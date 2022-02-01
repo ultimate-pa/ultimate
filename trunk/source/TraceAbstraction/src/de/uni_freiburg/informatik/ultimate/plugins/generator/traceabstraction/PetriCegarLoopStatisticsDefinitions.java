@@ -45,13 +45,10 @@ public enum PetriCegarLoopStatisticsDefinitions implements IStatisticsElement {
 	BackfoldingTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	BackfoldingUnfoldingTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
-	
+
 	FlowIncreaseByBackfolding(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-	BasicCegarLoop(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),
-	;
-
+	BasicCegarLoop(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
@@ -72,11 +69,6 @@ public enum PetriCegarLoopStatisticsDefinitions implements IStatisticsElement {
 	@Override
 	public String prettyprint(final Object o) {
 		return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
-	}
-
-	@Override
-	public Class<?> getDataType() {
-		return mClazz;
 	}
 
 }

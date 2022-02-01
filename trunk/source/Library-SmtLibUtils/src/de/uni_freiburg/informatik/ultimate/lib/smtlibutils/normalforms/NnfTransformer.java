@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -61,8 +62,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  */
 public class NnfTransformer {
 
+	private static final String FRESH_VARIABLE_PREFIX = "nnf";
+	/**
+	 * Check whether input and output are logically equivalent. Sometimes we need to
+	 * omit the soundness check which does a checksat on mManagedScript. For
+	 * example, this is the case when mManagedScript.getScript is
+	 * HornClauseParserScript (in which case the soundness check would lead to
+	 * nontermination)
+	 */
+	private static final boolean DEBUG_CHECK_SOUNDNESS = false;
 	protected final Script mScript;
-	private static final String s_FreshVariableString = "nnf";
 	private final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
 	private final NnfTransformerHelper mNnfTransformerHelper;
@@ -94,33 +103,24 @@ public class NnfTransformer {
 
 	protected Function<Integer, Boolean> mFunAbortIfExponential;
 
-	/**
-	 * Sometimes we need to omit the soundness check which does a checksat on mManagedScript. For example, this is the
-	 * case when mManagedScript.getScript is HornClauseParserScript (in which case the soundness check would lead to
-	 * nontermination)
-	 */
-	private final boolean mOmitSoundnessCheck;
-
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling) {
-		this(mgdScript, services, quantifierHandling, false, a -> false);
+		this(mgdScript, services, quantifierHandling, a -> false);
 	}
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck) {
-		this(mgdScript, services, quantifierHandling, omitSoundnessCheck, a -> false);
+		this(mgdScript, services, quantifierHandling, a -> false);
 	}
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck,
-			final Function<Integer, Boolean> funAbortIfExponential) {
+			final QuantifierHandling quantifierHandling, final Function<Integer, Boolean> funAbortIfExponential) {
 		mFunAbortIfExponential = Objects.requireNonNull(funAbortIfExponential);
 		mQuantifierHandling = quantifierHandling;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		mNnfTransformerHelper = getNnfTransformerHelper(services);
-		mOmitSoundnessCheck = omitSoundnessCheck;
 	}
 
 	protected NnfTransformerHelper getNnfTransformerHelper(final IUltimateServiceProvider services) {
@@ -146,7 +146,7 @@ public class NnfTransformer {
 			}
 			mQuantifiedVariables = null;
 		}
-		assert mOmitSoundnessCheck || Util.checkSat(mScript,
+		assert !DEBUG_CHECK_SOUNDNESS || Util.checkSat(mScript,
 				mScript.term("distinct", term, result)) != LBool.SAT : "Nnf transformation unsound";
 		return result;
 	}
@@ -276,11 +276,11 @@ public class NnfTransformer {
 					final Map<Term, Term> substitutionMapping = new HashMap<>();
 					for (final TermVariable oldTv : qf.getVariables()) {
 						final TermVariable freshTv =
-								mMgdScript.constructFreshTermVariable(s_FreshVariableString, oldTv.getSort());
+								mMgdScript.constructFreshTermVariable(FRESH_VARIABLE_PREFIX, oldTv.getSort());
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
-					final Term newBody = new Substitution(mScript, substitutionMapping).transform(qf.getSubformula());
+					final Term newBody = Substitution.apply(mMgdScript, substitutionMapping, qf.getSubformula());
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"

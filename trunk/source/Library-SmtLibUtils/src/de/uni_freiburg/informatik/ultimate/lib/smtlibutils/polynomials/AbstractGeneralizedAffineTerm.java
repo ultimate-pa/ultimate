@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -61,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <AVAR>
  *            type of the variables
  */
-public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends Term implements IPolynomialTerm {
+public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implements IPolynomialTerm {
 
 	/**
 	 * Map from abstract variables to coeffcients. Coefficient zero is forbidden.
@@ -93,9 +94,9 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	protected AbstractGeneralizedAffineTerm(final Sort s, final Rational constant,
 			final Map<AVAR, Rational> variables2coeffcient) {
 		super(0);
-		Objects.nonNull(s);
-		Objects.nonNull(constant);
-		Objects.nonNull(variables2coeffcient);
+		Objects.requireNonNull(s);
+		Objects.requireNonNull(constant);
+		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
 		mAbstractVariable2Coefficient = variables2coeffcient;
@@ -105,6 +106,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 			final Map<AVAR, Rational> variables2coeffcient);
 
 	protected abstract AVAR constructAbstractVar(Term term);
+
+	protected abstract Collection<Term> getFreeVars(AVAR var);
 
 	/**
 	 * True if this represents not an legal term of its kind but an error during the translation process, e.g., if
@@ -188,7 +191,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	 */
 	Monomial getExclusiveMonomialOfSubject(final Term subject) {
 		Monomial result = null;
-		for (final Term abstractVar : getAbstractVariable2Coefficient().keySet()) {
+		for (final AVAR abstractVar : getAbstractVariable2Coefficient().keySet()) {
 			if (abstractVar instanceof Monomial) {
 				final Monomial monomial = (Monomial) abstractVar;
 				switch (monomial.isExclusiveVariable(subject)) {
@@ -213,11 +216,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 						// not exclusive
 						return null;
 					} else {
-						result = new Monomial(abstractVar, Rational.ONE);
+						result = new Monomial(subject, Rational.ONE);
 					}
 				} else {
 					final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
-							.isPropertySatisfied(abstractVar);
+							.isSatisfiedBySomeSubterm((Term) abstractVar);
 					if (subjectOccursAsSubterm) {
 						return null;
 					}
@@ -303,6 +306,14 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 
 	Map<AVAR, Rational> getAbstractVariable2Coefficient() {
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
+	}
+
+	public Map<Term, Rational> getAbstractVariableAsTerm2Coefficient(final Script script) {
+		final HashMap<Term, Rational> result = new HashMap<>();
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			result.put(abstractVariableToTerm(script, entry.getKey()), entry.getValue());
+		}
+		return result;
 	}
 
 	@Override
@@ -392,10 +403,10 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 				final Rational euclideanQuotient = euclideanDivision(entry.getValue(), divisor);
 				variables2coeffcient.put(entry.getKey(), euclideanQuotient);
 			} else {
-				if (Arrays.stream(entry.getKey().getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
+				if (getFreeVars(entry.getKey()).stream().anyMatch(bannedForDivCapture::contains)) {
 					return null;
 				}
-				summandsOfDiv.add(SmtUtils.mul(script, entry.getValue(), entry.getKey()));
+				summandsOfDiv.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
 			}
 		}
 		final Rational constant;
@@ -922,5 +933,21 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		return result;
 	}
 
+	@Override
+	public TermVariable[] getFreeVars() {
+		throw new UnsupportedOperationException(
+				"AbstractGeneralizedAffineTerm is not a proper Term of our SMT library");
+	}
 
+	@Override
+	public Theory getTheory() {
+		throw new UnsupportedOperationException(
+				"AbstractGeneralizedAffineTerm is not a proper Term of our SMT library");
+	}
+
+	@Override
+	public String toStringDirect() {
+		throw new UnsupportedOperationException(
+				"AbstractGeneralizedAffineTerm is not a proper Term of our SMT library");
+	}
 }

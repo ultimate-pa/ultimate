@@ -41,12 +41,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Find all subterms that are application terms with FunctionSymbol mName. The boolean flag mOnlyOutermost defines if
- * only the outermost occurrence is returned (mOnlyOutermost == true) of if each occurrence is returned (mOnlyOutermost
- * == false) and hence the result may also contain terms that are subterms of other result .
+ * Find all subterms that are application terms with FunctionSymbol mName. The
+ * boolean flag mOnlyOutermost defines if only the outermost occurrence is
+ * returned (mOnlyOutermost == true) of if each occurrence is returned
+ * (mOnlyOutermost == false) and hence the result may also contain terms that
+ * are subterms of other result.
+ *
+ * @deprecated Use {@link SmtUtils#extractApplicationTerms} instead.
  *
  * @author Matthias Heizmann
  */
+@Deprecated
 public class ApplicationTermFinder extends NonRecursive {
 	protected final Set<String> mFunctionSymbolNames;
 	protected Set<ApplicationTerm> mResult;

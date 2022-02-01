@@ -55,15 +55,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.DebuggingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.SdHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -79,6 +79,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ *         TODO: Adapt to new {@link IHoareTripleChecker} chain architecture (stats, chaining of SD solver)
  *
  */
 public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<?>>
@@ -113,9 +115,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	private final IncrementalHoareTripleChecker mHtcSmt;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
-	private final SimplificationTechnique mSimplificationTechnique;
 	private final ManagedScript mManagedScript;
-	private final SdHoareTripleChecker mHtcSd;
+	private final IHoareTripleChecker mHtcSd;
 	private final boolean mOnlyAbsInt;
 	private final boolean mUseHierachicalPre;
 
@@ -155,14 +156,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		mCsToolkit = Objects.requireNonNull(csToolkit);
 		mManagedScript = Objects.requireNonNull(mCsToolkit.getManagedScript());
 
-		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
 		mTopState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createTopState());
 		mBottomState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createBottomState());
 		mHtcSmt = new IncrementalHoareTripleChecker(mCsToolkit, false);
-		mHtcSd = new SdHoareTripleChecker(mCsToolkit, predicateUnifer, mBenchmark);
+		mHtcSd = HoareTripleCheckerUtils.constructSdHoareTripleChecker(mLogger, mCsToolkit, mPredicateUnifier);
 		mOnlyAbsInt = onlyAbsInt;
 
 	}
@@ -342,7 +342,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		return mBenchmark;
 	}
 
@@ -415,11 +415,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	private Validity trackPost(final Validity valid, final ACTION act) {
 		if (act instanceof ICallAction) {
 			return trackPost(valid, InCaReCounter::incCa);
-		} else if (act instanceof IReturnAction) {
-			return trackPost(valid, InCaReCounter::incRe);
-		} else {
-			return trackPost(valid, InCaReCounter::incIn);
 		}
+		if (act instanceof IReturnAction) {
+			return trackPost(valid, InCaReCounter::incRe);
+		}
+		return trackPost(valid, InCaReCounter::incIn);
 	}
 
 	private Validity trackPost(final Validity valid, final Consumer<InCaReCounter> inc) {
@@ -445,14 +445,15 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			final Set<STATE> synchronizedStates =
 					states.stream().map(a -> AbsIntUtil.synchronizeVariables(a, vars)).collect(Collectors.toSet());
 			return DisjunctiveAbstractState.createDisjunction(synchronizedStates);
-		} else if (pred.equals(mTruePred)) {
-			return mTopState;
-		} else if (pred.equals(mFalsePred)) {
-			return mBottomState;
-		} else {
-			throw new UnsupportedOperationException(
-					"Cannot handle non-absint predicates: " + pred.hashCode() + " (" + pred.getClass() + ")");
 		}
+		if (pred.equals(mTruePred)) {
+			return mTopState;
+		}
+		if (pred.equals(mFalsePred)) {
+			return mBottomState;
+		}
+		throw new UnsupportedOperationException(
+				"Cannot handle non-absint predicates: " + pred.hashCode() + " (" + pred.getClass() + ")");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -570,7 +571,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			final DisjunctiveAbstractState<STATE> preHierState, final DisjunctiveAbstractState<STATE> synchronizedState,
 			final IFunPointer funReplay) {
 		final boolean rtr =
-				(!pre.isBottom() && (preHierState == null || !preHierState.isBottom())) || synchronizedState.isBottom();
+				!pre.isBottom() && (preHierState == null || !preHierState.isBottom()) || synchronizedState.isBottom();
 		if (!rtr) {
 			funReplay.run();
 		}
@@ -711,7 +712,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	@FunctionalInterface
-	private static interface IFunPointer {
+	private interface IFunPointer {
 		void run();
 	}
 

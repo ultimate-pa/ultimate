@@ -58,6 +58,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
 
+	public static final String LABEL_USE_EPSILON = "Use epsilon transformation during rt-inconsistency check";
+	private static final boolean DEF_USE_EPSILON = true;
+	private static final String DESC_USE_EPSILON = null;
+
 	public static final String LABEL_RT_INCONSISTENCY_RANGE = "Rt-inconsistency range";
 	private static final int DEF_RT_INCONSISTENCY_RANGE = 2;
 	private static final String DESC_RT_INCONSISTENCY_RANGE =
@@ -114,6 +118,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_EPSILON, DEF_USE_EPSILON, DESC_USE_EPSILON,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
 						DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,

@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -230,6 +232,11 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	@Override
 	protected Term abstractVariableToTerm(final Script script, final Term abstractVariable) {
 		return abstractVariable;
+	}
+
+	@Override
+	protected Collection<Term> getFreeVars(final Term var) {
+		return Arrays.asList(var.getFreeVars());
 	}
 
 	@Override

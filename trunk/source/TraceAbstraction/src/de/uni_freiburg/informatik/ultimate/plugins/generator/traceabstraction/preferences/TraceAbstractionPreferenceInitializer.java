@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.SmtFeatureHeuristicPartitioningType;
@@ -48,8 +49,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.CegarRestartBehaviour;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -95,11 +99,27 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
+	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
+	private static final boolean DEF_COND_POR = true;
+
+	public static final String LABEL_SYMM_POR = "Limit POR to symmetric independence in concurrent analysis";
+	private static final boolean DEF_SYMM_POR = false;
+
+	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
+	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
+
+	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
+	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
+
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
-	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
+	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
+	public static final String LABEL_CEGAR_RESTART_BEHAVIOUR = "CEGAR restart behaviour";
+	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
+	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS =
+			"When to check the insufficient erros location relative to the other error locations";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Enhance during reuse of Floyd-Hoare automata";
@@ -191,7 +211,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
-	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
+	public static final boolean DEF_STOP_AFTER_FIRST_VIOLATION = true;
+	private static final CegarRestartBehaviour DEF_CEGAR_RESTART_BEHAVIOUR = CegarRestartBehaviour.ONLY_ONE_CEGAR;
+
+	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
+
+	public static final InsufficientError DEF_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS = InsufficientError.TOGETHER;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
@@ -226,9 +251,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
 					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
 					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
-					+ LABEL_ALL_ERRORS_AT_ONCE + " is false, this setting will additionally try to re-use the automata "
-					+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
-					+ " will compute the difference with the initial abstraction and "
+					+ LABEL_STOP_AFTER_FIRST_VIOLATION
+					+ " is false, this setting will additionally try to re-use the automata " + "from previous runs. "
+					+ FloydHoareAutomataReuse.EAGER + " will compute the difference with the initial abstraction and "
 					+ "all additional interpolant automatas before the first iteration of a run. "
 					+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
 					+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
@@ -237,7 +262,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Specifies how to compute successors on-demand for re-use interpolant automata.";
 
-	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
+	private static final String DESC_STOP_AFTER_FIRST_VIOLATION =
+			"Stop the analysis after the first violation was found.";
+	private static final String DESC_CEGAR_RESTART_BEHAVIOUR =
+			"Control how many error locations are analyzed by a single CEGAR loop: all, only one, or other subsets.";
+	private static final String DESC_ERROR_AUTOMATON_MODE = "If \"" + LABEL_CEGAR_RESTART_BEHAVIOUR + "\" is not "
+			+ "\"ONE_CEGAR_PER_ERROR_LOCATION\", i.e., if one CEGAR loop analyzes multiple error locations, reachable "
+			+ "error locations are removed by refinining the abstraction with an error automaton specified by this mode.";
+
+	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS = null;
+
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
 	private static final String DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
@@ -337,8 +371,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_STOP_AFTER_FIRST_VIOLATION,
+						DESC_STOP_AFTER_FIRST_VIOLATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CEGAR_RESTART_BEHAVIOUR, DEF_CEGAR_RESTART_BEHAVIOUR,
+						DESC_CEGAR_RESTART_BEHAVIOUR, PreferenceType.Combo, CegarRestartBehaviour.values()),
+				new UltimatePreferenceItem<>(LABEL_ERROR_AUTOMATON_MODE, DEF_ERROR_AUTOMATON_MODE,
+						DESC_ERROR_AUTOMATON_MODE, PreferenceType.Combo, ErrorAutomatonType.values()),
+				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
+						DEF_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
+						DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS, PreferenceType.Combo,
+						InsufficientError.values()),
 
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
 						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
@@ -453,6 +495,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PetriNetLbe.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
+				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SYMM_POR, DEF_SYMM_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
+						OrderType.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,
@@ -537,13 +585,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS_MULTIPLECE, INCREMENTAL_INCLUSION_3,
 		INCREMENTAL_INCLUSION_3_2, INCREMENTAL_INCLUSION_4, INCREMENTAL_INCLUSION_4_2, INCREMENTAL_INCLUSION_5,
 		INCREMENTAL_INCLUSION_5_2,
-	}
-
-	/**
-	 * Hoare triple check mode.
-	 */
-	public enum HoareTripleChecks {
-		MONOLITHIC, INCREMENTAL
 	}
 
 	/**
@@ -759,6 +800,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum AcceleratedInterpolationLoopAccelerationTechnique {
-		FAST_UPR, WERNER_OVERAPPROX, JORDAN
+		FAST_UPR, WERNER_OVERAPPROX, JORDAN, QVASR, QVASRS
+	}
+
+	public enum InsufficientError {
+		BEFORE, TOGETHER, AFTER
 	}
 }

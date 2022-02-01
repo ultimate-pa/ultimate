@@ -58,12 +58,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -132,7 +131,7 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getStatistics() {
 		throw new UnsupportedOperationException(getClass().getName() + " does not support getEdgeCheckerBenchmark()");
 	}
 
@@ -178,8 +177,8 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 			}
 		}
 		final LBool isSat = mManagedScript.checkSat(this);
-		return checkValidity(expected, IncrementalPlicationChecker.convertLBool2Validity(isSat), transition, precond, postcond,
-				precondHier);
+		return checkValidity(expected, IncrementalPlicationChecker.convertLBool2Validity(isSat), transition, precond,
+				postcond, precondHier);
 	}
 
 	private Validity checkValidity(final Validity expected, final Validity actual, final IAction transition,
@@ -307,8 +306,8 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 		final Term formula = pred.getFormula();
 		final String pre = pred.hashCode() + "#";
 		if (formula instanceof QuantifiedFormula) {
-			return pre + PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, formula,
-					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)
+			return pre + PartialQuantifierElimination
+					.eliminateCompat(mServices, mManagedScript, SimplificationTechnique.SIMPLIFY_DDA, formula)
 					.toStringDirect();
 		}
 		return pre
@@ -341,7 +340,8 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 		final Supplier<Term> actSupplier = () -> {
 			if (act instanceof IInternalAction) {
 				return ((IInternalAction) act).getTransformula().getClosedFormula();
-			} else if (act instanceof ICallAction) {
+			}
+			if (act instanceof ICallAction) {
 				return ((ICallAction) act).getLocalVarsAssignment().getClosedFormula();
 			} else if (act instanceof IReturnAction) {
 				return ((IReturnAction) act).getAssignmentOfReturn().getClosedFormula();
@@ -707,14 +707,12 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 				if (bv.isOldvar()) {
 					assert !modifiableGlobals.contains(bv);
 					// do nothing
+				} else if (modifiableGlobals.contains(bv)) {
+					// do noting
 				} else {
-					if (modifiableGlobals.contains(bv)) {
-						// do noting
-					} else {
-						// oldVar of global which is not modifiable by called proc
-						replacees.add(entry.getValue());
-						replacers.add(bv.getDefaultConstant());
-					}
+					// oldVar of global which is not modifiable by called proc
+					replacees.add(entry.getValue());
+					replacers.add(bv.getDefaultConstant());
 				}
 			} else {
 				assert !modifiableGlobals.contains(bv);

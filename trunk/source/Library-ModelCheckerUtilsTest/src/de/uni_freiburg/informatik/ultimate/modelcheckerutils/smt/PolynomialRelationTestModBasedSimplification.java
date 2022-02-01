@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -67,9 +67,57 @@ public class PolynomialRelationTestModBasedSimplification {
 	}
 
 	private Script createSolver(final String proviededSolverCommand) {
-		final Script result = new HistoryRecordingScript(
-				UltimateMocks.createSolver(proviededSolverCommand, LogLevel.INFO));
+		final Script result =
+				new HistoryRecordingScript(UltimateMocks.createSolver(proviededSolverCommand, LogLevel.INFO));
 		return result;
+	}
+
+	@Test
+	public void bvsmodConstantSimplification01() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final String input = "(= (_ bv3 8) (bvsmod	(bvneg(_ bv9 8))(_ bv4 8)))";
+		final String expected = "true";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+	}
+
+	@Test
+	public void bvsmodConstantSimplificationDivZero() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final String input = "(= (_ bv9 8) (bvsmod	(_ bv9 8)(_ bv0 8)))";
+		final String expected = "true";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+	}
+
+	@Test
+	public void bvsmodConstantSimplification03() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final String input = "(= (bvneg(_ bv3 8)) (bvsmod	(_ bv9 8)(bvneg(_ bv4 8))))";
+		final String expected = "true";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+	}
+
+	@Test
+	public void bvsmodConstantSimplification04() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final String input = "(= (bvneg (_ bv1 8)) (bvsmod	(bvneg(_ bv9 8)) (bvneg(_ bv4 8))))";
+		final String expected = "true";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+	}
+
+	@Test
+	public void bvuremConstantSimplificationDivZero() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final String input = "(= (_ bv9 8) (bvurem	(_ bv9 8) (_ bv0 8)))";
+		final String expected = "true";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+	}
+
+	@Test
+	public void bvudivConstantSimplificationDivZero() {
+		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final String input = "(=  (_ bv255 8) (bvudiv	(_ bv9 8) (_ bv0 8)))";
+		final String expected = "true";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
 	}
 
 	@Test
@@ -296,6 +344,14 @@ public class PolynomialRelationTestModBasedSimplification {
 		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
 	}
 
+	@Test
+	public void divisorAlwaysPositive() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String input = "(= y (mod x (- 7)))";
+		final String expected = "(= (mod x 7) y)";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+	}
+
 	private void testSimplification(final String solverCommand, final String inputAsString,
 			final String expectedResultAsString, final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
@@ -306,8 +362,13 @@ public class PolynomialRelationTestModBasedSimplification {
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term expectedResultAsTerm = TermParseUtils.parseTerm(script, expectedResultAsString);
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script, inputAsTerm);
-		final Term pnf = polyRel.positiveNormalForm(script);
+		// final PolynomialRelation polyRel = PolynomialRelation.convert(script, inputAsTerm);
+		// final Term pnf = polyRel.positiveNormalForm(script);
+
+		final UnfTransformer unfT = new UnfTransformer(mScript);
+		final Term pnf = unfT.transform(inputAsTerm);
+
+		System.out.println(pnf);
 		Assert.assertTrue("Input and expected result are not logically equivalent",
 				SmtUtils.areFormulasEquivalent(pnf, expectedResultAsTerm, script));
 		if (SmtUtils.isTrueLiteral(expectedResultAsTerm) || SmtUtils.isFalseLiteral(expectedResultAsTerm)) {

@@ -6,7 +6,8 @@ package com.github.jhoenicke.javacup.runtime;
 
 /**
  *
- * Default implementation of {@link SymbolFactory} used throughout the Ultimate project
+ * Default implementation of {@link SymbolFactory} with line and column information.
+ * This is the implementation used throughout the Ultimate project
  * (https://github.com/ultimate-pa/ultimate).
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

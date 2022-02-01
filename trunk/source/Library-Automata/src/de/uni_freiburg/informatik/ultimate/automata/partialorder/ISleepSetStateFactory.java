@@ -27,9 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -49,16 +48,79 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	/**
 	 * Method to create the sleep set state according to a given state and sleep set.
 	 *
+	 * Implementations must ensure that states which should be considered equal are indeed equal according to their
+	 * {{@link #equals(Object)} method. In other words, the caller does not cache results of calls to this method.
+	 *
 	 * @param state
 	 *            The given state
 	 * @param sleepset
 	 *            The given sleep set
 	 * @return The corresponding sleep set state
 	 */
-	R createSleepSetState(S state, Set<L> sleepset);
+	R createSleepSetState(S state, ImmutableSet<L> sleepset);
 
 	/**
-	 * Default implementation of the interface, which represents the sleep set state as a pair.
+	 * Retrieves the original state from which a given sleep set state was constructed.
+	 *
+	 * @param sleepState
+	 *            The sleep set state
+	 * @return The first argument passed to the call of {@link #createSleepSetState(Object, ImmutableSet)} that returned
+	 *         the given sleep set state
+	 */
+	S getOriginalState(R sleepState);
+
+	/**
+	 * Retrieves the sleep set for a sleep set state.
+	 *
+	 * @param sleepState
+	 *            The sleep set state
+	 * @return The second argument passed to the call of {@link #createSleepSetState(Object, ImmutableSet)} that
+	 *         returned the given sleep set state
+	 */
+	ImmutableSet<L> getSleepSet(R sleepState);
+
+	/**
+	 * Simple implementation of the interface, which disregards the sleep set and simply returns the automaton state.
+	 *
+	 * As a result, the reduced automaton will be a sub-automaton of the input automaton, with some transitions removed.
+	 * No unrolling of loops or unfolding of branches is performed. While guaranteeing a small automaton size in terms
+	 * of states, this yields possibly non-minimal reductions (in terms of the language).
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters
+	 * @param <S>
+	 *            The type of states in the original (and in the reduced) automaton.
+	 */
+	class NoUnrolling<L, S> implements ISleepSetStateFactory<L, S, S> {
+		@Override
+		public S createEmptyStackState() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public S createSleepSetState(final S state, final ImmutableSet<L> sleepset) {
+			return state;
+		}
+
+		@Override
+		public S getOriginalState(final S sleepState) {
+			return sleepState;
+		}
+
+		@Override
+		public ImmutableSet<L> getSleepSet(final S sleepState) {
+			throw new UnsupportedOperationException("state factory cannot recover sleep set");
+		}
+	}
+
+	/**
+	 * Simple implementation of the interface, which represents the sleep set state as a pair.
+	 *
+	 * Hence the reduced automaton unrolls loops and unfolds branches in the original automaton as far as necessary to
+	 * achieve a minimal reduction (in terms of the language). Of course, this can lead to larger automata in terms of
+	 * states; in the worst case exponentially (in the size of the alphabet) more states.
 	 *
 	 * @author Marcel Ebbinghaus
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -68,15 +130,25 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	 * @param <S>
 	 *            The type of states in the original automaton
 	 */
-	public static class DefaultSleepSetStateFactory<L, S> implements ISleepSetStateFactory<L, S, Pair<S, Set<L>>> {
+	class MinimalReduction<L, S> implements ISleepSetStateFactory<L, S, Pair<S, ImmutableSet<L>>> {
 		@Override
-		public Pair<S, Set<L>> createEmptyStackState() {
+		public Pair<S, ImmutableSet<L>> createEmptyStackState() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public Pair<S, Set<L>> createSleepSetState(final S state, final Set<L> sleepset) {
+		public Pair<S, ImmutableSet<L>> createSleepSetState(final S state, final ImmutableSet<L> sleepset) {
 			return new Pair<>(state, sleepset);
+		}
+
+		@Override
+		public S getOriginalState(final Pair<S, ImmutableSet<L>> sleepState) {
+			return sleepState.getFirst();
+		}
+
+		@Override
+		public ImmutableSet<L> getSleepSet(final Pair<S, ImmutableSet<L>> sleepState) {
+			return sleepState.getSecond();
 		}
 	}
 }

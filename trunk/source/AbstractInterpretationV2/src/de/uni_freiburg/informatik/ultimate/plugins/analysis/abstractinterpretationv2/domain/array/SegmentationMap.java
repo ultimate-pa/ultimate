@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -93,7 +94,7 @@ public class SegmentationMap {
 		mRepresentiveSegmentations.put(variable, segmentation);
 	}
 
-	public void addEquivalenceClass(final Set<IProgramVarOrConst> variables, final Segmentation segmentation) {
+	public void addEquivalenceClass(final ImmutableSet<IProgramVarOrConst> variables, final Segmentation segmentation) {
 		mArrayEqualities.addEquivalenceClass(variables);
 		final IProgramVarOrConst var = variables.iterator().next();
 		mRepresentiveSegmentations.put(mArrayEqualities.find(var), segmentation);
@@ -101,7 +102,7 @@ public class SegmentationMap {
 
 	public void putAll(final SegmentationMap other) {
 		for (final IProgramVarOrConst rep : other.mArrayEqualities.getAllRepresentatives()) {
-			final Set<IProgramVarOrConst> eqClass = other.getEquivalenceClass(rep);
+			final ImmutableSet<IProgramVarOrConst> eqClass = other.getEquivalenceClass(rep);
 			for (final IProgramVarOrConst v : eqClass) {
 				if (getArrays().contains(v)) {
 					remove(v);
@@ -186,7 +187,7 @@ public class SegmentationMap {
 		return mRepresentiveSegmentations.get(mArrayEqualities.find(variable));
 	}
 
-	public Set<IProgramVarOrConst> getEquivalenceClass(final IProgramVarOrConst variable) {
+	public ImmutableSet<IProgramVarOrConst> getEquivalenceClass(final IProgramVarOrConst variable) {
 		return mArrayEqualities.getEquivalenceClassMembers(variable);
 	}
 

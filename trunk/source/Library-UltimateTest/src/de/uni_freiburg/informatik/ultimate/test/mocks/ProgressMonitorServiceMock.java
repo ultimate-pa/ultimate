@@ -31,6 +31,7 @@ import java.util.concurrent.CountDownLatch;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  *
@@ -39,10 +40,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
  */
 final class ProgressMonitorServiceMock implements IProgressMonitorService {
 
-	private long mDeadline = Long.MAX_VALUE;
+	private long mDeadline = -1;
 
 	@Override
 	public boolean continueProcessing() {
+		if (mDeadline == -1) {
+			return true;
+		}
 		return System.currentTimeMillis() < mDeadline;
 	}
 
@@ -78,18 +82,7 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 
 	@Override
 	public long getDeadline() {
-		return 0;
-	}
-
-	@Override
-	public void addChildTimer(final IProgressAwareTimer timer) {
-		// mock
-	}
-
-	@Override
-	public IProgressAwareTimer removeChildTimer() {
-		// mock
-		return null;
+		return mDeadline;
 	}
 
 	@Override
@@ -98,7 +91,17 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 	}
 
 	@Override
-	public boolean continueProcessingRoot() {
-		return true;
+	public long remainingTime() {
+		if (mDeadline == -1) {
+			return -1;
+		}
+		return System.currentTimeMillis() - mDeadline;
+	}
+
+	@Override
+	public IUltimateServiceProvider registerChildTimer(final IUltimateServiceProvider services,
+			final IProgressAwareTimer timer) {
+		// mock, does not set timer
+		return services;
 	}
 }

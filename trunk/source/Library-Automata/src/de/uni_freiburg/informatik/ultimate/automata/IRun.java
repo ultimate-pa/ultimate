@@ -59,7 +59,7 @@ public interface IRun<LETTER, STATE> {
 
 	/**
 	 * The length of the run.<br>
-	 * The result is identical to {@link #getWord()}.{@link Word#length() length()}.
+	 * The result is identical to {@link #getStateSequence()}.{@link Word#length() length()}.
 	 *
 	 * @return length of the run
 	 */

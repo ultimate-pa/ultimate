@@ -99,7 +99,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  * @author Matthias Heizmann
  * @author Christian Schilling
  */
-public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
+public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -114,8 +114,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 */
 	private final boolean mApplyQuantifierElimination = true;
 
-	public FlowSensitiveFaultLocalizer(final NestedRun<LETTER, IPredicate> counterexample,
-			final INestedWordAutomaton<LETTER, IPredicate> cfg, final IUltimateServiceProvider services,
+	public FlowSensitiveFaultLocalizer(final NestedRun<L, IPredicate> counterexample,
+			final INestedWordAutomaton<L, IPredicate> cfg, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicateUnifier predicateUnifier,
 			final RelevanceAnalysisMode faultLocalizationMode, final SimplificationTechnique simplificationTechnique,
@@ -161,9 +161,9 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 *
 	 * @return array with empty IRelevanceInformation for each IAction in the trace.
 	 */
-	private IRelevanceInformation[] initializeRelevanceOfTrace(final NestedRun<LETTER, IPredicate> counterexampleRun) {
+	private IRelevanceInformation[] initializeRelevanceOfTrace(final NestedRun<L, IPredicate> counterexampleRun) {
 		final IRelevanceInformation[] result = new IRelevanceInformation[counterexampleRun.getLength() - 1];
-		final NestedWord<LETTER> counterexampleWord = counterexampleRun.getWord();
+		final NestedWord<L> counterexampleWord = counterexampleRun.getWord();
 		for (int i = 0; i < counterexampleWord.length(); i++) {
 			final IRelevanceInformation relevancyOfAction = new RelevanceInformation(
 					Collections.singletonList(counterexampleWord.getSymbol(i)), false, false, false, false, false);
@@ -174,12 +174,12 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Construct conglomerate for the sub-graph.
-	 * 
+	 *
 	 * @return
 	 *
 	 */
 	private UnmodifiableTransFormula constructConglomerate(final Integer startPosition, final Integer endPosition,
-			final Set<IcfgEdge> subGraphEdges, final NestedRun<LETTER, IPredicate> counterexample,
+			final Set<IcfgEdge> subGraphEdges, final NestedRun<L, IPredicate> counterexample,
 			final IIcfg<IcfgLocation> IIcfg) {
 
 		final IcfgLocation startLocation =
@@ -216,7 +216,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 */
 	private Map<Integer, Set<IcfgEdge>> computeBranchOutLocation(final int startLocation, final int endLocation,
 			final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg,
-			final NestedRun<LETTER, IPredicate> counterexample) {
+			final NestedRun<L, IPredicate> counterexample) {
 		final Map<Integer, Set<IcfgEdge>> result = new HashMap<>();
 		final Set<IcfgEdge> subgraphEdges = new HashSet<>();
 		// Add the edges of the trace
@@ -247,7 +247,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Post process information from CFG.
-	 * 
+	 *
 	 * @param counterexample
 	 * @param informationFromCfg
 	 * @param startLocation,
@@ -258,7 +258,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 */
 
 	private Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessInformationFromCFG(
-			final NestedRun<LETTER, IPredicate> counterexample,
+			final NestedRun<L, IPredicate> counterexample,
 			final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg, final int startLocation,
 			final int endLocation) {
 		// Now we have to take the union of the edges
@@ -292,7 +292,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 *
 	 */
 
-	private Set<IcfgEdge> computePathEdges(final NestedRun<LETTER, IPredicate> trace, final Integer startState,
+	private Set<IcfgEdge> computePathEdges(final NestedRun<L, IPredicate> trace, final Integer startState,
 			final Integer endState) {
 
 		final Set<IcfgEdge> pathEdges = new HashSet<>();
@@ -313,9 +313,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 * COMPUTE INFORMATION FROM CFG
 	 *
 	 */
-	private Map<Integer, Map<Integer, Set<IcfgEdge>>> computeInformationFromCFG(
-			final NestedRun<LETTER, IPredicate> trace, final INestedWordAutomaton<LETTER, IPredicate> cfg,
-			final ManagedScript csToolkit) {
+	private Map<Integer, Map<Integer, Set<IcfgEdge>>> computeInformationFromCFG(final NestedRun<L, IPredicate> trace,
+			final INestedWordAutomaton<L, IPredicate> cfg, final ManagedScript csToolkit) {
 		// Get all the edges in the path in the trace.
 		final Map<Integer, Map<Integer, Set<IcfgEdge>>> result = new HashMap<>();
 		// Create a Map of Programpoints in the CFG to States of the CFG.
@@ -326,7 +325,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			programPointToState.put(programPoint, cfgState);
 		}
 		// Trace elements (transitions) of the given path in the CFG.
-		final List<LETTER> traceElements = new ArrayList<>();
+		final List<L> traceElements = new ArrayList<>();
 		for (int i = 0; i < trace.getLength() - 1; i++) {
 			traceElements.add(trace.getSymbol(i));
 		}
@@ -349,21 +348,21 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final Set<IPredicate> possibleEndPoints =
 					computePossibleEndpoints(trace, programPointToState, posOfStartState);
 			// Immediate succesors of s1 in the CFG.
-			final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> immediateSuccesors =
+			final Iterable<OutgoingInternalTransition<L, IPredicate>> immediateSuccesors =
 					cfg.internalSuccessors(startStateInCfg);
 			// Iterate over all the immediate succesors of s1 in the CFG.
-			for (final OutgoingInternalTransition<LETTER, IPredicate> transition : immediateSuccesors) {
+			for (final OutgoingInternalTransition<L, IPredicate> transition : immediateSuccesors) {
 				final IPredicate immediateSuccesor = transition.getSucc();
 				if (traceElements.contains(transition.getLetter())) {
 					// do nothing because this transition is present in
 					// the given trace.
 				} else {
 					// the transition is not in the given trace.
-					final NestedWord<LETTER> notGuard =
+					final NestedWord<L> notGuard =
 							new NestedWord<>(transition.getLetter(), NestedWord.INTERNAL_POSITION);
-					NestedRun<LETTER, IPredicate> alternativePath = new NestedRun<>(notGuard,
+					NestedRun<L, IPredicate> alternativePath = new NestedRun<>(notGuard,
 							new ArrayList<>(Arrays.asList(startStateInCfg, transition.getSucc())));
-					final NestedRun<LETTER, IPredicate> remainingPath =
+					final NestedRun<L, IPredicate> remainingPath =
 							findPathInCfg(immediateSuccesor, startStateInCfg, possibleEndPoints, cfg);
 					if (remainingPath != null) {
 						// An alternative path exists (here called the remaining path) from the successor
@@ -417,7 +416,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 * takes care of the case when for a state in CFG, there are more then one Occurrences of the corresponding state in
 	 * the error trace. This can happen, for example, in the case of a loop un-rolling.
 	 */
-	private List<Integer> computeEndpointOfAlternativePath(final NestedRun<LETTER, IPredicate> counterexample,
+	private List<Integer> computeEndpointOfAlternativePath(final NestedRun<L, IPredicate> counterexample,
 			final int posOfStartState, final IPredicate lastStateOfAlternativePath) {
 		final List<Integer> endPoints = new ArrayList<>();
 		for (int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
@@ -443,7 +442,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 * @param programPointStateMap
 	 *            map from program points to states in cfg
 	 */
-	private Set<IPredicate> computePossibleEndpoints(final NestedRun<LETTER, IPredicate> counterexample,
+	private Set<IPredicate> computePossibleEndpoints(final NestedRun<L, IPredicate> counterexample,
 			final Map<IcfgLocation, IPredicate> programPointStateMap, final int currentPosition) {
 		final Set<IPredicate> possibleEndPoints = new HashSet<>();
 		for (int j = currentPosition + 1; j < counterexample.getStateSequence().size() - 1; j++) {
@@ -482,7 +481,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		return new boolean[] { relevanceCriterionUC, relevanceCriterionGF, relevanceCriterionDB };
 	}
 
-	private void doNonFlowSensitiveAnalysis(final NestedWord<LETTER> counterexampleWord, final IPredicate truePredicate,
+	private void doNonFlowSensitiveAnalysis(final NestedWord<L> counterexampleWord, final IPredicate truePredicate,
 			final IPredicate falsePredicate, final ModifiableGlobalsTable modGlobVarManager,
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
@@ -491,23 +490,23 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP and SP List
-		final IterativePredicateTransformer iptWp = new IterativePredicateTransformer(mPredicateFactory,
+		final IterativePredicateTransformer<L> iptWp = new IterativePredicateTransformer<>(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
 				null, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
 				mXnfConversionTechnique, mSymbolTable);
-		final IterativePredicateTransformer iptSp = new IterativePredicateTransformer(mPredicateFactory,
+		final IterativePredicateTransformer<L> iptSp = new IterativePredicateTransformer<>(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
 				truePredicate, null, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
 				mXnfConversionTechnique, mSymbolTable);
 
-		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, truePredicate, falsePredicate,
-				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
+		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexampleWord, truePredicate,
+				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, mLogger, csToolkit.getManagedScript(),
-							mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
+					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
+							mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -584,7 +583,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 */
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula branchEncodedFormula, final IPredicate weakestPreconditionLeft,
-			final IPredicate weakestPreconditionRight, final NestedWord<LETTER> counterexampleWord,
+			final IPredicate weakestPreconditionRight, final NestedWord<L> counterexampleWord,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final TracePredicates strongestPostconditionSequence) {
 
@@ -626,22 +625,22 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Computes the Statements relevant to the flow sensitive analysis in the trace.
-	 * 
+	 *
 	 * @param postProcessedResults
 	 * @param counterexample
 	 *            trace
 	 * @param iIcfg
 	 */
-	private IPredicate computeRelevantStatements_FlowSensitive(final NestedWord<LETTER> counterexampleWord,
+	private IPredicate computeRelevantStatements_FlowSensitive(final NestedWord<L> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer<Term, IPredicate, TransFormula> pt, final FaultLocalizationRelevanceChecker rc,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final TracePredicates strongestPostconditionSequence,
 			final Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessedResults,
-			final NestedRun<LETTER, IPredicate> counterexample, final IIcfg<IcfgLocation> IIcfg) {
+			final NestedRun<L, IPredicate> counterexample, final IIcfg<IcfgLocation> IIcfg) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--) {
-			final LETTER statement = counterexampleWord.getSymbol(position);
+			final L statement = counterexampleWord.getSymbol(position);
 
 			final Map<Integer, Set<IcfgEdge>> branchIn = postProcessedResults.get(position);
 			Integer branchOutPosition = null;
@@ -742,7 +741,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 */
 	private ERelevanceStatus computeRelevance(final int position, final IAction action, final IPredicate pre,
 			final IPredicate weakestPreconditionRight, final IPredicate weakestPreconditionLeft,
-			final TracePredicates weakestPreconditionSequence, final NestedWord<LETTER> counterexampleWord,
+			final TracePredicates weakestPreconditionSequence, final NestedWord<L> counterexampleWord,
 			final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit) {
 		ERelevanceStatus relevance;
 		if (action instanceof IInternalAction) {
@@ -780,16 +779,15 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final PredicateTransformer<Term, IPredicate, TransFormula> pt, final boolean applyQuantifierElimination) {
 		Term result = pt.weakestPrecondition(successor, tf);
 		if (applyQuantifierElimination) {
-			result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, freshTermVariableConstructor,
-					result, mSimplificationTechnique, mXnfConversionTechnique);
+			final Term term = result;
+			result = PartialQuantifierElimination.eliminateCompat(mServices, freshTermVariableConstructor, mSimplificationTechnique, term);
 		}
 		return result;
 	}
 
-	private void doFlowSensitiveAnalysis(final NestedRun<LETTER, IPredicate> counterexample,
-			final IPredicate truePredicate, final INestedWordAutomaton<LETTER, IPredicate> cfg,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit,
-			final IIcfg<IcfgLocation> IIcfg) {
+	private void doFlowSensitiveAnalysis(final NestedRun<L, IPredicate> counterexample, final IPredicate truePredicate,
+			final INestedWordAutomaton<L, IPredicate> cfg, final ModifiableGlobalsTable modifiableGlobalsTable,
+			final CfgSmtToolkit csToolkit, final IIcfg<IcfgLocation> IIcfg) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 
 		// get information from CFG but instead of fromulas, put edges
@@ -818,19 +816,19 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				mPredicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false"));
 
 		// Calculating the SP List
-		final IterativePredicateTransformer iptSp = new IterativePredicateTransformer(mPredicateFactory,
+		final IterativePredicateTransformer<L> iptSp = new IterativePredicateTransformer<>(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices,
 				counterexample.getWord(), truePredicate, null, null, mPredicateFactory.not(falsePredicate),
 				mSimplificationTechnique, mXnfConversionTechnique, mSymbolTable);
 
-		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexample.getWord(), truePredicate,
+		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexample.getWord(), truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, mLogger, csToolkit.getManagedScript(),
-							mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
+					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
+							mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -850,8 +848,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 * Check if there is a path from startPoint so some element of the possibleEndPoints set. If yes, a NestedRun is
 	 * returned, otherwise null is returned.
 	 */
-	private NestedRun<LETTER, IPredicate> findPathInCfg(final IPredicate startPoint, final IPredicate parentState,
-			final Set<IPredicate> possibleEndPoints, final INestedWordAutomaton<LETTER, IPredicate> cfg) {
+	private NestedRun<L, IPredicate> findPathInCfg(final IPredicate startPoint, final IPredicate parentState,
+			final Set<IPredicate> possibleEndPoints, final INestedWordAutomaton<L, IPredicate> cfg) {
 		try {
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), cfg, Collections.singleton(startPoint),
 					Collections.singleton(parentState), possibleEndPoints).getNestedRun();

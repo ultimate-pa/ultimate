@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -339,8 +339,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			// we need to substitute the variable in the definition by the argument of at
 			final TermVariable var = at.getFunction().getDefinitionVars()[0];
 			final Term value = at.getParameters()[0];
-			final Term defSubstituted =
-					new Substitution(mMgdScript, Collections.singletonMap(var, value)).transform(def);
+			final Term defSubstituted = Substitution.apply(mMgdScript, Collections.singletonMap(var, value), def);
 
 			return getOrConstructConstantArray(defSubstituted);
 		}

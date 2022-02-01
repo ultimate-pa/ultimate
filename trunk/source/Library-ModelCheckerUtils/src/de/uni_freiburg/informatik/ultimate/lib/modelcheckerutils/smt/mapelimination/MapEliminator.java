@@ -56,18 +56,18 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IndexAnalyzer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbolFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -199,15 +199,15 @@ public class MapEliminator {
 	private void findIndices(final ModifiableTransFormula transformula) {
 		final Term term = transformula.getFormula();
 		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
-			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray());
+			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray(), mScript);
 			findIndicesArrayWrite(arrayWrite, transformula);
 			addArrayAccessToRelation(arrayWrite.getOldArray(), select.getIndex(), transformula);
 		}
-		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(term)) {
-			if (t.getParameters()[0].getSort().isArraySort()) {
-				final ArrayWrite arrayWrite = new ArrayWrite(t);
+		for (final Term t : SmtUtils.extractApplicationTerms("=", term, false)) {
+			if (((ApplicationTerm) t).getParameters()[0].getSort().isArraySort()) {
+				final ArrayWrite arrayWrite = new ArrayWrite(t, mScript);
 				// The new array can be also a store-term, so also find indices in this term
-				final ArrayWrite arrayWrite2 = new ArrayWrite(arrayWrite.getNewArray());
+				final ArrayWrite arrayWrite2 = new ArrayWrite(arrayWrite.getNewArray(), mScript);
 				findIndicesArrayWrite(arrayWrite, transformula);
 				findIndicesArrayWrite(arrayWrite2, transformula);
 				final Term array1 = arrayWrite.getOldArray();
@@ -227,8 +227,8 @@ public class MapEliminator {
 			final Object symbol = s.getSymbol();
 			if (symbol instanceof FunctionSymbol) {
 				final String function = ((FunctionSymbol) symbol).getName();
-				for (final ApplicationTerm t : new ApplicationTermFinder(function, false).findMatchingSubterms(term)) {
-					final ArrayIndex index = new ArrayIndex(Arrays.asList(t.getParameters()));
+				for (final Term t : SmtUtils.extractApplicationTerms(function, term, false)) {
+					final ArrayIndex index = new ArrayIndex(Arrays.asList(((ApplicationTerm) t).getParameters()));
 					addCallToRelation(function, index, transformula);
 				}
 			}
@@ -316,7 +316,7 @@ public class MapEliminator {
 		assert mTransFormulasToLocalIndices.containsKey(transformula) : "This transformula wasn't preprocessed";
 		final ModifiableTransFormula newTF = new ModifiableTransFormula(transformula);
 		final Term term = newTF.getFormula();
-		if (new ContainsQuantifier().containsQuantifier(term)) {
+		if (!QuantifierUtils.isQuantifierFree(term)) {
 			throw new UnsupportedOperationException("Quantifiers are not supported");
 		}
 		if (!SmtUtils.isNNF(term)) {
@@ -431,8 +431,9 @@ public class MapEliminator {
 			newTerm = term;
 		} else {
 			// If aux-vars have been created, eliminate them
-			newTerm = PartialQuantifierElimination.elim(mManagedScript, Script.EXISTS, mAuxVars, term, mServices,
-					mLogger, mSettings.getSimplificationTechnique(), mSettings.getXnfConversionTechnique());
+			final Term quantifier = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, mAuxVars, term);
+			newTerm = PartialQuantifierElimination.eliminate(mServices, mManagedScript, quantifier,
+					mSettings.getSimplificationTechnique());
 			// Add the remaining aux-vars to the transformula
 			transformula.addAuxVars(mAuxVars);
 			mAuxVars.clear();
@@ -502,19 +503,19 @@ public class MapEliminator {
 			}
 		}
 		final Map<Term, Term> substitution = new HashMap<>();
-		for (final ApplicationTerm select : new ApplicationTermFinder("select", true).findMatchingSubterms(term)) {
+		for (final Term select : SmtUtils.extractApplicationTerms("select", term, true)) {
 			if (!select.getSort().isArraySort()) {
 				substitution.put(select,
 						getReplacementVar(select, transformula, mScript, mReplacementVarFactory, mAuxVars));
 			}
 		}
 		for (final String functionName : mUninterpretedFunctions) {
-			for (final Term functionCall : new ApplicationTermFinder(functionName, true).findMatchingSubterms(term)) {
+			for (final Term functionCall : SmtUtils.extractApplicationTerms(functionName, term, true)) {
 				substitution.put(functionCall,
 						getReplacementVar(functionCall, transformula, mScript, mReplacementVarFactory, mAuxVars));
 			}
 		}
-		return new Substitution(mManagedScript, substitution).transform(term);
+		return Substitution.apply(mManagedScript, substitution, term);
 	}
 
 	/**
@@ -542,16 +543,19 @@ public class MapEliminator {
 						replaceSelectStoreTerm(selectTerm, transformula, invariants, auxVarEqualities));
 			}
 		}
-		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(newTerm)) {
-			if (t.getParameters()[0].getSort().isArraySort()) {
+		for (final Term t : SmtUtils.extractApplicationTerms("=", newTerm, false)) {
+			if (((ApplicationTerm) t).getParameters()[0].getSort().isArraySort()) {
 				substitutionMap.put(t, replaceArrayEquality(t, transformula, invariants));
 			}
 		}
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(newTerm)));
 		conjuncts.addAll(auxVarEqualities);
-		final Substitution substitution = new Substitution(mManagedScript, substitutionMap);
-		return substitution.transform(substitution.transform(SmtUtils.and(mScript, conjuncts)));
+		// 20211226 Matthias: I am wondering why the substitution is applied twice.
+		// Because we often have two-dimensional arrays? Shouldn't we apply the
+		// substitution until a fixpoint is reached?
+		return Substitution.apply(mManagedScript, substitutionMap,
+				Substitution.apply(mManagedScript, substitutionMap, SmtUtils.and(mScript, conjuncts)));
 	}
 
 	/**
@@ -560,8 +564,8 @@ public class MapEliminator {
 	 */
 	private Term replaceArrayInequalities(final Term term) {
 		final Map<Term, Term> substitutionMap = new HashMap<>();
-		for (final ApplicationTerm t : new ApplicationTermFinder("not", false).findMatchingSubterms(term)) {
-			final Term subterm = t.getParameters()[0];
+		for (final Term t : SmtUtils.extractApplicationTerms("not", term, false)) {
+			final Term subterm = ((ApplicationTerm) t).getParameters()[0];
 			if (SmtUtils.isFunctionApplication(subterm, "=")) {
 				final ApplicationTerm equality = (ApplicationTerm) subterm;
 				if (equality.getParameters()[0].getSort().isArraySort()) {
@@ -569,7 +573,7 @@ public class MapEliminator {
 				}
 			}
 		}
-		return new Substitution(mManagedScript, substitutionMap).transform(term);
+		return Substitution.apply(mManagedScript, substitutionMap, term);
 	}
 
 	/**
@@ -580,7 +584,7 @@ public class MapEliminator {
 			final EqualityAnalysisResult invariants, final List<Term> auxVarEqualities) {
 		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
-		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray());
+		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray(), mScript);
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
 		final TermVariable auxVar = getAndAddAuxVar(term, mAuxVars, mReplacementVarFactory);
 		for (final Pair<ArrayIndex, Term> pair : arrayWrite.getIndexValuePairs()) {
@@ -620,7 +624,7 @@ public class MapEliminator {
 	 */
 	private Term replaceArrayEquality(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants) {
-		final ArrayWrite arrayWrite = new ArrayWrite(term);
+		final ArrayWrite arrayWrite = new ArrayWrite(term, mScript);
 		final Term oldArray = arrayWrite.getOldArray();
 		final Term newArray = arrayWrite.getNewArray();
 		// If the old or new array is an aux-var, just return true

@@ -142,9 +142,10 @@ public class ArrayQuantifierEliminationMain {
 	private EliminationTaskSimple recursivCall(final EliminationTaskSimple eTask, final Term quantifiedTerm) {
 
 		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(quantifiedTerm);
-		final Term pushed = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ALL_LOCAL, nnf);
+		final Term pushed = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ALL_LOCAL,
+				SimplificationTechnique.SIMPLIFY_DDA, nnf);
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 		Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 		for (int i = qvs.size() - 1; i >= 0; i--) {
@@ -156,7 +157,8 @@ public class ArrayQuantifierEliminationMain {
 				recResult = elimAllRec(recResult);
 				matrix = recResult.getTerm();
 				matrix = SmtUtils.quantifier(mMgdScript.getScript(), qv.getQuantifier(), eliminatees, matrix);
-				matrix = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ONLY_DER, matrix);
+				matrix = QuantifierPusher.eliminate(mServices, mMgdScript, true, PqeTechniques.ONLY_DER,
+						SimplificationTechnique.SIMPLIFY_DDA, matrix);
 			}
 		}
 		return new EliminationTaskSimple(eTask.getQuantifier(), mEliminatees, matrix);
@@ -201,10 +203,8 @@ public class ArrayQuantifierEliminationMain {
 							nas.getValues().get(1));
 
 					// Substitude newStore
-					final Substitution sub = new Substitution(mMgdScript,
-							Collections.singletonMap(storeOuter.getStoreTerm(), newStore));
-					final Term noSOSterm = sub.transform(term);
-
+					final Term noSOSterm = Substitution.apply(mMgdScript,
+							Collections.singletonMap(storeOuter.getStoreTerm(), newStore), term);
 					return storeOverStore(noSOSterm, qarray);
 
 				}
@@ -213,10 +213,8 @@ public class ArrayQuantifierEliminationMain {
 						storeOuter.getArray().getSort());
 				final Term innerStore = SmtUtils.store(mScript, nas.getArray(), nas.getIndices().get(0),
 						nas.getValues().get(0));
-				final Substitution sub = new Substitution(mMgdScript,
-						Collections.singletonMap(innerStore, newarrayvar));
-
-				final Term noSOSterm = sub.transform(term);
+				final Term noSOSterm = Substitution.apply(mMgdScript,
+						Collections.singletonMap(innerStore, newarrayvar), term);
 				mNewExistEliminatees.add(newarrayvar);
 				// Index comparison Equality
 				final Term factorOutStore = SmtUtils.binaryEquality(mScript, newarrayvar, innerStore);
@@ -269,18 +267,17 @@ public class ArrayQuantifierEliminationMain {
 
 						final Term indexnoteq = SmtUtils.not(mScript, indexeq);
 
-						final Substitution sub = new Substitution(mMgdScript, Collections.singletonMap(
-								select.getSelectTerm(), nas.getValues().get(nas.getIndices().indexOf(index))));
-						final Term subtermlhs = sub.transform(term);
+						final Map<ApplicationTerm, Term> substitutionMappin = Collections.singletonMap(
+								select.getSelectTerm(), nas.getValues().get(nas.getIndices().indexOf(index)));
+						final Term subtermlhs = Substitution.apply(mMgdScript, substitutionMappin, term);
 						final Term lhs = SmtUtils.and(mScript, indexeq, subtermlhs, allindexnoteq);
 						disjunction = SmtUtils.or(mScript, lhs, disjunction);
 						allindexnoteq = SmtUtils.and(mScript, indexnoteq, allindexnoteq);
 					}
 
-					final Substitution sub = new Substitution(mMgdScript,
-							Collections.singletonMap(select.getSelectTerm(),
-									SmtUtils.select(mScript, nas.getArray(), select.getIndex().get(0))));
-					final Term subtermrhs = sub.transform(term);
+					final Map<ApplicationTerm, Term> map = Collections.singletonMap(select.getSelectTerm(),
+							SmtUtils.select(mScript, nas.getArray(), select.getIndex().get(0)));
+					final Term subtermrhs = Substitution.apply(mMgdScript, map, term);
 
 					final Term rhs = SmtUtils.and(mScript, allindexnoteq, subtermrhs);
 					return SmtUtils.or(mScript, disjunction, rhs);
@@ -417,8 +414,7 @@ public class ArrayQuantifierEliminationMain {
 
 			}
 
-			final Substitution sub = new Substitution(mMgdScript, submap);
-			final Term newTerm2 = sub.transform(eTerm);
+			final Term newTerm2 = Substitution.apply(mMgdScript, submap, eTerm);
 
 			newTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, newTerm2, newTerm);
 			neweliminatees.add(eliminate); // add remaining eliminate
@@ -449,8 +445,7 @@ public class ArrayQuantifierEliminationMain {
 		// Term 3: Term 1 AND Term 2
 		final Term elimterm = SmtUtils.and(mScript, elimtermlhs, elimtermrhs);
 		// Substitute store term equality with the new term "elimForall"
-		final Substitution sub = new Substitution(mMgdScript, Collections.singletonMap(storeEQ, elimterm));
-		newterm = sub.transform(newterm);
+		newterm = Substitution.apply(mMgdScript, Collections.singletonMap(storeEQ, elimterm), newterm);
 		return newterm;
 	}
 
@@ -496,8 +491,7 @@ public class ArrayQuantifierEliminationMain {
 				final TermVariable newarrayvar = mMgdScript.constructFreshTermVariable("a_new",
 						term.getParameters()[0].getSort());
 				// Substitute ttore term with new exist quantified array variable a_new
-				final Substitution sub = new Substitution(mMgdScript, Collections.singletonMap(term, newarrayvar));
-				newterm = sub.transform(newterm);
+				newterm = Substitution.apply(mMgdScript, Collections.singletonMap(term, newarrayvar), newterm);
 				// Add conjunct a1 = (eliminated store term)
 				final Term eqterm = SmtUtils.binaryEquality(mScript, newarrayvar, term);
 				newterm = SmtUtils.and(mScript, newterm, eqterm);

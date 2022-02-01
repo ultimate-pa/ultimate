@@ -32,15 +32,15 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysi
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
 public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 
-	private Object mResult;
 	private final StatisticsData mReuseStats = new StatisticsData();
-	private final StatisticsData mEcData = new StatisticsData();
+	private final StatisticsAggregator mEcData = new StatisticsAggregator();
 	private final StatisticsData mPredicateUnifierData = new StatisticsData();
 	private final StatisticsData mTcData = new StatisticsData();
 	private final StatisticsData mTiData = new StatisticsData();
@@ -54,14 +54,11 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mTraceHistogramMaximum = 0;
 	private int mInterpolantAutomatonStates = 0;
+	private int mPathProgramHistogramMaximum = 0;
 
 	@Override
 	public Collection<String> getKeys() {
 		return getBenchmarkType().getKeys();
-	}
-
-	public void setResult(final Object result) {
-		mResult = result;
 	}
 
 	public void addReuseStats(final IStatisticsDataProvider reuseStats) {
@@ -121,6 +118,12 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		}
 	}
 
+	public void reportPathProgramHistogramMaximum(final int pathProgramHistogramMax) {
+		if (pathProgramHistogramMax > mPathProgramHistogramMaximum) {
+			mPathProgramHistogramMaximum = pathProgramHistogramMax;
+		}
+	}
+
 	public void reportInterpolantAutomatonStates(final int count) {
 		mInterpolantAutomatonStates += count;
 	}
@@ -129,8 +132,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public Object getValue(final String key) {
 		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case VerificationResult:
-			return mResult;
 		case OverallTime:
 		case EmptinessCheckTime:
 		case AutomataDifference:
@@ -163,6 +164,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mIterations;
 		case TraceHistogramMax:
 			return mTraceHistogramMaximum;
+		case PathProgramHistogramMax:
+			return mPathProgramHistogramMaximum;
 		case BiggestAbstraction:
 			return mBiggestAbstraction;
 		case InterpolantAutomatonStates:

@@ -63,10 +63,9 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) };
 
-		final IIpTcStrategyModule<?, L> smtinterpol = factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-				InterpolationTechnique.Craig_TreeInterpolation, order);
-		final IIpTcStrategyModule<?, L> z3 =
-				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP, order);
+		final IIpTcStrategyModule<?, L> smtinterpol =
+				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation, order);
+		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP, order);
 		final IIpTcStrategyModule<?, L> absint = factory.createIpTcStrategyModuleAbstractInterpretation();
 
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3 };
@@ -89,7 +88,7 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<L, ?> engine) {
-		if (engine.getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
+		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
 				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
 			// rather hacky: we now that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getHoareTripleChecker();
@@ -99,9 +98,9 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
-		if (engine.getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
+		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
 				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
-			// rather hacky: we now that the absint module is in position 2
+			// rather hacky: we know that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getPredicateUnifier();
 		}
 		return super.getPredicateUnifier(engine);

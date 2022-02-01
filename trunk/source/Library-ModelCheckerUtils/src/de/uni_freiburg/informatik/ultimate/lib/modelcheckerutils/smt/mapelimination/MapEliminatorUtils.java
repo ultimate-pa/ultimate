@@ -79,7 +79,7 @@ public final class MapEliminatorUtils {
 				substitution.put(var, transformula.getOutVars().get(programVar));
 			}
 		}
-		return new Substitution(managedScript, substitution).transform(term);
+		return Substitution.apply(managedScript, substitution, term);
 	}
 
 	/**

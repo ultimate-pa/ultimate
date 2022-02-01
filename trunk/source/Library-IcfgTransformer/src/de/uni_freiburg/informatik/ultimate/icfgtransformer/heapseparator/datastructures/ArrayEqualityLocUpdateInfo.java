@@ -196,7 +196,7 @@ public class ArrayEqualityLocUpdateInfo {
 
 	private static Set<Term> extractBaseArrayTerms(final ApplicationTerm equality) {
 		final Predicate<Term> pred = subterm -> SmtUtils.isBasicArrayTerm(subterm);
-		return new SubTermFinder(pred).findMatchingSubterms(equality);
+		return SubTermFinder.find(equality, pred, false);
 	}
 
 	public Term getFormulaWithLocUpdates() {

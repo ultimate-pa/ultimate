@@ -29,13 +29,10 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -43,11 +40,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Implementation of the Sleep Set Reduction with new states. This variant explores a reduction automaton that partially
  * unfolds and unrolls the input automaton, in order to guarantee a reduction that is minimal (in terms of the accepted
  * language).
+ *
+ * @deprecated Superseded by {@link MinimalSleepSetReduction}
  *
  * @author Marcel Ebbinghaus
  *
@@ -58,12 +58,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @param <R>
  *            The type of states of the reduced automaton that is built on-the-fly.
  */
+@Deprecated(since = "2021-03-22")
 public class SleepSetNewStateReduction<L, S, R> {
 	private final ISleepSetStateFactory<L, S, R> mStateFactory;
-	private final ISleepSetOrder<S, L> mOrder;
+	private final IDfsOrder<L, R> mOrder;
 	private final IIndependenceRelation<S, L> mIndependenceRelation;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
-	private final IPartialOrderVisitor<L, R> mVisitor;
+	private final IDfsVisitor<L, R> mVisitor;
 
 	private final Set<R> mVisitedSet = new HashSet<>();
 	private final ArrayDeque<R> mStateStack = new ArrayDeque<>();
@@ -90,8 +91,8 @@ public class SleepSetNewStateReduction<L, S, R> {
 	 */
 	public SleepSetNewStateReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final ISleepSetOrder<S, L> sleepSetOrder,
-			final ISleepSetStateFactory<L, S, R> stateFactory, final IPartialOrderVisitor<L, R> visitor)
+			final ISleepSetStateFactory<L, S, R> stateFactory, final IIndependenceRelation<S, L> independenceRelation,
+			final IDfsOrder<L, R> sleepSetOrder, final IDfsVisitor<L, R> visitor)
 			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Sleep sets support only finite automata";
 
@@ -101,31 +102,13 @@ public class SleepSetNewStateReduction<L, S, R> {
 		mOperand = operand;
 		mVisitor = visitor;
 
-		final S startState = getOneAndOnly(operand.getInitialStates(), "initial state");
-		final R newStartState = getSleepSetState(startState, Collections.emptySet());
-		mVisitor.addStartState(newStartState);
+		final S startState = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
+		final R newStartState = getSleepSetState(startState, ImmutableSet.empty());
 		mStateStack.push(newStartState);
-		search(services);
-	}
-
-	// TODO eliminate duplication
-	private static <E> E getOneAndOnly(final Iterable<E> elements, final String thing) {
-		final Iterator<E> iterator = elements.iterator();
-		assert iterator.hasNext() : "Must have at least one " + thing;
-		final E elem = iterator.next();
-		assert !iterator.hasNext() : "Only one " + thing + " allowed";
-		return elem;
-	}
-
-	// TODO eliminate duplication
-	private static <E> E getOnly(final Iterable<E> elements, final String errMsg) {
-		final Iterator<E> iterator = elements.iterator();
-		if (!iterator.hasNext()) {
-			return null;
+		final boolean prune = mVisitor.addStartState(newStartState);
+		if (!prune) {
+			search(services);
 		}
-		final E elem = iterator.next();
-		assert !iterator.hasNext() : errMsg;
-		return elem;
 	}
 
 	private void search(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
@@ -154,33 +137,29 @@ public class SleepSetNewStateReduction<L, S, R> {
 
 			// If all transitions have been explored or pruned (or there were none), backtrack.
 			if (successorTransitionList.isEmpty()) {
-				mVisitor.backtrackState(currentSleepSetState);
+				mVisitor.backtrackState(currentSleepSetState, false);
 				mStateStack.pop();
 				continue;
 			}
 
 			// sort successorTransitionList according to the given order
-			successorTransitionList.sort(mOrder.getOrder(currentState));
+			successorTransitionList.sort(mOrder.getOrder(currentSleepSetState));
 			final Set<L> explored = new HashSet<>();
 			final ArrayDeque<R> successorStateList = new ArrayDeque<>(successorTransitionList.size());
 
-			// TODO (Dominik 2021-01-24) Consider pre-computing independence between different outgoing transitions,
-			// and between outgoing transitions and sleep set members, at an earlier point. The background is that
-			// in the usage of this class in SleepSetCegar, there is competition for a ManagedScript between the
-			// (interpolant) automaton and the independence checks. The fewer batches of independence checks, the
-			// fewer times the ManagedScript need change lock ownership.
-
 			for (final L currentLetter : successorTransitionList) {
-				final var currentTransition = getOnly(mOperand.internalSuccessors(currentState, currentLetter),
-						"Automaton must be deterministic");
-				if (currentTransition == null) {
+				final var currentTransitionOpt = DataStructureUtils.getOnly(
+						mOperand.internalSuccessors(currentState, currentLetter), "Automaton must be deterministic");
+				if (currentTransitionOpt.isEmpty()) {
 					continue;
 				}
+				final var currentTransition = currentTransitionOpt.get();
 
 				final S succState = currentTransition.getSucc();
-				final Set<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
+				// TODO factor out sleep set successor computation
+				final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
 						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
-						.collect(Collectors.toSet()); // TODO factor out
+						.collect(ImmutableSet.collector());
 				final R succSleepSetState = getSleepSetState(succState, succSleepSet);
 
 				final boolean prune =
@@ -199,7 +178,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 		}
 	}
 
-	private R getSleepSetState(final S state, final Set<L> sleepset) {
+	private R getSleepSetState(final S state, final ImmutableSet<L> sleepset) {
 		final R newState = mStateFactory.createSleepSetState(state, sleepset);
 		mStateMap.put(newState, state);
 		mSleepMap.put(newState, sleepset);

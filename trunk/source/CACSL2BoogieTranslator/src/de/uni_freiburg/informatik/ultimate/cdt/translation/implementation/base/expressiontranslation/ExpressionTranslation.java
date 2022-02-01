@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 public abstract class ExpressionTranslation {
 
@@ -441,7 +442,7 @@ public abstract class ExpressionTranslation {
 	public abstract void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type);
 
 	public abstract void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
-			final String[] bitvectorFunctions);
+			final BvOp[] importantBvOps);
 
 	public Expression constructOverapproximationFloatLiteral(final ILocation loc, final String val,
 			final CPrimitive type) {

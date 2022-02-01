@@ -74,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -93,10 +95,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
@@ -137,7 +137,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final NcsbImplementation ncsbImplementation) {
-		super();
 		mServices = services;
 		mLogger = logger;
 		mICfgContainer = icfgContainer;
@@ -198,22 +197,20 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem, mCsToolkit,
 					pu, mInterpolation);
 			final LBool stemCheck = traceCheck.isCorrect();
-			if (stemCheck == LBool.UNSAT) {
-				stemInterpolants = traceCheck.getInterpolants();
-			} else {
+			if (stemCheck != LBool.UNSAT) {
 				throw new AssertionError("incorrect predicates - stem");
 			}
+			stemInterpolants = traceCheck.getInterpolants();
 		}
 
 		traceCheck = constructTraceCheck(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit, pu,
 				mInterpolation);
 		final LBool loopCheck = traceCheck.isCorrect();
 		IPredicate[] loopInterpolants;
-		if (loopCheck == LBool.UNSAT) {
-			loopInterpolants = traceCheck.getInterpolants();
-		} else {
+		if (loopCheck != LBool.UNSAT) {
 			throw new AssertionError("incorrect predicates - loop");
 		}
+		loopInterpolants = traceCheck.getInterpolants();
 		mBci = TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
 
 		NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton =
@@ -227,7 +224,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 
 		// BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(mCsToolkit));
-		final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(
+		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, pu);
 		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
@@ -317,7 +314,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		// INestedWordAutomatonOldApi<LETTER, IPredicate> oldApi = (new
 		// RemoveUnreachable<LETTER,
 		// IPredicate>(mInterpolAutomatonUsedInRefinement)).getResult();
-		benchmarkGenerator.addEdgeCheckerData(bhtc.getEdgeCheckerBenchmark());
+		benchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
 		mInterpolAutomaton = null;
 		final boolean isUseful = isUsefulInterpolantAutomaton(mInterpolAutomatonUsedInRefinement, mCounterexample);
 		if (!isUseful) {
@@ -403,12 +400,10 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			Set<IPredicate> stemInterpolantsForRefinement;
 			if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
 				stemInterpolantsForRefinement = Collections.emptySet();
+			} else if (biaConstructionStyle.cannibalizeLoop()) {
+				stemInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(stemInterpolants));
 			} else {
-				if (biaConstructionStyle.cannibalizeLoop()) {
-					stemInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(stemInterpolants));
-				} else {
-					stemInterpolantsForRefinement = new HashSet<>(Arrays.asList(stemInterpolants));
-				}
+				stemInterpolantsForRefinement = new HashSet<>(Arrays.asList(stemInterpolants));
 			}
 			Set<IPredicate> loopInterpolantsForRefinement;
 			if (biaConstructionStyle.cannibalizeLoop()) {
@@ -734,7 +729,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		assert pos <= predicates.length;
 		if (pos < 0) {
 			return before;
-		} else if (pos >= predicates.length) {
+		}
+		if (pos >= predicates.length) {
 			return after;
 		} else {
 			return predicates[pos];

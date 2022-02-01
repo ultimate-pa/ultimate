@@ -45,13 +45,13 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
@@ -77,10 +77,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.biesenb.BPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -170,7 +169,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @return
 	 */
 	private boolean initialize(final IIcfg<IcfgLocation> root) {
-		if (!root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (IcfgUtils.isConcurrent(root)) {
 			throw new UnsupportedOperationException("Concurrent programs are currently unsupported");
 		}
 
@@ -240,12 +239,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private IHoareTripleChecker createHoareTripleChecker() {
-		final IHoareTripleChecker smtBasedHoareTripleChecker = new IncrementalHoareTripleChecker(mCsToolkit, false);
-		final IHoareTripleChecker protectedHoareTripleChecker =
-				new EfficientHoareTripleChecker(smtBasedHoareTripleChecker, mCsToolkit, mPredicateUnifier);
-		final IHoareTripleChecker edgeChecker =
-				new CachingHoareTripleCheckerMap(mServices, protectedHoareTripleChecker, mPredicateUnifier);
-		return edgeChecker;
+		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
 	}
 
 	private void readPreferencePage() {
@@ -441,8 +436,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							.setUseExternalSolver(!commandExternalSolver.isEmpty(), commandExternalSolver,
 									mGlobalSettings.getSeparateSolverForTracechecksTheory());
 
-					mgdScriptTracechecks = mOriginalRoot.getCfgSmtToolkit().createFreshManagedScript(solverSettings,
-							"TraceCheck_Iteration" + iterationsCount);
+					mgdScriptTracechecks = mOriginalRoot.getCfgSmtToolkit().createFreshManagedScript(mServices,
+							solverSettings, "TraceCheck_Iteration" + iterationsCount);
 				} else {
 					mgdScriptTracechecks = mCsToolkit.getManagedScript();
 				}
@@ -474,7 +469,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						interpolants = traceCheck.getInterpolants();
 					}
 					codechecker.codeCheck(errorRun, interpolants, procedureRoot);
-					benchmarkGenerator.addEdgeCheckerData(codechecker.mEdgeChecker.getEdgeCheckerBenchmark());
+					benchmarkGenerator.addEdgeCheckerData(codechecker.mEdgeChecker.getStatistics());
 
 				} else if (isSafe == LBool.SAT) { // trace is feasible
 					mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
@@ -512,7 +507,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 
 		// benchmark stuff
-		benchmarkGenerator.setResult(overallResult);
 		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		benchmarkGenerator.addPredicateUnifierData(mPredicateUnifier.getPredicateUnifierBenchmark());
 		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot);
@@ -706,9 +700,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final ImpRootNode newRoot = new ImpRootNode();
 		copy.put(root, newRoot);
 		final Deque<AnnotatedProgramPoint> stack = new ArrayDeque<>();
-		for (final AnnotatedProgramPoint child : root.getOutgoingNodes()) {
-			stack.add(child);
-		}
+		stack.addAll(root.getOutgoingNodes());
 		while (!stack.isEmpty()) {
 			final AnnotatedProgramPoint current = stack.pop();
 			if (copy.containsKey(current)) {
@@ -789,8 +781,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs) {
 		for (final IcfgLocation errorIpp : errorLocs) {
 			final ILocation origin = ILocation.getAnnotation(errorIpp);
-			String timeOutMessage =
-					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
+			String timeOutMessage = "Unable to prove that " + Check.getAnnotation(errorIpp).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);

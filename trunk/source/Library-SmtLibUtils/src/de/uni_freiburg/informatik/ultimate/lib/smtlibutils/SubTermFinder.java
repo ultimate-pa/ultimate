@@ -60,25 +60,15 @@ public class SubTermFinder extends NonRecursive {
 	 *
 	 * @param predicate
 	 *            subterms fulfilling this predicate are collected.
-	 */
-	public SubTermFinder(final Predicate<Term> predicate) {
-		this(predicate, false);
-	}
-
-	/**
-	 * See {@link SubTermFinder}.
-	 *
-	 * @param predicate
-	 *            subterms fulfilling this predicate are collected.
 	 * @param onlyOutermost
 	 *            if a subterm is collected, don't look further inside for subterms also matching the predicate
 	 */
-	public SubTermFinder(final Predicate<Term> predicate, final boolean onlyOutermost) {
+	private SubTermFinder(final Predicate<Term> predicate, final boolean onlyOutermost) {
 		mPredicate = predicate;
 		mOnlyOutermost = onlyOutermost;
 	}
 
-	public Set<Term> findMatchingSubterms(final Term term) {
+	private Set<Term> findMatchingSubterms(final Term term) {
 		if (term == null) {
 			throw new IllegalArgumentException();
 		}
@@ -86,6 +76,19 @@ public class SubTermFinder extends NonRecursive {
 		mVisitedSubterms = new HashSet<>();
 		run(new FindWalker(term));
 		return mResult;
+	}
+
+
+	/**
+	 *
+	 * @param predicate     subterms for which this predicate evaluates to true are
+	 *                      returned
+	 * @param onlyOutermost if set to true we do not descend to subterms of a term
+	 *                      that has been found
+	 * @return subterms of the given term for which the predicate evaluates to true
+	 */
+	public static Set<Term> find(final Term term, final Predicate<Term> predicate, final boolean onlyOutermost) {
+		return new SubTermFinder(predicate, onlyOutermost).findMatchingSubterms(term);
 	}
 
 	class FindWalker extends TermWalker {

@@ -40,41 +40,26 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * Provides static auxiliary methods for trace abstraction.
@@ -82,7 +67,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class TraceAbstractionUtils {
+public final class TraceAbstractionUtils {
+
+	private TraceAbstractionUtils() {
+		// do not instantiate utility class
+	}
 
 	/**
 	 * @param <LCS>
@@ -110,50 +99,6 @@ public class TraceAbstractionUtils {
 		return new PartitionBackedSetOfPairs<>(partition);
 	}
 
-	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
-			final IPredicateUnifier predicateUnifier) throws AssertionError {
-		final IHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(hoareTripleChecks, csToolkit);
-		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
-	}
-
-	public static IHoareTripleChecker constructSmtHoareTripleChecker(final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit) throws AssertionError {
-		final IHoareTripleChecker solverHtc;
-		switch (hoareTripleChecks) {
-		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
-			break;
-		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false);
-			break;
-		default:
-			throw new AssertionError("unknown value");
-		}
-		return solverHtc;
-	}
-
-	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
-			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) throws AssertionError {
-		final IHoareTripleChecker ehtc =
-				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
-		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier);
-	}
-
-	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
-			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache,
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache,
-			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache)
-			throws AssertionError {
-		final IHoareTripleChecker ehtc =
-				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
-		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier, initialInternalCache,
-				initialCallCache, initialReturnCache);
-	}
-
 	/**
 	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
 	 * oldGlobalVars.
@@ -176,7 +121,7 @@ public class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = new Substitution(mgdScript, substitutionMapping).transform(ps.getFormula());
+		Term renamedFormula = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
 		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
 		return result;
@@ -196,8 +141,7 @@ public class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result =
-				new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(ps.getFormula());
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		return result;
 	}
 
@@ -221,36 +165,26 @@ public class TraceAbstractionUtils {
 	}
 
 	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
-	 * globalVar in term and remove the oldvar from vars.
-	 *
-	 * @param modifiableGlobals
-	 * @param script
+	 * For each oldVar in vars that is not modifiable by procedure proc: substitute
+	 * the oldVar by the corresponding globalVar in term and remove the oldvar from
+	 * vars.
 	 */
 	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
-			final Term term, final ModifiableGlobalsTable modifiableGlobals, final Script script) {
+			final Term term, final ModifiableGlobalsTable modifiableGlobals, final ManagedScript mgdScript) {
 		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
 		final List<IProgramVar> replacedOldVars = new ArrayList<>();
-
-		final ArrayList<TermVariable> replacees = new ArrayList<>();
-		final ArrayList<Term> replacers = new ArrayList<>();
-
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
 				if (!modifiableGlobalsOfProc.contains(pnov)) {
-					replacees.add(bv.getTermVariable());
-					replacers.add(((IProgramOldVar) bv).getNonOldVar().getTermVariable());
+					substitutionMapping.put(bv.getTermVariable(),
+							((IProgramOldVar) bv).getNonOldVar().getTermVariable());
 					replacedOldVars.add(bv);
 				}
 			}
 		}
-
-		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
-		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
-		Term result = script.let(substVars, substValues, term);
-		result = new FormulaUnLet().unlet(result);
-
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		for (final IProgramVar bv : replacedOldVars) {
 			vars.remove(bv);
 			vars.add(((IProgramOldVar) bv).getNonOldVar());

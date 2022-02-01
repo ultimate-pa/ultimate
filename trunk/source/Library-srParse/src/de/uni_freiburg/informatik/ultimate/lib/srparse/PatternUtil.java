@@ -38,10 +38,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -71,14 +72,15 @@ public final class PatternUtil {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
+		int maxPatternObs = 2;
 		final CDD[] patternObs = new CDD[count];
-		final String[] durations = new String[count];
+		final Rational[] durations = new Rational[count];
 
 		final Durations duration2bounds = new Durations(PatternUtil::dummyConsumer);
 
 		for (int i = 0; i < count; ++i) {
-			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16));
-			durations[i] = String.valueOf(duration);
+			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 15));
+			durations[i] = Rational.valueOf(duration, 1);
 			duration += 5;
 		}
 
@@ -96,7 +98,7 @@ public final class PatternUtil {
 				ReflectionUtil.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
 						.filter(c -> !ReflectionUtil.isAbstractClass(c))
 						.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
-						.filter(c -> !c.equals(InitializationPattern.class)).map(a -> (Class<PatternType<?>>) a)
+						.filter(c -> !c.equals(DeclarationPattern.class)).map(a -> (Class<PatternType<?>>) a)
 						.collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 
@@ -111,19 +113,20 @@ public final class PatternUtil {
 			// we first instantiate the pattern type to see how many cdds and durations we
 			// actually need, and then we
 			// instantiate it again for real for every scope
-
 			final PatternType<?> dummyInstance =
-					ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null, null);
+					ReflectionUtil.instantiateClass(patternTypeClazz, new SrParseScopeGlobally(), "",
+							Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 			final int cddCount = dummyInstance.getExpectedCddSize();
 			final int durationCount = dummyInstance.getExpectedDurationSize();
 
 			for (final SrParseScope<?> scope : scopes) {
 				final List<CDD> currentCdds =
-						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
-				final List<String> currentDurations =
+						Arrays.stream(patternObs).skip(maxPatternObs).limit(cddCount).collect(Collectors.toList());
+				Collections.reverse(currentCdds);
+				final List<Rational> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
 				final PatternType<?> pattern = ReflectionUtil.instantiateClass(patternTypeClazz, scope,
-						"ID_" + String.valueOf(id), currentCdds, currentDurations, null);
+						"ID_" + String.valueOf(id), currentCdds, currentDurations, Collections.emptyList());
 
 				if (withoutNotImplemented) {
 					try {

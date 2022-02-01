@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
-import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
  */
-public class Monomial extends Term {
+public class Monomial {
 
 	/**
 	 * Return value for {@link Monomial#isExclusiveVariable}
@@ -52,7 +51,6 @@ public class Monomial extends Term {
 	 * Monomial that consists of the single Term t raised to the power of r.
 	 */
 	public Monomial(final Term t, final Rational r) {
-		super(0);
 		checkIfTermIsLegalVariable(t);
 		mSort = t.getSort();
 		mVariable2Exponent = Collections.singletonMap(t, r);
@@ -62,7 +60,6 @@ public class Monomial extends Term {
 	 * Monomial that represents the product of Monomials.
 	 */
 	public Monomial(final Monomial... monomials) {
-		super(0);
 		mSort = monomials[0].getSort();
 		mVariable2Exponent = new HashMap<>();
 		for (final Monomial monomial : monomials) {
@@ -160,7 +157,7 @@ public class Monomial extends Term {
 				}
 			} else {
 				final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == var)
-						.isPropertySatisfied(var2exp.getKey());
+						.isSatisfiedBySomeSubterm(var2exp.getKey());
 				if (subjectOccursAsSubterm) {
 					return Occurrence.NON_EXCLUSIVE_OR_SUBTERM;
 				}
@@ -173,14 +170,8 @@ public class Monomial extends Term {
 		}
 	}
 
-	@Override
 	public Sort getSort() {
 		return mSort;
-	}
-
-	@Override
-	public void toStringHelper(final ArrayDeque<Object> mTodo) {
-		throw new UnsupportedOperationException("This is a Monomial. Something went wrong.");
 	}
 
 	/**
@@ -282,4 +273,5 @@ public class Monomial extends Term {
 		}
 		return true;
 	}
+
 }

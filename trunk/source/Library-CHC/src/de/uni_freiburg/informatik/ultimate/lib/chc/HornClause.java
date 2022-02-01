@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -205,7 +205,7 @@ public class HornClause implements IRankedLetter {
 				bodySb.append(" ");
 				bodySb.append(mBodyPreds.get(i));
 				bodySb.append(mBodyPredToArgs.get(i).stream().map(
-						t -> new Substitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
+						t -> new PureSubstitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
 								.transform(t))
 						.collect(Collectors.toList()));
 				// bodySb.append(")");
@@ -223,12 +223,12 @@ public class HornClause implements IRankedLetter {
 			final String headPred = mHeadIsFalse ? "false" : mHeadPredicate.getName();
 			head = headPred
 					+ mHeadPredVariables.stream()
-							.map(t -> new Substitution(mHornClauseSymbolTable.getManagedScript(),
+							.map(t -> new PureSubstitution(mHornClauseSymbolTable.getManagedScript(),
 									prettyVariableSubstitution).transform(t.getTermVariable()))
 							.collect(Collectors.toList());
 		}
 		return String.format("%s(%s) /\\ (%s) --> %s", hasComment() ? (getComment() + "| ") : "", body,
-				new Substitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
+				new PureSubstitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
 						.transform(mFormula).toString(),
 				head);
 	}

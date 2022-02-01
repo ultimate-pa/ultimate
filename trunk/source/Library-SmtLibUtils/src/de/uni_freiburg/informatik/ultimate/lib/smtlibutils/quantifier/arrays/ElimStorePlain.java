@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -50,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEqualityExplicator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexBasedCostEstimation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
@@ -60,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -321,6 +322,18 @@ public class ElimStorePlain {
 		final Term polarizedContext = QuantifierUtils.negateIfUniversal(services, mgdScript,
 				eTask.getQuantifier(), eTask.getContext());
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), eTask.getTerm(), eliminatee);
+		if (!aoa.getValueOfStore().isEmpty() || !aoa.getOtherFunctionApplications().isEmpty()) {
+			// cannot eliminated this array
+			return null;
+		}
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(eTask.getQuantifier(), eTask.getTerm());
+		final Map<Boolean, List<Term>> part = Arrays.stream(dualJuncts).collect(Collectors
+				.partitioningBy(x -> QuantifierUtils.isCorrespondingFiniteJunction(eTask.getQuantifier(), x)));
+		final Term distributers = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), eTask.getQuantifier(), part.get(true));
+		final ArrayOccurrenceAnalysis resetAoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), distributers, eliminatee);
+		if (!resetAoa.getDerRelations(eTask.getQuantifier()).isEmpty() || !resetAoa.getAntiDerRelations(eTask.getQuantifier()).isEmpty()) {
+			return null;
+		}
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 
@@ -478,7 +491,7 @@ public class ElimStorePlain {
 								} else {
 									effectiveIndex2 = index2;
 								}
-								final Term replaced = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(eTask.getTerm());
+								final Term replaced = Substitution.apply(mMgdScript, substitutionMapping, eTask.getTerm());
 								effectiveTerm = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
 										eTask.getQuantifier(), replaced, QuantifierUtils.applyDualFiniteConnective(
 												mMgdScript.getScript(), eTask.getQuantifier(), definitions));
@@ -711,10 +724,11 @@ public class ElimStorePlain {
 			throws ElimStorePlainException {
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
 				eTask.getEliminatees(), eTask.getTerm());
-		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques, quantified);
+		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, techniques,
+				SimplificationTechnique.SIMPLIFY_DDA, quantified);
 
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mgdScript, pnf);
 		final Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 

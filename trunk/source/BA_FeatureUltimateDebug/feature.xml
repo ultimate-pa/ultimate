@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateDebug"
       label="BA_FeatureUltimateDebug"
-      version="0.2.1"
+      version="0.2.2"
       os="linux,win32"
       arch="x86_64">
 

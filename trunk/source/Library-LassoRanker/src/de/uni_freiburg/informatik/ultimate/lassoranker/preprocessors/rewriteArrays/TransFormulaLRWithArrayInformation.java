@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker Library.
- * 
+ *
  * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -49,14 +51,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality.ArrayEqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality.ArrayEqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -70,12 +72,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Computes and provides for a TransformulaLR a DNF of the formula and 
- * information 
+ * Computes and provides for a TransformulaLR a DNF of the formula and
+ * information
  * - which arrays occur in the formula,
  * - in which order the arrays are written,
  * - and the possible indices of each Array accesses.
- * 
+ *
  * @author Matthias Heizmann
  */
 public class TransFormulaLRWithArrayInformation {
@@ -85,7 +87,7 @@ public class TransFormulaLRWithArrayInformation {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	
+
 	private final boolean mContainsArrays;
 
 	static final String s_AuxArray = "auxArray";
@@ -114,24 +116,24 @@ public class TransFormulaLRWithArrayInformation {
 
 	private final ModifiableTransFormula mTransFormulaLR;
 	private final ReplacementVarFactory mReplacementVarFactory;
-	
-	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars = 
+
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars =
 			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
-	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars = 
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars =
 			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
-	
-	private Substitution mInVars2OutVars;
-	private Substitution mOutVars2InVars;
-	
-	
-	
+
+	private Map<Term, Term> mInVars2OutVars;
+	private Map<Term, Term> mOutVars2InVars;
+
+
+
 	public TransFormulaLRWithArrayInformation(
-			final IUltimateServiceProvider services, 
-			final ModifiableTransFormula transFormulaLR, 
-			final ReplacementVarFactory replacementVarFactory, final ManagedScript script, 
-			final IIcfgSymbolTable boogie2smt, 
-			final TransFormulaLRWithArrayInformation stem, 
-			final SimplificationTechnique simplificationTechnique, 
+			final IUltimateServiceProvider services,
+			final ModifiableTransFormula transFormulaLR,
+			final ReplacementVarFactory replacementVarFactory, final ManagedScript script,
+			final IIcfgSymbolTable boogie2smt,
+			final TransFormulaLRWithArrayInformation stem,
+			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -173,7 +175,7 @@ public class TransFormulaLRWithArrayInformation {
 				mArrayGenealogy[i] = new ArrayGenealogy(mTransFormulaLR, mArrayEqualities.get(i), mArrayUpdates.get(i), mArrayReads.get(i));
 			}
 			assert !RewriteArrays2.ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED || checkSunftranformation(
-					services, mLogger, mScript, boogie2smt, mArrayEqualities, sunfts) 
+					services, mLogger, mScript, boogie2smt, mArrayEqualities, sunfts)
 					: "error in sunftransformation";
 			constructSubstitutions();
 			final HashRelation<TermVariable, ArrayIndex> foreignIndices;
@@ -187,19 +189,19 @@ public class TransFormulaLRWithArrayInformation {
 			computeInVarAndOutVarArrayCells();
 		}
 	}
-	
-	
-	
-	private boolean checkSunftranformation(final IUltimateServiceProvider services, 
-			final ILogger logger, final ManagedScript ftvc, 
+
+
+
+	private boolean checkSunftranformation(final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript ftvc,
 			final IIcfgSymbolTable boogie2smt, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
 		final ModifiableTransFormula afterSunft = constructTransFormulaLRWInSunf(services, mXnfConversionTechnique, mSimplificationTechnique, logger, ftvc, mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
-		final LBool notStronger = ModifiableTransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript.getScript(), boogie2smt);
+		final LBool notStronger = ModifiableTransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript, boogie2smt);
 		if (notStronger != LBool.SAT && notStronger != LBool.UNSAT) {
 			logger.warn("result of sunf transformation notStronger check is " + notStronger);
 		}
 		assert (notStronger != LBool.SAT) : "result of sunf transformation too strong";
-		final LBool notWeaker = ModifiableTransFormulaUtils.implies(mServices, mLogger, afterSunft, mTransFormulaLR, mScript.getScript(), boogie2smt);
+		final LBool notWeaker = ModifiableTransFormulaUtils.implies(mServices, mLogger, afterSunft, mTransFormulaLR, mScript, boogie2smt);
 		if (notWeaker != LBool.SAT && notWeaker != LBool.UNSAT) {
 			logger.warn("result of sunf transformation notWeaker check is " + notWeaker);
 		}
@@ -214,7 +216,7 @@ public class TransFormulaLRWithArrayInformation {
 		for (final Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : stem.getArrayCellOutVars().entrySet()) {
 			final ArrayCellReplacementVarInformation acrvi = triple.getThird();
 			final IProgramVar arrayRv = acrvi.getArrayRankVar();
-			final TermVariable arrayInVar = (TermVariable) mTransFormulaLR.getInVars().get(arrayRv);
+			final TermVariable arrayInVar = mTransFormulaLR.getInVars().get(arrayRv);
 			if (arrayInVar != null) {
 				// array also occurs in loop, we have to add the index
 				// of this ArrayCellReplacement
@@ -238,11 +240,10 @@ public class TransFormulaLRWithArrayInformation {
 			if (!mTransFormulaLR.getInVars().containsKey(foreigntv2rv.getValue())) {
 				addForeignInVarAndOutVar(foreigntv2rv.getValue());
 			}
-			final TermVariable ourInVar = (TermVariable) mTransFormulaLR.getInVars().get(foreigntv2rv.getValue());
+			final TermVariable ourInVar = mTransFormulaLR.getInVars().get(foreigntv2rv.getValue());
 			substitutionMapping.put(foreigntv2rv.getKey(), ourInVar);
 		}
-		final List<Term> translatedIndex = (new Substitution(mScript.getScript(), substitutionMapping)).transform(index);
-		final ArrayIndex foreignIndex = new ArrayIndex(translatedIndex);
+		final ArrayIndex foreignIndex = index.applySubstitution(mScript, substitutionMapping);
 		return foreignIndex;
 	}
 
@@ -280,7 +281,7 @@ public class TransFormulaLRWithArrayInformation {
 	public HashRelation<Term, ArrayIndex> getArrayFirstGeneration2Indices() {
 		return mArrayFirstGeneration2Indices;
 	}
-	
+
 	public HashRelation<TermVariable, TermVariable> getArrayFirstGeneration2Instances() {
 		return mArrayFirstGeneration2Instances;
 	}
@@ -288,7 +289,7 @@ public class TransFormulaLRWithArrayInformation {
 	public List<List<ArrayUpdate>> getArrayUpdates() {
 		return mArrayUpdates;
 	}
-	
+
 	public List<List<MultiDimensionalSelect>> getArrayReads() {
 		return mArrayReads;
 	}
@@ -296,7 +297,7 @@ public class TransFormulaLRWithArrayInformation {
 	public List<MultiDimensionalSelect> getAdditionalArrayReads() {
 		return mAdditionalArrayReads;
 	}
-	
+
 	public List<List<ArrayEquality>> getArrayEqualities() {
 		return mArrayEqualities;
 	}
@@ -308,11 +309,11 @@ public class TransFormulaLRWithArrayInformation {
 	public Term[] getSunnf() {
 		return sunnf;
 	}
-	
+
 	public ModifiableTransFormula getTransFormulaLR() {
 		return mTransFormulaLR;
 	}
-	
+
 	public ArrayIndex getOrConstructIndexRepresentative(final ArrayIndex indexInstance) {
 		ArrayIndex indexRepresentative = mIndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
@@ -353,7 +354,7 @@ public class TransFormulaLRWithArrayInformation {
 		List<ArrayGeneration> mArrayGenerations = new ArrayList<>();
 
 		private final ModifiableTransFormula mTransFormula;
-		
+
 		private ArrayGeneration getOrConstructArrayGeneration(final TermVariable array) {
 			ArrayGeneration ag = mArray2Generation.get(array);
 			if (ag == null) {
@@ -477,7 +478,7 @@ public class TransFormulaLRWithArrayInformation {
 		/**
 		 * An array generation is a set of arrays whose equality is implied by
 		 * the disjunct.
-		 * 
+		 *
 		 */
 		private class ArrayGeneration {
 			private final Set<TermVariable> mArrays = new HashSet<>();
@@ -522,7 +523,7 @@ public class TransFormulaLRWithArrayInformation {
 
 		}
 	}
-	
+
 	private void constructSubstitutions() {
 		final Map<Term, Term> in2outMapping = new HashMap<Term, Term>();
 		final Map<Term, Term> out2inMapping = new HashMap<Term, Term>();
@@ -534,8 +535,8 @@ public class TransFormulaLRWithArrayInformation {
 			in2outMapping.put(inVar, outVar);
 			out2inMapping.put(outVar, inVar);
 		}
-		mInVars2OutVars = new Substitution(mScript.getScript(), in2outMapping);
-		mOutVars2InVars = new Substitution(mScript.getScript(), out2inMapping);
+		mInVars2OutVars = in2outMapping;
+		mOutVars2InVars = out2inMapping;
 	}
 
 	private class IndexCollector {
@@ -571,9 +572,9 @@ public class TransFormulaLRWithArrayInformation {
 					}
 //					assert firstGenerationArray != null : arrayInVar + " has no progenitor";
 //					if (firstGenerationArray != arrayInVar) {
-//						assert occursInArrayEqualities(arrayInVar) : 
+//						assert occursInArrayEqualities(arrayInVar) :
 //							"if arrayInVar of foreign index is not first generation it has to occur in array equality";
-//						assert occursInArrayEqualities(firstGenerationArray) : 
+//						assert occursInArrayEqualities(firstGenerationArray) :
 //							"if arrayInVar of foreign index is not first generation the first generation has to occur in array equality";
 //					}
 					final Set<ArrayIndex> foreignIndicesForInVar = foreignIndices.getImage(arrayInVar);
@@ -605,17 +606,20 @@ public class TransFormulaLRWithArrayInformation {
 			mArrayFirstGeneration2Indices.addPair(firstGeneration, index);
 			if (mTransFormulaLR.getInVarsReverseMapping().containsKey(firstGeneration)) {
 				if (ModifiableTransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
-					final ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, mInVars2OutVars));
+					final Function<Term, Term> subst = (x -> Substitution.apply(mScript, mInVars2OutVars, x));
+					final ArrayIndex inReplacedByOut = new ArrayIndex(
+							index.stream().map(subst).collect(Collectors.toList()));
 					mArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
 					mAdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
 				}
 				if (ModifiableTransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
-					final ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, mOutVars2InVars));
+					final Function<Term, Term> subst = (x -> Substitution.apply(mScript, mOutVars2InVars, x));
+					final ArrayIndex outReplacedByIn = new ArrayIndex(
+							index.stream().map(subst).collect(Collectors.toList()));
 					mArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
 					mAdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
 				}
 
-				
 			}
 		}
 
@@ -648,8 +652,8 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 
-	
-	
+
+
 	public void computeInVarAndOutVarArrayCells() {
 //		HashRelation<TermVariable, ArrayIndex> cellVarRepresentatives = new HashRelation<>();
 		for (final TermVariable firstGeneration : getArrayFirstGeneration2Instances().getDomain()) {
@@ -669,10 +673,10 @@ public class TransFormulaLRWithArrayInformation {
 							assert getTransFormulaLR().getInVarsReverseMapping().containsKey(inVarInstance);
 							final ArrayIndex inVarIndex = computeInVarIndex(index);
 							assert ModifiableTransFormulaUtils.allVariablesAreInVars(inVarIndex, getTransFormulaLR());
-							final ArrayCellReplacementVarInformation acrvi = 
+							final ArrayCellReplacementVarInformation acrvi =
 									new ArrayCellReplacementVarInformation(
-											inVarInstance, arrayRepresentative, 
-											inVarIndex, indexRepresentative, 
+											inVarInstance, arrayRepresentative,
+											inVarIndex, indexRepresentative,
 											VarType.InVar, getTransFormulaLR());
 							mArrayCellInVars.put(arrayRepresentative, indexRepresentative, acrvi);
 
@@ -682,37 +686,37 @@ public class TransFormulaLRWithArrayInformation {
 							assert getTransFormulaLR().getOutVarsReverseMapping().containsKey(outVarInstance);
 							final ArrayIndex outVarIndex = computeOutVarIndex(index);
 							assert ModifiableTransFormulaUtils.allVariablesAreOutVars(outVarIndex, getTransFormulaLR());
-							final ArrayCellReplacementVarInformation acrvi = 
+							final ArrayCellReplacementVarInformation acrvi =
 									new ArrayCellReplacementVarInformation(
-											outVarInstance, arrayRepresentative, 
-											outVarIndex, indexRepresentative, 
+											outVarInstance, arrayRepresentative,
+											outVarIndex, indexRepresentative,
 											VarType.OutVar, getTransFormulaLR());
 							mArrayCellOutVars.put(arrayRepresentative, indexRepresentative, acrvi);
 						}
 
 
 					}
-					
+
 //					boolean isInVarCell = this.isInVarCell(instance, index);
 //					boolean isOutVarCell = this.isOutVarCell(instance, index);
 //					if (isInVarCell || isOutVarCell) {
 //						if (isInVarCell) {
-//							ArrayCellReplacementVarInformation acrvi = 
+//							ArrayCellReplacementVarInformation acrvi =
 //									new ArrayCellReplacementVarInformation(
-//											instance, arrayRepresentative, 
-//											index, indexRepresentative, 
+//											instance, arrayRepresentative,
+//											index, indexRepresentative,
 //											VarType.InVar, this.getTransFormulaLR());
 //							mArrayCellInVars.put(arrayRepresentative, indexRepresentative, acrvi);
 //						}
 //						if (isOutVarCell) {
-//							ArrayCellReplacementVarInformation acrvi = 
+//							ArrayCellReplacementVarInformation acrvi =
 //									new ArrayCellReplacementVarInformation(
-//											instance, arrayRepresentative, 
-//											index, indexRepresentative, 
+//											instance, arrayRepresentative,
+//											index, indexRepresentative,
 //											VarType.OutVar, this.getTransFormulaLR());
 //							mArrayCellOutVars.put(arrayRepresentative, indexRepresentative, acrvi);
 //						}
-//					} 
+//					}
 				}
 
 			}
@@ -720,24 +724,22 @@ public class TransFormulaLRWithArrayInformation {
 
 
 	}
-	
+
 	private ArrayIndex computeInVarIndex(final ArrayIndex index) {
-		final List<Term> inVarIndex = mOutVars2InVars.transform(index);
-		return new ArrayIndex(inVarIndex);
+		return index.applySubstitution(mScript, mOutVars2InVars);
 	}
-	
+
 	private ArrayIndex computeOutVarIndex(final ArrayIndex index) {
-		final List<Term> inVarIndex = mInVars2OutVars.transform(index);
-		return new ArrayIndex(inVarIndex);
+		return index.applySubstitution(mScript, mInVars2OutVars);
 	}
-	
+
 	private TermVariable computeInVarInstance(final TermVariable arrayInstance) {
-		final TermVariable result = (TermVariable) mOutVars2InVars.transform(arrayInstance);
+		final TermVariable result = (TermVariable) mOutVars2InVars.get(arrayInstance);
 		return result;
 	}
-	
+
 	private TermVariable computeOutVarInstance(final TermVariable arrayInstance) {
-		final TermVariable result = (TermVariable) mInVars2OutVars.transform(arrayInstance);
+		final TermVariable result = (TermVariable) mInVars2OutVars.get(arrayInstance);
 		return result;
 	}
 
@@ -753,11 +755,11 @@ public class TransFormulaLRWithArrayInformation {
 	public NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> getArrayCellOutVars() {
 		return mArrayCellOutVars;
 	}
-	
-	
+
+
 	public boolean requiresRepVar(final TermVariable arrayInstance, final ArrayIndex index) {
 		// check if arrayInstance is inVar or outVar and if all indices are inVars or outVars
-		if (getTransFormulaLR().getOutVarsReverseMapping().keySet().contains(arrayInstance) || 
+		if (getTransFormulaLR().getOutVarsReverseMapping().keySet().contains(arrayInstance) ||
 				getTransFormulaLR().getInVarsReverseMapping().keySet().contains(arrayInstance)) {
 			return ModifiableTransFormulaUtils.allVariablesAreVisible(index, getTransFormulaLR());
 		} else {
@@ -765,8 +767,8 @@ public class TransFormulaLRWithArrayInformation {
 		}
 	}
 
-	
-	
+
+
 	/**
 	 * Is the cellVariable that we construct for arrayInstance[index] is an
 	 * inVar. This is the case if arrayInstance and each free variable of
@@ -789,10 +791,10 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 
-	private static ModifiableTransFormula constructTransFormulaLRWInSunf(final IUltimateServiceProvider services, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, 
-			final ILogger logger, final ManagedScript ftvc, final ReplacementVarFactory repVarFactory, 
-			final Script script, final ModifiableTransFormula tf, 
+	private static ModifiableTransFormula constructTransFormulaLRWInSunf(final IUltimateServiceProvider services,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
+			final ILogger logger, final ManagedScript ftvc, final ReplacementVarFactory repVarFactory,
+			final Script script, final ModifiableTransFormula tf,
 			final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer... sunfts) {
 		final ModifiableTransFormula result = new ModifiableTransFormula(tf);
 		final List<Term> disjuncts = new ArrayList<Term>();
@@ -808,7 +810,7 @@ public class TransFormulaLRWithArrayInformation {
 			conjuncts.add(sunfts[i].getRemainderTerm());
 			Term disjunct = SmtUtils.and(script, conjuncts);
 			final Set<TermVariable> auxVars = new HashSet<>(sunfts[i].getAuxVars());
-			disjunct = PartialQuantifierElimination.elim(ftvc, QuantifiedFormula.EXISTS, auxVars, disjunct, services, logger, simplificationTechnique, xnfConversionTechnique); 
+			disjunct = PartialQuantifierElimination.elim(ftvc, QuantifiedFormula.EXISTS, auxVars, disjunct, services, logger, simplificationTechnique, xnfConversionTechnique);
 			disjuncts.add(disjunct);
 			result.addAuxVars(auxVars);
 		}

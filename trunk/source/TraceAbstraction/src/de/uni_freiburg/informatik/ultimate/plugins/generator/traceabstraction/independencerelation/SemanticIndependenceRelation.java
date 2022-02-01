@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -64,13 +65,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 
 public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
-
-	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique mXnfConversionTechnique =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final boolean mConditional;
 	private final boolean mSymmetric;
@@ -130,17 +131,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final UnmodifiableTransFormula tfA = getTransFormula(a);
 		final UnmodifiableTransFormula tfB = getTransFormula(b);
 
+		// TODO We do composition twice for symmetric relations (in performInclusionCheck). Why?
 		final LBool subset = performInclusionCheck(context, tfA, tfB);
 		final LBool result;
-		if (mSymmetric && subset != LBool.SAT) {
-			final LBool superset = performInclusionCheck(context, tfB, tfA);
-			if (subset == LBool.UNSAT && superset == LBool.UNSAT) {
-				result = LBool.UNSAT;
-			} else if (superset == LBool.SAT) {
-				result = LBool.SAT;
-			} else {
-				result = LBool.UNKNOWN;
-			}
+		if (mSymmetric) {
+			result = and(subset, () -> performInclusionCheck(context, tfB, tfA));
 		} else {
 			result = subset;
 		}
@@ -197,8 +192,22 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final boolean tryAuxVarElimination = false;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
-				tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique,
+				tryAuxVarElimination, false, false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
 				Arrays.asList(first, second));
+	}
+
+	private static LBool and(final LBool lhs, final Supplier<LBool> getRhs) {
+		if (lhs == LBool.SAT) {
+			return LBool.SAT;
+		}
+		final LBool rhs = getRhs.get();
+		if (rhs == LBool.SAT) {
+			return LBool.SAT;
+		}
+		if (lhs == LBool.UNSAT && rhs == LBool.UNSAT) {
+			return LBool.UNSAT;
+		}
+		return LBool.UNKNOWN;
 	}
 
 	@Override

@@ -18,14 +18,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -36,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
@@ -479,7 +484,7 @@ public class QuantifierTheory implements ITheory {
 	 *            the right side of the equality.
 	 * @return a QuantEquality atom for the equality lhs = rhs.
 	 */
-	public QuantLiteral getQuantEquality(final Term lhs, final Term rhs) {
+	public QuantLiteral getQuantEquality(final Term lhs, final Term rhs, final SourceAnnotation source) {
 		// Bring atom to form (var = term) if there exists a variable at "top level".
 		Term newLhs = lhs;
 		Term newRhs = rhs;
@@ -494,6 +499,7 @@ public class QuantifierTheory implements ITheory {
 			final SMTAffineTerm linAdded = SMTAffineTerm.create(lhs);
 			linAdded.add(Rational.MONE, SMTAffineTerm.create(rhs));
 			Rational fac = Rational.ONE;
+			final TermCompiler compiler = mClausifier.getTermCompiler();
 			for (final Term smd : linAdded.getSummands().keySet()) {
 				if (smd instanceof TermVariable) {
 					fac = linAdded.getSummands().get(smd);
@@ -501,7 +507,7 @@ public class QuantifierTheory implements ITheory {
 						newLhs = smd;
 						linAdded.add(fac.negate(), smd);
 						linAdded.mul(fac.negate());
-						newRhs = linAdded.toTerm(lhs.getSort());
+						newRhs = linAdded.toTerm(compiler, lhs.getSort());
 						break;
 					} else {
 						if (fac.abs() == Rational.ONE) {
@@ -511,7 +517,7 @@ public class QuantifierTheory implements ITheory {
 							if (fac == Rational.ONE) {
 								linAdded.negate();
 							}
-							newRhs = linAdded.toTerm(lhs.getSort());
+							newRhs = linAdded.toTerm(compiler, lhs.getSort());
 							break;
 						}
 					}
@@ -519,6 +525,8 @@ public class QuantifierTheory implements ITheory {
 			}
 		}
 		final Term newTerm = mTheory.term("=", newLhs, newRhs);
+		addGroundCCTerms(newLhs, source);
+		addGroundCCTerms(newRhs, source);
 		final QuantLiteral atom = new QuantEquality(newTerm, newLhs, newRhs);
 
 		// Check if the atom is almost uninterpreted or can be used for DER.
@@ -558,7 +566,7 @@ public class QuantifierTheory implements ITheory {
 	 *            the left side of the inequality (t <= 0)
 	 * @return a QuantLiteral, possibly negated, of the form (t <= 0) or ~(t' <= 0)
 	 */
-	public QuantLiteral getQuantInequality(final boolean positive, final Term lhs) {
+	public QuantLiteral getQuantInequality(final boolean positive, final Term lhs, final SourceAnnotation source) {
 
 		boolean rewrite = false; // Set to true when rewriting positive (x-t<=0) into ~(t+1<=x) for x integer
 		final SMTAffineTerm linTerm = SMTAffineTerm.create(lhs);
@@ -601,7 +609,10 @@ public class QuantifierTheory implements ITheory {
 			linTerm.div(fac.abs());
 		}
 
-		final Term newTerm = mTheory.term("<=", linTerm.toTerm(lhs.getSort()), Rational.ZERO.toTerm(lhs.getSort()));
+		final TermCompiler compiler = mClausifier.getTermCompiler();
+		final Term newLhs = linTerm.toTerm(compiler, lhs.getSort());
+		addGroundCCTerms(newLhs, source);
+		final Term newTerm = mTheory.term("<=", newLhs, Rational.ZERO.toTerm(lhs.getSort()));
 		final QuantLiteral atom = new QuantBoundConstraint(newTerm, linTerm);
 
 		// Check if the atom is almost uninterpreted.
@@ -620,7 +631,7 @@ public class QuantifierTheory implements ITheory {
 			if (!hasUpperBound) {
 				remainderAff.negate();
 			}
-			final Term remainder = remainderAff.toTerm(lhs.getSort());
+			final Term remainder = remainderAff.toTerm(compiler, lhs.getSort());
 			if (remainder instanceof TermVariable || remainder.getFreeVars().length == 0) {
 				atom.negate().mIsArithmetical = true;
 			}
@@ -868,6 +879,27 @@ public class QuantifierTheory implements ITheory {
 	Term getRepresentativeTerm(final Term term) {
 		final CCTerm ccTerm = getClausifier().getCCTerm(term);
 		return ccTerm == null ? term : ccTerm.getRepresentative().getFlatTerm();
+	}
+
+	private void addGroundCCTerms(final Term term, final SourceAnnotation source) {
+		final HashSet<Term> seen = new HashSet<>();
+		final Deque<Term> todo = new ArrayDeque<>();
+		todo.add(term);
+		while (!todo.isEmpty()) {
+			final Term subTerm = todo.pop();
+			if (subTerm instanceof ApplicationTerm && seen.add(subTerm)) {
+				if (subTerm.getFreeVars().length == 0) {
+					CCTerm ccTerm = mClausifier.getCCTerm(subTerm);
+					if (ccTerm == null && (Clausifier.needCCTerm(subTerm) || subTerm.getSort().isArraySort())) {
+						mClausifier.createCCTerm(subTerm, source);
+					}
+				} else {
+					for (final Term arg : ((ApplicationTerm) subTerm).getParameters()) {
+						todo.add(arg);
+					}
+				}
+			}
+		}
 	}
 
 	/**

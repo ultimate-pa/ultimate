@@ -31,8 +31,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieCo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -164,7 +164,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 		mHiddenVars.add(name);
 	}
 
-	public void extractVariablesFromInit(final InitializationPattern init) {
+	public void extractVariablesFromInit(final DeclarationPattern init) {
 		final BoogiePrimitiveType type = toPrimitiveType(init.getType());
 		final String name = init.getId();
 		if (type == BoogieType.TYPE_ERROR) {

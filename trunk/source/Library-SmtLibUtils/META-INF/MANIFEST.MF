@@ -2,13 +2,15 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-SmtLibUtils
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.smtlibutils
-Bundle-Version: 0.2.1
+Bundle-Version: 0.2.2
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier,

@@ -30,12 +30,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.ICoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * An implementation of an {@link ISleepSetStateFactory} for {@link IPredicate} states. Currently only works with
@@ -48,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFactory<L, IPredicate, IPredicate> {
 
-	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mEmptyStack;
-	private final Map<IPredicate, Map<Set<L>, IPredicate>> mKnownStates = new HashMap<>();
-	private final Map<IPredicate, IPredicate> mOriginalStates = new HashMap<>();
+
+	// Can we get rid of this entirely? [Requires reference equality to be replaced with #equals() everywhere.]
+	private final Map<IPredicate, Map<ImmutableSet<L>, IPredicate>> mKnownStates = new HashMap<>();
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -61,7 +69,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 */
 	public SleepSetStateFactoryForRefinement(final PredicateFactory predicateFactory) {
 		super();
-		mPredicateFactory = predicateFactory;
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
 	}
 
@@ -71,9 +78,9 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	}
 
 	@Override
-	public IPredicate createSleepSetState(final IPredicate state, final Set<L> sleepset) {
-		final Map<Set<L>, IPredicate> sleep2State = mKnownStates.computeIfAbsent(state, x -> new HashMap<>());
-		return sleep2State.computeIfAbsent(sleepset, x -> createFreshCopy(state));
+	public IPredicate createSleepSetState(final IPredicate state, final ImmutableSet<L> sleepset) {
+		final Map<ImmutableSet<L>, IPredicate> sleep2State = mKnownStates.computeIfAbsent(state, x -> new HashMap<>());
+		return sleep2State.computeIfAbsent(sleepset, x -> createFreshCopy(state, sleepset));
 	}
 
 	/**
@@ -82,20 +89,129 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 * @param sleepState
 	 *            The state of the sleep set reduction, as returned by a call to
 	 *            {@link #createSleepSetState(IPredicate, Set)}.
-	 * @return The argument passed to {@link #createSleepSetState(IPredicate, Set)} that returned the given reduction
-	 *         state
+	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
+	 *         reduction state
 	 */
+	@Override
 	public IPredicate getOriginalState(final IPredicate sleepState) {
-		return mOriginalStates.get(sleepState);
+		return ((SleepPredicate<?>) sleepState).getUnderlying();
 	}
 
-	private IPredicate createFreshCopy(final IPredicate original) {
-		if (original instanceof IMLPredicate) {
-			final IMLPredicate mlPred = (IMLPredicate) original;
-			final IMLPredicate copy = mPredicateFactory.newMLPredicate(mlPred.getProgramPoints(), mlPred.getFormula());
-			mOriginalStates.put(copy, original);
-			return copy;
+	/**
+	 * Retrieves the sleep set for which a reduction state was constructed.
+	 *
+	 * @param sleepState
+	 *            The state of the sleep set reduction, as returned by a call to
+	 *            {@link #createSleepSetState(IPredicate, Set)}.
+	 * @return The argument passed to {@link #createSleepSetState(IPredicate, ImmutableSet)} that returned the given
+	 *         reduction state
+	 */
+	@Override
+	public ImmutableSet<L> getSleepSet(final IPredicate sleepState) {
+		return ((SleepPredicate<L>) sleepState).getSleepSet();
+	}
+
+	public void reset() {
+		mKnownStates.clear();
+	}
+
+	private IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
+		if (!(original instanceof IMLPredicate)) {
+			throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
 		}
-		throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
+		return new SleepPredicate<>((IMLPredicate) original, sleepset);
+	}
+
+	public static final class SleepPredicate<L> implements IMLPredicate {
+		private final IMLPredicate mUnderlying;
+		private final ImmutableSet<L> mSleepSet;
+
+		public SleepPredicate(final IMLPredicate underlying, final ImmutableSet<L> sleepSet) {
+			mUnderlying = underlying;
+			mSleepSet = sleepSet;
+		}
+
+		@Override
+		public IcfgLocation[] getProgramPoints() {
+			return mUnderlying.getProgramPoints();
+		}
+
+		@Override
+		public Term getFormula() {
+			return mUnderlying.getFormula();
+		}
+
+		@Override
+		public Term getClosedFormula() {
+			return mUnderlying.getClosedFormula();
+		}
+
+		@Override
+		public String[] getProcedures() {
+			return mUnderlying.getProcedures();
+		}
+
+		@Override
+		public Set<IProgramVar> getVars() {
+			return mUnderlying.getVars();
+		}
+
+		@Override
+		public Set<IProgramConst> getConstants() {
+			return mUnderlying.getConstants();
+		}
+
+		@Override
+		public Set<IProgramFunction> getFunctions() {
+			return mUnderlying.getFunctions();
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(mSleepSet, mUnderlying);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final SleepPredicate<?> other = (SleepPredicate<?>) obj;
+			return Objects.equals(mSleepSet, other.mSleepSet) && Objects.equals(mUnderlying, other.mUnderlying);
+		}
+
+		public IMLPredicate getUnderlying() {
+			return mUnderlying;
+		}
+
+		public ImmutableSet<L> getSleepSet() {
+			return mSleepSet;
+		}
+	}
+
+	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {
+		private final SleepSetStateFactoryForRefinement<L> mFactory;
+
+		public FactoryCoveringRelation(final SleepSetStateFactoryForRefinement<L> factory) {
+			mFactory = factory;
+			assert PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION : "Covering optimization turned off";
+		}
+
+		@Override
+		public boolean covers(final IPredicate oldState, final IPredicate newState) {
+			assert getKey(oldState) == getKey(newState);
+			return mFactory.getSleepSet(newState).containsAll(mFactory.getSleepSet(oldState));
+		}
+
+		@Override
+		public Object getKey(final IPredicate state) {
+			return mFactory.getOriginalState(state);
+		}
 	}
 }

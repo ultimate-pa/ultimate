@@ -45,7 +45,13 @@ public class BitvectorConstant {
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	public enum SupportedBitvectorOperations {
+	public enum BvOp {
+		/**
+		 * ((_ sign_extend i) x)
+		 *
+		 * extend x with sign bits to the (signed) equivalent bitvector of size m+i
+		 */
+		sign_extend(2, false, false),
 		/**
 		 * ((_ zero_extend i) x)
 		 *
@@ -60,6 +66,13 @@ public class BitvectorConstant {
 		 * + 1
 		 */
 		extract(3, false, false),
+
+		/**
+		 * (concat(_ BitVec m) (_ BitVec n))
+		 *
+		 * concatinates two bitvectors to a bitvector of size m+n
+		 */
+		concat(2, false, false),
 
 		/**
 		 * (bvadd (_ BitVec m) (_ BitVec m) (_ BitVec m))
@@ -109,6 +122,13 @@ public class BitvectorConstant {
 		 * 2's complement signed remainder (sign follows dividend)
 		 */
 		bvsrem(2, false, false),
+
+		/**
+		 * (bvsmod (_ BitVec m) (_ BitVec m) (_ BitVec m))
+		 *
+		 * 2's complement signed remainder (sign follows divisor)
+		 */
+		bvsmod(2, false, false),
 
 		/**
 		 * (bvand (_ BitVec m) (_ BitVec m) (_ BitVec m))
@@ -227,7 +247,7 @@ public class BitvectorConstant {
 		private final boolean mIsBoolean;
 		private final boolean mIsAssociative;
 
-		private SupportedBitvectorOperations(final int arity, final boolean isBoolean, final boolean isAssoc) {
+		private BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
 			mArity = arity;
 			mIsBoolean = isBoolean;
 			mIsAssociative = isAssoc;
@@ -252,6 +272,22 @@ public class BitvectorConstant {
 		 */
 		public boolean isCommutative() {
 			return mIsAssociative;
+		}
+
+	}
+
+	public enum ExtendOperation {
+		sign_extend(BvOp.sign_extend),
+		zero_extend(BvOp.zero_extend),;
+
+		private final BvOp mBvOp;
+
+		private ExtendOperation(final BvOp bvop) {
+			mBvOp = bvop;
+		}
+
+		public BvOp getBvOp() {
+			return mBvOp;
 		}
 
 	}
@@ -368,21 +404,56 @@ public class BitvectorConstant {
 	}
 
 	public static BitvectorConstant bvudiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (bv2.getValue().signum() == 0) {
+			return maxValue(bv1.getIndex());
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.divide(y));
 	}
 
 	public static BitvectorConstant bvurem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (bv2.getValue().signum() == 0) {
+			return bv1;
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.remainder(y));
 	}
 
 	public static BitvectorConstant bvsdiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (toSignedInt(bv2.getValue(), bv2.getIndex()).signum() == 0) {
+			return bvudiv(bv1, bv2);
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2,
 				x -> y -> toSignedInt(x, bv1.getIndex()).divide(toSignedInt(y, bv2.getIndex())));
 	}
 
 	public static BitvectorConstant bvsrem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		if (toSignedInt(bv2.getValue(), bv2.getIndex()).signum() == 0) {
+			return bvurem(bv1, bv2);
+		}
 		return similarIndexBvOp_BitvectorResult(bv1, bv2,
 				x -> y -> toSignedInt(x, bv1.getIndex()).remainder(toSignedInt(y, bv2.getIndex())));
+	}
+
+	public static BitvectorConstant bvsmod(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		final BigInteger bigInt1 = toSignedInt(bv1.getValue(), bv1.getIndex());
+		final BigInteger bigInt2 = toSignedInt(bv2.getValue(), bv2.getIndex());
+		BitvectorConstant uts1 = bv1;
+		BitvectorConstant uts2 = bv2;
+		if (bigInt1.signum() == -1) {
+			uts1 = bvneg(uts1);
+		}
+		if (bigInt2.signum() == -1) {
+			uts2 = bvneg(uts2);
+		}
+		final BitvectorConstant bvurem = bvurem(uts1, uts2);
+		if ((bigInt1.signum() == -1) && (bigInt2.signum() == 1)) {
+			return bvadd(bvneg(bvurem), bv2);
+		} else if ((bigInt1.signum() == 1) && (bigInt2.signum() == -1)) {
+			return bvadd(bvurem, bv2);
+		} else if ((bigInt1.signum() == -1) && (bigInt2.signum() == -1)) {
+			return bvneg(bvurem);
+		} else {
+			return bvurem;
+		}
 	}
 
 	public static BitvectorConstant bvand(final BitvectorConstant bv1, final BitvectorConstant bv2) {
@@ -475,6 +546,13 @@ public class BitvectorConstant {
 				x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) >= 0);
 	}
 
+	public static BitvectorConstant concat(final BitvectorConstant bv1, final BitvectorConstant bv2) {
+		final BigInteger concatSize = bv1.getIndex().add(bv2.getIndex());
+		final BigInteger concatValue =
+				bv1.getValue().multiply(BigInteger.TWO.pow(bv2.getIndex().intValue())).add(bv2.getValue());
+		return new BitvectorConstant(concatValue, concatSize);
+	}
+
 	public static BitvectorConstant extract(final BitvectorConstant bv, final int upperIndex, final int lowerIndex) {
 		final String binaryString = bvToBinaryString(bv);
 		final int resultIndex = upperIndex + 1 - lowerIndex;
@@ -502,8 +580,13 @@ public class BitvectorConstant {
 		return result;
 	}
 
-	public static BitvectorConstant zero_extend(final BitvectorConstant bv, final BigInteger index) {
-		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(index));
+	public static BitvectorConstant zero_extend(final BitvectorConstant bv, final BigInteger indexExtension) {
+		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(indexExtension));
+	}
+
+	public static BitvectorConstant sign_extend(final BitvectorConstant bv, final BigInteger indexExtension) {
+		final BigInteger signed = bv.toSignedInt();
+		return new BitvectorConstant(signed, bv.getIndex().add(indexExtension));
 	}
 
 	public static BigInteger toSignedInt(final BigInteger bvValue, final BigInteger bvIndex) {
@@ -519,7 +602,7 @@ public class BitvectorConstant {
 		return toSignedInt(mValue, mIndex);
 	}
 
-	public static BitvectorConstantOperationResult apply(final SupportedBitvectorOperations sbo,
+	public static BitvectorConstantOperationResult apply(final BvOp sbo,
 			final BitvectorConstant... operands) {
 		if (operands == null) {
 			throw new IllegalArgumentException("No operands");

@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
@@ -289,8 +289,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorForward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
-						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
+						mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -331,8 +331,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorBackward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
-						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
+						mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -421,7 +421,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(), localVarAssignmentAtCallInUnsatCore,
 					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
+			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
 					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
@@ -536,8 +536,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-			final Term pushed = QuantifierPusher.eliminate(mServices, mCfgManagedScript, false, PqeTechniques.ONLY_DER,
-					projectedT);
+			final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mCfgManagedScript, false,
+					PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
@@ -561,8 +561,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-			final Term pushed = QuantifierPusher.eliminate(mServices, mCfgManagedScript, false, PqeTechniques.ONLY_DER,
-					projectedT);
+			final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mCfgManagedScript, false,
+					PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;

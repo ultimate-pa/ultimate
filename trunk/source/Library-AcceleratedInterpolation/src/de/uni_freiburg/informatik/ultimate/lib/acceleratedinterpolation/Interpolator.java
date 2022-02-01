@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
@@ -50,13 +51,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
+ * Interpolator used to generate interpolants from a given meta-trace
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) Interpolator used to generate interpolants from a given
- *         meta-trace
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            The transition.
  *
  */
 public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	/**
+	 * Define which technique of interpolation is used.
 	 *
 	 * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
 	 *
@@ -75,8 +80,21 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	private LBool mTraceCheckResult;
 
 	/**
-	 * Class to help with interpolation.
+	 * The accelerated interpolation interpolator. Generates interpolants along a meta trace according to the specified
+	 * interpolation method.
 	 *
+	 * @param predicateUnifier
+	 *            A {@link PredicateUnifier}
+	 * @param predTransformer
+	 *            A {@link PredicateTransformer}
+	 * @param logger
+	 *            A {@link ILogger}
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param services
+	 *            An {@link IUltimateServiceProvider}
+	 * @param prefs
+	 *            Ultimate's preferences as specified in the settings file.
 	 */
 	public Interpolator(final IPredicateUnifier predicateUnifier,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer, final ILogger logger,
@@ -88,7 +106,6 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mServices = services;
 		mPrefs = prefs;
-
 	}
 
 	/**
@@ -97,6 +114,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	 * @param interpolationMethod
 	 *            which method of interpolation is used
 	 * @param counterexample
+	 *            A possible counterexample trace.
 	 */
 	public void generateInterpolants(final InterpolationMethod interpolationMethod,
 			final IRun<LETTER, IPredicate> counterexample) {
@@ -120,9 +138,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	 * @return
 	 */
 	private IPredicate[] generateInterpolantsPost(final IRun<LETTER, IPredicate> counterexampleRun) {
-		// TODO: Seems necessary by construction
 		mTraceCheckResult = LBool.UNSAT;
-
 		final List<LETTER> counterexample = counterexampleRun.getWord().asList();
 		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
 		interpolants[0] = mPredicateUnifier.getTruePredicate();
@@ -162,7 +178,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		if (mTraceCheckResult == LBool.UNSAT) {
 			return itcc.getInterpolants();
 		}
-		return null;
+		return new IPredicate[0];
 	}
 
 	public LBool getTraceCheckResult() {

@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmar
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorFastUPR;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorJordan;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorQvasr;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorQvasrs;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorWernerOverapprox;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.IAccelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.ILoopdetector;
@@ -71,10 +73,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
+ * Class for the accelerated interpolation interpolant generation scheme. Accelerated interpolation makes use of loop
+ * accelerations/summaries to speed up interpolant computation.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
+ *
  * @param <LETTER>
+ *            A letter of a word.
  */
 public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
 
@@ -97,23 +103,30 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final Class<LETTER> mTransitionClazz;
 
 	/**
-	 * Interpolation using loopacceleration
+	 * Interpolation using loopacceleration. By detecting loops in program traces, we compute the reflexive transitive
+	 * closure to capture all possible loop iterations and interpolate of this meta-trace.
 	 *
 	 * @param logger
+	 *            A {@link ILogger}
 	 * @param prefs
+	 *            Ultimate's preferences.
 	 * @param script
+	 *            A {@link ManagedScript}
 	 * @param predicateUnifier
+	 *            A {@link PredicateTransformer}
 	 * @param counterexample
+	 *            A possible counterexample.
 	 * @param transitionClazz
+	 *            The letter clazz.
 	 */
-	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
-			final ManagedScript script, final IPredicateUnifier predicateUnifier,
+	public AcceleratedInterpolation(final IUltimateServiceProvider services, final ILogger logger,
+			final ITraceCheckPreferences prefs, final ManagedScript script, final IPredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate> counterexample, final Class<LETTER> transitionClazz,
 			final String accelerationMethod) {
 		mLogger = logger;
 		mScript = script;
 		mTransitionClazz = transitionClazz;
-		mServices = prefs.getUltimateServices();
+		mServices = services;
 		mCounterexampleTrace = counterexample;
 		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPrefs = prefs;
@@ -130,9 +143,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		final ILoopdetector<IcfgLocation, LETTER> loopdetector;
 		final ILoopPreprocessor<IcfgLocation, LETTER, UnmodifiableTransFormula> loopPreprocessor;
 		final IAccelerator loopAccelerator;
-
-		final AcceleratedInterpolationCore<LETTER> accelInterpolCore;
-
 		if ("FAST_UPR".equals(accelerationMethod)) {
 			loopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
 			final List<String> fastUPRPreprocessOptions = new ArrayList<>(Arrays.asList("ite", "mod", "!=", "not"));
@@ -153,11 +163,21 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 					mIcfg.getCfgSmtToolkit(), new ArrayList<>(Arrays.asList("")));
 			loopAccelerator = new AcceleratorJordan(mLogger, mScript, mServices);
+		} else if ("QVASR".equals(accelerationMethod)) {
+			loopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
+			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
+					mIcfg.getCfgSmtToolkit(), Arrays.asList("No DNF"));
+			loopAccelerator = new AcceleratorQvasr(mLogger, mScript, mServices, mPredUnifier);
+		} else if ("QVASRS".equals(accelerationMethod)) {
+			loopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
+			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
+					mIcfg.getCfgSmtToolkit(), Arrays.asList("No DNF"));
+			loopAccelerator = new AcceleratorQvasrs(mLogger, mScript, mServices);
 		} else {
 			throw new UnsupportedOperationException();
 		}
-
-		accelInterpolCore = new AcceleratedInterpolationCore<>(mLogger, mScript, mPredUnifier, mPrefs,
+		final AcceleratedInterpolationCore<LETTER> accelInterpolCore;
+		accelInterpolCore = new AcceleratedInterpolationCore<>(mServices, mLogger, mScript, mPredUnifier, mPrefs,
 				mCounterexampleTrace, mIcfg, loopdetector, loopPreprocessor, loopAccelerator);
 
 		try {
@@ -207,11 +227,11 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		if (isCorrect() == LBool.UNSAT) {
 			return new InterpolantComputationStatus();
-		} else if (isCorrect() == LBool.SAT) {
-			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
-		} else {
-			throw new UnsupportedOperationException();
 		}
+		if (isCorrect() == LBool.SAT) {
+			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

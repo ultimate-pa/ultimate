@@ -44,12 +44,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class DnfTransformer extends XnfTransformer {
 
 	public DnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
-		this(script, services, a -> false);
+		super(script, services, a -> false);
 	}
 
 	public DnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
 			final Function<Integer, Boolean> funAbortIfExponential) {
-		super(script, services, false, funAbortIfExponential);
+		super(script, services, funAbortIfExponential);
 	}
 
 	@Override

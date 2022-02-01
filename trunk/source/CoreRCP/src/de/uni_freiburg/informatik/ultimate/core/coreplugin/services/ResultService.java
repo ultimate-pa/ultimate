@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
@@ -129,7 +130,7 @@ public final class ResultService implements IStorable, IResultService {
 	}
 
 	@Override
-	public void registerTransformer(final String name, final Function<IResult, IResult> resultTransformer) {
+	public void registerTransformer(final String name, final UnaryOperator<IResult> resultTransformer) {
 		mTransformers.put(name, resultTransformer);
 	}
 

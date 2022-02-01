@@ -113,10 +113,10 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 		}
 
 		if (!repVarFac.isUnused()) {
-			final CfgSmtToolkit newToolkit = new CfgSmtToolkit(mServices, repVarFac.constructModifiableGlobalsTable(),
-					mgScript, repVarFac.constructIIcfgSymbolTable(), toolkit.getProcedures(),
-					toolkit.getInParams(), toolkit.getOutParams(), toolkit.getIcfgEdgeFactory(),
-					toolkit.getConcurrencyInformation(), toolkit.getSmtFunctionsAndAxioms());
+			final CfgSmtToolkit newToolkit = new CfgSmtToolkit(repVarFac.constructModifiableGlobalsTable(), mgScript,
+					repVarFac.constructIIcfgSymbolTable(), toolkit.getProcedures(), toolkit.getInParams(),
+					toolkit.getOutParams(), toolkit.getIcfgEdgeFactory(), toolkit.getConcurrencyInformation(),
+					toolkit.getSmtFunctionsAndAxioms());
 			icfg.setCfgSmtToolkit(newToolkit);
 		}
 

@@ -42,7 +42,7 @@ public class CPrimitive extends CType {
 	 * @author Markus Lindenmann
 	 * @date 18.09.2012 Describing primitive C types. (updated 10.12.2013 by nutz)
 	 */
-	public static enum CPrimitives {
+	public enum CPrimitives {
 
 		/* Integer Types */
 		/* char */
@@ -145,101 +145,98 @@ public class CPrimitive extends CType {
 	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
-		if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-			final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
-			switch (sds.getType()) {
-			case IASTSimpleDeclSpecifier.t_bool:
-				mType = CPrimitives.BOOL;
-				break;
-			case IASTSimpleDeclSpecifier.t_char:
-				if (sds.isSigned()) {
-					mType = CPrimitives.SCHAR;
-				} else if (sds.isUnsigned()) {
-					mType = CPrimitives.UCHAR;
-				} else {
-					mType = CPrimitives.CHAR;
-				}
-				break;
-			// case IASTSimpleDeclSpecifier.t_char16_t:
-			// this.type = PRIMITIVE.CHAR16;
-			// break;
-			// case IASTSimpleDeclSpecifier.t_char32_t:
-			// this.type = PRIMITIVE.CHAR32;
-			// break;
-			case IASTSimpleDeclSpecifier.t_double:
-				if (sds.isComplex()) {
-					if (sds.isLong()) {
-						mType = CPrimitives.COMPLEX_LONGDOUBLE;
-					} else {
-						mType = CPrimitives.COMPLEX_DOUBLE;
-					}
-				} else {
-					if (sds.isLong()) {
-						mType = CPrimitives.LONGDOUBLE;
-					} else {
-						mType = CPrimitives.DOUBLE;
-					}
-				}
-				break;
-			case IASTSimpleDeclSpecifier.t_float:
-				if (sds.isComplex()) {
-					mType = CPrimitives.COMPLEX_FLOAT;
-				} else {
-					mType = CPrimitives.FLOAT;
-				}
-				break;
-			case IASTSimpleDeclSpecifier.t_int:
-				if (sds.isUnsigned()) {
-					if (sds.isLong()) {
-						mType = CPrimitives.ULONG;
-					} else if (sds.isLongLong()) {
-						mType = CPrimitives.ULONGLONG;
-					} else if (sds.isShort()) {
-						mType = CPrimitives.USHORT;
-					} else {
-						mType = CPrimitives.UINT;
-					}
-				} else if (sds.isLong()) {
-					mType = CPrimitives.LONG;
-				} else if (sds.isLongLong()) {
-					mType = CPrimitives.LONGLONG;
-				} else if (sds.isShort()) {
-					mType = CPrimitives.SHORT;
-				} else {
-					mType = CPrimitives.INT;
-				}
-				break;
-			case IASTSimpleDeclSpecifier.t_unspecified:
-				if (sds.isUnsigned()) {
-					if (sds.isLong()) {
-						mType = CPrimitives.ULONG;
-					} else if (sds.isLongLong()) {
-						mType = CPrimitives.ULONGLONG;
-					} else if (sds.isShort()) {
-						mType = CPrimitives.USHORT;
-					} else {
-						mType = CPrimitives.UINT;
-					}
-				} else if (sds.isLong()) {
-					mType = CPrimitives.LONG;
-				} else if (sds.isLongLong()) {
-					mType = CPrimitives.LONGLONG;
-				} else if (sds.isShort()) {
-					mType = CPrimitives.SHORT;
-				} else {
-					mType = CPrimitives.INT;
-				}
-				break;
-			case IASTSimpleDeclSpecifier.t_void:
-				mType = CPrimitives.VOID;
-				break;
-			// case IASTSimpleDeclSpecifier.t_wchar_t:
-			// this.type = PRIMITIVE.WCHAR;
-			// break;
-			default:
-				throw new IllegalArgumentException("Unknown C Declaration!");
+		if (!(cDeclSpec instanceof IASTSimpleDeclSpecifier)) {
+			throw new IllegalArgumentException("Unknown C Declaration!");
+		}
+		final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
+		switch (sds.getType()) {
+		case IASTSimpleDeclSpecifier.t_bool:
+			mType = CPrimitives.BOOL;
+			break;
+		case IASTSimpleDeclSpecifier.t_char:
+			if (sds.isSigned()) {
+				mType = CPrimitives.SCHAR;
+			} else if (sds.isUnsigned()) {
+				mType = CPrimitives.UCHAR;
+			} else {
+				mType = CPrimitives.CHAR;
 			}
-		} else {
+			break;
+		// case IASTSimpleDeclSpecifier.t_char16_t:
+		// this.type = PRIMITIVE.CHAR16;
+		// break;
+		// case IASTSimpleDeclSpecifier.t_char32_t:
+		// this.type = PRIMITIVE.CHAR32;
+		// break;
+		case IASTSimpleDeclSpecifier.t_double:
+			if (sds.isComplex()) {
+				if (sds.isLong()) {
+					mType = CPrimitives.COMPLEX_LONGDOUBLE;
+				} else {
+					mType = CPrimitives.COMPLEX_DOUBLE;
+				}
+			} else if (sds.isLong()) {
+				mType = CPrimitives.LONGDOUBLE;
+			} else {
+				mType = CPrimitives.DOUBLE;
+			}
+			break;
+		case IASTSimpleDeclSpecifier.t_float:
+			if (sds.isComplex()) {
+				mType = CPrimitives.COMPLEX_FLOAT;
+			} else {
+				mType = CPrimitives.FLOAT;
+			}
+			break;
+		case IASTSimpleDeclSpecifier.t_int:
+			if (sds.isUnsigned()) {
+				if (sds.isLong()) {
+					mType = CPrimitives.ULONG;
+				} else if (sds.isLongLong()) {
+					mType = CPrimitives.ULONGLONG;
+				} else if (sds.isShort()) {
+					mType = CPrimitives.USHORT;
+				} else {
+					mType = CPrimitives.UINT;
+				}
+			} else if (sds.isLong()) {
+				mType = CPrimitives.LONG;
+			} else if (sds.isLongLong()) {
+				mType = CPrimitives.LONGLONG;
+			} else if (sds.isShort()) {
+				mType = CPrimitives.SHORT;
+			} else {
+				mType = CPrimitives.INT;
+			}
+			break;
+		case IASTSimpleDeclSpecifier.t_unspecified:
+			if (sds.isUnsigned()) {
+				if (sds.isLong()) {
+					mType = CPrimitives.ULONG;
+				} else if (sds.isLongLong()) {
+					mType = CPrimitives.ULONGLONG;
+				} else if (sds.isShort()) {
+					mType = CPrimitives.USHORT;
+				} else {
+					mType = CPrimitives.UINT;
+				}
+			} else if (sds.isLong()) {
+				mType = CPrimitives.LONG;
+			} else if (sds.isLongLong()) {
+				mType = CPrimitives.LONGLONG;
+			} else if (sds.isShort()) {
+				mType = CPrimitives.SHORT;
+			} else {
+				mType = CPrimitives.INT;
+			}
+			break;
+		case IASTSimpleDeclSpecifier.t_void:
+			mType = CPrimitives.VOID;
+			break;
+		// case IASTSimpleDeclSpecifier.t_wchar_t:
+		// this.type = PRIMITIVE.WCHAR;
+		// break;
+		default:
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
 		mGeneralType = getGeneralType(mType);
@@ -320,8 +317,8 @@ public class CPrimitive extends CType {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((mGeneralType == null) ? 0 : mGeneralType.hashCode());
-		result = prime * result + ((mType == null) ? 0 : mType.hashCode());
+		result = prime * result + (mGeneralType == null ? 0 : mGeneralType.hashCode());
+		result = prime * result + (mType == null ? 0 : mType.hashCode());
 		return result;
 	}
 

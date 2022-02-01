@@ -22,6 +22,14 @@
 
 
 known_exceptions:
+  "Received EOF on stdin.":
+  "stderr output: (error \"out of memory\")":
+  "AssertionError: Possible infinite loop detected":
+  "Modelproduction for quantifier theory not implemented":
+  "IllegalArgumentException: NONLINEAR_UPDATE Monomial contains modified variable.":
+  "IllegalArgumentException: NONINTEGER_UPDATE Some updated variables are of non-integer sorts":
+  "IllegalArgumentException: UNSUPPORTED_EIGENVALUES":
+  "NegativeArraySizeException":
   "UnsupportedOperationException: Unsupported type":
   "AssertionError: at least one of both input predicates is unknown":
     delta_debug: True
@@ -42,6 +50,7 @@ known_exceptions:
   "overapproximation of shiftLeft":
   "overapproximation of memtrack":
   "There is insufficient memory for the Java Runtime Environment to continue":
+  "UnsupportedOperationException: Shadow problem":
   "UnsupportedSyntaxResult":
     show_line: False
   "TypeErrorResult":
@@ -103,16 +112,19 @@ known_timeouts:
   "Toolchain execution was canceled (user or tool) before executing":
   "TimeoutResultAtElement":
   "TimeoutResult":
+  "UserSpecifiedLimitReachedResult":
   "Killed by 15":
   "Killed from outside":
 
 known_safe:
-  "AllSpecificationsHoldResult":
+  "We were not able to verify any specifiation because the program does not contain any specification":
+  "specifications checked. All of them hold":
   "TerminationAnalysisResult: Termination proven":
 
 known_unsafe:
   "CounterExampleResult":
   "NonterminatingLassoResult":
+  "DataRaceFoundResult":
 
 known_unknown:
   "UnprovableResult":
@@ -120,5 +132,4 @@ known_unknown:
 known_wrapper_errors:
   "Ultimate.py: error: argument --validate: File":
   "Checking for LTL property":
-  "WARNING: YOUR LOGFILE WAS TOO LONG, SOME LINES IN THE MIDDLE WERE REMOVED.":
   "Skipped default analysis because property is memsafety":

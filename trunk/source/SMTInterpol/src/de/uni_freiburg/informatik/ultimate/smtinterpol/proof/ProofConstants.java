@@ -34,6 +34,7 @@ public interface ProofConstants {
 	public static final String FN_MP = "@mp";
 	public static final String FN_SPLIT = "@split";
 	public static final String FN_EXISTS = "@exists";
+	public static final String FN_MATCH = "@match";
 	public static final String FN_ALLINTRO = "@allIntro";
 	public static final String FN_CONG = "@cong";
 	public static final String FN_ORMONOTONY = "@orMonotony";
@@ -126,6 +127,8 @@ public interface ProofConstants {
 	public final static Annotation AUX_TO_INT_HIGH       = new Annotation(":toIntHigh", null);
 	public final static Annotation AUX_ARRAY_STORE       = new Annotation(":store", null);
 	public final static Annotation AUX_ARRAY_DIFF        = new Annotation(":diff", null);
+	public final static Annotation AUX_MATCH_CASE        = new Annotation(":matchCase", null);
+	public final static Annotation AUX_MATCH_DEFAULT     = new Annotation(":matchDefault", null);
 
 	//// ==== Structural splitting constants ====
 	public final static Annotation SPLIT_NEG_OR    = new Annotation(":notOr", null);

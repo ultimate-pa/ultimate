@@ -91,10 +91,8 @@ public class FixpointCheck {
 				constructSubtitutionMapping(mStem, this::getConstantAtInit, this::getConstantAtHonda);
 		final Map<Term, Term> substitutionMappingLoop =
 				constructSubtitutionMapping(mLoop, this::getConstantAtHonda, this::getConstantAtHonda);
-		final Term renamedStem =
-				new Substitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
-		final Term renamedLoop =
-				new Substitution(mManagedScript, substitutionMappingLoop).transform(mLoop.getFormula());
+		final Term renamedStem = Substitution.apply(mManagedScript, substitutionMappingStem, mStem.getFormula());
+		final Term renamedLoop = Substitution.apply(mManagedScript, substitutionMappingLoop, mLoop.getFormula());
 		mManagedScript.echo(this, new QuotedObject("Start fixpoint check"));
 		mManagedScript.push(this, 1);
 		mManagedScript.assertTerm(this, renamedStem);

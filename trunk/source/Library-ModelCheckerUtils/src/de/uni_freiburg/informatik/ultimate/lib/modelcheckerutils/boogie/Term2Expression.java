@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -79,6 +80,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -207,6 +210,22 @@ public final class Term2Expression implements Serializable {
 					return translateBitvectorConcat(type, term);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 					return translateWithSymbolTable(symb, type, termParams);
+				} else if (Arrays.asList(new String[] { "bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt" })
+						.contains(symb.getName())) {
+					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
+							BvOp.valueOf(symb.getName()), params);
+				} else if (Arrays.asList(new String[] { "zero_extend", "sign_extend" }).contains(symb.getName())) {
+					return BitvectorFactory.constructExtendOperation(null, ExtendOperation.valueOf(symb.getName()),
+							new BigInteger(symb.getIndices()[0]), params[0]);
+				} else if (Arrays.asList(new String[] { "bvnot", "bvneg" }).contains(symb.getName())) {
+					return BitvectorFactory.constructUnaryOperation(null,
+							BvOp.valueOf(symb.getName()), params[0]);
+				} else if (Arrays
+						.asList(new String[] { "bvadd", "bvsub", "bvmul", "bvudiv", "bvurem", "bvsdiv", "bvsrem",
+								"bvsmod", "bvand", "bvor", "bvxor", "bvshl", "bvlshr", "bvashr" })
+						.contains(symb.getName())) {
+					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
+							BvOp.valueOf(symb.getName()), params);
 				} else {
 					throw new UnsupportedOperationException(
 							"translation of " + symb + " not yet implemented, please contact Matthias");
@@ -282,7 +301,7 @@ public final class Term2Expression implements Serializable {
 		assert term.getParameters().length == 2;
 		final Expression op1 = translate(term.getParameters()[0]);
 		final Expression op2 = translate(term.getParameters()[1]);
-		return new BinaryExpression(null, Operator.BITVECCONCAT, op1, op2);
+		return new BinaryExpression(null, type, Operator.BITVECCONCAT, op1, op2);
 	}
 
 	/**

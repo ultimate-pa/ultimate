@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -133,6 +134,10 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		switch (relationSymbol) {
 		case DISTINCT:
 		case EQ:
+			// make sure that result respects the {@link CommuhashNormalForm}
+			final Term[] sortedOperands = CommuhashUtils.sortByHashCode(lhsTerm, rhsTerm);
+			result = toTerm(script, relationSymbol, sortedOperands[0], sortedOperands[1]);
+			break;
 		case BVULE:
 		case BVULT:
 		case BVSLE:
@@ -157,7 +162,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	}
 
 	public Term toTerm(final Script script) {
-		return toTerm(script, getRelationSymbol(), getLhs(), getRhs());
+		return constructLessNormalForm(script, getRelationSymbol(), getLhs(), getRhs());
 	}
 
 	public static Term toTerm(final Script script, final RelationSymbol relationSymbol, final Term lhsTerm,
@@ -165,7 +170,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		Term result;
 		switch (relationSymbol) {
 		case DISTINCT:
-			final Term eq = script.term("=", lhsTerm, rhsTerm);
+			final Term eq = SmtUtils.binaryEquality(script, lhsTerm, rhsTerm);
 			result = script.term("not", eq);
 			break;
 		case EQ:

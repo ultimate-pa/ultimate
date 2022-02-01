@@ -31,7 +31,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
@@ -55,10 +54,9 @@ public class RubberTaipanRefinementStrategy<L extends IIcfgTransition<?>> extend
 			createModules(final StrategyModuleFactory<L> factory) {
 
 		final IIpTcStrategyModule<?, L> smtinterpol =
-				factory.createIpTcStrategyModuleSmtInterpolCraig(false, InterpolationTechnique.Craig_TreeInterpolation);
-		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP);
-		final IIpTcStrategyModule<?, L> cvc4 = factory.createIpTcStrategyModuleCVC4(false,
-				InterpolationTechnique.FPandBP, SolverBuilder.LOGIC_CVC4_DEFAULT);
+				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation);
+		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP);
+		final IIpTcStrategyModule<?, L> cvc4 = factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP);
 
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3, cvc4 };
 		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { smtinterpol, z3, cvc4 };

@@ -54,9 +54,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -77,13 +78,13 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	private final STATE mSubState;
 	private final SegmentationMap mSegmentationMap;
 	private final ArrayDomainToolkit<STATE> mToolkit;
-	private final Set<IProgramVarOrConst> mVariables;
+	private final ImmutableSet<IProgramVarOrConst> mVariables;
 	private Term mCachedTerm;
 	private EquivalenceFinder mEquivalenceFinder;
 	private final Map<Segmentation, Segmentation> mSimplifiedSegmentations;
 
 	private ArrayDomainState(final STATE subState, final SegmentationMap segmentationMap,
-			final Set<IProgramVarOrConst> variables, final ArrayDomainToolkit<STATE> toolkit) {
+			final ImmutableSet<IProgramVarOrConst> variables, final ArrayDomainToolkit<STATE> toolkit) {
 		mSubState = subState;
 		mSegmentationMap = segmentationMap;
 		mToolkit = toolkit;
@@ -118,7 +119,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return true;
 	}
 
-	public ArrayDomainState(final STATE subState, final Set<IProgramVarOrConst> variables,
+	public ArrayDomainState(final STATE subState, final ImmutableSet<IProgramVarOrConst> variables,
 			final ArrayDomainToolkit<STATE> toolkit) {
 		this(subState, new SegmentationMap(), variables, toolkit);
 	}
@@ -149,7 +150,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			nonArrayVars.add(var);
 		}
 		final STATE newState = mSubState.addVariables(nonArrayVars);
-		return new ArrayDomainState<>(newState, newSegmentationMap, newVariables, mToolkit);
+		return new ArrayDomainState<>(newState, newSegmentationMap, ImmutableSet.of(newVariables), mToolkit);
 	}
 
 	public ArrayDomainState<STATE> addAuxVars(final Collection<IProgramVarOrConst> auxVars) {
@@ -189,7 +190,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			}
 		}
 		final STATE newState = mSubState.removeVariables(nonArrayVars);
-		return new ArrayDomainState<>(newState, newSegmentationMap, newVariables, mToolkit).removeUnusedAuxVars();
+		return new ArrayDomainState<>(newState, newSegmentationMap, ImmutableSet.of(newVariables), mToolkit)
+				.removeUnusedAuxVars();
 	}
 
 	private ArrayDomainState<STATE> removeAuxVars(final Collection<IProgramVar> auxVars) {
@@ -226,7 +228,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			}
 		}
 		final STATE newState = mSubState.renameVariables(nonArrayVarMap);
-		return new ArrayDomainState<>(newState, newSegmentationMap, newVariables, mToolkit);
+		return new ArrayDomainState<>(newState, newSegmentationMap, ImmutableSet.of(newVariables), mToolkit);
 	}
 
 	@Override
@@ -235,7 +237,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
 		return mVariables;
 	}
 
@@ -249,7 +251,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Set<IProgramVarOrConst> overwrittenArrays = DataStructureUtils.intersection(oldArrays, dominatorArrays);
 		final Set<IProgramVarOrConst> newVariables = DataStructureUtils.union(mVariables, dominator.mVariables);
 		final ArrayDomainState<STATE> result =
-				new ArrayDomainState<>(newSubState, getSegmentationMap(), newVariables, mToolkit);
+				new ArrayDomainState<>(newSubState, getSegmentationMap(), ImmutableSet.of(newVariables), mToolkit);
 		result.mSegmentationMap.removeAll(overwrittenArrays);
 		result.mSegmentationMap.putAll(dominator.mSegmentationMap);
 		return result.removeUnusedAuxVars();
@@ -468,7 +470,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				result = intersectionResult.getSecond();
 				segmentation = intersectionResult.getFirst();
 			}
-			result.mSegmentationMap.addEquivalenceClass(equivalenceClass, segmentation);
+			result.mSegmentationMap.addEquivalenceClass(ImmutableSet.of(equivalenceClass), segmentation);
 		}
 		return result.simplify();
 	}
@@ -781,7 +783,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			newVariables.addAll(result.getNewVariables());
 			removeVariablesThis.addAll(result.getRemoveVariablesFirstState());
 			removeVariablesOther.addAll(result.getRemoveVariablesSecondState());
-			segmentationMap.addEquivalenceClass(equivalenceClass, result.getSegmentation());
+			segmentationMap.addEquivalenceClass(ImmutableSet.of(equivalenceClass), result.getSegmentation());
 			final Map<IProgramVar, Segmentation> newSegmentations = result.getNewSegmentations();
 			for (final Entry<IProgramVar, EqClassSegmentation> entry : unificationResult.getAuxVarSegmentations()
 					.entrySet()) {
@@ -811,15 +813,14 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	private Term project(final IProgramVar newVar, final IProgramVar oldVar, final Term baseTerm) {
 		final TermVariable newTv = newVar.getTermVariable();
-		final Term substituted =
-				new Substitution(mToolkit.getManagedScript(), Collections.singletonMap(oldVar.getTermVariable(), newTv))
-						.transform(baseTerm);
+		final Term substituted = Substitution.apply(mToolkit.getManagedScript(),
+				Collections.singletonMap(oldVar.getTermVariable(), newTv), baseTerm);
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(substituted.getFreeVars()));
 		freeVars.remove(newTv);
 		final Term quantified =
 				SmtUtils.quantifier(mToolkit.getScript(), QuantifiedFormula.EXISTS, freeVars, substituted);
-		return QuantifierPusher.eliminate(mToolkit.getServices(), mToolkit.getManagedScript(), false,
-				PqeTechniques.ALL_LOCAL, quantified);
+		return PartialQuantifierElimination.eliminateCompat(mToolkit.getServices(), mToolkit.getManagedScript(), false,
+				PqeTechniques.ALL_LOCAL, SimplificationTechnique.NONE, quantified);
 	}
 
 	@Override
@@ -1026,7 +1027,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(newSubState.getVariables());
 		newVariables.addAll(newSegmentationMap.getArrays());
 		newVariables.retainAll(mVariables);
-		return new ArrayDomainState<>(newSubState, newSegmentationMap, newVariables, mToolkit).removeUnusedAuxVars();
+		return new ArrayDomainState<>(newSubState, newSegmentationMap, ImmutableSet.of(newVariables), mToolkit)
+				.removeUnusedAuxVars();
 	}
 
 	private boolean isArrayTop(final IProgramVarOrConst array) {
@@ -1111,8 +1113,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				conjuncts.add(SmtUtils.or(script, disjuncts));
 			}
 		}
-		final Term body = new SubstitutionWithLocalSimplification(managedScript, substitution)
-				.transform(SmtUtils.and(script, conjuncts));
+		final Term body = Substitution.apply(managedScript, substitution, SmtUtils.and(script, conjuncts));
 		final Term existsTerm = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, body);
 		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, mToolkit.eliminateQuantifier(existsTerm));
 	}
@@ -1452,7 +1453,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final SegmentationMap newSegmentationMap = new SegmentationMap();
 		for (final IProgramVarOrConst rep : mSegmentationMap.getAllRepresentatives()) {
 			final Segmentation newSegmentation = simplifySegmentation(getSegmentation(rep));
-			final Set<IProgramVarOrConst> eqClass = mSegmentationMap.getEquivalenceClass(rep);
+			final ImmutableSet<IProgramVarOrConst> eqClass = mSegmentationMap.getEquivalenceClass(rep);
 			newSegmentationMap.addEquivalenceClass(eqClass, newSegmentation);
 		}
 		return updateState(newSegmentationMap).removeUnusedAuxVars();

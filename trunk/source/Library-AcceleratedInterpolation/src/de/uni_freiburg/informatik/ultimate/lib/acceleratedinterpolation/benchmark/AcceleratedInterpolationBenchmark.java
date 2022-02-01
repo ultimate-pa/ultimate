@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchma
 import java.util.Collection;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
+ * Benchmark for evaluating the performance of the {@link AcceleratedInterpolation} paradigm.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -62,30 +64,31 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 	public Object getValue(final String key) {
 		final AcceleratedInterpolationStatisticsDefinitions keyEnum =
 				Enum.valueOf(AcceleratedInterpolationStatisticsDefinitions.class, key);
+		final String errorMsg = "clock still running: ";
 		switch (keyEnum) {
 		case ACCELINTERPOL_CORE:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		case ACCELINTERPOL_OVERALL:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		case ACCELINTERPOL_LOOPDETECTOR:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		case ACCELINTERPOL_LOOPACCELERATOR:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		default:
 			throw new AssertionError("unknown data: " + keyEnum);
@@ -108,19 +111,16 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 	 *
 	 */
 	public enum AcceleratedInterpolationStatisticsDefinitions implements IStatisticsElement {
-		ACCELINTERPOL_CORE(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_OVERALL(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_LOOPDETECTOR(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_LOOPACCELERATOR(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
+		ACCELINTERPOL_CORE(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_OVERALL(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_LOOPDETECTOR(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_LOOPACCELERATOR(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
 
-		private final Class<?> mClass;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
 
-		AcceleratedInterpolationStatisticsDefinitions(final Class<?> clazz,
-				final Function<Object, Function<Object, Object>> aggr,
+		AcceleratedInterpolationStatisticsDefinitions(final Function<Object, Function<Object, Object>> aggr,
 				final Function<String, Function<Object, String>> prettyprinter) {
-			mClass = clazz;
 			mAggr = aggr;
 			mPrettyprinter = prettyprinter;
 		}
@@ -133,11 +133,6 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 		@Override
 		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
-		}
-
-		@Override
-		public Class<?> getDataType() {
-			return mClass;
 		}
 	}
 

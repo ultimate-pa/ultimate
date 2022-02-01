@@ -30,12 +30,13 @@ import java.math.BigInteger;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Provides auxiliary methods for SMT bitvectors.
@@ -84,13 +85,35 @@ public final class BitvectorUtils {
 						assert (symb.getName().startsWith("bv"));
 						final String valueString = symb.getName().substring(2);
 						final BigInteger value = new BigInteger(valueString);
-						final String index = term.getSort().getIndices()[0];
-						return new BitvectorConstant(value, index);
+						return constructBitvectorConstant(value, term.getSort());
 					}
+				}
+			}
+		} else if (term instanceof ConstantTerm) {
+			if (SmtSortUtils.isBitvecSort(term.getSort())) {
+				final ConstantTerm constTerm = (ConstantTerm) term;
+				if (constTerm.getValue() instanceof String) {
+					final String bitString = (String) constTerm.getValue();
+					final BigInteger value;
+					if (bitString.startsWith("#b")) {
+						value = new BigInteger(bitString.substring(2), 2);
+					} else if (bitString.startsWith("#x")) {
+						value = new BigInteger(bitString.substring(2), 16);
+					} else {
+						throw new AssertionError("Unexpected constant value");
+					}
+					return constructBitvectorConstant(value, term.getSort());
+				} else {
+					throw new UnsupportedOperationException("Unexpected value of bitvector constant");
 				}
 			}
 		}
 		return null;
+	}
+
+	public static BitvectorConstant constructBitvectorConstant(final BigInteger value, final Sort sort) {
+		final String index = sort.getIndices()[0];
+		return new BitvectorConstant(value, index);
 	}
 
 	/**
@@ -126,13 +149,19 @@ public final class BitvectorUtils {
 	public static Term termWithLocalSimplification(final Script script, final String funcname,
 			final BigInteger[] indices, final Term... params) {
 		final Term result;
-		final SupportedBitvectorOperations bvop = SupportedBitvectorOperations.valueOf(funcname);
+		final BvOp bvop = BvOp.valueOf(funcname);
 		switch (bvop) {
 		case zero_extend:
 			result = new Zero_extend().simplifiedResult(script, funcname, indices, params);
 			break;
+		case sign_extend:
+			result = new Sign_extend().simplifiedResult(script, funcname, indices, params);
+			break;
 		case extract:
 			result = new Extract().simplifiedResult(script, funcname, indices, params);
+			break;
+		case concat:
+			result = new Concat().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvadd:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvadd(x, y))
@@ -156,6 +185,10 @@ public final class BitvectorUtils {
 			break;
 		case bvsrem:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsrem(x, y))
+					.simplifiedResult(script, funcname, indices, params);
+			break;
+		case bvsmod:
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsmod(x, y))
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvmul:
@@ -223,7 +256,6 @@ public final class BitvectorUtils {
 			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsge(x, y))
 					.simplifiedResult(script, funcname, indices, params);
 			break;
-
 		default:
 			if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
 				throw new AssertionError("wasted optimization " + funcname);
@@ -260,10 +292,18 @@ public final class BitvectorUtils {
 		}
 
 		private final Term notSimplified(final Script script, final BigInteger[] indices, final Term[] params) {
-			return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, params);
+			final Term[] newParams;
+			if (isCommutative()) {
+				newParams = CommuhashUtils.sortByHashCode(params);
+			} else {
+				newParams = params;
+			}
+			return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, newParams);
 		}
 
 		public abstract String getFunctionName();
+
+		public abstract boolean isCommutative();
 
 		public abstract int getNumberOfIndices();
 
@@ -272,11 +312,47 @@ public final class BitvectorUtils {
 		public abstract Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs);
 	}
 
+	private static class Concat extends BitvectorOperation {
+
+		@Override
+		public String getFunctionName() {
+			return "concat";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
+		}
+
+		@Override
+		public int getNumberOfIndices() {
+			return 0;
+		}
+
+		@Override
+		public int getNumberOfParams() {
+			return 2;
+		}
+
+		@Override
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
+			final BitvectorConstant bv = BitvectorConstant.concat(bvs[0], bvs[1]);
+			return constructTerm(script, bv);
+		}
+
+	}
+
 	private static class Extract extends BitvectorOperation {
 
 		@Override
 		public String getFunctionName() {
 			return "extract";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override
@@ -299,11 +375,47 @@ public final class BitvectorUtils {
 
 	}
 
+	private static class Sign_extend extends BitvectorOperation {
+
+		@Override
+		public String getFunctionName() {
+			return "sign_extend";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
+		}
+
+		@Override
+		public int getNumberOfIndices() {
+			return 1;
+		}
+
+		@Override
+		public int getNumberOfParams() {
+			return 1;
+		}
+
+		@Override
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
+			final BitvectorConstant bv = BitvectorConstant.sign_extend(bvs[0], indices[0]);
+			return constructTerm(script, bv);
+		}
+
+	}
+
 	private static class Zero_extend extends BitvectorOperation {
 
 		@Override
 		public String getFunctionName() {
 			return "zero_extend";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override
@@ -357,6 +469,46 @@ public final class BitvectorUtils {
 		}
 
 		@Override
+		public boolean isCommutative() {
+			final BvOp bvop = BvOp.valueOf(getFunctionName());
+			switch (bvop) {
+			case bvadd:
+			case bvand:
+			case bvmul:
+			case bvor:
+			case bvxor:
+				return true;
+			case bvashr:
+			case bvlshr:
+			case bvsdiv:
+			case bvshl:
+			case bvsmod:
+			case bvsrem:
+			case bvurem:
+			case bvsub:
+			case bvudiv:
+				return false;
+			case bvneg:
+			case bvnot:
+			case bvsge:
+			case bvsgt:
+			case bvsle:
+			case bvslt:
+			case bvuge:
+			case bvugt:
+			case bvule:
+			case bvult:
+			case concat:
+			case extract:
+			case sign_extend:
+			case zero_extend:
+				throw new AssertionError("Not a regular bitvector operator with bitvector result: " + bvop);
+			default:
+				throw new UnsupportedOperationException("Unknown bitvector operator: " + bvop);
+			}
+		}
+
+		@Override
 		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
 				final BitvectorConstant[] bvs) {
 			if (bvs.length != getNumberOfParams()) {
@@ -384,6 +536,11 @@ public final class BitvectorUtils {
 		}
 
 		@Override
+		public boolean isCommutative() {
+			return false;
+		}
+
+		@Override
 		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
 				final BitvectorConstant[] bvs) {
 			return script.term(String.valueOf(mFunction.apply(bvs[0]).apply(bvs[1])));
@@ -394,6 +551,11 @@ public final class BitvectorUtils {
 		@Override
 		public String getFunctionName() {
 			return "bvnot";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override
@@ -418,6 +580,11 @@ public final class BitvectorUtils {
 		@Override
 		public String getFunctionName() {
 			return "bvneg";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override

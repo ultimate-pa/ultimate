@@ -46,7 +46,7 @@ public class ModelFormatter {
 
 	public ModelFormatter(final Theory t, final Model model) {
 		mLineSep = System.getProperty("line.separator");
-		mString = new StringBuilder("(model ");// NOPMD
+		mString = new StringBuilder("(");// NOPMD
 		mIndent = 0;
 		mTheory = t;
 		mModel = model;

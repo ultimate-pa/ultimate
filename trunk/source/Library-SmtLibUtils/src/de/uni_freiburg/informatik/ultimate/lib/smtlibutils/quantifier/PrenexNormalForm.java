@@ -115,7 +115,7 @@ public class PrenexNormalForm extends TermTransformer {
 	private Term pullQuantifiersNot(final Term[] newArgs) {
 		assert newArgs.length == 1 : "no not";
 		final Term notArg = newArgs[0];
-		final QuantifierSequence quantifierSequence = new QuantifierSequence(mScript, notArg);
+		final QuantifierSequence quantifierSequence = new QuantifierSequence(mMgdScript, notArg);
 		final Term inner = quantifierSequence.getInnerTerm();
 		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifierBlocks();
 		Term result = SmtUtils.not(mScript, inner);
@@ -133,7 +133,7 @@ public class PrenexNormalForm extends TermTransformer {
 		final HashSet<TermVariable> freeVariables = new HashSet<>();
 		for (int i=0; i<newArgs.length; i++) {
 			freeVariables.addAll(Arrays.asList(newArgs[i].getFreeVars()));
-			quantifierSequences[i] = new QuantifierSequence(mScript, newArgs[i]);
+			quantifierSequences[i] = new QuantifierSequence(mMgdScript, newArgs[i]);
 		}
 		final Term result = QuantifierSequence.mergeQuantifierSequences(mMgdScript,
 				appTerm.getFunction().getName(), quantifierSequences,

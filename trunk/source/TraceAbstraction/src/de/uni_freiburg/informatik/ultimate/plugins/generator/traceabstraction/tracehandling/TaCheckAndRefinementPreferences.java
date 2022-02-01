@@ -89,7 +89,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mComputeCounterexample;
 	private final boolean mCollectInterpolantStatistics;
-	private final IUltimateServiceProvider mServices;
 	private final boolean mUsePredicateTrieBasedPredicateUnifier;
 	private final String mFeatureVectorDumpPath;
 	private final boolean mDumpFeatureVectors;
@@ -122,7 +121,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer) {
-		mServices = services;
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -303,11 +301,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public boolean collectInterpolantStatistics() {
 		return mCollectInterpolantStatistics;
-	}
-
-	@Override
-	public IUltimateServiceProvider getUltimateServices() {
-		return mServices;
 	}
 
 	public boolean usePredicateTrieBasedPredicateUnifier() {

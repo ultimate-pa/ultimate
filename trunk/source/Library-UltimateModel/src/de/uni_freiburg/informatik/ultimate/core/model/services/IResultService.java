@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.core.model.services;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
@@ -69,5 +69,5 @@ public interface IResultService {
 	 * @param resultTransformer
 	 *            the transformer function.
 	 */
-	void registerTransformer(final String name, final Function<IResult, IResult> resultTransformer);
+	void registerTransformer(final String name, final UnaryOperator<IResult> resultTransformer);
 }

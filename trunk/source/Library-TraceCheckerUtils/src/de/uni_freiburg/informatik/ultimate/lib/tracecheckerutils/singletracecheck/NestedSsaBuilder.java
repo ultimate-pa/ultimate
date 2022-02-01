@@ -27,12 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -51,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -217,6 +219,7 @@ public class NestedSsaBuilder<L extends IAction> {
 			 */
 			initOldVarsVV.versionAssignedVars(mStartOfCallingContext);
 			initLocalVarsVV.versionAssignedVars(mStartOfCallingContext);
+			initLocalVarsVV.replaceAuxVars();
 
 			mSsa.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getVersioneeredTerm());
 			mVariable2Constant.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getSubstitutionMapping());
@@ -593,9 +596,10 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public Term getVersioneeredTerm() {
-			final Substitution subst = new Substitution(mTcScript, mSubstitutionMapping);
+			final PureSubstitution subst = new PureSubstitution(mTcScript, mSubstitutionMapping);
 			final Term result = subst.transform(mFormula);
-			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
+			assert result.getFreeVars().length == 0 : "free vars in versioneered term: "
+					+ Arrays.stream(result.getFreeVars()).map(a -> a.toString()).collect(Collectors.joining(","));
 			return result;
 		}
 

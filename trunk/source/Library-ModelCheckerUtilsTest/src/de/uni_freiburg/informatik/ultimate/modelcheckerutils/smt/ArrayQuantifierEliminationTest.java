@@ -354,8 +354,10 @@ public class ArrayQuantifierEliminationTest {
 
 	public Term parseAndElim(final String formulaAsString) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdScript;
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 		mLogger.info("Result: " + result);
 		return result;
 	}

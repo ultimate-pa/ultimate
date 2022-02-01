@@ -100,7 +100,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private final HashRelation<String, IProgramNonOldVar> mNewModifiedGlobals;
 
 	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
-	private final IBacktranslationTracker mBacktranslationTracker;
+	private final IcfgTransformationBacktranslator mBacktranslationTracker;
 	private final ITransformulaTransformer mTransformer;
 	private final IIcfg<INLOC> mOriginalIcfg;
 	private final BasicIcfg<OUTLOC> mResultIcfg;
@@ -110,7 +110,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private ILogger mLogger;
 
 	public TransformedIcfgBuilder(final ILogger logger, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final IIcfg<INLOC> originalIcfg,
+			final IcfgTransformationBacktranslator backtranslationTracker, final IIcfg<INLOC> originalIcfg,
 			final BasicIcfg<OUTLOC> resultIcfg) {
 		this(logger, funLocFac, backtranslationTracker, new CopyingTransformulaTransformer(logger,
 				originalIcfg.getCfgSmtToolkit().getManagedScript(), originalIcfg.getCfgSmtToolkit()), originalIcfg,
@@ -133,7 +133,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 *            The output {@link IIcfg}.
 	 */
 	public TransformedIcfgBuilder(final ILogger logger, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final ITransformulaTransformer transformer,
+			final IcfgTransformationBacktranslator backtranslationTracker, final ITransformulaTransformer transformer,
 			final IIcfg<INLOC> originalIcfg, final BasicIcfg<OUTLOC> resultIcfg) {
 		this(logger, funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg, Collections.emptySet());
 	}
@@ -156,7 +156,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 *            axioms that are to be added to the resulting {@link IIcfg}
 	 */
 	public TransformedIcfgBuilder(final ILogger logger, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final ITransformulaTransformer transformer,
+			final IcfgTransformationBacktranslator backtranslationTracker, final ITransformulaTransformer transformer,
 			final IIcfg<INLOC> originalIcfg, final BasicIcfg<OUTLOC> resultIcfg,
 			final Collection<IPredicate> additionalAxioms) {
 		mLogger = Objects.requireNonNull(logger);
@@ -206,7 +206,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		}
 		newSource.addOutgoing(newTransition);
 		newTarget.addIncoming(newTransition);
-		mBacktranslationTracker.rememberRelation(oldTransition, newTransition);
+		mBacktranslationTracker.mapEdges(newTransition, oldTransition);
 		return newTransition;
 	}
 
@@ -350,10 +350,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final SmtFunctionsAndAxioms transformedSymbols =
 				transformSmtFunctionsAndAxioms(oldToolkit.getSmtFunctionsAndAxioms());
-		final CfgSmtToolkit csToolkit =
-				new CfgSmtToolkit(oldToolkit.getServices(), newModifiedGlobals, oldToolkit.getManagedScript(),
-						newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
-						oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
+				newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
+				oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
 

@@ -37,16 +37,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule.IpAbStrategyModuleResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.
@@ -63,81 +62,42 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 
 	private final ILogger mLogger;
 	private final IRefinementStrategy<L> mStrategy;
-	private final AutomatonFreeRefinementEngine<L> mAutomatonFreeEngine;
 
 	private NestedWordAutomaton<L, IPredicate> mInterpolantAutomaton;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
+	private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mAfeResult;
+	private final RefinementEngineStatisticsGenerator mAfeStatistics;
 
-	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<L> strategy) {
+	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
+			final IRefinementStrategy<L> strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
-		mAutomatonFreeEngine = new AutomatonFreeRefinementEngine<>(logger, strategy);
+		final AutomatonFreeRefinementEngine<L> afEngine =
+				new AutomatonFreeRefinementEngine<>(services, logger, strategy);
+		mAfeResult = afEngine.getResult();
+		mAfeStatistics = afEngine.getRefinementEngineStatistics();
 		generateProof();
 	}
 
 	@Override
-	public LBool getCounterexampleFeasibility() {
-		return mAutomatonFreeEngine.getCounterexampleFeasibility();
-	}
-
-	@Override
-	public NestedWordAutomaton<L, IPredicate> getInfeasibilityProof() {
-		if (mInterpolantAutomaton == null) {
-			throw new IllegalStateException(
-					"There is no proof because counterexample was " + getCounterexampleFeasibility());
-		}
-		return mInterpolantAutomaton;
-	}
-
-	@Override
-	public boolean somePerfectSequenceFound() {
-		return mAutomatonFreeEngine.somePerfectSequenceFound();
-	}
-
-	@Override
-	public boolean providesIcfgProgramExecution() {
-		return mAutomatonFreeEngine.providesIcfgProgramExecution();
-	}
-
-	@Override
-	public IProgramExecution<L, Term> getIcfgProgramExecution() {
-		return mAutomatonFreeEngine.getIcfgProgramExecution();
-	}
-
-	@Override
-	public List<QualifiedTracePredicates> getUsedTracePredicates() {
-		return mUsedTracePredicates;
-	}
-
-	@Override
-	public IHoareTripleChecker getHoareTripleChecker() {
-		return mAutomatonFreeEngine.getHoareTripleChecker();
-	}
-
-	@Override
-	public IPredicateUnifier getPredicateUnifier() {
-		return mAutomatonFreeEngine.getPredicateUnifier();
-	}
-
-	@Override
 	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
-		return mAutomatonFreeEngine.getRefinementEngineStatistics();
+		return mAfeStatistics;
 	}
 
 	private void generateProof() {
-		final LBool cexResult = mAutomatonFreeEngine.getCounterexampleFeasibility();
+		final LBool cexResult = mAfeResult.getCounterexampleFeasibility();
 		if (cexResult != LBool.UNSAT) {
 			mInterpolantAutomaton = null;
 			mUsedTracePredicates = null;
 			return;
 		}
-		final Collection<QualifiedTracePredicates> ipps = mAutomatonFreeEngine.getInfeasibilityProof();
+		final Collection<QualifiedTracePredicates> ipps = mAfeResult.getInfeasibilityProof();
 		final IIpAbStrategyModule<L> interpolantAutomatonBuilder = mStrategy.getInterpolantAutomatonBuilder();
 		logModule("Using interpolant automaton builder", interpolantAutomatonBuilder);
 		try {
 
 			final List<QualifiedTracePredicates> perfectIpps =
-					ipps.stream().filter(a -> a.isPerfect()).collect(Collectors.toList());
+					ipps.stream().filter(QualifiedTracePredicates::isPerfect).collect(Collectors.toList());
 			final List<QualifiedTracePredicates> imperfectIpps =
 					ipps.stream().filter(a -> !a.isPerfect()).collect(Collectors.toList());
 
@@ -153,6 +113,13 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 
 	private void logModule(final String msg, final Object module) {
 		mLogger.info("%s %s [%s]", msg, module.getClass().getSimpleName(), module.hashCode());
+	}
+
+	@Override
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getResult() {
+		return new BasicRefinementEngineResult<>(mAfeResult.getCounterexampleFeasibility(), mInterpolantAutomaton,
+				mAfeResult.getIcfgProgramExecution(), mAfeResult.somePerfectSequenceFound(), mUsedTracePredicates,
+				new Lazy<>(mAfeResult::getHoareTripleChecker), new Lazy<>(mAfeResult::getPredicateUnifier));
 	}
 
 }

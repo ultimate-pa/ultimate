@@ -28,12 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -53,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUti
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Unmodifiable variant of {@link TransFormula}
@@ -83,9 +82,9 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	 * @param nonTheoryConsts
 	 */
 	UnmodifiableTransFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars,
-			final Map<IProgramVar, TermVariable> outVars, final Set<IProgramConst> nonTheoryConsts,
-			final Set<TermVariable> auxVars, final Set<TermVariable> branchEncoders, final Infeasibility infeasibility,
-			final ManagedScript script) {
+			final Map<IProgramVar, TermVariable> outVars, final ImmutableSet<IProgramConst> nonTheoryConsts,
+			final ImmutableSet<TermVariable> auxVars, final ImmutableSet<TermVariable> branchEncoders,
+			final Infeasibility infeasibility, final ManagedScript script) {
 		super(inVars, outVars, auxVars, nonTheoryConsts);
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(formula) : "Term not in UltimateNormalForm";
 		mFormula = formula;
@@ -172,7 +171,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Term auxVarConst = ProgramVarUtils.constructConstantForAuxVar(script, auxVarTv);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
-		final Term closedTerm = new Substitution(script, substitutionMapping).transform(formula);
+		final Term closedTerm = Substitution.apply(script, substitutionMapping, formula);
 		return closedTerm;
 	}
 
@@ -198,41 +197,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			return pv.getDefaultConstant();
 		}
 		return pv.getPrimedConstant();
-	}
-
-	/**
-	 * Remove inVars, outVars and auxVars that are not necessary. Remove auxVars if it does not occur in the formula.
-	 * Remove inVars if it does not occur in the formula. Remove outVar if it does not occur in the formula and is also
-	 * an inVar (case where the var is not modified). Note that we may not generally remove outVars that do not occur in
-	 * the formula (e.g., TransFormula for havoc statement).
-	 */
-	public static void removeSuperfluousVars(final Term formula, final Map<IProgramVar, TermVariable> inVars,
-			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars) {
-		final Set<TermVariable> allVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
-		auxVars.retainAll(allVars);
-		final List<IProgramVar> superfluousInVars = new ArrayList<>();
-		final List<IProgramVar> superfluousOutVars = new ArrayList<>();
-		for (final Entry<IProgramVar, TermVariable> bv : inVars.entrySet()) {
-			final TermVariable inVar = bv.getValue();
-			if (!allVars.contains(inVar)) {
-				superfluousInVars.add(bv.getKey());
-			}
-		}
-		for (final Entry<IProgramVar, TermVariable> bv : outVars.entrySet()) {
-			final TermVariable outVar = bv.getValue();
-			if (!allVars.contains(outVar)) {
-				final TermVariable inVar = inVars.get(bv.getKey());
-				if (outVar == inVar) {
-					superfluousOutVars.add(bv.getKey());
-				}
-			}
-		}
-		for (final IProgramVar bv : superfluousInVars) {
-			inVars.remove(bv);
-		}
-		for (final IProgramVar bv : superfluousOutVars) {
-			outVars.remove(bv);
-		}
 	}
 
 	private static boolean allVarsContainsFreeVars(final Set<TermVariable> allVars, final Term term,

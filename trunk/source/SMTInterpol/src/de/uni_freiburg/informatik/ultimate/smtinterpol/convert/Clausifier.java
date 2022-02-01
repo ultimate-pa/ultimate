@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -34,9 +35,12 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.DataType;
+import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.OccurrenceCounter;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -66,6 +70,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheo
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.DTReverseTrigger;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.DataTypeTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprHelpers;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprTheorySettings;
@@ -582,7 +588,7 @@ public class Clausifier {
 						} else if (trivialEq == mTheory.mFalse) {
 							lit = mFALSE;
 						} else {
-							lit = mQuantTheory.getQuantEquality(lhs, rhs);
+							lit = mQuantTheory.getQuantEquality(lhs, rhs, mCollector.getSource());
 						}
 					} else {
 						final EqualityProxy eq = createEqualityProxy(lhs, rhs, mCollector.getSource());
@@ -602,14 +608,14 @@ public class Clausifier {
 					// (<= SMTAffineTerm 0)
 					if (quantified) {
 						final Term linTerm = at.getParameters()[0];
-						lit = mQuantTheory.getQuantInequality(positive, linTerm);
+						lit = mQuantTheory.getQuantInequality(positive, linTerm, mCollector.getSource());
 					} else {
 						lit = createLeq0(at, mCollector.getSource());
 					}
-				} else if (!at.getFunction().isInterpreted() || at.getFunction().getName().equals("select")) {
+				} else if (!at.getFunction().isInterpreted() || at.getFunction().getName().equals("select") || at.getFunction().getName().equals("is")) {
 					lit = createBooleanLit(at, mCollector.getSource());
 				} else {
-					lit = createAnonLiteral(idx);
+					lit = createAnonLiteral(idx, mCollector.getSource());
 					if (positive) {
 						addAuxAxioms(idx, true, mCollector.getSource());
 					} else {
@@ -647,7 +653,7 @@ public class Clausifier {
 				// Build a quantified disequality, this allows us to use the literal for DER.
 				// That is, x --> (x != false) and ~x --> (x != true),
 				final Term value = positive ? mTheory.mFalse : mTheory.mTrue;
-				final ILiteral lit = mQuantTheory.getQuantEquality(idx, value);
+				final ILiteral lit = mQuantTheory.getQuantEquality(idx, value, mCollector.getSource());
 				final Term atomRewrite =
 						mTracker.intern(idx, (positive ? lit.negate() : lit).getSMTFormula(theory, true));
 				if (positive) {
@@ -656,6 +662,20 @@ public class Clausifier {
 					rewrite = mTracker.congruence(rewrite, new Term[] { atomRewrite });
 				}
 				mCollector.addLiteral(lit.negate(), rewrite);
+			} else if (idx instanceof MatchTerm) {
+				final ILiteral lit = createAnonLiteral(idx, mCollector.getSource());
+				if (positive) {
+					addAuxAxioms(idx, true, mCollector.getSource());
+				} else {
+					addAuxAxioms(idx, false, mCollector.getSource());
+				}
+				final Term atomRewrite = mTracker.intern(idx, lit.getSMTFormula(theory, true));
+				if (positive) {
+					rewrite = mTracker.transitivity(rewrite, atomRewrite);
+				} else {
+					rewrite = mTracker.congruence(rewrite, new Term[] { atomRewrite });
+				}
+				mCollector.addLiteral(positive ? lit : lit.negate(), rewrite);
 			} else {
 				throw new SMTLIBException("Cannot handle literal " + mLiteral);
 			}
@@ -739,7 +759,7 @@ public class Clausifier {
 				rewrite = mTracker.orSimpClause(rewrite);
 			}
 			Term rewriteProof = mTracker.modusPonens(mClause, rewrite);
-			Term proof = mTracker.getClauseProof(rewriteProof);
+			final Term proof = mTracker.getClauseProof(rewriteProof);
 			boolean isDpllClause = true;
 
 			final Literal[] lits = mLits.toArray(new Literal[mLits.size()]);
@@ -1075,6 +1095,28 @@ public class Clausifier {
 					final boolean isConst = funcName.equals("const");
 					mArrayTheory.notifyArray(getCCTerm(term), isStore, isConst);
 				}
+
+
+				if (fs.isConstructor()) {
+					final DataType returnSort = (DataType) fs.getReturnSort().getSortSymbol();
+					final Constructor c = returnSort.findConstructor(fs.getName());
+
+					if (c != null) {
+						for (final String sel : c.getSelectors()) {
+							final FunctionSymbol selFs = mTheory.getFunction(sel, fs.getReturnSort());
+							mCClosure.insertReverseTrigger(selFs, ccTerm, 0,
+									new DTReverseTrigger(mDataTypeTheory, this, selFs, ccTerm));
+						}
+						for (final Constructor constr : returnSort.getConstructors()) {
+							final String[] index = new String[] { constr.getName() };
+							final FunctionSymbol isFs = mTheory.getFunctionWithResult("is", index, null,
+									fs.getReturnSort());
+							mCClosure.insertReverseTrigger(isFs, ccTerm, 0,
+									new DTReverseTrigger(mDataTypeTheory, this, isFs, ccTerm));
+						}
+					}
+				}
+
 			}
 			if (term.getSort().isNumericSort()) {
 				boolean needsLA = term instanceof ConstantTerm;
@@ -1095,6 +1137,9 @@ public class Clausifier {
 				if (term != term.getTheory().mTrue && term != term.getTheory().mFalse) {
 					addExcludedMiddleAxiom(term, source);
 				}
+			}
+			if (term instanceof MatchTerm) {
+				addMatchAxiom((MatchTerm) term, source);
 			}
 		}
 		if (!mIsRunning) {
@@ -1177,6 +1222,9 @@ public class Clausifier {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol fs = appTerm.getFunction();
+			if (fs.isConstructor() || fs.isSelector()) {
+				return true;
+			}
 			if (appTerm.getParameters().length == 0) {
 				return false;
 			}
@@ -1192,6 +1240,7 @@ public class Clausifier {
 			case "@diff":
 			case "const":
 			case "@EQ":
+			case "is":
 				return true;
 			case "div":
 			case "mod":
@@ -1205,10 +1254,12 @@ public class Clausifier {
 	}
 
 	/**
-	 * A QuantifiedFormula is either skolemized or the universal quantifier is dropped before processing the subformula.
-	 * 
-	 * In the existential case, the variables are replaced by Skolem functions over the free variables. In the universal
-	 * case, the variables are uniquely renamed.
+	 * A QuantifiedFormula is either skolemized or the universal quantifier is
+	 * dropped before processing the subformula.
+	 *
+	 * In the existential case, the variables are replaced by Skolem functions over
+	 * the free variables. In the universal case, the variables are uniquely
+	 * renamed.
 	 *
 	 * @param positive
 	 * @param qf
@@ -1274,6 +1325,7 @@ public class Clausifier {
 	private CClosure mCClosure;
 	private LinArSolve mLASolver;
 	private ArrayTheory mArrayTheory;
+	private DataTypeTheory mDataTypeTheory;
 	private EprTheory mEprTheory;
 	private QuantifierTheory mQuantTheory;
 
@@ -1514,6 +1566,59 @@ public class Clausifier {
 			} else {
 				throw new AssertionError("AuxAxiom not implemented: " + term);
 			}
+		} else if (term instanceof MatchTerm) {
+			final Theory theory = term.getTheory();
+			final MatchTerm mt = (MatchTerm) term;
+			final Term dataTerm = mt.getDataTerm();
+			final Map<Constructor, Term> cases = new LinkedHashMap<>();
+			int c_i = 0;
+			for (final Constructor c : mt.getConstructors()) {
+				Annotation rule;
+				if (cases.containsKey(c)) {
+					c_i++;
+					continue;
+				}
+
+				final Deque<Term> clause = new ArrayDeque<>();
+				clause.add(negLitTerm);
+
+				final Map<TermVariable, Term> argSubs = new LinkedHashMap<>();
+				if (c == null) {
+					// if c == null, this is the default case which matches everything else
+					clause.addAll(cases.values());
+					argSubs.put(mt.getVariables()[c_i][0], dataTerm);
+					rule = ProofConstants.AUX_MATCH_DEFAULT;
+					assert c_i == mt.getConstructors().length - 1;
+				} else {
+					// build is-condition
+					final FunctionSymbol isFs = theory.getFunctionWithResult("is", new String[] { c.getName() }, null,
+							dataTerm.getSort());
+					final Term isTerm = theory.term(isFs, dataTerm);
+					cases.put(c, isTerm);
+					clause.add(theory.term("not", isTerm));
+
+					// substitute argument TermVariables with the according selector function
+					int s_i = 0;
+					for (final String sel : c.getSelectors()) {
+						final Term selTerm = theory.term(theory.getFunctionSymbol(sel), dataTerm);
+						argSubs.put(mt.getVariables()[c_i][s_i++], selTerm);
+					}
+					rule = ProofConstants.AUX_MATCH_CASE;
+				}
+
+				// build implicated literal
+				final FormulaUnLet unlet = new FormulaUnLet();
+				unlet.addSubstitutions(argSubs);
+				final Term equalTerm = unlet.unlet(mt.getCases()[c_i]);
+				if (positive) {
+					clause.add(equalTerm);
+				} else {
+					clause.add(theory.term("not", equalTerm));
+				}
+				final Term axiom = mTracker.auxAxiom(theory.term("or", clause.toArray(new Term[clause.size()])), rule);
+				buildAuxClause(negLit, axiom, source);
+				c_i++;
+			}
 		} else {
 			throw new AssertionError("Don't know how to create aux axiom: " + term);
 		}
@@ -1643,6 +1748,55 @@ public class Clausifier {
 		buildAuxClause(falseLit, axiom, source);
 	}
 
+	public void addMatchAxiom(final MatchTerm term, final SourceAnnotation source) {
+		final Theory theory = term.getTheory();
+		final Term dataTerm = term.getDataTerm();
+		final Map<Constructor, Term> cases = new LinkedHashMap<>();
+		int c_i = 0;
+		for (final Constructor c : term.getConstructors()) {
+			if (cases.containsKey(c)) {
+				c_i++;
+				continue;
+			}
+
+			final Map<TermVariable, Term> argSubs = new LinkedHashMap<>();
+			final Deque<Term> clause = new ArrayDeque<>();
+			Annotation rule;
+			if (c == null) {
+				// if c == null, this is the default case which matches everything else
+				clause.addAll(cases.values());
+				argSubs.put(term.getVariables()[c_i][0], dataTerm);
+				rule = ProofConstants.AUX_MATCH_DEFAULT;
+				assert c_i == term.getConstructors().length - 1;
+			} else {
+				// build is-condition
+				final FunctionSymbol isFs = theory.getFunctionWithResult("is", new String[] { c.getName() }, null,
+						dataTerm.getSort());
+				final Term isTerm = theory.term(isFs, dataTerm);
+				cases.put(c, isTerm);
+				clause.add(theory.term("not", isTerm));
+
+				// substitute argument TermVariables with the according selector function
+				int s_i = 0;
+				for (final String sel : c.getSelectors()) {
+					final Term selTerm = theory.term(theory.getFunctionSymbol(sel), dataTerm);
+					argSubs.put(term.getVariables()[c_i][s_i++], selTerm);
+				}
+				rule = ProofConstants.AUX_MATCH_CASE;
+			}
+
+			// build implicated equality
+			final FormulaUnLet unlet = new FormulaUnLet();
+			unlet.addSubstitutions(argSubs);
+			final Term caseTerm = mTheory.term("=", term, unlet.unlet(term.getCases()[c_i]));
+			clause.add(caseTerm);
+			Term axiom = theory.term("or", clause.toArray(new Term[clause.size()]));
+			axiom = mTracker.auxAxiom(axiom, ProofConstants.AUX_MATCH_CASE);
+			buildClause(axiom, source);
+			c_i++;
+		}
+	}
+
 	/**
 	 * Create an equality proxy for the terms lhs and rhs. This will check for trivial equality and return a false or
 	 * true proxy instead. For others it creates the equality proxy. It also creates the terms and their term axioms for
@@ -1697,14 +1851,12 @@ public class Clausifier {
 
 	/**
 	 * Check if an equality between two terms is trivially true or false.
-	 * 
-	 * @param lhs
-	 *            the left side of the equality
-	 * @param rhs
-	 *            the right side of the equality
-	 * @param theory
-	 *            the theory
-	 * @return the true (false) term if the equality is trivially true (false), null otherwise.
+	 *
+	 * @param lhs    the left side of the equality
+	 * @param rhs    the right side of the equality
+	 * @param theory the theory
+	 * @return the true (false) term if the equality is trivially true (false), null
+	 *         otherwise.
 	 */
 	public static Term checkAndGetTrivialEquality(final Term lhs, final Term rhs, final Theory theory) {
 		// This code corresponds to the check in createEqualityProxy(...)
@@ -1731,7 +1883,7 @@ public class Clausifier {
 		return null;
 	}
 
-	ILiteral createAnonLiteral(final Term term) {
+	ILiteral createAnonLiteral(final Term term, final SourceAnnotation source) {
 		ILiteral lit = getILiteral(term);
 		if (lit == null) {
 			/*
@@ -1755,7 +1907,7 @@ public class Clausifier {
 					// for instantiation terms - should it be done earlier?)
 					// We use an equality "f(x,y,...)=true", not a NamedAtom, as CClosure must treat the literal
 					// instances.
-					lit = mQuantTheory.getQuantEquality(auxTerm, mTheory.mTrue);
+					lit = mQuantTheory.getQuantEquality(auxTerm, mTheory.mTrue, source);
 				}
 			} else {
 				lit = new NamedAtom(term, mStackLevel);
@@ -1770,7 +1922,7 @@ public class Clausifier {
 	ILiteral getLiteralTseitin(final Term t, final SourceAnnotation source) {
 		final Term idx = toPositive(t);
 		final boolean pos = t == idx;
-		final ILiteral lit = createAnonLiteral(idx);
+		final ILiteral lit = createAnonLiteral(idx, source);
 		addAuxAxioms(idx, true, source);
 		addAuxAxioms(idx, false, source);
 		return pos ? lit : lit.negate();
@@ -1837,6 +1989,13 @@ public class Clausifier {
 		}
 	}
 
+	private void setupDataTypeTheory() {
+		if (mDataTypeTheory == null) {
+			mDataTypeTheory = new DataTypeTheory(this, mTheory, mCClosure);
+			mEngine.addTheory(mDataTypeTheory);
+		}
+	}
+
 	private void setupEprTheory() {
 		// TODO maybe merge with setupQuantifiers, below?
 
@@ -1868,7 +2027,7 @@ public class Clausifier {
 	}
 
 	public void setLogic(final Logics logic) {
-		if (logic.isUF() || logic.isArray() || logic.isArithmetic() || logic.isQuantified()) {
+		if (logic.isUF() || logic.isArray() || logic.isArithmetic() || logic.isQuantified() || logic.isDatatype()) {
 			// also need UF for div/mod
 			// and for quantifiers for AUX functions
 			setupCClosure();
@@ -1886,6 +2045,9 @@ public class Clausifier {
 			} else {
 				setupQuantifiers();
 			}
+		}
+		if (logic.isDatatype()) {
+			setupDataTypeTheory();
 		}
 	}
 
@@ -2133,7 +2295,7 @@ public class Clausifier {
 				lit = atom;
 			} else {
 				if (term.getFreeVars().length > 0 && !mIsEprEnabled) {
-					lit = mQuantTheory.getQuantEquality(term, mTheory.mTrue);
+					lit = mQuantTheory.getQuantEquality(term, mTheory.mTrue, source);
 
 					// alex: this the right place to get rid of the CClosure predicate conversion in EPR-case?
 					// --> seems to be one of three positions.. (keyword: predicate-to-function conversion)

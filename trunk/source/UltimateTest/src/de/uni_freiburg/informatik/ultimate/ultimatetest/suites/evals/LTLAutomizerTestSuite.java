@@ -105,7 +105,6 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 
 			getPair("examples/LTL/coolant/"),
 			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
-			getPair("examples/LTL/bugs/"),
 			getPair("examples/LTL/simple/"),
 
 			// Possible soundness bug

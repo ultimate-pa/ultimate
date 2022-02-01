@@ -33,8 +33,6 @@ package de.uni_freiburg.informatik.ultimate.util.statistics;
  */
 public interface IStatisticsElement {
 
-	Class<?> getDataType();
-
 	Object aggregate(Object o1, Object o2);
 
 	String prettyprint(Object o);

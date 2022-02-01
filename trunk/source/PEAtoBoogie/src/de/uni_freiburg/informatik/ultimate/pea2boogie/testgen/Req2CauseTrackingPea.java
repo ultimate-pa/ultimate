@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private final ILogger mLogger;
-	private final List<InitializationPattern> mInitPattern;
+	private final List<DeclarationPattern> mInitPattern;
 	private final List<ReqPeas> mReqPeas;
 	private IReqSymbolTable mSymbolTable;
 	private boolean mHasErrors;
@@ -77,7 +77,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	private static final String LOWER_AUTOMATON_SUFFIX = "_tt";
 
 	public Req2CauseTrackingPea(final IUltimateServiceProvider services, final ILogger logger,
-			final List<InitializationPattern> init) {
+			final List<DeclarationPattern> init) {
 		mServices = services;
 		mLogger = logger;
 		mInitPattern = init;
@@ -92,7 +92,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
-		for (final InitializationPattern p : mInitPattern) {
+		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
 			mDurations.addInitPattern(p);
 			if (p.getCategory() == VariableCategory.OUT) {
@@ -131,7 +131,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		// repair old pea
 		setFlags(oldPea.getInit());
 		final Phase[] oldLocations = oldPea.getPhases();
-		final int dcEffectPhase = getHighestDCPhase(oldLocations);
+		final int dcEffectPhase = getHighestDCPhase(oldLocations, dcFormula);
 		mLogger.info(new StringBuilder("Effect Variables of ").append(pattern.toString()).append(": ")
 				.append(effectVars.toString()).toString() + ", with effect phase: " + Integer.toString(dcEffectPhase));
 		final Phase[] newLocations = transformLocations(oldPea, oldSymbolTable, effectVars, dcEffectPhase, dcFormula);
@@ -265,10 +265,10 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return toTrackVars;
 	}
 
-	private static int getHighestDCPhase(final Phase[] oldLocations) {
+	private static int getHighestDCPhase(final Phase[] oldLocations, final DCPhase[] dcFormula) {
 		// Find the last phase that is mentioned in automaton. Its the effect phase.
 		int lastDcPhase = 0;
-		for (int i = 0; i < oldLocations.length; i++) {
+		for (int i = 0; i < dcFormula.length; i++) {
 			for (final Phase p : oldLocations) {
 				final PhaseBits pb = p.getPhaseBits();
 				if (pb != null && (pb.isActive(i) || pb.isWaiting(i) || pb.isExact(i)) && i > lastDcPhase) {

@@ -91,7 +91,14 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		// - input is a subset of a known input
 		// - input is a superset of a known input, but a subset of any input from the iteration sequence.
 		// Such re-use strategies work well as a WrapperLoopSummarzier
-		final IPredicate result = mCache.computeIfAbsent(key, this::summarizeInternal);
+		IPredicate result = mCache.get(key);
+		if (result == null) {
+			// do not use computeIfAbsent because mDagIpr may modify the cache during the computation of
+			// this summary
+			result = summarizeInternal(key);
+			final IPredicate intermediateResult = mCache.put(key, result);
+			assert intermediateResult == null || result == intermediateResult;
+		}
 
 		mStats.stop(SifaStats.Key.LOOP_SUMMARIZER_OVERALL_TIME);
 		return result;

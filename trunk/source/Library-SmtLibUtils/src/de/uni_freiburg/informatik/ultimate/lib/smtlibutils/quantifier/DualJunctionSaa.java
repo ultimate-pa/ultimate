@@ -32,12 +32,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Smart array Ackermanization.
@@ -45,6 +49,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DualJunctionSaa extends DualJunctionQuantifierElimination {
+
+	/**
+	 * Our array elimination does not support if the term of the elimination task
+	 * contains quantified formulas. If this variable is set, we bring the term in
+	 * prenex normal form. Apply the elimination to the "matrix" of the prenex
+	 * normal form and add prepend the quantifiers to the result. If the elimination
+	 * new introduces auxiliary quantified variables, these have to be added at the
+	 * same level as the eliminatee, i.e., have to be prepended to the result. If
+	 * this variable is not set the elimination may crash or return unsound results.
+	 */
+	private static final boolean PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS = true;
 
 	/**
 	 * @see constructor
@@ -77,45 +92,116 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 	}
 
 	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt) {
-		final EliminationTask er = tryToEliminateOne(inputEt);
+		final EliminationResult er = tryToEliminateOne(inputEt);
 		if (er == null) {
 			return null;
 		} else {
-			return new EliminationResult(er, Collections.emptySet());
+			return er;
 		}
 	}
 
-	private EliminationTask tryToEliminateOne(final EliminationTask inputEt) {
+	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
 				continue;
 			}
-			EliminationTaskPlain res;
-			try {
-				res = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript,
-						new EliminationTaskPlain(inputEt.getQuantifier(), Collections.singleton(eliminatee),
-								inputEt.getTerm(), inputEt.getContext().getCriticalConstraint()));
-			} catch (final SMTLIBException e) {
-				throw new AssertionError(e);
-			} catch (final ElimStorePlainException e) {
-				if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)
-						|| e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
-					res = null;
-				} else {
-					throw new AssertionError(e);
-				}
-			}
-			if (res != null) {
-				if (Arrays.asList(res.getTerm().getFreeVars()).contains(eliminatee)) {
-					throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEt.toTerm(mScript));
-				}
-				final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(inputEt.getEliminatees());
-				resultEliminatees.remove(eliminatee);
-				resultEliminatees.addAll(res.getEliminatees());
-				return inputEt.update(resultEliminatees, res.getTerm());
+			final EliminationTask singletonEliminationTask = new EliminationTask(inputEt.getQuantifier(),
+					Collections.singleton(eliminatee), inputEt.getTerm(), inputEt.getContext());
+			final EliminationResult er = tryToEliminateOne0(singletonEliminationTask);
+			if (er != null) {
+				assert inputEt.getContext() == er.getEliminationTask().getContext() : "illegal change of context";
+				return new EliminationResult(
+						er.getEliminationTask().update(inputEt.getEliminatees(), er.getEliminationTask().getTerm()),
+						er.getNewEliminatees());
 			}
 		}
 		return null;
+	}
+
+	private EliminationResult tryToEliminateOne0(final EliminationTask inputEt) {
+		final Pair<Term, EliminationTask> pair = inputEt.makeTight(mServices, mMgdScript);
+		if (pair == null) {
+			return tryToEliminateOne1(inputEt);
+		} else {
+			final EliminationResult er = tryToEliminateOne1(pair.getSecond());
+			if (er == null) {
+				return null;
+			} else {
+				final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+						pair.getFirst(), er.getEliminationTask().getTerm());
+				final EliminationTask resultEliminationTask = new EliminationTask(inputEt.getQuantifier(),
+						inputEt.getEliminatees(), resultTerm, inputEt.getContext());
+				return new EliminationResult(resultEliminationTask, er.getNewEliminatees());
+			}
+		}
+	}
+
+	private EliminationResult tryToEliminateOne1(final EliminationTask inputEt) {
+		final EliminationResult er;
+		if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
+			er = tryToEliminateOne2(inputEt);
+		} else {
+			er = tryToEliminateOne3(inputEt);
+		}
+		return er;
+	}
+
+	private EliminationResult tryToEliminateOne2(final EliminationTask inputEt) {
+		final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
+		final Term term = qs.getInnerTerm();
+		final EliminationTask et = inputEt.update(term);
+		final EliminationResult res = tryToEliminateOne3(et);
+		if (res == null) {
+			return null;
+		} else {
+			final QuantifierSequence qsForResult = new QuantifierSequence(mMgdScript, res.getEliminationTask().getTerm(),
+					qs.getQuantifierBlocks());
+			final Term resultTerm = qsForResult.toTerm();
+			return new EliminationResult(res.getEliminationTask().update(resultTerm), res.getNewEliminatees());
+		}
+	}
+
+	private EliminationResult tryToEliminateOne3(final EliminationTask inputEt) {
+		final EliminationTaskPlain res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(),
+				inputEt.getContext(), inputEt.getEliminatees().iterator().next());
+		if (res == null) {
+			return null;
+		} else {
+			final Set<TermVariable> newEliminatees = new HashSet<TermVariable>(res.getEliminatees());
+			newEliminatees.removeAll(inputEt.getEliminatees());
+			return new EliminationResult(new EliminationTask(res.getQuantifier(), inputEt.getEliminatees(),
+					res.getTerm(), inputEt.getContext()), newEliminatees);
+		}
+	}
+
+	private EliminationTaskPlain tryToEliminate(final int quantifier, final Term term, final Context context,
+			final TermVariable eliminatee) {
+		final EliminationTaskPlain inputEtp = new EliminationTaskPlain(quantifier, Collections.singleton(eliminatee),
+				term, context.getCriticalConstraint());
+		EliminationTaskPlain res1;
+		try {
+			res1 = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEtp);
+		} catch (final SMTLIBException e) {
+			throw new AssertionError(e);
+		} catch (final ElimStorePlainException e) {
+			if (e.getMessage().equals(ElimStorePlainException.NON_TOP_LEVEL_DER)) {
+				res1 = null;
+			} else if (e.getMessage().equals(ElimStorePlainException.CAPTURED_INDEX)) {
+				if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
+					throw new AssertionError("Captured index although handling of inner quantfiers is set");
+				}
+				res1 = null;
+			} else {
+				throw new AssertionError(e);
+			}
+		}
+		if (res1 != null) {
+			if (Arrays.asList(res1.getTerm().getFreeVars()).contains(eliminatee)) {
+				throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEtp.toTerm(mScript));
+			}
+		}
+		return res1;
 	}
 
 }

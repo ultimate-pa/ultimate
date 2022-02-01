@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class SdHoareTripleCheckerHelper {
 
@@ -77,20 +78,7 @@ public class SdHoareTripleCheckerHelper {
 	}
 
 	private static boolean varSetDisjoint(final Set<IProgramVar> set1, final Set<IProgramVar> set2) {
-		if (set1.size() < set2.size()) {
-			for (final IProgramVar bv : set1) {
-				if (set2.contains(bv)) {
-					return false;
-				}
-			}
-		} else {
-			for (final IProgramVar bv : set2) {
-				if (set1.contains(bv)) {
-					return false;
-				}
-			}
-		}
-		return true;
+		return DataStructureUtils.haveEmptyIntersection(set1, set2);
 	}
 
 	/**
@@ -110,13 +98,14 @@ public class SdHoareTripleCheckerHelper {
 				return Validity.INVALID;
 			}
 			return null;
-		} else if (infeasiblity == Infeasibility.INFEASIBLE) {
-			return Validity.VALID;
-		} else if (infeasiblity == Infeasibility.NOT_DETERMINED) {
-			return null;
-		} else {
-			throw new IllegalArgumentException();
 		}
+		if (infeasiblity == Infeasibility.INFEASIBLE) {
+			return Validity.VALID;
+		}
+		if (infeasiblity == Infeasibility.NOT_DETERMINED) {
+			return null;
+		}
+		throw new IllegalArgumentException();
 	}
 
 	/**
@@ -127,12 +116,7 @@ public class SdHoareTripleCheckerHelper {
 	 * @return
 	 */
 	private static boolean varsDisjoinedFormInVars(final IPredicate state, final UnmodifiableTransFormula tf) {
-		for (final IProgramVar bv : state.getVars()) {
-			if (tf.getInVars().containsKey(bv)) {
-				return false;
-			}
-		}
-		return true;
+		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getInVars().keySet());
 	}
 
 	/**
@@ -149,11 +133,11 @@ public class SdHoareTripleCheckerHelper {
 	 *
 	 * FIXME: Check for preconditions, postcondition? Check at least for infeasibility flag of TransFormula.
 	 */
-	public Validity sdecInteral(final IPredicate pre, final IInternalAction act, final IPredicate post) {
+	public Validity sdecInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (mPredicateCoverageChecker != null) {
 			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
-				if (Collections.disjoint(pre.getVars(), act.getTransformula().getAssignedVars())) {
+				if (DataStructureUtils.haveEmptyIntersection(pre.getVars(), act.getTransformula().getAssignedVars())) {
 					mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
 					return Validity.VALID;
 				}
@@ -170,7 +154,8 @@ public class SdHoareTripleCheckerHelper {
 			// } else
 			if (act.getTransformula().getInVars().containsKey(bv)) {
 				return null;
-			} else if (act.getTransformula().getOutVars().containsKey(bv)) {
+			}
+			if (act.getTransformula().getOutVars().containsKey(bv)) {
 				return null;
 			}
 		}
@@ -181,11 +166,14 @@ public class SdHoareTripleCheckerHelper {
 			if (sat == Validity.VALID) {
 				mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
 				return Validity.VALID;
-			} else if (sat == Validity.UNKNOWN) {
+			}
+			if (sat == Validity.UNKNOWN) {
 				return null;
-			} else if (sat == Validity.NOT_CHECKED) {
+			}
+			if (sat == Validity.NOT_CHECKED) {
 				return null;
-			} else if (sat == Validity.INVALID) {
+			}
+			if (sat == Validity.INVALID) {
 				final String proc = act.getPrecedingProcedure();
 				assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
 						|| act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
@@ -195,10 +183,8 @@ public class SdHoareTripleCheckerHelper {
 				}
 				// continue and return Validity.INVALID
 			}
-		} else {
-			if (!Collections.disjoint(pre.getVars(), post.getVars())) {
-				return null;
-			}
+		} else if (!Collections.disjoint(pre.getVars(), post.getVars())) {
+			return null;
 		}
 		mHoareTripleCheckerStatistics.getSDsCounter().incIn();
 		switch (act.getTransformula().isInfeasible()) {
@@ -222,9 +208,15 @@ public class SdHoareTripleCheckerHelper {
 	// else return false;
 	// }
 
-	public Validity sdLazyEcInteral(final IPredicate pre, final IInternalAction act, final IPredicate post) {
+	/**
+	 * FIXME 20210810 Matthias: Bad name: "incomplete" would be better than "lazy".
+	 * Idea: If succedent of implication does (in NNF) not contain a disjunction and
+	 * contains some variable that does not occur in the antecedent the implication
+	 * does not hold very often.
+	 */
+	public Validity sdLazyEcInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (isOrIteFormula(post)) {
-			return sdecInteral(pre, act, post);
+			return sdecInternal(pre, act, post);
 		}
 		for (final IProgramVar bv : post.getVars()) {
 			if (!pre.getVars().contains(bv) || !act.getTransformula().getInVars().containsKey(bv)
@@ -246,12 +238,17 @@ public class SdHoareTripleCheckerHelper {
 	}
 
 	public Validity sdecCall(final IPredicate pre, final ICallAction act, final IPredicate post) {
+		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, act.getPrecedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, act.getSucceedingProcedure())) {
+			return null;
+		}
 		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
 				// if oldVar occurs this edge might be inductive since
 				// old(g)=g is true
 				return null;
-			} else if (bv.isGlobal()) {
+			}
+			if (bv.isGlobal()) {
 				assert !bv.isOldvar();
 				if (pre.getVars().contains(bv)) {
 					return null;
@@ -293,6 +290,11 @@ public class SdHoareTripleCheckerHelper {
 
 	public Validity sdecReturn(final IPredicate pre, final IPredicate hier, final IReturnAction ret,
 			final IPredicate post) {
+		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, ret.getPrecedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(hier, ret.getSucceedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, ret.getSucceedingProcedure())) {
+			return null;
+		}
 		if (hierPostIndependent(hier, ret, post)
 				&& preHierNotFalse(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure())
 				&& prePostIndependent(pre, ret, post)) {
@@ -317,7 +319,6 @@ public class SdHoareTripleCheckerHelper {
 		if (isOrIteFormula(post)) {
 			return sdecReturn(pre, hier, ret, post);
 		}
-		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 
 		/*
 		 * Old Version. Does not work if param set to constant.
@@ -338,6 +339,7 @@ public class SdHoareTripleCheckerHelper {
 		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		final boolean assignedVarsRestrictedByPre =
 				!varSetDisjoint(ret.getAssignmentOfReturn().getInVars().keySet(), pre.getVars());
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		for (final IProgramVar bv : post.getVars()) {
 			if (!continueSdLazyEcReturnLoop(bv, modifiableGlobals, hier, pre, assignedVars,
 					assignedVarsRestrictedByPre)) {
@@ -374,14 +376,12 @@ public class SdHoareTripleCheckerHelper {
 				}
 			}
 
-		} else {
-			if (assignedVars.contains(bv)) {
-				if (assignedVarsRestrictedByPre) {
-					return true;
-				}
-			} else if (hier.getVars().contains(bv)) {
+		} else if (assignedVars.contains(bv)) {
+			if (assignedVarsRestrictedByPre) {
 				return true;
 			}
+		} else if (hier.getVars().contains(bv)) {
+			return true;
 		}
 		return false;
 	}
@@ -414,10 +414,8 @@ public class SdHoareTripleCheckerHelper {
 					if (hier.getVars().contains(((IProgramOldVar) bv).getNonOldVar())) {
 						return false;
 					}
-				} else {
-					if (!modifiableGlobals.contains(bv) && hier.getVars().contains(bv)) {
-						return false;
-					}
+				} else if (!modifiableGlobals.contains(bv) && hier.getVars().contains(bv)) {
+					return false;
 				}
 			}
 		}
@@ -458,12 +456,8 @@ public class SdHoareTripleCheckerHelper {
 	private static boolean disjointOnNonModifiableGlobals(final IPredicate hier, final IPredicate returnPred,
 			final Set<IProgramNonOldVar> modifiableGlobals) {
 		for (final IProgramVar pv : returnPred.getVars()) {
-			if (pv instanceof IProgramNonOldVar) {
-				if (!modifiableGlobals.contains(pv)) {
-					if (hier.getVars().contains(pv)) {
-						return false;
-					}
-				}
+			if (pv instanceof IProgramNonOldVar && !modifiableGlobals.contains(pv) && hier.getVars().contains(pv)) {
+				return false;
 			}
 		}
 		return true;
@@ -591,11 +585,10 @@ public class SdHoareTripleCheckerHelper {
 	 */
 	public Validity sdecCallSelfloop(final IPredicate p, final ICallAction call) {
 		for (final IProgramVar bv : p.getVars()) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					return null;
-				}
-			} else {
+			if (!bv.isGlobal()) {
+				return null;
+			}
+			if (bv.isOldvar()) {
 				return null;
 			}
 		}
@@ -606,13 +599,13 @@ public class SdHoareTripleCheckerHelper {
 	public Validity sdecReturnSelfloopPre(final IPredicate p, final IReturnAction ret) {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		for (final IProgramVar bv : p.getVars()) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					return null;
-				} else if (assignedVars.contains(bv)) {
-					return null;
-				}
-			} else {
+			if (!bv.isGlobal()) {
+				return null;
+			}
+			if (bv.isOldvar()) {
+				return null;
+			}
+			if (assignedVars.contains(bv)) {
 				return null;
 			}
 		}
@@ -644,8 +637,7 @@ public class SdHoareTripleCheckerHelper {
 		if (formula instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) formula;
 			final FunctionSymbol symbol = appTerm.getFunction();
-			final boolean result = symbol.getName().equals("or") || symbol.getName().equals("ite");
-			return result;
+			return "or".equals(symbol.getName()) || "ite".equals(symbol.getName());
 		}
 		return false;
 	}

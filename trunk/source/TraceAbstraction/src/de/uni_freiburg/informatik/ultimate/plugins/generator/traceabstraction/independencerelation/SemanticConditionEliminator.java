@@ -26,19 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
 
-import java.util.Arrays;
-import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
@@ -107,9 +102,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 
 	private IPredicate normalize(final IPredicate condition, final L a, final L b) {
 		// Syntactically determine if condition is possibly relevant to independence.
-		final Set<TermVariable> relevantVars = getRelevantVariables(a, b);
-		final boolean isRelevant = Arrays.stream(condition.getFormula().getFreeVars()).anyMatch(relevantVars::contains);
-		if (isRelevant || mIsInconsistent.test(condition)) {
+		if (mIsInconsistent.test(condition) || isRelevant(condition, a) || isRelevant(condition, b)) {
 			return condition;
 		}
 
@@ -118,10 +111,9 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		return null;
 	}
 
-	private Set<TermVariable> getRelevantVariables(final L a, final L b) {
-		final Stream<IProgramVar> readA = a.getTransformula().getInVars().keySet().stream();
-		final Stream<IProgramVar> readB = b.getTransformula().getInVars().keySet().stream();
-		return Stream.concat(readA, readB).map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+	private boolean isRelevant(final IPredicate condition, final L statement) {
+		return DataStructureUtils.haveNonEmptyIntersection(condition.getVars(),
+				statement.getTransformula().getInVars().keySet());
 	}
 
 	private class EliminatorStatistics extends IndependenceStatisticsDataProvider {

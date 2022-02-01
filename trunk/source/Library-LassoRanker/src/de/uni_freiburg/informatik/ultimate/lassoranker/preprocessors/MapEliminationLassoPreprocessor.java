@@ -100,7 +100,7 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 				mReplacementVarFactory, Arrays.asList(lasso.getStem(), lasso.getLoop()), mSettings);
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
-				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+				mSymbolTable, mManagedScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
 		final EqualityAnalysisResult equalityAnalysisLoop = esia.getEqualityAnalysisResult();
 		mArrayIndexSupportingInvariants
 				.addAll(equalityAnalysisLoop.constructListOfEqualities(mManagedScript.getScript()));

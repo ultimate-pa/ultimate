@@ -1,5 +1,6 @@
 #Mon Nov 27 17:23:30 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ class=de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher\=ERROR;
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.1.22
 
@@ -41,7 +42,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=NONE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=DEPENDING
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ old\ map\ elimination=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ inequalities\ as\ additional\ conjuncts\ to\ the\ transformula=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ index\ assignments=true

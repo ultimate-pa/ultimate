@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.controller.eliminator
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.controller.eliminator;singleton:=true
-Bundle-Version: 0.2.1
+Bundle-Version: 0.2.2
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
@@ -10,5 +10,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
- de.uni_freiburg.informatik.ultimate.smtsolver.external
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.controller.eliminator

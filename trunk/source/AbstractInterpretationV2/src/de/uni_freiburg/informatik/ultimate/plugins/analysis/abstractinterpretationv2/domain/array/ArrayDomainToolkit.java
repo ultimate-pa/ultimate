@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -233,7 +233,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		final Term newTerm = NonrelationalTermUtils.getTermVar(newVariable);
 		final TermVariable oldTerm = oldVariable.getTermVariable();
 		final Term constraint = SmtUtils.filterFormula(baseTerm, Collections.singleton(oldTerm), getScript());
-		return new Substitution(getScript(), Collections.singletonMap(oldTerm, newTerm)).transform(constraint);
+		return new PureSubstitution(getScript(), Collections.singletonMap(oldTerm, newTerm)).transform(constraint);
 	}
 
 	public ArrayDomainState<STATE> createBottomState() {
@@ -247,7 +247,6 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public Term eliminateQuantifier(final Term term) {
-		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, getManagedScript(), term,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		return PartialQuantifierElimination.eliminateCompat(mServices, getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
 	}
 }

@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  *
@@ -958,7 +959,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
-			final String[] bitvectorFunctions) {
+			final BvOp[] bvOps) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -25,18 +25,45 @@
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
     <!-- BasicCegarLoop-specific columns -->
+    <column hidden="true" sourceUnit="ms" title="inclusionTime"      displayTitle="Inclusion Check Time">EmptinessCheckTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" sourceUnit="ms" title="avgInclusionTime"   displayTitle="Avg. Inclusion Check Time" copy="inclusionTime" denominator="iterations"/>
     <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
     <column hidden="true" sourceUnit="ms" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)ms</column>
     <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
   </result>
 
+  <!-- results for Automizer (Lazy Product) -->
+  <!-- ==================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.None.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+  </result>
+
   <!-- results for Petri Automizer -->
   <!-- =========================== -->
-  <result filename="*.results.Automizer PN.xml" />
+  <result filename="*.results.Automizer PN.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
 
-  <!-- results for Automizer with Petri net LBE -->
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+  </result>
+
+  <!-- results for Automizer with (semantic) Petri net LBE -->
   <!-- ======================================== -->
   <result filename="*.results.Automizer FA.SemanticLBE.xml">
     <!-- default columns -->
@@ -47,6 +74,7 @@
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
     <!-- BasicCegarLoop-specific columns -->
     <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
@@ -58,8 +86,26 @@
     <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
 
-  <!-- results for Petri Automizer with Petri net LBE -->
-  <!-- ============================================== -->
+  <!-- results for Petri Automizer with (syntactic) Petri net LBE -->
+  <!-- ========================================================== -->
+  <result filename="*.results.Automizer PN.VariableLBE.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+
+  <!-- results for Petri Automizer with (semantic) Petri net LBE -->
+  <!-- ========================================================= -->
   <result filename="*.results.Automizer PN.SemanticLBE.xml">
     <!-- default columns -->
     <column title="status"/>
@@ -69,6 +115,61 @@
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+
+  <!-- results for Petri Automizer -->
+  <!-- =========================== -->
+  <result filename="*.results.Automizer PN.RepeatedSemanticLBE.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+
+  <!-- results for Petri Automizer -->
+  <!-- =========================== -->
+  <result filename="*.results.Automizer PN.RepeatedSemanticLbeWithPredicates.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+
+  <!-- results for Petri Automizer -->
+  <!-- =========================== -->
+  <result filename="*.results.Automizer PN.RepeatedSemanticLbeWithDisjunctivePredicates.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
     <!-- LBE-specific columns -->
     <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
@@ -86,6 +187,7 @@
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
     <!-- BasicCegarLoop-specific columns -->
     <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
@@ -93,13 +195,13 @@
     <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">CachedIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
   </result>
 
   <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant -->
   <!-- ============================================================================ -->
-  <result filename="*.results.Automizer SLEEP_SET_FA.Delay.xml">
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleep.xml">
     <!-- default columns -->
     <column title="status"/>
     <column title="cputime" displayTitle="CPU Time"/>
@@ -108,16 +210,55 @@
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+
+  <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant (different DFS orders) -->
+  <!-- =================================================================================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleep.Order*.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+  <result filename="aggregated-*.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
   </result>
 
   <!-- results for Automizer with integrated Sleep Set POR, using New States variant -->
   <!-- ============================================================================= -->
-  <result filename="*.results.Automizer SLEEP_SET_FA.NewStates.xml">
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleep.xml">
     <!-- default columns -->
     <column title="status"/>
     <column title="cputime" displayTitle="CPU Time"/>
@@ -126,16 +267,49 @@
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleep.Symm.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleep.Order*.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
   </result>
 
-  <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant, with one-shot Petri net LBE -->
-  <!-- ========================================================================================================= -->
-  <result filename="*.results.Automizer SLEEP_SET_FA.SemanticLbe.Delay.xml">
+  <!-- results for Automizer with integrated Sleep Set POR, using New States variant (unconditional commutativity) -->
+  <!-- =========================================================================================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleepUncond.xml">
     <!-- default columns -->
     <column title="status"/>
     <column title="cputime" displayTitle="CPU Time"/>
@@ -144,9 +318,158 @@
     <!-- Trace Abstraction-specific columns -->
     <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
     <!-- POR-specific columns -->
-    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column> <!-- should always be 0 -->
+  </result>
+
+  <!-- results for Automizer with integrated Persistent Set POR -->
+  <!-- ======================================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.Persistent.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+
+    <!-- Persistent set columns -->
+    <column hidden="true" title="persistentCounter" displayTitle="Persistent set computations">Number of persistent set computation: (\d+)</column>
+    <column hidden="true" title="persistentTime"    displayTitle="Persistent set computation time"      sourceUnit="ms">Persistent set computation time\[ms\]: (\d+(\.\d+)?)</column>
+    <column hidden="true" title="avgPersistentTime" displayTitle="Avg. persistent set computation time" sourceUnit="ms" copy="persistentTime" denominator="persistentCounter"/>
+    <column hidden="true" title="trivialPersistent" displayTitle="Trivial persistent sets">Number of trivial persistent sets: (\d+)</column>
+    <column hidden="true" title="trivialRatio"      displayTitle="Ratio of Trivial persistent sets" copy="trivialPersistent" denominator="persistentCounter"/>
+  </result>
+
+  <!-- results for Automizer with integrated Persistent Set and Sleep Set POR, using Delay Set variant -->
+  <!-- =============================================================================================== -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleepPersistent.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+
+    <!-- Persistent set columns -->
+    <column hidden="true" title="persistentCounter" displayTitle="Persistent set computations">Number of persistent set computation: (\d+)</column>
+    <column hidden="true" title="persistentTime"    displayTitle="Persistent set computation time"      sourceUnit="ms">Persistent set computation time\[ms\]: (\d+(\.\d+)?)</column>
+    <column hidden="true" title="avgPersistentTime" displayTitle="Avg. persistent set computation time" sourceUnit="ms" copy="persistentTime" denominator="persistentCounter"/>
+    <column hidden="true" title="trivialPersistent" displayTitle="Trivial persistent sets">Number of trivial persistent sets: (\d+)</column>
+    <column hidden="true" title="trivialRatio"      displayTitle="Ratio of Trivial persistent sets" copy="trivialPersistent" denominator="persistentCounter"/>
+  </result>
+
+  <!-- results for Automizer with integrated Persistent Set and Sleep Set POR, using New States variant -->
+  <!-- ================================================================================================ -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+
+    <!-- Persistent set columns -->
+    <column hidden="true" title="persistentCounter" displayTitle="Persistent set computations">Number of persistent set computation: (\d+)</column>
+    <column hidden="true" title="persistentTime"    displayTitle="Persistent set computation time"      sourceUnit="ms">Persistent set computation time\[ms\]: (\d+(\.\d+)?)</column>
+    <column hidden="true" title="avgPersistentTime" displayTitle="Avg. persistent set computation time" sourceUnit="ms" copy="persistentTime" denominator="persistentCounter"/>
+    <column hidden="true" title="trivialPersistent" displayTitle="Trivial persistent sets">Number of trivial persistent sets: (\d+)</column>
+    <column hidden="true" title="trivialRatio"      displayTitle="Ratio of Trivial persistent sets" copy="trivialPersistent" denominator="persistentCounter"/>
+  </result>
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+
+    <!-- Persistent set columns -->
+    <column hidden="true" title="persistentCounter" displayTitle="Persistent set computations">Number of persistent set computation: (\d+)</column>
+    <column hidden="true" title="persistentTime"    displayTitle="Persistent set computation time"      sourceUnit="ms">Persistent set computation time\[ms\]: (\d+(\.\d+)?)</column>
+    <column hidden="true" title="avgPersistentTime" displayTitle="Avg. persistent set computation time" sourceUnit="ms" copy="persistentTime" denominator="persistentCounter"/>
+    <column hidden="true" title="trivialPersistent" displayTitle="Trivial persistent sets">Number of trivial persistent sets: (\d+)</column>
+    <column hidden="true" title="trivialRatio"      displayTitle="Ratio of Trivial persistent sets" copy="trivialPersistent" denominator="persistentCounter"/>
+  </result>
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.Order*.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="avgInclusionTime" displayTitle="Avg. Inclusion Check Time"  sourceUnit="ms" copy="inclusionTime" denominator="iterations"/>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+
+    <!-- Persistent set columns -->
+    <column hidden="true" title="persistentCounter" displayTitle="Persistent set computations">Number of persistent set computation: (\d+)</column>
+    <column hidden="true" title="persistentTime"    displayTitle="Persistent set computation time"      sourceUnit="ms">Persistent set computation time\[ms\]: (\d+(\.\d+)?)</column>
+    <column hidden="true" title="avgPersistentTime" displayTitle="Avg. persistent set computation time" sourceUnit="ms" copy="persistentTime" denominator="persistentCounter"/>
+    <column hidden="true" title="trivialPersistent" displayTitle="Trivial persistent sets">Number of trivial persistent sets: (\d+)</column>
+    <column hidden="true" title="trivialRatio"      displayTitle="Ratio of Trivial persistent sets" copy="trivialPersistent" denominator="persistentCounter"/>
+  </result>
+
+  <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant, with one-shot Petri net LBE -->
+  <!-- ========================================================================================================= -->
+  <result filename="*.results.Automizer PARTIAL_ORDER_FA.DelaySleep.SemanticLbe.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="inclusionTime"    displayTitle="Inclusion Check Time"       sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
     <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
     <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
 

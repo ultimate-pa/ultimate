@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -329,8 +329,7 @@ public class Elim1Store {
 
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
 
-		final Term transformedTerm = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping)
-				.transform(intermediateTerm);
+		final Term transformedTerm = Substitution.apply(mMgdScript, substitutionMapping, intermediateTerm);
 //		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
 //				indexMapping, substitutionMapping, indexEqualityInformation);
 		if (Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee)) {
@@ -346,10 +345,10 @@ public class Elim1Store {
 					doubleCaseJuncts);
 			final Term doubleCaseTermMod;
 			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
-				final Term resultWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result,
-						context);
+				final Term criticalConstraint = SmtUtils.and(mScript,
+						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, result), context);
 				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, doubleCaseTerm,
-						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, resultWithContext), mServices,
+						criticalConstraint, mServices,
 						SimplificationTechnique.SIMPLIFY_DDA);
 				mLogger.info(esr.buildSizeReductionMessage());
 				doubleCaseTermMod = esr.getSimplifiedTerm();
@@ -643,8 +642,7 @@ public class Elim1Store {
 			final ArrayIndex replacementIndex = indexMapping.get(indexRepresentative);
 			storedValueInformation.add(QuantifierUtils.applyDerOperator(mMgdScript.getScript(), quantifier,
 					new MultiDimensionalSelect(entry.getValue(), replacementIndex, mScript).toTerm(mScript),
-					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping)
-							.transform(entry.getKey().getValue())));
+					Substitution.apply(mMgdScript, substitutionMapping, entry.getKey().getValue())));
 		}
 		return QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, storedValueInformation);
 	}
@@ -820,8 +818,8 @@ public class Elim1Store {
 
 				final MultiDimensionalSelect newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex,
 						mgdScript.getScript());
-				final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript,
-						substitutionMapping).transform(storeValue);
+				final Term storeValueReplacement = Substitution.apply(mgdScript,
+						substitutionMapping, storeValue);
 				final Term newValueInCell = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
 						newSelect.toTerm(mgdScript.getScript()), storeValueReplacement);
 				final EqualityStatus indexEqStatus = indexEqualityInformation
@@ -896,8 +894,7 @@ public class Elim1Store {
 				assert !occursIn(eliminatee, replacementStoreIndex) : "var is still there";
 
 				final Term storeValue = entry.getKey().getValues().get(i);
-				final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript,
-						substitutionMapping).transform(storeValue);
+				final Term storeValueReplacement = Substitution.apply(mgdScript, substitutionMapping, storeValue);
 				storeIndexReplacements.add(replacementStoreIndex);
 				storeValueReplacements.add(storeValueReplacement);
 			}

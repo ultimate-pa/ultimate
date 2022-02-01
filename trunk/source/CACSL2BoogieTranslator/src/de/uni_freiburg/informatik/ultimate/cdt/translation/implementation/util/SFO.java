@@ -189,6 +189,11 @@ public final class SFO {
 	public static final String MEMSET = "ULTIMATE.memset";
 
 	/**
+	 * used for detecting data races
+	 */
+	public static final String MEMORY_RACE = "#race";
+
+	/**
 	 * name of C's "main" procedure
 	 */
 	public static final String MAIN = "main";
@@ -211,6 +216,8 @@ public final class SFO {
 	public static final String ULTIMATE_FORK_COUNT = "#pthreadsForks";
 
 	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
+
+	public static final String ULTIMATE_PTHREADS_RWLOCK = "#pthreadsRwLock";
 
 	public static final String INIT_TO_ZERO_AT_ADDRESS = "initToZeroAtPointerBaseAddress~";
 
@@ -369,6 +376,8 @@ public final class SFO {
 		 * during creation of an IdentifierExpression...)
 		 */
 		DUMMY_VOID("#dummy~void~value"),
+
+		RACE_DETECT("detect~race"),
 
 		;
 

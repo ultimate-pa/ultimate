@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
@@ -54,10 +55,12 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 	private final ILogger mLogger;
 	private final Class<L> mTransitionClazz;
 	private final ManagedScript mScript;
+	private final IUltimateServiceProvider mServices;
 
-	public IpTcStrategyModuleAcceleratedInterpolation(final ILogger logger, final IRun<L, ?> counterexample,
-			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<L> prefs,
-			final Class<L> transitionClazz) {
+	public IpTcStrategyModuleAcceleratedInterpolation(final IUltimateServiceProvider services, final ILogger logger,
+			final IRun<L, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final TaCheckAndRefinementPreferences<L> prefs, final Class<L> transitionClazz) {
+		mServices = services;
 		mCounterexample = counterexample;
 		mPredicateUnifier = predicateUnifier;
 		mLogger = logger;
@@ -69,7 +72,7 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 	@SuppressWarnings("unchecked")
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
-		return new AcceleratedInterpolation<>(mLogger, mPrefs, mScript, mPredicateUnifier,
+		return new AcceleratedInterpolation<>(mServices, mLogger, mPrefs, mScript, mPredicateUnifier,
 				(IRun<L, IPredicate>) mCounterexample, mTransitionClazz,
 				mPrefs.getLoopAccelerationTechnique().toString());
 	}

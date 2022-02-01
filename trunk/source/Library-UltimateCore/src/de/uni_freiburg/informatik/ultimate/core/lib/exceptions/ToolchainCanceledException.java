@@ -40,12 +40,13 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class ToolchainCanceledException extends RuntimeException implements IRunningTaskStackProvider {
+public class ToolchainCanceledException extends RuntimeException
+		implements IRunningTaskStackProvider, IRunningTaskStackReceiver {
 
 	private static final long serialVersionUID = 7090759880566576629L;
 	private static final String MESSAGE = "Timeout or Toolchain cancelled by user";
 
-	private final List<RunningTaskInfo> mRunningTaskInfos;
+	private final transient List<RunningTaskInfo> mRunningTaskInfos;
 
 	public ToolchainCanceledException(final Class<?> thrower) {
 		this(MESSAGE, new RunningTaskInfo(thrower, null));
@@ -82,6 +83,7 @@ public class ToolchainCanceledException extends RuntimeException implements IRun
 		mRunningTaskInfos.add(Objects.requireNonNull(runningTaskInfo));
 	}
 
+	@Override
 	public void addRunningTaskInfo(final RunningTaskInfo runningTaskInfo) {
 		mRunningTaskInfos.add(runningTaskInfo);
 	}

@@ -115,17 +115,16 @@ public class HoareAnnotationComposer {
 			for (final Entry<IPredicate, Term> entry : callpred2invariant.entrySet()) {
 
 				final IPredicate postForCallpred;
-				if (USE_ENTRY || containsAnOldVar(entry.getKey())) {
-					if (entry.getKey() == mSurrogateForEmptyCallPred) {
-						postForCallpred = mSurrogateForEmptyCallPred;
-					} else {
-						postForCallpred = mHoareAnnotationFragments.getCallpred2Entry().get(entry.getKey());
-					}
-					assert postForCallpred != null : "no post for callpred";
-				} else {
+				if (!USE_ENTRY && !containsAnOldVar(entry.getKey())) {
 					// compute SP
 					throw new AssertionError("not implemented");
 				}
+				if (entry.getKey() == mSurrogateForEmptyCallPred) {
+					postForCallpred = mSurrogateForEmptyCallPred;
+				} else {
+					postForCallpred = mHoareAnnotationFragments.getCallpred2Entry().get(entry.getKey());
+				}
+				assert postForCallpred != null : "no post for callpred";
 				final Term precond = TraceAbstractionUtils.renameGlobalsToOldGlobals(postForCallpred, mServices,
 						mCsToolkit.getManagedScript());
 
@@ -135,17 +134,18 @@ public class HoareAnnotationComposer {
 				Term precondImpliesInvariant =
 						Util.implies(mCsToolkit.getManagedScript().getScript(), precond, entry.getValue());
 				if (AVOID_IMPLICATIONS) {
-					precondImpliesInvariant = new NnfTransformer(mCsToolkit.getManagedScript(), mServices, QuantifierHandling.KEEP)
-							.transform(precondImpliesInvariant);
+					precondImpliesInvariant =
+							new NnfTransformer(mCsToolkit.getManagedScript(), mServices, QuantifierHandling.KEEP)
+									.transform(precondImpliesInvariant);
 				}
 				conjuncts.add(precondImpliesInvariant);
 			}
 			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
 
 			final Set<IProgramVar> vars = TermVarsProc.computeTermVarsProc(conjunction,
-					mCsToolkit.getManagedScript().getScript(), mCsToolkit.getSymbolTable()).getVars();
+					mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable()).getVars();
 			conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
-					conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript().getScript());
+					conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript());
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
 					mCsToolkit.getManagedScript(), conjunction, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			mHoareAnnotationStatisticsGenerator.reportSimplificationInter();
@@ -180,7 +180,7 @@ public class HoareAnnotationComposer {
 	private Term or(final Set<Term> terms) {
 		final Term disjunction = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), terms);
 		final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
-				mCsToolkit.getManagedScript(), disjunction, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+				mCsToolkit.getManagedScript(), disjunction, mServices, SimplificationTechnique.POLY_PAC);
 		mHoareAnnotationStatisticsGenerator.reportSimplification();
 		mHoareAnnotationStatisticsGenerator.reportReduction(simplificationResult.getReductionOfTreeSize());
 		mHoareAnnotationStatisticsGenerator.reportSimplificationTime(simplificationResult.getSimplificationTimeNano());
@@ -227,12 +227,11 @@ public class HoareAnnotationComposer {
 
 		for (final IPredicate context : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
 			IPredicate precondForContext;
-			if (USE_ENTRY || containsAnOldVar(context)) {
-				precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
-			} else {
+			if (!USE_ENTRY && !containsAnOldVar(context)) {
 				// compute SP
 				throw new AssertionError("not implemented");
 			}
+			precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, mServices,
 					mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<IcfgLocation, IPredicate> pp2preds =
@@ -242,12 +241,11 @@ public class HoareAnnotationComposer {
 
 		for (final IPredicate context : mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
 			IPredicate precondForContext;
-			if (USE_ENTRY || containsAnOldVar(context)) {
-				precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
-			} else {
+			if (!USE_ENTRY && !containsAnOldVar(context)) {
 				// compute SP
 				throw new AssertionError("not implemented");
 			}
+			precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, mServices,
 					mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<IcfgLocation, IPredicate> pp2preds =

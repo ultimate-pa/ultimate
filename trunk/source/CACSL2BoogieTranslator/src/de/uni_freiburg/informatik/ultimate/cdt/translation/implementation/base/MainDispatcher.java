@@ -214,6 +214,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * @author Markus Lindenmann
@@ -235,7 +236,7 @@ public class MainDispatcher implements IDispatcher {
 	 */
 	private DecoratorNode mNextACSLBuffer;
 
-	private final Set<Set<String>> mNodeLabelsOfAddedWitnesses;
+	private final Set<ImmutableSet<String>> mNodeLabelsOfAddedWitnesses;
 
 	private final Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 

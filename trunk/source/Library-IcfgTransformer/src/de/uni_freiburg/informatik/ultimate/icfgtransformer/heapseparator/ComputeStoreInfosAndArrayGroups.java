@@ -304,8 +304,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				 * in the formula (this makes sure that also arrays that occur in select terms only in the formula get
 				 * an array group)
 				 */
-				final Set<Term> baseArrayTerms =
-						new SubTermFinder(SmtUtils::isBasicArrayTerm).findMatchingSubterms(tf.getFormula());
+				final Set<Term> baseArrayTerms = SubTermFinder.find(tf.getFormula(), SmtUtils::isBasicArrayTerm, false);
 				baseArrayTerms.forEach(perTfArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 
 				// compute edge-specific array groups

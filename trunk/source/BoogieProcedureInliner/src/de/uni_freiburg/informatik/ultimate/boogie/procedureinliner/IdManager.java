@@ -1,39 +1,41 @@
 /*
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieProcedureInliner plug-in.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieProcedureInliner plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieProcedureInliner plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Used to manage identifiers.
  * This stores already used identifiers and can make identifiers unique by adding pre- and post-fixes.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class IdManager {
@@ -45,14 +47,17 @@ public class IdManager {
 
 	/** All registered ids (renamed to be unique). */
 	private final Set<String> mIds = new HashSet<>();
-	
+
+	/** Count occurrences of prefix and id in order to generate unique IDs */
+	private final Map<String, Integer> mPrefixAndIdCounter = new HashMap<>();
+
 	/**
 	 * Adds an id to this manager. The id will be registered as it is.
 	 * @param id An identifier.
 	 * @return The same identifier.
 	 * @throws IllegalStateException When adding the same id twice.
 	 */
-	public String addId(String id){
+	public String addId(final String id){
 		if (!mIds.add(id)) {
 			throw new IllegalStateException("Id was already registered: " + id);
 		}
@@ -62,10 +67,10 @@ public class IdManager {
 	 * Convenience method for {@link #makeAndAddUniqueId(String, String)} without prefix.
 	 * This tries to preserve the original identifier.
 	 */
-	public String makeAndAddUniqueId(String id) {
+	public String makeAndAddUniqueId(final String id) {
 		return makeAndAddUniqueId(null, id);
-	}	
-	
+	}
+
 	/**
 	 * Makes an id unique and adds it to this manager.
 	 * @param prefix Prefix to be used (for instance, the id of the surrounding procedure).
@@ -73,18 +78,21 @@ public class IdManager {
 	 * @param id An identifier.
 	 * @return The unique and registered version of the id.
 	 */
-	public String makeAndAddUniqueId(String prefix, String id) {
-		String fixedPart = "";
-		if (prefix != null) {
-			fixedPart = prefix + PREFIX_DELIM;
+	public String makeAndAddUniqueId(final String prefix, final String id) {
+		final String prefixAndId;
+		if (prefix == null) {
+			prefixAndId = id;
+		} else {
+			prefixAndId = prefix + PREFIX_DELIM + id;
 		}
-		fixedPart += id;
-		int postFixNumber = 1;
-		String uniqueId = fixedPart;
-		while (mIds.contains(uniqueId)) {
-			++postFixNumber;
-			uniqueId = fixedPart + POSTFIX_DELIM + postFixNumber;
+		Integer occurrences = mPrefixAndIdCounter.get(prefixAndId);
+		if (occurrences == null) {
+			occurrences = 1;
+		} else {
+			occurrences = occurrences + 1;
 		}
+		mPrefixAndIdCounter.put(prefixAndId, occurrences);
+		final String uniqueId = prefixAndId + POSTFIX_DELIM + occurrences;
 		mIds.add(uniqueId);
 		return uniqueId;
 	}
@@ -96,5 +104,5 @@ public class IdManager {
 	public Set<String> getIds() {
 		return Collections.unmodifiableSet(mIds);
 	}
-	
+
 }

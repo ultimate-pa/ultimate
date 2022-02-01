@@ -112,8 +112,7 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 				substitute.put(mainFormula.getInVars().get(var), value);
 			}
 		}
-		final Substitution sub = new Substitution(mMgScript, substitute);
-		final Term transformedExitFormula = sub.transform(mainFormula.getFormula());
+		final Term transformedExitFormula = Substitution.apply(mMgScript, substitute, mainFormula.getFormula());
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(substituteFormula.getInVars(), substituteFormula.getInVars(), false,
@@ -224,8 +223,7 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 		final Set<IProgramConst> nonTheoryConsts = new HashSet<>();
 		nonTheoryConsts.addAll(first.getNonTheoryConsts());
 		nonTheoryConsts.addAll(second.getNonTheoryConsts());
-		final Substitution sub = new Substitution(mMgScript, substitute);
-		final Term transformedSecond = sub.transform(second.getFormula());
+		final Term transformedSecond = Substitution.apply(mMgScript, substitute, second.getFormula());
 		final Term jointFormula = mMgScript.getScript().term("and", first.getFormula(), transformedSecond);
 
 		final TransFormulaBuilder tfb =

@@ -66,10 +66,12 @@ class Executor {
 
 	private MonitoredProcess mProcess;
 	private Lexer mLexer;
+
 	private BufferedWriter mWriter;
 	private InputStream mStdErr;
 
 	private final Script mScript;
+	private final Parser mParser;
 	private final String mSolverCmd;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -79,7 +81,7 @@ class Executor {
 	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
 
 	/**
-	 * 
+	 *
 	 * @param solverCommand
 	 *            The command to execute an external process with all parameters
 	 * @param script
@@ -103,6 +105,8 @@ class Executor {
 		mLogger = logger;
 		mName = solverName;
 		mFullPathOfDumpedFile = fullPathOfDumpedFile;
+		mParser = new Parser();
+		mParser.setScript(mScript);
 		createProcess();
 	}
 
@@ -114,7 +118,7 @@ class Executor {
 			throw new IllegalStateException(errorMsg);
 		}
 
-		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
+		mProcess.setTerminationAfterTimeout(1000);
 
 		final OutputStream stdin = mProcess.getOutputStream();
 		final InputStream stdout = mProcess.getInputStream();
@@ -151,10 +155,7 @@ class Executor {
 			mWriter.write(in + System.lineSeparator() + System.lineSeparator());
 			mWriter.flush();
 		} catch (final IOException e) {
-			if (mServices.getProgressMonitorService().continueProcessingRoot()) {
-				throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
-			}
-			throw new ToolchainCanceledException(getClass());
+			throw convertIOException(e);
 		}
 	}
 
@@ -179,6 +180,8 @@ class Executor {
 				parenLevel++;
 			} else if (sym.sym == LexerSymbols.RPAR) {
 				parenLevel--;
+			} else if (sym.sym == LexerSymbols.EOF) {
+				break;
 			}
 			result.add(sym);
 		} while (parenLevel > 0);
@@ -195,7 +198,7 @@ class Executor {
 			}
 			return result;
 		} catch (final IOException e) {
-			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
+			throw convertIOException(e);
 		}
 	}
 
@@ -230,23 +233,24 @@ class Executor {
 			// we don't care what happens on stdErr
 		}
 
-		final Parser parser = new Parser();
-		parser.setScript(mScript);
 		answer.add(0, new Symbol(what));
-		parser.setAnswer(answer);
+		mParser.setAnswer(answer);
 		try {
-			return parser.parse();
+			return mParser.parse();
 		} catch (final SMTLIBException ex) {
-			if (ex.getMessage().equals(Parser.s_EOF)) {
-				throw new SMTLIBException(getLogStringPrefix() + EOF_ERROR_MSG + " " + generateStderrMessage(stderr),
-						ex);
+			if (mServices.getProgressMonitorService().continueProcessing()) {
+				if (ex.getMessage().equals(Parser.s_EOF)) {
+					throw new SMTLIBException(String.format("%s %s %s", getLogStringPrefix(), EOF_ERROR_MSG,
+							generateStderrMessage(stderr)), ex);
+				}
+				throw ex;
 			}
-			throw ex;
-		} catch (final UnsupportedOperationException ex) {
-			throw ex;
+			throw new ToolchainCanceledException(getClass());
+		} catch (final IOException e) {
+			throw convertIOException(e);
 		} catch (final Exception ex) {
-			throw new SMTLIBException(
-					getLogStringPrefix() + "Unexpected Exception while parsing. " + generateStderrMessage(stderr), ex);
+			throw new SMTLIBException(String.format("%s %s %s", getLogStringPrefix(),
+					"Unexpected Exception while parsing", generateStderrMessage(stderr)), ex);
 		}
 	}
 
@@ -292,7 +296,10 @@ class Executor {
 	}
 
 	private String getLogStringPrefix() {
-		return mName + " (" + mSolverCmd + ")";
+		if (mProcess != null) {
+			return String.format("%s (%s)", mName, mProcess);
+		}
+		return String.format("%s (dormant, command %s)", mName, mSolverCmd);
 	}
 
 	private static String generateStderrMessage(final String stderr) {
@@ -300,6 +307,13 @@ class Executor {
 			return "No stderr output.";
 		}
 		return "stderr output: " + stderr;
+	}
+
+	private RuntimeException convertIOException(final IOException ex) {
+		if (mServices.getProgressMonitorService().continueProcessing()) {
+			return new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", ex);
+		}
+		return new ToolchainCanceledException(getClass());
 	}
 
 }
