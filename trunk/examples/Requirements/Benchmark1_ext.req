@@ -1,0 +1,32 @@
+Input x0008 is bool
+Input x0007 is bool
+Input x0010 is bool
+Input x0006 is bool
+Input x0009 is bool
+Input x0005 is bool
+Input x0016 is bool
+Input x0012 is bool
+Input x0002 is bool
+Input x0017 is bool
+Input x0003 is bool
+Input x0015 is bool
+Input x0014 is bool
+Input x0001 is bool
+Input x0004 is bool
+Input x0000 is bool
+Input x0013 is bool
+Input x0011 is bool
+
+ID000: Globally, it is always the case that if "x0000" holds, then "x0001" holds as well
+ID001: Globally, it is always the case that if "x0001" holds, then "x0000" holds as well
+ID002: Globally, it is always the case that if "!x0002 && !x0003 && !x0001 && !x0004 && !x0005" holds, then "x0006" holds as well
+ID003: Globally, it is always the case that if "!x0007 || !x0008 || x0009" holds, then "x0010" holds as well
+ID004: Globally, it is always the case that if "!x0011 || x0010" holds, then "x0012" holds as well
+ID005: Globally, it is always the case that if "x0001 && x0013" holds, then "x0014" holds as well
+ID006: Globally, it is always the case that if "x0012" holds, then "x0006" holds after at most "1" time units
+ID007: Globally, it is always the case that if  "!x0000"  holds, then "x0006" holds after at most "1" time units
+ID008: Globally, it is always the case that if  "x0000 && !x0014"  holds, then  "!x0000"  holds after at most "1"  time units
+ID009: After  "x0006"  until  "!x0002 && !x0003" , it is always the case that  "x0006"  holds
+ID010: After  "x0006"  until  "!x0001" , it is always the case that  "x0006"  holds
+ID011: Globally, it is always the case that if  "x0015"  holds, then  "!x0016"  holds as well
+ID012: Globally, it is always the case that if  "x0017"  holds, then  "!x0016"  holds as well

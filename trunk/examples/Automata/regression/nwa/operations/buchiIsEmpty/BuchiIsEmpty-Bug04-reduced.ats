@@ -1,0 +1,32 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 08.11.2013
+// Reveals Bug in r10390 in SCC computation.
+// The accepting summary q1->q9 is considered as summary of the SCC {q0,q1}
+// Fix: summary belongs only to a SCC if call pred and return succ are in this SCC.
+
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 6);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a" },
+	returnAlphabet = {"r" },
+	states = {"q0" "q1" "q2" "q3" "q4" "s1" "t1" "q9" },
+	initialStates = {"q0" },
+	finalStates = {"s1" "t1" },
+	callTransitions = {
+		 ("q1" "c" "t1")
+		 ("q4" "c" "s1")
+	},
+	internalTransitions = {
+		 ("q0" "a" "q1")
+		 ("q1" "a" "q0")
+		 ("q0" "a" "q2")
+		 ("q2" "a" "q3")
+		 ("q3" "a" "q4")
+	},
+	returnTransitions = {
+		 ("t1" "q1" "r" "q9")
+		 ("s1" "q4" "r" "q4")
+	}
+);

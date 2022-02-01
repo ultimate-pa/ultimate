@@ -1,0 +1,10 @@
+// Date: 19.05.2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+parseAutomata("../Misc_Crafted.ats");
+
+assert(numberOfStates(complement(sameCalldifferentReturns)) == 4);
+assert(numberOfStates(complement(wBenjamin)) == 8);
+assert(numberOfStates(complement(pendingReturnNwa)) == 2);
+assert(numberOfStates(complement(bugBfsEmptinessLowPriorityCallQueue)) == 11);

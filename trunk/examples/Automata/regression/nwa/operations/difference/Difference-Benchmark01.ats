@@ -1,0 +1,12 @@
+// Date: 19.05.2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+parseAutomata("../../../../benchmarks/nwa/ProgramVerification-Ministerprasident.ats");
+
+assert(numberOfStates(difference(McCarthyInterpolantAutomaton_Iteration16, McCarthyInterpolantAutomaton_Iteration12)) == 126);
+assert(numberOfStates(difference(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration12)) == 377);
+assert(numberOfStates(difference(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration16)) == 377);
+
+assert(numberOfStates(difference(Ackermann_Abstraction24, Ackermann_InterpolantAutomaton_Iteration39)) == 861);
+assert(numberOfStates(difference(Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39)) == 295);

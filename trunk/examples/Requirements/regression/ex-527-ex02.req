@@ -1,0 +1,9 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; results: 1
+input A is bool
+input B is bool
+input C is bool
+
+req1: Globally, it is always the case that if "A" holds, then "B" holds as well
+req2: Globally, it is always the case that if "A" holds, then "B && C" holds as well
+
+// vacuity does not work on invariants

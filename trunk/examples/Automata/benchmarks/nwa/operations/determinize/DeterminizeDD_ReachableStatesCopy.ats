@@ -1,0 +1,10 @@
+
+
+parseAutomata("../../ProgramVerification-Ministerprasident.ats");
+
+print(numberOfStates(determinizeDD(McCarthyInterpolantAutomaton_Iteration12)));
+print(numberOfStates(determinizeDD(McCarthyInterpolantAutomaton_Iteration16)));
+print(numberOfStates(determinizeDD(McCarthyAbstraction16)));
+print(numberOfStates(determinizeDD(Ackermann_Abstraction19)));
+print(numberOfStates(determinizeDD(Ackermann_Abstraction24)));
+print(numberOfStates(determinizeDD(Ackermann_InterpolantAutomaton_Iteration39)));

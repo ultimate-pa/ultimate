@@ -1,0 +1,42 @@
+#Sat Nov 16 03:16:31 CET 2013
+file_export_version=3.0
+/instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
+@BlockEncoding=0.0.1
+\!/instance/BlockEncoding=
+/instance/BlockEncoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
+/instance/BlockEncoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
+#Sat Nov 16 03:16:31 CET 2013
+\!/instance/BuchiAutomizer=
+file_export_version=3.0
+@BuchiAutomizer=0.0.1
+/instance/BuchiAutomizer/Determinization\ on\ demand=true
+#Sat Nov 16 03:16:31 CET 2013
+file_export_version=3.0
+/instance/RCFGBuilder/Simplify\ code\ blocks=true
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Remove\ goto\ edges\ from\ RCFG=false
+/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/RCFGBuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+@RCFGBuilder=0.0.1
+#Sat Nov 16 03:16:31 CET 2013
+/instance/TraceAbstraction/Interpolant\ automaton=SINGLETRACE
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+/instance/TraceAbstraction/Timeout\ in\ seconds=300
+/instance/TraceAbstraction/Determinization\ algorithm=EAGERPOST
+\!/instance/TraceAbstraction=
+/instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
+#Sat Nov 16 03:16:31 CET 2013
+file_export_version=3.0
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=FATAL
+\!/instance/UltimateCore=
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=FATAL
+@UltimateCore=0.0.1
+/instance/UltimateCore/Root\ Log\ Level=FATAL
+/instance/UltimateCore/Log\ Level\ for\ Plugins=FATAL
+#Sat Nov 16 03:16:31 CET 2013
+file_export_version=3.0
+\!/instance/UltimateGui=
+/instance/UltimateGui/LASTTOOLCHAINPATH=/mnt/storage/stalin/trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
+/instance/UltimateGui/LASTPATH=/mnt/storage/stalin/trunk/examples/terminator/terminating/232.t2.c
+@UltimateGui=0.0.1

@@ -1,0 +1,29 @@
+// Reduced version of removeDeadEnds-Bug02.ats
+// Date: November 2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+NestedWordAutomaton result = removeNonLiveStates(nwa);
+print(buchiIsEmpty(nwa));
+
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {"c" },
+    internalAlphabet = {"a" },
+    returnAlphabet = {"r" },
+    states = {"f" "q1" "q3" "q0" "g" },
+    initialStates = {"q0" },
+    finalStates = {"f" },
+    callTransitions = {
+         ("q1" "c" "q3")
+         ("q0" "c" "q1")
+    },
+    internalTransitions = {
+         ("q3" "a" "q1")
+         ("q3" "a" "q0")
+    },
+    returnTransitions = {
+         ("f" "q0" "r" "q1")
+         ("q1" "q1" "r" "f")
+    }
+);

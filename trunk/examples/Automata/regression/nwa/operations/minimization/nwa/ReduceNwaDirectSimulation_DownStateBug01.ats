@@ -1,0 +1,50 @@
+// Author: Christian Schilling <schillic@informatik.uni-freiburg.de>, Daniel Tischner
+// Date: 2016-05-22
+//
+// wrong merge result for direct simulation (fixed):
+// merges q0 and q3
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 5);
+assert(shrinkNwaSize == 5);
+assert(minimizeNwaPmaxSatDirectBiSize == 5);
+assert(minimizeNwaPmaxSatDirectSize == 5);
+assert(reduceNwaDirectSimulationSize == 5);
+assert(reduceNwaDirectSimulationBSize == 5);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
+// assert(reduceNwaDelayedSimulationSize == 5);
+// assert(reduceNwaDelayedSimulationBSize == 5);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a1" "a2" "a3"},
+	returnAlphabet = {"r" },
+	states = {"q0" "q1" "q2" "q3" "qf"},
+	initialStates = {"q0"},
+	finalStates = {"qf"},
+	callTransitions = {
+		("q0" "c" "q1")
+		("q3" "c" "q1")
+	},
+	internalTransitions = {
+		("q1" "a1" "q2")
+		("q1" "a2" "q3")
+		("qf" "a3" "qf")
+	},
+	returnTransitions = {
+		("q2" "q3" "r" "qf")
+	}
+);

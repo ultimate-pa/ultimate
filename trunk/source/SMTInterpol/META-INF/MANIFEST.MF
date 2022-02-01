@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SMTInterpol - an Interpolating SMT Solver
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.smtinterpol
+Bundle-Version: 2.0.0
+Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol,
+ de.uni_freiburg.informatik.ultimate.smtinterpol.model,
+ de.uni_freiburg.informatik.ultimate.smtinterpol.option,
+ de.uni_freiburg.informatik.ultimate.smtinterpol.proof,
+ de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib,
+ de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2,
+ de.uni_freiburg.informatik.ultimate.smtinterpol.util
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-ActivationPolicy: lazy
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ com.github.jhoenicke.javacup
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.smtinterpol

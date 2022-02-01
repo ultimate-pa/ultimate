@@ -1,0 +1,30 @@
+// Testfile dumped by Ultimate at 2013/11/24 03:46:14
+
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 8);
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {"c" },
+    internalAlphabet = {"a" },
+    returnAlphabet = {"r" },
+    states = {"q3" "q1" "t2" "q2" "r0" "t0" "q0" "t1" },
+    initialStates = {"q0" },
+    finalStates = {"t1" },
+    callTransitions = {
+         ("q2" "c" "r0")
+         ("q0" "c" "t0")
+         ("q3" "c" "t1")
+    },
+    internalTransitions = {
+         ("q1" "a" "q2")
+         ("r0" "a" "t2")
+         ("t0" "a" "t1")
+         ("t1" "a" "t2")
+    },
+    returnTransitions = {
+         ("r0" "q2" "r" "q3")
+         ("t2" "q0" "r" "q1")
+         ("t2" "q2" "r" "q1")
+         ("t2" "q3" "r" "q1")
+    }
+);

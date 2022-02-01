@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( (! (F "input == 4") || (! "output == 26" U ("output == 21" || "input == 4"))) ) )

@@ -1,0 +1,49 @@
+#Tue Jul 15 20:57:27 EST 2014
+\!/instance/JungVisualization=
+file_export_version=3.0
+/instance/JungVisualization/shapeForNodePreference=RoundRectangle
+@JungVisualization=0.0.1
+#Tue Jul 15 20:57:27 EST 2014
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Enter\ Rating-Boundary\ (empty\ for\ LBE)\:=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
+#Tue Jul 15 20:57:27 EST 2014
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+#Tue Jul 15 20:57:27 EST 2014
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+#Tue Jul 15 20:57:27 EST 2014
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Multiphase\ template\ size=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Path\ of\ dumped\ script=/tmp/
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=false
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nested\ template\ size=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nested\ template=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Simplify\ discovered\ termination\ arguments=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
+#Tue Jul 15 20:57:27 EST 2014
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Controller\ Plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Core\ Plugin=INFO
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ External\ Tools=INFO
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ Log\ Level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker\=INFO;
+#Tue Jul 15 20:57:27 EST 2014
+file_export_version=3.0
+\!/instance/UltimateGui=
+/instance/UltimateGui/LASTTOOLCHAINPATH=/home/jan/Downloads/ultimate/trunk/examples/toolchains/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.xml
+/instance/UltimateGui/LASTPATH=/home/jan/Downloads/ultimate/trunk/examples/lassos/Waldkirch.bpl
+@UltimateGui=0.0.1

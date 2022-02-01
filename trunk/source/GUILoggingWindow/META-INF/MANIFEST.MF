@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: GUILoggingWindow
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui.logging;singleton:=true
+Bundle-Version: 0.2.1
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ org.eclipse.ui.workbench,
+ org.eclipse.jface
+Export-Package: de.uni_freiburg.informatik.ultimate.gui.views
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.gui.logging

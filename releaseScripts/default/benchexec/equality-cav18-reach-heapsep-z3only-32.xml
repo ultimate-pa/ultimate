@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="240" hardtimelimit="300" cpuCores="2">
+
+    <option name="--generate-csv" />
+    <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+
+    <rundefinition name="Automizer">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench//svcomp-Reach-32bit-Automizer_Fixed_noBitfields+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AutomizerHeapSep">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench//svcomp-Reach-32bit-Automizer_Fixed_noBitfields+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="HeapSep">
+        <option name="-tc">../../../trunk/examples/toolchains/IcfgTransformerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench//svcomp-Reach-32bit-Automizer_Fixed_noBitfields+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    
+    <tasks name="32bitMem">
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
+    </tasks>
+    
+</benchmark>

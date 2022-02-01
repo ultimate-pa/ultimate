@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CoreRCPTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.core.test
+Bundle-Version: 0.2.1
+Bundle-ActivationPolicy: lazy
+Fragment-Host: de.uni_freiburg.informatik.ultimate.core
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit
+Import-Package: org.junit,
+ org.junit.runner,
+ org.junit.runners,
+ junit.framework,
+ org.junit.runner.notification
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.core.test

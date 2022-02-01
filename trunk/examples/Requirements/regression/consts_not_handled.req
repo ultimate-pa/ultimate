@@ -1,0 +1,15 @@
+// #TestSpec: rt-inconsistent:req1+req2; vacuous:; inconsistent:; results: 4
+// R == 20.0 is not the same as R == K 
+// During quantifier elimination the encoding of const Riables is not correct 
+
+CONST CYCLE_TIME IS 50.0
+
+Input T2 IS bool
+Input T1 IS bool
+
+Input R IS real
+CONST K IS 20.0
+CONST H IS 30.0
+
+req1: Globally, it is always the case that if "T1 " holds, then "R == K" holds after at most "CYCLE_TIME" time units
+req2: Globally, it is always the case that if "T2" holds, then "R == H" holds for at least "CYCLE_TIME" time units 

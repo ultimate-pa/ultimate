@@ -1,0 +1,32 @@
+// Reveals Bug in new dead end removal for DoubleDeckers
+// Date: 27.10.2012
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+NestedWordAutomaton result = removeDeadEnds(nwa);
+assert(numberOfStates(result) == 8);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call11" "call13" },
+	internalAlphabet = {"assume x > 100;res :...2" "assume !(x > 100);4" "assume !(res == 91 |...8" "assume res == 91 || ...9" "assume true;10" },
+	returnAlphabet = {"return12" "return14" },
+	states = {"q2" "qLast" "McCarthyErr0AssertViolation18" "qEx" "qEntry2" "qErr" "q22" "q3" "qInit" "q1" },
+	initialStates = {"qInit" },
+	finalStates = {"qErr" },
+	callTransitions = {
+		 ("q2" "call11" "qEntry2")
+		 ("q3" "call13" "qEntry2")
+	},
+	internalTransitions = {
+		 ("qLast" "assume true;10" "qEx")
+		 ("qEntry2" "assume x > 100;res :...2" "q22")
+		 ("q22" "assume !(res == 91 |...8" "qErr")
+		 ("q22" "assume res == 91 || ...9" "qLast")
+		 ("qInit" "assume x > 100;res :...2" "q1")
+		 ("qInit" "assume !(x > 100);4" "q2")
+		 ("q1" "assume res == 91 || ...9" "qLast")
+	},
+	returnTransitions = {
+		 ("qEx" "q2" "return12" "q3")
+	}
+);

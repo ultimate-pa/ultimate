@@ -1,0 +1,75 @@
+//Simple examples for NWA reduction using delayed simulation
+
+//Do internal transitions work?
+NestedWordAutomaton preIntTest = removeUnreachable(intTest);
+
+int minimizeNwaPmaxSatDelayedSizeIntTest = numberOfStates(minimizeNwaPmaxSatDelayed(preIntTest));
+assert(minimizeNwaPmaxSatDelayedSizeIntTest == 3);
+//print(minimizeNwaPmaxSatDelayedSizeIntTest);
+
+NestedWordAutomaton intTest = (
+	callAlphabet = {},
+	internalAlphabet = {"a" "b"},
+	returnAlphabet = {},
+	states = {"p1" "p2" "p3" "p4" "p5"},
+	initialStates = {"p1"},
+	finalStates = {"p3" "p4" "p5"},
+	callTransitions = {},
+	internalTransitions = {
+		 ("p1" "a" "p2")
+		 ("p1" "a" "p3")
+		 ("p2" "b" "p4")
+		 ("p3" "b" "p5")
+	},
+	returnTransitions = {}
+);
+
+//Do call transitions work?
+NestedWordAutomaton preCallTest = removeUnreachable(callTest);
+
+int minimizeNwaPmaxSatDelayedSizeCallTest = numberOfStates(minimizeNwaPmaxSatDelayed(preCallTest));
+assert(minimizeNwaPmaxSatDelayedSizeCallTest == 3);
+//print(minimizeNwaPmaxSatDelayedSizeCallTest);
+
+NestedWordAutomaton callTest = (
+	callAlphabet = {"b"},
+	internalAlphabet = {"a"},
+	returnAlphabet = {},
+	states = {"p1" "p2" "p3" "p4" "p5"},
+	initialStates = {"p1"},
+	finalStates = {"p3" "p4" "p5"},
+	callTransitions = {
+		 ("p2" "b" "p4")
+		 ("p3" "b" "p5")	
+	},
+	internalTransitions = {
+		 ("p1" "a" "p2")
+		 ("p1" "a" "p3")
+	},
+	returnTransitions = {}
+);
+
+//Do return transitions work?
+NestedWordAutomaton preRetTest = removeUnreachable(retTest);
+
+int minimizeNwaPmaxSatDelayedSizeRetTest = numberOfStates(minimizeNwaPmaxSatDelayed(preRetTest));
+assert(minimizeNwaPmaxSatDelayedSizeRetTest == 3);
+//print(minimizeNwaPmaxSatDelayedSizeRetTest);
+
+NestedWordAutomaton retTest = (
+	callAlphabet = {},
+	internalAlphabet = {"a"},
+	returnAlphabet = {"b"},
+	states = {"p1" "p2" "p3" "p4" "p5"},
+	initialStates = {"p1"},
+	finalStates = {"p3" "p4" "p5"},
+	callTransitions = {},
+	internalTransitions = {
+		 ("p1" "a" "p2")
+		 ("p1" "a" "p3")
+	},
+	returnTransitions = {
+		 ("p2" "b" "p4")
+		 ("p3" "b" "p5")
+	}
+);

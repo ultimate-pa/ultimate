@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.analysis">
+      <impl
+            class="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.AbstractInterpretation">
+      </impl>
+   </extension>
+</plugin>

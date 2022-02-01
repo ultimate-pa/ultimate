@@ -1,0 +1,121 @@
+// Testfile dumped by Ultimate at 2015/06/09 02:08:18
+//
+// 
+
+// execution of the following three statements took ca. 15s
+// on Matthias' laptop
+// without assertions (without -ea)
+// in revision r14485
+
+assert(loopComplexity(nested9) == 2);
+assert(loopComplexity(cggmp2005b_true_unreach_call) == 2);
+assert(loopComplexity(AliasDarteFeautrierGonnord_SAS2010_Fig1_true_termination) == 2);
+
+
+
+NestedWordAutomaton nested9 = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~k~6 < main_~j~6);__VERIFIER_assert_#in~cond := (if main_~k~6 - main_~i~6 <= 2 * main_~n~6 then 1 else 0);havoc __VERIFIER_assert_~cond;__VERIFIER_assert_~cond := __VERIFIER_assert_#in~cond;" "havoc main_#t~nondet1, main_#t~nondet2, main_#t~nondet3, main_#t~post6, main_#t~post5, main_#t~post4, main_~i~6, main_~j~6, main_~k~6, main_~n~6, main_~l~6, main_~m~6;havoc main_~i~6;havoc main_~j~6;havoc main_~k~6;havoc main_~n~6;havoc main_~l~6;havoc main_~m~6;main_~n~6 := main_#t~nondet1;havoc main_#t~nondet1;main_~m~6 := main_#t~nondet2;havoc main_#t~nondet2;main_~l~6 := main_#t~nondet3;havoc main_#t~nondet3;assume -1000000 < main_~n~6 && main_~n~6 < 1000000;" "assume !(main_~k~6 < main_~j~6);" "assume !(3 * main_~n~6 <= main_~m~6 + main_~l~6);" "assume !false;" "assume !(__VERIFIER_assert_~cond != 0);" "assume !!(__VERIFIER_assert_~cond != 0);" "assume true;" "assume true;" "assume !true;" "assume !(main_~i~6 < main_~n~6);" "main_#t~post6 := main_~k~6;main_~k~6 := main_#t~post6 + 1;havoc main_#t~post6;" "assume !true;" "assume !!(main_~i~6 < main_~n~6);main_~j~6 := 2 * main_~i~6;" "main_#t~post5 := main_~j~6;main_~j~6 := main_#t~post5 + 1;havoc main_#t~post5;" "assume !true;" "assume true;" "main_#t~post4 := main_~i~6;main_~i~6 := main_#t~post4 + 1;havoc main_#t~post4;" "assume !(main_~j~6 < 3 * main_~i~6);" "assume !!(main_~j~6 < 3 * main_~i~6);main_~k~6 := main_~i~6;" "assume 3 * main_~n~6 <= main_~m~6 + main_~l~6;main_~i~6 := 0;" "assume true;" "assume true;" },
+	returnAlphabet = {},
+	states = {"17#L22true" "16#L19''true" "2#L4true" "3#ULTIMATE.startENTRYtrue" "4#L5true" "5#ULTIMATE.startEXITtrue" "6#L19'''true" "7#ULTIMATE.startErr0AssertViolationtrue" "8#L19true" "9#L18''true" "10#L18'''true" "11#L18true" "12#L4''true" "13#L17true" "14#L20true" "15#L20''true" },
+	initialStates = {"3#ULTIMATE.startENTRYtrue" },
+	finalStates = {"7#ULTIMATE.startErr0AssertViolationtrue" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("17#L22true" "assume true;" "5#ULTIMATE.startEXITtrue")
+		 ("16#L19''true" "main_#t~post5 := main_~j~6;main_~j~6 := main_#t~post5 + 1;havoc main_#t~post5;" "6#L19'''true")
+		 ("2#L4true" "assume !(__VERIFIER_assert_~cond != 0);" "4#L5true")
+		 ("2#L4true" "assume !!(__VERIFIER_assert_~cond != 0);" "12#L4''true")
+		 ("3#ULTIMATE.startENTRYtrue" "havoc main_#t~nondet1, main_#t~nondet2, main_#t~nondet3, main_#t~post6, main_#t~post5, main_#t~post4, main_~i~6, main_~j~6, main_~k~6, main_~n~6, main_~l~6, main_~m~6;havoc main_~i~6;havoc main_~j~6;havoc main_~k~6;havoc main_~n~6;havoc main_~l~6;havoc main_~m~6;main_~n~6 := main_#t~nondet1;havoc main_#t~nondet1;main_~m~6 := main_#t~nondet2;havoc main_#t~nondet2;main_~l~6 := main_#t~nondet3;havoc main_#t~nondet3;assume -1000000 < main_~n~6 && main_~n~6 < 1000000;" "13#L17true")
+		 ("4#L5true" "assume !false;" "7#ULTIMATE.startErr0AssertViolationtrue")
+		 ("4#L5true" "assume true;" "12#L4''true")
+		 ("6#L19'''true" "assume !true;" "9#L18''true")
+		 ("6#L19'''true" "assume true;" "8#L19true")
+		 ("8#L19true" "assume !(main_~j~6 < 3 * main_~i~6);" "9#L18''true")
+		 ("8#L19true" "assume !!(main_~j~6 < 3 * main_~i~6);main_~k~6 := main_~i~6;" "15#L20''true")
+		 ("9#L18''true" "main_#t~post4 := main_~i~6;main_~i~6 := main_#t~post4 + 1;havoc main_#t~post4;" "10#L18'''true")
+		 ("10#L18'''true" "assume !true;" "17#L22true")
+		 ("10#L18'''true" "assume true;" "11#L18true")
+		 ("11#L18true" "assume !!(main_~i~6 < main_~n~6);main_~j~6 := 2 * main_~i~6;" "6#L19'''true")
+		 ("11#L18true" "assume !(main_~i~6 < main_~n~6);" "17#L22true")
+		 ("12#L4''true" "main_#t~post6 := main_~k~6;main_~k~6 := main_#t~post6 + 1;havoc main_#t~post6;" "15#L20''true")
+		 ("13#L17true" "assume !(3 * main_~n~6 <= main_~m~6 + main_~l~6);" "17#L22true")
+		 ("13#L17true" "assume 3 * main_~n~6 <= main_~m~6 + main_~l~6;main_~i~6 := 0;" "10#L18'''true")
+		 ("14#L20true" "assume !!(main_~k~6 < main_~j~6);__VERIFIER_assert_#in~cond := (if main_~k~6 - main_~i~6 <= 2 * main_~n~6 then 1 else 0);havoc __VERIFIER_assert_~cond;__VERIFIER_assert_~cond := __VERIFIER_assert_#in~cond;" "2#L4true")
+		 ("14#L20true" "assume !(main_~k~6 < main_~j~6);" "16#L19''true")
+		 ("15#L20''true" "assume true;" "14#L20true")
+		 ("15#L20''true" "assume !true;" "16#L19''true")
+	},
+	returnTransitions = {
+	}
+);
+
+
+
+
+NestedWordAutomaton cggmp2005b_true_unreach_call = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~k~4 <= 3);main_~k~4 := main_~k~4 + 1;" "havoc main_~i~4, main_~j~4, main_~k~4;havoc main_~i~4;havoc main_~j~4;havoc main_~k~4;main_~i~4 := 0;main_~k~4 := 9;main_~j~4 := -100;" "assume !(main_~k~4 <= 3);" "assume true;" "assume !true;" "assume !true;" "assume !(main_~i~4 <= 100);" "assume !!(main_~i~4 <= 100);main_~i~4 := main_~i~4 + 1;" "__VERIFIER_assert_#in~cond := (if main_~k~4 == 4 then 1 else 0);havoc __VERIFIER_assert_~cond;__VERIFIER_assert_~cond := __VERIFIER_assert_#in~cond;" "assume !false;" "assume true;" "assume !(__VERIFIER_assert_~cond != 0);" "assume true;" "assume !!(__VERIFIER_assert_~cond != 0);" "assume !(main_~j~4 < 20);" "assume !!(main_~j~4 < 20);main_~j~4 := main_~i~4 + main_~j~4;" "assume true;" "assume !true;" "main_~k~4 := 4;" "assume true;" },
+	returnAlphabet = {},
+	states = {"2#L21''true" "3#L4''true" "4#L4true" "5#L17true" "6#L17'''true" "7#ULTIMATE.startENTRYtrue" "8#L5true" "9#L15true" "10#ULTIMATE.startEXITtrue" "11#L15''true" "12#L21'''true" "13#ULTIMATE.startErr0AssertViolationtrue" "14#L21true" "15#L17''true" },
+	initialStates = {"7#ULTIMATE.startENTRYtrue" },
+	finalStates = {"13#ULTIMATE.startErr0AssertViolationtrue" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("2#L21''true" "assume !true;" "12#L21'''true")
+		 ("2#L21''true" "assume true;" "14#L21true")
+		 ("3#L4''true" "assume true;" "10#ULTIMATE.startEXITtrue")
+		 ("4#L4true" "assume !!(__VERIFIER_assert_~cond != 0);" "3#L4''true")
+		 ("4#L4true" "assume !(__VERIFIER_assert_~cond != 0);" "8#L5true")
+		 ("5#L17true" "assume !(main_~j~4 < 20);" "6#L17'''true")
+		 ("5#L17true" "assume !!(main_~j~4 < 20);main_~j~4 := main_~i~4 + main_~j~4;" "15#L17''true")
+		 ("6#L17'''true" "main_~k~4 := 4;" "2#L21''true")
+		 ("7#ULTIMATE.startENTRYtrue" "havoc main_~i~4, main_~j~4, main_~k~4;havoc main_~i~4;havoc main_~j~4;havoc main_~k~4;main_~i~4 := 0;main_~k~4 := 9;main_~j~4 := -100;" "12#L21'''true")
+		 ("8#L5true" "assume !false;" "13#ULTIMATE.startErr0AssertViolationtrue")
+		 ("8#L5true" "assume true;" "3#L4''true")
+		 ("9#L15true" "assume !(main_~i~4 <= 100);" "11#L15''true")
+		 ("9#L15true" "assume !!(main_~i~4 <= 100);main_~i~4 := main_~i~4 + 1;" "15#L17''true")
+		 ("11#L15''true" "__VERIFIER_assert_#in~cond := (if main_~k~4 == 4 then 1 else 0);havoc __VERIFIER_assert_~cond;__VERIFIER_assert_~cond := __VERIFIER_assert_#in~cond;" "4#L4true")
+		 ("12#L21'''true" "assume true;" "9#L15true")
+		 ("12#L21'''true" "assume !true;" "11#L15''true")
+		 ("14#L21true" "assume !!(main_~k~4 <= 3);main_~k~4 := main_~k~4 + 1;" "2#L21''true")
+		 ("14#L21true" "assume !(main_~k~4 <= 3);" "12#L21'''true")
+		 ("15#L17''true" "assume !true;" "6#L17'''true")
+		 ("15#L17''true" "assume true;" "5#L17true")
+	},
+	returnTransitions = {
+	}
+);
+
+
+
+NestedWordAutomaton AliasDarteFeautrierGonnord_SAS2010_Fig1_true_termination = (
+	callAlphabet = {},
+	internalAlphabet = {"assume true;" "havoc main_#res;havoc main_#t~nondet0, main_#t~nondet1, main_#t~post3, main_#t~nondet2, main_#t~post4, main_#t~post5, main_~y~2, main_~m~2, main_~x~2;main_~y~2 := 0;main_~m~2 := main_#t~nondet0;havoc main_#t~nondet0;main_~x~2 := main_~m~2;" "assume !true;" "assume !(main_~y~2 <= main_~m~2 && main_#t~nondet2 != 0);havoc main_#t~nondet2;" "assume true;" "assume !!(main_~y~2 <= main_~m~2 && main_#t~nondet2 != 0);havoc main_#t~nondet2;main_#t~post3 := main_~y~2;main_~y~2 := main_#t~post3 + 1;havoc main_#t~post3;" "assume !true;" "assume !(main_~x~2 >= 0 && main_~y~2 >= 0);" "main_#t~post4 := main_~x~2;main_~x~2 := main_#t~post4 - 1;havoc main_#t~post4;" "main_#res := 0;#t~ret6 := main_#res;assume true;" "assume !!(main_~x~2 >= 0 && main_~y~2 >= 0);" "assume !(main_#t~nondet1 != 0);havoc main_#t~nondet1;" "assume main_#t~nondet1 != 0;havoc main_#t~nondet1;" "main_#t~post5 := main_~y~2;main_~y~2 := main_#t~post5 - 1;havoc main_#t~post5;" },
+	returnAlphabet = {},
+	states = {"2#L14''true" "3#ULTIMATE.startENTRYtrue" "4#L15true" "5#ULTIMATE.startEXITtrue" "6#L15''true" "7#L15'''true" "8#L13''true" "9#L14true" "10#L13'''true" "11#L13true" },
+	initialStates = {"3#ULTIMATE.startENTRYtrue" },
+	finalStates = {},
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("2#L14''true" "main_#t~post5 := main_~y~2;main_~y~2 := main_#t~post5 - 1;havoc main_#t~post5;" "8#L13''true")
+		 ("3#ULTIMATE.startENTRYtrue" "havoc main_#res;havoc main_#t~nondet0, main_#t~nondet1, main_#t~post3, main_#t~nondet2, main_#t~post4, main_#t~post5, main_~y~2, main_~m~2, main_~x~2;main_~y~2 := 0;main_~m~2 := main_#t~nondet0;havoc main_#t~nondet0;main_~x~2 := main_~m~2;" "8#L13''true")
+		 ("4#L15true" "assume !(main_~y~2 <= main_~m~2 && main_#t~nondet2 != 0);havoc main_#t~nondet2;" "7#L15'''true")
+		 ("4#L15true" "assume !!(main_~y~2 <= main_~m~2 && main_#t~nondet2 != 0);havoc main_#t~nondet2;main_#t~post3 := main_~y~2;main_~y~2 := main_#t~post3 + 1;havoc main_#t~post3;" "6#L15''true")
+		 ("6#L15''true" "assume true;" "4#L15true")
+		 ("6#L15''true" "assume !true;" "7#L15'''true")
+		 ("7#L15'''true" "main_#t~post4 := main_~x~2;main_~x~2 := main_#t~post4 - 1;havoc main_#t~post4;" "2#L14''true")
+		 ("8#L13''true" "assume !true;" "10#L13'''true")
+		 ("8#L13''true" "assume true;" "11#L13true")
+		 ("9#L14true" "assume !(main_#t~nondet1 != 0);havoc main_#t~nondet1;" "2#L14''true")
+		 ("9#L14true" "assume main_#t~nondet1 != 0;havoc main_#t~nondet1;" "6#L15''true")
+		 ("10#L13'''true" "main_#res := 0;#t~ret6 := main_#res;assume true;" "5#ULTIMATE.startEXITtrue")
+		 ("11#L13true" "assume !(main_~x~2 >= 0 && main_~y~2 >= 0);" "10#L13'''true")
+		 ("11#L13true" "assume !!(main_~x~2 >= 0 && main_~y~2 >= 0);" "9#L14true")
+	},
+	returnTransitions = {
+	}
+);

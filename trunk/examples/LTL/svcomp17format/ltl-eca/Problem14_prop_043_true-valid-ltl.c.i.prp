@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( (! "output == 21" WU "input == 5") ) )

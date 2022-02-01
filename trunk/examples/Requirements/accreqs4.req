@@ -1,0 +1,42 @@
+Input x0008 is bool
+Input x0010 is bool
+Input x0006 is bool
+Input x0005 is bool
+Input x0022 is bool
+Input x0017 is bool
+Input x0019 is bool
+Input x0020 is bool
+Input x0014 is bool
+Input x0001 is bool
+Input x0004 is bool
+Input x0000 is bool
+Input x0007 is bool
+Input x0009 is bool
+Input x0016 is bool
+Input x0023 is bool
+Input x0012 is bool
+Input x0002 is bool
+Input x0003 is bool
+Input x0015 is bool
+Input x0018 is bool
+Input x0021 is bool
+Input x0013 is bool
+Input x0011 is bool
+
+ID000: Globally, it is always the case that if  "x0000"  holds, then  "!x0001"  holds as well
+ID001: Globally, it is always the case that if  "x0002"  holds, then  "!x0001"  holds as well
+ID002: Globally, it is always the case that if  "x0003"  holds, then  "!x0001"  holds as well
+ID003: After  "x0004"  until  "!x0004" , it is always the case that if  "x0004"  holds, then  "!x0001"  holds after at most  "200"  time units
+ID004: Globally, it is always the case that if  "x0005"  holds, then  "!x0001"  holds as well
+ID005: Globally, it is always the case that if  "x0006"  holds, then  "!x0001"  holds as well
+ID006: Globally, it is always the case that if "!x0007 || !x0008 || x0009" holds, then "x0010" holds as well
+ID007: Globally, it is always the case that if  "x0011 || x0012"  holds, then  "!x0013"  holds as well
+ID008: Globally, it is always the case that if  "x0014"  holds, then  "!x0013"  holds as well
+ID009: Globally, it is always the case that if  "x0015"  holds, then  "!x0013"  holds as well
+ID010: Globally, it is always the case that if  "x0016"  holds, then  "!x0013"  holds as well
+ID011: After  "x0017"  until  "!x0017" , it is always the case that if  "x0017"  holds, then  "!x0013"  holds after at most  "200"  time units
+ID012: Globally, it is always the case that if  "x0018"  holds, then  "!x0013"  holds as well
+ID013: Globally, it is always the case that if  "x0019"  holds, then  "!x0013"  holds as well
+ID014: After  "x0020"  until  "!x0020" , it is always the case that if  "x0020"  holds, then  "!x0009"  holds after at most  "200"  time units
+ID015: Globally, it is always the case that if  "x0021"  holds, then  "!x0009"  holds as well
+ID016: Globally, it is always the case that if  "x0022"  holds, then  "x0023"  holds as well

@@ -1,0 +1,147 @@
+// 
+
+//print(numberOfStates(operand2));
+//NestedWordAutomaton complement = buchiComplementFKV(operand2);
+//print(numberOfStates(complement));
+//print(complement);
+NestedWordAutomaton diff = buchiDifferenceFKV(operand1,operand2);
+
+NestedWordAutomaton operand1 = (
+	callAlphabet = {"call #t~ret9 := main();" },
+	internalAlphabet = {"call #t~ret3 := nondet_bool();havoc ~a~2..." "assume true;" "assume !(#t~ret4 != 0);havoc #t~ret4;" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "assume !!(1 <= ~v1~3);" "assume #t~ret4 != 0;havoc #t~ret4;" "havoc ~a~1;#res := ~a~1;assume true;" "assume true;" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "assume !(#t~ret2 != 0);havoc #t~ret2;" "havoc ~a~2;#res := ~a~2;assume true;" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "assume !(1 <= ~v1~3);" "assume true;" "call ULTIMATE.init();assume true;Return ..." "assume #t~ret3 != 0;havoc #t~ret3;" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "assume !(101 <= ~v2~3);" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "assume !!(1 <= ~v1~3);" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "call #t~ret0 := nondet();havoc ~a~1;#res..." "assume !(~v2~3 <= 100);" "assume !(1 <= ~v1~3);" "assume #t~ret2 != 0;havoc #t~ret2;call #..." },
+	returnAlphabet = {"return call #t~ret9 := main();" },
+	states = {"137#L15" "136#loc0" "139#L8" "138#L22" "141#L22" "140#L15" "143#mainENTRY" "142#L8" "129#mainENTRY" "128#L21" "131#L20'" "130#L14" "133#L13" "132#L1" "135#loc0" "134#L13" "144#L21" "145#L20'" "146#L21" "147#L14" "148#L14" "149#L20'" "111#L22" "119#mainENTRY" "118#L22" "117#L13" "116#L21" "115#loc0" "114#L15" "113#ULTIMATE.startENTRY" "112#L8" "127#L13" "126#L1" "125#L20'" "124#L21" "123#loc0" "122#L15" "121#L14" "120#L8" },
+	initialStates = {"113#ULTIMATE.startENTRY" },
+	finalStates = {"111#L22" "117#L13" "116#L21" "115#loc0" "114#L15" "113#ULTIMATE.startENTRY" "112#L8" },
+	callTransitions = {
+		 ("132#L1" "call #t~ret9 := main();" "129#mainENTRY")
+		 ("126#L1" "call #t~ret9 := main();" "119#mainENTRY")
+		 ("126#L1" "call #t~ret9 := main();" "143#mainENTRY")
+	},
+	internalTransitions = {
+		 ("137#L15" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "136#loc0")
+		 ("137#L15" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "135#loc0")
+		 ("136#loc0" "call #t~ret3 := nondet_bool();havoc ~a~2..." "127#L13")
+		 ("139#L8" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "136#loc0")
+		 ("139#L8" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "135#loc0")
+		 ("138#L22" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "136#loc0")
+		 ("138#L22" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "135#loc0")
+		 ("141#L22" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "115#loc0")
+		 ("140#L15" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "136#loc0")
+		 ("143#mainENTRY" "call #t~ret0 := nondet();havoc ~a~1;#res..." "139#L8")
+		 ("143#mainENTRY" "call #t~ret0 := nondet();havoc ~a~1;#res..." "120#L8")
+		 ("142#L8" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "115#loc0")
+		 ("129#mainENTRY" "call #t~ret0 := nondet();havoc ~a~1;#res..." "112#L8")
+		 ("128#L21" "assume !!(1 <= ~v1~3);" "111#L22")
+		 ("131#L20'" "assume #t~ret4 != 0;havoc #t~ret4;" "128#L21")
+		 ("130#L14" "assume !!(1 <= ~v1~3);" "114#L15")
+		 ("133#L13" "assume #t~ret3 != 0;havoc #t~ret3;" "130#L14")
+		 ("133#L13" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "149#L20'")
+		 ("135#loc0" "call #t~ret3 := nondet_bool();havoc ~a~2..." "133#L13")
+		 ("135#loc0" "call #t~ret3 := nondet_bool();havoc ~a~2..." "134#L13")
+		 ("134#L13" "assume #t~ret3 != 0;havoc #t~ret3;" "147#L14")
+		 ("134#L13" "assume #t~ret3 != 0;havoc #t~ret3;" "148#L14")
+		 ("134#L13" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "145#L20'")
+		 ("134#L13" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "131#L20'")
+		 ("144#L21" "assume !!(1 <= ~v1~3);" "141#L22")
+		 ("145#L20'" "assume #t~ret4 != 0;havoc #t~ret4;" "144#L21")
+		 ("145#L20'" "assume #t~ret4 != 0;havoc #t~ret4;" "146#L21")
+		 ("146#L21" "assume !!(1 <= ~v1~3);" "118#L22")
+		 ("146#L21" "assume !!(1 <= ~v1~3);" "138#L22")
+		 ("147#L14" "assume !!(1 <= ~v1~3);" "137#L15")
+		 ("147#L14" "assume !!(1 <= ~v1~3);" "140#L15")
+		 ("148#L14" "assume !!(1 <= ~v1~3);" "122#L15")
+		 ("149#L20'" "assume #t~ret4 != 0;havoc #t~ret4;" "116#L21")
+		 ("111#L22" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "123#loc0")
+		 ("119#mainENTRY" "call #t~ret0 := nondet();havoc ~a~1;#res..." "142#L8")
+		 ("118#L22" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "123#loc0")
+		 ("117#L13" "assume #t~ret3 != 0;havoc #t~ret3;" "121#L14")
+		 ("117#L13" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "125#L20'")
+		 ("116#L21" "assume !!(1 <= ~v1~3);" "141#L22")
+		 ("115#loc0" "call #t~ret3 := nondet_bool();havoc ~a~2..." "127#L13")
+		 ("114#L15" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "136#loc0")
+		 ("113#ULTIMATE.startENTRY" "call ULTIMATE.init();assume true;Return ..." "126#L1")
+		 ("113#ULTIMATE.startENTRY" "call ULTIMATE.init();assume true;Return ..." "132#L1")
+		 ("112#L8" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "123#loc0")
+		 ("127#L13" "assume #t~ret3 != 0;havoc #t~ret3;" "121#L14")
+		 ("127#L13" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "125#L20'")
+		 ("125#L20'" "assume #t~ret4 != 0;havoc #t~ret4;" "124#L21")
+		 ("124#L21" "assume !!(1 <= ~v1~3);" "118#L22")
+		 ("123#loc0" "call #t~ret3 := nondet_bool();havoc ~a~2..." "117#L13")
+		 ("122#L15" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "115#loc0")
+		 ("121#L14" "assume !!(1 <= ~v1~3);" "140#L15")
+		 ("120#L8" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "123#loc0")
+	},
+	returnTransitions = {
+	}
+);
+
+
+
+
+NestedWordAutomaton operand2 = (
+	callAlphabet = {"call #t~ret9 := main();" },
+	internalAlphabet = {"call #t~ret3 := nondet_bool();havoc ~a~2..." "assume true;" "assume !(#t~ret4 != 0);havoc #t~ret4;" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "assume !!(1 <= ~v1~3);" "assume #t~ret4 != 0;havoc #t~ret4;" "havoc ~a~1;#res := ~a~1;assume true;" "assume true;" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "assume !(#t~ret2 != 0);havoc #t~ret2;" "havoc ~a~2;#res := ~a~2;assume true;" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "assume !(1 <= ~v1~3);" "assume true;" "call ULTIMATE.init();assume true;Return ..." "assume #t~ret3 != 0;havoc #t~ret3;" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "assume !(101 <= ~v2~3);" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "assume !!(1 <= ~v1~3);" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "call #t~ret0 := nondet();havoc ~a~1;#res..." "assume !(~v2~3 <= 100);" "assume !(1 <= ~v1~3);" "assume #t~ret2 != 0;havoc #t~ret2;call #..." },
+	returnAlphabet = {"return call #t~ret9 := main();" },
+	states = {"338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "281#(<= 0 oldRank)" "270#unseeded" "285#unseeded" "404#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)) (<= 0 oldRank))" "523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))" },
+	initialStates = {"270#unseeded" },
+	finalStates = {"276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" },
+	callTransitions = {
+		 ("285#unseeded" "call #t~ret9 := main();" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "call #t~ret9 := main();" "285#unseeded")
+	},
+	internalTransitions = {
+		 ("338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))" "assume #t~ret3 != 0;havoc #t~ret3;" "338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))")
+		 ("338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))" "assume !!(1 <= ~v1~3);" "404#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)) (<= 0 oldRank))")
+		 ("338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))" "assume #t~ret4 != 0;havoc #t~ret4;" "338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))")
+		 ("338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))")
+		 ("338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))" "assume !!(1 <= ~v1~3);" "404#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)) (<= 0 oldRank))")
+		 ("276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "call #t~ret3 := nondet_bool();havoc ~a~2..." "338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))")
+		 ("276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "assume #t~ret3 != 0;havoc #t~ret3;" "338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))")
+		 ("276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "assume !!(1 <= ~v1~3);" "404#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)) (<= 0 oldRank))")
+		 ("276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))")
+		 ("276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "assume #t~ret4 != 0;havoc #t~ret4;" "338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))")
+		 ("276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "338#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)))")
+		 ("276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))" "assume !!(1 <= ~v1~3);" "404#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)) (<= 0 oldRank))")
+		 ("281#(<= 0 oldRank)" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "281#(<= 0 oldRank)")
+		 ("281#(<= 0 oldRank)" "call #t~ret3 := nondet_bool();havoc ~a~2..." "281#(<= 0 oldRank)")
+		 ("281#(<= 0 oldRank)" "assume #t~ret3 != 0;havoc #t~ret3;" "281#(<= 0 oldRank)")
+		 ("281#(<= 0 oldRank)" "assume !!(1 <= ~v1~3);" "281#(<= 0 oldRank)")
+		 ("281#(<= 0 oldRank)" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "281#(<= 0 oldRank)")
+		 ("281#(<= 0 oldRank)" "assume #t~ret4 != 0;havoc #t~ret4;" "281#(<= 0 oldRank)")
+		 ("281#(<= 0 oldRank)" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "281#(<= 0 oldRank)")
+		 ("281#(<= 0 oldRank)" "assume !!(1 <= ~v1~3);" "281#(<= 0 oldRank)")
+		 ("270#unseeded" "call ULTIMATE.init();assume true;Return ..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("270#unseeded" "call ULTIMATE.init();assume true;Return ..." "285#unseeded")
+		 ("404#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)) (<= 0 oldRank))" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("404#(and (= oldRank (+ main_~v1~3 (- 1))) (<= main_~v1~3 (+ oldRank 1)) (<= 0 oldRank))" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "281#(<= 0 oldRank)")
+		 ("285#unseeded" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume !!(~v2~3 <= 100);~v2~3 := 11 + ~v..." "285#unseeded")
+		 ("285#unseeded" "call #t~ret0 := nondet();havoc ~a~1;#res..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "call #t~ret0 := nondet();havoc ~a~1;#res..." "285#unseeded")
+		 ("285#unseeded" "call #t~ret3 := nondet_bool();havoc ~a~2..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "call #t~ret3 := nondet_bool();havoc ~a~2..." "285#unseeded")
+		 ("285#unseeded" "assume #t~ret3 != 0;havoc #t~ret3;" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume #t~ret3 != 0;havoc #t~ret3;" "285#unseeded")
+		 ("285#unseeded" "assume !!(1 <= ~v1~3);" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume !!(1 <= ~v1~3);" "285#unseeded")
+		 ("285#unseeded" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume !!(101 <= ~v2~3);~v2~3 := -10 + ~..." "285#unseeded")
+		 ("285#unseeded" "assume #t~ret4 != 0;havoc #t~ret4;" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume #t~ret4 != 0;havoc #t~ret4;" "285#unseeded")
+		 ("285#unseeded" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "285#unseeded")
+		 ("285#unseeded" "assume !!(1 <= ~v1~3);" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume !!(1 <= ~v1~3);" "285#unseeded")
+		 ("285#unseeded" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("285#unseeded" "assume #t~ret2 != 0;havoc #t~ret2;call #..." "285#unseeded")
+		 ("523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))" "call #t~ret3 := nondet_bool();havoc ~a~2..." "523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))")
+		 ("523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))" "assume #t~ret3 != 0;havoc #t~ret3;" "523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))")
+		 ("523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))" "assume !!(1 <= ~v1~3);" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+		 ("523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))" "assume #t~ret4 != 0;havoc #t~ret4;" "523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))")
+		 ("523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))" "assume !(#t~ret3 != 0);havoc #t~ret3;cal..." "523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))")
+		 ("523#(and (<= main_~v1~3 (+ oldRank 1)) (<= main_~v1~3 oldRank))" "assume !!(1 <= ~v1~3);" "276#(or unseeded (and (> oldRank (+ main_~v1~3 (- 1))) (>= oldRank 0)))")
+	},
+	returnTransitions = {
+	}
+);

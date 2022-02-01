@@ -1,0 +1,71 @@
+// 2020-01-09 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+// a-transitions are not synced at all because they occur only in selfloops
+
+assert(accepts(net, [a b]));
+assert(accepts(net, [c]));
+assert(accepts(net, [a b c]));
+assert(accepts(net, [a c b]));
+assert(accepts(net, [c a b]));
+
+assert(!accepts(nwa, [a b]));
+assert(!accepts(nwa, [a b c]));
+assert(accepts(nwa, [a c b]));
+assert(accepts(nwa, [c a b]));
+
+PetriNet differenceH = difference(net, nwa, "HEURISTIC");
+assert(accepts(differenceH, [c]));
+assert(accepts(differenceH, [a b]));
+assert(accepts(differenceH, [a b c]));
+assert(!accepts(differenceH, [a c b]));
+assert(!accepts(differenceH, [c a b]));
+
+// a can only be synced once
+// b should be omitted
+// c should be synced only once (using inverted method)
+// assert(numberOfTransitions(differenceH) == 4);
+assert(numberOfTransitions(differenceH) == 3);
+
+// 5 places from petri net + 2 white places + 1 black place
+// assert(numberOfPlaces(differenceH) == 9);
+assert(numberOfPlaces(differenceH) == 8);
+
+PetriNet differencePairwiseOnDemand = differencePairwiseOnDemand(net, nwa);
+assert(numberOfTransitions(differencePairwiseOnDemand) == 3);
+assert(numberOfPlaces(differencePairwiseOnDemand) == 7);
+
+PetriNet differenceP = difference(net, nwa, "PAIRWISE");
+assert(numberOfTransitions(differenceP) == 3);
+assert(numberOfPlaces(differenceP) == 7);
+
+PetriNet differenceI = difference(net, nwa, "INVERTED");
+assert(numberOfTransitions(differenceI) == 3);
+assert(numberOfPlaces(differenceI) == 9);
+
+
+PetriNet net = (
+	alphabet = {a b c},
+	places = {p1 p2 p3 p4 p5},
+	transitions = {
+		({p1} a {p2})
+		({p2} b {p3})
+		({p4} c {p5})
+	},
+	initialMarking = {p1 p4},
+	acceptingPlaces = {p3 p5}
+);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b c},
+	returnAlphabet = {},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	finalStates = {q3},
+	callTransitions = {},
+	internalTransitions = {
+		(q1 a q1) (q1 b q1) (q1 c q2)
+		(q2 a q2) (q2 b q3) (q2 c q2)
+		(q3 a q3) (q3 b q3) (q3 c q3)
+	},
+	returnTransitions = {}
+);

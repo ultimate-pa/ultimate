@@ -1,0 +1,12 @@
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding" />
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"/>
+
+	</toolchain>
+</rundefinition>

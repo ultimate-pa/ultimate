@@ -1,0 +1,24 @@
+// Author: Christian Schilling and Matthias Heizmann
+// Date: 5.9.2013
+
+removeUnreachable(nwa);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"i" },
+	returnAlphabet = {"r" },
+	states = {q2 q0 q1 },
+	initialStates = {q0 },
+	finalStates = {q2 },
+	callTransitions = {
+		 (q2 "c" q1)
+		 (q0 "c" q1)
+	},
+	internalTransitions = {
+// 		 (q0 "i" q0)
+	},
+	returnTransitions = {
+		 (q1 q2 "r" q0)
+		 (q1 q0 "r" q2)
+	}
+);

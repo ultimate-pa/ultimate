@@ -1,0 +1,109 @@
+// Example where only lasso has the following property. Accepting state occurs
+// before call and after return, but is not the only state between call and
+// return.
+// Matthias used this example in his email to Xiao-Lin on 2010-10-23
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 23.10.2010
+
+assert(buchiAccepts(eNoether, [ ,b c< a >r]));
+assert(buchiAccepts(eNoether, [b , c< a >r b]));
+assert(!buchiAccepts(eNoether, [, c< a >r b]));
+assert(buchiAccepts(eNoether, [b, c< a >r b]));
+assert(!buchiAccepts(eNoether, [b, c< a >r]));
+assert(!buchiAccepts(eNoether, [b, c a r]));
+assert(!buchiIsEmpty(eNoether));
+
+print(eNoether);
+
+
+NestedWordAutomaton eNoether = (
+  callAlphabet = {a b c r},
+  internalAlphabet = {a b c r},
+  returnAlphabet = {a b c r},
+  states = {s0 s1 p1 p2},
+  initialStates = {s0},
+  finalStates = {s0},
+  callTransitions = {(s1 c p1)},
+  internalTransitions = {(s0 b s1) (p1 a p2)}, 
+  returnTransitions = {(p2 s1 r s0)}
+);
+
+
+
+
+
+
+
+
+
+
+// Example that
+// 1. tests whether accepting state in between call 
+// and return will be ``found´´.
+// 2. has no accepting run.
+// Author: Xiao-Lin
+// Date: 17.11.2010
+assert(buchiIsEmpty(rSchumann));
+print(rSchumann);
+
+NestedWordAutomaton rSchumann = (
+  callAlphabet = {c},
+  internalAlphabet = {a b},
+  returnAlphabet = {r},
+  states = {q1 p1 p2 p3 p4},
+  initialStates = {q1},
+  finalStates = {p3},
+  callTransitions = {(p1 c p2)},
+  internalTransitions = {(q1 a p1) (p2 a p3)}, 
+  returnTransitions = {(p3 p1 r p4)}
+);
+
+
+
+
+
+
+
+
+
+// Example, where in each accepting run the same call transition has to be
+// taken twice.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 16.5.2011
+
+assert(buchiAccepts(cKistner, [, c<  c<  a >r >r ]));
+assert(!buchiIsEmpty(cKistner));
+
+print(cKistner);
+
+NestedWordAutomaton cKistner = (
+  callAlphabet = { c },
+  internalAlphabet = {a b},
+  returnAlphabet = { r },
+  states = {s0 s1 s2},
+  initialStates = {s0},
+  finalStates = {s1},
+  callTransitions = { (s0 c s0) },
+  internalTransitions = {(s0 a s1) }, 
+  returnTransitions = { (s1 s0 r s2) (s2 s0 r s0) }
+);
+
+
+
+
+
+
+
+
+
+NestedWordAutomaton cKistnerSelfLoopFree = (
+  callAlphabet = { c },
+  internalAlphabet = {a b},
+  returnAlphabet = { r },
+  states = {s0 r0 r1 s1 s2},
+  initialStates = {s0},
+  finalStates = {s1},
+  callTransitions = { (s0 c r0) (r0 c r1)  },
+  internalTransitions = {(r1 a s1) }, 
+  returnTransitions = { (s1 r0 r s2) (s2 s0 r s0) }
+);

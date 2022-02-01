@@ -1,0 +1,10 @@
+/*
+No Test
+Has not Test
+*/
+
+Input Q is bool
+Output R is bool
+
+
+req1: After "Q", it is always the case that "R" holds at least every "5" time units.

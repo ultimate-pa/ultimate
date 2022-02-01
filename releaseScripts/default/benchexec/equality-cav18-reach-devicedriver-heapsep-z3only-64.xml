@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="240" hardtimelimit="300" cpuCores="2">
+
+    <option name="--generate-csv" />
+    <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+
+    <rundefinition name="Automizer">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench//svcomp-Reach-64bit-Automizer_Fixed_noBitfields+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AutomizerHeapSep">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench//svcomp-Reach-64bit-Automizer_Fixed_noBitfields+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="HeapSep">
+        <option name="-tc">../../../trunk/examples/toolchains/IcfgTransformerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench//svcomp-Reach-64bit-Automizer_Fixed_noBitfields+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    
+    <tasks name="DeviceDrivers">
+        <includesfile>../../../trunk/examples/svcomp/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
+    </tasks>
+    
+</benchmark>

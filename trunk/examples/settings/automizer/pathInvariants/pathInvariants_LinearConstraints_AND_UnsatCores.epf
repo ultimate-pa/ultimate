@@ -1,0 +1,18 @@
+#Mon Nov 07 17:44:48 CET 2016
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ unsat\ cores\ in\ PathInvariants=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=PathInvariants
+#Mon Nov 07 17:44:48 CET 2016
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+#Sat Feb 25 03:18:09 CET 2017
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Use\ unsat\ cores=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Nonlinear\ constraints=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=0.1.8
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=

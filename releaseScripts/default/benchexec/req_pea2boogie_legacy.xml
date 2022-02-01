@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="pea_to_boogie_legacy" 
+  timelimit="9000s" 
+  hardtimelimit="9000s" 
+  memlimit="32 GB" 
+  cpuCores="2">
+
+  <resultfiles>**.xml</resultfiles>
+  
+  <rundefinition name="pea_to_boogie"></rundefinition>
+  
+  <option>${inputfile_path_abs}/${inputfile_name}.xml</option>
+
+  <tasks name="All">
+	<includesfile>/storage/repos/re2019-exp/req-old.set</includesfile>
+  </tasks>
+
+  <tasks name="Paper">
+	<includesfile>/storage/repos/re2019-exp/in_paper_old.set</includesfile>
+  </tasks>
+
+  <tasks name="Big">
+	<include>/storage/repos/re2019-exp/all.old.req</include>
+  </tasks>
+  
+
+</benchmark>

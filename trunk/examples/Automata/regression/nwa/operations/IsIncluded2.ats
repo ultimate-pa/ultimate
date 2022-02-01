@@ -1,0 +1,27 @@
+// All accepts all binary numbers
+// Amod2 accepts all binary numbers that are divisible by two.
+// Amod3 accepts all binary numbers that are divisible by three.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2014-11-27
+
+
+parseAutomata("Misc_Divisibility.ats");
+
+assert(!isIncluded2(All, Amod2, Amod3));
+assert(isIncluded2(All, Amod2, All));
+
+
+NestedWordAutomaton All = (
+  callAlphabet = { },
+  internalAlphabet = { "0" "1" },
+  returnAlphabet = { },
+  states = {q0 },
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 "0" q0)
+	(q0 "1" q0)
+  },
+  returnTransitions = {}
+);

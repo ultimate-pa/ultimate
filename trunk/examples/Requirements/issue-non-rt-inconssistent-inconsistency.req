@@ -1,0 +1,13 @@
+// #TestSpec: rt-inconsistent:req1; vacuous:; inconsistent:; results: 1
+// Seemingly inconsistent requirement 
+// DD 2018-03-13 
+
+input a is bool
+input b is bool
+input c is bool
+
+req1: After "b", it is always the case that if "c" holds, then "a" holds after at most "50" time units
+req2: Globally, it is never the case that "a" holds.
+
+
+

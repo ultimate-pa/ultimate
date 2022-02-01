@@ -1,0 +1,52 @@
+// Author: Matthias
+// Date: 22.09.2012
+// changed: Christian
+//
+// Example that shows that we may not only split partitions along linear
+// predecessors but also along hierarchical predecessors.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 4);
+assert(shrinkNwaSize == 4);
+assert(minimizeNwaPmaxSatDirectBiSize == 4);
+assert(minimizeNwaPmaxSatDirectSize == 4);
+assert(reduceNwaDirectSimulationSize == 4);
+assert(reduceNwaDirectSimulationBSize == 4);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 4);
+// assert(reduceNwaDelayedSimulationSize == 4);
+// assert(reduceNwaDelayedSimulationBSize == 4);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call" },
+	internalAlphabet = {"a" "b" "d" },
+	returnAlphabet = { "return" },
+	states = {"q2" "qEntry" "q1" "q3" },
+	initialStates = {"qEntry" },
+	finalStates = {"qEntry" },
+	callTransitions = {
+		 ("q1" "call" "q1")
+ 		 ("q3" "call" "q3")
+	},
+	internalTransitions = {
+		 ("qEntry" "a" "q2")
+		 ("qEntry" "b" "q1")
+		 ("q1" "d" "qEntry")
+ 		 ("q3" "d" "qEntry")
+	},
+	returnTransitions = {
+		 ("q2" "q1" "return" "q3")
+	}
+);

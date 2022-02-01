@@ -1,0 +1,24 @@
+// Testfile dumped by Ultimate at 2011/10/31 13:20:53
+
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 10);
+
+assert(isEmpty(net));
+
+
+PetriNet net = (
+	alphabet = {"[assume !(critical == 0);]51" "LetterE" "[assume true;]54" "[flag1 = 0;]95" "[assume !true;]188" "[assume flag1 == 0 || turn == 0;]6" "[flag0 = 1;]212" "[turn = 0;]311" "[assume critical == 0;]90" "LetterA" "[assume critical == 0;]302" "LetterC" "LetterB" "[assume true;]286" "[assume true;]13" "[critical = 1;]120" "[flag0 = 0;]73" "[assume !(critical == 0);]9" "[assume flag0 == 0 || turn == 1;]176" "[assume true;]14" "LetterF" "[turn = 1;]100" "LetterD" "[flag1 = 1;]241" },
+	places = {"$Ultimate##2.4255" "$Ultimate##2.4Violation200" "$Ultimate##2.4253" "init_nonCrit" "$Ultimate##2.5181" "deadEnd97" "$Ultimate##2.557" "early2" "$Ultimate##2.2232" "$Ultimate##2.6307" "{$emptyStack=true}70" "deadEndDusk3" "$Ultimate##2.3253" "deadEndThread0Final" "init1" "early1" "earlySucc" "init2" "$Ultimate##2.2258" "$Ultimate##2.749" "Thread1FINAL33" "$Ultimate##2.4Violation121" "Thread1EXIT94" "$Ultimate##2.6310" "deadEndEarly" "$Ultimate##2.132" "init_true" "$Ultimate##2.3160" "$Ultimate##2.1177" "Thread0EXIT283" },
+	transitions = {
+		( {"init2" "init1" "{$emptyStack=true}70" } "LetterA" {"early2" "early1" "{$emptyStack=true}70" } )
+		( {"$Ultimate##2.6307" "init_true" "init_nonCrit" } "LetterB" {"deadEndDusk3" "deadEnd97" "{$emptyStack=true}70" } )
+		( {"$Ultimate##2.6310" "init_true" "init_nonCrit" } "LetterC" {"$Ultimate##2.749" "deadEnd97" "{$emptyStack=true}70" } )
+		( {"earlySucc" "{$emptyStack=true}70" "init_nonCrit" } "LetterD" {"deadEndThread0Final" "{$emptyStack=true}70" "init_nonCrit" } )
+		( {"$Ultimate##2.557" "deadEnd97" "{$emptyStack=true}70" } "LetterE" {"$Ultimate##2.6310" "init_true" "init_nonCrit" } )
+		( {"init2" "init1" "init_true" "init_nonCrit" } "LetterA" {"early2" "early1" "deadEnd97" "{$emptyStack=true}70" } )
+		( {"early2" "early1" } "LetterF" {"earlySucc" "deadEndEarly" } )
+	},
+	initialMarking = {"init_nonCrit" "init_true" "init1" "init2" },
+	acceptingPlaces = {"$Ultimate##2.4Violation121" "$Ultimate##2.4Violation200" }
+);

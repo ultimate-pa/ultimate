@@ -1,0 +1,54 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 7.8.2013
+
+
+NestedWordAutomaton result = removeUnreachable(nwa);
+print(numberOfStates(result));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c0 c1 c2 c3 c4 },
+	internalAlphabet = {a1 a0 a4 a3 a2 a5 a7 a6 a9 a8 a10 a11 },
+	returnAlphabet = {r0 r1 r2 r3 r4 },
+	states = {s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16 s17 s18 s19 s20 s21 s22 s23 s24 s25 s26 },
+	initialStates = {s19 },
+	finalStates = {s16 s25 s26 },
+	callTransitions = {
+		 (s3 c2 s8)
+		 (s10 c1 s8)
+		 (s11 c4 s8)
+		 (s12 c0 s1)
+		 (s17 c3 s8)
+	},
+	internalTransitions = {
+		 (s0 a10 s2)
+		 (s1 a6 s0)
+		 (s1 a8 s3)
+		 (s4 a5 s7)
+		 (s6 a11 s5)
+		 (s8 a4 s12)
+		 (s8 a1 s13)
+		 (s9 a7 s11)
+		 (s9 a9 s10)
+		 (s13 a5 s14)
+		 (s15 a11 s16)
+		 (s18 a10 s20)
+		 (s19 a2 s9)
+		 (s19 a0 s17)
+		 (s21 a5 s22)
+		 (s23 a11 s25)
+		 (s24 a11 s26)
+	},
+	returnTransitions = {
+		 (s2 s12 r3 s4)
+		 (s7 s10 r0 s15)
+		 (s7 s11 r1 s24)
+		 (s7 s3 r2 s18)
+		 (s7 s17 r4 s6)
+		 (s14 s3 r2 s18)
+		 (s20 s12 r3 s21)
+		 (s22 s10 r0 s24)
+		 (s22 s11 r1 s24)
+		 (s22 s3 r2 s18)
+		 (s22 s17 r4 s23)
+	}
+);

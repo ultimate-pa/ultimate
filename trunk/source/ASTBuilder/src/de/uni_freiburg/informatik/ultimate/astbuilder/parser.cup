@@ -1,0 +1,271 @@
+package de.uni_freiburg.informatik.ultimate.astbuilder;
+
+/* This is the grammar for my personal tree builder project.
+ * It is used to build the nodes for an abstract syntax tree
+ * in an automatic way.
+ */
+
+import com.github.jhoenicke.javacup.runtime.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+import java.util.HashMap;
+import java.util.HashSet;
+
+option java15, compact_red, newpositions;
+
+parser code {:
+    String filename = "";
+
+    public void setFileName(String filename) {
+        this.filename = filename;
+    }
+
+    public void syntax_error(Symbol cur_token) {
+    }
+:}
+
+action code {:
+    private static final int WRITEABLE = 1;
+    private static final int OPTIONAL  = 2;
+    private static final int WRITEABLE_ONCE  = 4;
+
+    Node currentNode = null;
+    HashMap<String,Node> symbolTable = new HashMap<String,Node>();
+    boolean hasError = false;
+
+    public void report_error(int left, int right, String message)
+    {
+        hasError = true;
+        System.err.println(parser.filename+":"
+            + (left >> 16) + ":" + (left & 0xffff) + ":"
+            + (right >> 16) + ":" + (right & 0xffff) + ": "
+            + message);
+    }
+
+    void popNode() {
+        currentNode = currentNode.getParent();
+    }
+
+    Node buildNode(String name, String ifaces, String comment) {
+        Node parent = currentNode;
+        if (comment == null)
+            comment = Emit.buildClassComment(name, parent == null ? null : parent.getName());
+        else if (!comment.endsWith("."))
+            comment += ".";
+        currentNode = new Node(name, parent, ifaces, comment, new HashSet<String>());
+       	return currentNode;
+    }
+    
+    void fillNode(Node node, List<Parameter> pl, boolean isAbstract, int left, int right) {
+        node.setAbstract(isAbstract);
+        node.setParameters(pl.toArray(new Parameter[pl.size()]));
+        Object previous = symbolTable.put(node.getName(), node);
+        if (previous != null)
+            report_error(left, right,
+                         "Double definition of "+currentNode);
+    }
+
+:}
+
+terminal String IDENT;
+terminal String DOCCOMMENT;
+terminal IMPORT, PACKAGE, IMPLEMENTS, DOT, DDEF, COLON, BAR, STAR, SEMI, COMMA;
+terminal LBRACE, RBRACE, LBRACKET, RBRACKET, LPAREN, RPAREN, LANGLE, RANGLE;
+terminal WRITEABLE, OPTIONAL, WRITEABLE_ONCE;
+
+non terminal NodeDefinitionList, NodeDefinition;
+non terminal Grammar goal;
+non terminal Boolean Choice_opt, ChoiceDefinition, ChoiceDefinition_Part;
+non terminal ArrayList<Parameter> Parameter_List, Parameter_List_opt;
+non terminal Parameter Parameter;
+non terminal Node DeclName, BracedDeclName;
+non terminal String Implements_opt;
+non terminal String Comment_opt;
+non terminal ArrayList<String> Import_List;
+non terminal String PackageDefinition_opt, Import;
+non terminal String Type, TypeArgsCommaPlus, FullQualifiedName, FullQualifiedName_opt;
+non terminal String IdentList_tail;
+non terminal Integer Flags;
+
+goal
+ ::= PackageDefinition_opt:pkgName Import_List:imports NodeDefinitionList
+     {: 
+        if (hasError) 
+            RESULT = null; 
+        else
+            RESULT = new Grammar(pkgName, imports, symbolTable);
+     :}
+   ;
+
+PackageDefinition_opt
+ ::= {: RESULT = ""; :}
+   | PACKAGE FullQualifiedName_opt:name SEMI
+     {: RESULT = name; :}
+   ;
+
+FullQualifiedName_opt
+ ::= {: RESULT = null; :}
+   | FullQualifiedName:name
+     {: RESULT = name; :}
+   ;
+
+FullQualifiedName
+ ::= IDENT:name
+     {: RESULT = name; :}
+   | FullQualifiedName:pre DOT IDENT:post
+     {: RESULT = pre + "." + post; :}
+   ;
+
+TypeArgsCommaPlus
+ ::= Type:t {: RESULT = t; :}
+   | TypeArgsCommaPlus:ta COMMA Type:t {: RESULT = ta + ","+t; :} 
+   ;
+   
+Import_List
+ ::= {: RESULT = new ArrayList<String>(); :}
+   | Import_List:l Import:i
+     {: l.add(i); RESULT = l; :}
+   ;
+
+Import
+ ::= IMPORT FullQualifiedName:fqn SEMI
+     {: RESULT = fqn; :}
+   | IMPORT FullQualifiedName:fqn DOT STAR SEMI
+     {: RESULT = fqn + ".*"; :}
+   ;
+
+NodeDefinitionList
+ ::=
+   | NodeDefinitionList NodeDefinition
+   ;
+
+NodeDefinition 
+ ::= DeclName:comment DDEF Parameter_List:list Choice_opt:c SEMI
+     {: fillNode(currentNode, list, !c.booleanValue(), 
+                 comment$.left, comment$.right); 
+        popNode(); :}
+   | DeclName:comment DDEF ChoiceDefinition:c SEMI
+     {: fillNode(currentNode, 
+                 new ArrayList<Parameter>(0), !c.booleanValue(),
+                 comment$.left, comment$.right);
+        popNode(); :}
+   | DeclName DDEF Parameter_List Choice_opt error:err
+     {: popNode(); report_error(err$.left, err$.right, "`;' expected!"); :}
+   | DeclName DDEF error:err
+     {: popNode(); report_error(err$.left, err$.right, "production expected!"); :}
+   | DeclName error:err
+     {: popNode(); report_error(err$.left, err$.right, "`::=' expected!"); :}
+   | error:err
+     {: report_error(err$.left, err$.right, "definition expected!"); :}
+   ;
+
+DeclName
+ ::= Comment_opt:comment IDENT:node Implements_opt:ifaces
+     {: RESULT = buildNode(node, ifaces, comment); :}
+   ;
+   
+Implements_opt
+ ::= {: RESULT = null; :}
+   | IMPLEMENTS IdentList_tail:l IDENT:i 
+     {: RESULT = l + i; :}
+   ;
+
+BracedDeclName
+ ::= LBRACE DeclName:comment RBRACE
+     {: RESULT = comment; :}
+   ;
+
+ChoiceDefinition
+ ::= ChoiceDefinition:l BAR ChoiceDefinition_Part:c
+     {: if (l.booleanValue()) RESULT = l; else RESULT = c; :}
+   | ChoiceDefinition_Part:c
+     {: RESULT = c; :}
+   ;
+
+Choice_opt
+ ::= {: RESULT = Boolean.TRUE; :}
+   | LPAREN ChoiceDefinition:cd RPAREN
+     {: RESULT = cd; :}
+   | LPAREN ChoiceDefinition error:err
+     {: report_error(err$.left, err$.right, "`|' or `)' expected"); 
+        RESULT = null; :}
+   ;
+
+ChoiceDefinition_Part
+ ::= BracedDeclName:comment Parameter_List_opt:list Choice_opt:c
+     {: 
+        fillNode(currentNode, list, !c.booleanValue(),
+                  comment$.left, comment$.right); 
+        popNode(); 
+        RESULT = Boolean.FALSE;
+     :}
+   | {:
+        RESULT = Boolean.TRUE;
+     :}     
+   ;
+
+Parameter_List
+ ::= Parameter_List_opt:l Parameter:p
+     {: l.add(p); RESULT = l; :}
+   ;
+
+Parameter_List_opt
+ ::= {: RESULT = new ArrayList<Parameter>(); :}
+   | Parameter_List_opt:l Parameter:p
+     {: l.add(p); RESULT = l; :}
+   ;
+
+Parameter
+ ::= Comment_opt:comment IDENT:name COLON Flags:flags Type:type
+     {: if (comment == null)
+            comment = Emit.buildFieldComment(currentNode.getName(), name, type);
+        else if (!comment.endsWith("."))
+            comment += ".";
+        boolean writeable = (flags.intValue() & WRITEABLE) != 0;
+        boolean optional = (flags.intValue() & OPTIONAL) != 0;
+        boolean writeable_once = (flags.intValue() & WRITEABLE_ONCE) != 0;
+        RESULT = new Parameter(name, type, comment, writeable, writeable_once, optional); 
+     :}
+   | Comment_opt IDENT error:err
+     {: report_error(err$.left, err$.right, "`:' expected!"); 
+        RESULT = null; :}
+   | Comment_opt IDENT COLON error:err
+     {: report_error(err$.left, err$.right, "Type expected!"); 
+        RESULT = null; :}
+   ;
+
+Type
+ ::= FullQualifiedName:name
+     {: RESULT = name; currentNode.getUsedTypes().add(name); :}
+   | FullQualifiedName:name LANGLE TypeArgsCommaPlus:ta RANGLE
+     {: RESULT = name + "<" + ta + ">"; currentNode.getUsedTypes().add(name); :}
+   | Type:name LBRACKET RBRACKET
+     {: RESULT = name + "[]"; :}
+   | LBRACE IdentList_tail:l IDENT:i RBRACE
+     {: RESULT = "," + l + i; :}
+   | IDENT:ename LBRACE IdentList_tail:l IDENT:i RBRACE
+     {: RESULT = "!" + ename + "," + l + i; :}
+   ;
+
+IdentList_tail
+ ::= {: RESULT =""; :}
+   | IdentList_tail:l IDENT:i COMMA
+     {: RESULT = l + i + ","; :}
+   ;
+
+Comment_opt
+ ::= {: RESULT = null; :}
+   | DOCCOMMENT:comment
+     {: RESULT = comment; :}
+   ;
+
+Flags
+ ::= {: RESULT = 0; :}
+   | WRITEABLE Flags:flags
+     {: RESULT = flags | WRITEABLE; :}
+   | OPTIONAL Flags:flags
+     {: RESULT = flags | OPTIONAL; :}
+   | WRITEABLE_ONCE Flags:flags
+     {: RESULT = flags | WRITEABLE_ONCE; :}     
+   ;

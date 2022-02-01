@@ -1,0 +1,6 @@
+Note that there are many variants of the benchmark in the "variants" directory.
+You need to manually select the variant that you want to run.
+This can be done simply by moving all the variants you do _not_ want somewhere
+else (i.e., leave only the variant you want in the "variants" directory).
+
+The variant we used for the table in the paper is "big00.c".

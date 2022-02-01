@@ -1,0 +1,7 @@
+TODO:
+> open multiple files => multiple tabs ... actually not that easy
+
+DONE:
+- write log files in UltimateInterface
+- FontSize als Parameter index.jsp
+- Settings String only ASCII

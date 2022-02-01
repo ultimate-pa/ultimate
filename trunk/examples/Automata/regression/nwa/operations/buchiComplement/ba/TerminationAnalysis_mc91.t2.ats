@@ -1,0 +1,370 @@
+// 2015-06-21 Matthias Heizmann
+// Büchi automata obtained while applying BüchiAutomizer to the file mc91.t2.c
+// from the benchmark set from cooperating T2
+
+
+// RefinementSetting [m_InterpolantAutomaton=Deterministic, m_BouncerStem=true, m_BouncerLoop=false, m_ScroogeNondeterminismStem=false, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=true, m_UsedDefinedMaxRank=-3]
+NestedWordAutomaton interpolBuchiAutomatonUsedInRefinement1after = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume !(main_#t~ret5 != 0);havoc main_#t~ret5;" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "assume !(main_~v2~3 <= 100);" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "assume !!(1 <= main_~v1~3);" "assume !(main_#t~ret4 != 0);havoc main_#t~ret4;" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume !(main_#t~ret6 != 0);havoc main_#t~ret6;" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "assume !!(1 <= main_~v1~3);" "assume !(1 <= main_~v1~3);" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume !(main_#t~ret7 != 0);havoc main_#t~ret7;" "assume !(1 <= main_~v1~3);" "assume !(101 <= main_~v2~3);" "#t~ret9 := main_#res;assume true;" "assume !(main_#t~ret2 != 0);havoc main_#t~ret2;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" },
+	returnAlphabet = {},
+	states = {"32#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "28#unseeded" },
+	initialStates = {"28#unseeded" },
+	finalStates = {"32#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("32#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "#t~ret9 := main_#res;assume true;" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("32#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume !(main_#t~ret5 != 0);havoc main_#t~ret5;" "32#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "32#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !(main_~v2~3 <= 100);" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(1 <= main_~v1~3);" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !(main_#t~ret4 != 0);havoc main_#t~ret4;" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(1 <= main_~v1~3);" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !(1 <= main_~v1~3);" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !(1 <= main_~v1~3);" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "#t~ret9 := main_#res;assume true;" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !(101 <= main_~v2~3);" "33#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("28#unseeded" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "28#unseeded")
+		 ("28#unseeded" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "32#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("28#unseeded" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume !(main_#t~ret7 != 0);havoc main_#t~ret7;" "28#unseeded")
+		 ("28#unseeded" "#t~ret9 := main_#res;assume true;" "28#unseeded")
+		 ("28#unseeded" "assume !(main_#t~ret2 != 0);havoc main_#t~ret2;" "28#unseeded")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton c1FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefinement1after);
+assert (numberOfStates(c1FKV) == 6);
+NestedWordAutomaton c1FKVl = removeNonLiveStates(c1FKV);
+assert (numberOfStates(c1FKVl) == 6);
+assert (isDeterministic(interpolBuchiAutomatonUsedInRefinement1after));
+NestedWordAutomaton c1Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement1after);
+assert (numberOfStates(c1Det) == 7);
+NestedWordAutomaton c1Detl = removeNonLiveStates(c1Det);
+assert (numberOfStates(c1Detl) == 7);
+assert(isSemiDeterministic(interpolBuchiAutomatonUsedInRefinement1after));
+NestedWordAutomaton c1BS = buchiComplementNCSB(interpolBuchiAutomatonUsedInRefinement1after);
+assert (numberOfStates(c1BS) == 5);
+NestedWordAutomaton c1BStl = removeNonLiveStates(c1BS);
+assert (numberOfStates(c1BStl) == 5);
+
+
+
+
+
+// RefinementSetting [m_InterpolantAutomaton=Deterministic, m_BouncerStem=true, m_BouncerLoop=true, m_ScroogeNondeterminismStem=false, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=true, m_UsedDefinedMaxRank=-3]
+
+NestedWordAutomaton interpolBuchiAutomatonUsedInRefinement4after = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume !(main_#t~ret5 != 0);havoc main_#t~ret5;" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "assume !(main_~v2~3 <= 100);" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "assume !!(1 <= main_~v1~3);" "assume !(main_#t~ret4 != 0);havoc main_#t~ret4;" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume !(main_#t~ret6 != 0);havoc main_#t~ret6;" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "assume !!(1 <= main_~v1~3);" "assume !(1 <= main_~v1~3);" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume !(main_#t~ret7 != 0);havoc main_#t~ret7;" "assume !(1 <= main_~v1~3);" "assume !(101 <= main_~v2~3);" "#t~ret9 := main_#res;assume true;" "assume !(main_#t~ret2 != 0);havoc main_#t~ret2;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" },
+	returnAlphabet = {},
+	states = {"492#(<= 11 oldRank0)" "442#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "443#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "436#unseeded" "450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" },
+	initialStates = {"436#unseeded" },
+	finalStates = {"442#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("492#(<= 11 oldRank0)" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "492#(<= 11 oldRank0)")
+		 ("492#(<= 11 oldRank0)" "assume !!(1 <= main_~v1~3);" "492#(<= 11 oldRank0)")
+		 ("492#(<= 11 oldRank0)" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "492#(<= 11 oldRank0)")
+		 ("492#(<= 11 oldRank0)" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "492#(<= 11 oldRank0)")
+		 ("492#(<= 11 oldRank0)" "assume !!(1 <= main_~v1~3);" "492#(<= 11 oldRank0)")
+		 ("492#(<= 11 oldRank0)" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "492#(<= 11 oldRank0)")
+		 ("492#(<= 11 oldRank0)" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "492#(<= 11 oldRank0)")
+		 ("492#(<= 11 oldRank0)" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "492#(<= 11 oldRank0)")
+		 ("442#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "assume !!(1 <= main_~v1~3);" "443#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("443#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "assume !!(1 <= main_~v1~3);" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "assume !!(1 <= main_~v1~3);" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "492#(<= 11 oldRank0)")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))")
+		 ("470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))")
+		 ("436#unseeded" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "436#unseeded")
+		 ("436#unseeded" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "436#unseeded")
+		 ("436#unseeded" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "442#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("436#unseeded" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "436#unseeded")
+		 ("450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !!(1 <= main_~v1~3);" "450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "442#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "470#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0))")
+		 ("450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "450#(and (<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 11 oldRank0) (<= 233 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton c4FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefinement4after);
+assert (numberOfStates(c4FKV) == 12);
+NestedWordAutomaton c4FKVl = removeNonLiveStates(c4FKV);
+assert (numberOfStates(c4FKVl) == 12);
+assert (isDeterministic(interpolBuchiAutomatonUsedInRefinement4after));
+NestedWordAutomaton c4Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement4after);
+assert (numberOfStates(c4Det) == 13);
+NestedWordAutomaton c4Detl = removeNonLiveStates(c4Det);
+assert (numberOfStates(c4Detl) == 13);
+NestedWordAutomaton c4BS = buchiComplementNCSB(interpolBuchiAutomatonUsedInRefinement4after);
+assert (numberOfStates(c4BS) == 11);
+NestedWordAutomaton c4BStl = removeNonLiveStates(c4BS);
+assert (numberOfStates(c4BStl) == 10);
+
+
+
+
+
+// RefinementSetting [m_InterpolantAutomaton=ScroogeNondeterminism, m_BouncerStem=true, m_BouncerLoop=false, m_ScroogeNondeterminismStem=true, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=false, m_UsedDefinedMaxRank=-3]
+
+NestedWordAutomaton interpolBuchiAutomatonUsedInRefinement6after = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume !(main_#t~ret5 != 0);havoc main_#t~ret5;" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "assume !(main_~v2~3 <= 100);" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "assume !!(1 <= main_~v1~3);" "assume !(main_#t~ret4 != 0);havoc main_#t~ret4;" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume !(main_#t~ret6 != 0);havoc main_#t~ret6;" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "assume !!(1 <= main_~v1~3);" "assume !(1 <= main_~v1~3);" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume !(main_#t~ret7 != 0);havoc main_#t~ret7;" "assume !(1 <= main_~v1~3);" "assume !(101 <= main_~v2~3);" "#t~ret9 := main_#res;assume true;" "assume !(main_#t~ret2 != 0);havoc main_#t~ret2;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" },
+	returnAlphabet = {},
+	states = {"1175#unseeded" "1181#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" },
+	initialStates = {"1175#unseeded" },
+	finalStates = {"1181#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("1175#unseeded" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "1175#unseeded")
+		 ("1175#unseeded" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "1175#unseeded")
+		 ("1175#unseeded" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "1175#unseeded")
+		 ("1175#unseeded" "assume !!(1 <= main_~v1~3);" "1175#unseeded")
+		 ("1175#unseeded" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "1175#unseeded")
+		 ("1175#unseeded" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "1181#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("1175#unseeded" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "1175#unseeded")
+		 ("1175#unseeded" "assume !!(1 <= main_~v1~3);" "1175#unseeded")
+		 ("1175#unseeded" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "1175#unseeded")
+		 ("1175#unseeded" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "1175#unseeded")
+		 ("1175#unseeded" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "1175#unseeded")
+		 ("1181#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "assume !!(1 <= main_~v1~3);" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("1181#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "1181#(and (< 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(1 <= main_~v1~3);" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(1 <= main_~v1~3);" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "1182#(<= 211 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton c6FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefinement6after);
+assert (numberOfStates(c6FKV) == 18);
+NestedWordAutomaton c6FKVl = removeNonLiveStates(c6FKV);
+assert (numberOfStates(c6FKVl) == 18);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement6after));
+NestedWordAutomaton c6Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement6after);
+assert (numberOfStates(c6Det) == 7);
+NestedWordAutomaton c6Detl = removeNonLiveStates(c6Det);
+assert (numberOfStates(c6Detl) == 7);
+NestedWordAutomaton c6BS = buchiComplementNCSB(interpolBuchiAutomatonUsedInRefinement6after);
+assert (numberOfStates(c6BS) == 9);
+NestedWordAutomaton c6BStl = removeNonLiveStates(c6BS);
+assert (numberOfStates(c6BStl) == 9);
+
+
+
+
+
+
+// RefinementSetting [m_InterpolantAutomaton=ScroogeNondeterminism, m_BouncerStem=true, m_BouncerLoop=true, m_ScroogeNondeterminismStem=true, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=false, m_UsedDefinedMaxRank=-3]
+
+NestedWordAutomaton interpolBuchiAutomatonUsedInRefinement7after = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume !(main_#t~ret5 != 0);havoc main_#t~ret5;" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "assume !(main_~v2~3 <= 100);" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "assume !!(1 <= main_~v1~3);" "assume !(main_#t~ret4 != 0);havoc main_#t~ret4;" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume !(main_#t~ret6 != 0);havoc main_#t~ret6;" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "assume !!(1 <= main_~v1~3);" "assume !(1 <= main_~v1~3);" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume !(main_#t~ret7 != 0);havoc main_#t~ret7;" "assume !(1 <= main_~v1~3);" "assume !(101 <= main_~v2~3);" "#t~ret9 := main_#res;assume true;" "assume !(main_#t~ret2 != 0);havoc main_#t~ret2;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" },
+	returnAlphabet = {},
+	states = {"2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "2006#unseeded" "2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "2012#(and (< 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "2013#(<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" },
+	initialStates = {"2006#unseeded" },
+	finalStates = {"2012#(and (< 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !!(1 <= main_~v1~3);" "2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2012#(and (< 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2006#unseeded" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "2006#unseeded")
+		 ("2006#unseeded" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "2006#unseeded")
+		 ("2006#unseeded" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "2006#unseeded")
+		 ("2006#unseeded" "assume !!(1 <= main_~v1~3);" "2006#unseeded")
+		 ("2006#unseeded" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2006#unseeded")
+		 ("2006#unseeded" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2012#(and (< 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("2006#unseeded" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "2006#unseeded")
+		 ("2006#unseeded" "assume !!(1 <= main_~v1~3);" "2006#unseeded")
+		 ("2006#unseeded" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "2006#unseeded")
+		 ("2006#unseeded" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "2006#unseeded")
+		 ("2006#unseeded" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "2006#unseeded")
+		 ("2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !!(1 <= main_~v1~3);" "2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2012#(and (< 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))")
+		 ("2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "2049#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+		 ("2012#(and (< 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 0 oldRank0))" "assume !!(1 <= main_~v1~3);" "2013#(<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))")
+		 ("2013#(<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "2020#(and (<= 1 oldRank0) (<= 203 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 223 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)) (<= 201 (+ (* 2 ULTIMATE.start_main_~v2~3) oldRank0)))")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton c7FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefinement7after);
+assert (numberOfStates(c7FKV) == 15);
+NestedWordAutomaton c7FKVl = removeNonLiveStates(c7FKV);
+assert (numberOfStates(c7FKVl) == 15);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement7after));
+NestedWordAutomaton c7Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement7after);
+assert (numberOfStates(c7Det) == 11);
+NestedWordAutomaton c7Detl = removeNonLiveStates(c7Det);
+assert (numberOfStates(c7Detl) == 11);
+NestedWordAutomaton c7BS = buchiComplementNCSB(interpolBuchiAutomatonUsedInRefinement7after);
+assert (numberOfStates(c7BS) == 10);
+NestedWordAutomaton c7BStl = removeNonLiveStates(c7BS);
+assert (numberOfStates(c7BStl) == 10);
+
+
+
+
+
+// RefinementSetting [m_InterpolantAutomaton=ScroogeNondeterminism, m_BouncerStem=true, m_BouncerLoop=false, m_ScroogeNondeterminismStem=true, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=false, m_UsedDefinedMaxRank=-3]
+
+NestedWordAutomaton interpolBuchiAutomatonUsedInRefinement8after = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume !(main_#t~ret5 != 0);havoc main_#t~ret5;" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "assume !(main_~v2~3 <= 100);" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "assume !!(1 <= main_~v1~3);" "assume !(main_#t~ret4 != 0);havoc main_#t~ret4;" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume !(main_#t~ret6 != 0);havoc main_#t~ret6;" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "assume !!(1 <= main_~v1~3);" "assume !(1 <= main_~v1~3);" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume !(main_#t~ret7 != 0);havoc main_#t~ret7;" "assume !(1 <= main_~v1~3);" "assume !(101 <= main_~v2~3);" "#t~ret9 := main_#res;assume true;" "assume !(main_#t~ret2 != 0);havoc main_#t~ret2;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" },
+	returnAlphabet = {},
+	states = {"2524#unseeded" "2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "2531#(and (< (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191)) (<= 0 oldRank0))" },
+	initialStates = {"2524#unseeded" },
+	finalStates = {"2531#(and (< (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191)) (<= 0 oldRank0))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("2524#unseeded" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "2524#unseeded")
+		 ("2524#unseeded" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "2524#unseeded")
+		 ("2524#unseeded" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "2524#unseeded")
+		 ("2524#unseeded" "assume !!(1 <= main_~v1~3);" "2524#unseeded")
+		 ("2524#unseeded" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2524#unseeded")
+		 ("2524#unseeded" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "2524#unseeded")
+		 ("2524#unseeded" "assume !!(1 <= main_~v1~3);" "2524#unseeded")
+		 ("2524#unseeded" "assume !!(1 <= main_~v1~3);" "2531#(and (< (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191)) (<= 0 oldRank0))")
+		 ("2524#unseeded" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "2524#unseeded")
+		 ("2524#unseeded" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "2524#unseeded")
+		 ("2524#unseeded" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "2524#unseeded")
+		 ("2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "assume !!(1 <= main_~v1~3);" "2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))")
+		 ("2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))")
+		 ("2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))")
+		 ("2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "assume !!(1 <= main_~v1~3);" "2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))")
+		 ("2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "2531#(and (< (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191)) (<= 0 oldRank0))")
+		 ("2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))")
+		 ("2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "assume !!(1 <= main_~v1~3);" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "assume !!(1 <= main_~v1~3);" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))")
+		 ("2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "assume !!(1 <= main_~v1~3);" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))")
+		 ("2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))")
+		 ("2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))")
+		 ("2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "assume !!(1 <= main_~v1~3);" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))")
+		 ("2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "2531#(and (< (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191)) (<= 0 oldRank0))")
+		 ("2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))")
+		 ("2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "2575#(and (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213)) (<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 193)))")
+		 ("2531#(and (< (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191)) (<= 0 oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "2535#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 213))")
+		 ("2531#(and (< (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191)) (<= 0 oldRank0))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "2532#(<= (* 2 ULTIMATE.start_main_~v2~3) (+ oldRank0 191))")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton c8FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefinement8after);
+assert (numberOfStates(c8FKV) == 101);
+NestedWordAutomaton c8FKVl = removeNonLiveStates(c8FKV);
+assert (numberOfStates(c8FKVl) == 101);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement8after));
+NestedWordAutomaton c8Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement8after);
+assert (numberOfStates(c8Det) == 11);
+NestedWordAutomaton c8Detl = removeNonLiveStates(c8Det);
+assert (numberOfStates(c8Detl) == 11);
+NestedWordAutomaton c8BS = buchiComplementNCSB(interpolBuchiAutomatonUsedInRefinement8after);
+assert (numberOfStates(c8BS) == 37);
+NestedWordAutomaton c8BStl = removeNonLiveStates(c8BS);
+assert (numberOfStates(c8BStl) == 37);
+
+
+
+
+
+// RefinementSetting [m_InterpolantAutomaton=ScroogeNondeterminism, m_BouncerStem=true, m_BouncerLoop=false, m_ScroogeNondeterminismStem=true, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=false, m_UsedDefinedMaxRank=-3]
+
+NestedWordAutomaton interpolBuchiAutomatonUsedInRefinement9after = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume !(main_#t~ret5 != 0);havoc main_#t~ret5;" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "assume !(main_~v2~3 <= 100);" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "assume !!(1 <= main_~v1~3);" "assume !(main_#t~ret4 != 0);havoc main_#t~ret4;" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume !(main_#t~ret6 != 0);havoc main_#t~ret6;" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "assume !!(1 <= main_~v1~3);" "assume !(1 <= main_~v1~3);" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume !(main_#t~ret7 != 0);havoc main_#t~ret7;" "assume !(1 <= main_~v1~3);" "assume !(101 <= main_~v2~3);" "#t~ret9 := main_#res;assume true;" "assume !(main_#t~ret2 != 0);havoc main_#t~ret2;" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" },
+	returnAlphabet = {},
+	states = {"3504#(and (< (* 2 ULTIMATE.start_main_~v1~3) oldRank0) (<= 0 oldRank0))" "3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "3497#unseeded" },
+	initialStates = {"3497#unseeded" },
+	finalStates = {"3504#(and (< (* 2 ULTIMATE.start_main_~v1~3) oldRank0) (<= 0 oldRank0))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))" "assume !!(1 <= main_~v1~3);" "3504#(and (< (* 2 ULTIMATE.start_main_~v1~3) oldRank0) (<= 0 oldRank0))")
+		 ("3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))")
+		 ("3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))")
+		 ("3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))" "assume !!(1 <= main_~v1~3);" "3504#(and (< (* 2 ULTIMATE.start_main_~v1~3) oldRank0) (<= 0 oldRank0))")
+		 ("3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))")
+		 ("3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))")
+		 ("3504#(and (< (* 2 ULTIMATE.start_main_~v1~3) oldRank0) (<= 0 oldRank0))" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3504#(and (< (* 2 ULTIMATE.start_main_~v1~3) oldRank0) (<= 0 oldRank0))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "assume !!(1 <= main_~v1~3);" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "assume !!(1 <= main_~v1~3);" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "3673#(and (<= (+ (* 2 ULTIMATE.start_main_~v1~3) 2) oldRank0) (<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2)) (<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0))")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)")
+		 ("3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)")
+		 ("3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "assume !!(1 <= main_~v1~3);" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "assume !!(1 <= main_~v1~3);" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "3505#(<= (* 2 ULTIMATE.start_main_~v1~3) oldRank0)")
+		 ("3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "3508#(<= (* 2 ULTIMATE.start_main_~v1~3) (+ oldRank0 2))")
+		 ("3497#unseeded" "havoc main_#res;havoc main_#t~ret0, main_#t~ret1, main_#t~ret2, main_#t~ret3, main_#t~ret4, main_#t~ret5, main_#t~ret6, main_#t~ret7, main_#t~ret8, main_~v1~3, main_~v2~3;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret0 := nondet_#res;main_~v1~3 := main_#t~ret0;havoc main_#t~ret0;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret1 := nondet_#res;main_~v2~3 := main_#t~ret1;havoc main_#t~ret1;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret2 := nondet_bool_#res;" "3497#unseeded")
+		 ("3497#unseeded" "assume main_#t~ret2 != 0;havoc main_#t~ret2;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret7 := nondet_bool_#res;assume main_#t~ret7 != 0;havoc main_#t~ret7;havoc nondet_#res;havoc nondet_~a~1;havoc nondet_~a~1;nondet_#res := nondet_~a~1;main_#t~ret8 := nondet_#res;main_~v2~3 := main_#t~ret8;havoc main_#t~ret8;main_~v1~3 := 1;" "3497#unseeded")
+		 ("3497#unseeded" "assume !!(main_~v2~3 <= 100);main_~v2~3 := 11 + main_~v2~3;main_~v1~3 := 1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret5 := nondet_bool_#res;assume main_#t~ret5 != 0;havoc main_#t~ret5;" "3497#unseeded")
+		 ("3497#unseeded" "assume !!(1 <= main_~v1~3);" "3497#unseeded")
+		 ("3497#unseeded" "assume main_#t~ret3 != 0;havoc main_#t~ret3;" "3497#unseeded")
+		 ("3497#unseeded" "assume main_#t~ret4 != 0;havoc main_#t~ret4;" "3497#unseeded")
+		 ("3497#unseeded" "assume !!(1 <= main_~v1~3);" "3504#(and (< (* 2 ULTIMATE.start_main_~v1~3) oldRank0) (<= 0 oldRank0))")
+		 ("3497#unseeded" "assume !!(1 <= main_~v1~3);" "3497#unseeded")
+		 ("3497#unseeded" "assume !!(101 <= main_~v2~3);main_~v2~3 := -10 + main_~v2~3;main_~v1~3 := -1 + main_~v1~3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret6 := nondet_bool_#res;assume main_#t~ret6 != 0;havoc main_#t~ret6;" "3497#unseeded")
+		 ("3497#unseeded" "assume !(main_#t~ret3 != 0);havoc main_#t~ret3;havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret4 := nondet_bool_#res;" "3497#unseeded")
+		 ("3497#unseeded" "havoc nondet_bool_#res;havoc nondet_bool_~a~2;havoc nondet_bool_~a~2;nondet_bool_#res := nondet_bool_~a~2;main_#t~ret3 := nondet_bool_#res;" "3497#unseeded")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton c9FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefinement9after);
+assert (numberOfStates(c9FKV) == 43);
+NestedWordAutomaton c9FKVl = removeNonLiveStates(c9FKV);
+assert (numberOfStates(c9FKVl) == 43);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement9after));
+NestedWordAutomaton c9Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement9after);
+assert (numberOfStates(c9Det) == 11);
+NestedWordAutomaton c9Detl = removeNonLiveStates(c9Det);
+assert (numberOfStates(c9Detl) == 11);
+NestedWordAutomaton c9BS = buchiComplementNCSB(interpolBuchiAutomatonUsedInRefinement9after);
+assert (numberOfStates(c9BS) == 20);
+NestedWordAutomaton c9BStl = removeNonLiveStates(c9BS);
+assert (numberOfStates(c9BStl) == 20);

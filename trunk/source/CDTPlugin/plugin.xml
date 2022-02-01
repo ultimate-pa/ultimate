@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <!-- Definition of the new Category for "Ultimate" -->
+    <extension
+         point="org.eclipse.cdt.codan.core.checkers"
+         id="org.eclipse.cdt.codan.core.categories">
+    	<category
+      		id="org.eclipse.cdt.codan.core.categories.Ultimate"
+      		name="Ultimate">
+      	</category>
+   	</extension>
+
+   	<!-- Definition of the new Checker - here Standard C-Checker -->
+   	<extension
+         point="org.eclipse.cdt.codan.core.checkers">
+      	<checker
+            class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCChecker"
+            id="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCChecker"
+            name="Ultimate Run on C-Files">
+         	<!-- Define different Problem Categories -->
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Error"
+                description="Ultimate found an Error"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.CounterExampleResult"
+                messagePattern="Ultimate found an Error here, &apos;&apos;{0}&apos;&apos;"
+                name="Ultimate Counterexamples">
+         	</problem>
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Info"
+                description="Ultimate found an Invariant"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.InvariantResult"
+                messagePattern="Ultimate found an Invariant here, &apos;&apos;{0}&apos;&apos;"
+                name="Ultimate Invariants">
+         	</problem>
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Warning"
+                description="Ultimate cannot prove this"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.UnproveableResult"
+                messagePattern="Ultimate cannot prove this, &apos;&apos;{0}&apos;&apos;"
+                name="Ultimate Unproveable">
+         	</problem>
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Info"
+                description="Ultimate proved this"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.PositiveResult"
+                messagePattern="Ultimate proved this, &apos;&apos;{0}&apos;&apos;"
+                name="Ultimate Positive Result">
+         	</problem>
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Error"
+                description="Ultimate Syntax Error"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.SyntaxErrorResult"
+                messagePattern="Ultimate found a Syntax Error here, &apos;&apos;{0}&apos;&apos;"
+                name="Ultimate Syntax Error">
+         	</problem>
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Error"
+                description="Ultimate Timeout"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.TimeoutResult"
+                messagePattern="Ultimate got a time out here, &apos;&apos;{0}&apos;&apos;"
+                name="Ultimate Timeout">
+         	</problem>
+            <problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Info"
+                description="Ultimate Info"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericInfoResult"
+                messagePattern="{0}"
+                name="Info">
+            </problem>
+			<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Warning"
+                description="Ultimate Warning"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericWarningResult"
+                messagePattern="{0}"
+                name="Warning">
+         	</problem>
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Error"
+                description="Ultimate Error"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericErrorResult"
+                messagePattern="{0}"
+                name="Error">
+            </problem>
+      	</checker>
+   	</extension>
+   	
+   	<!-- Definition of the Problems Details -->
+   	<extension
+         point="org.eclipse.cdt.codan.ui.codanProblemDetails">
+    	  <problemDetails
+      			class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+      			problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.CounterExampleResult">
+      	  </problemDetails>
+      	  <problemDetails
+      			class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+      			problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.InvariantResult">
+      	  </problemDetails>
+      	  <problemDetails
+      			class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+      			problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.UnproveableResult">
+      	  </problemDetails>
+      	  <problemDetails
+      			class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+      			problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.PositiveResult">
+      	  </problemDetails>
+      	  <problemDetails
+      			class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+      			problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.SyntaxErrorResult">
+      	  </problemDetails>
+      	  <problemDetails
+      			class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+      			problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.TimeoutResult">
+      	  </problemDetails>
+      	  <problemDetails
+                class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+                problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericInfoResult">
+          </problemDetails>
+          <problemDetails
+                class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+                problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericWarningResult">
+          </problemDetails>
+          <problemDetails
+                class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+                problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericErrorResult">
+          </problemDetails>
+   	</extension>
+    <extension
+          id="de.uni_freiburg.informatik.ultimate.cdt.UltimateViews"
+          name="UltimateViews"
+          point="org.eclipse.ui.views">
+       <category 
+       		id="de.uni_freiburg.informatik.ultimate.cdt.UltimateViewCategory"
+           	name="Ultimate Views">
+       </category>
+       <view
+             allowMultiple="false"
+             category="de.uni_freiburg.informatik.ultimate.cdt.UltimateViewCategory"
+             class="de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList"
+             icon="icons/ut_small.png"
+             id="de.uni_freiburg.informatik.ultimate.cdt.ResultList"
+             name="Result List"
+             restorable="true">
+       </view>
+	   <view
+          allowMultiple="false"
+          category="de.uni_freiburg.informatik.ultimate.cdt.UltimateViewCategory"
+          class="de.uni_freiburg.informatik.ultimate.cdt.views.locationtrace.LocationTrace"
+          icon="icons/ut_small.png"
+          id="de.uni_freiburg.informatik.ultimate.cdt.LocationTrace"
+          name="Location Trace"
+          restorable="true">
+       </view>
+       <view
+          allowMultiple="false"
+          category="de.uni_freiburg.informatik.ultimate.cdt.UltimateViewCategory"
+          class="de.uni_freiburg.informatik.ultimate.cdt.views.variableassignment.VariableAssignment"
+          icon="icons/ut_small.png"
+          id="de.uni_freiburg.informatik.ultimate.cdt.VariableAssignment"
+          name="Variable Assignment"
+          restorable="true">
+       </view>
+       <view
+             allowMultiple="false"
+             category="de.uni_freiburg.informatik.ultimate.cdt.UltimateViewCategory"
+             class="de.uni_freiburg.informatik.ultimate.cdt.views.resultdetails.ResultDetails"
+             icon="icons/ut_small.png"
+             id="de.uni_freiburg.informatik.ultimate.cdt.ResultDetails"
+             name="Result Details"
+             restorable="true">
+       </view>
+    </extension>
+    <!-- Define the extention of a own annotation/marker -->
+    <extension
+        id="de.uni_freiburg.informatik.ultimate.cdt.marker.locationmarker"
+        name="Location Marker"
+        point="org.eclipse.core.resources.markers">
+        <super
+    		type="org.eclipse.core.resources.textmarker">
+  		</super>
+    </extension>
+    <!-- Define the annotation type of the Location Marker -->
+    <extension
+      	point="org.eclipse.ui.editors.annotationTypes">
+   		<type
+         	markerType="de.uni_freiburg.informatik.ultimate.cdt.marker.locationmarker"
+         	name="LocationMarker">
+   		</type>
+	</extension>
+	<!-- Define the preferences of this new defined marker type-->
+	<extension
+      	point="org.eclipse.ui.editors.markerAnnotationSpecification">
+   		<specification
+           	annotationType="LocationMarker"
+           	colorPreferenceKey="de.uni_freiburg.informatik.ultimate.cdt.marker.color"
+           	colorPreferenceValue="250,190,45"
+           	contributesToHeader="false"
+           	highlightPreferenceKey="de.uni_freiburg.informatik.ultimate.cdt.marker.highlight"
+           	highlightPreferenceValue="false"
+           	includeOnPreferencePage="true"
+           	label="Location Marker"
+           	overviewRulerPreferenceKey="de.uni_freiburg.informatik.ultimate.cdt.marker.overview"
+           	overviewRulerPreferenceValue="true"
+           	presentationLayer="0"
+           	textPreferenceKey="de.uni_freiburg.informatik.ultimate.cdt.marker.text"
+           	textPreferenceValue="true"
+           	textStylePreferenceKey="de.uni_freiburg.informatik.ultimate.cdt.marker.textstyle"
+           	textStylePreferenceValue="DASHED_BOX"
+           	verticalRulerPreferenceKey="de.uni_freiburg.informatik.ultimate.cdt.marker.vertical"
+           	verticalRulerPreferenceValue="true">
+   		</specification>
+	</extension>
+ <extension
+       point="org.eclipse.ui.perspectives">
+    <perspective
+          class="de.uni_freiburg.informatik.ultimate.cdt.perspective.UltimatePerspective"
+          icon="icons/ut_small.png"
+          id="de.uni_freiburg.informatik.ultimate.cdt.UltimatePerspective"
+          name="Ultimate">
+    </perspective>
+ </extension>
+ <extension
+       point="org.eclipse.ui.preferencePages">
+    <page
+          category="GeneratedUltimatePreferences"
+          class="de.uni_freiburg.informatik.ultimate.cdt.preferences.PreferencePage"
+          id="de.uni_freiburg.informatik.ultimate.cdt.Preferences"
+          name="Ultimate CDT-Plugin">
+    </page>
+ </extension>
+ <extension
+       point="org.eclipse.ui.perspectiveExtensions">
+    <perspectiveExtension
+          targetID="de.uni_freiburg.informatik.ultimate.cdt.UltimatePerspective">
+       <showInPart
+             id="org.eclipse.cdt.codan.internal.ui.views.ProblemDetails">
+       </showInPart>
+       <showInPart
+             id="de.uni_freiburg.informatik.ultimate.cdt.ResultDetails">
+       </showInPart>
+    </perspectiveExtension>
+ </extension>
+ <extension
+       point="org.eclipse.ui.bindings">
+    <key
+          commandId="org.eclipse.cdt.codan.commands.runCodanCommand"
+          contextId="org.eclipse.cdt.ui.cViewScope"
+          schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+          sequence="Ctrl+Shift+Alt+C">
+    </key>
+ </extension>
+</plugin>

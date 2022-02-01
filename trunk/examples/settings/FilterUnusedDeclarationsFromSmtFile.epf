@@ -1,0 +1,6 @@
+#Mon May 01 12:13:38 CEST 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Remove\ only\ unused\ declarations\ from\ SMT\ file\ (experimental)=true
+@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.11
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Directory=/home/matthias/ultimate/dump/SmtFilter

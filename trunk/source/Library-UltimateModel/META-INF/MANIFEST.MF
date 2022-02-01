@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-UltimateModel
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
+Bundle-Version: 0.2.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: de.uni_freiburg.informatik.ultimate.core.model,
+ de.uni_freiburg.informatik.ultimate.core.model.models,
+ de.uni_freiburg.informatik.ultimate.core.model.models.annotation,
+ de.uni_freiburg.informatik.ultimate.core.model.observers,
+ de.uni_freiburg.informatik.ultimate.core.model.preferences,
+ de.uni_freiburg.informatik.ultimate.core.model.results,
+ de.uni_freiburg.informatik.ultimate.core.model.services,
+ de.uni_freiburg.informatik.ultimate.core.model.translation
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.ultimatemodel
+Require-Bundle: javax.xml.bind;bundle-version="2.2.0";visibility:=reexport

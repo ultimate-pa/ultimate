@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  This file is part of the PEA Toolkit.
+  
+  The PEA toolkit is a collection of tools for 
+  Phase Event Automata (PEA). See
+  http://csd.informatik.uni-oldenburg.de/projects/epea.html
+  for more information.
+  
+  Copyright (C) 2005-2006 Department for Computing Science,
+                          University of Oldenburg
+  
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+--> 
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:annotation>
+        <xs:documentation xml:lang="en"> Schema for phase event automata. Roland Meyer 2005 C.v.O.
+            University of Oldenburg </xs:documentation>
+    </xs:annotation>
+
+    <xs:include schemaLocation="http://csd.informatik.uni-oldenburg.de/pub/download/peatoolkit/BasicTypes.xsd"/>
+      
+    <xs:complexType name="VariableList">
+        <xs:sequence>
+            <xs:element name="variable" type="Variable" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="EventList">
+        <xs:sequence>
+            <xs:element name="event" type="EventExpression" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="ClockList">
+        <xs:sequence>
+            <xs:element name="clock" type="Clock" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="PhaseList">
+        <xs:sequence>
+            <xs:element name="phase" type="PEAPhase" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="TransitionList">
+        <xs:sequence>
+            <xs:element name="transition" type="Transition" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="Transition">
+        <xs:sequence>
+            <xs:element name="guard" type="Formula"/>
+            <xs:element name="reset" type="Clock" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="source" type="xs:string" use="required"/>
+        <xs:attribute name="target" type="xs:string" use="required"/>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="PEAPhase">
+        <xs:all>
+            <xs:element name="invariant" type="Formula"/>
+            <xs:element name="clockInvariant" type="Formula" 
+                        minOccurs="0" maxOccurs="1"/>
+        </xs:all>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="initial" type="xs:boolean" use="optional" default="false"/>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="PEA">
+        <xs:all>
+        <xs:element name="variables" type="VariableList" minOccurs="0" maxOccurs="1"/>
+        <xs:element name="clocks" type="ClockList" minOccurs="0" maxOccurs="1"/>
+        <xs:element name="events" type="EventList" minOccurs="0" maxOccurs="1"/>
+        <xs:element name="phases" type="PhaseList"/>
+        <xs:element name="transitions" type="TransitionList" minOccurs="0" maxOccurs="1"/>
+        </xs:all>        
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="PEANet">
+        <xs:sequence>
+            <xs:element name="pea" type="PEA" minOccurs="1" maxOccurs="unbounded">
+                <xs:key name="IPhase">
+                    <xs:selector xpath="phases/phase"/>
+                    <xs:field xpath="@name"/>
+                </xs:key>
+                <xs:keyref refer="IPhase" name="SourceRef">
+                    <xs:selector xpath="transitions/transition"/>
+                    <xs:field xpath="@source"/>
+                </xs:keyref>
+                <xs:keyref refer="IPhase" name="TargetRef">
+                    <xs:selector xpath="transitions/transition"/>
+                    <xs:field xpath="@target"/>
+                </xs:keyref>
+                <xs:key name="IClocksAndVariables">
+                    <xs:selector xpath="clocks/clock|variables/variable"/>
+                    <xs:field xpath="@name"/>
+                </xs:key>
+                <xs:keyref refer="IClocksAndVariables" name="RangeExpressionRef">
+                    <xs:selector xpath=".//rangeExpression"/>
+                    <xs:field xpath="@variable"/>
+                </xs:keyref>
+                <xs:keyref refer="IClocksAndVariables" name="ResetRef">
+                    <xs:selector xpath="transitions/transition/reset"/>
+                    <xs:field xpath="@name"/>
+                </xs:keyref>
+                <xs:key name="IEvent">
+                    <xs:selector xpath="events/event"/>
+                    <xs:field xpath="@name"/>
+                </xs:key>
+                <xs:keyref refer="IEvent" name="EventRef">
+                    <xs:selector xpath=".//eventExpression"/>
+                    <xs:field xpath="@name"/>
+                </xs:keyref>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <xs:element name="peaNet" type="PEANet">
+    <xs:key name="IPEA">
+        <xs:selector xpath="pea"/>
+        <xs:field xpath="@name"/>
+    </xs:key>
+    </xs:element>
+</xs:schema>

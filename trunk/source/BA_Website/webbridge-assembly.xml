@@ -1,0 +1,52 @@
+<assembly>
+	<id>de.uni_freiburg.informatik.ultimate.websiteeclipsebridge.war</id>
+	<formats>
+		<format>war</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<fileSets>
+		<!-- web-inf template -->
+		<fileSet>
+			<directory>${project.basedir}${file.separator}..${file.separator}WebsiteEclipseBridge${file.separator}WEB-INF
+			</directory>
+			<outputDirectory>${file.separator}WEB-INF</outputDirectory>
+			<includes>
+				<include>**</include>
+			</includes>
+		</fileSet>
+
+		<!-- exported binaries from the product -->
+		<fileSet>
+			<directory>${project.basedir}${file.separator}..${file.separator}BA_SiteRepository${file.separator}target${file.separator}products${file.separator}Webbridge${file.separator}linux${file.separator}gtk${file.separator}x86_64
+			</directory>
+			<outputDirectory>${file.separator}WEB-INF
+			</outputDirectory>
+			<includes>
+				<include>plugins${file.separator}**</include>
+			</includes>
+		</fileSet>
+
+		<!-- manual config.ini -->
+		<fileSet>
+			<directory>${project.basedir}${file.separator}website-config
+			</directory>
+			<outputDirectory>${file.separator}WEB-INF${file.separator}configuration
+			</outputDirectory>
+			<includes>
+				<include>config.ini</include>
+			</includes>
+		</fileSet>
+
+		<!-- servlet bridge library -->
+		<fileSet>
+			<directory>${project.basedir}${file.separator}..${file.separator}BA_SiteRepository${file.separator}target${file.separator}products${file.separator}Webbridge${file.separator}linux${file.separator}gtk${file.separator}x86_64${file.separator}plugins
+			</directory>
+			<outputDirectory>${file.separator}WEB-INF${file.separator}lib
+			</outputDirectory>
+			<includes>
+				<include>org.eclipse.equinox.servletbridge_*.jar</include>
+			</includes>
+		</fileSet>
+
+	</fileSets>
+</assembly>

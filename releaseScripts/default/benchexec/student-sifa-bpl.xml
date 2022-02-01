@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+	
+    <rundefinition name="Automizer Default">
+    	<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+	</rundefinition>
+
+	<rundefinition name="Sifa">
+		<option name="-tc">../../../trunk/examples/toolchains/Sifa.xml</option>
+	</rundefinition>
+
+    <rundefinition name="AIv2 EXp+CONG">
+		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
+		<option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_compound_exp_cong.epf</option>
+	</rundefinition>
+    
+	<tasks name="Pdr">
+		<includesfile>../../../trunk/examples/bench-pdr-boogie.set</includesfile>
+	</tasks>
+	<tasks name="NoTermination">
+		<includesfile>../../../trunk/examples/bench-no-term-boogie.set</includesfile>
+	</tasks>
+
+</benchmark>

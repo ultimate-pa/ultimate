@@ -1,0 +1,20 @@
+// A reachable transition t leading to an accepting places
+// can be dead if unreachable transitions on the way block
+// all firing sequences containing t.
+
+PetriNet result = removeDead(removeUnreachable(n));
+
+assert(numberOfTransitions(result) == 0);
+assert(numberOfPlaces(result) == 0);
+assert(isEmpty(result));
+
+PetriNet n = (
+  alphabet = {a b},
+  places = {p1 p2 p3 p4},
+  transitions = {
+    ({p1} a {p2})
+    ({p2 p3} b {p4}) 
+  },
+  initialMarking = {p1},
+  acceptingPlaces = {p4}
+);

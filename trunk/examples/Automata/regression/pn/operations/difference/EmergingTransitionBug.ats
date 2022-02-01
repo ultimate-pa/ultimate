@@ -1,0 +1,50 @@
+// If we compute differencePairwiseOnDemand in a preprocessing step
+// and remove redundant flow then the place s0 is redundant because
+// p1 is a restrictor for the ({p1 s0} a {p1 s0}) transition and
+// p2 is a restrictor for the ({p2 s0} b {p3 s0}) transition.
+// If we then compute the difference with the removed s0, the result
+// recognizes a different language.
+// (We note that the place s1 is also redundant)
+//
+// A simple workaround is to remove automata states from the list of
+// redundancy candidates.
+// A more effective solution would be to add information about
+// "emerging transitions" e.g., the transition ({p1} a {p1 s0}) to the
+// DifferenceSynchronizationInformation.
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2020-03-27
+
+PetriNet difference = difference(net, nwa);
+assert(!isEmpty(difference));
+assert(numberOfPlaces(difference) == 6);
+
+
+
+PetriNet net = (
+	alphabet = {a b c d},
+	places = {p1 p2 p3 p4},
+	transitions = {
+		({p1} a {p2})
+		({p2} b {p3})
+		({p3} c {p4})
+		({p3} d {p4})
+	},
+	initialMarking = {p1},
+	acceptingPlaces = {p4}
+);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b c d},
+	returnAlphabet = {},
+	states = {s0 s1 s2},
+	initialStates = {s0},
+	finalStates = {s2},
+	callTransitions = {},
+	internalTransitions = {
+		(s0 a s0) (s0 b s1)
+		(s1 c s2) (s1 d s1)
+	},
+	returnTransitions = {}
+);

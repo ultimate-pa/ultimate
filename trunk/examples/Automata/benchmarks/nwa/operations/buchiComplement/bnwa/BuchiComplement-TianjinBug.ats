@@ -1,0 +1,47 @@
+// 2015-08-16, Matthias Heizmann
+// reveals conceptual problem in our (HeiMat) extension of the FKV Büchi 
+// complementation algorithm to nested word automata.
+// It is the same problem that we have with bounding the maximal rank.
+// There is no successor in which a state in O has to leave O and lower its rank.
+// This is not a problem if there is some LevelRankingState that has a high
+// maximal rank but only few states. (We do not always have this if max rank is
+// bounded or we use NWAs).
+// Probably fixed in r15014.
+
+NestedLassoWord nlw = [  "c"< >"r1" "a" "c"<  , "c"< "c"< >"r2" >"r1" "a" "c"< ];
+boolean accepted = buchiAccepts(ia, nlw);
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ia);
+boolean acceptedComplementNCSB = buchiAccepts(complementNCSB, nlw);
+NestedWordAutomaton complementFKV = buchiComplementFKV(ia);
+boolean acceptedComplementFKV = buchiAccepts(complementFKV, nlw);
+assert(!accepted);
+assert(acceptedComplementNCSB);
+assert(acceptedComplementFKV);
+print(complementFKV);
+
+
+NestedWordAutomaton ia = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a" },
+	returnAlphabet = {"r1" "r2" },
+	states = {"f" "s" "q" },
+	initialStates = {"q" },
+	finalStates = {"f" },
+	callTransitions = {
+		 ("s" "c" "s")
+		 ("q" "c" "q")
+	},
+	internalTransitions = {
+		 ("q" "a" "q")
+		 ("s" "a" "s")
+		 ("f" "a" "s")
+	},
+	returnTransitions = {
+		 ("s" "s" "r1" "s")
+		 ("q" "q" "r1" "q")
+		 ("q" "q" "r1" "f")
+		 ("s" "s" "r2" "s")
+		 ("q" "q" "r2" "q")
+
+	}
+);

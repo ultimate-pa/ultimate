@@ -1,0 +1,62 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2014-08-11
+//
+// Test incremental inclusion with random automata
+
+	// First argument: size of alphabet
+	// Second argument: number of states
+	// Third argument: transition density of internal transitions in per mille
+	// Fourth argument: transition density of call transitions in per mille -- use 0 here
+	// Fifth argument: transition density of return transitions in per mille -- use 0 here
+	// Sixth argument: amount of accepting states in per mille
+	int i = 0;
+	while(i<9999){
+		NestedWordAutomaton A = getRandomNwa(148, 86, 1, 0, 0, 12);
+		NestedWordAutomaton B0 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B1 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B2 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B3 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B4 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B5 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B6 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B7 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B8 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		NestedWordAutomaton B9 = getRandomNwa(148, 4, 160, 0, 0, 250);
+		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),1);
+		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),2);
+		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),3);
+//		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),32);
+		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),4);
+		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),42);
+		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),5);
+		Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),52);
+	i++;	
+	}
+	NestedWordAutomaton A = getRandomNwa(148, 86, 1, 0, 0, 12);
+	NestedWordAutomaton B0 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B1 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B2 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B3 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B4 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B5 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B6 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B7 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B8 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	NestedWordAutomaton B9 = getRandomNwa(148, 4, 160, 0, 0, 250);
+	print(A);
+	//print(B);
+	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),1));
+	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),2));
+	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),3));
+//	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),32));
+	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),4));
+	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),42));
+	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),5));
+	print(Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0,B1),B2),B3),B4),B5),B6),B7),B8),B9),52));
+	//isIncluded = IncrementalInclusionCheck4(A,NwaList(B1, B2));
+	//print(isIncluded);
+	//isIncluded = IncrementalInclusionCheck5(A,NwaList(B1, B2));
+	//print(isIncluded);
+
+
+

@@ -1,0 +1,35 @@
+// Testfile dumped by Ultimate at 2012/04/03 14:17:58
+
+print(reachableStatesCopy(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"[call res = McCarthyRec(res);]274" "[call res = McCarthyRec(x + 11);]215" "[call c = McCarthyImp(a);]142" "[call b = McCarthyRec(a);]3" },
+	internalAlphabet = {"[assume true;]284" "[assume true;]24" "[assume true;]165" "[assume x > 100;, res = x - 10;]245" "[assume !(x <= 101);, res = x - 10;]97" "[assume !(b == c);]140" "[assume b == c;]38" "[assume x <= 101;, res = 91;]186" "[assume !(x > 100);]192" },
+	returnAlphabet = {"[call res = McCarthyRec(x + 11);]200" "[call res = McCarthyRec(res);]8" "[call b = McCarthyRec(a);]151" "[call c = McCarthyImp(a);]79" },
+	states = {"#7645#McCarthyRecINIT_30" "#7646#MainINIT_40" "#7643#McCarthyRecEXIT_10" "#7644#MainEXIT_20" "#7649#MainErr0AssertViolation_70" "#7650#McCarthyImpEXIT_80" "#7647#MainFINAL_50" "#7648#L44_60" "#7653#L18_110" "#7654#L17'_120" "#7651#L43_90" "#7652#McCarthyImpINIT_100" "#7655#L17_130" "#7656#L27'_140" },
+	initialStates = {"#7645#McCarthyRecINIT_30" "#7646#MainINIT_40" "#7652#McCarthyImpINIT_100" },
+	finalStates = {"#7649#MainErr0AssertViolation_70" },
+	callTransitions = {
+		 ("#7646#MainINIT_40" "[call b = McCarthyRec(a);]3" "#7645#McCarthyRecINIT_30")
+		 ("#7651#L43_90" "[call c = McCarthyImp(a);]142" "#7652#McCarthyImpINIT_100")
+		 ("#7654#L17'_120" "[call res = McCarthyRec(res);]274" "#7645#McCarthyRecINIT_30")
+		 ("#7655#L17_130" "[call res = McCarthyRec(x + 11);]215" "#7645#McCarthyRecINIT_30")
+	},
+	internalTransitions = {
+		 ("#7645#McCarthyRecINIT_30" "[assume !(x > 100);]192" "#7655#L17_130")
+		 ("#7645#McCarthyRecINIT_30" "[assume x > 100;, res = x - 10;]245" "#7653#L18_110")
+		 ("#7647#MainFINAL_50" "[assume true;]284" "#7644#MainEXIT_20")
+		 ("#7648#L44_60" "[assume b == c;]38" "#7647#MainFINAL_50")
+		 ("#7648#L44_60" "[assume !(b == c);]140" "#7649#MainErr0AssertViolation_70")
+		 ("#7652#McCarthyImpINIT_100" "[assume !(x <= 101);, res = x - 10;]97" "#7656#L27'_140")
+		 ("#7652#McCarthyImpINIT_100" "[assume x <= 101;, res = 91;]186" "#7656#L27'_140")
+		 ("#7653#L18_110" "[assume true;]24" "#7643#McCarthyRecEXIT_10")
+		 ("#7656#L27'_140" "[assume true;]165" "#7650#McCarthyImpEXIT_80")
+	},
+	returnTransitions = {
+		 ("#7643#McCarthyRecEXIT_10" "#7654#L17'_120" "[call res = McCarthyRec(res);]8" "#7653#L18_110")
+		 ("#7643#McCarthyRecEXIT_10" "#7646#MainINIT_40" "[call b = McCarthyRec(a);]151" "#7651#L43_90")
+		 ("#7643#McCarthyRecEXIT_10" "#7655#L17_130" "[call res = McCarthyRec(x + 11);]200" "#7654#L17'_120")
+		 ("#7650#McCarthyImpEXIT_80" "#7651#L43_90" "[call c = McCarthyImp(a);]79" "#7648#L44_60")
+	}
+);

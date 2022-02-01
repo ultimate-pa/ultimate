@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="180" hardtimelimit="200" cpuCores="2">
+	<rundefinition name="CHC">
+		<option name="-tc">../../../trunk/examples/toolchains/TreeAutomizer.xml</option>
+		<option name="-s">../../../trunk/examples/settings/chc/TreeAutomizer/TreeAutomizerStandardSettings.epf</option>
+
+		<tasks name="CHC">
+			<includesfile>/storage/repos/svcomp/c/ReachSafetyCHC.set</includesfile>
+		</tasks>
+
+	</rundefinition>
+</benchmark>

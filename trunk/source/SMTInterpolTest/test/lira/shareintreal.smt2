@@ -1,0 +1,18 @@
+(set-option :produce-proofs true)
+(set-option :produce-models true)
+(set-option :proof-check-mode true)
+(set-logic QF_AUFLIRA)
+
+(declare-const x Int)
+(declare-const x1 Int)
+(declare-const y Real)
+(declare-const y1 Real)
+(declare-const a (Array Real Real))
+
+(assert (= x x1))
+(assert (= y y1))
+(assert (= x 1))
+(assert (= y 1.0))
+(assert (not (= (select a (to_real x)) (select a y))))
+(check-sat)
+(get-proof)

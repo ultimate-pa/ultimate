@@ -1,0 +1,34 @@
+<project name="proj1" default="generate_parser" basedir=".">
+	    <property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
+	    <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
+	<description>
+		Build File for Compiler Project
+	</description>
+
+	<target name="generate_parser">
+		
+		<echo>AutPromela.flex</echo>
+		<java jar="${flexJar}" fork="true" failonerror="true">
+			<arg value="AutPromela.flex" />
+		</java>
+		
+		<echo>AutPromela.cup</echo>
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+		<arg line="-parser Parser"/>
+			<arg value="AutPromela.cup" />
+		</java>
+		
+		<echo>Apformula.flex</echo>
+		<java jar="${flexJar}" fork="true" failonerror="true">
+			<arg value="Apformula.flex" />
+		</java>
+		
+		<echo>Apformula.cup</echo>
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+		<arg line="-parser Parser"/>
+			<arg value="Apformula.cup" />
+		</java>
+
+	</target>
+
+</project>

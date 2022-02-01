@@ -1,0 +1,20 @@
+#Fri Oct 24 16:34:36 CEST 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ absence\ of\ signed\ integer\ overflows=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+
+
+#Fri Oct 24 16:34:36 CEST 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+
+
+#Sun Sep 10 08:55:08 CEST 2017
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.20
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Reuse\ of\ Floyd-Hoare\ automata=EAGER
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL

@@ -1,0 +1,114 @@
+// CUP specification for a simple expression evaluator (w/ actions)
+package de.uni_freiburg.informatik.ultimate.ltl2aut;
+import com.github.jhoenicke.javacup.runtime.*;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.*;
+import java.util.ArrayList;
+
+parser Parser;
+option symbols=Symbols;
+
+/* Terminals (tokens returned by the scanner). */
+terminal           	NEVER, LCB, RCB, IF, FI, SKIP, GOTO, TO, SEMICOLON, COLON, TRUE; 				
+terminal 			AND, OR, LPAR , RPAR, NOT;
+terminal String    	NAME;
+/* Dummy terminal with low precedence */
+terminal            LOW;
+
+/* Non-terminals */
+non terminal AstNode     		 name, claim, lblock, prop, ap, and, or;
+non terminal ArrayList<AstNode>  options, stmtlist ;
+
+precedence left LOW;
+precedence left AND, OR;
+precedence left NOT;
+
+start with claim;
+
+/* PROMELA grammar part*/
+claim ::= NEVER LCB stmtlist:s RCB
+		{: 
+		NeverStatement n = new NeverStatement();
+		n.addAllOutgoing(s);
+		RESULT = n;
+		 :}; 
+		
+stmtlist ::= lblock:b1 stmtlist:b2
+		{: 
+		b2.add(0,b1);
+		RESULT = b2;
+		:}
+		| lblock:b1 
+		{: 
+		ArrayList<AstNode> l = new ArrayList<AstNode>();
+		l.add(b1);
+		RESULT = l;
+		:};
+		
+name ::= NAME:m
+		{: RESULT = new Name(m); :};		
+
+lblock ::= name:n COLON IF options:o FI SEMICOLON
+		{:
+		ConditionalBlock cb = new ConditionalBlock(o);
+		RESULT = new LabeledBlock(n, cb);
+		:}
+		| name:n COLON SKIP
+		{: 
+		RESULT = new LabeledBlock(n, new SkipStatement()); 
+		:};    
+		
+options ::= COLON COLON prop:n TO GOTO name:m options:o
+		{: 
+		o.add(0,new OptionStatement(n,new GotoStatement(m)));
+		RESULT = o;
+		:}
+		|COLON COLON prop:n TO GOTO name:m
+		{: 
+		ArrayList<AstNode> l = new ArrayList<AstNode>();
+		l.add(new OptionStatement(n,new GotoStatement(m)));
+		RESULT = l;
+		:};
+		
+/* logic grammar part*/	
+prop ::= and:a
+	{:RESULT = a;:} %prec LOW
+	| or:o
+	{:RESULT = o;:} %prec LOW
+	| NOT prop:p
+	{: RESULT = new Not(p); :}
+	| LPAR prop:p RPAR
+	{: RESULT = p; :}
+	| ap:a
+	{: RESULT = a; :}; 
+	 
+and ::= and:a AND prop:p
+		{: 
+		a.addOutgoing(p);
+		RESULT = a;
+		:}
+	| prop:p1 AND prop:p2
+		{: 
+		BinaryOperator a = new BinaryOperator(BinaryType.and);
+		a.addOutgoing(p1);
+		a.addOutgoing(p2);
+		RESULT = a;
+		:};
+	
+or ::= or:a OR prop:p
+		{: 
+		a.addOutgoing(p);
+		RESULT = a;
+		:}
+	| prop:p1 OR prop:p2
+		{: 
+		BinaryOperator a = new BinaryOperator(BinaryType.or);
+		a.addOutgoing(p1);
+		a.addOutgoing(p2);
+		RESULT = a;
+		:};
+	
+ap ::=  name:n
+		{:RESULT = n; :}
+		| TRUE
+		{:RESULT = new BoolLiteral(true); :};
+		

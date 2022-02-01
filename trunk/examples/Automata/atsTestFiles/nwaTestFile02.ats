@@ -1,0 +1,33 @@
+// Author: musab@informatik.uni-freiburg.de
+// Date: 9.02.2013
+// Example of an .ats file, which doesn't contain
+// automata definitions at all.
+
+// Declaring some nested words
+NestedWord wordWith2Bs = [b a c d c c a b];
+NestedWord wordWithManyBs = [a b b c b b b d c];
+NestedWord wordWith1c = [a b b b a c];
+
+
+// Acceptance should be true.
+assert(accepts(accepts2Bs, wordWith2Bs));
+// Acceptance should be false
+assert(!accepts(accepts2Bs, wordWithManyBs));
+// Acceptance should be true.
+assert(accepts(acceptsWithC, wordWith1c));
+// Acceptance should be false
+assert(!accepts(acceptsNothing, [a b b a]));
+// Acceptance should be false
+assert(!accepts(acceptsNothing, wordWith2Bs));
+// Acceptance should be false
+assert(!accepts(nwa1, [a< b< >r >s]));
+
+// This operation parses all automata defined in the file 'nwaDefinitions01.ats' and
+// stores them internally. Thus, you can use the automata from that file, as if
+// they'd have been defined in this file. 
+// Other than automata definitions are ignored.
+parseAutomata("./nwaDefinitions02.ats");
+parseAutomata("./nwaDefinitions01.ats");
+
+// If file does not exist, the parser won't abort.
+parseAutomata("fileDoesNotExist.ats");

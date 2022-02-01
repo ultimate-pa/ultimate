@@ -1,0 +1,7 @@
+#Thu Aug 31 18:46:39 GMT+01:00 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Kind\ of\ invariant=DANGER
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Large-Block-Encoding=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Use\ unsat\ cores=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=0.1.20
+file_export_version=3.0

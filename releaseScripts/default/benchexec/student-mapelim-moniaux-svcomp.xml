@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90" hardtimelimit="90" cpuCores="2">
+
+    <option name="-s">config/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--rcfgbuilder.command.for.external.solver">z3 SMTLIB2_COMPLIANT=true -memory:4096 -smt2 -in -t:12000</option>
+
+
+	<rundefinition name="Automizer">
+      <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+      <option name="--rcfgbuilder.size.of.a.code.block">SingleStatement</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer+MapElim 1cell">
+      <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInlineTransformed.xml</option>
+      <option name="--icfgtransformation.transformationtype">MAP_ELIMINATION_MONNIAUX</option>
+      <option name="--rcfgbuilder.size.of.a.code.block">SingleStatement</option>
+	  <option name="--icfgtransformation.map.elimination.monniaux.number.of.cells">1</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer+MapElim 1cell LBE">
+      <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInlineTransformed.xml</option>
+      <option name="--icfgtransformation.transformationtype">MAP_ELIMINATION_MONNIAUX</option>
+	  <option name="--icfgtransformation.map.elimination.monniaux.number.of.cells">1</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer+MapElim 2cell">
+      <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInlineTransformed.xml</option>
+      <option name="--icfgtransformation.transformationtype">MAP_ELIMINATION_MONNIAUX</option>
+      <option name="--rcfgbuilder.size.of.a.code.block">SingleStatement</option>
+	  <option name="--icfgtransformation.map.elimination.monniaux.number.of.cells">2</option>
+	</rundefinition>
+
+
+	<tasks name="ReachSafety-Arrays SVCOMP">
+		<includesfile>/storage/repos/svcomp/c/ReachSafety-Arrays.set</includesfile>
+	</tasks>
+</benchmark>

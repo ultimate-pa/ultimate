@@ -1,0 +1,18 @@
+Input x0006 is bool
+Input x0005 is bool
+Input x0002 is bool
+Input x0003 is bool
+Input x0001 is bool
+Input x0004 is bool
+Input x0000 is bool
+
+ID000: Globally, it is always the case that if "x0000 && x0001" holds, then "x0002" holds after at most "30" time units
+ID001: Globally, it is always the case that if "x0000 && x0001" holds, then "!x0002" holds for at least "29" time units
+ID002: Globally, it is always the case that if "x0000 && !x0001" holds, then  "x0002" holds after at most "60" time units
+ID003: Globally, it is always the case that if "x0000 && !x0001" holds, then  "!x0002" holds for at least "59" time units
+ID004: Globally, it is always the case that if "x0002" holds, then "x0003" holds after at most 10 time units
+ID005: Globally, it is always the case that if "x0003" holds, then "x0004" holds for at least 25 time units
+ID006: Globally, it is always the case that if "x0003" holds, then "!x0004" holds after at most 30 time units
+ID007: After "x0003" until "x0005", it is always the case that if "!x0004" holds then "x0006" holds for at least "15" time units
+ID008: After "x0003" until "x0005", it is always the case that if "!x0004" holds then "!x0006" holds after at most "20" time units
+ID009: After "x0003" until "x0005", it is always the case that if "!x0006" holds, then "x0005" holds after at most "10" time units

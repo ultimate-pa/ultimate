@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<key id="programfile" attr.name="programfile" for="graph"/>
+<key id="sourcecodelang" attr.name="sourcecodelang" for="graph"/>
+<key id="creationtime" attr.name="creationtime" for="graph"/>
+<key id="witness-type" attr.name="witness-type" for="graph"/>
+<key id="programhash" attr.name="programhash" for="graph"/>
+<key id="entry" attr.name="entry" for="node">
+<default>false</default>
+</key>
+<key id="nodetype" attr.name="nodetype" for="node">
+<default>path</default>
+</key>
+<key id="violation" attr.name="violation" for="node">
+<default>false</default>
+</key>
+<key id="invariant" attr.name="invariant" for="node">
+<default>true</default>
+</key>
+<key id="endline" attr.name="endline" for="edge"/>
+<key id="enterLoopHead" attr.name="enterLoopHead" for="edge">
+<default>false</default>
+</key>
+<key id="enterFunction" attr.name="enterFunction" for="edge"/>
+<key id="startline" attr.name="startline" for="edge"/>
+<key id="returnFrom" attr.name="returnFrom" for="edge"/>
+<key id="assumption" attr.name="assumption" for="edge"/>
+<key id="tokens" attr.name="tokens" for="edge"/>
+<key id="control" attr.name="control" for="edge"/>
+<key id="originfile" attr.name="originfile" for="edge">
+<default>/mnt/storage/ultimate/trunk/examples/sv-benchmarks/c/psyco/psyco_abp_1_false-unreach-call_false-termination.c</default>
+</key>
+<key id="sourcecode" attr.name="sourcecode" for="edge"/>
+<graph edgedefault="directed">
+<data key="programfile">/mnt/storage/ultimate/trunk/examples/sv-benchmarks/c/psyco/psyco_abp_1_false-unreach-call_false-termination.c</data>
+<data key="sourcecodelang">C</data>
+<data key="creationtime">2017-11-28T01:07Z</data>
+<data key="witness-type">correctness_witness</data>
+<data key="programhash">db04337184e0dc3c9bdb3df980bb74c5f2415f6e</data>
+<data key="architecture">32bit</data>
+<data key="producer">Matthias</data>
+<data key="specification">CHECK( init(main()), LTL(G ! call(__VERIFIER_error())) )</data>
+<node id="N0">
+<data key="entry">true</data>
+</node>
+<node id="N1"/>
+<node id="N2"/>
+<node id="N3"/>
+<node id="N4">
+<data key="invariant">                  (q == 0 &amp;&amp; this_buffer_empty == 0 &amp;&amp; 0 &lt;= this_expect + 1 &amp;&amp; (this_expect + 1) % 2 != 0) || 
+                  (q == 1 &amp;&amp; this_buffer_empty == 1 &amp;&amp; 0 &lt;= this_expect + 1 &amp;&amp; (this_expect + 1) % 2 != 0) || 
+                  (q == 3 &amp;&amp; this_buffer_empty == 0 &amp;&amp; 1 &lt;= this_expect &amp;&amp; this_expect % 2 != 0) ||
+                  (q == 4 &amp;&amp; this_buffer_empty == 1 &amp;&amp; 1 &lt;= this_expect &amp;&amp; this_expect % 2 != 0) ||
+                  (q == 5 &amp;&amp; this_buffer_empty == 0 &amp;&amp; 1 &lt;= this_expect &amp;&amp; (this_expect + 1) % 2 != 0)</data>
+</node>
+<node id="N5"/>
+<node id="N6"/>
+<edge id="E0" source="N0" target="N1">
+<data key="endline">16</data>
+<data key="startline">16</data>
+<data key="sourcecode">int q = 0;</data>
+</edge>
+<edge id="E1" source="N1" target="N2">
+<data key="endline">17</data>
+<data key="startline">17</data>
+<data key="sourcecode">int method_id;</data>
+</edge>
+<edge id="E2" source="N2" target="N3">
+<data key="endline">20</data>
+<data key="startline">20</data>
+<data key="sourcecode">int this_expect = 0;</data>
+</edge>
+<edge id="E3" source="N3" target="N4">
+<data key="endline">21</data>
+<data key="enterLoopHead">true</data>
+<data key="startline">21</data>
+<data key="sourcecode">int this_buffer_empty = 0;</data>
+</edge>
+<edge id="E4" source="N4" target="N5"/>
+<edge id="E5" source="N5" target="N6">
+<data key="endline">563</data>
+<data key="startline">563</data>
+<data key="sourcecode">return 0;</data>
+</edge>
+</graph>
+</graphml>

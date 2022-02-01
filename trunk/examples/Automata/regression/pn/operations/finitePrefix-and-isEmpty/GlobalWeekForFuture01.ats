@@ -1,0 +1,30 @@
+// Date:  2019-09-20
+// Author: Mehdi Naouar, heizmann@informatik.uni-freiburg.de
+//
+// Example that we use to discuss 
+// * the finitePrefix2PetriNet operation and
+// * axiliary initial events.
+// Revealed bug in finitePrefix2PetriNet operation.
+
+BranchingProcess bp = finitePrefix(net);
+print(bp);
+PetriNet net2 = finitePrefix2PetriNet(bp);
+print(net2);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 18);
+
+assert(!isEmpty(net));
+
+
+PetriNet net = (
+	alphabet = {t1 t2 t3 t4},
+	places = {p1 p2 p3 p4 p5},
+	transitions = {
+		({p1} t1 {p3})
+		({p2 p3} t2 {p1 p4})
+		({p3 p4} t3 {p5})
+		({p5} t4 {p1 p2})
+	},
+	initialMarking = {p1 p2},
+	acceptingPlaces = {p5}
+);

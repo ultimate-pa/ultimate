@@ -1,0 +1,56 @@
+// Examples for testing correctness of buchiIntersect operation
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 09.11.2013
+
+print(numberOfStates(nwa));
+NestedWordAutomaton complement = buchiComplementFKV(nwa);
+print(numberOfStates(complement));
+assert(numberOfStates(complement) == 9);
+NestedWordAutomaton live = removeNonLiveStates(complement);
+print(numberOfStates(live));
+assert(numberOfStates(live) == 9);
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"17assume true;" "16assume true;" "19assume true;" "18assume !(x > 0 && y > 0);" "21x := x - 1;" "13assume x > 0 && y > 0;" "15havoc x;y := y - 1;" },
+	returnAlphabet = {},
+	states = {"16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "10#unseeded" "27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))" "14#(= oldRank (+ x (- 1)))" },
+	initialStates = {"10#unseeded" },
+	finalStates = {"16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "17assume true;" "14#(= oldRank (+ x (- 1)))")
+		 ("16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "16assume true;" "14#(= oldRank (+ x (- 1)))")
+		 ("16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "19assume true;" "14#(= oldRank (+ x (- 1)))")
+		 ("16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "18assume !(x > 0 && y > 0);" "14#(= oldRank (+ x (- 1)))")
+		 ("16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "13assume x > 0 && y > 0;" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "17assume true;" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "16assume true;" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "19assume true;" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "18assume !(x > 0 && y > 0);" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "21x := x - 1;" "27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))")
+		 ("24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "13assume x > 0 && y > 0;" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))" "17assume true;" "27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))")
+		 ("27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))" "16assume true;" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))" "19assume true;" "27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))")
+		 ("27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))" "18assume !(x > 0 && y > 0);" "27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))")
+		 ("27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))" "21x := x - 1;" "27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))")
+		 ("27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))" "13assume x > 0 && y > 0;" "27#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (<= x oldRank))")
+		 ("10#unseeded" "17assume true;" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("10#unseeded" "16assume true;" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("10#unseeded" "19assume true;" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("10#unseeded" "18assume !(x > 0 && y > 0);" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("10#unseeded" "21x := x - 1;" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("10#unseeded" "13assume x > 0 && y > 0;" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("10#unseeded" "15havoc x;y := y - 1;" "16#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("14#(= oldRank (+ x (- 1)))" "17assume true;" "14#(= oldRank (+ x (- 1)))")
+		 ("14#(= oldRank (+ x (- 1)))" "16assume true;" "14#(= oldRank (+ x (- 1)))")
+		 ("14#(= oldRank (+ x (- 1)))" "19assume true;" "14#(= oldRank (+ x (- 1)))")
+		 ("14#(= oldRank (+ x (- 1)))" "18assume !(x > 0 && y > 0);" "14#(= oldRank (+ x (- 1)))")
+		 ("14#(= oldRank (+ x (- 1)))" "13assume x > 0 && y > 0;" "24#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+	},
+	returnTransitions = {
+	}
+);

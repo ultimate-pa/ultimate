@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.testTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.test.test
+Bundle-Version: 0.2.1
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.test
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit
+Import-Package: junit.framework,
+ org.junit,
+ org.junit.runner,
+ org.junit.runner.notification,
+ org.junit.runners
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.test.test

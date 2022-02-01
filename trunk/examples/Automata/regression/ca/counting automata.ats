@@ -1,0 +1,63 @@
+// Example that demonstrates how to use counting automata in this automata library
+// Author: Jacob Maxam, Marcel Ebbinghaus
+// Date: 2020-07-12
+
+
+// Declare a nondeterministic counting automaton called "nca1".
+CountingAutomaton nca1 = (
+     alphabet = {a b},
+	 counters = {c d},
+     states = {q1 q2},
+     initialConditions = {
+		 (q1 "true")
+		 (q2 "false")
+	 },
+     finalConditions = {
+		 (q1 "false")
+		 (q2 "(= c 7)")
+	 },
+     transitions = {
+         (q1 a "true" {c := "(+ d 1)", d := "(+ d 1)"} q1)
+		 (q1 b "(> c 3)" {} q2)
+		 (q2 a "true" {c := "(+ c 1)"} q2)
+		 (q2 b "true" {} q1)
+     }
+);
+
+// Declare a second nondeterministic counting automaton called "nca2".
+CountingAutomaton nca2 = (
+     alphabet = {a b},
+	 counters = {e},
+     states = {p1 p2 p3},
+     initialConditions = {
+		 (p1 "(= e 0)")
+		 (p2 "false")
+		 (p3 "false")
+	 },
+     finalConditions = {
+		 (p1 "true")
+		 (p2 "(> e 5)")
+		 (p3 "true")
+	 },
+     transitions = {
+         (p1 a "true" {e := "(+ e 1)"} p2)
+		 (p1 b "true" {} p3)
+		 (p2 a "true" {e := "(+ e 1)"} p2)
+     }
+);
+
+print(nca1);
+Word word1 = [a a a a a a a a a];
+print(acceptance(nca2, word1));
+
+CountingAutomaton nca3 = intersect(nca1, nca2);
+print(nca3);
+
+CountingAutomaton nca4 = union(nca1, nca2);
+print(nca4);
+
+CountingAutomaton nca5 = complement(nca1);
+print(nca5);
+
+CountingAutomaton nca6 = concatenation(nca1, nca2);
+print(nca6);

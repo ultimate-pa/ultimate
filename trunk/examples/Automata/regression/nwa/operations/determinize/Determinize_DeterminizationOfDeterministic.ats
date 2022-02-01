@@ -1,0 +1,35 @@
+// example of deterministic automaton where
+// result of determinization algorithm has more states than input
+// but minimization is able to remove the unnecessary states
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 29.05.2013
+
+NestedWordAutomaton tot = totalize(automaton);
+NestedWordAutomaton det = determinize(tot);
+NestedWordAutomaton minOld = removeUnreachable(minimizeSevpa(det));
+NestedWordAutomaton minNew = removeUnreachable(shrinkNwa(det));
+print(det);
+print(numberOfStates(automaton));
+print(numberOfStates(tot));
+print(numberOfStates(det));
+print(numberOfStates(minOld));
+print(numberOfStates(minNew));
+
+
+NestedWordAutomaton automaton = (
+    callAlphabet = { "c" },
+	internalAlphabet = {"a" "b" },
+	returnAlphabet = { },
+	states = {"q2" "q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q2" },
+	callTransitions = {
+		 ("q0" "c" "q0")
+	},
+	internalTransitions = {
+		 ("q0" "a" "q1")
+		 ("q1" "b" "q2")
+	},
+	returnTransitions = {
+	}
+);

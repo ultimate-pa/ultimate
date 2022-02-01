@@ -1,0 +1,84 @@
+<!-- This document contains information about the CACSL2BOOGIETRANSLATOR
+ * @author Markus Lindenmann
+ * @author Oleksii Saukh
+ * @author Stefan Wissert
+ -->
+<html>
+<head>
+<title>Project: CACSL2BoogieTranslator</title>
+</head>
+<body>
+	<h1>Project: CACSL2BoogieTranslator</h1>
+	<h2>Project Description</h2>
+	<h3>General Information</h3>
+    CACSL2BoogieTranslator is a part of ULTIMATE project. The aim of
+	CACSL2BoogieTranslator project is to translate C language with ACSL
+	annotation to verification language Boogie.
+	
+	<h3>Package Structure</h3>
+	<pre>
+de.uni_freiburg.informatik.ultimate.
+ |-cdt.
+ |  |-decorator    
+ |	|-translation.
+ |		|-implementation
+ |		|	|-example
+ |		|	|-exception
+ |		|	|-result
+ |		|-interfaces.
+ |			|-handler
+ |-plugins
+ 	|-generator
+ 		|-cacsl2boobietranslator
+</pre>
+
+	<h3>Translator Schema</h3>
+	<img src="./CACSLTranslatorSchema.png" />
+
+	<h3>Result Interface</h3>
+	<img width="100%" src="./20111124-ResultNode.jpg" />
+
+	<h2>File information</h2>
+	<pre>
+Package: [de.uni_freiburg.informatik.ultimate.cdt.decorator]
+	Contains decorator nodes that encapsulate the C nodes and ACSL nodes.
+	Contains also traversal algorithms that perform BreaddthFirstSearch
+	and DepthFirstSearch needed for AST-tree traversal.
+Package: [de.uni_freiburg.informatik.ultimate.cdt.translation.example]
+	Contains main files that perform the translation.
+		- ACSLHandler - translates ACSL nodes into Boogie nodes
+		- CHandler - translates C nodes to Boogie nodes
+		- MainDispatcher - the start point of translation. Checks what kind of node
+			is given as input and decides what kind of visit method has to be used
+		- NameHandler - class that performs variable name handling and monitores skope
+			i.e. takes care of local and global variables.
+		- NextACSL - container for a list of ACSL nodes and one C node.
+		- SideEffectHandler - here all side effects have to be handled. like
+			foo(x++, ++x)
+		- TypeHandler - resolves typedef and takes care of data types
+		
+Package: [de.uni_freiburg.informatik.ultimate.cdt.translation.exception]
+	Contains InParameterUnnamedException
+Package: [de.uni_freiburg.informatik.ultimate.cdt.translation.result]
+	Contains a set of different result classes. All these classes are used to collect information
+		form CACSL nodes (things like declarations and statements) and then used to form
+		the Boogie nodes.
+Package: [de.uni_freiburg.informatik.ultimate.cdt.interfaces] 		
+	Contains interfaces. Classes that implement interfaces are mostly in cdt.decorator package.
+Package: [de.uni_freiburg.informatik.ultimate.cdt.interfaces.handler]
+	Contains interfaces for handlers.
+	
+Single file: [CommentParser]
+	Class that contains methods to parse the ACSL comments, remove unneeded symbols to get
+	ACSL specifications
+Single file: [CommentParser]
+	A Visitor that produces a HashMap with the Line-Ranges of all Functions.
+	This is necessary to determine the ACSL-Parser Mode. This is global or local.
+	
+Package: [de.uni_freiburg.informatik.ultimate.plugins]
+	- Activator - The activator class controls the plug-in life cycle.
+	- CACSL2BoogieTranslator - Main class of Plug-In CACSL2BoogieTranslator.
+	- CACSL2BoogieTranslatorObserver - The plug-in's Observer
+</pre>
+</body>
+</html>

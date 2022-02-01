@@ -1,0 +1,45 @@
+<html>
+<head>
+<title>Project: WebInterface</title>
+</head>
+<body>
+	<h1>Project: WebInterface</h1>
+	<h2>Project Description</h2>
+	This project defines a Web interface for the Ultimate web-site. It is
+	based on the
+	<a href="http://www.json.org/java/index.html"> JSON (JavaScript
+		Object Notation).</a>
+	<br /> The main two classes here are:
+	<ul>
+		<li><b>UltimateResult.java</b> - defines the standard of Ultimate
+			output result, namely what kind of information will be sent back from
+			Ultimate to the web-site in order to visualize the results on the
+			web-site.</li>
+
+		<li><b>UltimateInterface.java</b> - defines the web interface
+			itself. Contains methods that perform GET(for examples)/POST(for
+			Ultimate requests). This interface uses JSON to send data from
+			Web-site to Ultimate and back. Can be accessed via <code>http://server.tld/WebEclipseBridge/if</code>
+		</li>
+	</ul>
+	<b>UltimateInterface.java.</b> Defines the standard of Ultimate output
+	result, namely what kind of information will be sent back from Ultimate
+	to the web-site in order to visualize the results on the web-site.
+	<h2>Dependencies</h2>
+	<code>WebUltimateBridge</code>
+	, Ultimate plug-ins (except all plug-ins contributing to the UI and
+	log4j). The dependences will be loaded as OSGI bundles in the project
+	<code>WebsiteEclipseBridge</code>
+	.
+	<h2>See also</h2>
+	<ul>
+		<li><a href="../../WebInterface/doc/index.html">WebInterface
+				documentation</a></li>
+		<li><a href="../../Website/doc/index.html">Website documentation</a></li>
+		<li><a href="../../WebsiteEclipseBridge/doc/index.html">WebsiteEclipseBridge
+				documentation</a></li>
+		<li><a href="../../WebUltimateBridge/doc/index.html">WebUltimateBridge
+				documentation</a></li>
+	</ul>
+</body>
+</html>

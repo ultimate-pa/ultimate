@@ -1,0 +1,4 @@
+Most of the benchmarks for Nighugg-POWER differ slightly from those used
+for the other memory models (SC, TSO and PSO) with the exception of readers
+which is the same.  Hence, readers is a symbolic link to that directory,
+while the other directories are POWER-specific and appear here.

@@ -1,0 +1,26 @@
+TreeAutomaton ta730845 = TreeAutomaton(
+	alphabet = {nil "0" cons},
+	states = {"[NAT, Bool]" "[NatList, BoolList]"},
+	finalStates = {"[NatList, BoolList]"},
+	transitionTable = {
+		(() "0" "[NAT, Bool]")
+		(() nil "[NatList, BoolList]")
+		(("[NAT, Bool]" "[NatList, BoolList]") cons "[NatList, BoolList]")
+	}
+);
+
+TreeAutomaton ta2 = TreeAutomaton(
+	alphabet = {f a b},
+	states = {q1 q2 q3 qf},
+	finalStates = {qf},
+	transitionTable = {
+		(() a q1)
+		(() b q1)
+		((q1 q1) f qf)
+	}
+);
+
+
+Tree t = Tree [ f(a,b) ];
+assert(!accepts(ta730845, t));
+assert(accepts(ta2, t));

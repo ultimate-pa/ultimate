@@ -1,0 +1,17 @@
+(set-info :souce |A tight rhombus without solutions.  This benchmark is designed to be hard for cut engines.
+Authors: The SMTInterpol team|)
+(set-info :status unsat)
+(set-info :category "crafted")
+(set-logic QF_LIRA)
+(declare-fun x () Int)
+(declare-fun y () Real)
+(declare-fun z () Int)
+(assert (and
+	(<= 0 (- (* 28300000 x) (* 24500001 y)))
+	(<= (- (* 28300000 x) (* 24500001 y)) 99999)
+	(<= 1 (- (* 28300001 x) (* 24500000 y)))
+	(<= (- (* 28300001 x) (* 24500000 y)) 100000)))
+(assert (<= 0 (- y z)))
+(assert (<= (- y z) (- (/ 68 24500001) (/ 1 100000000000))))
+(check-sat)
+(exit)

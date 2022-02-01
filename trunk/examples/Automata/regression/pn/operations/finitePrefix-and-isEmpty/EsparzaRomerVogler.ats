@@ -1,0 +1,29 @@
+// Date:  18.12.2011
+// Author: heizmann@informatik.uni-freiburg.de
+// Example taken from Figure 3 of the following publication
+// 1996TACAS - Esparza,Römer,Vogler - An Improvement of McMillan's Unfolding Algorithm
+
+BranchingProcess bp = finitePrefix(esrovo);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 18);
+
+assert(!isEmpty(esrovo));
+
+
+PetriNet esrovo = (
+	alphabet = {t1 t2 t3 t4 t5 t6 t7 t8 t9 },
+	places = {s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12},
+	transitions = {
+		({s1} t1 {s2 s3})
+		({s1} t2 {s4 s5})
+		({s2} t3 {s6 s7})
+		({s4} t4 {s6 s7})
+		({s3} t5 {s8 s9})
+		({s5} t6 {s8 s9})
+		({s6 s8} t7 {s10})
+		({s7 s9} t8 {s11})
+		({s10 s11} t9 {s12})
+	},
+	initialMarking = {s1},
+	acceptingPlaces = {s12}
+);

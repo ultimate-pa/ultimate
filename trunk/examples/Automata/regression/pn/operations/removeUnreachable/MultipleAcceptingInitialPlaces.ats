@@ -1,0 +1,20 @@
+// Date:  2018-08-02
+// Author: schaetzc@tf.uni-freiburg.de
+
+PetriNet result = removeUnreachable(n);
+
+// One of the places would be sufficient, but we should keep them, because
+// removeUnreachable would be non-deterministc if it removed only some of them.
+assert(numberOfPlaces(result) == 3);
+assert(numberOfTransitions(result) == 0);
+assert(accepts(result, []));
+
+
+PetriNet n = (
+  alphabet = {a},
+  places = {p1 p2 p3},
+  transitions = {
+  },
+  initialMarking = {p1 p2 p3},
+  acceptingPlaces = {p1 p2 p3}
+);

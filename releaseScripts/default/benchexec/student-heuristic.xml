@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+
+  <rundefinition name="AutomizerBplInline Default">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: NUM_FUNCTIONS">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: NUM_VARIABLES">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_VARIABLES</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: DAGSIZE">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: DEPENDENCY">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: BIGGEST_EQUIVALENCE_CLASS">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: AVERAGE_EQUIVALENCE_CLASS">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">AVERAGE_EQUIVALENCE_CLASS</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: NUMBER_OF_EQUIVALENCE_CLASSES">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_EQUIVALENCE_CLASSES</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+	<rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: COMPARE_FEATURES">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+  <rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: ZERO">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+  <rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: NUMBER_OF_SELECT_FUNCTIONS">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+
+<tasks name="Pdr">
+  <includesfile>../../../trunk/examples/bench-pdr-boogie.set</includesfile>
+</tasks>
+</benchmark>

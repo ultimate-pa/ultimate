@@ -1,0 +1,32 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 24.5.2013
+// Reveals Bug in r8883
+
+NestedWordAutomaton result = removeUnreachable(nwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 5);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"a0" "a1" },
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {"a0" "a1" },
+	states = {"q2" "q1" "q4" "q3" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" "q3" "q0" },
+	callTransitions = {
+		 ("q2" "a1" "q4")
+		 ("q4" "a0" "q3")
+	},
+	internalTransitions = {
+		 ("q3" "a0" "q1")
+		 ("q3" "a1" "q2")
+		 ("q0" "a0" "q4")
+		 ("q0" "a0" "q3")
+	},
+	returnTransitions = {
+		 ("q2" "q2" "a0" "q3")
+		 ("q2" "q1" "a0" "q4")
+		 ("q2" "q4" "a0" "q2")
+		 ("q2" "q3" "a0" "q1")
+	}
+);

@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-MSO
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.mso
+Bundle-Version: 0.2.1
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.automata
+Export-Package: de.uni_freiburg.informatik.ultimate.mso
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.mso

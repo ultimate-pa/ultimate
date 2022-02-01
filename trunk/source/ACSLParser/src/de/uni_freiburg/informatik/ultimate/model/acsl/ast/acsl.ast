@@ -1,0 +1,273 @@
+package de.uni_freiburg.informatik.ultimate.model.acsl.ast;
+/* Maybe place this import somewhere else */
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+
+/**
+ * CodeAnnotation:
+ * basically represents Assertions (not sure what Invariant is)
+ * and for-behaviours with Assertions. The Ast here is based upon
+ * the Grammar
+ */
+
+CodeAnnot ::= 
+	{ CodeAnnotBehavior }
+		forBehavior : CodeForBehavior
+	| { CodeAnnotStmt }
+		codeStmt : CodeStatement
+	;
+	
+CodeForBehavior ::=
+	behaviorNames : String[]
+	codeStmt : CodeStatement;
+
+CodeStatement ::=
+	formula : Expression
+	( { Assertion } 
+	| { CodeInvariant } 
+	);
+
+	
+
+
+/**
+ * LoopAnnotation
+ * TODO: Not sure if this works properly. Because a LoopAnnotation
+ * can be mixed up with behaviours and loop statements. Multiple Inheritance
+ * seems to be better, but does not work with ASTBuilder
+ */
+
+LoopAnnot ::=  
+	loopBehavior : LoopForBehavior[]
+	loopStmt : LoopStatement[];
+ 
+LoopForBehavior ::=
+ 	behaviorNames : String[]
+ 	behaviorStmt : LoopStatement[];
+ 
+LoopStatement ::=
+ 	{ LoopInvariant }
+ 		formula : Expression
+ 	| { LoopVariant }
+ 		formula : Expression
+ 		identifier : ?String
+ 	| { LoopAssigns }
+ 		locations : Expression[]
+ 	;
+
+/**
+ * Contract (for Function and Statement)
+ * if Contract is for Function or for Statement depends of its position in the code
+ */
+Contract ::=
+	contractStmt : ContractStatement[]
+	behaviors : ?&Behavior[]
+	completeness : ?&Completeness;
+ 	
+Completeness ::=
+	completeBehaviors : ?&String[]
+	disjointBehaviors : ?&String[];
+ 
+Behavior ::=
+ 	name : String[]
+ 	body : ContractStatement[];
+ 	
+ContractStatement ::=
+ 	{ Requires }
+ 		formula : Expression
+ 	| { Terminates }
+ 		formula : Expression
+ 	| { Decreases }
+ 		formula : Expression
+ 		identifier : ?String
+ 	| { Ensures }
+ 		formula : Expression
+ 	| { Assigns }
+ 		locations : Expression[]
+ 	| { Assumes }
+ 		formula : Expression
+ 	;	
+	
+/**
+ * Invariants (Global/Type)
+ *
+ */
+
+Invariant ::=
+	identifier : String
+	formula : Expression
+	( { GlobalInvariant }
+	| { GlobalLTLInvariant }
+	| { TypeInvariant }
+		parameters : ?Parameter
+	);		
+
+Parameter ::=
+	parameterType : ACSLType
+	parameterIdentifier : String;
+
+/**
+ * ModelVariable (//@model int x...)
+ * TODO: Somehow wired these variables
+ */	
+ 
+ModelVariable ::=
+	type : ACSLType
+	parameter : ?Parameter;
+ 
+/**
+ * LogicDefinition
+ * TODO: Not sure if this works like that
+ */
+
+LogicStatement ::=
+	polyId : PolyIdentifier
+	parameters : ?Parameter[]
+	( { Predicate }
+ 		formula : Expression
+	| { LogicFunction }
+		type : ACSLType
+		formula : Expression
+	| { Lemma }
+		formula : Expression
+	| { Inductive }
+		cases : Case[]
+	| { Axiom }
+		formula : Expression
+	| { Axiomatic }
+		logicStmts : LogicStatement[]
+	);
+	
+Case ::=
+	polyId : PolyIdentifier
+	formula : Expression;
+
+PolyIdentifier ::=
+ 	identifier : String
+ 	labelList : ?String[]
+ 	varList : ?String[];
+ 
+ /**
+ * This node represents an expression.
+ * This base class is almost empty, the sub classes contain the possible types.
+ * TODO: These are all Boogie Expressions, need to finish this for ACSL
+ */
+Expression ::=
+	    /** The type of this expression.  This is set by the type-checker */
+		type   : ?&ACSLType
+	( { BinaryExpression }
+		operator : Operator { LOGICIFF, LOGICIMPLIES, LOGICAND, LOGICOR, LOGICXOR,
+						   COMPLT, COMPGT, COMPLEQ, COMPGEQ, COMPEQ, COMPNEQ, COMPPO,
+						   BITVECCONCAT, ARITHPLUS, ARITHMINUS, ARITHMUL, ARITHDIV, ARITHMOD,
+						   BITAND, BITOR, BITIMPLIES, BITIFF, BITXOR, LTLUNTIL, LTLRELEASE, LTLWEAKUNTIL }
+		left  : Expression
+		right : Expression
+	| { NotDefinedExpression }
+	| { UnaryExpression }
+		operator : Operator { LOGICNEG, PLUS, MINUS, LOGICCOMPLEMENT, POINTER, ADDROF, LTLGLOBALLY, LTLFINALLY, LTLNEXT }
+		expr     : Expression
+	| { ArrayAccessExpression }
+		array   : Expression
+		indices : Expression[]
+	| { ArrayStoreExpression }
+		array   : Expression 
+		indices : Expression[]
+		value   : Expression
+	| { BitVectorAccessExpression }
+		/** The sub expression representing the bit-vector. */
+		bitvec  : Expression
+		/** The end index of this bit-vector access */
+		end     : int
+		/** The start index of this bit-vector access */
+		start   : int
+	| { CastExpression }
+		castedType   : ACSLType 
+		expression : Expression
+	| { BooleanLiteral }
+		value   : boolean
+	| { IntegerLiteral }
+	    /** The integer given as String.  This representation is used to support 
+	        arbitrarily large numbers.  We do not need to compute with them but
+	        give them 1-1 to the decision procedure. */
+		value   : String
+	| { RealLiteral }
+	    /** The value given as String.  This representation is used to support 
+	        arbitrarily large numbers.  We do not need to compute with them but
+	        give them 1-1 to the decision procedure. */
+		value   : String
+	| { BitvecLiteral }
+	    /** The value given as String.  This representation is used to support 
+	        arbitrarily large numbers.  We do not need to compute with them but
+	        give them 1-1 to the decision procedure. */
+		value   : String
+		/** The number of bits in this bitvector */ 
+		length  : int
+	| { /** Represents a string literal.  
+	        This is only used as attribute value, since strings are not otherwise 
+	        supported in Boogie.  A string literal never has a type. */
+	    StringLiteral }
+		value   : String
+	| { NullPointer }
+	| { ValidExpression }
+		/** is used to check if a pointer location is safe, so the formula should be a
+			Pointer (UnaryExpression with star) or this makes no sense */
+		formula : Expression
+    | { FreeableExpression }
+        /** is used to check if a pointer location is safe, so the formula should be a
+            Pointer (UnaryExpression with star) or this makes no sense */
+        formula : Expression
+    | { MallocableExpression }
+        /** is used to check if a pointer location is safe, so the formula should be a
+            Pointer (UnaryExpression with star) or this makes no sense */
+        formula : Expression
+	| { /** represents the result value, which is used in contracts */ 
+		ACSLResultExpression }
+	| { FieldAccessExpression }
+		/** access on fields, like a.x */
+		struct : Expression
+		field : String
+	| { SizeOfExpression }
+		/** checks the size of differnent things, like in C */
+		formula : ?&Expression
+		logicType : ?&ACSLType
+	| { OldValueExpression }
+		/** refers to the old value of a certain expression */
+		formula : Expression
+	| { AtLabelExpression }
+		/** refers to the value at a certain position, determined
+			by the given label */
+		formula : Expression
+		label : String
+	| { BaseAddrExpression }
+		/** gets the base addr of a certain pointer */
+		formula : Expression
+	| { BlockLengthExpression }
+		/** gets the memory block length of a certain pointer */
+		formula : Expression
+	| { SyntacticNamingExpression }
+		/** special contruct is used in assumes clauses */
+		identifier : String
+		formula : Expression										
+	| { IdentifierExpression }
+		identifier : String
+	| { FunctionApplication }
+		identifier : String
+		arguments  : Expression[]
+	| { IfThenElseExpression }
+		condition  : Expression
+		thenPart   : Expression
+		elsePart   : Expression
+	| { QuantifierExpression }
+		/** This is true for universal and false for existential quantifier */
+		isUniversal : boolean
+		typeParams  : String[]
+		subformula  : Expression
+		parameters  : String[] 
+		attributes  : String[]
+	| { /** This can be used as call forall parameter, or as if or 
+	     * while condition.  In all other places it is forbidden. */ 
+		WildcardExpression }
+	);
+ 
+ACSLType ::= 
+	typeName : String;
+

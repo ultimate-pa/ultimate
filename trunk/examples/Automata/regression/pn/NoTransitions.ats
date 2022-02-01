@@ -1,0 +1,14 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2018-07-24
+
+assert(accepts(noTransitions, []));
+assert(!isEmpty(noTransitions));
+
+PetriNet noTransitions = (
+	alphabet = {a1 a2 a0 },
+	places = {p0 p1 p2 },
+	transitions = {
+	},
+	initialMarking = {p0 p1 },
+	acceptingPlaces = {p1 }
+);

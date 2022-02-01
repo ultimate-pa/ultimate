@@ -1,0 +1,19 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 01.06.2013
+
+parseAutomata("../../../Xiaolin.ats");
+
+NestedWordAutomaton nwa = buchiComplementFKV(eNoether);
+assert(numberOfStates(nwa) == 10);
+assert(!buchiIsEmpty(nwa));
+print(numberOfStates(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(rSchumann);
+assert(numberOfStates(nwa) == 10);
+assert(!buchiIsEmpty(nwa));
+print(numberOfStates(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(cKistner);
+assert(numberOfStates(nwa) == 12);
+assert(!buchiIsEmpty(nwa));
+print(numberOfStates(nwa));

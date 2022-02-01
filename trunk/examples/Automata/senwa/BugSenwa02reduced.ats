@@ -1,0 +1,25 @@
+// Testfile dumped by Ultimate at 2012/09/28 23:52:39
+
+// Problem with run ackermannENTRY assume m >= 0;assume... $Ultimate##0 assume !(m == 0); L25 assume !(n == 0); L29 call< ackermannENTRY assume m >= 0;assume... $Ultimate##0 assume m == 0;res :=... #4534#ackermannFINAL assume res >= 0; #4541#ackermannEXIT > return#4605#L29' assume !(tmp >= 0); #4612#ackermannErr5RequiresViolation 
+
+print(senwa(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call238"},
+	internalAlphabet = {"a" "b" "d" },
+	returnAlphabet = {"return239" },
+	states = {"q7" "qExit" "qEntry" "q2" "q1" "q3" },
+	initialStates = {"qEntry" },
+	finalStates = {"q7" },
+	callTransitions = {
+		 ("q3" "call238" "qEntry")
+	},
+	internalTransitions = {
+		 ("qEntry" "a" "q1")
+		 ("q1" "b" "q3")
+		 ("q1" "d" "qExit")
+	},
+	returnTransitions = {
+		 ("qExit" "q3" "return239" "q7")
+	}
+);

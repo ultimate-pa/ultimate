@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class-diagram version="1.2.3" icons="true" always-add-relationships="false" generalizations="true" realizations="true" 
+  associations="true" dependencies="false" nesting-relationships="true" router="FAN">  
+  <class id="1" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsWeak" 
+    project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODAutomataOperationsWeak.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="115" width="1003" x="2448" y="1384"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="2" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsInt" 
+    project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODFormulaOperationsInt.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="349" width="657" x="708" y="1384"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="3" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperations" 
+    project="Library-MSOD" file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODFormulaOperations.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="259" width="616" x="708" y="1085"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="4" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODStringFactory" project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODStringFactory.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="313" width="306" x="2945" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="5" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODAlphabetSymbol" project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODAlphabetSymbol.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="313" width="278" x="1497" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="6" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsNat" 
+    project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODFormulaOperationsNat.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="205" width="613" x="55" y="1384"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="7" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperations" 
+    project="Library-MSOD" file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODAutomataOperations.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="223" width="1003" x="1405" y="1085"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="8" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsBuchi" 
+    project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODAutomataOperationsBuchi.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="115" width="1003" x="1405" y="1384"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="9" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODSolver" project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODSolver.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="601" width="798" x="1058" y="444"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="10" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODUtils" project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODUtils.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="367" width="693" x="2013" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="11" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODScript" project="Library-MSOD" 
+    file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODScript.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="277" width="308" x="952" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <enumeration id="12" language="java" name="de.uni_freiburg.informatik.ultimate.mso.MSODScript.MSODLogic" 
+    project="Library-MSOD" file="/Library-MSOD/src/de/uni_freiburg/informatik/ultimate/mso/MSODScript.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="151" width="172" x="846" y="444"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <generalization id="13">    
+    <end type="SOURCE" refId="6"/>    
+    <end type="TARGET" refId="3"/>  
+  </generalization>  
+  <association id="14">    
+    <end type="SOURCE" refId="9" navigable="false">      
+      <attribute id="15" name="mAutomataOperations">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </attribute>      
+      <multiplicity id="16" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="7" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <association id="17">    
+    <end type="SOURCE" refId="11" navigable="false">      
+      <attribute id="18" name="mMSODSolver">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </attribute>      
+      <multiplicity id="19" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="9" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <generalization id="20">    
+    <end type="SOURCE" refId="8"/>    
+    <end type="TARGET" refId="7"/>  
+  </generalization>  
+  <nesting id="21">    
+    <end type="SOURCE" refId="11"/>    
+    <end type="TARGET" refId="12"/>  
+  </nesting>  
+  <generalization id="22">    
+    <end type="SOURCE" refId="1"/>    
+    <end type="TARGET" refId="7"/>  
+  </generalization>  
+  <association id="23">    
+    <end type="SOURCE" refId="9" navigable="false">      
+      <attribute id="24" name="mFormulaOperations">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </attribute>      
+      <multiplicity id="25" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="3" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <generalization id="26">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="3"/>  
+  </generalization>  
+  <classifier-display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+    sort-features="false" accessors="true" visibility="true">    
+    <attributes public="true" package="true" protected="true" private="true" static="true"/>    
+    <operations public="true" package="true" protected="true" private="true" static="true"/>  
+  </classifier-display>  
+  <association-display labels="true" multiplicity="true"/>
+</class-diagram>

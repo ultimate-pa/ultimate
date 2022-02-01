@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+    
+	<option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	
+	<rundefinition name="Automizer SVCOMP 2020">
+        <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    </rundefinition>
+
+    <rundefinition name="Automizer FA">
+        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA.epf</option>
+	</rundefinition>
+
+    <rundefinition name="Automizer FA-MCR-WP">
+        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-WP.epf</option>
+	</rundefinition>
+	
+	<rundefinition name="Automizer FA-MCR-SP">
+        <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-SP.epf</option>
+	</rundefinition>
+    
+	<tasks name="SVCOMP ConcurrencySafety-Main">
+		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks>
+    
+	<tasks name="Ultimate Repo">
+		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks>
+
+</benchmark>

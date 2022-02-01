@@ -1,0 +1,25 @@
+// Date:  2018-05-22
+// Author: schaetzc@tf.uni-freiburg.de
+//
+// Petri Net n. 
+//
+//   (0)--[a]->(1)--[c]->(2)--[e]->(3)
+//    `---[b]--^ `--[d]--^ `--[f]--^
+
+print(finitePrefix(n));
+
+PetriNet n = (
+  alphabet = {a b c d e f},
+  places = {p0 p1 p2 p3},
+  transitions = {
+    ({p0} a {p1})
+    ({p0} b {p1})
+    ({p1} c {p2})
+    ({p1} d {p2})
+    ({p2} e {p3})
+    ({p2} f {p3})
+
+  },
+  initialMarking = {p0},
+  acceptingPlaces = {p3}
+);

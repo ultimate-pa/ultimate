@@ -1,0 +1,68 @@
+// Date: May 2014
+// Matthias Heizmann
+// typical(?) Büchi interpolant automaton that is not easy to complement
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 8);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 15);
+
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(ba);
+print(numberOfStates(complementNCSBLazy3));
+assert(numberOfStates(complementNCSBLazy3) == 8);
+print(numberOfTransitions(complementNCSBLazy3));
+assert(numberOfTransitions(complementNCSBLazy3) == 15);
+
+NestedWordAutomaton complementNCSBLazy2 = buchiComplementNCSBLazy2(ba);
+print(numberOfStates(complementNCSBLazy2));
+assert(numberOfStates(complementNCSBLazy2) == 8);
+print(numberOfTransitions(complementNCSBLazy2));
+assert(numberOfTransitions(complementNCSBLazy2) == 15);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(ba, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 14);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 25);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(ba, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 14);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 25);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(ba, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 17);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 32);
+
+
+
+
+NestedWordAutomaton res = buchiComplementFKV(ba);
+assert( !buchiAccepts(ba, [a b, a b]));
+assert( buchiAccepts(res, [a b, a b]));
+print(res);
+
+NestedWordAutomaton ba = (
+  callAlphabet = { },
+  internalAlphabet = { "a" "b" },
+  returnAlphabet = { },
+  states = {s0 s1 qi l0 l1},
+  initialStates = {s0},
+  finalStates = {qi},
+  callTransitions = { },
+  internalTransitions = { 
+    (s0 "a" s1) 
+	(s1 "b" s0) 
+    (s1 "b" qi) 
+    (l0 "a" l1)
+    (l1 "b" l0)
+    (qi "a" l1)
+  }, 
+  returnTransitions = { }
+);
+//7591 states and 18770In 0Ca 0Re transitions.
+//3838 states and 4990In 0Ca 0Re transitions

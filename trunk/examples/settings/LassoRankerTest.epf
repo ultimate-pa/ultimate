@@ -1,0 +1,34 @@
+#Fri Oct 03 12:44:52 EST 2014
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=NONLINEAR
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=NONLINEAR
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Path\ of\ dumped\ script=/tmp/
+#
+# Template sizes here:
+#
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Multiphase\ template\ size=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nested\ template\ size=6
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Piecewise\ template\ size=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Lexicographic\ template\ size=3
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Parallel\ template\ size=3
+#
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Simplify\ discovered\ termination\ arguments=false
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
+#Fri Oct 03 12:44:52 EST 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+#Fri Oct 03 12:44:52 EST 2014
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Controller\ Plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Core\ Plugin=INFO
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ External\ Tools=INFO
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ Log\ Level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker\=INFO;

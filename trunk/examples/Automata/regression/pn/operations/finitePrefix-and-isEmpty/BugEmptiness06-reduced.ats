@@ -1,0 +1,21 @@
+// Testfile dumped by Ultimate at 2011/12/20 14:10:35
+
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 20);
+
+assert(!isEmpty(net));
+
+PetriNet net = (
+	alphabet = {a0 a1 a5 a4 a3 a2 a6 a8 a7 a9 a10 a11 },
+	places = {p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 },
+	transitions = {
+		( {p14 p0 p6 } a6 {p12 p18 p6 } )
+		( {p18 p5 p4 } a1 {p19 p7 p8 } )
+		( {p15 p2 p1 p8 } a4 {p14 p0 p5 p6 } )
+		( {p10 p8 p6 } a9 {p13 p8 p6 } )
+		( {p12 p6 } a11 {p10 p6 } )
+	},
+	initialMarking = {p1 p2 p4 p8 p15 },
+	acceptingPlaces = {p13 p17 }
+);

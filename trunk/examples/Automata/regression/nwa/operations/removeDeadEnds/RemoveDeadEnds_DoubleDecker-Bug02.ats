@@ -1,0 +1,30 @@
+// Example showing that down states are not computed correctly
+// in r8960 using removeDeadEnds() or reachableStatesCopy.
+// double decker (q2,q0) is not reachable because state q0 was removed.
+// however the state is still there.
+
+// Date: 03.06.2013
+// Author: heizmann@informatik.uni-freiburg.de and Christian Schilling
+
+minimizeSevpa(removeDeadEnds(nwa));
+//minimizeSevpa(reachableStatesCopy(nwa, false, false, true, false));
+print(nwa);
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { c },
+	internalAlphabet = { a b },
+	returnAlphabet = { r },
+	states = { q0 q1 q2 q3 qE },
+	initialStates = { q0 },
+	finalStates = { qE },
+	callTransitions = {
+		(q0 c q1) (q3 c q2)
+	},
+	internalTransitions = {
+		 (q1 b q2) (q0 a q3) (q0 a qE)
+	},
+	returnTransitions = {
+		 (q2 q3 r qE)
+	}
+);

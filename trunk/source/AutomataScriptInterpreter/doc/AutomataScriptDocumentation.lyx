@@ -1,0 +1,1478 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass scrartcl
+\use_default_options true
+\begin_modules
+theorems-ams-bytype
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_title "Documentation of Automatascript"
+\pdf_author "Betim Musa"
+\pdf_keywords "documentation of automatascript, documentation, statements, types, words, structure, parser, interpreter"
+\pdf_bookmarks true
+\pdf_bookmarksnumbered true
+\pdf_bookmarksopen true
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Documentation of AutomataScript
+\end_layout
+
+\begin_layout Author
+Betim Musa
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+newpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+newpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Intro
+\end_layout
+
+\begin_layout Subsubsection
+Hello-World example
+\end_layout
+
+\begin_layout Example
+The mandatory example for a programming language is always the Hello-World
+ example, and this is how you do it in automatascript.
+\end_layout
+
+\begin_layout LyX-Code
+1: print(
+\begin_inset Quotes eld
+\end_inset
+
+Hello World!
+\begin_inset Quotes erd
+\end_inset
+
+);
+\end_layout
+
+\begin_layout Standard
+The string “Hello World!” will be printed to console, or if you are trying
+ it in the web interface, it will be reported as an ULTIMATE result.
+ There will be also a warning, that tells you, that there are no test cases
+ defined, but you can ignore it this time.
+\end_layout
+
+\begin_layout Subsubsection
+Simple example
+\end_layout
+
+\begin_layout Example
+In this example we will define a nested word automaton, that doesn't accept
+ any word, because it has no transitions at all.
+ Then we assert the result of the operation accepts, so this assertion should
+ fail.
+\end_layout
+
+\begin_layout LyX-Code
+1: NestedWord nw = [a< b< c< >d >e]; 
+\end_layout
+
+\begin_layout LyX-Code
+2: assert(accepts(nwa, nw));
+\end_layout
+
+\begin_layout LyX-Code
+3:
+\end_layout
+
+\begin_layout LyX-Code
+4: NestedWordAutomaton nwa = ( 
+\end_layout
+
+\begin_layout LyX-Code
+5: callAlphabet = {a b c}, 
+\end_layout
+
+\begin_layout LyX-Code
+6: internalAlphabet = {}, 
+\end_layout
+
+\begin_layout LyX-Code
+7: returnAlphabet = {d e}, 
+\end_layout
+
+\begin_layout LyX-Code
+8: states = {q0 q1 q2 q3}, 
+\end_layout
+
+\begin_layout LyX-Code
+9: initialStates = {q0}, 
+\end_layout
+
+\begin_layout LyX-Code
+10: finalStates = {q0 q1}, 
+\end_layout
+
+\begin_layout LyX-Code
+11: callTransitions = {}, 
+\end_layout
+
+\begin_layout LyX-Code
+12: internalTransitions = { }, 
+\end_layout
+
+\begin_layout LyX-Code
+13: returnTransitions = {} 
+\end_layout
+
+\begin_layout LyX-Code
+14: );
+\end_layout
+
+\begin_layout Subsection
+Guide for Eclipse
+\end_layout
+
+\begin_layout Standard
+TODO: How to run Automatascript parser on a .ats file.
+ (Choose automatascript parser, and then AutomatascriptInterpreter)
+\end_layout
+
+\begin_layout Subsection
+Guide for web interface
+\end_layout
+
+\begin_layout Standard
+TODO: How to run AutomataScript on the web interface
+\end_layout
+
+\begin_layout Section
+AutomataScript
+\end_layout
+
+\begin_layout Subsection
+Syntax
+\end_layout
+
+\begin_layout Standard
+Automatascript has a Java-like syntax.
+\end_layout
+
+\begin_layout Itemize
+statements usually terminate with a semi-colon
+\end_layout
+
+\begin_layout Itemize
+...
+\end_layout
+
+\begin_layout Subsection*
+Declaration of automata
+\end_layout
+
+\begin_layout Standard
+Automata declarations have the following form:
+\end_layout
+
+\begin_layout LyX-Code
+type automata_name = (
+\begin_inset Formula $c_{1}$
+\end_inset
+
+, 
+\begin_inset Formula $c_{2}$
+\end_inset
+
+, ..., 
+\begin_inset Formula $c_{k}$
+\end_inset
+
+);
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $c_{1}$
+\end_inset
+
+, ..., 
+\begin_inset Formula $c_{k}$
+\end_inset
+
+ are the elements of the automaton.
+ See 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Automata-types"
+
+\end_inset
+
+ to get an overview of the available automata types.
+ The elements 
+\begin_inset Formula $c_{1},\ldots,\, c_{k}$
+\end_inset
+
+ depend on the type of the automaton.
+\end_layout
+
+\begin_layout Subsection*
+Words
+\end_layout
+
+\begin_layout Standard
+Declarations of words have the following syntax:
+\end_layout
+
+\begin_layout LyX-Code
+type word_name = [
+\begin_inset Formula $s_{1}\, s_{2}\ldots\, s_{n}$
+\end_inset
+
+];
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $s_{1},\ldots,s_{n}$
+\end_inset
+
+ are the symbols of the word.
+ The symbols are separated by space.
+ A symbol is either just a letter or a list of characters within quotation
+ marks.
+ See 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Word-types"
+
+\end_inset
+
+ for a list of supported words.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Statement types
+\end_layout
+
+\begin_layout Standard
+The following statement types have exactly the same syntax as in Java.
+\end_layout
+
+\begin_layout Itemize
+Variable declaration
+\end_layout
+
+\begin_layout Itemize
+Operation invocation
+\end_layout
+
+\begin_layout Itemize
+Control flow statements
+\end_layout
+
+\begin_layout Itemize
+Loops (while and for-loop)
+\end_layout
+
+\begin_layout Subsection
+Types
+\end_layout
+
+\begin_layout Subsubsection*
+Primitive types
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Type
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Example
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Range
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Default value
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+int
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+int a = 42;
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $-2^{31}$
+\end_inset
+
+ to 
+\begin_inset Formula $2^{31}-1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+boolean
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+boolean a = true;
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+'true' or 'false'
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+String
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+String a = 
+\begin_inset Quotes erd
+\end_inset
+
+foo
+\begin_inset Quotes erd
+\end_inset
+
+;
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Note:
+\series default
+ Currently, no type is assigned a default a value.
+ This may change in the future.
+\end_layout
+
+\begin_layout Subsubsection
+Word types
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Word-types"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Currently, three types of words are supported.
+\end_layout
+
+\begin_layout Subsubsection*
+
+\series bold
+Words, without hierarchical structure
+\end_layout
+
+\begin_layout Standard
+Words, without hierarchical structure are implemented as nested words without
+ any call and return symbols.
+\end_layout
+
+\begin_layout Example
+NestedWord nw = [a b a];
+\end_layout
+
+\begin_layout Subsubsection*
+
+\series bold
+Nested words
+\end_layout
+
+\begin_layout Standard
+As described in Madhusudan et al.
+ this sort of words have a nesting structure.
+ The nesting relation is defined by call symbols and return symbols.
+ To indicate a call symbol, you append a '<' to the symbol, to indicate
+ a return symbol you prepend a '>' to the symbol.
+\end_layout
+
+\begin_layout Example
+NestedWord nw = [aCallSym< otherSym otherSym2 fooSym >aReturnSym];
+\end_layout
+
+\begin_layout Example
+In this particular example the symbol 'aCallSym' is a call symbol and the
+ symbol 'aReturnSym' is a return symbol.
+ The other symbols are normal symbols.
+\end_layout
+
+\begin_layout Subsubsection*
+
+\series bold
+Nested lasso words
+\end_layout
+
+\begin_layout Standard
+A nested lasso word consists of two nested words separated by a comma.
+ In the following statement we see the general structure of a declaration
+ of a nested lasso word.
+\end_layout
+
+\begin_layout LyX-Code
+NestedLassoWord nlw = [NestedWord, NestedWord]; 
+\end_layout
+
+\begin_layout Subsubsection
+Automata types
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Automata-types"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Nested word automata
+\end_layout
+
+\begin_layout Standard
+Nested word automata consists of three alphabets, a set of states, a set
+ of initial states, and a set of final states.
+ Finally, they have three different types of transitions.
+ The general structure of a nested word automaton declaration is listed
+ below.
+\end_layout
+
+\begin_layout LyX-Code
+NestedWordAutomaton nwa = (
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+callAlphabet = {
+\begin_inset Formula $c_{1}\, c_{2}\,\ldots\, c_{k}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+internalAlphabet = {
+\begin_inset Formula $b_{1}\, b_{2}\,\ldots\, b_{m}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+returnAlphabet = {
+\begin_inset Formula $r_{1}\, r_{2}\,\ldots\, r_{n}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+states = {
+\begin_inset Formula $q_{0}\, q_{1}\,\ldots\, q_{p}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+initialStates = {
+\begin_inset Formula $q_{x}\, q_{y}\, q_{z}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+finalStates = {
+\begin_inset Formula $q_{s}\, q_{f}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+callTransitions = {(
+\begin_inset Formula $q_{\ensuremath{s}}$
+\end_inset
+
+
+\begin_inset Formula $c_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{s'}$
+\end_inset
+
+) (
+\begin_inset Formula $q_{u}$
+\end_inset
+
+ 
+\begin_inset Formula $c_{j}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{u'}$
+\end_inset
+
+) ...},
+\end_layout
+
+\begin_layout LyX-Code
+internalTransitions = {(
+\begin_inset Formula $q_{s}$
+\end_inset
+
+ 
+\begin_inset Formula $b_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{s'}$
+\end_inset
+
+) (
+\begin_inset Formula $q_{u}$
+\end_inset
+
+ 
+\begin_inset Formula $c_{j}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{u'}$
+\end_inset
+
+) ...},
+\end_layout
+
+\begin_layout LyX-Code
+returnTransitions = {(
+\begin_inset Formula $q_{s}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{s'}$
+\end_inset
+
+ 
+\begin_inset Formula $r_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{s''}$
+\end_inset
+
+) (
+\begin_inset Formula $q_{u}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{u'}$
+\end_inset
+
+ 
+\begin_inset Formula $r_{j}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{u''}$
+\end_inset
+
+) ...} );
+\end_layout
+
+\end_deeper
+\begin_layout Example
+TODO: NestedWordAutomaton nwa = ...; 
+\end_layout
+
+\begin_layout Subsubsection*
+Finite automata
+\end_layout
+
+\begin_layout Standard
+Finite automata may be defined as nested word automata without any call
+ and return transitions.
+ Then, the call and return alphabet should be empty, of course.
+ The general structure of a finite automaton declaration is shown below.
+\end_layout
+
+\begin_layout LyX-Code
+NestedWordAutomaton dfa = (
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+callAlphabet = {},
+\end_layout
+
+\begin_layout LyX-Code
+internalAlphabet = {
+\begin_inset Formula $b_{1}\, b_{2}\,\ldots\, b_{m}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+returnAlphabet = {},
+\end_layout
+
+\begin_layout LyX-Code
+states = {
+\begin_inset Formula $q_{0}\, q_{1}\,\ldots\, q_{p}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+initialStates = {
+\begin_inset Formula $q_{x}\, q_{y}\, q_{z}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+finalStates = {
+\begin_inset Formula $q_{s}\, q_{f}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+callTransitions = {},
+\end_layout
+
+\begin_layout LyX-Code
+internalTransitions = {(
+\begin_inset Formula $q_{s}$
+\end_inset
+
+ 
+\begin_inset Formula $b_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{s'}$
+\end_inset
+
+) (
+\begin_inset Formula $q_{u}$
+\end_inset
+
+ 
+\begin_inset Formula $c_{j}$
+\end_inset
+
+ 
+\begin_inset Formula $q_{u'}$
+\end_inset
+
+) ...},
+\end_layout
+
+\begin_layout LyX-Code
+returnTransitions = {});
+\end_layout
+
+\end_deeper
+\begin_layout Example
+A finite automaton, that accepts the language 
+\begin_inset Formula $\mathcal{L}=\{a*\cdot(b|c)\}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+NestedWordAutomaton dfa = (
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+callAlphabet = {},
+\end_layout
+
+\begin_layout LyX-Code
+internalAlphabet = {a b c},
+\end_layout
+
+\begin_layout LyX-Code
+returnAlphabet = {},
+\end_layout
+
+\begin_layout LyX-Code
+states = {q0 q1 q2},
+\end_layout
+
+\begin_layout LyX-Code
+initialStates = {q0},
+\end_layout
+
+\begin_layout LyX-Code
+finalStates = {q2},
+\end_layout
+
+\begin_layout LyX-Code
+callTransitions = {},
+\end_layout
+
+\begin_layout LyX-Code
+internalTransitions = {(q0 a q0) (q0 b q2) (q0 c q2)},
+\end_layout
+
+\begin_layout LyX-Code
+returnTransitions = {} );
+\end_layout
+
+\end_deeper
+\begin_layout Subsubsection*
+Petri nets
+\end_layout
+
+\begin_layout Standard
+General structure of Petri nets.
+\end_layout
+
+\begin_layout LyX-Code
+PetriNet pn = (
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+alphabet = {
+\begin_inset Formula $a_{1}\, a_{2}\,\ldots\, a_{k}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+places = {
+\begin_inset Formula $p_{1}\, p\,\ldots\, p_{k}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+transitions = {({
+\begin_inset Formula $m_{l}$
+\end_inset
+
+} 
+\begin_inset Formula $a_{i}$
+\end_inset
+
+ {
+\begin_inset Formula $m_{l'}$
+\end_inset
+
+}) ({
+\begin_inset Formula $m_{k}$
+\end_inset
+
+} 
+\begin_inset Formula $a_{j}$
+\end_inset
+
+ {
+\begin_inset Formula $m_{k'}$
+\end_inset
+
+}) ...},
+\end_layout
+
+\begin_layout LyX-Code
+initialMarking = {
+\begin_inset Formula $p_{x}$
+\end_inset
+
+ 
+\begin_inset Formula $p_{y}$
+\end_inset
+
+},
+\end_layout
+
+\begin_layout LyX-Code
+acceptingPlaces = {
+\begin_inset Formula $p_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $p_{j}$
+\end_inset
+
+ 
+\begin_inset Formula $p_{h}$
+\end_inset
+
+});
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Subsection
+Operations
+\end_layout
+
+\begin_layout Subsubsection
+Special operations
+\end_layout
+
+\begin_layout Subsubsection*
+print
+\end_layout
+
+\begin_layout Standard
+This operation prints the string representation of the given arguments (i.e.
+ it calls the toString method) to the Logger and to the Webinterface
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+btw: currently, the web interface is available at
+\end_layout
+
+\begin_layout Plain Layout
+http://monteverdi.informatik.uni-freiburg.de/ultimate
+\end_layout
+
+\end_inset
+
+.
+ It may also write the results into a file.
+ To do this, you have to checkmark the box in Generated Ultimate Plugins
+ -> Tool plugins -> Automata Script Interpreter.
+\begin_inset Newline newline
+\end_inset
+
+
+\series bold
+Syntax:
+\series default
+ 
+\series bold
+print(
+\begin_inset Formula $arg_{1}$
+\end_inset
+
+, 
+\begin_inset Formula $arg_{2}$
+\end_inset
+
+, 
+\begin_inset Formula $arg_{3}$
+\end_inset
+
+, 
+\begin_inset Formula $arg_{n}$
+\end_inset
+
+);
+\end_layout
+
+\begin_layout Example
+print(
+\begin_inset Quotes eld
+\end_inset
+
+This is a string
+\begin_inset Quotes erd
+\end_inset
+
+, 42, true); 
+\end_layout
+
+\begin_layout Example
+
+\series bold
+Output(from the Logger):
+\series default
+ 
+\end_layout
+
+\begin_layout Example
+2013-12-23 17:31:17,077 INFO [TestFileInterpreter.java:1268]: Printing "This
+ is a string", 42, true 
+\end_layout
+
+\begin_layout Example
+2013-12-23 17:31:17,077 INFO [TestFileInterpreter.java:1268]: This is a string
+ 
+\end_layout
+
+\begin_layout Example
+2013-12-23 17:31:17,077 INFO [TestFileInterpreter.java:1268]: 42 
+\end_layout
+
+\begin_layout Example
+2013-12-23 17:31:17,077 INFO [TestFileInterpreter.java:1268]: true
+\end_layout
+
+\begin_layout Subsubsection*
+parseAutomata
+\end_layout
+
+\begin_layout Standard
+This operation is similar to an 
+\begin_inset Quotes eld
+\end_inset
+
+import
+\begin_inset Quotes erd
+\end_inset
+
+ statement in Java.
+ It collects the automata defined in the given files and makes the available
+ to use them in the current file.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\series bold
+Syntax: parseAutomata(
+\series default
+
+\begin_inset Formula $pathToFile_{1}$
+\end_inset
+
+, 
+\begin_inset Formula $pathToFile_{2}$
+\end_inset
+
+, 
+\begin_inset Formula $\ldots$
+\end_inset
+
+, 
+\begin_inset Formula $pathToFile_{i}$
+\end_inset
+
+
+\series bold
+);
+\series default
+
+\begin_inset Newline newline
+\end_inset
+
+You have three possibilities to give the path to a file.
+\end_layout
+
+\begin_layout Enumerate
+if the file is located in the same directory as the currently parsed file,
+ then you may just give the file name.
+ (e.g.
+ parseAutomata(
+\begin_inset Quotes eld
+\end_inset
+
+fileName.ats
+\begin_inset Quotes erd
+\end_inset
+
+);)
+\end_layout
+
+\begin_layout Enumerate
+if the file is located in the upper directory of the currently parsed file,
+ then you may use two dots to indicate that.
+ (e.g.
+ parseAutomata(
+\begin_inset Quotes eld
+\end_inset
+
+../fileName.ats
+\begin_inset Quotes erd
+\end_inset
+
+);)
+\end_layout
+
+\begin_layout Enumerate
+you specify the full path to the file.
+ (e.g.
+ parseAutomata(
+\begin_inset Quotes eld
+\end_inset
+
+C:/Programs/automata/automataFile.ats
+\begin_inset Quotes erd
+\end_inset
+
+);)
+\end_layout
+
+\begin_layout Subsubsection*
+assert
+\end_layout
+
+\begin_layout Standard
+This operation defines a test case, the result of the test is printed to
+ the Logger and to the Webinterface.
+\begin_inset Newline newline
+\end_inset
+
+
+\series bold
+Syntax: assert(BooleanExpression);
+\begin_inset Newline newline
+\end_inset
+
+Note: 
+\series default
+A summary of the defined assertions is printed at the end of the interpretation.
+\end_layout
+
+\begin_layout Subsubsection
+Automata operations
+\end_layout
+
+\begin_layout Standard
+All classes that implement IOperation interface (e.g.
+ classes from the package: de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ope
+rations) are so-called automata operations and may be called in a Automatascript
+ file.
+ Below there is a list of some useful operations.
+\end_layout
+
+\begin_layout Itemize
+accepts(IAutomaton, Word);
+\end_layout
+
+\begin_layout Itemize
+isempty(IAutomaton);
+\end_layout
+
+\begin_layout Itemize
+difference(IAutomaton, IAutomaton);
+\end_layout
+
+\begin_layout Itemize
+intersect(IAutomaton, IAutomaton);
+\end_layout
+
+\begin_layout Itemize
+removeUnreachable(IAutomaton);
+\end_layout
+
+\begin_layout Itemize
+determinize(IAutomaton);
+\end_layout
+
+\begin_layout Itemize
+...
+\end_layout
+
+\begin_layout Subsection
+Operators 
+\end_layout
+
+\begin_layout Itemize
++, -, *, / for Integer addition, subtraction, multiplication, division
+\end_layout
+
+\begin_layout Itemize
++ for string concatenation
+\end_layout
+
+\begin_layout Itemize
+Relational operators <, >, <= , >=, == , != for Integer comparisons
+\end_layout
+
+\begin_layout Itemize
+Boolean operators &&, ||, ! for Boolean expressions
+\end_layout
+
+\begin_layout Itemize
+Conditional operator for Boolean expressions 
+\begin_inset Formula $be_{1}?\, st_{1}:st_{2};$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Section
+Internal Structure
+\end_layout
+
+\begin_layout Subsection
+Parser
+\end_layout
+
+\begin_layout Standard
+The parser for Automatascript files is automatically generated by JavaCUP
+ from a grammar.
+\begin_inset Newline newline
+\end_inset
+
+TODO: What else could be interesting? Maybe, how to extend the grammar for
+ certain use cases.
+ (e.g.
+ what do I have to do in order to implement a new automaton type?)
+\end_layout
+
+\begin_layout Subsection
+Interpreter
+\end_layout
+
+\begin_layout Subsubsection*
+TestFileInterpreter
+\end_layout
+
+\begin_layout Standard
+The TestFileInterpreter is the main component of the Interpreter.
+ Interpreting an Automatascript file is done in four steps.
+\end_layout
+
+\begin_layout Enumerate
+Interpreting the automata definitions (handled by AutomataDefinitionInterpreter)
+\end_layout
+
+\begin_layout Enumerate
+Typechecking the file (handled by AutomataScriptTypeChecker)
+\end_layout
+
+\begin_layout Enumerate
+Interpreting the statements
+\end_layout
+
+\begin_layout Enumerate
+Reporting the results
+\end_layout
+
+\begin_layout Standard
+Only the last two aspects are done by the TestFileInterpreter itself.
+ Regarding the first part, there is a separate interpret method for each
+ statement type.
+ There are two kinds of results.
+ The result of each assert-statement is separately reported and there is
+ an overall result reported, that represents a summary of all assert-statements.
+\end_layout
+
+\begin_layout Subsubsection*
+AutomataDefinitionInterpreter
+\end_layout
+
+\begin_layout Standard
+The task is to interpret automata definitions and to make them available
+ for the TestFileInterpreter.
+ Regarding the first part there is an interpret method for each automaton
+ type.
+ Currently, there are two interpret methods for two different types of automata.
+\end_layout
+
+\begin_layout LyX-Code
+1.
+ public void interpret(NestedwordAutomatonAST nwa) throws IllegalArgumentExcepti
+on {...}
+\end_layout
+
+\begin_layout LyX-Code
+2.
+ public void interpret(PetriNetAutomatonAST pna) throws IllegalArgumentException
+\series bold
+  
+\series default
+{...}
+\end_layout
+
+\begin_layout Standard
+Both methods store the interpreted automata into the following map.
+\end_layout
+
+\begin_layout LyX-Code
+private Map<String,Object> m_Automata;
+\end_layout
+
+\begin_layout Standard
+This map is retrievable by the TestFileInterpreter through a public get-Method.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+AutomataScriptTypeChecker
+\end_layout
+
+\begin_layout Standard
+This class implements a static type checker for Automatascript.
+ There is a checkType-Method for each statement of the form
+\end_layout
+
+\begin_layout LyX-Code
+private void checkType(Statement); 
+\end_layout
+
+\begin_layout Standard
+Such a method checks whether the expecting type matches the type of the
+ current statement.
+ For example, the method for assignments
+\end_layout
+
+\begin_layout LyX-Code
+private void checkType(AssignmentExpressionAST as)
+\end_layout
+
+\begin_layout Standard
+checks whether the type of the right-hand side of the assignment either
+ has the same type as, or has a sub-type of the left-hand side of the assignment.
+\end_layout
+
+\begin_layout Subsection
+Coming features
+\end_layout
+
+\begin_layout Itemize
+parseAutomata - should be able to parse automata from other tools (different
+ file formats like GOAL)
+\end_layout
+
+\begin_layout Itemize
+...
+\end_layout
+
+\begin_layout Section
+Grammar
+\end_layout
+
+\begin_layout Standard
+see /AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source
+/automatascriptparser/AutomataTestFileGrammar.cup
+\end_layout
+
+\end_body
+\end_document

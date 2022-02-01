@@ -1,0 +1,48 @@
+// Author: Christian Schilling, Daniel Tischner, Matthias Heizmann
+// Date: 2016-05-17
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 6);
+assert(shrinkNwaSize == 6);
+assert(minimizeNwaPmaxSatDirectBiSize == 6);
+assert(minimizeNwaPmaxSatDirectSize == 6);
+assert(reduceNwaDirectSimulationSize == 6);
+assert(reduceNwaDirectSimulationBSize == 6);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
+// assert(reduceNwaDelayedSimulationSize == 5);
+// assert(reduceNwaDelayedSimulationBSize == 5);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a1" "a2" "a3"},
+	returnAlphabet = {"r"},
+	states = {"q1" "q2" "q3" "q4" "qf" "q5"},
+	initialStates = {"q1"},
+	finalStates = {"qf" "q5"},
+	callTransitions = {
+		 ("q1" "c" "qf")
+	},
+	internalTransitions = {
+		 ("qf" "a2" "q2")
+		 ("qf" "a3" "q3")
+		 ("q4" "a1" "q5")
+		 ("q5" "a1" "q5")
+	},
+	returnTransitions = {
+		 ("q2" "q1" "r" "q4")
+		 ("q3" "q1" "r" "qf")
+	}
+);

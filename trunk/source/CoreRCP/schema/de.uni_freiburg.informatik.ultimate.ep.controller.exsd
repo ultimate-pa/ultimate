@@ -1,0 +1,84 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="de.uni_freiburg.informatik.ultimate.core.model.coreplugin" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="de.uni_freiburg.informatik.ultimate.core.model.coreplugin" id="de.uni_freiburg.informatik.ultimate.ep.controller" name="Controller Extension Point"/>
+      </appinfo>
+      <documentation>
+         
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="impl"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="impl">
+      <complexType>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":de.uni_freiburg.informatik.ultimate.core.model.IController"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="isGraphical" type="boolean" use="required">
+            <annotation>
+               <documentation>
+                  Indicate if the controller is graphical and therefore not suited for command line mode
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="preference" type="string" use="required">
+            <annotation>
+               <documentation>
+                  Use an integer value to define which controller should be used if multiple controllers are present. If you are unsure, use 100 as value. Higher values will win in the battle of controllers.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+
+
+
+
+
+</schema>

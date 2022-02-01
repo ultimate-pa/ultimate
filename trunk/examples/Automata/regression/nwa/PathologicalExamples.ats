@@ -1,0 +1,135 @@
+// some small and extreme examples
+// Date: 16.05.2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+assert(isEmpty(noInitialStates));
+
+NestedWordAutomaton noInitialStates = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = {s2 s0 s1 },
+	initialStates = { },
+	finalStates = { s1 s2 },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 (s0 a0 s1)
+		 (s1 a1 s2)
+	},
+	returnTransitions = {
+	}
+);
+
+
+assert(isEmpty(noFinalStates));
+
+NestedWordAutomaton noFinalStates = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = {s2 s0 s1 },
+	initialStates = {s0 },
+	finalStates = { },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 (s0 a0 s1)
+		 (s1 a1 s2)
+	},
+	returnTransitions = {
+	}
+);
+
+
+assert(isEmpty(noStates));
+
+NestedWordAutomaton noStates = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = {s2 s0 s1 },
+	initialStates = { },
+	finalStates = { },
+	callTransitions = {
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);
+
+
+assert(isEmpty(unreachableStates));
+
+NestedWordAutomaton unreachableStates = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = { s0 s1 s2 },
+	initialStates = {s0 },
+	finalStates = { s2 },
+	callTransitions = {
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);
+
+
+assert(!isEmpty(totalOneStateAutomaton));
+
+NestedWordAutomaton totalOneStateAutomaton = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = {s0 },
+	initialStates = {s0 },
+	finalStates = {s0 },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 (s0 a0 s0)
+		 (s0 a1 s0)
+	},
+	returnTransitions = {
+	}
+);
+
+
+NestedWordAutomaton emptyAutomaton = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = { },
+  initialStates = { },
+  finalStates = { },
+  callTransitions = { },
+  internalTransitions = { }, 
+  returnTransitions = { }
+);
+
+assert(isEmpty(emptyAutomaton));
+
+
+NestedWordAutomaton noTransitionAutomaton = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = {s0 },
+	initialStates = {s0 },
+	finalStates = {s0 },
+	callTransitions = {
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);
+
+
+
+NestedWord emptyString = [];
+assert(accepts(noTransitionAutomaton, emptyString));

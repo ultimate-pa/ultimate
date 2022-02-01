@@ -1,0 +1,1311 @@
+// Automata obtained as intermediate result of the program verification of 
+// McCarthy91.bpl using the PowersetDeterminizer.
+
+// Date: 20.05.2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+NestedWordAutomaton diff1 = difference(AllErrorsAtOnceAbstraction0,InterpolantAutomaton_Iteration1);
+print(numberOfStates(diff1));
+assert(!isEmpty(diff1));
+assert(isIncluded(diff1, Abstraction1));
+assert(isIncluded(Abstraction1, diff1));
+
+NestedWordAutomaton diff2 = difference(diff1,InterpolantAutomaton_Iteration2);
+print(numberOfStates(diff2));
+assert(!isEmpty(diff2));
+assert(isIncluded(diff2, Abstraction2));
+assert(isIncluded(Abstraction2, diff2));
+
+NestedWordAutomaton diff3 = difference(diff2,InterpolantAutomaton_Iteration3);
+print(numberOfStates(diff3));
+assert(!isEmpty(diff3));
+assert(isIncluded(diff3, Abstraction3));
+assert(isIncluded(Abstraction3, diff3));
+
+NestedWordAutomaton diff4 = difference(diff3,InterpolantAutomaton_Iteration4);
+print(numberOfStates(diff4));
+assert(!isEmpty(diff4));
+assert(isIncluded(diff4, Abstraction4));
+assert(isIncluded(Abstraction4, diff4));
+
+
+NestedWordAutomaton diff5 = difference(diff4,InterpolantAutomaton_Iteration5);
+print(numberOfStates(diff5));
+assert(!isEmpty(diff5));
+assert(isIncluded(diff5, Abstraction5));
+assert(isIncluded(Abstraction5, diff5));
+
+NestedWordAutomaton diff6 = difference(diff5,InterpolantAutomaton_Iteration6);
+print(numberOfStates(diff6));
+assert(!isEmpty(diff6));
+assert(isIncluded(diff6, Abstraction6));
+assert(isIncluded(Abstraction6, diff6));
+
+NestedWordAutomaton diff7 = difference(diff6,InterpolantAutomaton_Iteration7);
+print(numberOfStates(diff7));
+assert(!isEmpty(diff7));
+assert(isIncluded(diff7, Abstraction7));
+assert(isIncluded(Abstraction7, diff7));
+
+
+NestedWordAutomaton diff8 = difference(diff7,InterpolantAutomaton_Iteration8);
+print(numberOfStates(diff8));
+assert(!isEmpty(diff8));
+assert(isIncluded(diff8, Abstraction8));
+assert(isIncluded(Abstraction8, diff8));
+
+
+NestedWordAutomaton diff9 = difference(diff8,InterpolantAutomaton_Iteration9);
+print(numberOfStates(diff9));
+assert(isEmpty(diff9));
+assert(isIncluded(diff9, Abstraction9));
+assert(isIncluded(Abstraction9, diff9));
+
+
+NestedWordAutomaton AllErrorsAtOnceAbstraction0 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"2#McCarthyErr0AssertViolationtrue" "3#L20'true" "4#McCarthyENTRYtrue" "5#L20true" "6#L21true" "7#McCarthyEXITtrue" },
+	initialStates = {"4#McCarthyENTRYtrue" },
+	finalStates = {"2#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("3#L20'true" "call res := McCarthy(res);" "4#McCarthyENTRYtrue")
+		 ("5#L20true" "call res := McCarthy(x + 11);" "4#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("4#McCarthyENTRYtrue" "assume x > 100;res :..." "6#L21true")
+		 ("4#McCarthyENTRYtrue" "assume !(x > 100);" "5#L20true")
+		 ("6#L21true" "assume !(91 == res |..." "2#McCarthyErr0AssertViolationtrue")
+		 ("6#L21true" "assume 91 == res || ..." "7#McCarthyEXITtrue")
+	},
+	returnTransitions = {
+		 ("7#McCarthyEXITtrue" "5#L20true" "return call res := McCarthy(x + 11);" "3#L20'true")
+		 ("7#McCarthyEXITtrue" "3#L20'true" "return call res := McCarthy(res);" "6#L21true")
+	}
+);
+
+// Testfile dumped by Ultimate at 2013/05/21 15:16:17
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration1 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"8#true" "9#false" "10#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" },
+	initialStates = {"8#true" },
+	finalStates = {"9#false" },
+	callTransitions = {
+		 ("9#false" "call res := McCarthy(x + 11);" "9#false")
+		 ("9#false" "call res := McCarthy(res);" "9#false")
+	},
+	internalTransitions = {
+		 ("8#true" "assume x > 100;res :..." "10#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("9#false" "assume x > 100;res :..." "9#false")
+		 ("9#false" "assume !(x > 100);" "9#false")
+		 ("9#false" "assume !(91 == res |..." "9#false")
+		 ("9#false" "assume 91 == res || ..." "9#false")
+		 ("10#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume !(91 == res |..." "9#false")
+	},
+	returnTransitions = {
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:17
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration2 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"32#false" "33#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "31#true" },
+	initialStates = {"31#true" },
+	finalStates = {"32#false" },
+	callTransitions = {
+		 ("32#false" "call res := McCarthy(x + 11);" "32#false")
+		 ("32#false" "call res := McCarthy(res);" "32#false")
+		 ("33#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "call res := McCarthy(x + 11);" "31#true")
+		 ("31#true" "call res := McCarthy(x + 11);" "31#true")
+	},
+	internalTransitions = {
+		 ("32#false" "assume x > 100;res :..." "32#false")
+		 ("32#false" "assume !(x > 100);" "32#false")
+		 ("32#false" "assume !(91 == res |..." "32#false")
+		 ("32#false" "assume 91 == res || ..." "32#false")
+		 ("33#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume !(91 == res |..." "32#false")
+		 ("31#true" "assume x > 100;res :..." "33#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("31#true" "assume x > 100;res :..." "31#true")
+		 ("31#true" "assume !(x > 100);" "31#true")
+	},
+	returnTransitions = {
+		 ("32#false" "33#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "return call res := McCarthy(x + 11);" "32#false")
+		 ("32#false" "33#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "return call res := McCarthy(res);" "32#false")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:18
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration3 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"66#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "62#false" "61#true" },
+	initialStates = {"61#true" },
+	finalStates = {"62#false" },
+	callTransitions = {
+		 ("66#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "call res := McCarthy(x + 11);" "61#true")
+		 ("62#false" "call res := McCarthy(x + 11);" "62#false")
+		 ("62#false" "call res := McCarthy(res);" "62#false")
+		 ("61#true" "call res := McCarthy(x + 11);" "61#true")
+		 ("61#true" "call res := McCarthy(res);" "61#true")
+	},
+	internalTransitions = {
+		 ("66#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume !(91 == res |..." "62#false")
+		 ("66#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume 91 == res || ..." "61#true")
+		 ("62#false" "assume x > 100;res :..." "62#false")
+		 ("62#false" "assume !(x > 100);" "62#false")
+		 ("62#false" "assume !(91 == res |..." "62#false")
+		 ("62#false" "assume 91 == res || ..." "62#false")
+		 ("61#true" "assume x > 100;res :..." "66#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("61#true" "assume x > 100;res :..." "61#true")
+		 ("61#true" "assume !(x > 100);" "61#true")
+		 ("61#true" "assume 91 == res || ..." "61#true")
+	},
+	returnTransitions = {
+		 ("62#false" "66#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "return call res := McCarthy(x + 11);" "62#false")
+		 ("62#false" "66#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "return call res := McCarthy(res);" "62#false")
+		 ("61#true" "61#true" "return call res := McCarthy(x + 11);" "61#true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:18
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration4 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"102#true" "103#false" "114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "113#(<= McCarthy_res (+ McCarthy_x (- 10)))" "112#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "108#(<= McCarthy_res 101)" "104#(<= McCarthy_x 100)" },
+	initialStates = {"102#true" },
+	finalStates = {"103#false" },
+	callTransitions = {
+		 ("103#false" "call res := McCarthy(x + 11);" "103#false")
+		 ("103#false" "call res := McCarthy(res);" "103#false")
+		 ("112#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "call res := McCarthy(res);" "102#true")
+		 ("108#(<= McCarthy_res 101)" "call res := McCarthy(res);" "102#true")
+		 ("104#(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "102#true")
+	},
+	internalTransitions = {
+		 ("102#true" "assume x > 100;res :..." "114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("102#true" "assume x > 100;res :..." "113#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("102#true" "assume !(x > 100);" "104#(<= McCarthy_x 100)")
+		 ("103#false" "assume x > 100;res :..." "103#false")
+		 ("103#false" "assume !(x > 100);" "103#false")
+		 ("103#false" "assume !(91 == res |..." "103#false")
+		 ("103#false" "assume 91 == res || ..." "103#false")
+		 ("114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "assume 91 == res || ..." "114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "assume 91 == res || ..." "113#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("113#(<= McCarthy_res (+ McCarthy_x (- 10)))" "assume 91 == res || ..." "113#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("112#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "assume !(91 == res |..." "103#false")
+	},
+	returnTransitions = {
+		 ("103#false" "112#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "return call res := McCarthy(x + 11);" "103#false")
+		 ("103#false" "108#(<= McCarthy_res 101)" "return call res := McCarthy(x + 11);" "103#false")
+		 ("103#false" "104#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "103#false")
+		 ("103#false" "112#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "return call res := McCarthy(res);" "103#false")
+		 ("103#false" "108#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "103#false")
+		 ("103#false" "104#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "103#false")
+		 ("114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "104#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "108#(<= McCarthy_res 101)")
+		 ("114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "108#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "112#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("114#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "108#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "108#(<= McCarthy_res 101)")
+		 ("113#(<= McCarthy_res (+ McCarthy_x (- 10)))" "104#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "108#(<= McCarthy_res 101)")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:19
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration5 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "203#(<= McCarthy_res 101)" "176#true" "199#(<= McCarthy_x 100)" "177#false" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" },
+	initialStates = {"176#true" },
+	finalStates = {"177#false" },
+	callTransitions = {
+		 ("207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "call res := McCarthy(x + 11);" "176#true")
+		 ("203#(<= McCarthy_res 101)" "call res := McCarthy(res);" "176#true")
+		 ("199#(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "176#true")
+		 ("176#true" "call res := McCarthy(x + 11);" "176#true")
+		 ("176#true" "call res := McCarthy(res);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "call res := McCarthy(res);" "176#true")
+		 ("177#false" "call res := McCarthy(x + 11);" "177#false")
+		 ("177#false" "call res := McCarthy(res);" "177#false")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "call res := McCarthy(x + 11);" "176#true")
+	},
+	internalTransitions = {
+		 ("207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "assume 91 == res || ..." "207#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "assume 91 == res || ..." "176#true")
+		 ("199#(<= McCarthy_x 100)" "assume 91 == res || ..." "176#true")
+		 ("176#true" "assume x > 100;res :..." "207#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("176#true" "assume x > 100;res :..." "176#true")
+		 ("176#true" "assume x > 100;res :..." "208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("176#true" "assume !(x > 100);" "199#(<= McCarthy_x 100)")
+		 ("176#true" "assume !(x > 100);" "176#true")
+		 ("176#true" "assume 91 == res || ..." "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "assume !(91 == res |..." "177#false")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("177#false" "assume x > 100;res :..." "177#false")
+		 ("177#false" "assume !(x > 100);" "177#false")
+		 ("177#false" "assume !(91 == res |..." "177#false")
+		 ("177#false" "assume 91 == res || ..." "177#false")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "assume 91 == res || ..." "207#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "assume 91 == res || ..." "176#true")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "assume 91 == res || ..." "208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+	},
+	returnTransitions = {
+		 ("207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "176#true")
+		 ("207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "176#true" "return call res := McCarthy(x + 11);" "176#true")
+		 ("207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "199#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "203#(<= McCarthy_res 101)")
+		 ("207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "199#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "176#true")
+		 ("176#true" "176#true" "return call res := McCarthy(x + 11);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "199#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "176#true" "return call res := McCarthy(x + 11);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "return call res := McCarthy(x + 11);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "203#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "203#(<= McCarthy_res 101)")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "203#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "203#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "176#true" "return call res := McCarthy(res);" "203#(<= McCarthy_res 101)")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "176#true" "return call res := McCarthy(res);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "176#true" "return call res := McCarthy(res);" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "return call res := McCarthy(res);" "203#(<= McCarthy_res 101)")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "return call res := McCarthy(res);" "176#true")
+		 ("198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "return call res := McCarthy(res);" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("177#false" "207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "177#false")
+		 ("177#false" "203#(<= McCarthy_res 101)" "return call res := McCarthy(x + 11);" "177#false")
+		 ("177#false" "199#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "177#false")
+		 ("177#false" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "return call res := McCarthy(x + 11);" "177#false")
+		 ("177#false" "208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "return call res := McCarthy(x + 11);" "177#false")
+		 ("177#false" "207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(res);" "177#false")
+		 ("177#false" "203#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "177#false")
+		 ("177#false" "199#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "177#false")
+		 ("177#false" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "return call res := McCarthy(res);" "177#false")
+		 ("177#false" "208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "return call res := McCarthy(res);" "177#false")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "207#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "176#true")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "199#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "203#(<= McCarthy_res 101)")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "199#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "176#true")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "176#true" "return call res := McCarthy(x + 11);" "176#true")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "return call res := McCarthy(x + 11);" "176#true")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "203#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "203#(<= McCarthy_res 101)")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "203#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "176#true")
+		 ("208#(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "203#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "198#(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:20
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration6 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"334#false" "333#true" "346#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" },
+	initialStates = {"333#true" },
+	finalStates = {"334#false" },
+	callTransitions = {
+		 ("334#false" "call res := McCarthy(x + 11);" "334#false")
+		 ("334#false" "call res := McCarthy(res);" "334#false")
+		 ("333#true" "call res := McCarthy(x + 11);" "333#true")
+		 ("333#true" "call res := McCarthy(res);" "333#true")
+		 ("346#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "call res := McCarthy(x + 11);" "333#true")
+	},
+	internalTransitions = {
+		 ("334#false" "assume x > 100;res :..." "334#false")
+		 ("334#false" "assume !(x > 100);" "334#false")
+		 ("334#false" "assume !(91 == res |..." "334#false")
+		 ("334#false" "assume 91 == res || ..." "334#false")
+		 ("333#true" "assume x > 100;res :..." "333#true")
+		 ("333#true" "assume x > 100;res :..." "346#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("333#true" "assume !(x > 100);" "333#true")
+		 ("333#true" "assume 91 == res || ..." "333#true")
+		 ("346#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume !(91 == res |..." "334#false")
+		 ("346#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume 91 == res || ..." "333#true")
+	},
+	returnTransitions = {
+		 ("334#false" "346#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "return call res := McCarthy(x + 11);" "334#false")
+		 ("334#false" "346#(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "return call res := McCarthy(res);" "334#false")
+		 ("333#true" "333#true" "return call res := McCarthy(x + 11);" "333#true")
+		 ("333#true" "333#true" "return call res := McCarthy(res);" "333#true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:21
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration7 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "475#(<= McCarthy_res 101)" "455#false" "454#true" "471#(<= McCarthy_x 100)" "467#(<= McCarthy_res 91)" "480#(<= 0 (+ McCarthy_x (- 101)))" },
+	initialStates = {"454#true" },
+	finalStates = {"455#false" },
+	callTransitions = {
+		 ("479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "call res := McCarthy(x + 11);" "454#true")
+		 ("475#(<= McCarthy_res 101)" "call res := McCarthy(res);" "454#true")
+		 ("455#false" "call res := McCarthy(x + 11);" "455#false")
+		 ("455#false" "call res := McCarthy(res);" "455#false")
+		 ("455#false" "call res := McCarthy(res);" "454#true")
+		 ("471#(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "454#true")
+		 ("454#true" "call res := McCarthy(x + 11);" "454#true")
+		 ("480#(<= 0 (+ McCarthy_x (- 101)))" "call res := McCarthy(x + 11);" "454#true")
+		 ("467#(<= McCarthy_res 91)" "call res := McCarthy(res);" "454#true")
+	},
+	internalTransitions = {
+		 ("479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "assume 91 == res || ..." "479#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("455#false" "assume x > 100;res :..." "455#false")
+		 ("455#false" "assume !(x > 100);" "455#false")
+		 ("455#false" "assume !(91 == res |..." "455#false")
+		 ("455#false" "assume 91 == res || ..." "455#false")
+		 ("455#false" "assume 91 == res || ..." "467#(<= McCarthy_res 91)")
+		 ("454#true" "assume x > 100;res :..." "479#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("454#true" "assume x > 100;res :..." "454#true")
+		 ("454#true" "assume x > 100;res :..." "480#(<= 0 (+ McCarthy_x (- 101)))")
+		 ("454#true" "assume !(x > 100);" "471#(<= McCarthy_x 100)")
+		 ("454#true" "assume !(x > 100);" "454#true")
+		 ("480#(<= 0 (+ McCarthy_x (- 101)))" "assume 91 == res || ..." "480#(<= 0 (+ McCarthy_x (- 101)))")
+		 ("467#(<= McCarthy_res 91)" "assume 91 == res || ..." "467#(<= McCarthy_res 91)")
+	},
+	returnTransitions = {
+		 ("479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "471#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "475#(<= McCarthy_res 101)")
+		 ("479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "475#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "475#(<= McCarthy_res 101)")
+		 ("479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "475#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "467#(<= McCarthy_res 91)")
+		 ("455#false" "479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "455#false")
+		 ("455#false" "475#(<= McCarthy_res 101)" "return call res := McCarthy(x + 11);" "455#false")
+		 ("455#false" "455#false" "return call res := McCarthy(x + 11);" "455#false")
+		 ("455#false" "471#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "455#false")
+		 ("455#false" "467#(<= McCarthy_res 91)" "return call res := McCarthy(x + 11);" "455#false")
+		 ("455#false" "480#(<= 0 (+ McCarthy_x (- 101)))" "return call res := McCarthy(x + 11);" "455#false")
+		 ("455#false" "479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(res);" "455#false")
+		 ("455#false" "475#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "455#false")
+		 ("455#false" "455#false" "return call res := McCarthy(res);" "455#false")
+		 ("455#false" "471#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "455#false")
+		 ("455#false" "467#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "455#false")
+		 ("455#false" "480#(<= 0 (+ McCarthy_x (- 101)))" "return call res := McCarthy(res);" "455#false")
+		 ("480#(<= 0 (+ McCarthy_x (- 101)))" "467#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "475#(<= McCarthy_res 101)")
+		 ("480#(<= 0 (+ McCarthy_x (- 101)))" "467#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "455#false")
+		 ("480#(<= 0 (+ McCarthy_x (- 101)))" "467#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "467#(<= McCarthy_res 91)")
+		 ("467#(<= McCarthy_res 91)" "479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "475#(<= McCarthy_res 101)")
+		 ("467#(<= McCarthy_res 91)" "479#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "467#(<= McCarthy_res 91)")
+		 ("467#(<= McCarthy_res 91)" "471#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "475#(<= McCarthy_res 101)")
+		 ("467#(<= McCarthy_res 91)" "471#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "467#(<= McCarthy_res 91)")
+		 ("467#(<= McCarthy_res 91)" "454#true" "return call res := McCarthy(x + 11);" "475#(<= McCarthy_res 101)")
+		 ("467#(<= McCarthy_res 91)" "454#true" "return call res := McCarthy(x + 11);" "467#(<= McCarthy_res 91)")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:23
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration8 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"772#(<= 0 (+ McCarthy_res (- 91)))" "773#(<= 0 (+ McCarthy_x (- 91)))" "767#true" "768#false" "796#(<= McCarthy_x 100)" },
+	initialStates = {"767#true" },
+	finalStates = {"768#false" },
+	callTransitions = {
+		 ("772#(<= 0 (+ McCarthy_res (- 91)))" "call res := McCarthy(x + 11);" "767#true")
+		 ("772#(<= 0 (+ McCarthy_res (- 91)))" "call res := McCarthy(res);" "773#(<= 0 (+ McCarthy_x (- 91)))")
+		 ("773#(<= 0 (+ McCarthy_x (- 91)))" "call res := McCarthy(x + 11);" "767#true")
+		 ("767#true" "call res := McCarthy(x + 11);" "767#true")
+		 ("767#true" "call res := McCarthy(res);" "767#true")
+		 ("768#false" "call res := McCarthy(x + 11);" "768#false")
+		 ("768#false" "call res := McCarthy(res);" "773#(<= 0 (+ McCarthy_x (- 91)))")
+		 ("768#false" "call res := McCarthy(res);" "767#true")
+		 ("768#false" "call res := McCarthy(res);" "768#false")
+		 ("796#(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "767#true")
+		 ("796#(<= McCarthy_x 100)" "call res := McCarthy(res);" "767#true")
+	},
+	internalTransitions = {
+		 ("772#(<= 0 (+ McCarthy_res (- 91)))" "assume 91 == res || ..." "772#(<= 0 (+ McCarthy_res (- 91)))")
+		 ("773#(<= 0 (+ McCarthy_x (- 91)))" "assume !(x > 100);" "773#(<= 0 (+ McCarthy_x (- 91)))")
+		 ("773#(<= 0 (+ McCarthy_x (- 91)))" "assume !(x > 100);" "767#true")
+		 ("767#true" "assume x > 100;res :..." "772#(<= 0 (+ McCarthy_res (- 91)))")
+		 ("767#true" "assume x > 100;res :..." "767#true")
+		 ("767#true" "assume !(x > 100);" "767#true")
+		 ("767#true" "assume !(x > 100);" "796#(<= McCarthy_x 100)")
+		 ("767#true" "assume 91 == res || ..." "767#true")
+		 ("768#false" "assume x > 100;res :..." "768#false")
+		 ("768#false" "assume !(x > 100);" "768#false")
+		 ("768#false" "assume !(91 == res |..." "768#false")
+		 ("768#false" "assume 91 == res || ..." "767#true")
+		 ("768#false" "assume 91 == res || ..." "768#false")
+		 ("768#false" "assume 91 == res || ..." "796#(<= McCarthy_x 100)")
+		 ("796#(<= McCarthy_x 100)" "assume 91 == res || ..." "767#true")
+		 ("796#(<= McCarthy_x 100)" "assume 91 == res || ..." "796#(<= McCarthy_x 100)")
+	},
+	returnTransitions = {
+		 ("772#(<= 0 (+ McCarthy_res (- 91)))" "772#(<= 0 (+ McCarthy_res (- 91)))" "return call res := McCarthy(x + 11);" "772#(<= 0 (+ McCarthy_res (- 91)))")
+		 ("772#(<= 0 (+ McCarthy_res (- 91)))" "767#true" "return call res := McCarthy(x + 11);" "772#(<= 0 (+ McCarthy_res (- 91)))")
+		 ("767#true" "767#true" "return call res := McCarthy(x + 11);" "767#true")
+		 ("767#true" "796#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "796#(<= McCarthy_x 100)")
+		 ("767#true" "767#true" "return call res := McCarthy(res);" "767#true")
+		 ("767#true" "768#false" "return call res := McCarthy(res);" "772#(<= 0 (+ McCarthy_res (- 91)))")
+		 ("767#true" "768#false" "return call res := McCarthy(res);" "767#true")
+		 ("767#true" "768#false" "return call res := McCarthy(res);" "768#false")
+		 ("767#true" "768#false" "return call res := McCarthy(res);" "796#(<= McCarthy_x 100)")
+		 ("767#true" "796#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "767#true")
+		 ("767#true" "796#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "796#(<= McCarthy_x 100)")
+		 ("768#false" "772#(<= 0 (+ McCarthy_res (- 91)))" "return call res := McCarthy(x + 11);" "768#false")
+		 ("768#false" "773#(<= 0 (+ McCarthy_x (- 91)))" "return call res := McCarthy(x + 11);" "768#false")
+		 ("768#false" "768#false" "return call res := McCarthy(x + 11);" "768#false")
+		 ("768#false" "796#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "768#false")
+		 ("768#false" "772#(<= 0 (+ McCarthy_res (- 91)))" "return call res := McCarthy(res);" "768#false")
+		 ("768#false" "773#(<= 0 (+ McCarthy_x (- 91)))" "return call res := McCarthy(res);" "768#false")
+		 ("768#false" "768#false" "return call res := McCarthy(res);" "768#false")
+		 ("768#false" "796#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "768#false")
+		 ("796#(<= McCarthy_x 100)" "773#(<= 0 (+ McCarthy_x (- 91)))" "return call res := McCarthy(x + 11);" "772#(<= 0 (+ McCarthy_res (- 91)))")
+		 ("796#(<= McCarthy_x 100)" "773#(<= 0 (+ McCarthy_x (- 91)))" "return call res := McCarthy(x + 11);" "767#true")
+		 ("796#(<= McCarthy_x 100)" "773#(<= 0 (+ McCarthy_x (- 91)))" "return call res := McCarthy(x + 11);" "768#false")
+		 ("796#(<= McCarthy_x 100)" "773#(<= 0 (+ McCarthy_x (- 91)))" "return call res := McCarthy(x + 11);" "796#(<= McCarthy_x 100)")
+		 ("796#(<= McCarthy_x 100)" "767#true" "return call res := McCarthy(x + 11);" "767#true")
+		 ("796#(<= McCarthy_x 100)" "796#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "796#(<= McCarthy_x 100)")
+		 ("796#(<= McCarthy_x 100)" "767#true" "return call res := McCarthy(res);" "767#true")
+		 ("796#(<= McCarthy_x 100)" "796#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "767#true")
+		 ("796#(<= McCarthy_x 100)" "796#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "796#(<= McCarthy_x 100)")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:25
+
+
+
+NestedWordAutomaton InterpolantAutomaton_Iteration9 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"1339#(<= McCarthy_res 91)" "1357#(<= McCarthy_x 100)" "1366#(<= 0 (+ McCarthy_x (- 101)))" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1318#true" "1361#(<= McCarthy_res 101)" "1319#false" },
+	initialStates = {"1318#true" },
+	finalStates = {"1319#false" },
+	callTransitions = {
+		 ("1339#(<= McCarthy_res 91)" "call res := McCarthy(res);" "1318#true")
+		 ("1357#(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "call res := McCarthy(x + 11);" "1318#true")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "call res := McCarthy(x + 11);" "1318#true")
+		 ("1361#(<= McCarthy_res 101)" "call res := McCarthy(res);" "1318#true")
+		 ("1318#true" "call res := McCarthy(x + 11);" "1318#true")
+		 ("1318#true" "call res := McCarthy(res);" "1318#true")
+		 ("1319#false" "call res := McCarthy(x + 11);" "1319#false")
+		 ("1319#false" "call res := McCarthy(res);" "1318#true")
+		 ("1319#false" "call res := McCarthy(res);" "1319#false")
+	},
+	internalTransitions = {
+		 ("1339#(<= McCarthy_res 91)" "assume 91 == res || ..." "1339#(<= McCarthy_res 91)")
+		 ("1339#(<= McCarthy_res 91)" "assume 91 == res || ..." "1318#true")
+		 ("1357#(<= McCarthy_x 100)" "assume 91 == res || ..." "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "assume 91 == res || ..." "1366#(<= 0 (+ McCarthy_x (- 101)))")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "assume 91 == res || ..." "1318#true")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "assume 91 == res || ..." "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "assume 91 == res || ..." "1318#true")
+		 ("1318#true" "assume x > 100;res :..." "1366#(<= 0 (+ McCarthy_x (- 101)))")
+		 ("1318#true" "assume x > 100;res :..." "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))")
+		 ("1318#true" "assume x > 100;res :..." "1318#true")
+		 ("1318#true" "assume !(x > 100);" "1357#(<= McCarthy_x 100)")
+		 ("1318#true" "assume !(x > 100);" "1318#true")
+		 ("1318#true" "assume 91 == res || ..." "1318#true")
+		 ("1319#false" "assume x > 100;res :..." "1319#false")
+		 ("1319#false" "assume !(x > 100);" "1319#false")
+		 ("1319#false" "assume !(91 == res |..." "1319#false")
+		 ("1319#false" "assume 91 == res || ..." "1339#(<= McCarthy_res 91)")
+		 ("1319#false" "assume 91 == res || ..." "1319#false")
+	},
+	returnTransitions = {
+		 ("1339#(<= McCarthy_res 91)" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1339#(<= McCarthy_res 91)")
+		 ("1339#(<= McCarthy_res 91)" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1361#(<= McCarthy_res 101)")
+		 ("1339#(<= McCarthy_res 91)" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1339#(<= McCarthy_res 91)" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "1339#(<= McCarthy_res 91)")
+		 ("1339#(<= McCarthy_res 91)" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "1361#(<= McCarthy_res 101)")
+		 ("1339#(<= McCarthy_res 91)" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1339#(<= McCarthy_res 91)" "1318#true" "return call res := McCarthy(x + 11);" "1339#(<= McCarthy_res 91)")
+		 ("1339#(<= McCarthy_res 91)" "1318#true" "return call res := McCarthy(x + 11);" "1361#(<= McCarthy_res 101)")
+		 ("1339#(<= McCarthy_res 91)" "1318#true" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1339#(<= McCarthy_res 91)" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1339#(<= McCarthy_res 91)")
+		 ("1339#(<= McCarthy_res 91)" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1361#(<= McCarthy_res 101)")
+		 ("1339#(<= McCarthy_res 91)" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1318#true")
+		 ("1339#(<= McCarthy_res 91)" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "1339#(<= McCarthy_res 91)")
+		 ("1339#(<= McCarthy_res 91)" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "1361#(<= McCarthy_res 101)")
+		 ("1339#(<= McCarthy_res 91)" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "1318#true")
+		 ("1339#(<= McCarthy_res 91)" "1318#true" "return call res := McCarthy(res);" "1339#(<= McCarthy_res 91)")
+		 ("1339#(<= McCarthy_res 91)" "1318#true" "return call res := McCarthy(res);" "1361#(<= McCarthy_res 101)")
+		 ("1339#(<= McCarthy_res 91)" "1318#true" "return call res := McCarthy(res);" "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1366#(<= 0 (+ McCarthy_x (- 101)))" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1318#true" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1339#(<= McCarthy_res 91)")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1361#(<= McCarthy_res 101)")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1318#true")
+		 ("1366#(<= 0 (+ McCarthy_x (- 101)))" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1319#false")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1361#(<= McCarthy_res 101)")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1318#true" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "1339#(<= McCarthy_res 91)")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "1361#(<= McCarthy_res 101)")
+		 ("1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "1318#true")
+		 ("1318#true" "1318#true" "return call res := McCarthy(x + 11);" "1318#true")
+		 ("1319#false" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(x + 11);" "1319#false")
+		 ("1319#false" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1319#false")
+		 ("1319#false" "1366#(<= 0 (+ McCarthy_x (- 101)))" "return call res := McCarthy(x + 11);" "1319#false")
+		 ("1319#false" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(x + 11);" "1319#false")
+		 ("1319#false" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(x + 11);" "1319#false")
+		 ("1319#false" "1319#false" "return call res := McCarthy(x + 11);" "1319#false")
+		 ("1319#false" "1339#(<= McCarthy_res 91)" "return call res := McCarthy(res);" "1319#false")
+		 ("1319#false" "1357#(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1319#false")
+		 ("1319#false" "1366#(<= 0 (+ McCarthy_x (- 101)))" "return call res := McCarthy(res);" "1319#false")
+		 ("1319#false" "1365#(<= McCarthy_res (+ McCarthy_x (- 10)))" "return call res := McCarthy(res);" "1319#false")
+		 ("1319#false" "1361#(<= McCarthy_res 101)" "return call res := McCarthy(res);" "1319#false")
+		 ("1319#false" "1319#false" "return call res := McCarthy(res);" "1319#false")
+	}
+);
+
+
+
+
+// Testfile dumped by Ultimate at 2013/05/21 15:16:17
+
+
+
+NestedWordAutomaton Abstraction1 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"25#L20'true" "24#McCarthyErr0AssertViolationtrue" "27#L20true" "26#McCarthyENTRYtrue" "29#McCarthyEXITtrue" "28#L21true" "30#McCarthyENTRYtrue" },
+	initialStates = {"26#McCarthyENTRYtrue" },
+	finalStates = {"24#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("25#L20'true" "call res := McCarthy(res);" "30#McCarthyENTRYtrue")
+		 ("27#L20true" "call res := McCarthy(x + 11);" "30#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("26#McCarthyENTRYtrue" "assume !(x > 100);" "27#L20true")
+		 ("28#L21true" "assume !(91 == res |..." "24#McCarthyErr0AssertViolationtrue")
+		 ("28#L21true" "assume 91 == res || ..." "29#McCarthyEXITtrue")
+		 ("30#McCarthyENTRYtrue" "assume x > 100;res :..." "28#L21true")
+		 ("30#McCarthyENTRYtrue" "assume !(x > 100);" "27#L20true")
+	},
+	returnTransitions = {
+		 ("29#McCarthyEXITtrue" "27#L20true" "return call res := McCarthy(x + 11);" "25#L20'true")
+		 ("29#McCarthyEXITtrue" "25#L20'true" "return call res := McCarthy(res);" "28#L21true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:18
+
+
+
+NestedWordAutomaton Abstraction2 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"51#McCarthyErr0AssertViolationtrue" "55#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "54#L20true" "53#McCarthyENTRYtrue" "52#L20'true" "59#McCarthyENTRYtrue" "58#McCarthyENTRYtrue" "57#L21true" "56#McCarthyEXITtrue" "60#L20true" },
+	initialStates = {"53#McCarthyENTRYtrue" },
+	finalStates = {"51#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("54#L20true" "call res := McCarthy(x + 11);" "59#McCarthyENTRYtrue")
+		 ("52#L20'true" "call res := McCarthy(res);" "58#McCarthyENTRYtrue")
+		 ("60#L20true" "call res := McCarthy(x + 11);" "58#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("55#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume 91 == res || ..." "56#McCarthyEXITtrue")
+		 ("53#McCarthyENTRYtrue" "assume !(x > 100);" "54#L20true")
+		 ("59#McCarthyENTRYtrue" "assume x > 100;res :..." "55#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("59#McCarthyENTRYtrue" "assume !(x > 100);" "54#L20true")
+		 ("58#McCarthyENTRYtrue" "assume x > 100;res :..." "57#L21true")
+		 ("58#McCarthyENTRYtrue" "assume !(x > 100);" "60#L20true")
+		 ("57#L21true" "assume !(91 == res |..." "51#McCarthyErr0AssertViolationtrue")
+		 ("57#L21true" "assume 91 == res || ..." "56#McCarthyEXITtrue")
+	},
+	returnTransitions = {
+		 ("56#McCarthyEXITtrue" "54#L20true" "return call res := McCarthy(x + 11);" "52#L20'true")
+		 ("56#McCarthyEXITtrue" "60#L20true" "return call res := McCarthy(x + 11);" "52#L20'true")
+		 ("56#McCarthyEXITtrue" "52#L20'true" "return call res := McCarthy(res);" "57#L21true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:18
+
+
+
+NestedWordAutomaton Abstraction3 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"100#McCarthyEXITtrue" "101#McCarthyENTRYtrue" "98#L20true" "99#L20'true" "96#L21true" "97#McCarthyENTRYtrue" "93#L20true" "92#McCarthyENTRYtrue" "95#McCarthyEXITtrue" "94#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "91#L20'true" "90#McCarthyErr0AssertViolationtrue" },
+	initialStates = {"92#McCarthyENTRYtrue" },
+	finalStates = {"90#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("98#L20true" "call res := McCarthy(x + 11);" "97#McCarthyENTRYtrue")
+		 ("99#L20'true" "call res := McCarthy(res);" "97#McCarthyENTRYtrue")
+		 ("93#L20true" "call res := McCarthy(x + 11);" "101#McCarthyENTRYtrue")
+		 ("91#L20'true" "call res := McCarthy(res);" "101#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("101#McCarthyENTRYtrue" "assume x > 100;res :..." "94#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("101#McCarthyENTRYtrue" "assume !(x > 100);" "93#L20true")
+		 ("96#L21true" "assume !(91 == res |..." "90#McCarthyErr0AssertViolationtrue")
+		 ("96#L21true" "assume 91 == res || ..." "100#McCarthyEXITtrue")
+		 ("97#McCarthyENTRYtrue" "assume x > 100;res :..." "96#L21true")
+		 ("97#McCarthyENTRYtrue" "assume !(x > 100);" "98#L20true")
+		 ("92#McCarthyENTRYtrue" "assume !(x > 100);" "93#L20true")
+		 ("94#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume 91 == res || ..." "95#McCarthyEXITtrue")
+	},
+	returnTransitions = {
+		 ("100#McCarthyEXITtrue" "98#L20true" "return call res := McCarthy(x + 11);" "99#L20'true")
+		 ("100#McCarthyEXITtrue" "93#L20true" "return call res := McCarthy(x + 11);" "99#L20'true")
+		 ("100#McCarthyEXITtrue" "99#L20'true" "return call res := McCarthy(res);" "96#L21true")
+		 ("100#McCarthyEXITtrue" "91#L20'true" "return call res := McCarthy(res);" "96#L21true")
+		 ("95#McCarthyEXITtrue" "93#L20true" "return call res := McCarthy(x + 11);" "91#L20'true")
+		 ("95#McCarthyEXITtrue" "91#L20'true" "return call res := McCarthy(res);" "96#L21true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:18
+
+
+
+NestedWordAutomaton Abstraction4 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"171#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "170#L20'(<= McCarthy_res 101)" "169#L21(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 101))" "168#L20'true" "175#McCarthyENTRYtrue" "174#McCarthyENTRYtrue" "173#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "172#L20(<= McCarthy_x 100)" "163#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "162#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "161#L20(<= McCarthy_x 100)" "160#McCarthyENTRYtrue" "167#L20true" "166#McCarthyEXITtrue" "165#McCarthyENTRYtrue" "164#L21true" "158#McCarthyErr0AssertViolationtrue" "159#L20'(<= McCarthy_res 101)" },
+	initialStates = {"160#McCarthyENTRYtrue" },
+	finalStates = {"158#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("170#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "174#McCarthyENTRYtrue")
+		 ("168#L20'true" "call res := McCarthy(res);" "165#McCarthyENTRYtrue")
+		 ("172#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "175#McCarthyENTRYtrue")
+		 ("161#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "175#McCarthyENTRYtrue")
+		 ("167#L20true" "call res := McCarthy(x + 11);" "165#McCarthyENTRYtrue")
+		 ("159#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "174#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("169#L21(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 101))" "assume 91 == res || ..." "166#McCarthyEXITtrue")
+		 ("175#McCarthyENTRYtrue" "assume x > 100;res :..." "162#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))")
+		 ("175#McCarthyENTRYtrue" "assume !(x > 100);" "161#L20(<= McCarthy_x 100)")
+		 ("174#McCarthyENTRYtrue" "assume x > 100;res :..." "173#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))")
+		 ("174#McCarthyENTRYtrue" "assume !(x > 100);" "161#L20(<= McCarthy_x 100)")
+		 ("173#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "assume 91 == res || ..." "163#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("162#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "assume 91 == res || ..." "171#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("160#McCarthyENTRYtrue" "assume !(x > 100);" "172#L20(<= McCarthy_x 100)")
+		 ("165#McCarthyENTRYtrue" "assume x > 100;res :..." "164#L21true")
+		 ("165#McCarthyENTRYtrue" "assume !(x > 100);" "167#L20true")
+		 ("164#L21true" "assume !(91 == res |..." "158#McCarthyErr0AssertViolationtrue")
+		 ("164#L21true" "assume 91 == res || ..." "166#McCarthyEXITtrue")
+	},
+	returnTransitions = {
+		 ("171#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "172#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "159#L20'(<= McCarthy_res 101)")
+		 ("171#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "161#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "170#L20'(<= McCarthy_res 101)")
+		 ("163#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "170#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "169#L21(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 101))")
+		 ("166#McCarthyEXITtrue" "172#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "168#L20'true")
+		 ("166#McCarthyEXITtrue" "161#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "168#L20'true")
+		 ("166#McCarthyEXITtrue" "167#L20true" "return call res := McCarthy(x + 11);" "168#L20'true")
+		 ("166#McCarthyEXITtrue" "170#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "164#L21true")
+		 ("166#McCarthyEXITtrue" "168#L20'true" "return call res := McCarthy(res);" "164#L21true")
+		 ("166#McCarthyEXITtrue" "159#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "164#L21true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:19
+
+
+
+NestedWordAutomaton Abstraction5 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"326#L20(<= McCarthy_x 100)" "327#McCarthyENTRYtrue" "324#L20(<= McCarthy_x 100)" "325#L20(<= McCarthy_x 100)" "322#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "323#L20'(<= McCarthy_res 101)" "320#L20'true" "321#L20'(<= McCarthy_res 101)" "332#L20(<= McCarthy_x 100)" "330#L20'true" "331#L20'(<= McCarthy_res 101)" "328#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "329#L20'true" "305#McCarthyENTRYtrue" "304#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "307#L20'(<= McCarthy_res 101)" "306#L20(<= McCarthy_x 100)" "309#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "308#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "311#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "310#McCarthyENTRYtrue" "313#McCarthyENTRYtrue" "312#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "315#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "317#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "316#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "319#L20'(<= McCarthy_res 101)" "318#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "289#McCarthyErr0AssertViolationtrue" "290#L20'true" "291#McCarthyENTRYtrue" "292#L20true" "293#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "294#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "295#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "296#McCarthyENTRYtrue" "297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "298#L21true" "299#L20(<= McCarthy_x 100)" "300#L20'(<= McCarthy_res 101)" "301#McCarthyENTRYtrue" "302#McCarthyEXITtrue" "303#L20'true" },
+	initialStates = {"327#McCarthyENTRYtrue" },
+	finalStates = {"289#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("326#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "313#McCarthyENTRYtrue")
+		 ("324#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "301#McCarthyENTRYtrue")
+		 ("325#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "313#McCarthyENTRYtrue")
+		 ("323#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "291#McCarthyENTRYtrue")
+		 ("320#L20'true" "call res := McCarthy(res);" "305#McCarthyENTRYtrue")
+		 ("321#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "310#McCarthyENTRYtrue")
+		 ("332#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "301#McCarthyENTRYtrue")
+		 ("330#L20'true" "call res := McCarthy(res);" "305#McCarthyENTRYtrue")
+		 ("331#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "310#McCarthyENTRYtrue")
+		 ("329#L20'true" "call res := McCarthy(res);" "305#McCarthyENTRYtrue")
+		 ("307#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "310#McCarthyENTRYtrue")
+		 ("306#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "301#McCarthyENTRYtrue")
+		 ("319#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "291#McCarthyENTRYtrue")
+		 ("290#L20'true" "call res := McCarthy(res);" "296#McCarthyENTRYtrue")
+		 ("292#L20true" "call res := McCarthy(x + 11);" "296#McCarthyENTRYtrue")
+		 ("299#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "313#McCarthyENTRYtrue")
+		 ("300#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "291#McCarthyENTRYtrue")
+		 ("303#L20'true" "call res := McCarthy(res);" "305#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("327#McCarthyENTRYtrue" "assume !(x > 100);" "299#L20(<= McCarthy_x 100)")
+		 ("322#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "assume 91 == res || ..." "316#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("328#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "317#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("305#McCarthyENTRYtrue" "assume x > 100;res :..." "304#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("305#McCarthyENTRYtrue" "assume !(x > 100);" "332#L20(<= McCarthy_x 100)")
+		 ("304#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "assume !(91 == res |..." "289#McCarthyErr0AssertViolationtrue")
+		 ("304#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("309#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "assume !(91 == res |..." "289#McCarthyErr0AssertViolationtrue")
+		 ("309#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "308#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("310#McCarthyENTRYtrue" "assume x > 100;res :..." "295#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("310#McCarthyENTRYtrue" "assume !(x > 100);" "306#L20(<= McCarthy_x 100)")
+		 ("313#McCarthyENTRYtrue" "assume x > 100;res :..." "312#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))")
+		 ("313#McCarthyENTRYtrue" "assume !(x > 100);" "326#L20(<= McCarthy_x 100)")
+		 ("312#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "assume 91 == res || ..." "311#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("315#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "assume 91 == res || ..." "314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("291#McCarthyENTRYtrue" "assume x > 100;res :..." "322#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))")
+		 ("291#McCarthyENTRYtrue" "assume !(x > 100);" "325#L20(<= McCarthy_x 100)")
+		 ("293#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "assume 91 == res || ..." "318#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("295#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "assume !(91 == res |..." "289#McCarthyErr0AssertViolationtrue")
+		 ("295#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "294#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("296#McCarthyENTRYtrue" "assume x > 100;res :..." "298#L21true")
+		 ("296#McCarthyENTRYtrue" "assume !(x > 100);" "292#L20true")
+		 ("298#L21true" "assume !(91 == res |..." "289#McCarthyErr0AssertViolationtrue")
+		 ("298#L21true" "assume 91 == res || ..." "302#McCarthyEXITtrue")
+		 ("301#McCarthyENTRYtrue" "assume x > 100;res :..." "309#L21(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("301#McCarthyENTRYtrue" "assume !(x > 100);" "324#L20(<= McCarthy_x 100)")
+	},
+	returnTransitions = {
+		 ("308#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "324#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "321#L20'(<= McCarthy_res 101)")
+		 ("308#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "306#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "307#L20'(<= McCarthy_res 101)")
+		 ("308#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "332#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "331#L20'(<= McCarthy_res 101)")
+		 ("311#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "326#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "319#L20'(<= McCarthy_res 101)")
+		 ("311#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "325#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "323#L20'(<= McCarthy_res 101)")
+		 ("311#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "299#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "300#L20'(<= McCarthy_res 101)")
+		 ("314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "326#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "320#L20'true")
+		 ("314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "324#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "320#L20'true")
+		 ("314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "325#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "329#L20'true")
+		 ("314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "306#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "329#L20'true")
+		 ("314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "332#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "330#L20'true")
+		 ("314#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "299#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "303#L20'true")
+		 ("317#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "320#L20'true" "return call res := McCarthy(res);" "315#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("317#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "330#L20'true" "return call res := McCarthy(res);" "328#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("317#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "329#L20'true" "return call res := McCarthy(res);" "293#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("316#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "323#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "293#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("316#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "319#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "315#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("318#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "307#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "293#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("318#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "323#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "293#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("318#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "321#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "315#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("318#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "331#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "328#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("318#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "319#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "315#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("294#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "307#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "293#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("294#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "321#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "315#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("294#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "331#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "328#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "320#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "330#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "303#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "329#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "326#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "290#L20'true")
+		 ("302#McCarthyEXITtrue" "324#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "290#L20'true")
+		 ("302#McCarthyEXITtrue" "325#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "290#L20'true")
+		 ("302#McCarthyEXITtrue" "306#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "290#L20'true")
+		 ("302#McCarthyEXITtrue" "292#L20true" "return call res := McCarthy(x + 11);" "290#L20'true")
+		 ("302#McCarthyEXITtrue" "332#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "290#L20'true")
+		 ("302#McCarthyEXITtrue" "299#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "290#L20'true")
+		 ("302#McCarthyEXITtrue" "290#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "307#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "323#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "320#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "321#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "300#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "330#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "331#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "319#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "303#L20'true" "return call res := McCarthy(res);" "298#L21true")
+		 ("302#McCarthyEXITtrue" "329#L20'true" "return call res := McCarthy(res);" "298#L21true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:20
+
+
+
+NestedWordAutomaton Abstraction6 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"410#L20(<= McCarthy_x 100)" "411#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "408#L20'(<= McCarthy_res 101)" "409#McCarthyENTRYtrue" "414#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "415#L21true" "412#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "413#L21true" "407#McCarthyErr0AssertViolationtrue" "453#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "452#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "451#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "450#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "449#McCarthyENTRYtrue" "448#L20'(<= McCarthy_res 101)" "440#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "441#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "442#L20(<= McCarthy_x 100)" "443#L20(<= McCarthy_x 100)" "444#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "445#McCarthyENTRYtrue" "446#McCarthyENTRYtrue" "447#L20'(<= McCarthy_res 101)" "432#L20'true" "433#McCarthyENTRYtrue" "434#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "435#L20(<= McCarthy_x 100)" "436#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "437#L20'(<= McCarthy_res 101)" "438#L20'true" "439#L20(<= McCarthy_x 100)" "425#L20'true" "424#L20'true" "427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "426#L20(<= McCarthy_x 100)" "429#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "428#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "431#L20'(<= McCarthy_res 101)" "430#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "417#L20'(<= McCarthy_res 101)" "416#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "419#L20true" "418#McCarthyENTRYtrue" "421#L20'true" "420#L20'true" "423#McCarthyEXITtrue" "422#McCarthyENTRYtrue" },
+	initialStates = {"433#McCarthyENTRYtrue" },
+	finalStates = {"407#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("410#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "445#McCarthyENTRYtrue")
+		 ("408#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "409#McCarthyENTRYtrue")
+		 ("448#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "446#McCarthyENTRYtrue")
+		 ("442#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "449#McCarthyENTRYtrue")
+		 ("443#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "449#McCarthyENTRYtrue")
+		 ("447#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "446#McCarthyENTRYtrue")
+		 ("432#L20'true" "call res := McCarthy(res);" "418#McCarthyENTRYtrue")
+		 ("435#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "445#McCarthyENTRYtrue")
+		 ("437#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "446#McCarthyENTRYtrue")
+		 ("438#L20'true" "call res := McCarthy(res);" "418#McCarthyENTRYtrue")
+		 ("439#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "445#McCarthyENTRYtrue")
+		 ("425#L20'true" "call res := McCarthy(res);" "418#McCarthyENTRYtrue")
+		 ("424#L20'true" "call res := McCarthy(res);" "418#McCarthyENTRYtrue")
+		 ("426#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "449#McCarthyENTRYtrue")
+		 ("431#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "409#McCarthyENTRYtrue")
+		 ("417#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "409#McCarthyENTRYtrue")
+		 ("419#L20true" "call res := McCarthy(x + 11);" "422#McCarthyENTRYtrue")
+		 ("421#L20'true" "call res := McCarthy(res);" "422#McCarthyENTRYtrue")
+		 ("420#L20'true" "call res := McCarthy(res);" "422#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("411#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "436#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("409#McCarthyENTRYtrue" "assume x > 100;res :..." "451#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))")
+		 ("409#McCarthyENTRYtrue" "assume !(x > 100);" "439#L20(<= McCarthy_x 100)")
+		 ("415#L21true" "assume !(91 == res |..." "407#McCarthyErr0AssertViolationtrue")
+		 ("415#L21true" "assume 91 == res || ..." "423#McCarthyEXITtrue")
+		 ("413#L21true" "assume !(91 == res |..." "407#McCarthyErr0AssertViolationtrue")
+		 ("453#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume 91 == res || ..." "423#McCarthyEXITtrue")
+		 ("452#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "assume 91 == res || ..." "450#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("451#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "assume 91 == res || ..." "429#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("449#McCarthyENTRYtrue" "assume x > 100;res :..." "441#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("449#McCarthyENTRYtrue" "assume !(x > 100);" "443#L20(<= McCarthy_x 100)")
+		 ("441#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "440#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("444#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))" "assume 91 == res || ..." "412#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))")
+		 ("445#McCarthyENTRYtrue" "assume x > 100;res :..." "444#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1))")
+		 ("445#McCarthyENTRYtrue" "assume !(x > 100);" "435#L20(<= McCarthy_x 100)")
+		 ("446#McCarthyENTRYtrue" "assume x > 100;res :..." "411#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("446#McCarthyENTRYtrue" "assume !(x > 100);" "442#L20(<= McCarthy_x 100)")
+		 ("433#McCarthyENTRYtrue" "assume !(x > 100);" "410#L20(<= McCarthy_x 100)")
+		 ("434#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "430#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("428#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "assume 91 == res || ..." "427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("416#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "414#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("418#McCarthyENTRYtrue" "assume x > 100;res :..." "416#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("418#McCarthyENTRYtrue" "assume !(x > 100);" "426#L20(<= McCarthy_x 100)")
+		 ("422#McCarthyENTRYtrue" "assume x > 100;res :..." "453#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("422#McCarthyENTRYtrue" "assume !(x > 100);" "419#L20true")
+	},
+	returnTransitions = {
+		 ("414#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "425#L20'true" "return call res := McCarthy(res);" "413#L21true")
+		 ("414#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "424#L20'true" "return call res := McCarthy(res);" "415#L21true")
+		 ("414#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "432#L20'true" "return call res := McCarthy(res);" "415#L21true")
+		 ("414#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "438#L20'true" "return call res := McCarthy(res);" "415#L21true")
+		 ("412#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "410#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "417#L20'(<= McCarthy_res 101)")
+		 ("412#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "435#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "431#L20'(<= McCarthy_res 101)")
+		 ("412#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "439#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "408#L20'(<= McCarthy_res 101)")
+		 ("450#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "408#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "452#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("450#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "431#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "428#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("450#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "447#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "428#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("450#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "437#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "434#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("450#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "448#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "452#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("440#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "442#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "448#L20'(<= McCarthy_res 101)")
+		 ("440#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "426#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "437#L20'(<= McCarthy_res 101)")
+		 ("440#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "443#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "447#L20'(<= McCarthy_res 101)")
+		 ("436#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "447#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "428#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("436#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "437#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "434#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("436#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "448#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "452#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "410#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "425#L20'true")
+		 ("427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "442#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "424#L20'true")
+		 ("427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "426#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "438#L20'true")
+		 ("427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "443#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "432#L20'true")
+		 ("427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "435#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "432#L20'true")
+		 ("427#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "439#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "424#L20'true")
+		 ("429#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "408#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "452#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("429#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))))" "431#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "428#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("430#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "424#L20'true" "return call res := McCarthy(res);" "452#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("430#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "432#L20'true" "return call res := McCarthy(res);" "428#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("430#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "438#L20'true" "return call res := McCarthy(res);" "434#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("423#McCarthyEXITtrue" "410#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "421#L20'true")
+		 ("423#McCarthyEXITtrue" "442#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "420#L20'true")
+		 ("423#McCarthyEXITtrue" "426#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "420#L20'true")
+		 ("423#McCarthyEXITtrue" "443#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "420#L20'true")
+		 ("423#McCarthyEXITtrue" "419#L20true" "return call res := McCarthy(x + 11);" "420#L20'true")
+		 ("423#McCarthyEXITtrue" "435#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "420#L20'true")
+		 ("423#McCarthyEXITtrue" "439#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "420#L20'true")
+		 ("423#McCarthyEXITtrue" "425#L20'true" "return call res := McCarthy(res);" "413#L21true")
+		 ("423#McCarthyEXITtrue" "424#L20'true" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "408#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "431#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "447#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "417#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "413#L21true")
+		 ("423#McCarthyEXITtrue" "432#L20'true" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "421#L20'true" "return call res := McCarthy(res);" "413#L21true")
+		 ("423#McCarthyEXITtrue" "437#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "420#L20'true" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "438#L20'true" "return call res := McCarthy(res);" "415#L21true")
+		 ("423#McCarthyEXITtrue" "448#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "415#L21true")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:21
+
+
+
+NestedWordAutomaton Abstraction7 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"702#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "703#L21true" "700#L20(<= McCarthy_x 100)" "701#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "698#L20'(<= McCarthy_res 101)" "699#McCarthyENTRYtrue" "697#McCarthyErr0AssertViolationtrue" "747#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "746#L20(<= McCarthy_x 100)" "745#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "744#L20'(<= McCarthy_res 101)" "751#L20'(<= McCarthy_res 101)" "750#L20'(<= McCarthy_res 101)" "749#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "739#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "738#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "737#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "743#L20'true" "742#L20'(<= McCarthy_res 101)" "741#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "762#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "763#McCarthyENTRYtrue" "760#McCarthyENTRYtrue" "761#McCarthyENTRYtrue" "766#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "764#McCarthyENTRYtrue" "765#L20'(<= McCarthy_res 101)" "754#L20(<= McCarthy_x 100)" "755#McCarthyENTRYtrue" "752#L20'(<= McCarthy_res 101)" "753#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "758#L20(<= McCarthy_x 100)" "759#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))" "756#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "757#L20(<= McCarthy_x 100)" "713#McCarthyEXITtrue" "712#McCarthyENTRYtrue" "715#L20'true" "714#L20'true" "717#L20(<= McCarthy_x 100)" "716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "705#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "704#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "707#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "706#L21true" "709#L20true" "708#McCarthyENTRYtrue" "711#L20'true" "710#L20'true" "728#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))" "729#L20(<= McCarthy_x 100)" "730#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "731#L20'(<= McCarthy_res 101)" "732#McCarthyENTRYtrue" "733#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "734#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "735#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "720#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "721#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "722#L20'true" "723#L20'(<= McCarthy_res 101)" "724#McCarthyENTRYtrue" "725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "726#L20(<= McCarthy_x 100)" "727#L20(<= McCarthy_x 100)" },
+	initialStates = {"724#McCarthyENTRYtrue" },
+	finalStates = {"697#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("700#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "732#McCarthyENTRYtrue")
+		 ("698#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "699#McCarthyENTRYtrue")
+		 ("746#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "732#McCarthyENTRYtrue")
+		 ("744#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "699#McCarthyENTRYtrue")
+		 ("751#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "755#McCarthyENTRYtrue")
+		 ("750#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "755#McCarthyENTRYtrue")
+		 ("737#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "call res := McCarthy(res);" "764#McCarthyENTRYtrue")
+		 ("743#L20'true" "call res := McCarthy(res);" "708#McCarthyENTRYtrue")
+		 ("742#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "755#McCarthyENTRYtrue")
+		 ("741#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "call res := McCarthy(res);" "764#McCarthyENTRYtrue")
+		 ("765#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "763#McCarthyENTRYtrue")
+		 ("754#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "760#McCarthyENTRYtrue")
+		 ("752#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "763#McCarthyENTRYtrue")
+		 ("758#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "760#McCarthyENTRYtrue")
+		 ("757#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "760#McCarthyENTRYtrue")
+		 ("715#L20'true" "call res := McCarthy(res);" "708#McCarthyENTRYtrue")
+		 ("714#L20'true" "call res := McCarthy(res);" "708#McCarthyENTRYtrue")
+		 ("717#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "761#McCarthyENTRYtrue")
+		 ("707#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "call res := McCarthy(res);" "764#McCarthyENTRYtrue")
+		 ("709#L20true" "call res := McCarthy(x + 11);" "712#McCarthyENTRYtrue")
+		 ("711#L20'true" "call res := McCarthy(res);" "712#McCarthyENTRYtrue")
+		 ("710#L20'true" "call res := McCarthy(res);" "712#McCarthyENTRYtrue")
+		 ("729#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "761#McCarthyENTRYtrue")
+		 ("731#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "763#McCarthyENTRYtrue")
+		 ("721#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "call res := McCarthy(res);" "764#McCarthyENTRYtrue")
+		 ("722#L20'true" "call res := McCarthy(res);" "708#McCarthyENTRYtrue")
+		 ("723#L20'(<= McCarthy_res 101)" "call res := McCarthy(res);" "699#McCarthyENTRYtrue")
+		 ("726#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "761#McCarthyENTRYtrue")
+		 ("727#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "732#McCarthyENTRYtrue")
+	},
+	internalTransitions = {
+		 ("703#L21true" "assume !(91 == res |..." "697#McCarthyErr0AssertViolationtrue")
+		 ("701#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "730#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("699#McCarthyENTRYtrue" "assume x > 100;res :..." "766#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("699#McCarthyENTRYtrue" "assume !(x > 100);" "700#L20(<= McCarthy_x 100)")
+		 ("745#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "assume 91 == res || ..." "739#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))")
+		 ("749#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "747#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "assume 91 == res || ..." "740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "assume 91 == res || ..." "719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("762#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "702#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("763#McCarthyENTRYtrue" "assume x > 100;res :..." "701#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("763#McCarthyENTRYtrue" "assume !(x > 100);" "729#L20(<= McCarthy_x 100)")
+		 ("760#McCarthyENTRYtrue" "assume x > 100;res :..." "756#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("760#McCarthyENTRYtrue" "assume !(x > 100);" "757#L20(<= McCarthy_x 100)")
+		 ("761#McCarthyENTRYtrue" "assume x > 100;res :..." "762#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("761#McCarthyENTRYtrue" "assume !(x > 100);" "726#L20(<= McCarthy_x 100)")
+		 ("766#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "720#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("764#McCarthyENTRYtrue" "assume !(x > 100);" "758#L20(<= McCarthy_x 100)")
+		 ("755#McCarthyENTRYtrue" "assume x > 100;res :..." "749#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("755#McCarthyENTRYtrue" "assume !(x > 100);" "754#L20(<= McCarthy_x 100)")
+		 ("759#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))" "assume 91 == res || ..." "738#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))")
+		 ("756#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "753#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("712#McCarthyENTRYtrue" "assume x > 100;res :..." "705#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))")
+		 ("712#McCarthyENTRYtrue" "assume !(x > 100);" "709#L20true")
+		 ("718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))" "assume 91 == res || ..." "716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("705#L21(and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= (+ McCarthy_res (- 91)) 0) (<= McCarthy_res (+ McCarthy_x (- 10)))))" "assume 91 == res || ..." "713#McCarthyEXITtrue")
+		 ("706#L21true" "assume !(91 == res |..." "697#McCarthyErr0AssertViolationtrue")
+		 ("706#L21true" "assume 91 == res || ..." "713#McCarthyEXITtrue")
+		 ("708#McCarthyENTRYtrue" "assume x > 100;res :..." "734#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("708#McCarthyENTRYtrue" "assume !(x > 100);" "746#L20(<= McCarthy_x 100)")
+		 ("728#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))" "assume 91 == res || ..." "725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))")
+		 ("732#McCarthyENTRYtrue" "assume x > 100;res :..." "735#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("732#McCarthyENTRYtrue" "assume !(x > 100);" "727#L20(<= McCarthy_x 100)")
+		 ("734#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "704#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("735#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "733#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("724#McCarthyENTRYtrue" "assume !(x > 100);" "717#L20(<= McCarthy_x 100)")
+	},
+	returnTransitions = {
+		 ("702#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "729#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "752#L20'(<= McCarthy_res 101)")
+		 ("702#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "717#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "765#L20'(<= McCarthy_res 101)")
+		 ("702#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "726#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "731#L20'(<= McCarthy_res 101)")
+		 ("747#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "751#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "759#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))")
+		 ("747#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "750#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "728#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))")
+		 ("747#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "742#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "745#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))")
+		 ("739#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "721#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("739#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "737#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("739#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "741#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("738#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "731#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("738#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "751#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("738#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "750#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("738#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "752#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("738#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "742#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "744#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "731#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "698#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "751#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "750#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "752#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "723#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("740#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "742#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("753#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "754#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "751#L20'(<= McCarthy_res 101)")
+		 ("753#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "758#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "742#L20'(<= McCarthy_res 101)")
+		 ("753#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "757#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "750#L20'(<= McCarthy_res 101)")
+		 ("713#McCarthyEXITtrue" "746#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "729#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "700#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "717#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "710#L20'true")
+		 ("713#McCarthyEXITtrue" "754#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "758#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "709#L20true" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "726#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "727#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "757#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "711#L20'true")
+		 ("713#McCarthyEXITtrue" "715#L20'true" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "744#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "714#L20'true" "return call res := McCarthy(res);" "703#L21true")
+		 ("713#McCarthyEXITtrue" "751#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "750#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "737#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "707#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "703#L21true")
+		 ("713#McCarthyEXITtrue" "743#L20'true" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "742#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "711#L20'true" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "741#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "710#L20'true" "return call res := McCarthy(res);" "703#L21true")
+		 ("713#McCarthyEXITtrue" "731#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "698#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "765#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "703#L21true")
+		 ("713#McCarthyEXITtrue" "721#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "752#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "722#L20'true" "return call res := McCarthy(res);" "706#L21true")
+		 ("713#McCarthyEXITtrue" "723#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "706#L21true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "746#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "743#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "729#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "715#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "700#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "715#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "717#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "714#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "754#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "715#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "758#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "743#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "726#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "722#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "727#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "722#L20'true")
+		 ("716#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "757#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "722#L20'true")
+		 ("719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "715#L20'true" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "721#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "722#L20'true" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "737#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "743#L20'true" "return call res := McCarthy(res);" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("719#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))" "741#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))" "return call res := McCarthy(res);" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("704#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "715#L20'true" "return call res := McCarthy(res);" "706#L21true")
+		 ("704#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "714#L20'true" "return call res := McCarthy(res);" "703#L21true")
+		 ("704#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "722#L20'true" "return call res := McCarthy(res);" "706#L21true")
+		 ("704#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "743#L20'true" "return call res := McCarthy(res);" "706#L21true")
+		 ("730#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "731#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "728#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))")
+		 ("730#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "752#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "759#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91)))")
+		 ("733#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "746#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "744#L20'(<= McCarthy_res 101)")
+		 ("733#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "700#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "698#L20'(<= McCarthy_res 101)")
+		 ("733#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "727#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "723#L20'(<= McCarthy_res 101)")
+		 ("720#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "744#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "736#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("720#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "698#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "748#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("720#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "723#L20'(<= McCarthy_res 101)" "return call res := McCarthy(res);" "718#L21(let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0)))")
+		 ("725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "729#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "737#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))")
+		 ("725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "717#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "707#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))")
+		 ("725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "754#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "737#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))")
+		 ("725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "758#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "741#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))")
+		 ("725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "726#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "721#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))")
+		 ("725#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91))" "757#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "721#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91))")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:24
+
+
+
+NestedWordAutomaton Abstraction8 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {"1229#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "1228#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "1231#L21(<= McCarthy_x 100)" "1230#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1225#McCarthyErr0AssertViolationtrue" "1227#McCarthyENTRYtrue" "1226#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1236#L20(<= McCarthy_x 100)" "1237#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1238#McCarthyENTRYtrue" "1239#L20(<= McCarthy_x 100)" "1232#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1233#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1234#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "1235#L21(<= McCarthy_x 100)" "1244#L20'(<= McCarthy_x 100)" "1245#L20'(<= McCarthy_x 100)" "1246#L20(and (<= 0 (+ McCarthy_x (- 91))) (<= McCarthy_x 100))" "1247#McCarthyEXIT(<= McCarthy_x 100)" "1240#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1241#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1242#McCarthyENTRYtrue" "1243#McCarthyENTRYtrue" "1255#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1254#McCarthyEXIT(<= McCarthy_x 100)" "1253#L20'(<= McCarthy_x 100)" "1252#L20'(<= McCarthy_x 100)" "1251#L21(<= McCarthy_x 100)" "1250#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "1249#L20(<= McCarthy_x 100)" "1248#L20(<= McCarthy_x 100)" "1263#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1262#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))" "1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1259#L21(let ((.cse0 (+ McCarthy_res (- 91)))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) (<= McCarthy_res (+ McCarthy_x (- 10)))) (<= 0 .cse0)))" "1258#L21(let ((.cse0 (+ McCarthy_res (- 91)))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) (<= McCarthy_res (+ McCarthy_x (- 10)))) (<= 0 .cse0)))" "1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1256#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1270#L20(<= McCarthy_x 100)" "1271#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))" "1268#L20(<= McCarthy_x 100)" "1269#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1266#L20'(<= McCarthy_x 100)" "1267#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1264#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1265#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))" "1276#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1277#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1274#McCarthyENTRYtrue" "1275#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1272#L20(<= McCarthy_x 100)" "1273#L20(<= McCarthy_x 100)" "1307#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "1306#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1305#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "1304#McCarthyENTRYtrue" "1311#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "1310#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "1309#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1308#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1299#L20(<= McCarthy_x 100)" "1298#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1296#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1303#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "1302#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "1301#L20(<= McCarthy_x 100)" "1300#McCarthyENTRYtrue" "1290#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1291#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1289#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "1294#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "1295#McCarthyENTRYtrue" "1292#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "1293#McCarthyENTRYtrue" "1282#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1283#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1280#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1281#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1286#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1287#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "1284#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1285#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1312#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "1313#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))" "1314#McCarthyENTRYtrue" "1315#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "1316#McCarthyENTRYtrue" "1317#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" },
+	initialStates = {"1227#McCarthyENTRYtrue" },
+	finalStates = {"1225#McCarthyErr0AssertViolationtrue" },
+	callTransitions = {
+		 ("1228#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "call res := McCarthy(x + 11);" "1316#McCarthyENTRYtrue")
+		 ("1226#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1311#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1236#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1295#McCarthyENTRYtrue")
+		 ("1237#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1274#McCarthyENTRYtrue")
+		 ("1239#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1242#McCarthyENTRYtrue")
+		 ("1233#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1274#McCarthyENTRYtrue")
+		 ("1244#L20'(<= McCarthy_x 100)" "call res := McCarthy(res);" "1242#McCarthyENTRYtrue")
+		 ("1245#L20'(<= McCarthy_x 100)" "call res := McCarthy(res);" "1242#McCarthyENTRYtrue")
+		 ("1246#L20(and (<= 0 (+ McCarthy_x (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(x + 11);" "1243#McCarthyENTRYtrue")
+		 ("1240#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1250#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1241#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1250#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1255#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1250#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1253#L20'(<= McCarthy_x 100)" "call res := McCarthy(res);" "1238#McCarthyENTRYtrue")
+		 ("1252#L20'(<= McCarthy_x 100)" "call res := McCarthy(res);" "1238#McCarthyENTRYtrue")
+		 ("1249#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1242#McCarthyENTRYtrue")
+		 ("1248#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1295#McCarthyENTRYtrue")
+		 ("1270#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1304#McCarthyENTRYtrue")
+		 ("1268#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1295#McCarthyENTRYtrue")
+		 ("1266#L20'(<= McCarthy_x 100)" "call res := McCarthy(res);" "1238#McCarthyENTRYtrue")
+		 ("1267#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1289#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1265#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1274#McCarthyENTRYtrue")
+		 ("1276#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1307#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1272#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1304#McCarthyENTRYtrue")
+		 ("1273#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1304#McCarthyENTRYtrue")
+		 ("1306#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1307#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1310#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "call res := McCarthy(x + 11);" "1314#McCarthyENTRYtrue")
+		 ("1308#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1307#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1299#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1300#McCarthyENTRYtrue")
+		 ("1296#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1311#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1301#L20(<= McCarthy_x 100)" "call res := McCarthy(x + 11);" "1300#McCarthyENTRYtrue")
+		 ("1290#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1289#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1282#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1311#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1283#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1289#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1280#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1289#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+		 ("1287#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "call res := McCarthy(x + 11);" "1293#McCarthyENTRYtrue")
+		 ("1285#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "call res := McCarthy(res);" "1307#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))")
+	},
+	internalTransitions = {
+		 ("1229#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "1262#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("1231#L21(<= McCarthy_x 100)" "assume !(91 == res |..." "1225#McCarthyErr0AssertViolationtrue")
+		 ("1227#McCarthyENTRYtrue" "assume !(x > 100);" "1301#L20(<= McCarthy_x 100)")
+		 ("1238#McCarthyENTRYtrue" "assume x > 100;res :..." "1234#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("1238#McCarthyENTRYtrue" "assume !(x > 100);" "1268#L20(<= McCarthy_x 100)")
+		 ("1234#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "1232#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("1235#L21(<= McCarthy_x 100)" "assume !(91 == res |..." "1225#McCarthyErr0AssertViolationtrue")
+		 ("1235#L21(<= McCarthy_x 100)" "assume 91 == res || ..." "1254#McCarthyEXIT(<= McCarthy_x 100)")
+		 ("1242#McCarthyENTRYtrue" "assume x > 100;res :..." "1258#L21(let ((.cse0 (+ McCarthy_res (- 91)))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) (<= McCarthy_res (+ McCarthy_x (- 10)))) (<= 0 .cse0)))")
+		 ("1242#McCarthyENTRYtrue" "assume !(x > 100);" "1249#L20(<= McCarthy_x 100)")
+		 ("1243#McCarthyENTRYtrue" "assume x > 100;res :..." "1259#L21(let ((.cse0 (+ McCarthy_res (- 91)))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) (<= McCarthy_res (+ McCarthy_x (- 10)))) (<= 0 .cse0)))")
+		 ("1243#McCarthyENTRYtrue" "assume !(x > 100);" "1239#L20(<= McCarthy_x 100)")
+		 ("1251#L21(<= McCarthy_x 100)" "assume !(91 == res |..." "1225#McCarthyErr0AssertViolationtrue")
+		 ("1251#L21(<= McCarthy_x 100)" "assume 91 == res || ..." "1247#McCarthyEXIT(<= McCarthy_x 100)")
+		 ("1250#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume x > 100;res :..." "1258#L21(let ((.cse0 (+ McCarthy_res (- 91)))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) (<= McCarthy_res (+ McCarthy_x (- 10)))) (<= 0 .cse0)))")
+		 ("1250#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume !(x > 100);" "1246#L20(and (<= 0 (+ McCarthy_x (- 91))) (<= McCarthy_x 100))")
+		 ("1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))" "assume 91 == res || ..." "1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1259#L21(let ((.cse0 (+ McCarthy_res (- 91)))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) (<= McCarthy_res (+ McCarthy_x (- 10)))) (<= 0 .cse0)))" "assume 91 == res || ..." "1256#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))")
+		 ("1258#L21(let ((.cse0 (+ McCarthy_res (- 91)))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) (<= McCarthy_res (+ McCarthy_x (- 10)))) (<= 0 .cse0)))" "assume 91 == res || ..." "1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))")
+		 ("1271#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))" "assume 91 == res || ..." "1269#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))" "assume 91 == res || ..." "1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1274#McCarthyENTRYtrue" "assume !(x > 100);" "1273#L20(<= McCarthy_x 100)")
+		 ("1307#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume x > 100;res :..." "1305#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("1307#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume !(x > 100);" "1228#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))")
+		 ("1305#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "1284#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("1304#McCarthyENTRYtrue" "assume x > 100;res :..." "1302#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("1304#McCarthyENTRYtrue" "assume !(x > 100);" "1270#L20(<= McCarthy_x 100)")
+		 ("1311#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume x > 100;res :..." "1315#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("1311#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume !(x > 100);" "1310#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))")
+		 ("1303#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "1298#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("1302#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "1297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("1300#McCarthyENTRYtrue" "assume x > 100;res :..." "1303#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("1300#McCarthyENTRYtrue" "assume !(x > 100);" "1299#L20(<= McCarthy_x 100)")
+		 ("1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "assume 91 == res || ..." "1264#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1289#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume x > 100;res :..." "1229#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("1289#McCarthyENTRY(<= 0 (+ McCarthy_x (- 91)))" "assume !(x > 100);" "1287#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))")
+		 ("1294#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "1291#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("1295#McCarthyENTRYtrue" "assume x > 100;res :..." "1294#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("1295#McCarthyENTRYtrue" "assume !(x > 100);" "1248#L20(<= McCarthy_x 100)")
+		 ("1292#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))" "assume 91 == res || ..." "1286#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))")
+		 ("1293#McCarthyENTRYtrue" "assume x > 100;res :..." "1292#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0)))")
+		 ("1293#McCarthyENTRYtrue" "assume !(x > 100);" "1236#L20(<= McCarthy_x 100)")
+		 ("1281#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "assume 91 == res || ..." "1263#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1312#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "1309#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("1313#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))" "assume 91 == res || ..." "1277#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1314#McCarthyENTRYtrue" "assume x > 100;res :..." "1312#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("1314#McCarthyENTRYtrue" "assume !(x > 100);" "1301#L20(<= McCarthy_x 100)")
+		 ("1315#L21(let ((.cse0 (+ McCarthy_res (- 91))) (.cse1 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse0 0) .cse1) (<= 0 .cse0) .cse1 (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "1275#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))")
+		 ("1316#McCarthyENTRYtrue" "assume x > 100;res :..." "1317#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))")
+		 ("1316#McCarthyENTRYtrue" "assume !(x > 100);" "1272#L20(<= McCarthy_x 100)")
+		 ("1317#L21(let ((.cse1 (+ McCarthy_res (- 91))) (.cse0 (<= McCarthy_res (+ McCarthy_x (- 10))))) (and .cse0 (<= 0 .cse1) (not (<= (+ McCarthy_res (- 90)) 0)) (or (<= .cse1 0) .cse0) (<= 0 (+ McCarthy_x (- 101)))))" "assume 91 == res || ..." "1230#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))")
+	},
+	returnTransitions = {
+		 ("1230#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1228#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "return call res := McCarthy(x + 11);" "1306#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1232#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1253#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1231#L21(<= McCarthy_x 100)")
+		 ("1232#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1252#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1232#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1266#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1236#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1244#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1270#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1245#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1268#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1245#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1239#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1244#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1249#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1245#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1248#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1245#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1299#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1245#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1301#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1244#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1272#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1244#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1273#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1245#L20'(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1237#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1231#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1253#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1231#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1252#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1266#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1233#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1265#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1244#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1231#L21(<= McCarthy_x 100)")
+		 ("1247#McCarthyEXIT(<= McCarthy_x 100)" "1245#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1254#McCarthyEXIT(<= McCarthy_x 100)" "1255#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1235#L21(<= McCarthy_x 100)")
+		 ("1254#McCarthyEXIT(<= McCarthy_x 100)" "1240#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1254#McCarthyEXIT(<= McCarthy_x 100)" "1241#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1231#L21(<= McCarthy_x 100)")
+		 ("1263#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1233#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1263#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1265#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1262#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1267#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1262#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1283#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1262#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1280#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1236#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1253#L20'(<= McCarthy_x 100)")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1270#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1266#L20'(<= McCarthy_x 100)")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1268#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1252#L20'(<= McCarthy_x 100)")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1248#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1266#L20'(<= McCarthy_x 100)")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1299#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1266#L20'(<= McCarthy_x 100)")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1301#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1253#L20'(<= McCarthy_x 100)")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1272#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1253#L20'(<= McCarthy_x 100)")
+		 ("1260#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1273#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1252#L20'(<= McCarthy_x 100)")
+		 ("1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1239#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1241#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1249#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1240#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1255#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1235#L21(<= McCarthy_x 100)")
+		 ("1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1244#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1231#L21(<= McCarthy_x 100)")
+		 ("1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1245#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1240#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1251#L21(<= McCarthy_x 100)")
+		 ("1257#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1241#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1231#L21(<= McCarthy_x 100)")
+		 ("1256#McCarthyEXIT(<= 0 (+ McCarthy_res (- 91)))" "1246#L20(and (<= 0 (+ McCarthy_x (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(x + 11);" "1255#L20'(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1269#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1270#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1265#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1269#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1299#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1265#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1269#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1301#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1237#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1269#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1272#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1237#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1269#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1273#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1233#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+		 ("1264#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1252#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1264#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1266#L20'(<= McCarthy_x 100)" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1264#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1233#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1264#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1265#L20'(and (<= McCarthy_res 101) (<= McCarthy_res 91) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1306#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1267#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1282#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1283#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1276#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1280#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1296#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1278#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "1285#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1277#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1306#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1277#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1282#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1279#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1277#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1276#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1277#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1296#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1261#L21(and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91)))) (.cse0 (<= McCarthy_res 101))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) (<= McCarthy_x 100))")
+		 ("1277#McCarthyEXIT(and (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))" "1285#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1288#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1275#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1282#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1313#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))")
+		 ("1275#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1296#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1271#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))")
+		 ("1309#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1310#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "return call res := McCarthy(x + 11);" "1282#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1298#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1299#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1296#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1298#McCarthyEXIT(and (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_x (- 101))))" "1301#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1226#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1270#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1276#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1272#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1308#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1297#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1273#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1285#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1291#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1236#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1290#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1291#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1268#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1280#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1291#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1248#L20(<= McCarthy_x 100)" "return call res := McCarthy(x + 11);" "1267#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1286#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))))" "1287#L20(and (<= McCarthy_x 100) (<= 0 (+ McCarthy_x (- 91))))" "return call res := McCarthy(x + 11);" "1283#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))")
+		 ("1284#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1306#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1313#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))")
+		 ("1284#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1276#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1271#L21(let ((.cse0 (<= McCarthy_res 101))) (and (let ((.cse1 (not (<= (+ (- McCarthy_res) 92) 0))) (.cse2 (<= 0 (+ McCarthy_res (- 91))))) (or (and .cse0 .cse1 .cse2) (and .cse1 .cse2 .cse0))) .cse0 (<= McCarthy_res 91) (<= McCarthy_x 100)))")
+		 ("1284#McCarthyEXIT(and (<= McCarthy_res (+ McCarthy_x (- 10))) (<= 0 (+ McCarthy_res (- 91))) (<= 0 (+ McCarthy_x (- 101))))" "1285#L20'(and (<= McCarthy_res 101) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_x 100))" "return call res := McCarthy(res);" "1281#L21(and (<= McCarthy_res 101) (not (<= (+ (- McCarthy_res) 92) 0)) (<= 0 (+ McCarthy_res (- 91))) (<= McCarthy_res 91) (<= McCarthy_x 100))")
+	}
+);
+// Testfile dumped by Ultimate at 2013/05/21 15:16:25
+
+
+
+NestedWordAutomaton Abstraction9 = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume x > 100;res :..." "assume !(x > 100);" "assume !(91 == res |..." "assume 91 == res || ..." },
+	returnAlphabet = {"return call res := McCarthy(x + 11);" "return call res := McCarthy(res);" },
+	states = {},
+	initialStates = {},
+	finalStates = {},
+	callTransitions = {
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);

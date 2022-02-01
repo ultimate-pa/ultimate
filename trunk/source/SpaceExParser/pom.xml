@@ -1,0 +1,112 @@
+<!--
+	Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	Copyright (C) 2015 University of Freiburg
+
+	This file is part of the ULTIMATE SpaceExParser plug-in.
+
+	The ULTIMATE SpaceExParser plug-in is free software: you can redistribute
+	it and/or modify
+	it under the terms of the GNU Lesser General Public License as published
+	by the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will
+	be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Lesser General Public License for more details.
+
+	You should have received a copy of the GNU Lesser General Public License
+	along with the ULTIMATE SpaceExParser plug-in.
+	If not, see <http://www.gnu.org/licenses/>.
+
+	Additional permission under GNU GPL version 3 section 7:
+	If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by
+	linking or combining it with Eclipse RCP (or a modified version of Eclipse
+	RCP), containing parts covered by the terms of the Eclipse Public License,
+	the licensors of the ULTIMATE SpaceExParser plug-in grant you additional
+	permission to convey the resulting work.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>mavenparent</artifactId>
+		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+		<version>0.2.1</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser</artifactId>
+	<version>0.2.1</version>
+	<packaging>eclipse-plugin</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>${maven-antrun-version}</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<target>
+								<echo>Building SpaceEx File Parser with xjc</echo>
+								<echo>SpaceEx Parser: workspaceDir is ${workspaceDir}</echo>
+								<echo>SpaceEx Parser: spaceexDir is ${spaceexDir}</echo>
+<!--
+								<exec executable="xjc" failonerror="true">
+									<arg value="-d" />
+									<arg value="${workspaceDir}/SpaceExParser/src" />
+									<arg value="-p" />
+									<arg
+										value="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" />
+									<arg value="${spaceexDir}/sspaceex.xsd" />
+								</exec>
+-->	
+								<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+							    	<classpath>
+							        	<fileset dir="${baSharedJarsDir}" includes="*.jar"/>
+							    	</classpath>
+								</taskdef>
+								
+								<xjc schema="${spaceexDir}/sspaceex.xsd" package="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" destdir="${workspaceDir}/SpaceExParser/src">
+									<produces dir="${workspaceDir}/SpaceExParser/src/de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" includes="**/*.java"/>
+								</xjc>
+
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>${maven-clean-version}</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${workspaceDir}/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/generated</directory>
+							<includes>
+								<include>BindType.java</include>
+								<include>ComponentType.java</include>
+								<include>LocationType.java</include>
+								<include>ObjectFactory.java</include>
+								<include>package-info.java</include>
+								<include>ParamType.java</include>
+								<include>Sspaceex.java</include>
+								<include>TransitionType.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

@@ -1,0 +1,23 @@
+Ultimate Buchi Automizer can analyze termination of C programs.
+
+http://ultimate.informatik.uniMINUSfreiburg.de/BuchiAutomizer/
+
+
+Ultimate Buchi Automizer is maintained by
+Matthias Heizmann [University of Freiburg, Germany]
+
+Ultimate Buchi Automizer is part of Ultimate
+http://ultimate.informatik.uniMINUSfreiburg.de/
+to which may people contributed.
+
+The other main authors in the last 12 month were
+Jan Leike [The Australian National University Canberra, Australia]
+Alexander Nutz [University of Freiburg, Germany]
+Daniel Dietsch [University of Freiburg, Germany]
+Betim Musa [University of Freiburg, Germany]
+
+Ultimate Buchi Automizer received in the last 12 month major contributions from
+Jürgen Christ [University of Freiburg, Germany]
+Jochen Hoenicke [University of Freiburg, Germany]
+Andreas Podelski [University of Freiburg, Germany]
+Christian Schilling [University of Freiburg, Germany]

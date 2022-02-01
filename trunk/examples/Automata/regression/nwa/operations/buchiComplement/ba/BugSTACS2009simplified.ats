@@ -1,0 +1,65 @@
+/*
+ * Bug in current version of implementation
+ * Date: 2016-01-02
+ * Author: Matthias Heizmann
+ * 
+ * Seems like a conceptual problem in the "reduced outdegree" construction.
+ * The pointwise maximal successor of
+ *     "{(r,3)(s,1)(f,2X)}" 
+ * is
+ *     "{(r,1)(s,1)(f,2)}"
+ * but this level ranking is not tight.
+ * The pointwise maximal successor of
+ *     "{(r,1)(s,3)(f,2X)}"
+ * is
+ *     "{(r,3)(s,3)(f,0)}"
+ * but this level ranking is not tight.
+ */
+
+
+// NestedWordAutomaton result = (
+// 	callAlphabet = {},
+// 	internalAlphabet = {"a" },
+// 	returnAlphabet = {},
+// 	states = {"{(€,r), (€,s)}" "{(r,3)(s,1)}" "{(€,r), (€,s), (€,f)}" "{(€,s)}" "{(r,1)(s,3)}" "{(r,3)(s,1)(f,2X)}" "{(r,1)(s,3)(f,2X)}" },
+// 	initialStates = {"{(€,s)}" },
+// 	finalStates = {"{(r,3)(s,1)}" "{(r,1)(s,3)}" },
+// 	callTransitions = {
+// 	},
+// 	internalTransitions = {
+// 		 ("{(€,r), (€,s)}" "a" "{(€,r), (€,s), (€,f)}")
+// 		 ("{(€,r), (€,s)}" "a" "{(r,3)(s,1)(f,2X)}")
+// 		 ("{(€,r), (€,s)}" "a" "{(r,1)(s,3)(f,2X)}")
+// 		 ("{(€,r), (€,s), (€,f)}" "a" "{(€,r), (€,s), (€,f)}")
+// 		 ("{(€,r), (€,s), (€,f)}" "a" "{(r,3)(s,1)(f,2X)}")
+// 		 ("{(€,r), (€,s), (€,f)}" "a" "{(r,1)(s,3)(f,2X)}")
+// 		 ("{(€,s)}" "a" "{(€,r), (€,s)}")
+// 		 ("{(€,s)}" "a" "{(r,3)(s,1)}")
+// 		 ("{(€,s)}" "a" "{(r,1)(s,3)}")
+// 	},
+// 	returnTransitions = {
+// 	}
+// );
+
+
+
+print(buchiComplementFKV(nwa,"SCHEWE", 777));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {"a" },
+	returnAlphabet = { },
+	states = {"s" "r" "f" },
+	initialStates = {"s" },
+	finalStates = {"f" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		("s" "a" "s")
+		("s" "a" "r")
+		("r" "a" "f")
+	},
+	returnTransitions = {
+	}
+);

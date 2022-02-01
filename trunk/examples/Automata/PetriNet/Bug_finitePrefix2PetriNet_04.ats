@@ -1,0 +1,26 @@
+// Testfile dumped by Ultimate at 2012/08/06 16:36:47
+
+print(finitePrefix2PetriNet( finitePrefix( net, true) ));
+
+PetriNet net = (
+	alphabet = {"assume !true;0" a2 a1 "assume critical == 0...0" "critical = 1;0" a1 "flag1 = 0;0" "flag0 = 1;0" a2 "turn = 1;0" a2 "critical = 1;0" "assume critical == 0...0" "assume !(critical ==...0" "assume flag1 == 0 ||...0" "assume !true;0" "flag0 = 0;0" a1 a2 a2 "assume !(critical ==...0" "assume flag0 == 0 ||...0" "turn = 0;0" "flag1 = 1;0" },
+	places = {"#478#Thread0EXIT0" "#479#Thread1EXIT0" "#476#L550" "#477#L350" "#474#L590" "#475#L390" "#472#L52loopEntry0" "#473#L32loopEntry0" p10 fin1 "#468#L380" xxxx p3 p7 p6 p4 "#493#L540" p5  "#494#L340" p1 "#488#Thread0FINAL0" p0 yyyy p8 "#484#Thread1FINAL0" yyy "#481#L370" fin0 p9 t },
+	transitions = {
+		( {"#473#L32loopEntry0" } a2 {yyyy } )
+		( {p0  } a2 {yyyy t } )
+		( {"#475#L390" } "flag0 = 0;0" {"#473#L32loopEntry0" } )
+		( { p3 p4 } a1 { p6 p7 } )
+		( {t p7 } "assume critical == 0...0" {p10 p7 } )
+		( {"#472#L52loopEntry0" } a2 {t } )
+//		( {p9 p4 } "assume !(critical ==...0" {fin0} )
+		( {yyyy } "flag0 = 1;0" {p9 } )
+		( {t p4 } "assume !(critical ==...0" {fin1 } )
+		( {"#481#L370" p6 p7 } "critical = 1;0" {"#468#L380" p3 p4 } )
+		( {"#468#L380" p3 p4 } a1 {"#475#L390" p6 p7 } )
+		( {p9 p7 } "assume critical == 0...0" {"#481#L370" p7 } )
+		( {p10 p7 } a1 {"#474#L590" p7 } )
+		( {"#474#L590" } "flag1 = 0;0" {"#472#L52loopEntry0" } )
+	},
+	initialMarking = {p0 p3 p4 },
+	acceptingPlaces = {fin1 fin0 }
+);

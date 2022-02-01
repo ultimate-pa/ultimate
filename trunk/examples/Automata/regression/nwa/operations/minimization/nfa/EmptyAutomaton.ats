@@ -1,0 +1,40 @@
+// Author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+// Date: 2017-10-11
+// 
+// The empty automaton was not even supported by "removeUnreachable" and by the
+// Buchi complementation algorithm that is used to check correctness.
+// TODO support the empty automaton
+
+parseAutomata("../../../PathologicalExamples.ats");
+
+// FiniteAutomaton preprocessed = removeUnreachable(emptyAutomaton);
+
+// int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+// int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+// int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+// int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+// int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+// int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+// int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+// int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+// int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+// int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+// assert(minimizeSevpaSize == 0);
+// assert(shrinkNwaSize == 0);
+// assert(minimizeNwaPmaxSatDirectBiSize == 0);
+// assert(minimizeNwaPmaxSatDirectSize == 0);
+// assert(minimizeDfaSimulationSize == 0);
+// assert(reduceNwaDirectSimulationSize == 0);
+// assert(reduceNwaDirectSimulationBSize == 0);
+// assert(reduceNwaDirectFullMultipebbleSimulationSize == 0);
+// assert(buchiReduceSize == 0);
+// assert(reduceNwaDelayedSimulationSize == 0);
+// assert(reduceNwaDelayedSimulationBSize == 0);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 0);
+// assert(reduceBuchiFairDirectSimulationSize == 0);
+// assert(reduceBuchiFairSimulationSize == 0);

@@ -1,0 +1,81 @@
+// Testfile dumped by Ultimate at 2011/12/14 15:24:33
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 28);
+assert(shrinkNwaSize == 28);
+assert(minimizeNwaPmaxSatDirectBiSize == 28);
+assert(minimizeNwaPmaxSatDirectSize == 28);
+assert(minimizeDfaSimulationSize == 28);
+assert(reduceNwaDirectSimulationSize == 28);
+assert(reduceNwaDirectSimulationBSize == 28);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 28);
+assert(buchiReduceSize == 28);
+assert(reduceNwaDelayedSimulationSize == 28);
+assert(reduceNwaDelayedSimulationBSize == 28);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 28);
+assert(reduceBuchiFairDirectSimulationSize == 28);
+assert(reduceBuchiFairSimulationSize == 28);
+
+NestedWordAutomaton nwa = (
+	alphabet = {"[assume !(x2 == 0);, x2 = 0;]284" "[assume true;]237" "[assume !(x3 == 0);, x3 = 0;]130" "[assume x3 == 0;, x3 = 1;]25" "[assume x0 == 0;, x0 = 1;]41" "[assume x2 == 0;, x2 = 1;]280" "[assume !(x1 == 0);, x1 = 0;]50" "[x0 = 0;, x1 = 0;, x2 = 0;, x3 = 0;]14" "[assume x3 == 0;]188" "[assume x1 == 0;, x1 = 1;]140" "[assume x3 != 0;]250" "[assume !(x0 == 0);, x0 = 0;]119" "[assume !(x3 == 0);]300" "[assume !(x3 != 0);]132" },
+	states = {"#2286#$Ultimate##2.1_90" "#3504#$Ultimate##14.1_6180" "#3126#$Ultimate##14.1_4290" "#3528#$Ultimate##2.1_6300" "#2296#$Ultimate##5.1_140" "#2524#$Ultimate##8.1_1280" "#3542#$Ultimate##5.1_6370" "#2696#$Ultimate##2.1_2140" "#2606#$Ultimate##14.1_1690" "#2274#$Ultimate##2.1_30" "#2408#$Ultimate##2.1_700" "#3464#$Ultimate##11.1_5980" "#3020#$Ultimate##5.1_3760" "#3332#$Ultimate##5.1_5320" "#2364#$Ultimate##14.1_480" "#2272#$Ultimate##14.1_20" "#2332#$Ultimate##2.1_320" "#3544#$Ultimate##3.1Violation_6380" "#3236#$Ultimate##2.1_4840" "#2462#$Ultimate##5.1_970" "#2310#$Ultimate##14.1_210" "#2800#$Ultimate##14.1_2660" "#2906#$Ultimate##2.1_3190" "#2278#$Ultimate##14.1_50" "#3408#$Ultimate##8.1_5700" "#3546#$Ultimate##8.1_6390" "#3530#$Ultimate##3.1_6310" "#2270#FourBitCounterINIT_10" },
+	initialStates = {"#2270#FourBitCounterINIT_10" },
+	finalStates = {"#3544#$Ultimate##3.1Violation_6380" },
+	transitions = {
+		("#2286#$Ultimate##2.1_90" "[assume !(x0 == 0);, x0 = 0;]119" "#2296#$Ultimate##5.1_140")
+		("#2286#$Ultimate##2.1_90" "[assume x0 == 0;, x0 = 1;]41" "#2278#$Ultimate##14.1_50")
+		("#3504#$Ultimate##14.1_6180" "[assume !(x3 == 0);]300" "#3530#$Ultimate##3.1_6310")
+		("#3504#$Ultimate##14.1_6180" "[assume x3 == 0;]188" "#3528#$Ultimate##2.1_6300")
+		("#3126#$Ultimate##14.1_4290" "[assume x3 == 0;]188" "#3236#$Ultimate##2.1_4840")
+		("#3528#$Ultimate##2.1_6300" "[assume !(x0 == 0);, x0 = 0;]119" "#3542#$Ultimate##5.1_6370")
+		("#3528#$Ultimate##2.1_6300" "[assume x0 == 0;, x0 = 1;]41" "#3504#$Ultimate##14.1_6180")
+		("#2296#$Ultimate##5.1_140" "[assume x1 == 0;, x1 = 1;]140" "#2310#$Ultimate##14.1_210")
+		("#2524#$Ultimate##8.1_1280" "[assume x2 == 0;, x2 = 1;]280" "#2606#$Ultimate##14.1_1690")
+		("#3542#$Ultimate##5.1_6370" "[assume !(x1 == 0);, x1 = 0;]50" "#3546#$Ultimate##8.1_6390")
+		("#3542#$Ultimate##5.1_6370" "[assume x1 == 0;, x1 = 1;]140" "#3504#$Ultimate##14.1_6180")
+		("#2696#$Ultimate##2.1_2140" "[assume x0 == 0;, x0 = 1;]41" "#2800#$Ultimate##14.1_2660")
+		("#2606#$Ultimate##14.1_1690" "[assume x3 == 0;]188" "#2696#$Ultimate##2.1_2140")
+		("#2274#$Ultimate##2.1_30" "[assume x0 == 0;, x0 = 1;]41" "#2278#$Ultimate##14.1_50")
+		("#2408#$Ultimate##2.1_700" "[assume !(x0 == 0);, x0 = 0;]119" "#2462#$Ultimate##5.1_970")
+		("#2408#$Ultimate##2.1_700" "[assume x0 == 0;, x0 = 1;]41" "#2364#$Ultimate##14.1_480")
+		("#3464#$Ultimate##11.1_5980" "[assume !(x3 == 0);, x3 = 0;]130" "#3504#$Ultimate##14.1_6180")
+		("#3464#$Ultimate##11.1_5980" "[assume x3 == 0;, x3 = 1;]25" "#3504#$Ultimate##14.1_6180")
+		("#3020#$Ultimate##5.1_3760" "[assume x1 == 0;, x1 = 1;]140" "#3126#$Ultimate##14.1_4290")
+		("#3332#$Ultimate##5.1_5320" "[assume !(x1 == 0);, x1 = 0;]50" "#3408#$Ultimate##8.1_5700")
+		("#3332#$Ultimate##5.1_5320" "[assume x1 == 0;, x1 = 1;]140" "#3126#$Ultimate##14.1_4290")
+		("#2364#$Ultimate##14.1_480" "[assume x3 == 0;]188" "#2408#$Ultimate##2.1_700")
+		("#2272#$Ultimate##14.1_20" "[assume x3 == 0;]188" "#2274#$Ultimate##2.1_30")
+		("#2332#$Ultimate##2.1_320" "[assume x0 == 0;, x0 = 1;]41" "#2364#$Ultimate##14.1_480")
+		("#3236#$Ultimate##2.1_4840" "[assume !(x0 == 0);, x0 = 0;]119" "#3332#$Ultimate##5.1_5320")
+		("#3236#$Ultimate##2.1_4840" "[assume x0 == 0;, x0 = 1;]41" "#3126#$Ultimate##14.1_4290")
+		("#2462#$Ultimate##5.1_970" "[assume !(x1 == 0);, x1 = 0;]50" "#2524#$Ultimate##8.1_1280")
+		("#2462#$Ultimate##5.1_970" "[assume x1 == 0;, x1 = 1;]140" "#2310#$Ultimate##14.1_210")
+		("#2310#$Ultimate##14.1_210" "[assume x3 == 0;]188" "#2332#$Ultimate##2.1_320")
+		("#2800#$Ultimate##14.1_2660" "[assume x3 == 0;]188" "#2906#$Ultimate##2.1_3190")
+		("#2906#$Ultimate##2.1_3190" "[assume !(x0 == 0);, x0 = 0;]119" "#3020#$Ultimate##5.1_3760")
+		("#2906#$Ultimate##2.1_3190" "[assume x0 == 0;, x0 = 1;]41" "#2800#$Ultimate##14.1_2660")
+		("#2278#$Ultimate##14.1_50" "[assume x3 == 0;]188" "#2286#$Ultimate##2.1_90")
+		("#3408#$Ultimate##8.1_5700" "[assume !(x2 == 0);, x2 = 0;]284" "#3464#$Ultimate##11.1_5980")
+		("#3408#$Ultimate##8.1_5700" "[assume x2 == 0;, x2 = 1;]280" "#2606#$Ultimate##14.1_1690")
+		("#3546#$Ultimate##8.1_6390" "[assume !(x2 == 0);, x2 = 0;]284" "#3464#$Ultimate##11.1_5980")
+		("#3546#$Ultimate##8.1_6390" "[assume x2 == 0;, x2 = 1;]280" "#3504#$Ultimate##14.1_6180")
+		("#3530#$Ultimate##3.1_6310" "[assume !(x3 != 0);]132" "#3544#$Ultimate##3.1Violation_6380")
+		("#2270#FourBitCounterINIT_10" "[x0 = 0;, x1 = 0;, x2 = 0;, x3 = 0;]14" "#2272#$Ultimate##14.1_20")
+	}
+);

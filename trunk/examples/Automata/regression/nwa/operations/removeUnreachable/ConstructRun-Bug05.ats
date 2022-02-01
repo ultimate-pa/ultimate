@@ -1,0 +1,27 @@
+// Author: Christian Schilling
+// Date: September 2013
+// Reveals Bug in r9618
+
+removeUnreachable(nwa);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c1 c2},
+	internalAlphabet = {a1 a2 a3 a4},
+	returnAlphabet = {r1 r2},
+	states = {s0 s1 s2 s3 s4},
+	initialStates = {s0},
+	finalStates = {s4},
+	callTransitions = {
+		 (s0 c1 s3)
+		 (s2 c2 s3)
+	},
+	internalTransitions = {
+		 (s0 a1 s0)
+		 (s0 a2 s1)
+		 (s0 a3 s2)
+		 (s3 a4 s0)
+	},
+	returnTransitions = {
+		 (s1 s2 r1 s4)
+	}
+);

@@ -1,0 +1,60 @@
+//
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 14);
+assert(shrinkNwaSize == 11);
+assert(minimizeNwaPmaxSatDirectBiSize == 11);
+assert(minimizeNwaPmaxSatDirectSize == 14);
+assert(reduceNwaDirectSimulationSize == 11);
+assert(reduceNwaDirectSimulationBSize == 14);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 14);
+// assert(reduceNwaDelayedSimulationSize == 11);
+// assert(reduceNwaDelayedSimulationBSize == 11);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 11);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call3572" "call3570" },
+	internalAlphabet = {"assume !(y == z);3559" "assume y == z;assume...3574" "assume z >= 0;y = z...3575" "assume true;3568" "res = res - 1;3569" "res = res - 1;3567" "res = x + 1;3562" },
+	returnAlphabet = {"return3573" "return3571" },
+	states = {"#50015#L2950015" "#49976#MainENTRY49976" "#49979#L1849979" "#49983#UpAndDownLocalENTRY49983" "#50039#MainErr0AssertViolation50039" "#50003#UpAndDownLocalEXIT50003" "#50033#L2950033" "#50035#L2950035" "#4118#UpAndDownLocalFINAL4118" "#50029#L18'50029" "#50025#UpAndDownLocalEXIT50025" "#4113#L284113" "#50027#UpAndDownLocalEXIT50027" "#50021#UpAndDownLocalFINAL50021" "#49989#L2849989" "#50023#UpAndDownLocalFINAL50023" "#49987#UpAndDownLocalENTRY49987" "#50019#L2950019" },
+	initialStates = {"#49976#MainENTRY49976" },
+	finalStates = {"#50039#MainErr0AssertViolation50039" },
+	callTransitions = {
+		 ("#49979#L1849979" "call3570" "#49983#UpAndDownLocalENTRY49983")
+		 ("#4113#L284113" "call3572" "#49987#UpAndDownLocalENTRY49987")
+		 ("#49989#L2849989" "call3572" "#49987#UpAndDownLocalENTRY49987")
+	},
+	internalTransitions = {
+		 ("#49976#MainENTRY49976" "assume z >= 0;y = z...3575" "#49979#L1849979")
+		 ("#49983#UpAndDownLocalENTRY49983" "res = x + 1;3562" "#49989#L2849989")
+		 ("#50033#L2950033" "res = res - 1;3567" "#50023#UpAndDownLocalFINAL50023")
+		 ("#50035#L2950035" "res = res - 1;3567" "#50021#UpAndDownLocalFINAL50021")
+		 ("#50029#L18'50029" "assume !(y == z);3559" "#50039#MainErr0AssertViolation50039")
+		 ("#50021#UpAndDownLocalFINAL50021" "assume true;3568" "#50025#UpAndDownLocalEXIT50025")
+		 ("#50023#UpAndDownLocalFINAL50023" "assume true;3568" "#50027#UpAndDownLocalEXIT50027")
+		 ("#50019#L2950019" "res = res - 1;3567" "#50023#UpAndDownLocalFINAL50023")
+		 ("#50015#L2950015" "res = res - 1;3567" "#50021#UpAndDownLocalFINAL50021")
+		 ("#4118#UpAndDownLocalFINAL4118" "assume true;3568" "#50003#UpAndDownLocalEXIT50003")
+		 ("#4113#L284113" "res = res - 1;3569" "#4118#UpAndDownLocalFINAL4118")
+		 ("#49987#UpAndDownLocalENTRY49987" "res = x + 1;3562" "#4113#L284113")
+	},
+	returnTransitions = {
+		 ("#50025#UpAndDownLocalEXIT50025" "#49979#L1849979" "return3571" "#50029#L18'50029")
+		 ("#50027#UpAndDownLocalEXIT50027" "#4113#L284113" "return3573" "#50033#L2950033")
+		 ("#50027#UpAndDownLocalEXIT50027" "#49989#L2849989" "return3573" "#50035#L2950035")
+		 ("#50003#UpAndDownLocalEXIT50003" "#4113#L284113" "return3573" "#50019#L2950019")
+		 ("#50003#UpAndDownLocalEXIT50003" "#49989#L2849989" "return3573" "#50015#L2950015")
+	}
+);

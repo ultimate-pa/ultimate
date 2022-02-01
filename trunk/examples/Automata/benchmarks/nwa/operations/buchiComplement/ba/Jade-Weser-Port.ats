@@ -1,0 +1,59 @@
+// This file contains some automaton definitions created by Ultimate at 
+// 2012/09/21 (Day of the opening of the Jade-Weser-Port).
+
+
+//print(buchiComplementSVW(nwa));
+assert(buchiAccepts(buchiReduce(reachableStatesCopy(buchiComplementSVW(nwa))), [ , a00]));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a00 a10 a20 },
+	returnAlphabet = {},
+	states = {q60 q50 q70 q20 q10 q40 q30 q00 },
+	initialStates = {q00 },
+	finalStates = {q20 q40 },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 (q60 a00 q60)
+		 (q60 a00 q20)
+		 (q60 a10 q60)
+		 (q60 a20 q50)
+		 (q60 a20 q70)
+		 (q60 a20 q40)
+		 (q50 a00 q70)
+		 (q50 a00 q40)
+		 (q50 a20 q60)
+		 (q50 a20 q10)
+		 (q70 a00 q60)
+		 (q70 a00 q70)
+		 (q70 a00 q00)
+		 (q70 a20 q10)
+		 (q20 a10 q70)
+		 (q20 a10 q10)
+		 (q20 a20 q10)
+		 (q10 a00 q00)
+		 (q10 a10 q60)
+		 (q10 a10 q10)
+		 (q10 a10 q40)
+		 (q10 a20 q70)
+		 (q10 a20 q10)
+		 (q10 a20 q30)
+		 (q10 a20 q00)
+		 (q40 a00 q60)
+		 (q40 a00 q70)
+		 (q40 a10 q20)
+		 (q40 a20 q30)
+		 (q30 a10 q70)
+		 (q30 a10 q40)
+		 (q30 a20 q10)
+		 (q00 a00 q10)
+		 (q00 a10 q60)
+		 (q00 a10 q10)
+		 (q00 a20 q50)
+		 (q00 a20 q20)
+		 (q00 a20 q10)
+	},
+	returnTransitions = {
+	}
+);

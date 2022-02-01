@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.1" useFeatures="false" includeLaunchers="true">
+
+   <aboutInfo>
+      <text>
+         Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
+      </text>
+   </aboutInfo>
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>--launcher.suppressErrors -nosplash -consoleLog
+      </programArgs>
+      <programArgsLin>-data @user.home/.ultimate
+      </programArgsLin>
+      <programArgsWin>-data @user.home\ultimate-data
+      </programArgsWin>
+      <vmArgs>-Xmx8g -Xms4m
+      </vmArgs>
+   </launcherArgs>
+
+   <windowImages/>
+
+   <splash
+      location="UltimateCore" />
+   <launcher name="Ultimate">
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+      <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</linux>
+      <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</macos>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</windows>
+   </vm>
+
+   <plugins>
+      <plugin id="com.github.jhoenicke.javacup"/>
+      <plugin id="com.lmax.disruptor"/>
+      <plugin id="com.sun.xml.bind"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.astbuilder"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.parser"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.controller.eliminator"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.core"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.boogieast"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.core"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlib"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlibutils"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.util"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external"/>
+      <plugin id="javax.activation"/>
+      <plugin id="javax.xml"/>
+      <plugin id="javax.xml.bind"/>
+      <plugin id="javax.xml.stream"/>
+      <plugin id="net.sf.javabdd"/>
+      <plugin id="org.apache.commons.lang"/>
+      <plugin id="org.apache.log4j"/>
+      <plugin id="org.apache.logging.log4j"/>
+      <plugin id="org.eclipse.core.contenttype"/>
+      <plugin id="org.eclipse.core.expressions"/>
+      <plugin id="org.eclipse.core.filesystem"/>
+      <plugin id="org.eclipse.core.jobs"/>
+      <plugin id="org.eclipse.core.resources"/>
+      <plugin id="org.eclipse.core.runtime"/>
+      <plugin id="org.eclipse.equinox.app"/>
+      <plugin id="org.eclipse.equinox.common"/>
+      <plugin id="org.eclipse.equinox.preferences"/>
+      <plugin id="org.eclipse.equinox.registry"/>
+      <plugin id="org.eclipse.osgi"/>
+      <plugin id="org.eclipse.osgi.services"/>
+      <plugin id="org.eclipse.osgi.util"/>
+   </plugins>
+
+   <configurations>
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.osgi" autoStart="true" startLevel="1" />
+   </configurations>
+
+   <preferencesInfo>
+      <targetfile overwrite="false"/>
+   </preferencesInfo>
+
+   <cssInfo>
+   </cssInfo>
+
+</product>

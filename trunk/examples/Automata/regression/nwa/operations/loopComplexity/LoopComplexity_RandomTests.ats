@@ -1,0 +1,18 @@
+// Author: Thomas Lang, heizmann@informatik.uni-freiburg.de
+// Date: 2015-04-25
+//
+
+// Test loop complexity with random automata
+	// First argument: size of alphabet
+	// Second argument: number of states
+	// Third argument: transition density of internal transitions in per mille
+	// Fourth argument: transition density of call transitions in per mille -- use 0 here
+	// Fifth argument: transition density of return transitions in per mille -- use 0 here
+	// Sixth argument: amount of accepting states in per mille
+	int i = 0;
+	while(i<2){
+		NestedWordAutomaton A = getRandomNwa(1, 13, 100, 0, 0, 8);
+		print(A);
+		print(loopComplexity(A));
+		i++;
+	}

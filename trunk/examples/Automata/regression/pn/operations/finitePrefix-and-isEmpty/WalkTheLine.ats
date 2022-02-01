@@ -1,0 +1,22 @@
+// Date:  31.10.2011
+// Author: heizmann@informatik.uni-freiburg.de
+
+// Reveals bug in unfolding.
+
+BranchingProcess bp = finitePrefix(WalkTheLine);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 3);
+
+assert(!isEmpty(WalkTheLine));
+
+
+PetriNet WalkTheLine = (
+  alphabet = {a},
+  places = {p0 p1 p2},
+  transitions = {
+    ({p0} a {p1}) 
+    ({p1} a {p2})
+  },
+  initialMarking = { p0 },
+  acceptingPlaces = { p2 }
+);

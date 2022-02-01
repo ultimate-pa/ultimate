@@ -1,0 +1,27 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 22.6.2013
+
+NestedWordAutomaton result = removeNonLiveStates(nwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 4);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"a0" "a1" },
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {"a0" "a1" },
+	states = {"p1" "p3" "p2" "p0" },
+	initialStates = {"p0" },
+	finalStates = {"p3" },
+	callTransitions = {
+		 ("p2" "a1" "p1")
+	},
+	internalTransitions = {
+		 ("p1" "a1" "p0")
+		 ("p1" "a0" "p2")
+		 ("p0" "a0" "p1")
+	},
+	returnTransitions = {
+		 ("p1" "p2" "a0" "p3")
+		 ("p3" "p2" "a0" "p1")
+	}
+);

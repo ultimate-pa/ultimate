@@ -1,0 +1,107 @@
+1. LICENSE
+
+LTL2BA - Version 1.0 - October 2001
+Written by Denis Oddoux, LIAFA, France                                 
+Copyright (c) 2001  Denis Oddoux                                       
+     
+LTL2BA - Version 1.1 - August 2007
+Modified by Paul Gastin, LSV, France                                 
+Copyright (c) 2007  Paul Gastin                                       
+Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
+                                                                  
+This program is free software; you can redistribute it and/or modify   
+it under the terms of the GNU General Public License as published by   
+the Free Software Foundation; either version 2 of the License, or      
+(at your option) any later version. GNU GPL is included in this 
+distribution, in a file called 'LICENSE'
+                                                                       
+This program is distributed in the hope that it will be useful,        
+but WITHOUT ANY WARRANTY; without even the implied warranty of         
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          
+GNU General Public License for more details.                           
+                                                                       
+You should have received a copy of the GNU General Public License      
+along with this program; if not, write to the Free Software            
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+The LTL2BA software was written by Denis Oddoux and modified by Paul
+Gastin.  It is based on the translation algorithm presented at CAV '01:
+	P.Gastin and D.Oddoux
+	"Fast LTL to Büchi Automata Translation" 
+	in 13th International Conference on Computer Aided Verification, CAV 2001, 
+	G. Berry, H. Comon, A. Finkel (Eds.)
+	Paris, France, July 18-22, 2001, 
+	Proceedings - LNCS 2102, pp. 53-65
+                                                                       
+Send bug-reports and/or questions to Paul Gastin   
+http://www.lsv.ens-cachan.fr/~gastin
+
+Part of the code included is issued from the SPIN software Version 3.4.1
+The SPIN software is written by Gerard J. Holzmann, originally as part
+of ``Design and Validation of Protocols,'' ISBN 0-13-539925-4,
+1991, Prentice Hall, Englewood Cliffs, NJ, 07632
+Here are the files that contain some code from Spin v3.4.1 :
+
+	cache.c  (originally tl_cache.c)
+	lex.c    (           tl_lex.c  )
+	ltl2ba.h (	     tl.h      )
+	main.c   (	     tl_main.c )
+	mem.c	 (	     tl_mem.c  )
+	parse.c  (	     tl_parse.c)
+	rewrt.c  (	     tl_rewrt.c)
+	trans.c	 (	     tl_trans.c)
+
+2. COMPILING
+
+open the archive :
+> gunzip ltl2ba-1.1.tar.gz
+> tar xf ltl2ba-1.1.tar
+> cd ltl2ba-1.1
+
+compile the program
+> make
+
+3. EXECUTING
+
+run the program
+> ./ltl2ba -f "formula"
+
+The formula is an LTL formula, and may contain propositional symbols, 
+boolean operators, temporal operators, and parentheses.
+The syntax used is the one used in the 'Spin' model-checker
+
+Propositonal Symbols:
+        true, false
+	any lowercase string
+
+Boolean operators:
+        !   (negation)
+        ->  (implication)
+	<-> (equivalence)
+        &&  (and)
+        ||  (or)
+
+Temporal operators:
+        []  (always)
+        <>  (eventually)
+        U   (until)
+        V   (release)
+        X   (next)
+
+Use spaces between any symbols.
+
+The result is a never claim in Promela that can be given to the
+Spin model checker to verify properties on a system.
+
+run the command
+> ./ltl2ba
+to see the possible options for executing the program
+
+4. CHANGES IN VERSION 1.1
+
+- fixing a bug in the way sets were used for strongly connected components. Thanks to Joachim Klein (klein@tcs.inf.tu-dresden.de) who found the bug and proposed a patch to fix it.
+- fixing a bug in the simplification with strongly connected components for the generalized Büchi automaton. 
+- improving the simplification with strongly connected components for the generalized Büchi automaton.
+- using getrusage to compute running times for the statistics
+- some other minor updates.
+

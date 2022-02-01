@@ -1,0 +1,18 @@
+<project name="proj1" default="generate_parser" basedir=".">
+    <property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
+    <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
+    <description>
+        Build File for Compiler Project
+    </description>
+
+
+    <target name="generate_parser">
+        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+			<arg value="constraints.cup" />
+        </java>
+        <java jar="${flexJar}" fork="true" failonerror="true">
+        	<arg value="constraints.flex" />
+        </java>
+    </target>
+
+</project>

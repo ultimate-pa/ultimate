@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="BA_FeatureUltimateCommandLine"
+      label="BA_FeatureUltimateCommandLine"
+      version="0.2.1"
+      arch="x86_64">
+
+   <requires>
+      <import feature="BA_FeatureDependenciesCommon"/>
+      <import feature="BA_FeatureDependenciesCommandlineE4"/>
+      <import feature="BA_FeatureUltimateCommon"/>
+   </requires>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.cli"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.commons.cli"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

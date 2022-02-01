@@ -1,0 +1,52 @@
+// n=4 Buchi automaton of Michaels automata class
+// A Buchi automaton which recognizes the complement of the language 
+// must have at least n! states.
+
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 17.6.2011
+
+assert(buchiAccepts(Michael4, [ "1", "1" "2" "3" "4" "1" hash]));
+assert(!buchiAccepts(Michael4, [ "1", "1" "2" "3" "4" hash]));
+
+NestedWordAutomaton michael4FKV = buchiComplementFKV(Michael4);
+
+assert(!buchiAccepts(michael4FKV, [ "1", "1" "2" "3" "4" "1" hash]));
+assert(buchiAccepts(michael4FKV, [ "1", "1" "2" "3" "4" hash]));
+
+// 2014-08-10 Matthias: according to this file the result of my old
+// buchiComplementFKV had only 2307 states
+// I am skeptical. Maybe this was without removal of non-live states
+// or with some minimization?
+assert(numberOfStates(michael4FKV) == 4519); // 2016-02-05 old: 4387
+print(numberOfStates(michael4FKV));
+
+NestedWordAutomaton michael4FKV_live = removeNonLiveStates(michael4FKV);
+assert(numberOfStates(michael4FKV_live) == 2809); // 2016-02-05 old: 2773
+print(numberOfStates(michael4FKV_live));
+
+// Unfortunately buchiComplementSVW runs out of memory
+// print(numberOfStates(buchiComplementSVW(Michael4)));
+print(Michael4);
+
+
+NestedWordAutomaton Michael4 = (
+  callAlphabet = { },
+  internalAlphabet = { hash "1" "2" "3" "4" },
+  returnAlphabet = { },
+  states = {q0 q1 q2 q3 q4},
+  initialStates = { q1 q2 q3 q4 },
+  finalStates = { q0 },
+  callTransitions = { },
+  internalTransitions = { 
+    (q0 "1" q1) (q1 "1" q0)
+    (q1 hash q1) (q1 "1" q1) (q1 "2" q1) (q1 "3" q1) (q1 "4" q1)
+    (q0 "2" q2) (q2 "2" q0)
+    (q2 hash q2) (q2 "1" q2) (q2 "2" q2) (q2 "3" q2) (q2 "4" q2)
+    (q0 "3" q3) (q3 "3" q0)
+    (q3 hash q3) (q3 "1" q3) (q3 "2" q3) (q3 "3" q3) (q3 "4" q3)
+    (q0 "4" q4) (q4 "4" q0)
+    (q4 hash q4) (q4 "1" q4) (q4 "2" q4) (q4 "3" q4) (q4 "4" q4)
+
+  }, 
+  returnTransitions = { }
+);

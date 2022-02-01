@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="4GB" timelimit="90" hardtimelimit="112" cpuCores="2">
+
+
+    <rundefinition name="NoReuse-Dump">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/regression-verif/svcomp-Reach-64bit-Automizer_Default.epf</option>
+    </rundefinition>
+    
+    <tasks name="regression-verif">
+        <include>../../../trunk/examples/regression-verif/**/*.i</include>
+    </tasks>
+    
+</benchmark>

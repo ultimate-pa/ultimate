@@ -1,0 +1,32 @@
+// Author: Daniel Tischner
+// Date: 2016-03-18
+//
+// Example usage of a reduction program for Nwa automata that uses fair nwa simulation.
+
+parseAutomata("ReduceNwaDirectSimulation_Example.ats");
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceNwaFairSimulationSize = numberOfStates(reduceNwaFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 2);
+assert(shrinkNwaSize == 2);
+assert(minimizeNwaPmaxSatDirectBiSize == 2);
+assert(minimizeNwaPmaxSatDirectSize == 2);
+assert(reduceNwaDirectSimulationSize == 2);
+assert(reduceNwaDirectSimulationBSize == 2);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 2);
+assert(reduceNwaFairSimulationSize == 4);
+// assert(reduceNwaDelayedSimulationSize == 2);
+// assert(reduceNwaDelayedSimulationBSize == 2);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 2);

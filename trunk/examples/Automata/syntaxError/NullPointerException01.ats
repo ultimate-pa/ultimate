@@ -1,0 +1,26 @@
+// Bug in r8533.
+// Date 14.04.2013
+// Author: heizmann@informatik.uni-freiburg.de
+// NullPointerException in AutomataScriptInterpreter
+
+nw word = ["L20loopEntry'21"];
+
+accepts(nwaSAS09, word);
+print(accepts(nwaSAS09, word));
+
+NestedWordAutomaton nwaSAS09 = (
+    callAlphabet = {},
+	internalAlphabet = {"assume -1 != y;assum...35" "assume !(-1 != y);32" "x := 0;y := 0;24" "x := x + 1;28" "assume -1 != x;31" "assume !(-1 != x);30" },
+	returnAlphabet = {},
+	states = {"L20loopEntry'21" "SAS09paperENTRY20" "L2523" "SAS09paperErr1AssertViolation22" },
+	initialStates = {"SAS09paperENTRY20" },
+	finalStates = {"SAS09paperErr1AssertViolation22" },
+	callTransitions = { },
+	internalTransitions = {
+		 ("L20loopEntry'21" "x := x + 1;28" "L20loopEntry'21")
+		 ("L20loopEntry'21" "assume -1 != x;31" "L2523")
+		 ("SAS09paperENTRY20" "x := 0;y := 0;24" "L20loopEntry'21")
+		 ("L2523" "assume !(-1 != y);32" "SAS09paperErr1AssertViolation22")
+	},
+	returnTransitions = { }
+);

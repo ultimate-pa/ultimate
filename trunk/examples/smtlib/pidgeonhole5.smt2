@@ -1,0 +1,17 @@
+(set-option :produce-proofs true)
+(set-info :source "{
+
+}")
+(set-info :status sat)
+(set-info :difficulty "{ 0 }")
+(set-logic QF_LIA)
+(declare-fun i1 () Int)
+(declare-fun i2 () Int)
+(declare-fun i3 () Int)
+(declare-fun i4 () Int)
+(declare-fun i5 () Int)
+(assert (! (distinct i1 i2 i3 i4 i5) :named IP_0))
+(assert (! (and (<= 1 i1) (<= i1 4) (<= 1 i2) (<= i2 4) (<= 1 i3) (<= i3 4) (<= 1 i4) (<= i4 4) (<= 1 i5) (<= i5 4)) :named IP_1))
+(check-sat)
+(get-interpolants IP_0 IP_1)
+(exit)

@@ -1,0 +1,143 @@
+// Testfile dumped by Ultimate at 2012/10/13 16:41:08
+//
+// Reveals bug in revision 7230.
+//
+// Problem with run #12005#TestENTRY x = 1;havoc n; #12007#L22 call< #12009#encTENTRY x_local = x;n_local... #12011#L38loopEntry' assume star; #12015#L41 call< #12019#encLTENTRY x_local = x;n_local... #12023#L107 call< #12027#encLLTENTRY assume !(x == 0);ret... #12031#L120' assume true; #12035#encLLTEXIT > return#12039#L107' assume !CallRet; #12047#L113 call< #12055#encRLTENTRY assume !(x != 0);ret... #12061#L129' assume true; #12069#encRLTEXIT > return#12077#L113' assume true; #12087#encLTEXIT > return#12099#L41' assume !blockCall;re... #12106#encTFINAL assume true; #12111#encTEXIT > return#12116#L22' assume !(ret != fals... #12125#TestErr0AssertViolation 
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 62);
+assert(shrinkNwaSize == 58);
+assert(minimizeNwaPmaxSatDirectBiSize == 57);
+assert(minimizeNwaPmaxSatDirectSize == 61);
+assert(reduceNwaDirectSimulationSize == 57);
+assert(reduceNwaDirectSimulationBSize == 61);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 61);
+// assert(reduceNwaDelayedSimulationSize == 57);
+// assert(reduceNwaDelayedSimulationBSize == 57);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 57);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call652" "call654" "call648" "call650" "call644" "call646" "call656" "call640" "call642" },
+	internalAlphabet = {"assume true;551" "assume !CallRet;548" "assume !star;609" "assume CallRet;ret :...546" "assume true;613" "assume !!blockCall;h...618" "assume star;556" "assume !blockCall;re...617" "assume !star;622" "x_local = x;n_local...552" "assume star;ret = t...621" "assume true;625" "assume !star;x_local...565" "assume star;ret = t...564" "assume !true;624" "assume !(x != 0);ret...630" "assume !!blockCall;h...561" "assume x != 0;ret :=...628" "assume !blockCall;re...560" "assume x == 0;ret :=...635" "assume !star;havoc n...574" "assume star;ret = t...573" "assume true;632" "assume true;639" "assume !!blockCall;h...570" "assume !blockCall;re...569" "assume !(x == 0);ret...637" "assume n_local > 0;578" "assume !blockCall;re...582" "assume !!blockCall;h...583" "assume star;ret = t...586" "assume !star;n_local...587" "assume !blockCall;re...591" "assume !!blockCall;h...592" "assume star;ret = t...595" "assume !star;596" "assume !(n_local > 0...598" "assume true;541" "assume ret != false;540" "assume !!blockCall;h...603" "assume !blockCall;re...602" "x_local = x;n_local...542" "x = 1;havoc n;537" "assume !(ret != fals...539" "assume !star;havoc s...607" "assume star;ret = t...606" },
+	returnAlphabet = {"return653" "return655" "return649" "return651" "return645" "return647" "return641" "return657" "return643" },
+	states = {"#11649#L38loopEntry'11649" "#11528#encLTEXIT11528" "#11530#encRLTENTRY11530" "#11653#L84loopEntry'11653" "#11532#L87'11532" "#11655#L4111655" "#11534#L41'11534" "#11657#L8711657" "#11521#L107'11521" "#11522#L107'11522" "#11524#L113'11524" "#11526#L11311526" "#11544#encRLTEXIT11544" "#11546#encRLTEXIT11546" "#11549#L4911549" "#11551#L113'11551" "#11536#L129'11536" "#11538#L129'11538" "#11540#L9011540" "#11542#L4411542" "#11562#L87'11562" "#11563#L41'11563" "#11684#L66'11684" "#11691#L66'11691" "#11689#L6911689" "#11553#L113'11553" "#11693#L41'11693" "#11556#encLTEXIT11556" "#11557#encLTEXIT11557" "#11698#L87'11698" "#11702#L41'11702" "#11700#L4411700" "#11581#encTEXIT11581" "#11706#L87'11706" "#11704#L9011704" "#11572#encTFINAL11572" "#11596#L5211596" "#11598#L49'11598" "#11594#TestErr0AssertViolation11594" "#11588#L22'11588" "#11590#L49'11590" "#11608#encTEXIT11608" "#11604#L5811604" "#11606#L7611606" "#11600#L56loopEntry'11600" "#11602#encTFINAL11602" "#11510#L10711510" "#11505#L8711505" "#11507#encLTENTRY11507" "#11516#L120'11516" "#11518#encLLTEXIT11518" "#11519#encLLTEXIT11519" "#11512#encLLTENTRY11512" "#11514#L120'11514" "#11493#TestENTRY11493" "#11646#L6611646" "#11495#L2211495" "#11644#L76'11644" "#11642#L7911642" "#11640#L58'11640" "#11501#L84loopEntry'11501" "#11638#L6111638" "#11503#L4111503" "#11636#L76'11636" "#11497#encTENTRY11497" "#11634#L58'11634" "#11499#L38loopEntry'11499" },
+	initialStates = {"#11493#TestENTRY11493" },
+	finalStates = {"#11594#TestErr0AssertViolation11594" },
+	callTransitions = {
+		 ("#11655#L4111655" "call646" "#11507#encLTENTRY11507")
+		 ("#11657#L8711657" "call656" "#11507#encLTENTRY11507")
+		 ("#11510#L10711510" "call642" "#11512#encLLTENTRY11512")
+		 ("#11505#L8711505" "call656" "#11507#encLTENTRY11507")
+		 ("#11495#L2211495" "call640" "#11497#encTENTRY11497")
+		 ("#11503#L4111503" "call646" "#11507#encLTENTRY11507")
+		 ("#11526#L11311526" "call644" "#11530#encRLTENTRY11530")
+		 ("#11549#L4911549" "call648" "#11507#encLTENTRY11507")
+		 ("#11604#L5811604" "call650" "#11507#encLTENTRY11507")
+		 ("#11606#L7611606" "call654" "#11507#encLTENTRY11507")
+		 ("#11646#L6611646" "call652" "#11507#encLTENTRY11507")
+	},
+	internalTransitions = {
+		 ("#11649#L38loopEntry'11649" "assume !star;609" "#11653#L84loopEntry'11653")
+		 ("#11649#L38loopEntry'11649" "assume star;556" "#11655#L4111655")
+		 ("#11653#L84loopEntry'11653" "assume true;613" "#11657#L8711657")
+		 ("#11684#L66'11684" "assume !!blockCall;h...592" "#11689#L6911689")
+		 ("#11691#L66'11691" "assume !!blockCall;h...592" "#11689#L6911689")
+		 ("#11691#L66'11691" "assume !blockCall;re...591" "#11602#encTFINAL11602")
+		 ("#11689#L6911689" "assume !star;596" "#11600#L56loopEntry'11600")
+		 ("#11693#L41'11693" "assume !!blockCall;h...561" "#11700#L4411700")
+		 ("#11698#L87'11698" "assume !!blockCall;h...618" "#11704#L9011704")
+		 ("#11702#L41'11702" "assume !!blockCall;h...561" "#11700#L4411700")
+		 ("#11702#L41'11702" "assume !blockCall;re...560" "#11602#encTFINAL11602")
+		 ("#11700#L4411700" "assume !star;x_local...565" "#11549#L4911549")
+		 ("#11706#L87'11706" "assume !!blockCall;h...618" "#11704#L9011704")
+		 ("#11706#L87'11706" "assume !blockCall;re...617" "#11602#encTFINAL11602")
+		 ("#11704#L9011704" "assume !star;622" "#11653#L84loopEntry'11653")
+		 ("#11507#encLTENTRY11507" "x_local = x;n_local...542" "#11510#L10711510")
+		 ("#11516#L120'11516" "assume true;639" "#11519#encLLTEXIT11519")
+		 ("#11512#encLLTENTRY11512" "assume x == 0;ret :=...635" "#11514#L120'11514")
+		 ("#11512#encLLTENTRY11512" "assume !(x == 0);ret...637" "#11516#L120'11516")
+		 ("#11514#L120'11514" "assume true;639" "#11518#encLLTEXIT11518")
+		 ("#11493#TestENTRY11493" "x = 1;havoc n;537" "#11495#L2211495")
+		 ("#11501#L84loopEntry'11501" "assume true;613" "#11505#L8711505")
+		 ("#11497#encTENTRY11497" "x_local = x;n_local...552" "#11499#L38loopEntry'11499")
+		 ("#11499#L38loopEntry'11499" "assume !star;609" "#11501#L84loopEntry'11501")
+		 ("#11499#L38loopEntry'11499" "assume star;556" "#11503#L4111503")
+		 ("#11530#encRLTENTRY11530" "assume !(x != 0);ret...630" "#11536#L129'11536")
+		 ("#11530#encRLTENTRY11530" "assume x != 0;ret :=...628" "#11538#L129'11538")
+		 ("#11532#L87'11532" "assume !!blockCall;h...618" "#11540#L9011540")
+		 ("#11534#L41'11534" "assume !!blockCall;h...561" "#11542#L4411542")
+		 ("#11521#L107'11521" "assume CallRet;ret :...546" "#11524#L113'11524")
+		 ("#11522#L107'11522" "assume !CallRet;548" "#11526#L11311526")
+		 ("#11522#L107'11522" "assume CallRet;ret :...546" "#11524#L113'11524")
+		 ("#11524#L113'11524" "assume true;551" "#11528#encLTEXIT11528")
+		 ("#11551#L113'11551" "assume true;551" "#11556#encLTEXIT11556")
+		 ("#11536#L129'11536" "assume true;632" "#11544#encRLTEXIT11544")
+		 ("#11538#L129'11538" "assume true;632" "#11546#encRLTEXIT11546")
+		 ("#11540#L9011540" "assume !star;622" "#11501#L84loopEntry'11501")
+		 ("#11542#L4411542" "assume !star;x_local...565" "#11549#L4911549")
+		 ("#11562#L87'11562" "assume !!blockCall;h...618" "#11540#L9011540")
+		 ("#11562#L87'11562" "assume !blockCall;re...617" "#11572#encTFINAL11572")
+		 ("#11563#L41'11563" "assume !!blockCall;h...561" "#11542#L4411542")
+		 ("#11563#L41'11563" "assume !blockCall;re...560" "#11572#encTFINAL11572")
+		 ("#11553#L113'11553" "assume true;551" "#11557#encLTEXIT11557")
+		 ("#11572#encTFINAL11572" "assume true;625" "#11581#encTEXIT11581")
+		 ("#11596#L5211596" "assume !star;havoc n...574" "#11600#L56loopEntry'11600")
+		 ("#11598#L49'11598" "assume !!blockCall;h...570" "#11596#L5211596")
+		 ("#11598#L49'11598" "assume !blockCall;re...569" "#11602#encTFINAL11602")
+		 ("#11588#L22'11588" "assume !(ret != fals...539" "#11594#TestErr0AssertViolation11594")
+		 ("#11590#L49'11590" "assume !!blockCall;h...570" "#11596#L5211596")
+		 ("#11600#L56loopEntry'11600" "assume n_local > 0;578" "#11604#L5811604")
+		 ("#11600#L56loopEntry'11600" "assume !(n_local > 0...598" "#11606#L7611606")
+		 ("#11602#encTFINAL11602" "assume true;625" "#11608#encTEXIT11608")
+		 ("#11644#L76'11644" "assume !!blockCall;h...603" "#11642#L7911642")
+		 ("#11644#L76'11644" "assume !blockCall;re...602" "#11602#encTFINAL11602")
+		 ("#11642#L7911642" "assume !star;havoc s...607" "#11649#L38loopEntry'11649")
+		 ("#11640#L58'11640" "assume !blockCall;re...582" "#11602#encTFINAL11602")
+		 ("#11640#L58'11640" "assume !!blockCall;h...583" "#11638#L6111638")
+		 ("#11638#L6111638" "assume !star;n_local...587" "#11646#L6611646")
+		 ("#11636#L76'11636" "assume !!blockCall;h...603" "#11642#L7911642")
+		 ("#11634#L58'11634" "assume !!blockCall;h...583" "#11638#L6111638")
+	},
+	returnTransitions = {
+		 ("#11518#encLLTEXIT11518" "#11510#L10711510" "return643" "#11521#L107'11521")
+		 ("#11519#encLLTEXIT11519" "#11510#L10711510" "return643" "#11522#L107'11522")
+		 ("#11528#encLTEXIT11528" "#11646#L6611646" "return653" "#11684#L66'11684")
+		 ("#11528#encLTEXIT11528" "#11606#L7611606" "return655" "#11636#L76'11636")
+		 ("#11528#encLTEXIT11528" "#11549#L4911549" "return649" "#11590#L49'11590")
+		 ("#11528#encLTEXIT11528" "#11604#L5811604" "return651" "#11634#L58'11634")
+		 ("#11528#encLTEXIT11528" "#11655#L4111655" "return647" "#11693#L41'11693")
+		 ("#11528#encLTEXIT11528" "#11503#L4111503" "return647" "#11534#L41'11534")
+		 ("#11528#encLTEXIT11528" "#11505#L8711505" "return657" "#11532#L87'11532")
+		 ("#11528#encLTEXIT11528" "#11657#L8711657" "return657" "#11698#L87'11698")
+		 ("#11544#encRLTEXIT11544" "#11526#L11311526" "return645" "#11551#L113'11551")
+		 ("#11546#encRLTEXIT11546" "#11526#L11311526" "return645" "#11553#L113'11553")
+		 ("#11556#encLTEXIT11556" "#11646#L6611646" "return653" "#11691#L66'11691")
+		 ("#11556#encLTEXIT11556" "#11606#L7611606" "return655" "#11644#L76'11644")
+		 ("#11556#encLTEXIT11556" "#11549#L4911549" "return649" "#11598#L49'11598")
+		 ("#11556#encLTEXIT11556" "#11604#L5811604" "return651" "#11640#L58'11640")
+		 ("#11556#encLTEXIT11556" "#11655#L4111655" "return647" "#11702#L41'11702")
+		 ("#11556#encLTEXIT11556" "#11657#L8711657" "return657" "#11706#L87'11706")
+		 ("#11557#encLTEXIT11557" "#11646#L6611646" "return653" "#11691#L66'11691")
+		 ("#11557#encLTEXIT11557" "#11606#L7611606" "return655" "#11644#L76'11644")
+		 ("#11557#encLTEXIT11557" "#11549#L4911549" "return649" "#11598#L49'11598")
+		 ("#11557#encLTEXIT11557" "#11604#L5811604" "return651" "#11640#L58'11640")
+		 ("#11557#encLTEXIT11557" "#11655#L4111655" "return647" "#11702#L41'11702")
+		 ("#11557#encLTEXIT11557" "#11503#L4111503" "return647" "#11563#L41'11563")
+		 ("#11557#encLTEXIT11557" "#11505#L8711505" "return657" "#11562#L87'11562")
+		 ("#11557#encLTEXIT11557" "#11657#L8711657" "return657" "#11706#L87'11706")
+		 ("#11581#encTEXIT11581" "#11495#L2211495" "return641" "#11588#L22'11588")
+		 ("#11608#encTEXIT11608" "#11495#L2211495" "return641" "#11588#L22'11588")
+	}
+);

@@ -1,0 +1,151 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<body>
+	<h1>Automizer</h1>
+	<p>
+		<span style="font-variant: small-caps">Ultimate</span> Automizer
+	</p>
+
+	<ul>
+		<li>is a software model checker that implements an approach based
+			on automata [1,2,3,4]</li>
+		<li>is one toolchain of the <a
+			href="http://ultimate.informatik.uni-freiburg.de"><span
+				style="font-variant: small-caps">Ultimate</span> software analysis
+				framework</a></li>
+		<li>is maintained by <a
+			href="http://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias
+				Heizmann</a></li>
+		<li>uses the <span style="font-variant: small-caps">Ultimate</span>
+			Automata Library (website available soon)
+		</li>
+	</ul>
+
+	<h2>Awards</h2>
+	<ul>
+		<li>Ultimate Automizer won the <a
+			href="http://sv-comp.sosy-lab.org/2017/results/">overall ranking</a>
+			at the <a href="http://sv-comp.sosy-lab.org/2017/">SV-COMP 2017</a></li>
+		<li>Ultimate Automizer won the <a
+			href="http://sv-comp.sosy-lab.org/2016/results/">overall ranking</a>
+			at the <a href="http://sv-comp.sosy-lab.org/2016/">SV-COMP 2016</a></li>
+		<li>Ultimate Automizer was second in the <a
+			href="http://sv-comp.sosy-lab.org/2015/results/">overall ranking</a>
+			at the <a href="http://sv-comp.sosy-lab.org/2015/">SV-COMP 2015</a></li>
+	</ul>
+
+
+	<h2>Web Interface</h2>
+	<p>
+		<span style="font-variant: small-caps">Ultimate</span> Automizer is
+		available via a web interface in which you can verify C programs.
+	</p>
+
+	<h2>Download</h2>
+	<p>
+		We try to provide regular releases for Windows and Linux at <a
+			href="https://github.com/ultimate-pa/ultimate/releases">our
+			GitHub release page</a>.
+	</p>
+	<h3>SV-COMP</h3>
+	<ul>
+		<li><a
+			href="https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2017/UltimateAutomizer-linux.zip"><span
+				style="font-variant: small-caps">Ultimate</span> Automizer for
+				SV-COMP 2017 </a></li>
+		<li><a
+			href="https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2016/UltimateAutomizer.zip"><span
+				style="font-variant: small-caps">Ultimate</span> Automizer for
+				SV-COMP 2016</a>.</li>
+	</ul>
+	<p>
+		All archives available here contain commandline versions of <span
+			style="font-variant: small-caps">Ultimate</span> Automizer that
+		participate(d) in the <a href="https://sv-comp.sosy-lab.org">Competition
+			on Software Verification (SV-COMP)</a>. They are build for x86-64 linux
+		and can be run using the provided Python script
+		<code>Ultimate.py</code>
+		as follows.
+	</p>
+	<p>
+		<code>Ultimate.py [-h] [--version] [--full-output] [--validate]
+			spec {32bit,64bit} {simple,precise} file [file ...]</code>
+		<br />
+	</p>
+	<p>Mandatory arguments</p>
+	<ul>
+		<li><code>spec</code><br /> An property (.prp) file from SVCOMP.</li>
+		<li><code>{32bit,64bit}</code><br /> Choose which architecture
+			(defined as per SV-COMP rules) should be assumed.</li>
+		<li><code>{simple,precise}</code><br /> Ultimate does not use
+			the distinction between simple and precise memory model and always
+			assumes precise. For compatibility reasons, you have to provide
+			either value.</li>
+		<li><code>file</code><br />Either one C file or one C file and
+			one witness as matching .graphml file.</li>
+	</ul>
+	<p>Optional arguments</p>
+	<ul>
+		<li><code>-h, --help</code><br /> Show a help message and exit.</li>
+		<li><code>--version</code><br />Print <span
+			style="font-variant: small-caps">Ultimate</span> Automizer's version
+			and exit.</li>
+		<li><code>--full-output</code><br /> Print <span
+			style="font-variant: small-caps">Ultimate</span> Automizer's full
+			output to stderr after verification ends.</li>
+		<li><code>--validate </code><br />Validate the provided witness</li>
+	</ul>
+	</p>
+
+
+
+	<h3>Eclipse CDT</h3>
+	<p>
+		We are planing to release an Eclipse CDT plugin that is able to use
+		all toolchains of <span style="font-variant: small-caps">Ultimate</span>.
+	</p>
+
+	<h2>Example</h2>
+	<p>
+		A commented <a
+			href=?ui=int&tool=automata_script_interpreter&task=automataScript&sample=1354300666><em>automata
+				script</em> file that explains some aspects of our verification approach
+			for recursive programs</a> is available in the web interface of our <a
+			href=?ui=tool&tool=automata_script_interpreter></a>automata library.
+	</p>
+
+	<h2>Developers</h2>
+	<p>
+		Since <span style="font-variant: small-caps">Ultimate</span> Automizer
+		is a toolchain of the <a
+			href="http://ultimate.informatik.uni-freiburg.de"><span
+			style="font-variant: small-caps">Ultimate</span> software analysis
+			framework</a>, <a href="http://ultimate.informatik.uni-freiburg.de#developers">many
+			people</a> were involved in the development (especially our bachelor and
+		master students). If you are a student at our university and you like
+		to contribute to <span style="font-variant: small-caps">Ultimate</span>
+		in a project, laboratory, or thesis then contact <a
+			href="http://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias
+			Heizmann</a> or any other <span style="font-variant: small-caps">Ultimate</span>
+		developer.
+	</p>
+
+	<h2>Related Publications</h2>
+	<p>
+		[1] <a href="http://dx.doi.org/10.1007/978-3-642-39799-8_2">Matthias
+			Heizmann, Jochen Hoenicke, Andreas Podelski: Software Model Checking
+			for People Who Love Automata. CAV 2013:36-52</a> <br /> [2] <a
+			href="http://dx.doi.org/10.1007/978-3-642-36742-7_53">Matthias
+			Heizmann, Jürgen Christ, Daniel Dietsch, Evren Ermis, Jochen
+			Hoenicke, Markus Lindenmann, Alexander Nutz, Christian Schilling,
+			Andreas Podelski: Ultimate Automizer with SMTInterpol - (Competition
+			Contribution). TACAS 2013:641-643</a> <br /> [3] <a
+			href="http://doi.acm.org/10.1145/1706299.1706353">Matthias
+			Heizmann, Jochen Hoenicke, Andreas Podelski: Nested interpolants.
+			POPL 2010:471-482</a> <br /> [4] <a
+			href="http://dx.doi.org/10.1007/978-3-642-03237-0_7">Matthias
+			Heizmann, Jochen Hoenicke, Andreas Podelski: Refinement of Trace
+			Abstraction. SAS 2009:69-85</a>
+	</p>
+</body>
+</html>
+

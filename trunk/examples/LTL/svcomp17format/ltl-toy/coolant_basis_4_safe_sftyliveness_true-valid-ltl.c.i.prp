@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( G( !"init == 3" || ( !"temp > limit" || FG" chainBroken == 1" ) ) ) )

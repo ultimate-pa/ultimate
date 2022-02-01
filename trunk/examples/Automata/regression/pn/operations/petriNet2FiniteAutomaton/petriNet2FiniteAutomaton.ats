@@ -1,0 +1,46 @@
+// Date:  2017-07-23
+// Author: heizmann@informatik.uni-freiburg.de
+//
+
+parseAutomata("../../Se7en.ats");
+
+NestedWordAutomaton se7enAsAutomaton = petriNet2FiniteAutomaton(se7en);
+
+assert(numberOfStates(se7enAsAutomaton) == 12);
+assert(numberOfTransitions(se7enAsAutomaton) == 25);
+
+assert(accepts(se7enAsAutomaton, []));
+assert(!accepts(se7enAsAutomaton, [a b c]));
+assert(accepts(se7enAsAutomaton, [a a a]));
+assert(accepts(se7enAsAutomaton, [a b b a a]));
+assert(!accepts(se7enAsAutomaton, [a c ]));
+assert(!accepts(se7enAsAutomaton, [a b c a a]));
+assert(accepts(se7enAsAutomaton, [a a a c]));
+assert(!accepts(se7enAsAutomaton, [a a a b c]));
+assert(accepts(se7enAsAutomaton, [a a a c b]));
+
+assert(!isEmpty(se7enAsAutomaton));
+
+
+
+
+parseAutomata("../../EmptyInitialMarking.ats");
+
+NestedWordAutomaton emptyInitialMarkingAsAutomaton = petriNet2FiniteAutomaton(n);
+
+assert(numberOfStates(emptyInitialMarkingAsAutomaton) == 1);
+assert(numberOfTransitions(emptyInitialMarkingAsAutomaton) == 0);
+
+assert(isEmpty(emptyInitialMarkingAsAutomaton));
+
+
+
+
+parseAutomata("../../NoAcceptingPlaces.ats");
+
+NestedWordAutomaton noAcceptingPlacesAsAutomaton = petriNet2FiniteAutomaton(noAccepting);
+
+assert(numberOfStates(noAcceptingPlacesAsAutomaton) == 1);
+assert(numberOfTransitions(noAcceptingPlacesAsAutomaton) == 1);
+
+assert(isEmpty(noAcceptingPlacesAsAutomaton));

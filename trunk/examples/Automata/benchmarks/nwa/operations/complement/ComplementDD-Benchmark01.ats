@@ -1,0 +1,12 @@
+// Date: 19.05.2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+parseAutomata("../../ProgramVerification-Ministerprasident.ats");
+
+assert(numberOfStates(complementDD(McCarthyInterpolantAutomaton_Iteration12)) == 67);
+assert(numberOfStates(complementDD(McCarthyInterpolantAutomaton_Iteration16)) == 96);
+assert(numberOfStates(complementDD(McCarthyAbstraction16)) == 378);
+assert(numberOfStates(complementDD(Ackermann_Abstraction19)) == 124);
+assert(numberOfStates(complementDD(Ackermann_Abstraction24)) == 545);
+assert(numberOfStates(complementDD(Ackermann_InterpolantAutomaton_Iteration39)) == 158);

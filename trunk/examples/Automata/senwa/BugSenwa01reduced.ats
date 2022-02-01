@@ -1,0 +1,25 @@
+// Testfile dumped by Ultimate at 2012/09/20 13:01:11
+
+// Problem with run fibonacciENTRY call< fibonacciENTRY PARALLELres = 0;PAR... L20' assume res >= 0;assu... fibonacciEXIT > returnL24 call< fibonacciENTRY PARALLELres = 0;PAR... L20' assume res >= 0;assu... fibonacciEXIT > returnL25 res = tmpA + tmpB; L20' assume !(res >= 0); fibonacciErr0AssertViolation 
+
+print(senwa(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call0" "call215" },
+	internalAlphabet = {"a2" "a1" },
+	returnAlphabet = {"return216" "ret1" },
+	states = {"q0" "q4" "q3" "q2" "qEX" "q1" },
+	initialStates = {"q0" },
+	finalStates = {"q4" },
+	callTransitions = {
+		 ("q3" "call215" "q1")
+		 ("q0" "call0" "q1")
+	},
+	internalTransitions = {
+		 ("q1" "a1" "qEX")
+	},
+	returnTransitions = {
+		 ("qEX" "q3" "return216" "q4")
+		 ("qEX" "q0" "ret1" "q3")
+	}
+);

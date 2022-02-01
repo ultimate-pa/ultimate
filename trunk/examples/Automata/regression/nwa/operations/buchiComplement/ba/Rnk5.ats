@@ -1,0 +1,48 @@
+/*
+ * Simple example, where a rank-based Büchi complementation needs rank 5.
+ * Date: 2016-01-02
+ * Author: Matthias Heizmann
+ */
+
+
+print(numberOfStates(nwa));
+print(isSemiDeterministic(nwa));
+// print(buchiComplementFKV(nwa,"Elastic", 777));
+print(buchiComplementationEvaluation(nwa));
+
+// NestedWordAutomaton cFKV = buchiComplementFKV(nwa);
+// print(numberOfStates(cFKV));
+// NestedWordAutomaton cFKVl = removeNonLiveStates(cFKV);
+// print(numberOfStates(cFKVl));
+// NestedWordAutomaton cDet = buchiComplementDeterministic(nwa);
+// print(numberOfStates(cDet));
+// NestedWordAutomaton cDetl = removeNonLiveStates(cDet);
+// print(numberOfStates(cDetl));
+// NestedWordAutomaton cNCSB = buchiComplementNCSB(nwa);
+// print(numberOfStates(cNCSB));
+// NestedWordAutomaton cNCSBl = removeNonLiveStates(nwa);
+// print(numberOfStates(cNCSBl));
+
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {"a" "b" },
+	returnAlphabet = { },
+	states = {"q5" "q4" "q3" "q2" "q1" },
+	initialStates = {"q5" },
+	finalStates = {"q4" "q2" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		("q5" "a" "q5")
+		("q5" "a" "q4")
+		("q4" "a" "q3")
+		("q3" "a" "q3")
+		("q3" "a" "q2")
+		("q2" "a" "q1")
+		("q1" "a" "q1")
+	},
+	returnTransitions = {
+	}
+);

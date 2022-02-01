@@ -1,0 +1,41 @@
+#Mon Sep 29 17:45:36 CEST 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+#Mon Sep 29 17:45:36 CEST 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Mon Sep 29 17:45:36 CEST 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+#Mon Sep 29 17:45:36 CEST 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Annotate\ edges=Hashcode
+@de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Node\ color\:=0,255,0
+#Mon Sep 29 17:45:36 CEST 2014
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=INFO
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ controller\ plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ core\ plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Show\ long\ description\ of\ results=true
+#Mon Sep 29 17:45:36 CEST 2014
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.gui=
+@de.uni_freiburg.informatik.ultimate.gui=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=F\:\\repos\\ultimate fresher co\\trunk\\examples\\BoogiePL\\structexpander\\StructEqualTest.bpl
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\Users\\firefox\\AppData\\Local\\Temp\\lastUltimateToolchain.xml

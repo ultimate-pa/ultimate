@@ -1,0 +1,149 @@
+/*
+ * Copyright (C) 2018 Eric Koskinen
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Crocotta plug-in.
+ *
+ * The ULTIMATE Crocotta plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Crocotta plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Crocotta plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Crocotta plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Crocotta plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
+
+/* 
+constraints
+   [u1 v1 = (concat (ev "a") (pair u2 v2))]
+   [u2 v2 = (concat (pair u1 v1) (union (ev "b") (pair u2 v2)))]
+   [(pair u1 v1) <= (pair u2 v2)]
+*/
+
+package de.uni_freiburg.informatik.ultimate.crocotta.parser;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+
+import com.github.jhoenicke.javacup.runtime.Symbol;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Concatenation;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Event;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.FinInfExpression;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.FixpointQuery;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.InclusionQuery;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Intersection;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.LanguageExpression;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Numeral;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Query;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Union;
+
+parser CrocParser;
+option symbols = CrocSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+
+
+	private IUltimateServiceProvider mServices;
+	private String mFilename;
+	private ILogger mLogger;
+
+	public CrocParser(final IUltimateServiceProvider services, final ILogger logger, final Reader reader,
+			final String filename) throws IOException {
+		this(new CrocLexer(reader));
+		mServices = services;
+		mLogger = logger;
+		mFilename = filename;
+	}
+
+	public CrocParser(final IUltimateServiceProvider services, final ILogger logger, final InputStream stream,
+			final String filename) throws IOException {
+		this(new CrocLexer(stream));
+		mServices = services;
+		mLogger = logger;
+		mFilename = filename;
+	}
+	
+	@Override
+	public void report_error(final String s, final Object sym) {
+		String location;
+		if (sym instanceof CrocSymbolFactory.LineColumnSymbol) {
+			final CrocSymbolFactory.LineColumnSymbol bsym = (CrocSymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+		} else if ((sym instanceof Symbol) && ((Symbol) sym).sym == CrocSymbols.EOF) {
+			location = "EOF";
+		} else {
+			location = "UNKNOWN";
+		}
+		final String filename = mFilename == null ? "" : (mFilename + ":");
+		mLogger.error(filename + location + ": " + s);
+	}
+
+	public void report_error(final String s) {
+		report_error(s, cur_token);
+	}
+
+	@Override
+	public void syntax_error(final Symbol sym) {
+		report_error("Syntax Error", sym);
+	}
+:}
+
+//action code {: :}  
+scan with {: return getScanner().next_token(); :}
+    
+terminal String PAIR, CONCAT, UNION, ISECT, CONSTRAINTS, EQUALS, INCLUSION;
+//terminal EV, SET;
+terminal int NUMERAL;
+terminal LPAR, RPAR, LBRAK, RBRAK, QUOTE;
+terminal String ID;
+
+non terminal LanguageExpression specConstant;
+non terminal LanguageExpression langExpr;
+non terminal FinInfExpression fininfpair;
+non terminal Query[] goal;
+non terminal Query constraint;
+
+goal ::= CONSTRAINTS constraint*:s {: RESULT = s; :}
+	;
+	
+constraint ::= LBRAK fininfpair:fip EQUALS langExpr:e RBRAK {: RESULT = new FixpointQuery(fip, e); :}
+    		| LBRAK langExpr:e1 INCLUSION langExpr:e2 RBRAK {: RESULT = new InclusionQuery(e1, e2); :}
+			;
+
+langExpr ::= specConstant:s {: RESULT = s; :}
+    | fininfpair:fip {: RESULT = fip; :} 
+//    | EV QUOTE
+    | CONCAT langExpr:e1 langExpr:e2 {: RESULT = new Concatenation(new LanguageExpression[]{e1, e2}); :}
+    | UNION langExpr:e1 langExpr:e2 {: RESULT = new Union(new LanguageExpression[]{e1, e2}); :}
+    | ISECT langExpr:e1 langExpr:e2 {: RESULT = new Intersection(new LanguageExpression[]{e1, e2}); :}
+    | LPAR langExpr:e RPAR {: RESULT = e; :}
+	;
+	
+fininfpair ::= PAIR ID:u ID:v {: RESULT = new FinInfExpression(u, v); :}
+			;
+			
+specConstant ::= NUMERAL:n {: RESULT = new Numeral(n); :}
+             | ID:n {: RESULT = new Event(n); :}
+             | QUOTE ID:n QUOTE {: RESULT = new Event(n); :}
+			 ;
+
+// string20, string25
+// ev -> strings

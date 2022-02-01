@@ -1,0 +1,30 @@
+// Author: dietsch@cs.uni-freiburg.de
+// Date: 2020-04-24
+//
+// In accepting runs, we have to take the call self-loop at q1 four 
+// times in the right order until we can move to q2.
+
+assert(!isEmptyHeuristic(nwa));
+assert(!isEmpty(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c1" "c2" },
+	internalAlphabet = {"a" },
+	returnAlphabet = {"r1" "r2" },
+	states = {"q0" "q1" "q2" "q3" "q4" "q5"},
+	initialStates = {"q0"},
+	finalStates = {"q5"},
+	callTransitions = {
+		("q1" "c1" "q1")
+        ("q2" "c2" "q2")
+	},
+	internalTransitions = {
+		("q0" "a" "q1")
+	},
+	returnTransitions = {
+		("q1" "q1" "r1" "q2")
+		("q2" "q2" "r2" "q3")
+		("q3" "q2" "r2" "q4")
+		("q4" "q1" "r1" "q5")
+	}
+);

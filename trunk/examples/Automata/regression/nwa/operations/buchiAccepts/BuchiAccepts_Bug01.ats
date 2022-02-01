@@ -1,0 +1,35 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 15.5.2011
+
+// Reveals bug of acceptance check in revision 3702.
+// Processing the loop of [ , a ] does not rech the honda again.
+// E.g. [ , a a] and [ , a a a a] are accepted by the algorithm, but
+// [ , a] and [ , a a a ] are not accpeted.
+// Solution: Process the loop several times.
+
+assert(buchiAccepts(nonNestedBuchi1, [ , a ]));
+assert(buchiAccepts(nonNestedBuchi2, [a , a ]));
+
+NestedWordAutomaton nonNestedBuchi1 = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {s0 s1},
+  initialStates = {s0},
+  finalStates = {s0},
+  callTransitions = { },
+  internalTransitions = {(s0 a s1) (s1 a s0)}, 
+  returnTransitions = { }
+);
+
+NestedWordAutomaton nonNestedBuchi2 = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {s0 s1 s2 s3},
+  initialStates = {s0},
+  finalStates = {s0},
+  callTransitions = { },
+  internalTransitions = {(s0 a s1) (s1 a s2) (s2 a s3) (s3 a s0)}, 
+  returnTransitions = { }
+);

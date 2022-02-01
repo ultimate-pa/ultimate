@@ -1,0 +1,90 @@
+// Test for different synchronization methods with selfloops
+// a- and b-transitions should be synchronized with the normal pairwise method.
+// c-transitions should be synchronized with the inverted method using black places.
+
+assert(accepts(net, [a b]));
+assert(accepts(net, [c]));
+assert(accepts(net, [a b c]));
+assert(accepts(net, [a c b]));
+assert(accepts(net, [c a b]));
+
+assert(accepts(nwa, [a b]));
+assert(accepts(nwa, [a b c]));
+assert(accepts(nwa, [a c b]));
+assert(accepts(nwa, [c a b]));
+
+PetriNet differenceH = difference(net, nwa, "HEURISTIC");
+assert(accepts(differenceH, [c]));
+assert(!accepts(differenceH, [a b]));
+assert(!accepts(differenceH, [a b c]));
+assert(!accepts(differenceH, [a c b]));
+assert(!accepts(differenceH, [c a b]));
+
+// a can only be synced once
+// b should be omitted
+// c should be synced only once (using inverted method)
+assert(numberOfTransitions(differenceH) == 2);
+
+// 5 places from petri net + 2 white places + 1 black place
+assert(numberOfPlaces(differenceH) == 8);
+
+
+PetriNet differenceP = difference(net, nwa, "PAIRWISE");
+assert(accepts(differenceP, [c]));
+assert(!accepts(differenceP, [a b]));
+assert(!accepts(differenceP, [a b c]));
+assert(!accepts(differenceP, [a c b]));
+assert(!accepts(differenceP, [c a b]));
+assert(numberOfTransitions(differenceP) == 2);
+assert(numberOfPlaces(differenceP) == 7);
+
+
+PetriNet differenceI = difference(net, nwa, "INVERTED");
+assert(accepts(differenceI, [c]));
+assert(!accepts(differenceI, [a b]));
+assert(!accepts(differenceI, [a b c]));
+assert(!accepts(differenceI, [a c b]));
+assert(!accepts(differenceI, [c a b]));
+assert(numberOfTransitions(differenceI) == 4);
+assert(numberOfPlaces(differenceI) == 9);
+
+
+
+
+
+
+PetriNet differencePairwiseOnDemand = differencePairwiseOnDemand(net, nwa);
+assert(numberOfTransitions(differencePairwiseOnDemand) == 2);
+assert(numberOfPlaces(differencePairwiseOnDemand) == 6);
+
+// print(difference);
+
+PetriNet net = (
+	alphabet = {a b c},
+	places = {p1 p2 p3 p4 p5},
+	transitions = {
+		({p1} a {p2})
+		({p2} b {p3})
+		({p4} c {p5})
+	},
+	initialMarking = {p1 p4},
+	acceptingPlaces = {p3 p5}
+);
+
+// automaton is not total, but missing transitions
+// are unreachable in product
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b c},
+	returnAlphabet = {},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	finalStates = {q3},
+	callTransitions = {},
+	internalTransitions = {
+		(q1 a q2) (q2 b q3)
+		(q1 c q1) (q2 c q3)
+		(q3 a q3) (q3 b q3) (q3 c q3)
+	},
+	returnTransitions = {}
+);

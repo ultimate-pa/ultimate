@@ -1,0 +1,64 @@
+// Author: musab@informatik.uni-freiburg.de
+// Date: 9.02.2013
+// Example of an .ats file
+
+// This operation parses all automata defined in the file 'nwaDefinitions01.ats' and
+// stores them internally. Thus, you can use the automata from that file, as if
+// they'd have been defined in this file. 
+// Other than automata definitions are ignored.
+parseAutomata("nwaDefinitions01.ats");
+// Declares a nested word
+NestedWord firstNW = [b b a b b b a];
+assert(accepts(a2, firstNW));
+assert(!accepts(a1, [a b c d]));
+assert(accepts(a2, [a b a b]));
+assert(accepts(a2, [a b b a]));
+assert(!accepts(a1, firstNW));
+// 'acceptsWithC' is an automaton defined in 'nwaDefinitions01.ats'
+// Acceptance should be true
+assert(accepts(acceptsWithC, [c]));
+// Acceptance should be false
+assert(!accepts(acceptsWithC, [c c]));
+// Acceptance should be false
+assert(!accepts(acceptsWithC, [c c a b c]));
+// Acceptance should be true
+assert(accepts(acceptsWithC, [a a a b c]));
+// Acceptance should be false
+assert(!accepts(acceptsWithC, [a a a b b]));
+// Acceptance should be false
+assert(!accepts(acceptsNothing, firstNW));
+
+// Following automaton was defined in fat-file 'abArchway.fat'
+
+// A nested word automaton that has no internal transitions.
+NestedWordAutomaton a1 = (
+  callAlphabet = {a b},
+  internalAlphabet = {a b},
+  returnAlphabet = {a b},
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q1},
+  callTransitions = {(q0 a q0) (q0 a q1)},
+  internalTransitions = {}, 
+  returnTransitions = {(q1 q0 b q1)}
+);
+
+// Following automaton was defined in fat-file 'abArchway.fat'
+
+// A nested word automaton, that represents a finite automaton. It accepts
+// nested words that have only internal positions. The call alphabet and the 
+// return alphabet are empty. Therefore the complement of this automaton (in 
+// our nwa implementation) accepts also only nested words that consist only of
+// internal positions.
+NestedWordAutomaton a2 = (
+  callAlphabet = {c d},
+  internalAlphabet = {a b},
+  returnAlphabet = {k i},
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = { },
+  internalTransitions = {(q0 a q1) (q1 a q0) (q0 b q0) (q1 b q1)}, 
+  returnTransitions = {}
+);
+

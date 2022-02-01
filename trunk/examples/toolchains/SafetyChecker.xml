@@ -1,0 +1,16 @@
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+	<plugin id="CFGBuilder"/>
+	<plugin id="CFG2SMT"/>
+	<plugin id="CFGReducer"/>
+	<plugin id="ErrorLocationGenerator"/>
+	<subchain>
+		<plugin id="SafetyChecker"/>
+	</subchain>
+	<plugin id="JungVisualization"/>
+
+	</toolchain>
+</rundefinition>

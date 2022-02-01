@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
+ 
+  <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+
+  <rundefinition name="Automizer">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan Sifa 13">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
+  </rundefinition>
+
+  <rundefinition name="Sifa 13">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaCInline.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
+  </rundefinition>
+
+  <tasks name="3200-nr">
+    <includesfile>../../../trunk/examples/svcomp/3200-nr.set</includesfile>
+  </tasks>
+
+</benchmark>

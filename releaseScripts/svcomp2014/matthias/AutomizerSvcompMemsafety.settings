@@ -1,0 +1,38 @@
+#Wed Nov 06 12:38:11 CET 2013
+\!/instance/JungVisualization=
+file_export_version=3.0
+/instance/JungVisualization/shapeForNodePreference=RoundRectangle
+@JungVisualization=0.0.1
+#Wed Nov 06 12:38:11 CET 2013
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Wed Nov 06 12:38:11 CET 2013
+/instance/RCFGBuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2056 -smt2 -in
+file_export_version=3.0
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@RCFGBuilder=0.0.1
+#Wed Nov 06 12:38:11 CET 2013
+file_export_version=3.0
+@TraceAbstraction=0.0.1
+/instance/TraceAbstraction/Timeout\ in\ seconds=1001
+\!/instance/TraceAbstraction=
+#Wed Nov 06 12:38:11 CET 2013
+file_export_version=3.0
+/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=info
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=info
+\!/instance/UltimateCore=
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=info
+@UltimateCore=0.0.1
+/instance/UltimateCore/Root\ Log\ Level=info
+/instance/UltimateCore/Log\ Level\ for\ Plugins=info
+#Wed Nov 06 12:38:11 CET 2013
+file_export_version=3.0
+\!/instance/UltimateGui=
+/instance/UltimateGui/LASTTOOLCHAINPATH=/mnt/storage/stalin/trunk/examples/toolchains/TraceAbstractionC.xml
+/instance/UltimateGui/LASTPATH=/mnt/storage/stalin/trunk/examples/svcomp/locks/test_locks_14_true.c
+@UltimateGui=0.0.1

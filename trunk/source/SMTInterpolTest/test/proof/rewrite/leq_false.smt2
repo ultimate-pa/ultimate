@@ -1,0 +1,25 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+(set-option :model-check-mode true)
+(set-option :print-terms-cse false)
+
+(set-logic QF_LIA)
+(declare-fun x () Int)
+
+(push 1)
+(assert (not (< (+ x (- x)) 1)))
+(check-sat)
+(get-proof)
+(pop 1)
+
+(push 1)
+(assert (not (< (+ x (- x)) 5)))
+(check-sat)
+(get-proof)
+(pop 1)
+
+(push 1)
+(assert (not (< 123456893784 23849728930783804606)))
+(check-sat)
+(get-proof)
+(pop 1)

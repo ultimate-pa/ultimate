@@ -1,0 +1,26 @@
+// revealed bug in ncsb refactoring
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2016-01-04
+
+NestedWordAutomaton cNCSB = buchiComplementNCSB(nwa);
+print(numberOfStates(cNCSB));
+// print(cNSCB);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"a" },
+	returnAlphabet = {},
+	states = {"f" "p" "s" },
+	initialStates = {"s" },
+	finalStates = {"f" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("f" "a" "p")
+		 ("p" "a" "p")
+		 ("s" "a" "f")
+		 ("s" "a" "s")
+	},
+	returnTransitions = {
+	}
+);

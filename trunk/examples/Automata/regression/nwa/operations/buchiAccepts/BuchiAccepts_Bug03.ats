@@ -1,0 +1,21 @@
+// Example where all accepting runs have accepting directly before call and
+// after corresponding return
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 14.10.2010
+
+assert(buchiAccepts(MatthiasBugOctober, [c< a > r ,c< a >r]));
+assert(buchiAccepts(MatthiasBugOctober, [ , c< a >r]));
+assert(!buchiAccepts(MatthiasBugOctober, [c< a ,  >r c< a]));
+assert(!buchiIsEmpty(MatthiasBugOctober));
+
+NestedWordAutomaton MatthiasBugOctober = (
+  callAlphabet = {c},
+  internalAlphabet = {a},
+  returnAlphabet = {r},
+  states = {q p1 p2},
+  initialStates = {q},
+  finalStates = {q},
+  callTransitions = {(q c p1)},
+  internalTransitions = {(p1 a p2)}, 
+  returnTransitions = {(p2 q r q)}
+);

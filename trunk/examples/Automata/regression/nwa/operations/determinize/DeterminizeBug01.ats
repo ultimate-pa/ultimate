@@ -1,0 +1,29 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 18.05.2013
+
+print(determinize(nwa));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"a0" },
+	internalAlphabet = {"a0" },
+	returnAlphabet = {"a0" },
+	states = {"q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" "q0" },
+	callTransitions = {
+// 		 ("q1" "a0" "q1")
+		 ("q1" "a0" "q1")
+	},
+	internalTransitions = {
+// 		 ("q2" "a1" "q2")
+// 		 ("q1" "a1" "q2")
+// 		 ("q1" "a1" "q1")
+		 ("q0" "a0" "q1")
+	},
+	returnTransitions = {
+// 		 ("q2" "q2" "a0" "q2")
+		 ("q1" "q1" "a0" "q1")
+// 		 ("q0" "q2" "a0" "q1")
+	}
+);

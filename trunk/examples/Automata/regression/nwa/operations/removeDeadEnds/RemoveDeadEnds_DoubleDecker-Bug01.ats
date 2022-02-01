@@ -1,0 +1,33 @@
+// Example showing that down states are not computed correctly
+// in r8960 using removeDeadEnds().
+// double deckers (q4,q1) (q4,q2), (q5,q1), (q5,q2) are each reachable
+// however the currect implementation removes (q4,q2) and (q5,q1) since
+// both can not reach the final state.
+// This can not be fixed by removing call transitions, since both call
+// transitions may occur on a run to the final state.
+
+// Date: 03.06.2013
+// Author: heizmann@informatik.uni-freiburg.de and Christian Schilling
+
+minimizeSevpa(removeDeadEnds(nwa));
+minimizeSevpa(reachableStatesCopy(nwa, false, false, true, false));
+print(nwa);
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { c },
+	internalAlphabet = { a b },
+	returnAlphabet = { r },
+	states = { q0 q1 q2 q3 q4 q5 qE },
+	initialStates = { q0 },
+	finalStates = { qE },
+	callTransitions = {
+		(q1 c q3) (q2 c q3)
+	},
+	internalTransitions = {
+		 (q0 a q1) (q0 b q2) (q3 a q4) (q3 b q5)
+	},
+	returnTransitions = {
+		 (q4 q1 r qE) (q5 q2 r qE)
+	}
+);

@@ -1,0 +1,34 @@
+// author nutz@informatik.uni-freiburg.de
+// prototype file for tree automata in AutomataScript
+// (and simple test file at the same time)
+// contains comments concerning the layout of the description of TreeAutomata
+
+
+TreeAutomaton ta1 = ( //We call a bottom-up tree automaton "TreeAutomaton"
+  rankedAlphabet = { //ranked alphabet entries are of the form "(<rank>, <alphabet as a set>)"
+    (0, {a b})
+    (1, {f})
+    (2, {g})
+  },
+  states = {q1 q2},
+  finalStates = {q2},
+  transitionTable = {
+    (() a q1)
+    (() b q1)
+    ((q1) f q1)
+    ((q1 q1) g q2)
+  }
+);
+
+TreeAutomaton ta2 = ( //We call a bottom-up tree automaton "TreeAutomaton"
+  alphabet = { a b f g},
+  states = {q0 q1 q2},
+  initialStates = {q0},
+  finalStates = {q2},
+  transitionTable = { //note that nullary rules are not allowed! (we have initial states for that)
+    ((q0) a q1)
+    ((q0) b q1)
+    ((q1) f q1)
+    ((q1 q1) g q2)
+  }
+);

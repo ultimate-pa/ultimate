@@ -1,0 +1,18 @@
+<project name="proj1" default="generate_ast" basedir=".">
+    <property name="astbuilderDir" location="${workspacedir}/ASTBuilder/bin"/>
+    <property name="astbuilderJar" location="${workspacedir}/JavaCup/ast-builder.jar"/>
+    <property name="cupDir" location="${workspacedir}/JavaCup/bin/"/>
+    <description>
+        Build File for Compiler Project
+    </description>
+
+    <target name="generate_ast">
+        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+                <arg value="parser.cup" />
+        </java>
+        <java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" fork="true" failonerror="true">
+            <arg value="parser.ast" />
+        </java>
+    </target>
+
+</project>

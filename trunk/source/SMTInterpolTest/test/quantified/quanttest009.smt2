@@ -1,0 +1,13 @@
+(set-option :print-success false)
+(set-info :smt-lib-version 2.6)
+(set-logic UF)
+(set-info :status unknown)
+(declare-sort U 0)
+(declare-fun f (U) U)
+(declare-fun a () U)
+(assert (forall ((x U)) (= x (f x))))
+(assert (not (= a (f a))))
+(check-sat)
+(get-proof)
+(exit)
+

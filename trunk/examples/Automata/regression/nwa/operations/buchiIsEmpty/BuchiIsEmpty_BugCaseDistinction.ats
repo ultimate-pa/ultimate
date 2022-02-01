@@ -1,0 +1,28 @@
+// Some example, cannot see its purpose any more... (Matthias)
+//
+// (Xiaolin: 
+// 1. Relates to the choice of case distinction in Reconstruction-A,
+//    bridge_A(s7,s8) = (s7,q,q,s8) where q = q but q is not accepting, 
+//    i.e., in one case both ``q = q´´ and ``q is accepting´´ should hold
+//    (but not solely ``q = q´´)
+// 2. Stem (of some accepted nested word) contains pending call
+// 3. Possibly originated from an endnote in draft-20101018-with-comments
+// )
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 18.10.2010 
+
+assert(!buchiAccepts(XiaolinBugOctober2, [ ,a a c< a >r a a]));
+assert(!buchiIsEmpty(XiaolinBugOctober2));
+
+NestedWordAutomaton XiaolinBugOctober2 = (
+  callAlphabet = {c},
+  internalAlphabet = {a},
+  returnAlphabet = {r},
+  states = {s0 s1 s2 s7 s8 p1 p2 q},
+  initialStates = {s0},
+  finalStates = {p1},
+  callTransitions = {(q c p1) (s2 c q)},
+  internalTransitions = {(p1 a p2) (s0 a s1) (s1 a s2) (s7 a s8) (s8 a s0)}, 
+  returnTransitions = {(p2 q r q) (q s2 r s7)}
+);

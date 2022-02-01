@@ -1,0 +1,40 @@
+#!/bin/sh
+if [ ! "$1" ]; then
+    echo "First argument has to be the file that we analyze"
+    exit
+fi
+java -jar ./../joogie/joogie.jar -j "$1" -b "$1".bpl >> /dev/null
+sed -i "s%type Field x;%// type Field x;%g" "$1".bpl
+sed -i "s%var \$HeapVar%// var \$HeapVar%g" "$1".bpl
+./../Ultimate/Ultimate --console ./../BuchiAutomizerJoogieWithBlockEncoding.xml "$1".bpl --settings ./../termcomp2015.epf > output.txt
+
+RESULT_NOTMEMSAFE=`cat output.txt | grep "CounterExampleResult"`
+RESULT_PROVEN_TERMINATION=`cat output.txt | grep "Buchi Automizer proved that your program is terminating"`
+RESULT_UNKNOWN_TERMINATION=`cat output.txt | grep "Buchi Automizer is unable to decide termination"`
+RESULT_FALSE_TERMINATION=`cat output.txt | grep "Nonterminating execution"`
+
+if [ "$RESULT_PROVEN_TERMINATION" ]; then
+	echo "YES"
+fi
+    
+if [ "$RESULT_FALSE_TERMINATION" ]; then
+	echo "NO"
+fi
+    
+if [ "$RESULT_UNKNOWN_TERMINATION" ]; then
+	echo "MAYBE"
+fi
+
+if [ "$RESULT_NOTMEMSAFE" ]; then
+	echo "MAYBE"
+fi
+
+echo ""
+echo "Boogie program obtained from Joogie"
+cat "$1".bpl
+
+echo ""
+cat output.txt
+
+#test if we receive output from z3
+#./../z3-4.3.2.d548c51a984e-x64-debian-6.0.6/bin/z3 -h

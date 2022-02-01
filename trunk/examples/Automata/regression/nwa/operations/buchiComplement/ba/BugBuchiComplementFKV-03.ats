@@ -1,0 +1,59 @@
+// Date: May 2014
+// Matthias Heizmann
+// revealed bugs in buchiComplementFKV (while implementing Sven Schewes 
+// optimizations)
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 7);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 13);
+
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(ba);
+print(numberOfStates(complementNCSBLazy3));
+assert(numberOfStates(complementNCSBLazy3) == 6);
+print(numberOfTransitions(complementNCSBLazy3));
+assert(numberOfTransitions(complementNCSBLazy3) == 12);
+
+NestedWordAutomaton complementNCSBLazy2 = buchiComplementNCSBLazy2(ba);
+print(numberOfStates(complementNCSBLazy2));
+assert(numberOfStates(complementNCSBLazy2) == 6);
+print(numberOfTransitions(complementNCSBLazy2));
+assert(numberOfTransitions(complementNCSBLazy2) == 12);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(ba, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 12);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 30);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(ba, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 12);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 25);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(ba, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 12);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 30);
+
+
+NestedWordAutomaton ba = (
+  callAlphabet = { },
+  internalAlphabet = { "a" "b" },
+  returnAlphabet = { },
+  states = {q r s},
+  initialStates = {q},
+  finalStates = {s},
+  callTransitions = { },
+  internalTransitions = {
+    (q "b" q)
+    (q "a" q) 
+    (q "a" r) 
+    (r "a" s)
+    (s "a" r)
+  }, 
+  returnTransitions = { }
+);

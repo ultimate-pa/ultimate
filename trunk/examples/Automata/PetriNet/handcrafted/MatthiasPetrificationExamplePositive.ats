@@ -1,0 +1,19 @@
+// Date:  2018-08-06
+
+assert(accepts(n, [a d]));
+assert(!accepts(n, []));
+
+print(finitePrefix(n));
+
+PetriNet n = (
+  alphabet = {a b c d},
+  places = {p1 p2 p3 p4 p5},
+  transitions = {
+    ({p1 p2} a {p3 p4})
+    ({p1 p3} b {p3 p4}) 
+    ({p4} c {p1}) 
+    ({p4} d {p5})
+  },
+  initialMarking = {p1 p2},
+  acceptingPlaces = {p5}
+);

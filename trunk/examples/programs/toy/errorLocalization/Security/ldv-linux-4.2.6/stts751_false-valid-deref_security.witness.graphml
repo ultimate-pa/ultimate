@@ -1,0 +1,1966 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <key attr.name="isViolationNode" attr.type="boolean" for="node" id="violation">
+  <default>false</default>
+ </key>
+ <key attr.name="isEntryNode" attr.type="boolean" for="node" id="entry">
+  <default>false</default>
+ </key>
+ <key attr.name="isSinkNode" attr.type="boolean" for="node" id="sink">
+  <default>false</default>
+ </key>
+ <key attr.name="violatedProperty" attr.type="string" for="node" id="violatedProperty"/>
+ <key attr.name="sourcecodeLanguage" attr.type="string" for="graph" id="sourcecodelang"/>
+ <key attr.name="programFile" attr.type="string" for="graph" id="programfile"/>
+ <key attr.name="programHash" attr.type="string" for="graph" id="programhash"/>
+ <key attr.name="specification" attr.type="string" for="graph" id="specification"/>
+ <key attr.name="architecture" attr.type="string" for="graph" id="architecture"/>
+ <key attr.name="producer" attr.type="string" for="graph" id="producer"/>
+ <key attr.name="creationTime" attr.type="string" for="graph" id="creationtime"/>
+ <key attr.name="sourcecode" attr.type="string" for="edge" id="sourcecode"/>
+ <key attr.name="startline" attr.type="int" for="edge" id="startline"/>
+ <key attr.name="endline" attr.type="int" for="edge" id="endline"/>
+ <key attr.name="startoffset" attr.type="int" for="edge" id="startoffset"/>
+ <key attr.name="endoffset" attr.type="int" for="edge" id="endoffset"/>
+ <key attr.name="originFileName" attr.type="string" for="edge" id="originfile">
+  <default>/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/avtg/drivers/hwmon/stts751.ko/generic:memory/weaver/.tmp_stts751.c.aux</default>
+ </key>
+ <key attr.name="control" attr.type="string" for="edge" id="control"/>
+ <key attr.name="assumption" attr.type="string" for="edge" id="assumption"/>
+ <key attr.name="assumption.scope" attr.type="string" for="edge" id="assumption.scope"/>
+ <key attr.name="enterFunction" attr.type="string" for="edge" id="enterFunction"/>
+ <key attr.name="returnFromFunction" attr.type="string" for="edge" id="returnFrom"/>
+ <key attr.name="witness-type" attr.type="string" for="graph" id="witness-type"/>
+ <key attr.name="inputWitnessHash" attr.type="string" for="graph" id="inputwitnesshash"/>
+ <graph edgedefault="directed">
+  <data key="witness-type">violation_witness</data>
+  <data key="sourcecodelang">C</data>
+  <data key="producer">CPAchecker 1.7-svn</data>
+  <data key="specification">CHECK( init(main()), LTL(G valid-deref) )</data>
+  <data key="specification">CHECK( init(main()), LTL(G valid-free) )</data>
+  <data key="specification">CHECK( init(main()), LTL(G valid-memtrack) )</data>
+  <data key="programfile">/work/temp/cil.i</data>
+  <data key="programhash">ede9d2c693ca717028ce96c4fe1317a9eb0cbb73865bbe767037175e44c4136d</data>
+  <data key="architecture">32bit</data>
+  <data key="creationtime">2018-01-31T16:03:01+03:00</data>
+  <node id="A0">
+   <data key="entry">true</data>
+  </node>
+  <node id="A817"/>
+  <edge source="A0" target="A817">
+   <data key="startline">470</data>
+   <data key="endline">470</data>
+   <data key="startoffset">273299</data>
+   <data key="endoffset">273309</data>
+   <data key="enterFunction">main</data>
+  </edge>
+  <node id="A818"/>
+  <edge source="A817" target="A818">
+   <data key="sourcecode">ldv_main_5((void *)0);</data>
+   <data key="startline">470</data>
+   <data key="endline">470</data>
+   <data key="startoffset">273340</data>
+   <data key="endoffset">273359</data>
+   <data key="enterFunction">ldv_main_5</data>
+  </edge>
+  <node id="A821"/>
+  <edge source="A818" target="A821">
+   <data key="sourcecode">ldv_dispatch_insmod_register_5_3();</data>
+   <data key="startline">269</data>
+   <data key="endline">269</data>
+   <data key="startoffset">265406</data>
+   <data key="endoffset">265439</data>
+   <data key="enterFunction">ldv_dispatch_insmod_register_5_3</data>
+  </edge>
+  <node id="A825"/>
+  <edge source="A821" target="A825">
+   <data key="sourcecode">tmp = ldv_xmalloc(4UL);</data>
+   <data key="startline">122</data>
+   <data key="endline">122</data>
+   <data key="startoffset">261338</data>
+   <data key="endoffset">261353</data>
+   <data key="enterFunction">ldv_xmalloc</data>
+  </edge>
+  <node id="A827"/>
+  <edge source="A825" target="A827">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">71</data>
+   <data key="endline">71</data>
+   <data key="startoffset">283325</data>
+   <data key="endoffset">283333</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (4UL);</data>
+   <data key="assumption.scope">ldv_xmalloc</data>
+  </edge>
+  <node id="A833"/>
+  <edge source="A827" target="A833">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">76</data>
+   <data key="endline">76</data>
+   <data key="startoffset">283533</data>
+   <data key="endoffset">283563</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A835"/>
+  <edge source="A833" target="A835">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">34</data>
+   <data key="endline">34</data>
+   <data key="startoffset">277004</data>
+   <data key="endoffset">277045</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A839"/>
+  <edge source="A835" target="A839">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">78</data>
+   <data key="endline">78</data>
+   <data key="startoffset">283626</data>
+   <data key="endoffset">283636</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_xmalloc</data>
+  </edge>
+  <node id="A842"/>
+  <edge source="A839" target="A842">
+   <data key="sourcecode">ldv_insmod_3((void *)cf_arg_3);</data>
+   <data key="startline">118</data>
+   <data key="endline">118</data>
+   <data key="startoffset">261426</data>
+   <data key="endoffset">261454</data>
+   <data key="enterFunction">ldv_insmod_3</data>
+  </edge>
+  <node id="A855"/>
+  <edge source="A842" target="A855">
+   <data key="sourcecode">ldv_free(arg0);</data>
+   <data key="startline">195</data>
+   <data key="endline">195</data>
+   <data key="startoffset">263633</data>
+   <data key="endoffset">263645</data>
+   <data key="enterFunction">ldv_free</data>
+  </edge>
+  <node id="A858"/>
+  <edge source="A855" target="A858">
+   <data key="sourcecode">return;</data>
+   <data key="startline">70</data>
+   <data key="endline">70</data>
+   <data key="startoffset">283117</data>
+   <data key="endoffset">283123</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_free</data>
+  </edge>
+  <node id="A860"/>
+  <edge source="A858" target="A860">
+   <data key="sourcecode">ldv_3_ret_default = ldv_insmod_stts751_driver_init_3_8(ldv_3_stts751_driver_init_default);</data>
+   <data key="startline">197</data>
+   <data key="endline">197</data>
+   <data key="startoffset">263681</data>
+   <data key="endoffset">263749</data>
+   <data key="enterFunction">ldv_insmod_stts751_driver_init_3_8</data>
+  </edge>
+  <node id="A863"/>
+  <edge source="A860" target="A863">
+   <data key="sourcecode">tmp = stts751_driver_init();</data>
+   <data key="startline">250</data>
+   <data key="endline">250</data>
+   <data key="startoffset">265061</data>
+   <data key="endoffset">265081</data>
+   <data key="enterFunction">stts751_driver_init</data>
+  </edge>
+  <node id="A866"/>
+  <edge source="A863" target="A866">
+   <data key="sourcecode">tmp = ldv_i2c_register_driver_19(&amp; __this_module, &amp; stts751_driver);</data>
+   <data key="startline">832</data>
+   <data key="endline">832</data>
+   <data key="startoffset">257448</data>
+   <data key="endoffset">257508</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">ldv_i2c_register_driver_19</data>
+  </edge>
+  <node id="A868"/>
+  <edge source="A866" target="A868">
+   <data key="sourcecode">int tmp ;</data>
+   <data key="startline">3</data>
+   <data key="endline">3</data>
+   <data key="startoffset">274491</data>
+   <data key="endoffset">274497</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/generic/memory.c</data>
+   <data key="assumption">(ldv_func_arg2-&gt;class) == (1U); (ldv_func_arg2-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(ldv_func_arg2-&gt;driver.probe_type)) == (0LL); ((ldv_func_arg2-&gt;id_table-&gt;name)[0]) == (115); ((ldv_func_arg2-&gt;id_table-&gt;name)[1]) == (116); ((ldv_func_arg2-&gt;id_table-&gt;name)[2]) == (116); ((ldv_func_arg2-&gt;id_table-&gt;name)[3]) == (115); ((ldv_func_arg2-&gt;id_table-&gt;name)[4]) == (55); ((ldv_func_arg2-&gt;id_table-&gt;name)[5]) == (53); ((ldv_func_arg2-&gt;id_table-&gt;name)[6]) == (49); ((ldv_func_arg2-&gt;id_table-&gt;name)[7]) == (0); ((ldv_func_arg2-&gt;id_table-&gt;name)[8]) == (0); (ldv_func_arg2-&gt;id_table-&gt;driver_data) == (0UL); (*(ldv_func_arg2-&gt;address_list)) == (72U);</data>
+   <data key="assumption.scope">ldv_i2c_register_driver_19</data>
+  </edge>
+  <node id="A869"/>
+  <edge source="A868" target="A869">
+   <data key="sourcecode">tmp = ldv_emg_i2c_register_driver(ldv_func_arg1, ldv_func_arg2);</data>
+   <data key="startline">36</data>
+   <data key="endline">36</data>
+   <data key="startoffset">274528</data>
+   <data key="endoffset">274584</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.h</data>
+   <data key="enterFunction">ldv_emg_i2c_register_driver</data>
+  </edge>
+  <node id="A871"/>
+  <edge source="A869" target="A871">
+   <data key="sourcecode">struct i2c_driver *ldv_4_i2c_driver_i2c_driver ;</data>
+   <data key="startline">135</data>
+   <data key="endline">135</data>
+   <data key="startoffset">262365</data>
+   <data key="endoffset">262410</data>
+   <data key="assumption">(arg1-&gt;class) == (1U); (arg1-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(arg1-&gt;driver.probe_type)) == (0LL); ((arg1-&gt;id_table-&gt;name)[0]) == (115); ((arg1-&gt;id_table-&gt;name)[1]) == (116); ((arg1-&gt;id_table-&gt;name)[2]) == (116); ((arg1-&gt;id_table-&gt;name)[3]) == (115); ((arg1-&gt;id_table-&gt;name)[4]) == (55); ((arg1-&gt;id_table-&gt;name)[5]) == (53); ((arg1-&gt;id_table-&gt;name)[6]) == (49); ((arg1-&gt;id_table-&gt;name)[7]) == (0); ((arg1-&gt;id_table-&gt;name)[8]) == (0); (arg1-&gt;id_table-&gt;driver_data) == (0UL); (*(arg1-&gt;address_list)) == (72U);</data>
+   <data key="assumption.scope">ldv_emg_i2c_register_driver</data>
+  </edge>
+  <node id="A877"/>
+  <edge source="A871" target="A877">
+   <data key="sourcecode">tmp___1 = ldv_undef_int();</data>
+   <data key="startline">150</data>
+   <data key="endline">150</data>
+   <data key="startoffset">262604</data>
+   <data key="endoffset">262618</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A881"/>
+  <edge source="A877" target="A881">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">287291</data>
+   <data key="endoffset">287301</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A883"/>
+  <edge source="A881" target="A883">
+   <data key="sourcecode">[tmp___1 != 0]</data>
+   <data key="startline">153</data>
+   <data key="endline">153</data>
+   <data key="startoffset">262641</data>
+   <data key="endoffset">262652</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="sink">
+   <data key="sink">true</data>
+  </node>
+  <edge source="A881" target="sink">
+   <data key="sourcecode">[!(tmp___1 != 0)]</data>
+   <data key="startline">153</data>
+   <data key="endline">153</data>
+   <data key="startoffset">262641</data>
+   <data key="endoffset">262652</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A885"/>
+  <edge source="A883" target="A885">
+   <data key="sourcecode">ldv_4_i2c_driver_i2c_driver = arg1;</data>
+   <data key="startline">161</data>
+   <data key="endline">161</data>
+   <data key="startoffset">262677</data>
+   <data key="endoffset">262710</data>
+   <data key="assumption">(ldv_4_i2c_driver_i2c_driver-&gt;class) == (1U); (ldv_4_i2c_driver_i2c_driver-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(ldv_4_i2c_driver_i2c_driver-&gt;driver.probe_type)) == (0LL); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[0]) == (115); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[1]) == (116); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[2]) == (116); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[3]) == (115); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[4]) == (55); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[5]) == (53); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[6]) == (49); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[7]) == (0); ((ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;name)[8]) == (0); (ldv_4_i2c_driver_i2c_driver-&gt;id_table-&gt;driver_data) == (0UL); (*(ldv_4_i2c_driver_i2c_driver-&gt;address_list)) == (72U);</data>
+   <data key="assumption.scope">ldv_emg_i2c_register_driver</data>
+  </edge>
+  <node id="A887"/>
+  <edge source="A885" target="A887">
+   <data key="sourcecode">ldv_dispatch_register_4_3(ldv_4_i2c_driver_i2c_driver);</data>
+   <data key="startline">163</data>
+   <data key="endline">163</data>
+   <data key="startoffset">262727</data>
+   <data key="endoffset">262779</data>
+   <data key="enterFunction">ldv_dispatch_register_4_3</data>
+  </edge>
+  <node id="A891"/>
+  <edge source="A887" target="A891">
+   <data key="sourcecode">struct ldv_struct_partially_ordered_scenario_2 *cf_arg_2 ;</data>
+   <data key="startline">123</data>
+   <data key="endline">123</data>
+   <data key="startoffset">261752</data>
+   <data key="endoffset">261807</data>
+   <data key="assumption">(arg0-&gt;class) == (1U); (arg0-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(arg0-&gt;driver.probe_type)) == (0LL); ((arg0-&gt;id_table-&gt;name)[0]) == (115); ((arg0-&gt;id_table-&gt;name)[1]) == (116); ((arg0-&gt;id_table-&gt;name)[2]) == (116); ((arg0-&gt;id_table-&gt;name)[3]) == (115); ((arg0-&gt;id_table-&gt;name)[4]) == (55); ((arg0-&gt;id_table-&gt;name)[5]) == (53); ((arg0-&gt;id_table-&gt;name)[6]) == (49); ((arg0-&gt;id_table-&gt;name)[7]) == (0); ((arg0-&gt;id_table-&gt;name)[8]) == (0); (arg0-&gt;id_table-&gt;driver_data) == (0UL); (*(arg0-&gt;address_list)) == (72U);</data>
+   <data key="assumption.scope">ldv_dispatch_register_4_3</data>
+  </edge>
+  <node id="A895"/>
+  <edge source="A891" target="A895">
+   <data key="sourcecode">tmp = ldv_xmalloc(16UL);</data>
+   <data key="startline">129</data>
+   <data key="endline">129</data>
+   <data key="startoffset">261852</data>
+   <data key="endoffset">261868</data>
+   <data key="enterFunction">ldv_xmalloc</data>
+  </edge>
+  <node id="A899"/>
+  <edge source="A895" target="A899">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">71</data>
+   <data key="endline">71</data>
+   <data key="startoffset">283325</data>
+   <data key="endoffset">283333</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (16UL);</data>
+   <data key="assumption.scope">ldv_xmalloc</data>
+  </edge>
+  <node id="A912"/>
+  <edge source="A899" target="A912">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">76</data>
+   <data key="endline">76</data>
+   <data key="startoffset">283533</data>
+   <data key="endoffset">283563</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A916"/>
+  <edge source="A912" target="A916">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">34</data>
+   <data key="endline">34</data>
+   <data key="startoffset">277004</data>
+   <data key="endoffset">277045</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A923"/>
+  <edge source="A916" target="A923">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">78</data>
+   <data key="endline">78</data>
+   <data key="startoffset">283626</data>
+   <data key="endoffset">283636</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_xmalloc</data>
+  </edge>
+  <node id="A929"/>
+  <edge source="A923" target="A929">
+   <data key="sourcecode">cf_arg_2-&gt;arg0 = arg0;</data>
+   <data key="startline">133</data>
+   <data key="endline">133</data>
+   <data key="startoffset">261961</data>
+   <data key="endoffset">261981</data>
+   <data key="assumption">(cf_arg_2-&gt;arg0-&gt;class) == (1U); (cf_arg_2-&gt;arg0-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(cf_arg_2-&gt;arg0-&gt;driver.probe_type)) == (0LL); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[0]) == (115); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[1]) == (116); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[2]) == (116); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[3]) == (115); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[4]) == (55); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[5]) == (53); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[6]) == (49); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[7]) == (0); ((cf_arg_2-&gt;arg0-&gt;id_table-&gt;name)[8]) == (0); (cf_arg_2-&gt;arg0-&gt;id_table-&gt;driver_data) == (0UL); (*(cf_arg_2-&gt;arg0-&gt;address_list)) == (72U);</data>
+   <data key="assumption.scope">ldv_dispatch_register_4_3</data>
+  </edge>
+  <node id="A931"/>
+  <edge source="A929" target="A931">
+   <data key="sourcecode">ldv_partially_ordered_scenario_2((void *)cf_arg_2);</data>
+   <data key="startline">131</data>
+   <data key="endline">131</data>
+   <data key="startoffset">261996</data>
+   <data key="endoffset">262044</data>
+   <data key="enterFunction">ldv_partially_ordered_scenario_2</data>
+  </edge>
+  <node id="A935"/>
+  <edge source="A931" target="A935">
+   <data key="sourcecode">void (*ldv_2_callback_alert)(struct i2c_client * , enum i2c_alert_protocol  , u32  ) ;</data>
+   <data key="startline">286</data>
+   <data key="endline">286</data>
+   <data key="startoffset">265871</data>
+   <data key="endoffset">265954</data>
+   <data key="assumption">(*((signed long long int *)arg0)) == (345296686719LL);</data>
+   <data key="assumption.scope">ldv_partially_ordered_scenario_2</data>
+  </edge>
+  <node id="A987"/>
+  <edge source="A935" target="A987">
+   <data key="sourcecode">data = (struct ldv_struct_partially_ordered_scenario_2 *)arg0;</data>
+   <data key="startline">287</data>
+   <data key="endline">287</data>
+   <data key="startoffset">266713</data>
+   <data key="endoffset">266773</data>
+   <data key="assumption">(data-&gt;arg0-&gt;class) == (1U); (data-&gt;arg0-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(data-&gt;arg0-&gt;driver.probe_type)) == (0LL); ((data-&gt;arg0-&gt;id_table-&gt;name)[0]) == (115); ((data-&gt;arg0-&gt;id_table-&gt;name)[1]) == (116); ((data-&gt;arg0-&gt;id_table-&gt;name)[2]) == (116); ((data-&gt;arg0-&gt;id_table-&gt;name)[3]) == (115); ((data-&gt;arg0-&gt;id_table-&gt;name)[4]) == (55); ((data-&gt;arg0-&gt;id_table-&gt;name)[5]) == (53); ((data-&gt;arg0-&gt;id_table-&gt;name)[6]) == (49); ((data-&gt;arg0-&gt;id_table-&gt;name)[7]) == (0); ((data-&gt;arg0-&gt;id_table-&gt;name)[8]) == (0); (data-&gt;arg0-&gt;id_table-&gt;driver_data) == (0UL); (*(data-&gt;arg0-&gt;address_list)) == (72U);</data>
+   <data key="assumption.scope">ldv_partially_ordered_scenario_2</data>
+  </edge>
+  <node id="A1003"/>
+  <edge source="A987" target="A1003">
+   <data key="sourcecode">ldv_2_ret_default = ldv_undef_int();</data>
+   <data key="startline">301</data>
+   <data key="endline">301</data>
+   <data key="startoffset">267758</data>
+   <data key="endoffset">267772</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A1007"/>
+  <edge source="A1003" target="A1007">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">287291</data>
+   <data key="endoffset">287301</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A1009"/>
+  <edge source="A1007" target="A1009">
+   <data key="sourcecode">[((unsigned long)data) != ((unsigned long)((struct ldv_struct_partially_ordered_scenario_2 *)0))]</data>
+   <data key="startline">308</data>
+   <data key="endline">308</data>
+   <data key="startoffset">267795</data>
+   <data key="endoffset">267887</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1007" target="sink">
+   <data key="sourcecode">[!(((unsigned long)data) != ((unsigned long)((struct ldv_struct_partially_ordered_scenario_2 *)0)))]</data>
+   <data key="startline">308</data>
+   <data key="endline">308</data>
+   <data key="startoffset">267795</data>
+   <data key="endoffset">267887</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1010"/>
+  <edge source="A1009" target="A1010">
+   <data key="sourcecode">ldv_2_container_i2c_driver = data-&gt;arg0;</data>
+   <data key="startline">311</data>
+   <data key="endline">311</data>
+   <data key="startoffset">267912</data>
+   <data key="endoffset">267950</data>
+   <data key="assumption">(ldv_2_container_i2c_driver-&gt;class) == (1U); (ldv_2_container_i2c_driver-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(ldv_2_container_i2c_driver-&gt;driver.probe_type)) == (0LL); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[0]) == (115); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[1]) == (116); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[2]) == (116); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[3]) == (115); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[4]) == (55); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[5]) == (53); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[6]) == (49); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[7]) == (0); ((ldv_2_container_i2c_driver-&gt;id_table-&gt;name)[8]) == (0); (ldv_2_container_i2c_driver-&gt;id_table-&gt;driver_data) == (0UL); (*(ldv_2_container_i2c_driver-&gt;address_list)) == (72U);</data>
+   <data key="assumption.scope">ldv_partially_ordered_scenario_2</data>
+  </edge>
+  <node id="A1011"/>
+  <edge source="A1010" target="A1011">
+   <data key="sourcecode">ldv_free((void *)data);</data>
+   <data key="startline">315</data>
+   <data key="endline">315</data>
+   <data key="startoffset">267967</data>
+   <data key="endoffset">267987</data>
+   <data key="enterFunction">ldv_free</data>
+  </edge>
+  <node id="A1014"/>
+  <edge source="A1011" target="A1014">
+   <data key="sourcecode">return;</data>
+   <data key="startline">70</data>
+   <data key="endline">70</data>
+   <data key="startoffset">283117</data>
+   <data key="endoffset">283123</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_free</data>
+  </edge>
+  <node id="A1017"/>
+  <edge source="A1014" target="A1017">
+   <data key="sourcecode">tmp___6 = ldv_xmalloc(1488UL);</data>
+   <data key="startline">318</data>
+   <data key="endline">318</data>
+   <data key="startoffset">268039</data>
+   <data key="endoffset">268057</data>
+   <data key="enterFunction">ldv_xmalloc</data>
+  </edge>
+  <node id="A1019"/>
+  <edge source="A1017" target="A1019">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">71</data>
+   <data key="endline">71</data>
+   <data key="startoffset">283325</data>
+   <data key="endoffset">283333</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (1488UL);</data>
+   <data key="assumption.scope">ldv_xmalloc</data>
+  </edge>
+  <node id="A1025"/>
+  <edge source="A1019" target="A1025">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">76</data>
+   <data key="endline">76</data>
+   <data key="startoffset">283533</data>
+   <data key="endoffset">283563</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A1027"/>
+  <edge source="A1025" target="A1027">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">34</data>
+   <data key="endline">34</data>
+   <data key="startoffset">277004</data>
+   <data key="endoffset">277045</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A1031"/>
+  <edge source="A1027" target="A1031">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">78</data>
+   <data key="endline">78</data>
+   <data key="startoffset">283626</data>
+   <data key="endoffset">283636</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_xmalloc</data>
+  </edge>
+  <node id="A1036"/>
+  <edge source="A1031" target="A1036">
+   <data key="sourcecode">tmp___9 = ldv_undef_int();</data>
+   <data key="startline">329</data>
+   <data key="endline">329</data>
+   <data key="startoffset">268220</data>
+   <data key="endoffset">268234</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A1040"/>
+  <edge source="A1036" target="A1040">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">287291</data>
+   <data key="endoffset">287301</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A1042"/>
+  <edge source="A1040" target="A1042">
+   <data key="sourcecode">[tmp___9 != 0]</data>
+   <data key="startline">333</data>
+   <data key="endline">333</data>
+   <data key="startoffset">268257</data>
+   <data key="endoffset">268268</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1040" target="sink">
+   <data key="sourcecode">[!(tmp___9 != 0)]</data>
+   <data key="startline">333</data>
+   <data key="endline">333</data>
+   <data key="startoffset">268257</data>
+   <data key="endoffset">268268</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1044"/>
+  <edge source="A1042" target="A1044">
+   <data key="sourcecode">tmp___7 = ldv_xmalloc_unknown_size(0UL);</data>
+   <data key="startline">333</data>
+   <data key="endline">333</data>
+   <data key="startoffset">268303</data>
+   <data key="endoffset">268331</data>
+   <data key="enterFunction">ldv_xmalloc_unknown_size</data>
+  </edge>
+  <node id="A1048"/>
+  <edge source="A1044" target="A1048">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">119</data>
+   <data key="endline">119</data>
+   <data key="startoffset">286092</data>
+   <data key="endoffset">286100</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (0UL);</data>
+   <data key="assumption.scope">ldv_xmalloc_unknown_size</data>
+  </edge>
+  <node id="A1060"/>
+  <edge source="A1048" target="A1060">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">37</data>
+   <data key="endline">37</data>
+   <data key="startoffset">286317</data>
+   <data key="endoffset">286347</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A1064"/>
+  <edge source="A1060" target="A1064">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">34</data>
+   <data key="endline">34</data>
+   <data key="startoffset">277004</data>
+   <data key="endoffset">277045</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A1071"/>
+  <edge source="A1064" target="A1071">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">42</data>
+   <data key="endline">42</data>
+   <data key="startoffset">286412</data>
+   <data key="endoffset">286422</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_xmalloc_unknown_size</data>
+  </edge>
+  <node id="A1079"/>
+  <edge source="A1071" target="A1079">
+   <data key="sourcecode">ldv_2_ret_default = ldv_partially_ordered_scenario_probe_2_11((s32 (*)(struct i2c_client * ,
+                                                                           struct i2c_device_id * ))ldv_2_container_i2c_driver-&gt;probe,
+                                                                  ldv_2_resource_client,
+                                                                  ldv_2_ldv_param_11_1_default);</data>
+   <data key="startline">340</data>
+   <data key="endline">343</data>
+   <data key="startoffset">268446</data>
+   <data key="endoffset">268837</data>
+   <data key="enterFunction">ldv_partially_ordered_scenario_probe_2_11</data>
+  </edge>
+  <node id="A1085"/>
+  <edge source="A1079" target="A1085">
+   <data key="sourcecode">tmp = stts751_probe(arg1, (struct i2c_device_id  const  *)arg2);</data>
+   <data key="startline">447</data>
+   <data key="endline">447</data>
+   <data key="startoffset">272573</data>
+   <data key="endoffset">272629</data>
+   <data key="enterFunction">stts751_probe</data>
+  </edge>
+  <node id="A1114"/>
+  <edge source="A1085" target="A1114">
+   <data key="sourcecode">tmp = ldv_devm_kzalloc_18(&amp; client-&gt;dev, 232UL, 20971712U);</data>
+   <data key="startline">779</data>
+   <data key="endline">779</data>
+   <data key="startoffset">253594</data>
+   <data key="endoffset">253645</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">ldv_devm_kzalloc_18</data>
+  </edge>
+  <node id="A1119"/>
+  <edge source="A1114" target="A1119">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">615</data>
+   <data key="endline">615</data>
+   <data key="startoffset">274041</data>
+   <data key="endoffset">274049</data>
+   <data key="assumption">size == (232UL); gfp == (20971712U);</data>
+   <data key="assumption.scope">ldv_devm_kzalloc_18</data>
+  </edge>
+  <node id="A1123"/>
+  <edge source="A1119" target="A1123">
+   <data key="sourcecode">tmp = ldv_calloc_unknown_size();</data>
+   <data key="startline">618</data>
+   <data key="endline">618</data>
+   <data key="startoffset">274094</data>
+   <data key="endoffset">274118</data>
+   <data key="enterFunction">ldv_calloc_unknown_size</data>
+  </edge>
+  <node id="A1138"/>
+  <edge source="A1123" target="A1138">
+   <data key="sourcecode">tmp___1 = ldv_undef_int();</data>
+   <data key="startline">103</data>
+   <data key="endline">103</data>
+   <data key="startoffset">285142</data>
+   <data key="endoffset">285156</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A1150"/>
+  <edge source="A1138" target="A1150">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">287291</data>
+   <data key="endoffset">287301</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A1156"/>
+  <edge source="A1150" target="A1156">
+   <data key="sourcecode">[tmp___1 != 0]</data>
+   <data key="startline">104</data>
+   <data key="endline">104</data>
+   <data key="startoffset">285178</data>
+   <data key="endoffset">285189</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1150" target="sink">
+   <data key="sourcecode">[!(tmp___1 != 0)]</data>
+   <data key="startline">104</data>
+   <data key="endline">104</data>
+   <data key="startoffset">285178</data>
+   <data key="endoffset">285189</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1176"/>
+  <edge source="A1156" target="A1176">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">114</data>
+   <data key="endline">114</data>
+   <data key="startoffset">285413</data>
+   <data key="endoffset">285443</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A1184"/>
+  <edge source="A1176" target="A1184">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">34</data>
+   <data key="endline">34</data>
+   <data key="startoffset">277004</data>
+   <data key="endoffset">277045</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="assumption">(*((signed long long int *)ptr)) == (0LL);</data>
+   <data key="assumption.scope">ldv_is_err</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A1195"/>
+  <edge source="A1184" target="A1195">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">111</data>
+   <data key="endline">111</data>
+   <data key="startoffset">285514</data>
+   <data key="endoffset">285524</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_calloc_unknown_size</data>
+  </edge>
+  <node id="A1201"/>
+  <edge source="A1195" target="A1201">
+   <data key="sourcecode">res = tmp;</data>
+   <data key="startline">617</data>
+   <data key="endline">617</data>
+   <data key="startoffset">274133</data>
+   <data key="endoffset">274141</data>
+   <data key="assumption">(*((signed long long int *)res)) == (0LL);</data>
+   <data key="assumption.scope">ldv_devm_kzalloc_18</data>
+  </edge>
+  <node id="A1203"/>
+  <edge source="A1201" target="A1203">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">1</data>
+   <data key="endline">1</data>
+   <data key="startoffset">274160</data>
+   <data key="endoffset">274170</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/generic/memory.c</data>
+   <data key="returnFrom">ldv_devm_kzalloc_18</data>
+  </edge>
+  <node id="A1209"/>
+  <edge source="A1203" target="A1209">
+   <data key="sourcecode">[!(((unsigned long)priv) == ((unsigned long)((struct stts751_priv *)0)))]</data>
+   <data key="startline">782</data>
+   <data key="endline">782</data>
+   <data key="startoffset">253715</data>
+   <data key="endoffset">253780</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1203" target="sink">
+   <data key="sourcecode">[((unsigned long)priv) == ((unsigned long)((struct stts751_priv *)0))]</data>
+   <data key="startline">782</data>
+   <data key="endline">782</data>
+   <data key="startoffset">253715</data>
+   <data key="endoffset">253780</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1215"/>
+  <edge source="A1209" target="A1215">
+   <data key="sourcecode">priv-&gt;notify_max = 1;</data>
+   <data key="startline">789</data>
+   <data key="endline">789</data>
+   <data key="startoffset">253880</data>
+   <data key="endoffset">253899</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;notify_max) == (1);</data>
+   <data key="assumption.scope">stts751_probe</data>
+  </edge>
+  <node id="A1217"/>
+  <edge source="A1215" target="A1217">
+   <data key="sourcecode">priv-&gt;notify_min = 1;</data>
+   <data key="startline">790</data>
+   <data key="endline">790</data>
+   <data key="startoffset">253914</data>
+   <data key="endoffset">253933</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;notify_min) == (1);</data>
+   <data key="assumption.scope">stts751_probe</data>
+  </edge>
+  <node id="A1219"/>
+  <edge source="A1217" target="A1219">
+   <data key="sourcecode">i2c_set_clientdata(client, (void *)priv);</data>
+   <data key="startline">791</data>
+   <data key="endline">791</data>
+   <data key="startoffset">253948</data>
+   <data key="endoffset">253986</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">i2c_set_clientdata</data>
+  </edge>
+  <node id="A1223"/>
+  <edge source="A1219" target="A1223">
+   <data key="sourcecode">dev_set_drvdata(&amp; dev-&gt;dev, data);</data>
+   <data key="startline">729</data>
+   <data key="endline">729</data>
+   <data key="startoffset">199418</data>
+   <data key="endoffset">199449</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/i2c.h</data>
+   <data key="assumption">(*((signed long long int *)data)) == (0LL);</data>
+   <data key="assumption.scope">i2c_set_clientdata</data>
+   <data key="enterFunction">dev_set_drvdata</data>
+  </edge>
+  <node id="A1227"/>
+  <edge source="A1223" target="A1227">
+   <data key="sourcecode">dev-&gt;driver_data = data;</data>
+   <data key="startline">93</data>
+   <data key="endline">93</data>
+   <data key="startoffset">197671</data>
+   <data key="endoffset">197693</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/property.h</data>
+   <data key="assumption">(*((signed long long int *)(dev-&gt;driver_data))) == (0LL); (*((signed long long int *)data)) == (0LL);</data>
+   <data key="assumption.scope">dev_set_drvdata</data>
+  </edge>
+  <node id="A1229"/>
+  <edge source="A1227" target="A1229">
+   <data key="sourcecode">return;</data>
+   <data key="startline">91</data>
+   <data key="endline">91</data>
+   <data key="startoffset">197709</data>
+   <data key="endoffset">197715</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/property.h</data>
+   <data key="returnFrom">dev_set_drvdata</data>
+  </edge>
+  <node id="A1233"/>
+  <edge source="A1229" target="A1233">
+   <data key="sourcecode">return;</data>
+   <data key="startline">729</data>
+   <data key="endline">729</data>
+   <data key="startoffset">199469</data>
+   <data key="endoffset">199475</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/i2c.h</data>
+   <data key="returnFrom">i2c_set_clientdata</data>
+  </edge>
+  <node id="A1241"/>
+  <edge source="A1233" target="A1241">
+   <data key="sourcecode">[((int)tmp___0) == 0]</data>
+   <data key="startline">798</data>
+   <data key="endline">798</data>
+   <data key="startoffset">254175</data>
+   <data key="endoffset">254187</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1233" target="sink">
+   <data key="sourcecode">[!(((int)tmp___0) == 0)]</data>
+   <data key="startline">798</data>
+   <data key="endline">798</data>
+   <data key="startoffset">254175</data>
+   <data key="endoffset">254187</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1241" target="sink">
+   <data key="sourcecode">[rev_id &lt; 0]</data>
+   <data key="startline">797</data>
+   <data key="endline">797</data>
+   <data key="startoffset">254621</data>
+   <data key="endoffset">254630</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1253"/>
+  <edge source="A1241" target="A1253">
+   <data key="sourcecode">[!(rev_id &lt; 0)]</data>
+   <data key="startline">797</data>
+   <data key="endline">797</data>
+   <data key="startoffset">254621</data>
+   <data key="endoffset">254630</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1253" target="sink">
+   <data key="sourcecode">[rev_id != 1]</data>
+   <data key="startline">798</data>
+   <data key="endline">798</data>
+   <data key="startoffset">254695</data>
+   <data key="endoffset">254705</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1262"/>
+  <edge source="A1253" target="A1262">
+   <data key="sourcecode">[!(rev_id != 1)]</data>
+   <data key="startline">798</data>
+   <data key="endline">798</data>
+   <data key="startoffset">254695</data>
+   <data key="endoffset">254705</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1272"/>
+  <edge source="A1262" target="A1272">
+   <data key="sourcecode">ret = stts751_read_chip_config(priv);</data>
+   <data key="startline">808</data>
+   <data key="endline">808</data>
+   <data key="startoffset">255698</data>
+   <data key="endoffset">255727</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_read_chip_config</data>
+  </edge>
+  <node id="A1283"/>
+  <edge source="A1272" target="A1283">
+   <data key="sourcecode">int ret ;</data>
+   <data key="startline">710</data>
+   <data key="endline">710</data>
+   <data key="startoffset">246120</data>
+   <data key="endoffset">246126</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;client-&gt;flags) == (65008U); (*((signed long long int *)(priv-&gt;client-&gt;dev.driver_data))) == (0LL); (priv-&gt;access_lock.owner.counter) == (1071579068L); (priv-&gt;notify_max) == (1); (priv-&gt;notify_min) == (1);</data>
+   <data key="assumption.scope">stts751_read_chip_config</data>
+  </edge>
+  <edge source="A1283" target="sink">
+   <data key="sourcecode">[ret &lt; 0]</data>
+   <data key="startline">715</data>
+   <data key="endline">715</data>
+   <data key="startoffset">246261</data>
+   <data key="endoffset">246267</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1314"/>
+  <edge source="A1283" target="A1314">
+   <data key="sourcecode">[!(ret &lt; 0)]</data>
+   <data key="startline">715</data>
+   <data key="endline">715</data>
+   <data key="startoffset">246261</data>
+   <data key="endoffset">246267</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1314" target="sink">
+   <data key="sourcecode">[ret &lt; 0]</data>
+   <data key="startline">722</data>
+   <data key="endline">722</data>
+   <data key="startoffset">246508</data>
+   <data key="endoffset">246514</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1379"/>
+  <edge source="A1314" target="A1379">
+   <data key="sourcecode">[!(ret &lt; 0)]</data>
+   <data key="startline">722</data>
+   <data key="endline">722</data>
+   <data key="startoffset">246508</data>
+   <data key="endoffset">246514</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1409"/>
+  <edge source="A1379" target="A1409">
+   <data key="sourcecode">ret = stts751_read_reg16(priv, &amp; priv-&gt;event_max, 5, 6);</data>
+   <data key="startline">727</data>
+   <data key="endline">727</data>
+   <data key="startoffset">246675</data>
+   <data key="endoffset">246723</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_read_reg16</data>
+  </edge>
+  <node id="A1427"/>
+  <edge source="A1409" target="A1427">
+   <data key="sourcecode">int integer ;</data>
+   <data key="startline">236</data>
+   <data key="endline">236</data>
+   <data key="startoffset">211543</data>
+   <data key="endoffset">211553</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;client-&gt;flags) == (32764U); (*((signed long long int *)(priv-&gt;client-&gt;dev.driver_data))) == (0LL); (priv-&gt;access_lock.owner.counter) == (1071579068L); (priv-&gt;notify_max) == (1); (priv-&gt;notify_min) == (1); hreg == (5U); lreg == (6U);</data>
+   <data key="assumption.scope">stts751_read_reg16</data>
+  </edge>
+  <edge source="A1427" target="sink">
+   <data key="sourcecode">[integer &lt; 0]</data>
+   <data key="startline">242</data>
+   <data key="endline">242</data>
+   <data key="startoffset">211702</data>
+   <data key="endoffset">211712</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1471"/>
+  <edge source="A1427" target="A1471">
+   <data key="sourcecode">[!(integer &lt; 0)]</data>
+   <data key="startline">242</data>
+   <data key="endline">242</data>
+   <data key="startoffset">211702</data>
+   <data key="endoffset">211712</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1471" target="sink">
+   <data key="sourcecode">[frac &lt; 0]</data>
+   <data key="startline">247</data>
+   <data key="endline">247</data>
+   <data key="startoffset">211889</data>
+   <data key="endoffset">211896</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1522"/>
+  <edge source="A1471" target="A1522">
+   <data key="sourcecode">[!(frac &lt; 0)]</data>
+   <data key="startline">247</data>
+   <data key="endline">247</data>
+   <data key="startoffset">211889</data>
+   <data key="endoffset">211896</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1549"/>
+  <edge source="A1522" target="A1549">
+   <data key="sourcecode">*temp = stts751_to_deg((int )((s16 )(integer &lt;&lt; 8)) | (int )((s16 )frac));</data>
+   <data key="startline">250</data>
+   <data key="endline">250</data>
+   <data key="startoffset">211970</data>
+   <data key="endoffset">212034</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_to_deg</data>
+  </edge>
+  <node id="A1569"/>
+  <edge source="A1549" target="A1569">
+   <data key="sourcecode">return (((int )hw_val * 125) / 32);</data>
+   <data key="startline">120</data>
+   <data key="endline">120</data>
+   <data key="startoffset">201673</data>
+   <data key="endoffset">201705</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_to_deg</data>
+  </edge>
+  <node id="A1590"/>
+  <edge source="A1569" target="A1590">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">252</data>
+   <data key="endline">252</data>
+   <data key="startoffset">212053</data>
+   <data key="endoffset">212061</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_read_reg16</data>
+  </edge>
+  <node id="A1613"/>
+  <edge source="A1590" target="A1613">
+   <data key="sourcecode">[!(ret != 0)]</data>
+   <data key="startline">730</data>
+   <data key="endline">730</data>
+   <data key="startoffset">246746</data>
+   <data key="endoffset">246753</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1590" target="sink">
+   <data key="sourcecode">[ret != 0]</data>
+   <data key="startline">730</data>
+   <data key="endline">730</data>
+   <data key="startoffset">246746</data>
+   <data key="endoffset">246753</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1638"/>
+  <edge source="A1613" target="A1638">
+   <data key="sourcecode">ret = stts751_read_reg16(priv, &amp; priv-&gt;event_min, 7, 8);</data>
+   <data key="startline">731</data>
+   <data key="endline">731</data>
+   <data key="startoffset">246824</data>
+   <data key="endoffset">246872</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_read_reg16</data>
+  </edge>
+  <node id="A1662"/>
+  <edge source="A1638" target="A1662">
+   <data key="sourcecode">int integer ;</data>
+   <data key="startline">236</data>
+   <data key="endline">236</data>
+   <data key="startoffset">211543</data>
+   <data key="endoffset">211553</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;client-&gt;flags) == (2780U); (*((signed long long int *)(priv-&gt;client-&gt;dev.driver_data))) == (0LL); (priv-&gt;access_lock.owner.counter) == (1071579068L); (priv-&gt;notify_max) == (1); (priv-&gt;notify_min) == (1); hreg == (7U); lreg == (8U);</data>
+   <data key="assumption.scope">stts751_read_reg16</data>
+  </edge>
+  <edge source="A1662" target="sink">
+   <data key="sourcecode">[integer &lt; 0]</data>
+   <data key="startline">242</data>
+   <data key="endline">242</data>
+   <data key="startoffset">211702</data>
+   <data key="endoffset">211712</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1719"/>
+  <edge source="A1662" target="A1719">
+   <data key="sourcecode">[!(integer &lt; 0)]</data>
+   <data key="startline">242</data>
+   <data key="endline">242</data>
+   <data key="startoffset">211702</data>
+   <data key="endoffset">211712</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1719" target="sink">
+   <data key="sourcecode">[frac &lt; 0]</data>
+   <data key="startline">247</data>
+   <data key="endline">247</data>
+   <data key="startoffset">211889</data>
+   <data key="endoffset">211896</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1778"/>
+  <edge source="A1719" target="A1778">
+   <data key="sourcecode">[!(frac &lt; 0)]</data>
+   <data key="startline">247</data>
+   <data key="endline">247</data>
+   <data key="startoffset">211889</data>
+   <data key="endoffset">211896</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1808"/>
+  <edge source="A1778" target="A1808">
+   <data key="sourcecode">*temp = stts751_to_deg((int )((s16 )(integer &lt;&lt; 8)) | (int )((s16 )frac));</data>
+   <data key="startline">250</data>
+   <data key="endline">250</data>
+   <data key="startoffset">211970</data>
+   <data key="endoffset">212034</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_to_deg</data>
+  </edge>
+  <node id="A1827"/>
+  <edge source="A1808" target="A1827">
+   <data key="sourcecode">return (((int )hw_val * 125) / 32);</data>
+   <data key="startline">120</data>
+   <data key="endline">120</data>
+   <data key="startoffset">201673</data>
+   <data key="endoffset">201705</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_to_deg</data>
+  </edge>
+  <node id="A1845"/>
+  <edge source="A1827" target="A1845">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">252</data>
+   <data key="endline">252</data>
+   <data key="startoffset">212053</data>
+   <data key="endoffset">212061</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_read_reg16</data>
+  </edge>
+  <node id="A1863"/>
+  <edge source="A1845" target="A1863">
+   <data key="sourcecode">[!(ret != 0)]</data>
+   <data key="startline">734</data>
+   <data key="endline">734</data>
+   <data key="startoffset">246895</data>
+   <data key="endoffset">246902</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1845" target="sink">
+   <data key="sourcecode">[ret != 0]</data>
+   <data key="startline">734</data>
+   <data key="endline">734</data>
+   <data key="startoffset">246895</data>
+   <data key="endoffset">246902</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1890"/>
+  <edge source="A1863" target="A1890">
+   <data key="sourcecode">ret = stts751_read_reg8(priv, &amp; priv-&gt;therm, 32);</data>
+   <data key="startline">735</data>
+   <data key="endline">735</data>
+   <data key="startoffset">246973</data>
+   <data key="endoffset">247014</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_read_reg8</data>
+  </edge>
+  <node id="A1918"/>
+  <edge source="A1890" target="A1918">
+   <data key="sourcecode">int integer ;</data>
+   <data key="startline">254</data>
+   <data key="endline">254</data>
+   <data key="startoffset">212315</data>
+   <data key="endoffset">212325</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;client-&gt;flags) == (45916U); (*((signed long long int *)(priv-&gt;client-&gt;dev.driver_data))) == (0LL); (priv-&gt;access_lock.owner.counter) == (1071579068L); (priv-&gt;notify_max) == (1); (priv-&gt;notify_min) == (1); reg == (32U);</data>
+   <data key="assumption.scope">stts751_read_reg8</data>
+  </edge>
+  <edge source="A1918" target="sink">
+   <data key="sourcecode">[integer &lt; 0]</data>
+   <data key="startline">266</data>
+   <data key="endline">266</data>
+   <data key="startoffset">212460</data>
+   <data key="endoffset">212470</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1969"/>
+  <edge source="A1918" target="A1969">
+   <data key="sourcecode">[!(integer &lt; 0)]</data>
+   <data key="startline">266</data>
+   <data key="endline">266</data>
+   <data key="startoffset">212460</data>
+   <data key="endoffset">212470</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1993"/>
+  <edge source="A1969" target="A1993">
+   <data key="sourcecode">*temp = stts751_to_deg((int )((s16 )(integer &lt;&lt; 8)));</data>
+   <data key="startline">274</data>
+   <data key="endline">274</data>
+   <data key="startoffset">212547</data>
+   <data key="endoffset">212590</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_to_deg</data>
+  </edge>
+  <node id="A2017"/>
+  <edge source="A1993" target="A2017">
+   <data key="sourcecode">return (((int )hw_val * 125) / 32);</data>
+   <data key="startline">120</data>
+   <data key="endline">120</data>
+   <data key="startoffset">201673</data>
+   <data key="endoffset">201705</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_to_deg</data>
+  </edge>
+  <node id="A2043"/>
+  <edge source="A2017" target="A2043">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">277</data>
+   <data key="endline">277</data>
+   <data key="startoffset">212609</data>
+   <data key="endoffset">212617</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_read_reg8</data>
+  </edge>
+  <node id="A2063"/>
+  <edge source="A2043" target="A2063">
+   <data key="sourcecode">[!(ret != 0)]</data>
+   <data key="startline">734</data>
+   <data key="endline">734</data>
+   <data key="startoffset">247037</data>
+   <data key="endoffset">247044</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A2043" target="sink">
+   <data key="sourcecode">[ret != 0]</data>
+   <data key="startline">734</data>
+   <data key="endline">734</data>
+   <data key="startoffset">247037</data>
+   <data key="endoffset">247044</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A2081"/>
+  <edge source="A2063" target="A2081">
+   <data key="sourcecode">ret = stts751_read_reg8(priv, &amp; tmp, 33);</data>
+   <data key="startline">741</data>
+   <data key="endline">741</data>
+   <data key="startoffset">247115</data>
+   <data key="endoffset">247148</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_read_reg8</data>
+  </edge>
+  <node id="A2099"/>
+  <edge source="A2081" target="A2099">
+   <data key="sourcecode">int integer ;</data>
+   <data key="startline">254</data>
+   <data key="endline">254</data>
+   <data key="startoffset">212315</data>
+   <data key="endoffset">212325</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;client-&gt;flags) == (56078U); (*((signed long long int *)(priv-&gt;client-&gt;dev.driver_data))) == (0LL); (priv-&gt;access_lock.owner.counter) == (1071579068L); (priv-&gt;notify_max) == (1); (priv-&gt;notify_min) == (1); reg == (33U);</data>
+   <data key="assumption.scope">stts751_read_reg8</data>
+  </edge>
+  <edge source="A2099" target="sink">
+   <data key="sourcecode">[integer &lt; 0]</data>
+   <data key="startline">266</data>
+   <data key="endline">266</data>
+   <data key="startoffset">212460</data>
+   <data key="endoffset">212470</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A2137"/>
+  <edge source="A2099" target="A2137">
+   <data key="sourcecode">[!(integer &lt; 0)]</data>
+   <data key="startline">266</data>
+   <data key="endline">266</data>
+   <data key="startoffset">212460</data>
+   <data key="endoffset">212470</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A2165"/>
+  <edge source="A2137" target="A2165">
+   <data key="sourcecode">*temp = stts751_to_deg((int )((s16 )(integer &lt;&lt; 8)));</data>
+   <data key="startline">274</data>
+   <data key="endline">274</data>
+   <data key="startoffset">212547</data>
+   <data key="endoffset">212590</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_to_deg</data>
+  </edge>
+  <node id="A2195"/>
+  <edge source="A2165" target="A2195">
+   <data key="sourcecode">return (((int )hw_val * 125) / 32);</data>
+   <data key="startline">120</data>
+   <data key="endline">120</data>
+   <data key="startoffset">201673</data>
+   <data key="endoffset">201705</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_to_deg</data>
+  </edge>
+  <node id="A2218"/>
+  <edge source="A2195" target="A2218">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">277</data>
+   <data key="endline">277</data>
+   <data key="startoffset">212609</data>
+   <data key="endoffset">212617</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_read_reg8</data>
+  </edge>
+  <node id="A2239"/>
+  <edge source="A2218" target="A2239">
+   <data key="sourcecode">[!(ret != 0)]</data>
+   <data key="startline">740</data>
+   <data key="endline">740</data>
+   <data key="startoffset">247171</data>
+   <data key="endoffset">247178</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A2218" target="sink">
+   <data key="sourcecode">[ret != 0]</data>
+   <data key="startline">740</data>
+   <data key="endline">740</data>
+   <data key="startoffset">247171</data>
+   <data key="endoffset">247178</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A2271"/>
+  <edge source="A2239" target="A2271">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">743</data>
+   <data key="endline">743</data>
+   <data key="startoffset">247283</data>
+   <data key="endoffset">247291</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_read_chip_config</data>
+  </edge>
+  <node id="A2294"/>
+  <edge source="A2271" target="A2294">
+   <data key="sourcecode">[!(ret != 0)]</data>
+   <data key="startline">811</data>
+   <data key="endline">811</data>
+   <data key="startoffset">255750</data>
+   <data key="endoffset">255757</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A2271" target="sink">
+   <data key="sourcecode">[ret != 0]</data>
+   <data key="startline">811</data>
+   <data key="endline">811</data>
+   <data key="startoffset">255750</data>
+   <data key="endoffset">255757</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A2294" target="sink">
+   <data key="sourcecode">[ret != 0]</data>
+   <data key="startline">816</data>
+   <data key="endline">816</data>
+   <data key="startoffset">255997</data>
+   <data key="endoffset">256004</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A2385"/>
+  <edge source="A2294" target="A2385">
+   <data key="sourcecode">[!(ret != 0)]</data>
+   <data key="startline">816</data>
+   <data key="endline">816</data>
+   <data key="startoffset">255997</data>
+   <data key="endoffset">256004</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A2455"/>
+  <edge source="A2385" target="A2455">
+   <data key="sourcecode">tmp___5 = PTR_ERR_OR_ZERO((void const   *)priv-&gt;dev);</data>
+   <data key="startline">832</data>
+   <data key="endline">832</data>
+   <data key="startoffset">256314</data>
+   <data key="endoffset">256355</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">PTR_ERR_OR_ZERO</data>
+  </edge>
+  <node id="A2523"/>
+  <edge source="A2455" target="A2523">
+   <data key="sourcecode">tmp___0 = IS_ERR(ptr);</data>
+   <data key="startline">375</data>
+   <data key="endline">375</data>
+   <data key="startoffset">192672</data>
+   <data key="endoffset">192682</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/hwmon.h</data>
+   <data key="enterFunction">IS_ERR</data>
+  </edge>
+  <node id="A2575"/>
+  <edge source="A2523" target="A2575">
+   <data key="sourcecode">tmp = __builtin_expect((unsigned long )ptr &gt; 0xfffffffffffff000UL, 0L);</data>
+   <data key="startline">58</data>
+   <data key="endline">58</data>
+   <data key="startoffset">192290</data>
+   <data key="endoffset">192353</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/err.h</data>
+   <data key="enterFunction">__builtin_expect</data>
+  </edge>
+  <node id="A2609"/>
+  <edge source="A2575" target="A2609">
+   <data key="sourcecode">return (exp);</data>
+   <data key="startline">29</data>
+   <data key="endline">29</data>
+   <data key="startoffset">280333</data>
+   <data key="endoffset">280343</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.h</data>
+   <data key="assumption">c == (0L);</data>
+   <data key="assumption.scope">__builtin_expect</data>
+   <data key="returnFrom">__builtin_expect</data>
+  </edge>
+  <node id="A2649"/>
+  <edge source="A2609" target="A2649">
+   <data key="sourcecode">return (tmp != 0L);</data>
+   <data key="startline">59</data>
+   <data key="endline">59</data>
+   <data key="startoffset">192371</data>
+   <data key="endoffset">192387</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/err.h</data>
+   <data key="returnFrom">IS_ERR</data>
+  </edge>
+  <node id="A2683"/>
+  <edge source="A2649" target="A2683">
+   <data key="sourcecode">[((int)tmp___0) == 0]</data>
+   <data key="startline">0</data>
+   <data key="endline">35</data>
+   <data key="startoffset">0</data>
+   <data key="endoffset">192716</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/export.h</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A2649" target="sink">
+   <data key="sourcecode">[!(((int)tmp___0) == 0)]</data>
+   <data key="startline">0</data>
+   <data key="endline">35</data>
+   <data key="startoffset">0</data>
+   <data key="endoffset">192716</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/export.h</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A2701"/>
+  <edge source="A2683" target="A2701">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">43</data>
+   <data key="endline">43</data>
+   <data key="startoffset">192823</data>
+   <data key="endoffset">192831</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/jump_label.h</data>
+   <data key="returnFrom">PTR_ERR_OR_ZERO</data>
+  </edge>
+  <node id="A2740"/>
+  <edge source="A2701" target="A2740">
+   <data key="sourcecode">return (tmp___5);</data>
+   <data key="startline">835</data>
+   <data key="endline">835</data>
+   <data key="startoffset">256374</data>
+   <data key="endoffset">256388</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="returnFrom">stts751_probe</data>
+  </edge>
+  <node id="A2782"/>
+  <edge source="A2740" target="A2782">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">450</data>
+   <data key="endline">450</data>
+   <data key="startoffset">272648</data>
+   <data key="endoffset">272658</data>
+   <data key="returnFrom">ldv_partially_ordered_scenario_probe_2_11</data>
+  </edge>
+  <node id="A2824"/>
+  <edge source="A2782" target="A2824">
+   <data key="sourcecode">ldv_2_ret_default = ldv_filter_err_code(ldv_2_ret_default);</data>
+   <data key="startline">345</data>
+   <data key="endline">345</data>
+   <data key="startoffset">268874</data>
+   <data key="endoffset">268911</data>
+   <data key="enterFunction">ldv_filter_err_code</data>
+  </edge>
+  <node id="A2868"/>
+  <edge source="A2824" target="A2868">
+   <data key="sourcecode">int tmp ;</data>
+   <data key="startline">30</data>
+   <data key="endline">30</data>
+   <data key="startoffset">279431</data>
+   <data key="endoffset">279437</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/mm/kzalloc.c</data>
+   <data key="assumption">ret_val == (0);</data>
+   <data key="assumption.scope">ldv_filter_err_code</data>
+  </edge>
+  <node id="A2892"/>
+  <edge source="A2868" target="A2892">
+   <data key="sourcecode">tmp = ldv_filter_positive_int(ret_val);</data>
+   <data key="startline">30</data>
+   <data key="endline">30</data>
+   <data key="startoffset">279467</data>
+   <data key="endoffset">279498</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/mm/kzalloc.c</data>
+   <data key="enterFunction">ldv_filter_positive_int</data>
+  </edge>
+  <node id="A2933"/>
+  <edge source="A2892" target="A2933">
+   <data key="sourcecode">[__VERIFIER_assume(val &lt;= 0);]</data>
+   <data key="startline">34</data>
+   <data key="endline">34</data>
+   <data key="startoffset">278543</data>
+   <data key="endoffset">278570</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/ldv/common.c</data>
+   <data key="assumption">val == (0);</data>
+   <data key="assumption.scope">ldv_filter_positive_int</data>
+  </edge>
+  <node id="A2956"/>
+  <edge source="A2933" target="A2956">
+   <data key="sourcecode">return (val);</data>
+   <data key="startline">37</data>
+   <data key="endline">37</data>
+   <data key="startoffset">278587</data>
+   <data key="endoffset">278597</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/ldv/common.c</data>
+   <data key="returnFrom">ldv_filter_positive_int</data>
+  </edge>
+  <node id="A3005"/>
+  <edge source="A2956" target="A3005">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">32</data>
+   <data key="endline">32</data>
+   <data key="startoffset">279516</data>
+   <data key="endoffset">279526</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/mm/kzalloc.c</data>
+   <data key="returnFrom">ldv_filter_err_code</data>
+  </edge>
+  <node id="A3066"/>
+  <edge source="A3005" target="A3066">
+   <data key="sourcecode">ldv_free((void *)ldv_2_ldv_param_11_1_default);</data>
+   <data key="startline">351</data>
+   <data key="endline">351</data>
+   <data key="startoffset">268928</data>
+   <data key="endoffset">268972</data>
+   <data key="enterFunction">ldv_free</data>
+  </edge>
+  <node id="A3154"/>
+  <edge source="A3066" target="A3154">
+   <data key="sourcecode">return;</data>
+   <data key="startline">70</data>
+   <data key="endline">70</data>
+   <data key="startoffset">283117</data>
+   <data key="endoffset">283123</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_free</data>
+  </edge>
+  <node id="A3219"/>
+  <edge source="A3154" target="A3219">
+   <data key="sourcecode">tmp___8 = ldv_undef_int();</data>
+   <data key="startline">353</data>
+   <data key="endline">353</data>
+   <data key="startoffset">269000</data>
+   <data key="endoffset">269014</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A3341"/>
+  <edge source="A3219" target="A3341">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">287291</data>
+   <data key="endoffset">287301</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A3400"/>
+  <edge source="A3341" target="A3400">
+   <data key="sourcecode">[tmp___8 != 0]</data>
+   <data key="startline">356</data>
+   <data key="endline">356</data>
+   <data key="startoffset">269041</data>
+   <data key="endoffset">269052</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A3341" target="sink">
+   <data key="sourcecode">[!(tmp___8 != 0)]</data>
+   <data key="startline">356</data>
+   <data key="endline">356</data>
+   <data key="startoffset">269041</data>
+   <data key="endoffset">269052</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A3527"/>
+  <edge source="A3400" target="A3527">
+   <data key="sourcecode">tmp___13 = ldv_undef_int();</data>
+   <data key="startline">388</data>
+   <data key="endline">388</data>
+   <data key="startoffset">269458</data>
+   <data key="endoffset">269472</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A3643"/>
+  <edge source="A3527" target="A3643">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">287291</data>
+   <data key="endoffset">287301</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <edge source="A3643" target="sink">
+   <data key="sourcecode">[tmp___13 != 0]</data>
+   <data key="startline">389</data>
+   <data key="endline">389</data>
+   <data key="startoffset">269495</data>
+   <data key="endoffset">269507</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A3710"/>
+  <edge source="A3643" target="A3710">
+   <data key="sourcecode">[!(tmp___13 != 0)]</data>
+   <data key="startline">389</data>
+   <data key="endline">389</data>
+   <data key="startoffset">269495</data>
+   <data key="endoffset">269507</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A3744"/>
+  <edge source="A3710" target="A3744">
+   <data key="sourcecode">tmp___10 = ldv_xmalloc_unknown_size(0UL);</data>
+   <data key="startline">404</data>
+   <data key="endline">404</data>
+   <data key="startoffset">269915</data>
+   <data key="endoffset">269943</data>
+   <data key="enterFunction">ldv_xmalloc_unknown_size</data>
+  </edge>
+  <node id="A3812"/>
+  <edge source="A3744" target="A3812">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">119</data>
+   <data key="endline">119</data>
+   <data key="startoffset">286092</data>
+   <data key="endoffset">286100</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (0UL);</data>
+   <data key="assumption.scope">ldv_xmalloc_unknown_size</data>
+  </edge>
+  <node id="A4005"/>
+  <edge source="A3812" target="A4005">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">37</data>
+   <data key="endline">37</data>
+   <data key="startoffset">286317</data>
+   <data key="endoffset">286347</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A4068"/>
+  <edge source="A4005" target="A4068">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">34</data>
+   <data key="endline">34</data>
+   <data key="startoffset">277004</data>
+   <data key="endoffset">277045</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A4157"/>
+  <edge source="A4068" target="A4157">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">42</data>
+   <data key="endline">42</data>
+   <data key="startoffset">286412</data>
+   <data key="endoffset">286422</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_xmalloc_unknown_size</data>
+  </edge>
+  <node id="A4249"/>
+  <edge source="A4157" target="A4249">
+   <data key="sourcecode">tmp___12 = ldv_undef_int();</data>
+   <data key="startline">410</data>
+   <data key="endline">410</data>
+   <data key="startoffset">270052</data>
+   <data key="endoffset">270066</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A4388"/>
+  <edge source="A4249" target="A4388">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">287291</data>
+   <data key="endoffset">287301</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <edge source="A4388" target="sink">
+   <data key="sourcecode">[tmp___12 != 0]</data>
+   <data key="startline">413</data>
+   <data key="endline">413</data>
+   <data key="startoffset">270093</data>
+   <data key="endoffset">270105</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A4454"/>
+  <edge source="A4388" target="A4454">
+   <data key="sourcecode">[!(tmp___12 != 0)]</data>
+   <data key="startline">413</data>
+   <data key="endline">413</data>
+   <data key="startoffset">270093</data>
+   <data key="endoffset">270105</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A4487"/>
+  <edge source="A4454" target="A4487">
+   <data key="sourcecode">ldv_partially_ordered_scenario_callback_2_4(ldv_2_callback_alert, ldv_2_resource_client,
+                                                  ldv_2_ldv_param_4_1_default, ldv_2_ldv_param_4_2_default);</data>
+   <data key="startline">432</data>
+   <data key="endline">433</data>
+   <data key="startoffset">270556</data>
+   <data key="endoffset">270750</data>
+   <data key="enterFunction">ldv_partially_ordered_scenario_callback_2_4</data>
+  </edge>
+  <node id="A4553"/>
+  <edge source="A4487" target="A4553">
+   <data key="sourcecode">stts751_alert(arg1, *arg2, arg3);</data>
+   <data key="startline">441</data>
+   <data key="endline">441</data>
+   <data key="startoffset">272057</data>
+   <data key="endoffset">272087</data>
+   <data key="assumption">(arg1-&gt;flags) == (63446U); ((arg1-&gt;name)[0]) == (-73); (*((unsigned long long int *)(arg1-&gt;dev.driver_data))) == (126162920106290876627492218616645795628495979276878230814063ULL);</data>
+   <data key="assumption.scope">ldv_partially_ordered_scenario_callback_2_4</data>
+   <data key="enterFunction">stts751_alert</data>
+  </edge>
+  <node id="A4624"/>
+  <edge source="A4553" target="A4624">
+   <data key="sourcecode">int ret ;</data>
+   <data key="startline">319</data>
+   <data key="endline">319</data>
+   <data key="startoffset">217482</data>
+   <data key="endoffset">217488</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(client-&gt;flags) == (63446U); ((client-&gt;name)[0]) == (-73); (*((unsigned long long int *)(client-&gt;dev.driver_data))) == (126162920106290876627492218616645795628495979276878230814063ULL);</data>
+   <data key="assumption.scope">stts751_alert</data>
+  </edge>
+  <node id="A4843"/>
+  <edge source="A4624" target="A4843">
+   <data key="sourcecode">tmp = i2c_get_clientdata((struct i2c_client  const  *)client);</data>
+   <data key="startline">322</data>
+   <data key="endline">322</data>
+   <data key="startoffset">217642</data>
+   <data key="endoffset">217696</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">i2c_get_clientdata</data>
+  </edge>
+  <node id="A4911"/>
+  <edge source="A4843" target="A4911">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">275</data>
+   <data key="endline">275</data>
+   <data key="startoffset">199054</data>
+   <data key="endoffset">199062</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/i2c.h</data>
+   <data key="assumption">(dev-&gt;flags) == (63446U); ((dev-&gt;name)[0]) == (-73); (*((unsigned long long int *)(dev-&gt;dev.driver_data))) == (126162920106290876627492218616645795628495979276878230814063ULL);</data>
+   <data key="assumption.scope">i2c_get_clientdata</data>
+  </edge>
+  <node id="A4947"/>
+  <edge source="A4911" target="A4947">
+   <data key="sourcecode">tmp = dev_get_drvdata(&amp; dev-&gt;dev);</data>
+   <data key="startline">273</data>
+   <data key="endline">273</data>
+   <data key="startoffset">199093</data>
+   <data key="endoffset">199119</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/i2c.h</data>
+   <data key="enterFunction">dev_get_drvdata</data>
+  </edge>
+  <node id="A5052"/>
+  <edge source="A4947" target="A5052">
+   <data key="sourcecode">return ((void *)dev-&gt;driver_data);</data>
+   <data key="startline">1264</data>
+   <data key="endline">1264</data>
+   <data key="startoffset">197376</data>
+   <data key="endoffset">197407</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/device.h</data>
+   <data key="assumption">(*((unsigned long long int *)(dev-&gt;driver_data))) == (126162920106290876627492218616645795628495979276878230814063ULL);</data>
+   <data key="assumption.scope">dev_get_drvdata</data>
+   <data key="returnFrom">dev_get_drvdata</data>
+  </edge>
+  <node id="A5110"/>
+  <edge source="A5052" target="A5110">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">704</data>
+   <data key="endline">704</data>
+   <data key="startoffset">199138</data>
+   <data key="endoffset">199148</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/i2c.h</data>
+   <data key="returnFrom">i2c_get_clientdata</data>
+  </edge>
+  <node id="A5168"/>
+  <edge source="A5110" target="A5168">
+   <data key="sourcecode">priv = (struct stts751_priv *)tmp;</data>
+   <data key="startline">322</data>
+   <data key="endline">322</data>
+   <data key="startoffset">217711</data>
+   <data key="endoffset">217743</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;client-&gt;flags) == (63446U); ((priv-&gt;client-&gt;name)[0]) == (-73); (*((unsigned long long int *)(priv-&gt;client-&gt;dev.driver_data))) == (126162920106290876627492218616645795628495979276878230814063ULL); (priv-&gt;access_lock.owner.counter) == (1071579068L); (priv-&gt;notify_max) == (1); (priv-&gt;notify_min) == (1);</data>
+   <data key="assumption.scope">stts751_alert</data>
+  </edge>
+  <edge source="A5168" target="sink">
+   <data key="sourcecode">[((unsigned int)type) != 0U]</data>
+   <data key="startline">321</data>
+   <data key="endline">321</data>
+   <data key="startoffset">217766</data>
+   <data key="endoffset">217790</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A5200"/>
+  <edge source="A5168" target="A5200">
+   <data key="sourcecode">[!(((unsigned int)type) != 0U)]</data>
+   <data key="startline">321</data>
+   <data key="endline">321</data>
+   <data key="startoffset">217766</data>
+   <data key="endoffset">217790</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A5388"/>
+  <edge source="A5200" target="A5388">
+   <data key="sourcecode">descriptor.lineno = 321U;</data>
+   <data key="startline">323</data>
+   <data key="endline">323</data>
+   <data key="startoffset">218047</data>
+   <data key="endoffset">218070</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">((unsigned int)(descriptor.lineno)) == (321U);</data>
+   <data key="assumption.scope">stts751_alert</data>
+  </edge>
+  <node id="A5420"/>
+  <edge source="A5388" target="A5420">
+   <data key="sourcecode">descriptor.flags = 1U;</data>
+   <data key="startline">322</data>
+   <data key="endline">322</data>
+   <data key="startoffset">218085</data>
+   <data key="endoffset">218105</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">((unsigned int)(descriptor.flags)) == (1U);</data>
+   <data key="assumption.scope">stts751_alert</data>
+  </edge>
+  <node id="A5453"/>
+  <edge source="A5420" target="A5453">
+   <data key="sourcecode">descriptor.key.dd_key_true.key.enabled.counter = 1;</data>
+   <data key="startline">322</data>
+   <data key="endline">322</data>
+   <data key="startoffset">218120</data>
+   <data key="endoffset">218169</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(descriptor.key.dd_key_true.key.enabled.counter) == (1);</data>
+   <data key="assumption.scope">stts751_alert</data>
+  </edge>
+  <node id="A5519"/>
+  <edge source="A5453" target="A5519">
+   <data key="sourcecode">tmp___0 = arch_static_branch(&amp; descriptor.key.dd_key_true.key, 1);</data>
+   <data key="startline">323</data>
+   <data key="endline">323</data>
+   <data key="startoffset">218289</data>
+   <data key="endoffset">218343</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">arch_static_branch</data>
+  </edge>
+  <node id="A5623"/>
+  <edge source="A5519" target="A5623">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">305</data>
+   <data key="endline">305</data>
+   <data key="startoffset">193713</data>
+   <data key="endoffset">193721</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/kernel.h</data>
+   <data key="assumption">(key-&gt;enabled.counter) == (1); branch == (1);</data>
+   <data key="assumption.scope">arch_static_branch</data>
+   <data key="returnFrom">arch_static_branch</data>
+  </edge>
+  <node id="A5694"/>
+  <edge source="A5623" target="A5694">
+   <data key="sourcecode">[!(((int)tmp___0) != 0)]</data>
+   <data key="startline">326</data>
+   <data key="endline">326</data>
+   <data key="startoffset">218366</data>
+   <data key="endoffset">218383</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A5623" target="sink">
+   <data key="sourcecode">[((int)tmp___0) != 0]</data>
+   <data key="startline">326</data>
+   <data key="endline">326</data>
+   <data key="startoffset">218366</data>
+   <data key="endoffset">218383</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A5728"/>
+  <edge source="A5694" target="A5728">
+   <data key="sourcecode">tmp___1 = 1;</data>
+   <data key="startline">325</data>
+   <data key="endline">325</data>
+   <data key="startoffset">218440</data>
+   <data key="endoffset">218450</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">tmp___1 == (1);</data>
+   <data key="assumption.scope">stts751_alert</data>
+  </edge>
+  <node id="A5796"/>
+  <edge source="A5728" target="A5796">
+   <data key="sourcecode">branch = (bool )tmp___1;</data>
+   <data key="startline">326</data>
+   <data key="endline">326</data>
+   <data key="startoffset">218469</data>
+   <data key="endoffset">218491</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">branch == (1);</data>
+   <data key="assumption.scope">stts751_alert</data>
+  </edge>
+  <node id="A5834"/>
+  <edge source="A5796" target="A5834">
+   <data key="sourcecode">[!(((int)branch) == 0)]</data>
+   <data key="startline">327</data>
+   <data key="endline">327</data>
+   <data key="startoffset">218510</data>
+   <data key="endoffset">218521</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A5796" target="sink">
+   <data key="sourcecode">[((int)branch) == 0]</data>
+   <data key="startline">327</data>
+   <data key="endline">327</data>
+   <data key="startoffset">218510</data>
+   <data key="endoffset">218521</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A5987"/>
+  <edge source="A5834" target="A5987">
+   <data key="sourcecode">ret = stts751_update_alert(priv);</data>
+   <data key="startline">335</data>
+   <data key="endline">335</data>
+   <data key="startoffset">218731</data>
+   <data key="endoffset">218756</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">stts751_update_alert</data>
+  </edge>
+  <node id="A6068"/>
+  <edge source="A5987" target="A6068">
+   <data key="sourcecode">int ret ;</data>
+   <data key="startline">283</data>
+   <data key="endline">283</data>
+   <data key="startoffset">212853</data>
+   <data key="endoffset">212859</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="assumption">(priv-&gt;client-&gt;flags) == (63446U); ((priv-&gt;client-&gt;name)[0]) == (-73); (*((unsigned long long int *)(priv-&gt;client-&gt;dev.driver_data))) == (126162920106290876627492218616645795628495979276878230814063ULL); (priv-&gt;access_lock.owner.counter) == (-2147396453L); (priv-&gt;notify_max) == (1); (priv-&gt;notify_min) == (1);</data>
+   <data key="assumption.scope">stts751_update_alert</data>
+  </edge>
+  <node id="A6709">
+   <data key="violation">true</data>
+   <data key="violatedProperty">valid-deref: invalid pointer dereference in /home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c, line 280</data>
+  </node>
+  <edge source="A6068" target="A6709">
+   <data key="sourcecode">tmp = msecs_to_jiffies((unsigned int const   )stts751_intervals[(int )priv-&gt;interval]);</data>
+   <data key="startline">280</data>
+   <data key="endline">280</data>
+   <data key="startoffset">213229</data>
+   <data key="endoffset">213308</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/hwmon/stts751.c</data>
+   <data key="enterFunction">msecs_to_jiffies</data>
+  </edge>
+ </graph>
+</graphml>

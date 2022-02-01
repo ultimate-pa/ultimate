@@ -1,0 +1,6 @@
+#Fri Nov 29 10:32:45 CET 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/MSOD\ logic=MSODNatWeak
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/SmtParser\ Mode=MSODSolver
+@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.25
+file_export_version=3.0

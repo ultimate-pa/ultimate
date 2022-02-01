@@ -1,0 +1,270 @@
+# Copyright (c) 2015 Daniel Liew <dan@su-root.co.uk>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# Compiler to use unless overriden
+
+.PHONY: all build_at_level clean
+
+CURRENT_DIR := $(shell pwd)
+ROOT_DIR := $(shell cd $(LEVEL) ; pwd)
+BUILD_ROOT := $(ROOT_DIR)/$(BUILD_DIR)
+LOCAL_BUILD_DIR_SUFFIX := $(patsubst /%,%,$(subst $(ROOT_DIR),,$(CURRENT_DIR)))
+LOCAL_BUILD_DIR := $(BUILD_ROOT)/$(LOCAL_BUILD_DIR_SUFFIX)
+DEPTH := $(words $(subst ./, ,$(LEVEL)))
+DEPTH_PLUS_ONE := $(shell echo $$(( $(DEPTH) + 1)))
+DEPTH_PLUS_ONE_PLUS_ONE := $(shell echo $$(( $(DEPTH_PLUS_ONE) + 1)))
+
+# Used as a function to call. It takes a list of paths
+# and returns a list containing only the paths referring to files/dirs
+# at the current level
+only_at_depth = $(foreach path,$(1),\
+                          $(strip \
+                            $(if $(word $(DEPTH_PLUS_ONE_PLUS_ONE),$(subst /, ,$(path))),,\
+                                 $(word $(DEPTH_PLUS_ONE),$(subst /, ,$(path))) \
+                             ) \
+                           ) \
+                 )
+
+# Used as a functionc call. It takes a list of paths and returns a list
+# referring to files/dirs at the current level or deeper.
+at_depth_or_deeper = $(foreach path,$(1),$(word $(DEPTH_PLUS_ONE),$(subst /, ,$(path))))
+
+# Any changes to the files listed here will trigger a rebuild of the sources
+ADDITIONAL_BUILD_DEPS := $(CURRENT_DIR)/Makefile \
+                         $(ROOT_DIR)/Makefile.config \
+                         $(ROOT_DIR)/Makefile.rules
+
+# Handle VERBOSE
+VERBOSE ?= 0
+ifneq ($(VERBOSE),0)
+  Verb :=
+else
+  Verb := @
+endif
+
+ifdef SET_FILES
+  $(warning Using Set files ($(SET_FILES)).)
+  DIRS :=
+  # Open all the set files we were asked to use, strip any comment lines and return
+  # a list of wildcard patterns
+  _SET_FILE_WILDCARDS := $(foreach set_file,$(SET_FILES),$(shell sed '/^\#/d' $(ROOT_DIR)/$(set_file)))
+  ifeq ($(strip $(LOCAL_BUILD_DIR_SUFFIX)),)
+    # At the root directory everything path is relevant
+    RELEVANT_PATHS := $(_SET_FILE_WILDCARDS)
+  else
+    # Filter only paths relevent to current build directory
+    # Note we assume wildcard patterns only appear in a filename and NEVER in
+    # a directory name!
+    RELEVANT_PATHS := $(filter $(LOCAL_BUILD_DIR_SUFFIX)/%,$(_SET_FILE_WILDCARDS))
+  endif
+  # Note sort also removes duplicates
+  DIRS := $(sort $(foreach wildcard_pattern,$(RELEVANT_PATHS),$(dir $(wildcard_pattern))))
+  # Need to only visit directories at the current level or deeper
+  DIRS := $(call at_depth_or_deeper,$(DIRS))
+  # Only need sources at the current level
+  RELEVANT_SRCS := $(call only_at_depth,$(RELEVANT_PATHS))
+else
+  # Find all directories in the current directory.
+  # Note sort is to remove duplicates.
+  DIRS := $(sort $(dir $(wildcard ./*/)))
+  # Filter out current directory
+  DIRS := $(filter-out ./,$(DIRS))
+  # Filter out the build directory
+  DIRS := $(filter-out ./$(BUILD_DIR)/,$(DIRS))
+  # Remove directories we are told not to traverse.
+  ifdef IGNORE_DIRS
+    DIRS := $(filter-out $(IGNORE_DIRS), $(DIRS))
+  endif
+endif
+
+# all Directory Recursion target
+all::
+	$(Verb) for dir in $(DIRS); do \
+		if [ $(REPORT_CC_FILE) -eq 2 ]; then \
+			echo "make[$$((( $(MAKELEVEL) + 1)))]: Entering directory '$$dir'"; \
+			($(MAKE) --no-print-directory -C $$dir $@ ) || exit 1; \
+			echo "" ;\
+			echo "make[$$((( $(MAKELEVEL) + 1)))]: Leaving directory '$$dir'"; \
+		else \
+			($(MAKE) -C $$dir $@ ) || exit 1; \
+		fi; \
+	done
+
+# clean Directory Recursion target
+clean::
+	@echo "Cleaning $(CURRENT_DIR)"
+	$(Verb) for dir in $(DIRS); do \
+		($(MAKE) -C $$dir $@ ) || exit 1; \
+	done
+	$(Verb) if [ -d $(LOCAL_BUILD_DIR) ]; then \
+		$(RM) -r $(LOCAL_BUILD_DIR) ;\
+	fi
+
+# Detect Compiler
+# FIXME: Not sure $(GREP) accepts these flags on OSX
+CC_COMPILER_OUTPUT :=$(shell $(CC) -E $(ROOT_DIR)/Makefile-detect-compiler.c -o -)
+CC_IS_GCC:=$(shell echo '$(CC_COMPILER_OUTPUT)' | $(GREP) -c SVCOMP_C_COMPILER_IS_GCC)
+CC_IS_CLANG:=$(shell echo '$(CC_COMPILER_OUTPUT)' | $(GREP) -c SVCOMP_C_COMPILER_IS_CLANG)
+
+################################################################################
+# Begin ifndef SKIP_LEVEL
+################################################################################
+ifndef SKIP_LEVEL
+all:: build_at_level
+
+ifeq ($(SUPPRESS_WARNINGS),0)
+  CC.Warnings := $(DEFAULT_COMMON_WARNINGS) $(COMMON_WARNINGS)
+
+  ifeq ($(CC_IS_GCC),1)
+    CC.Warnings += $(DEFAULT_GCC_WARNINGS) $(GCC_WARNINGS)
+  else ifeq ($(CC_IS_CLANG),1)
+    CC.Warnings += $(DEFAULT_CLANG_WARNINGS) $(CLANG_WARNINGS)
+  else
+    $(error Compiler "$(CC)" was not identified as gcc or clang)
+  endif
+else
+  # Suppress all warnings
+  CC.Warnings := -w
+endif
+
+CC.Flags += -std=$(CC.Standard) \
+            -m$(CC.Arch) \
+            $(CC.Warnings)
+
+
+# Handle emission of LLVM Bitcode rather than native code
+ifneq ($(EMIT_LLVM),0)
+  ifneq ($(CC_IS_CLANG),1)
+    $(error To use EMIT_LLVM you must build with Clang)
+  endif
+  # Can't use -fsyntax-only as need to emit code
+  CC.Flags += -emit-llvm
+else
+  ifneq ($(SYNTAX_ONLY),0)
+    CC.Flags += -fsyntax-only
+  endif
+endif
+
+ifndef SET_FILES
+  # Get all the source files in the current directory
+  C_SRCS := $(wildcard *.c)
+  I_SRCS := $(wildcard *.i)
+else
+  # Use set files to determine which files will be built in this directory
+  C_SRCS := $(filter %.c,$(wildcard $(RELEVANT_SRCS)))
+  I_SRCS := $(filter %.i,$(wildcard $(RELEVANT_SRCS)))
+endif
+
+# Remove sources we are told to not compile
+ifdef IGNORE_SRCS
+  C_SRCS := $(filter-out $(IGNORE_SRCS), $(C_SRCS))
+  I_SRCS := $(filter-out $(IGNORE_SRCS), $(I_SRCS))
+endif
+
+# Note these are set before PREFER_I_FILES are handled so
+# that the alias for ``foo.oc`` and ``foo.oi`` are available
+# regardless of the value of ``PREFER_I_FILES``.
+C_OBJS_NO_PREFIX := $(patsubst %.c,%.oc,$(C_SRCS))
+I_OBJS_NO_PREFIX := $(patsubst %.i,%.oi,$(I_SRCS))
+
+# Determine the sources that exist both as an ``*.i`` file and ``*.c`` file.
+# The suffix is removed
+C_I_COMMON_SRCS := $(patsubst %.i,%,$(filter $(C_SRCS:.c=.i),$(I_SRCS)))
+ifneq ($(PREFER_I_FILES),0)
+  # Filter out the *.c files that also exist as *.i files
+  C_SRCS := $(filter-out $(addsuffix .c,$(C_I_COMMON_SRCS)),$(C_SRCS))
+else
+  # Filter out the *.i files that also exist as *.c files
+  I_SRCS := $(filter-out $(addsuffix .i,$(C_I_COMMON_SRCS)),$(I_SRCS))
+endif
+
+# Note that the object files from ``*.c`` files and ``*.i`` files need a
+# different suffix so that the alias rule we add later to allow a single target
+# to built from inside a directory (e.g. ``make foo.oc``) can unambiguously
+# pick the right source file. If it was ``make foo.o`` the would be an
+# ambiguity between ``foo.c`` and ``foo.i`` as the source file.
+C_OBJS := $(addprefix $(LOCAL_BUILD_DIR)/,$(patsubst %.c,%.oc,$(C_SRCS)))
+I_OBJS := $(addprefix $(LOCAL_BUILD_DIR)/,$(patsubst %.i,%.oi,$(I_SRCS)))
+
+build_at_level: $(C_OBJS) $(I_OBJS)
+
+# Include the Compiler generated dependency files if they exist
+-include $(C_OBJS:.oc=.dc)
+-include $(I_OBJS:.oi=.di)
+
+# Pattern rules for building source code and dependency files
+# that is included above. Note the touch command is for when
+# -fsyntax-only is used as Clang doesn't seem to emit a file
+# to $@
+$(LOCAL_BUILD_DIR)/%.oc: %.c
+	@if [ $(REPORT_CC_FILE) -eq 1 ]; then \
+		echo "$(CC) building $(LOCAL_BUILD_DIR_SUFFIX)/$<" ; \
+	elif [ $(REPORT_CC_FILE) -eq 2 ]; then \
+		echo -n "."; \
+	fi
+	$(Verb) $(MKDIR) -p $(LOCAL_BUILD_DIR)
+	$(Verb) $(CC) $(CC.Flags) -c $< -o $@ -MP -MMD -MF $(LOCAL_BUILD_DIR)/$*.dc
+	$(Verb) $(TOUCH) $@
+
+$(LOCAL_BUILD_DIR)/%.oi: %.i
+	@if [ $(REPORT_CC_FILE) -eq 1 ]; then \
+		echo "$(CC) building $(LOCAL_BUILD_DIR_SUFFIX)/$<" ; \
+	elif [ $(REPORT_CC_FILE) -eq 2 ]; then \
+		echo -n "."; \
+	fi
+	$(Verb) $(MKDIR) -p $(LOCAL_BUILD_DIR)
+	$(Verb) $(CC) $(CC.Flags) -c $< -o $@ -MP -MMD -MF $(LOCAL_BUILD_DIR)/$*.di
+	$(Verb) $(TOUCH) $@
+
+# All the objects have these additional dependencies
+$(C_OBJS) $(I_OBJS): $(ADDITIONAL_BUILD_DEPS)
+
+$(LOCAL_BUILD_DIR):
+	$(Verb) $(MKDIR) -p $(LOCAL_BUILD_DIR)
+
+# Pattern rules to allow a user to run make thing.oc or thing.oi in a directory
+# to trigger a build. They are effectively aliases that makes it convenient to
+# compile a single benchmark.
+.PHONY: $(C_OBJS_NO_PREFIX) $(I_OBJS_NO_PREFIX)
+$(C_OBJS_NO_PREFIX): %.oc : $(LOCAL_BUILD_DIR)/%.oc
+
+$(I_OBJS_NO_PREFIX): %.oi : $(LOCAL_BUILD_DIR)/%.oi
+
+endif
+################################################################################
+# End ifndef SKIP_LEVEL
+################################################################################
+
+debug_vars:
+	@echo "********************************************************************************"
+	@echo "Makefile variables for debugging"
+	@echo "********************************************************************************"
+	@echo "BUILD_ROOT := $(BUILD_ROOT)"
+	@echo "C_SRCS := $(C_SRCS)"
+	@echo "I_SRCS := $(I_SRCS)"
+	@echo "C_I_COMMON_SRCS := $(C_I_COMMON_SRCS)"
+	@echo "CC.Flags := $(CC.Flags)"
+	@echo "CC.Warnings := $(CC.Warnings)"
+	@echo "CC_IS_CLANG := $(CC_IS_CLANG)"
+	@echo "CC_IS_GCC := $(CC_IS_GCC)"
+	@echo "CURRENT_DIR := $(CURRENT_DIR)"
+	@echo "DEPTH := $(DEPTH)"
+	@echo "DIRS := $(DIRS)"
+	@echo "EMIT_LLVM := $(EMIT_LLVM)"
+	@echo "IGNORE_SRCS := $(IGNORE_SRCS)"
+	@echo "LEVEL := $(LEVEL)"
+	@echo "LOCAL_BUILD_DIR := $(LOCAL_BUILD_DIR)"
+	@echo "LOCAL_BUILD_DIR_SUFFIX := $(LOCAL_BUILD_DIR_SUFFIX)"
+	@echo "ROOT_DIR := $(ROOT_DIR)"
+	@echo "SKIP_LEVEL := $(SKIP_LEVEL)"
+	@echo "SYNTAX_ONLY := $(SYNTAX_ONLY)"
+

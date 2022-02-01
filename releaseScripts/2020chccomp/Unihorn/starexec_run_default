@@ -1,0 +1,42 @@
+#!/bin/sh
+if [ ! "$1" ]; then
+    echo "First argument has to be the file that we analyze"
+    exit
+fi
+
+# note this is not used at the moment, except for the check below
+# mem=$((STAREXEC_MAX_MEM - 4096))
+# 
+# if [[ $mem -le 0 ]]; then
+#     echo "star exex max memory (expected: in Mbyte) is $STAREXEC_MAX_MEM and is smaller than 4096"
+#     exit 1
+# fi
+
+if [ -z $2 ]
+then
+	path="."
+else
+	path=$2
+fi
+
+outputfile=$path/output.txt
+
+java  -Dosgi.configuration.area=config/  -Xmx32000M -Xss4m -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar  -data "$TMPDIR" -tc ./../AutomizerCHC.xml -s ./../AutomizerCHC_No_Goto.epf -i "$1" &> $outputfile
+
+RESULT_UNSAFE=`cat $outputfile | grep "CounterExampleResult"`
+RESULT_SAFE=`cat $outputfile | grep "PositiveResult"`
+RESULT_UNKNOWN_EXCEPTION=`cat $outputfile | grep "The toolchain threw an exception"`
+
+if [ "$RESULT_SAFE" ]; then
+	echo "sat"
+	exit
+fi
+    
+if [ "$RESULT_UNSAFE" ]; then
+	echo "unsat"
+	exit
+fi
+    
+echo "unknown"
+echo ""
+cat $outputfile

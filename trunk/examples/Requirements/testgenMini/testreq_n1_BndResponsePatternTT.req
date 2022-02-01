@@ -1,0 +1,31 @@
+/*
+- ReqTestResultTest: Found Test for testgen_req6_Globally_BndResponseTT_tt7    
+Set Inputs:
+ 	I1 := true  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait at most 10  for: 
+	O1 == true  
+ 
+- ReqTestResultTest: Found Test for testgen_req6_Globally_BndResponseTT_tt8  
+Set Inputs:
+ 	I1 := true  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait at most 9  for: 
+	O1 == true  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait at most 1  for: 
+	O1 == true  
+*/
+
+Input I1 is bool
+Output O1 is bool
+
+req6: Globally, it is always the case that if "I1" holds for at least "5" time units, then "O1" holds afterwards for at least "10" time units

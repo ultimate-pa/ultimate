@@ -1,0 +1,37 @@
+// Author: heizmann@tf.uni-freiburg.de 
+// Date: 30.3.2011
+// Test translations from petriNet to automata and back
+
+assert(isEmpty(difference(petriNet2FiniteAutomaton(automaton2Net(a)), a)));
+assert(isEmpty(difference(a, petriNet2FiniteAutomaton(automaton2Net(a)))));
+
+assert(isEmpty(difference(petriNet2FiniteAutomaton(automaton2Net(Acontrol)), Acontrol)));
+assert(isEmpty(difference(Acontrol, petriNet2FiniteAutomaton(automaton2Net(Acontrol)))));
+
+// print(petriNet2FiniteAutomaton(automaton2Net(a)));
+
+NestedWordAutomaton a = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {(q0 a q1) (q1 a q0) (q0 b q0) (q1 b q1)}, 
+  returnTransitions = {}
+);
+
+
+NestedWordAutomaton Acontrol = (
+  callAlphabet = { },
+  internalAlphabet = { xto0 yto0 xInc xIsNegative yIsNegative},
+  returnAlphabet = { },
+  states = {l0 l1 l2 lerr},
+  initialStates = {l0},
+  finalStates = {lerr},
+  callTransitions = {},
+  internalTransitions = {(l0 xto0 l1) (l1 yto0 l2) (l2 xInc l2) (l2
+xIsNegative lerr) (l2 yIsNegative lerr)}, 
+  returnTransitions = {}
+);

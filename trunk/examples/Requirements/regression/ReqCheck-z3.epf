@@ -1,0 +1,57 @@
+#Tue Feb 20 14:06:03 CET 2018
+file_export_version=3.0
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ main\ track\ benchmark\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ unsat\ core\ track\ benchmark\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Fake\ non-incremental\ script=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Skolemize\ terms=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Translate\ Boogie\ integers\ to\ SMT\ bitvectors=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_DefaultMode
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.1.23
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ trace\ for\ counterexample\ result=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ statistics\ for\ interpolant\ sequences=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/DifferenceSenwa\ operation\ instead\ classical\ Difference=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ only\ reuse-automata=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Fake\ non-incremental\ script=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Flow-sensitive\ error\ trace\ relevance\ analysis=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Highlight\ relevant\ statements\ in\ error\ traces=NONE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interprocedural\ analysis\ (Nested\ Interpolants)=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Iterations\ until\ the\ model\ checker\ surrenders=1000000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ iteration\ whose\ artifact\ is\ visualized=1000000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Refine\ always\ when\ using\ abstract\ interpretation=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_DefaultMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ abstract\ interpretation\ in\ PathInvariants=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ live\ variables=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ nonlinear\ constraints\ in\ PathInvariants=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ unsat\ cores\ in\ PathInvariants=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ weakest\ precondition\ in\ PathInvariants=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/cut-off\ requires\ same\ transition=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/use\ unfolding\ as\ abstraction=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL_NO_AM
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.23
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.pea2boogie=
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Always\ use\ all\ invariants\ during\ rt-inconsistency\ checks=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ consistency=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ rt-inconsistency=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ vacuity=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Report\ trivial\ rt-consistency=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Rt-inconsistency\ range=2
+@de.uni_freiburg.informatik.ultimate.pea2boogie=0.1.23

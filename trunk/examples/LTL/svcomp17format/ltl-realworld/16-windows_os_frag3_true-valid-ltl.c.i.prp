@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( FG" Stored == 0 " ) )

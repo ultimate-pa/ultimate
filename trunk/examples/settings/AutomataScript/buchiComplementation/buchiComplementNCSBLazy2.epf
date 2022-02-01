@@ -1,0 +1,6 @@
+#Wed Aug 31 02:38:10 CEST 2016
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter/Ignore\ all\ commands\ and\ only\ execute\ below\ command=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter/Command=buchiComplementNCSBLazy2($1);

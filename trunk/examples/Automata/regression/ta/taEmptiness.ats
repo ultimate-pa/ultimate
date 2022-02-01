@@ -1,0 +1,27 @@
+
+TreeAutomaton taIntNoList = TreeAutomaton(
+    alphabet = { "0" cons succ },
+    states = { Num List },
+    finalStates = { List },
+    transitionTable = {
+        ((Num) succ Num)
+        (() "0" Num)
+        ((Num List) cons List)
+    }
+);
+
+TreeAutomaton taIntList = TreeAutomaton(
+    alphabet = { nil "0" cons succ },
+    states = { Num List },
+    finalStates = { List },
+    transitionTable = {
+        ((Num) succ Num)
+        (() "0" Num)
+        ((Num List) cons List)
+        (() nil List)
+    }
+);
+
+
+assert(isEmpty(taIntNoList)); // Empty, can't derive any list
+assert(!isEmpty(taIntList)); // Derives all lists of natural numbers

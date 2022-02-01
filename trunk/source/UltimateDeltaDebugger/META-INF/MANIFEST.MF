@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Ultimate Delta Debugger
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.deltadebugger;singleton:=true
+Bundle-Version: 0.2.1
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ org.apache.commons.cli,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.cli,
+ org.eclipse.cdt.core,
+ org.eclipse.jface.text,
+ de.uni_freiburg.informatik.ultimate.acsl.parser
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.deltadebugger

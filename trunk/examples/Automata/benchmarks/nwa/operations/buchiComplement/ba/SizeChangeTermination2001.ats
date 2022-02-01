@@ -1,0 +1,130 @@
+// Example taken from Neils POPL2001 paper.
+// The automaton callGraph represents the call graph of Example 3. The
+// automaton infeasible represents the automaton of the figure in Section 3.
+// infeasible accepts all call sequences (=traces) which are infeasible because
+// they cause an infinite decent on a value.
+//
+// infeasible accepts all traces
+// callGraph accpts all traces
+// the language of callGraph intersected with the complement of infeasible is
+// the empty set.
+
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 19.5.2011
+
+
+NestedWordAutomaton infeasibleComplementFKV = buchiComplementFKV(infeasible);
+assert(numberOfStates(infeasibleComplementFKV) == 80);
+NestedWordAutomaton infeasibleNComplementFKV = buchiComplementFKV(infeasibleN);
+assert(numberOfStates(infeasibleNComplementFKV) == 11);
+
+NestedWordAutomaton infeasibleComplementSVW = buchiComplementSVW(infeasible);
+assert(numberOfStates(infeasibleComplementSVW) == 11);
+NestedWordAutomaton infeasibleNComplementSVW = buchiComplementSVW(infeasibleN);
+assert(numberOfStates(infeasibleNComplementSVW) == 32);
+
+assert(isSemiDeterministic(infeasible));
+NestedWordAutomaton infeasibleComplementNCSB = buchiComplementNCSB(infeasible);
+assert(numberOfStates(infeasibleComplementNCSB) == 23);
+assert(isSemiDeterministic(infeasibleN));
+NestedWordAutomaton infeasibleNComplementNCSB = buchiComplementNCSB(infeasibleN);
+assert(numberOfStates(infeasibleNComplementNCSB) == 7);
+
+
+
+
+assert(buchiAccepts(infeasibleN, [ "3" , "3"  "3" ]));
+assert(!buchiAccepts(infeasibleNComplementFKV, [ "3" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleNComplementSVW, [ "3" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleNComplementNCSB, [ "3" , "3" "3" ]));
+
+
+assert(buchiAccepts(infeasible, [ "1" "3" "3", "3" "3" ]));
+assert(buchiAccepts(infeasible, [ "1" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementFKV, [ "1" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementSVW, [ "1" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementNCSB, [ "1" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementFKV, [ "1" "3" "3" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementSVW, [ "1" "3" "3" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementNCSB, [ "1" "3" "3" , "3" "3" ]));
+assert(buchiIsEmpty(infeasibleComplementFKV));
+assert(buchiIsEmpty(infeasibleComplementSVW));
+assert(buchiIsEmpty(infeasibleComplementNCSB));
+
+assert(buchiAccepts(infeasible, [ "1" "1" , "1" "1" ]));
+assert(!buchiAccepts(infeasibleComplementFKV, [ "1" "1" , "1" "1" ]));
+assert(!buchiAccepts(infeasibleComplementSVW, [ "1" "1" , "1" "1" ]));
+assert(!buchiAccepts(infeasibleComplementNCSB, [ "1" "1" , "1" "1" ]));
+assert(buchiIsEmpty(infeasibleComplementFKV));
+assert(buchiIsEmpty(infeasibleComplementSVW));
+assert(buchiIsEmpty(infeasibleComplementNCSB));
+assert(!buchiAccepts(buchiIntersect(callGraph, infeasibleComplementFKV), [ "1" "1" , "1" "1" ]));
+assert(!buchiAccepts(buchiIntersect(callGraph, infeasibleComplementSVW), [ "1" "1" , "1" "1" ]));
+assert(!buchiAccepts(buchiIntersect(callGraph, infeasibleComplementNCSB), [ "1" "1" , "1" "1" ]));
+assert(buchiIsEmpty(buchiIntersect(callGraph, infeasibleComplementFKV)));
+assert(buchiIsEmpty(buchiIntersect(callGraph, infeasibleComplementSVW)));
+assert(buchiIsEmpty(buchiIntersect(callGraph, infeasibleComplementNCSB)));
+
+
+
+
+
+
+//print(buchiComplementFKV(callGraph));
+print(numberOfStates(infeasibleComplementSVW));
+print(numberOfStates(infeasibleNComplementSVW));
+// print(numberOfStates());
+// print(numberOfStates());
+
+NestedWordAutomaton callGraph = (
+  callAlphabet = { },
+  internalAlphabet = { "1"  "2" "3" },
+  returnAlphabet = { },
+  states = {a},
+  initialStates = {a},
+  finalStates = {a},
+  callTransitions = { },
+  internalTransitions = { 
+    (a "1" a) (a  "2" a) (a "3" a)
+  }, 
+  returnTransitions = { }
+);
+
+NestedWordAutomaton infeasible = (
+  callAlphabet = { },
+  internalAlphabet = { "1"  "2" "3" },
+  returnAlphabet = { },
+  states = {init m mStrict n nStrict},
+  initialStates = {init},
+  finalStates = {mStrict nStrict},
+  callTransitions = { },
+  internalTransitions = { 
+    (init "1" init) (init  "2" init) (init "3" init) 
+    (init "1" m) (init  "2" m) (init "3" m) 
+    (init "1" n) (init  "2" n) (init "3" n) 
+    (m "3" m)
+    (m "1" mStrict) (m  "2" mStrict)
+    (mStrict "1" mStrict) (mStrict  "2" mStrict)
+    (mStrict "3" m)
+    (n "3" nStrict)
+    (nStrict "3" n)
+  }, 
+  returnTransitions = { }
+);
+
+NestedWordAutomaton infeasibleN = (
+  callAlphabet = { },
+  internalAlphabet = { "1"  "2" "3" },
+  returnAlphabet = { },
+  states = {init n nStrict},
+  initialStates = {init},
+  finalStates = {nStrict},
+  callTransitions = { },
+  internalTransitions = { 
+    (init "1" init) (init  "2" init) (init "3" init) 
+    (init "1" n) (init  "2" n) (init "3" n) 
+    (n "3" nStrict)
+    (nStrict "3" n)
+  }, 
+  returnTransitions = { }
+);

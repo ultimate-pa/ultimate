@@ -1,0 +1,83 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 08.11.2013
+
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 33);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call #t~ret1 := nondet();" "call #t~ret0 := nondet();" "call ULTIMATE.init();" "call #t~ret2 := main();" },
+	internalAlphabet = {"havoc ~anyValue~1;#r..." "assume true;" "assume true;" "assume true;" "havoc ~x~2;havoc ~y~..." "assume true;" "assume !(~x~2 > 0 &&..." "assume !!(~x~2 > 0 &..." "assume #t~ret0 != 0;" "assume !(#t~ret0 != ..." "~x~2 := #t~ret1;havo..." "assume !true;" "assume true;" },
+	returnAlphabet = {"return call #t~ret0 := nondet();" "return call #t~ret2 := main();" "return call #t~ret1 := nondet();" "return call ULTIMATE.init();" },
+	states = {"68#nondetENTRY" "69#ULTIMATE.startFINAL" "70#nondetFINAL" "71#nondetFINAL" "65#nondetENTRY" "67#nondetENTRY" "76#nondetEXIT" "77#L18'" "78#L18'" "79#L18'" "72#nondetFINAL" "73#ULTIMATE.startEXIT" "74#nondetEXIT" "75#nondetEXIT" "85#L21'" "84#nondetEXIT" "87#L17" "86#L18'''" "81#L21" "80#L21" "83#nondetFINAL" "82#nondetENTRY" "89#L18'" "88#L18" "34#ULTIMATE.startENTRY" "38#ULTIMATE.initFINAL" "39#ULTIMATE.initEXIT" "37#ULTIMATE.initFINAL" "43#L1" "40#ULTIMATE.initEXIT" "41#ULTIMATE.initEXIT" "46#mainENTRY" "47#mainENTRY" "44#L1" "45#L1" "50#L18'''" "48#mainENTRY" "54#L17" "53#L17" "59#L18" "56#L17''" "63#mainEXIT" "62#L18" "61#L17''" "60#L18" },
+	initialStates = {"34#ULTIMATE.startENTRY" },
+	finalStates = {"69#ULTIMATE.startFINAL" "70#nondetFINAL" "65#nondetENTRY" "77#L18'" "73#ULTIMATE.startEXIT" "74#nondetEXIT" "85#L21'" "84#nondetEXIT" "87#L17" "86#L18'''" "80#L21" "83#nondetFINAL" "82#nondetENTRY" "89#L18'" "88#L18" "34#ULTIMATE.startENTRY" "41#ULTIMATE.initEXIT" "45#L1" "48#mainENTRY" "63#mainEXIT" "62#L18" "61#L17''" },
+	callTransitions = {
+		 ("81#L21" "call #t~ret1 := nondet();" "82#nondetENTRY")
+		 ("80#L21" "call #t~ret1 := nondet();" "82#nondetENTRY")
+		 ("88#L18" "call #t~ret0 := nondet();" "82#nondetENTRY")
+		 ("34#ULTIMATE.startENTRY" "call ULTIMATE.init();" "38#ULTIMATE.initFINAL")
+		 ("34#ULTIMATE.startENTRY" "call ULTIMATE.init();" "37#ULTIMATE.initFINAL")
+		 ("43#L1" "call #t~ret2 := main();" "46#mainENTRY")
+		 ("43#L1" "call #t~ret2 := main();" "47#mainENTRY")
+		 ("44#L1" "call #t~ret2 := main();" "48#mainENTRY")
+		 ("45#L1" "call #t~ret2 := main();" "48#mainENTRY")
+		 ("59#L18" "call #t~ret0 := nondet();" "65#nondetENTRY")
+		 ("62#L18" "call #t~ret0 := nondet();" "65#nondetENTRY")
+		 ("60#L18" "call #t~ret0 := nondet();" "68#nondetENTRY")
+		 ("60#L18" "call #t~ret0 := nondet();" "67#nondetENTRY")
+	},
+	internalTransitions = {
+		 ("68#nondetENTRY" "havoc ~anyValue~1;#r..." "71#nondetFINAL")
+		 ("68#nondetENTRY" "havoc ~anyValue~1;#r..." "72#nondetFINAL")
+		 ("69#ULTIMATE.startFINAL" "assume true;" "73#ULTIMATE.startEXIT")
+		 ("70#nondetFINAL" "assume true;" "74#nondetEXIT")
+		 ("71#nondetFINAL" "assume true;" "74#nondetEXIT")
+		 ("65#nondetENTRY" "havoc ~anyValue~1;#r..." "70#nondetFINAL")
+		 ("67#nondetENTRY" "havoc ~anyValue~1;#r..." "70#nondetFINAL")
+		 ("77#L18'" "assume !(#t~ret0 != ..." "80#L21")
+		 ("78#L18'" "assume !(#t~ret0 != ..." "80#L21")
+		 ("79#L18'" "assume !(#t~ret0 != ..." "81#L21")
+		 ("79#L18'" "assume #t~ret0 != 0;" "50#L18'''")
+		 ("72#nondetFINAL" "assume true;" "75#nondetEXIT")
+		 ("72#nondetFINAL" "assume true;" "76#nondetEXIT")
+		 ("85#L21'" "~x~2 := #t~ret1;havo..." "86#L18'''")
+		 ("87#L17" "assume !(~x~2 > 0 &&..." "61#L17''")
+		 ("87#L17" "assume !!(~x~2 > 0 &..." "88#L18")
+		 ("86#L18'''" "assume true;" "87#L17")
+		 ("86#L18'''" "assume !true;" "61#L17''")
+		 ("83#nondetFINAL" "assume true;" "84#nondetEXIT")
+		 ("82#nondetENTRY" "havoc ~anyValue~1;#r..." "83#nondetFINAL")
+		 ("89#L18'" "assume !(#t~ret0 != ..." "80#L21")
+		 ("89#L18'" "assume #t~ret0 != 0;" "86#L18'''")
+		 ("38#ULTIMATE.initFINAL" "assume true;" "41#ULTIMATE.initEXIT")
+		 ("37#ULTIMATE.initFINAL" "assume true;" "39#ULTIMATE.initEXIT")
+		 ("37#ULTIMATE.initFINAL" "assume true;" "40#ULTIMATE.initEXIT")
+		 ("46#mainENTRY" "havoc ~x~2;havoc ~y~..." "50#L18'''")
+		 ("50#L18'''" "assume true;" "53#L17")
+		 ("50#L18'''" "assume true;" "54#L17")
+		 ("50#L18'''" "assume !true;" "56#L17''")
+		 ("54#L17" "assume !(~x~2 > 0 &&..." "61#L17''")
+		 ("54#L17" "assume !!(~x~2 > 0 &..." "62#L18")
+		 ("53#L17" "assume !(~x~2 > 0 &&..." "56#L17''")
+		 ("53#L17" "assume !!(~x~2 > 0 &..." "59#L18")
+		 ("53#L17" "assume !!(~x~2 > 0 &..." "60#L18")
+		 ("56#L17''" "assume true;" "63#mainEXIT")
+		 ("61#L17''" "assume true;" "63#mainEXIT")
+	},
+	returnTransitions = {
+		 ("76#nondetEXIT" "60#L18" "return call #t~ret0 := nondet();" "78#L18'")
+		 ("76#nondetEXIT" "60#L18" "return call #t~ret0 := nondet();" "79#L18'")
+		 ("74#nondetEXIT" "59#L18" "return call #t~ret0 := nondet();" "77#L18'")
+		 ("74#nondetEXIT" "62#L18" "return call #t~ret0 := nondet();" "77#L18'")
+		 ("74#nondetEXIT" "60#L18" "return call #t~ret0 := nondet();" "77#L18'")
+		 ("75#nondetEXIT" "60#L18" "return call #t~ret0 := nondet();" "77#L18'")
+		 ("84#nondetEXIT" "88#L18" "return call #t~ret0 := nondet();" "89#L18'")
+		 ("84#nondetEXIT" "81#L21" "return call #t~ret1 := nondet();" "85#L21'")
+		 ("84#nondetEXIT" "80#L21" "return call #t~ret1 := nondet();" "85#L21'")
+		 ("39#ULTIMATE.initEXIT" "34#ULTIMATE.startENTRY" "return call ULTIMATE.init();" "43#L1")
+		 ("39#ULTIMATE.initEXIT" "34#ULTIMATE.startENTRY" "return call ULTIMATE.init();" "44#L1")
+		 ("40#ULTIMATE.initEXIT" "34#ULTIMATE.startENTRY" "return call ULTIMATE.init();" "45#L1")
+		 ("41#ULTIMATE.initEXIT" "34#ULTIMATE.startENTRY" "return call ULTIMATE.init();" "45#L1")
+		 ("63#mainEXIT" "43#L1" "return call #t~ret2 := main();" "69#ULTIMATE.startFINAL")
+	}
+);

@@ -1,0 +1,86 @@
+<graphml>
+
+  <graph edgedefault="directed">
+    <data key="witness-type">violation_witness</data>
+    <data key="sourcecodelang">C</data>
+    <data key="producer">AProVE</data>
+    <data key="specification">CHECK( init(main()), LTL(F end) )</data>
+    <data key="programfile">simple.c</data>
+    <data key="programhash">2AA42C7E4F135D0BDDC6E095101751D40E1E264F</data>
+    <data key="architecture">64bit</data>
+
+    <node id="A0">
+      <data key="entry">true</data>
+    </node>
+    <node id="A3"/>
+    <edge source="A0" target="A3">
+      <data key="startline">1</data>
+      <data key="endline">1</data>
+      <data key="enterFunction">main</data>
+    </edge>
+    <node id="A5"/>
+    <edge source="A3" target="A5">
+      <data key="enterLoopHead">true</data>
+      <data key="sourcecode">int i=0;</data>
+      <data key="startline">3</data>
+      <data key="endline">3</data>
+    </edge>
+    <node id="A6"/>
+    <node id="sink">
+      <data key="sink">true</data>
+    </node>
+    <edge source="A5" target="sink">
+      <data key="sourcecode">[!(1)]</data>
+      <data key="startline">4</data>
+      <data key="endline">4</data>
+      <data key="control">condition-false</data>
+    </edge>
+    <edge source="A5" target="A6">
+      <data key="sourcecode">[1]</data>
+      <data key="startline">4</data>
+      <data key="endline">4</data>
+      <data key="control">condition-true</data>
+    </edge>
+    <node id="A7"/>
+    <edge source="A6" target="A7">
+      <data key="enterLoopHead">true</data>
+      <data key="sourcecode">i=0;</data>
+      <data key="startline">6</data>
+      <data key="endline">6</data>
+    </edge>
+    <node id="A8">
+      <data key="cyclehead">true</data>
+    </node>
+    <edge source="A7" target="sink">
+      <data key="sourcecode">[!(1)]</data>
+      <data key="startline">4</data>
+      <data key="endline">4</data>
+      <data key="control">condition-false</data>
+    </edge>
+    <edge source="A7" target="A8">
+      <data key="sourcecode">[1]</data>
+      <data key="startline">4</data>
+      <data key="endline">4</data>
+      <data key="control">condition-true</data>
+    </edge>
+    <node id="A9"/>
+    <edge source="A8" target="A9">
+      <data key="enterLoopHead">true</data>
+      <data key="sourcecode">i=0;</data>
+      <data key="startline">6</data>
+      <data key="endline">6</data>
+    </edge>
+    <edge source="A9" target="sink">
+      <data key="sourcecode">[!(1)]</data>
+      <data key="startline">4</data>
+      <data key="endline">4</data>
+      <data key="control">condition-false</data>
+    </edge>
+    <edge source="A9" target="A8">
+      <data key="sourcecode">[1]</data>
+      <data key="startline">4</data>
+      <data key="endline">4</data>
+      <data key="control">condition-true</data>
+    </edge>
+  </graph>
+</graphml>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="BA_FeatureDependenciesCommandlineE4"
+      label="BA_FeatureDependenciesCommandlineE4"
+      version="0.2.1"
+      arch="x86_64">
+
+   <description url="http://www.example.com/description">
+      [Enter Feature Description here.]
+   </description>
+
+   <copyright url="http://www.example.com/copyright">
+      [Enter Copyright Description here.]
+   </copyright>
+
+   <license url="http://www.example.com/license">
+      [Enter License Description here.]
+   </license>
+
+   <requires>
+      <import feature="BA_FeatureDependenciesCommon"/>
+   </requires>
+
+</feature>

@@ -1,0 +1,23 @@
+#Thu Jan 30 13:20:28 CET 2014
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+#Thu Jan 30 13:20:28 CET 2014
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+
+#Fri Mar 07 12:08:07 CET 2014
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Controller\ Plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Core\ Plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ External\ Tools=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ Log\ Level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Plugins=INFO

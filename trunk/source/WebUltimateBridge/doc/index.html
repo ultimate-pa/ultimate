@@ -1,0 +1,60 @@
+<html>
+<head>
+<title>Project: WebsiteUltimateBridge</title>
+</head>
+<body>
+	<h1>Project: WebsiteUltimateBridge</h1>
+	<h2>Project Description</h2>
+	This project describes Ultimate Toolchains, etc. for the projects
+	<i>WebsiteEclipseBridge</i> and
+	<i>Website</i>.
+	<b>After editing this project</b>, it has to be exported as deployable
+	plug-in and added to
+	<code>/Website/WebContent/WEB-INF/lib/</code>
+	and
+	<code>/WebsiteEclipseBridge/WebContent/WEB-INF/eclipse/plugins</code>
+	<h2>Where to add what</h2>
+	<h3>Tasks</h3>
+	Add a new value to the
+	<code>TaskNames</code>
+	enum and add the String representation for this new Task represented to
+	the users in
+	<code>initTaskNames()</code>
+	.
+	<h3>Toolchains</h3>
+	Create a new Class which extends Toolchain to the package
+	<code>de.uni_freiburg.informatik.ultimate.website.toolchains</code>
+	. Afterwards add a reference in the
+	<code>actTCs</code>
+	Array in the class
+	<code>Tasks</code>
+	.
+	<br />
+	<i>Before loading the new Toolchain, all constraints will be
+		checked (i.e. String length, and uniqueness of identifiers) - if one
+		is not fulfilled, the new toolchain will be skipped with a Logger
+		message</i>
+	<h3>Examples</h3>
+	Add the new Example file to the package
+	<code>resources.examples</code>
+	. Afterwards put the example description to the
+	<code>init()</code>
+	method in the class
+	<code>Examples</code>
+	.
+	<i>Before loading the new Example, all constraints will be checked
+		(i.e. String length, and uniqueness of identifier in the description)
+		- if one is not fulfilled, the new example will be skipped with a
+		Logger message</i>
+	<h2>See also</h2>
+	<ul>
+		<li><a href="../../WebInterface/doc/index.html">WebInterface
+				documentation</a></li>
+		<li><a href="../../Website/doc/index.html">Website documentation</a></li>
+		<li><a href="../../WebsiteEclipseBridge/doc/index.html">WebsiteEclipseBridge
+				documentation</a></li>
+		<li><a href="../../WebUltimateBridge/doc/index.html">WebUltimateBridge
+				documentation</a></li>
+	</ul>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.output">
+      <impl
+            class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.JungVisualization">
+      </impl>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor"
+            contributorClass="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.JungEditorActionBarContributor"
+            default="false"
+            id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor"
+            name="Jung Graph Editor">
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            id="JungVisualization.actionSet1"
+            label="Action Set"
+            visible="true">
+         <menu
+               id="jungvisualization"
+               label="Jung Visualization">
+         </menu>
+         <action
+               class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions"
+               id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.ExportAsSVG"
+               label="Export as SVG"
+               menubarPath="jungvisualization/sampleGroup"
+               style="push">
+         </action>
+         <action
+               class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions"
+               id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.TransformingMode"
+               label="Transforming Mode"
+               menubarPath="jungvisualization/ChangeModeGroup"
+               state="false"
+               style="radio">
+         </action>
+         <action
+               class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions"
+               id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.PickingMode"
+               label="Picking Mode"
+               menubarPath="jungvisualization/ChangeModeGroup"
+               state="true"
+               style="radio">
+         </action>
+         <action
+               class="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions"
+               id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.KeyHelp"
+               label="Key Help"
+               menubarPath="jungvisualization/helpGroup"
+               style="push">
+         </action>
+      </actionSet>
+   </extension>
+
+ <extension
+       point="org.eclipse.ui.commands">
+    <command
+          defaultHandler="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.CommandExportAsSVG"
+          id="JungVisualization.Command.ExportAsSVG"
+          name="Export as SVG">
+    </command>
+ </extension>
+
+
+</plugin>

@@ -1,0 +1,26 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2018-09-24
+//
+// Reveals problem of finitePrefix2PetriNet even in the case
+// where we use same-transition-cut-offs
+
+
+//print(net);
+//print(finitePrefix( net));
+// the second argument "true" of finitePrefix means that we use same-transition-cut-offs
+print(finitePrefix2PetriNet( finitePrefix( net, true) ));
+
+PetriNet net = (
+	alphabet = { burnCoal burnWood rp ps sr },
+	places = { wood coal p rock paper scissors },
+	transitions = {
+		( {wood p } burnWood { p } )
+        ( {coal p } burnCoal { p } )
+		( {rock } rp {paper } )
+		( {paper p } ps {scissors p } )
+		( {scissors } sr {rock } )
+	},
+	initialMarking = {coal wood rock  p },
+	acceptingPlaces = {scissors }
+);
+

@@ -1,0 +1,68 @@
+// Example obtained from Fanda that shows a problem if I do the voluntary 
+// rank decrease only for States in B.
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2015-10-04
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(nwa);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 61);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 152);
+
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(nwa);
+print(numberOfStates(complementNCSBLazy3));
+assert(numberOfStates(complementNCSBLazy3) == 61);
+print(numberOfTransitions(complementNCSBLazy3));
+assert(numberOfTransitions(complementNCSBLazy3) == 144);
+
+NestedWordAutomaton complementNCSBLazy2 = buchiComplementNCSBLazy2(nwa);
+print(numberOfStates(complementNCSBLazy2));
+assert(numberOfStates(complementNCSBLazy2) == 45);
+print(numberOfTransitions(complementNCSBLazy2));
+assert(numberOfTransitions(complementNCSBLazy2) == 106);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(nwa, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 131);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 366);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(nwa, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 131);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 356);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(nwa, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 231);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 632);
+
+
+
+
+assert(!buchiAccepts(nwa, [ a b, a ]));
+assert(buchiAccepts(complementNCSB, [ a b, a ]));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {a b},
+	returnAlphabet = { },
+	states = {q0 q1 q2 q3 q4 q5},
+	initialStates = {q0},
+	finalStates = {q1 q2 q4},
+	callTransitions = { },
+	internalTransitions = { 
+		(q0 a q0) (q0 b q0)
+		(q0 a q1) (q0 b q4)
+		(q1 a q2) (q1 b q2)
+		(q2 a q3) (q2 b q3)
+		(q3 a q3) (q3 b q3)
+		(q4 a q5) (q4 b q5)
+		(q5 a q5) (q5 b q5)
+	}, 
+	returnTransitions = { }
+);

@@ -1,0 +1,42 @@
+// Testfile dumped by Ultimate at 2011/10/29 00:38:52
+
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 28);
+
+assert(!isEmpty(net));
+
+//print(net);
+
+PetriNet net = (
+	alphabet = {a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a16 a15 a17 a18 a19 a20 a21 a22 a23 },
+	places = {p0 p1 p2 p3 p4 p5 p6 p7 p9 p8 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 },
+	transitions = {
+		( {p23 } a20 {p14 } )
+		( {p11 } a22 {p1 } )
+		( {p3 } a23 {p4 } )
+		( {p19 } a12 {p7 } )
+		( {p25 } a3 {p9 } )
+		( {p14 } a1 {p10 } )
+		( {p8 } a9 {p2 } )
+		( {p2 } a17 {p11 } )
+		( {p18 } a19 {p15 } )
+		( {p7 } a6 {p8 } )
+		( {p11 } a15 {p23 } )
+		( {p17 p12 } a7 {p19 p13 } )
+		( {p6 } a0 {p25 } )
+		( {p20 } a14 {p22 } )
+		( {p13 } a11 {p5 } )
+		( {p22 } a5 {p3 } )
+		( {p10 } a8 {p19 } )
+		( {p19 } a18 {p18 } )
+		( {p5 } a10 {p21 } )
+		( {p20 } a21 {p16 } )
+		( {p9 } a13 {p20 } )
+		( {p4 } a2 {p13 } )
+		( {p0 p24 } a16 {p17 p12 } )
+		( {p13 } a4 {p6 } )
+	},
+	initialMarking = {p0 p24 },
+	acceptingPlaces = {p1 p16 }
+);

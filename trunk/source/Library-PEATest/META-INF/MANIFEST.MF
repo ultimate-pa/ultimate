@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-PEATest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pea.test
+Bundle-Version: 0.0.1
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.pea
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.test
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pea.test

@@ -1,0 +1,129 @@
+#Thu Jun 04 14:46:55 CEST 2015
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
+#Thu Jun 04 14:46:55 CEST 2015
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Minimum\ iterations\ before\ widening=10
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Save\ abstract\ states\ as\ node\ annotations=true
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Parallel\ states\ before\ merging=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Collect\ literals\ from\ the\ RCFG's\ expressions=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/INTERVAL\ -\ Widening\ operator=Nearest In Set
+#Thu Jun 04 14:46:55 CEST 2015
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list=ULTIMATE.init ULTIMATE.start main
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Fallback\:\ Process\ everything,\ if\ an\ entry\ procedure\ doesn't\ exist=false
+#Thu Jun 04 14:46:55 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ wchar\ (?)\ (in\ bytes)=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ array\ bounds\ for\ arrays\ that\ are\ off\ heap=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/If\ two\ pointers\ are\ subtracted\ or\ compared\ they\ have\ the\ same\ base\ address=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ unsigned\ long\ (in\ bytes)=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ long\ (in\ bytes)=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ double\ (in\ bytes)=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ bool\ (in\ bytes)=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+#Thu Jun 04 14:46:55 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+#Thu Jun 04 14:46:55 CEST 2015
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/tree\ interpolation\ mode\ for\ smtinterpol\ \n\ (internal\:\ tree,\ a\ la\ matthias\:\ nested)=ForwardPredicates
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=
+@de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/the\ checking\ algorithm\ to\ use=IMPULSE
+#Thu Jun 04 14:46:55 CEST 2015
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
+@de.uni_freiburg.informatik.ultimate.buchiprogramproduct=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct=
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Rewrite\ not\ equals\ when\ simplifying\ assume\ statements\ with\ SBE=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Rewrite\ not\ equals\ during\ SBE=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Simplify\ assume\ statements=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Use\ SBE\ during\ assume\ simplification=false
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Optimize\ not\ more\ than\ (<\=0\ means\ until\ nothing\ changes)=0
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Remove\ sink\ states=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Use\ SBE\ for\ initial\ RCFG=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Maximize\ final\ states\ of\ the\ product=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Remove\ infeasible\ edges=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ using\ LBE\ with\ the\ strategy=NONE
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Apply\ product\ optimizations\ until\ nothing\ changes=false
+#Thu Jun 04 14:46:55 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=LARGE_BLOCK
+#Thu Jun 04 14:46:55 CEST 2015
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ stem=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ loop=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Bouncer\ loop=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Try\ twofold\ refinement=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
+#Thu Jun 04 14:46:55 CEST 2015
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Read\ property\ from\ file=true
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Rewrite\ not\ equals\ during\ small\ block\ encoding=false
+@de.uni_freiburg.informatik.ultimate.ltl2aut=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Path\ to\ LTL*BA\ executable\ (LTL2BA,\ LTL3BA)=ltl2ba
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Property\ to\ check=[] a \r\n a\: x > 42
+\!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Use\ small\ block\ encoding=false
+#Thu Jun 04 14:46:55 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+#Thu Jun 04 14:46:55 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Which\ models\ should\ be\ visualized?=ALL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Annotate\ edges=Text
+@de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=0.0.1
+#Thu Jun 04 14:46:55 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
+#Thu Jun 04 14:46:55 CEST 2015
+file_export_version=3.0
+\!/instance/CDTParser=
+/instance/CDTParser/Please\ specify\ include\ paths\ that\ will\ be\ parsed\ with\ the\ given\ C-File=C\:\\Users\\alex\\Desktop\\CstdHeaders;
+@CDTParser=0.0.1
+#Thu Jun 04 14:46:55 CEST 2015
+/instance/de.uni_freiburg.informatik.ultimate.core/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.bat -setprop analysis.checkCounterexamples\=false -setprop cpa.value.merge\=SEP -setprop cfa.useMultiEdges\=false -setprop parser.transformTokensToLines\=false -setprop spec.matchSourcecodeData\=false -setprop spec.strictLineMatching\=false -setprop cfa.simplifyCfa\=false -setprop cpa.value.optimizeBooleanVariables\=false -setprop analysis.traversal.useReversePostorder\=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "<inputfilename>-witness.graphml"\ in\ the\ same\ directory\ as\ the\ input\ file=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ witness\ from\ each\ counter\ example\ result=true
+/instance/de.uni_freiburg.informatik.ultimate.core/For\ CPAChecker\:\ Use\ this\ .prp\ file\ (may\ be\ relative\ to\ CPACHECKER_HOME)=examples/PropertyERROR.prp
+/instance/de.uni_freiburg.informatik.ultimate.core/Timeout\ in\ seconds\ for\ witness\ verifier=30
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.core/Verify\ the\ witness\ and\ generate\ results=true
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ witness=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+#Thu Jun 04 14:46:55 CEST 2015
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.gui=
+@de.uni_freiburg.informatik.ultimate.gui=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\data\\swtSvns\\ultimate\\trunk\\examples\\svcomp\\ldv-regression\\alt_test.c_false-unreach-call.cil.c
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\data\\bin\\svcompC\\toolchains\\cTransPrintThenTraceAbstraction.xml

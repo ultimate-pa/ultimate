@@ -1,0 +1,24 @@
+Input x0008 is bool
+Input x0007 is bool
+Input x0009 is bool
+Input x0006 is bool
+Input x0010 is bool
+Input x0005 is bool
+Input x0002 is bool
+Input x0003 is bool
+Input x0001 is bool
+Input x0004 is bool
+Input x0000 is bool
+
+ID000: Globally, it is always the case that if "x0000" holds, then "x0001" holds for at least "25" time units
+ID001: Between "x0000" and "!x0001", it is always the case that once "x0001" becomes satisfied it holds for less than "30" time units
+ID002: Globally, it is always the case that if "x0002 && x0003 && x0004" holds, then "!x0000" holds for at least "30" time units
+ID003: Globally, it is always the case that if "x0005 && !x0006 &&!x0007" holds, then "x0006" holds after at most "300" time units
+ID004: Between "x0005 && !x0006 &&!x0007" and "x0006", it is always the case that once "!x0006" becomes satisfied it holds for at least "100" time units
+ID005: Globally, it is always the case that if "x0006" holds, then "x0008" holds after at most "10" time units
+ID006: Globally, it is always the case that if "x0009" holds, then "x0010" holds after at most "10" time units
+ID007: Globally, it is always the case that if "x0010" holds, then "x0001" holds for at least "70" time units
+ID008: Between "x0010" and "!x0001", it is always the case that once "x0001" becomes satisfied it holds for less than "75" time units
+ID009: Globally, it is always the case that if "x0005 && !x0006 &&!x0007" holds, then "x0007" holds after at most "1" time units
+ID010: Globally, it is always the case that once "x0007" becomes satisfied it holds for less than "300" time units
+ID011: Globally, it is always the case that once "x0007" becomes satisfied it holds for at least "150" time units

@@ -1,0 +1,33 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 16.5.2013
+// Reveals Bug in r8814
+// down states of q0: EUR
+// down states of q1: q0, EUR
+// down states of q2: q0, q1, EUR
+
+NestedWordAutomaton result = removeDeadEnds(nwa);
+assert(numberOfStates(result) == 3);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"a0" "a1" },
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {"a0" "a1" },
+	states = {"q2" "q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" "q0" },
+	callTransitions = {
+		 ("q1" "a1" "q2")
+		 ("q0" "a0" "q1")
+	},
+	internalTransitions = {
+//		 ("q2" "a0" "q2")
+		 ("q1" "a1" "q2")
+//		 ("q0" "a0" "q1")
+//		 ("q0" "a1" "q1")
+	},
+	returnTransitions = {
+		 ("q2" "q0" "a0" "q1")
+//		 ("q1" "q1" "a1" "q2")
+//		 ("q0" "q2" "a0" "q2")
+	}
+);

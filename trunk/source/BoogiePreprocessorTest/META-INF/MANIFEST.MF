@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: BoogiePreprocessorTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.preprocessor.test
+Bundle-Version: 0.2.1
+Fragment-Host: de.uni_freiburg.informatik.ultimate.boogie.preprocessor
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.boogie.preprocessor.test

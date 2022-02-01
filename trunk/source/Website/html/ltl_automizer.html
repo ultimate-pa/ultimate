@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Ultimate LTL Automizer</title>
+  </head>
+<body>
+<h1>LTL Automizer</h1>
+<p>
+Ultimate LTL Automizer uses Büchi programs to prove that a C program satisfies an LTL property. <br>
+
+Ultimate LTL Automizer is a toolchain of the <a href="https://ultimate.informatik.uni-freiburg.de"><span style="font-variant:small-caps">Ultimate</span> software analysis framework</a>
+</p>
+
+<h2>Web interface</h2>
+<p><span style="font-variant:small-caps">Ultimate LTL Automizer</span> is available via a web interface.</p>
+
+<h2>CAV 2015 Submission "Fairness Modulo Theory: A New Approach to LTL Software Model Checking"</h2>
+<h3>Extended version of the paper</h3>
+<a href="https://ultimate.informatik.uni-freiburg.de/downloads/ltlautomizer/document.pdf">Download the extended version of the paper with a detailed proof in the appendix</a>
+
+
+<h3>Benchmarks</h3>
+<a href="https://ultimate.informatik.uni-freiburg.de/downloads/ltlautomizer/benchmarks.zip">Download the benchmark sets</a>
+
+
+<h3>Command line version</h3>
+<h4>Installation</h4>
+<p>In order to use LTL Automizer on your machine you require the following:
+<ul>
+<li>A version of LTL2BA in your PATH. You can download it from <a href="http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/">the LTL 2 BA website</a>.
+<li>At least JRE 7 x64. You can download the latest JRE version for your platform from <a href="http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html">here</a>.
+<li>A version of LTL Automizer for your platform:<br><a href="https://ultimate.informatik.uni-freiburg.de/downloads/ltlautomizer/LTLAutomizer_Win64_r13621.zip">LTL Automizer for Windows 64Bit</a><br>
+<a href="http://ultimate.informatik.uni-freiburg.de/downloads/ltlautomizer/LTLAutomizer_Linux64_r13621.zip">LTL Automizer for Linux 64Bit</a>
+</ul>
+</p>
+
+<h4>Usage</h4>
+<p>
+After you downloaded LTL Automizer, you can execute it with<br>
+<code>./Ultimate LTLAutomizer.xml &lt;inputfile&gt; --settings Default.epf</code>
+</p>
+<p>
+Your input file should be ANSI C and should contain a <code>main()</code> method. In order to specify an LTL property, you need to add the property to your input file. The syntax is:<br>
+<code>//@ ltl invariant &lt;name&gt;: &lt;formula&gt;;</code><br>
+The name of the property should be some string. The formula itself must range over global variables of the program. A formula f has the following syntax:<br>
+<code> f := AP(exp) | [] f | <> f | X f | f U f | f R f | f WU f | f || f | !f | f && f | f ==> f | f <==> f </code><br>
+where <code>exp</code> is some boolean expression over global variables of the program. As <code>X, U, R and WU</code> are operators, you cannot use variables with that name in your formula. 
+
+Also, we currently support only one LTL property per file and run. 
+
+The analysis will start after the first statement of <code>main()</code> is executed, i.e. all global initialisation will not be taken into account. 
+</p>
+<h4>Interpreting results</h4>
+<p>LTL Automizer writes quite some output. At the end, you will see something like this:
+<pre>
+[...]
+2015-02-02 16:49:43,110 INFO  [ToolchainManager.java:270]: #######################  End [Toolchain 1] #######################
+2015-02-02 16:49:43,110 INFO  [BasicToolchainJob.java:73]:  --- Results ---
+2015-02-02 16:49:43,110 INFO  [BasicToolchainJob.java:75]:  * Results from de.uni_freiburg.informatik.ultimate.buchiprogramproduct:
+2015-02-02 16:49:43,110 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Initial property automaton
+2015-02-02 16:49:43,110 INFO  [BasicToolchainJob.java:95]:     Locations: 2 Edges: 4
+2015-02-02 16:49:43,110 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Initial RCFG
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     Locations: 18 Edges: 25
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Initial product
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     Locations: 27 Edges: 57
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Optimized Product
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     Locations: 14 Edges: 28
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:75]:  * Results from de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction:
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - AllSpecificationsHoldResult: All specifications hold
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     We were not able to verify any specifiation because the program does not contain any specification.
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Ultimate Automizer benchmark data
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     CFG has 18 locations, 0 error locations. Automizer needed 0.0s and 0 iterations. Automata difference [...]
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:75]:  * Results from de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer:
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Constructed decomposition of program
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     Your program was decomposed into 1 terminating modules (1 trivial, 0 deterministic, 0 nondeterministic). [...]
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Timing statistics
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     BüchiAutomizer plugin needed 0.1s and 2 iterations. Analysis of lassos took 0.0s. Construction of modules took [...]
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - AllSpecificationsHoldResult: All specifications hold
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:95]:     Büchi Automizer proved that the LTL property F(G(A)) holds
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:75]:  * Results from UltimateCore:
+2015-02-02 16:49:43,120 INFO  [BasicToolchainJob.java:89]:   - BenchmarkResult: Toolchain Benchmarks
+2015-02-02 16:49:43,130 INFO  [BasicToolchainJob.java:95]:     Benchmark results are:
+[...]
+2015-02-02 16:49:43,130 INFO  [UltimateCore.java:84]: Preparing to exit Ultimate with return code 0
+Closed successfully
+</pre>
+The results under <code>Results from de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer:</code> contain the actual result, i.e. in this example, <code>Büchi Automizer proved that the LTL property F(G(A)) holds</code> says that the property was proven successfully. 
+</p>
+<h4>Changing time and memory limits</h4>
+<p>This version of LTL Automizer comes with a pre-set timeout of 20 minutes and Java heap space set to 8GB.<br>
+If you wish to change the timeout, you must edit <code>Default.epf</code>, search the line <code>/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=1200</code> and change the 1200 to something else. 0 disables the timeout.<br>
+If you want to change the heap space limit, you must edit <code>Ultimate.ini</code> and change the line <code>-Xmx8g</code> to something more appropriate.
+</p>
+
+
+<h2>Developers</h2>
+<p>Ultimate LTL Automizer is maintained by <a href="http://swt.informatik.uni-freiburg.de/staff/dietsch">Daniel Dietsch</a>, <a href="http://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias Heizmann</a>, and Vincent Langenfeld. Just write us an email if you need additional information.
+</p>
+
+</body>
+</html>
+

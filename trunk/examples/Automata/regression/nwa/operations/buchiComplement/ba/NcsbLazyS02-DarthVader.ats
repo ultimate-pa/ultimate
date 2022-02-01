@@ -1,0 +1,70 @@
+/*
+ * Small example where we can see that the Lazy-S optimization can
+ * produce smaller results than the original NCSB algorithm.
+ *
+ * The orignal NCSB produces a complement with 44 states and 99 transitions.
+ * The Lazy-S optimization produces a complement with 32 states and 68 transitions.
+ * The Lazy-SB optimization produces a complement with 29 states and 66 transitions.
+ * 
+ * 
+ * Date: 2017-08-31
+ * Author: Yong Li (李勇), Matthias Heizmann
+ */
+
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 44);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 99);
+
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(ba);
+print(numberOfStates(complementNCSBLazy3));
+assert(numberOfStates(complementNCSBLazy3) == 32);
+print(numberOfTransitions(complementNCSBLazy3));
+assert(numberOfTransitions(complementNCSBLazy3) == 68);
+
+NestedWordAutomaton complementNCSBLazy2 = buchiComplementNCSBLazy2(ba);
+print(numberOfStates(complementNCSBLazy2));
+assert(numberOfStates(complementNCSBLazy2) == 29);
+print(numberOfTransitions(complementNCSBLazy2));
+assert(numberOfTransitions(complementNCSBLazy2) == 66);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(ba, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 169);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 419);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(ba, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 128);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 249);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(ba, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 141);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 307);
+
+FiniteAutomaton ba = (
+	alphabet = {a0 a1},
+	states = {s0 s1 s2 s3 s4},
+	initialStates = {s0},
+	finalStates = {s1 s2},
+	transitions = {
+		(s0 a0 s0)
+		(s0 a1 s0)
+		(s0 a0 s1)
+		(s0 a1 s1)
+		(s1 a0 s3)
+		(s1 a1 s2)
+		(s2 a0 s4)
+		(s2 a1 s3)
+		(s3 a0 s3)
+		(s3 a1 s1)
+		(s4 a0 s3)
+		(s4 a1 s4)
+	}
+);

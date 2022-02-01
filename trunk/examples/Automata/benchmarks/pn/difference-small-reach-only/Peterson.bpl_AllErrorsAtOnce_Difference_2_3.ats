@@ -1,0 +1,82 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// Peterson.bpl_AllErrorsAtOnce_Iteration2_AbstractionAfterDifference.ats (2018/08/13 05:05:46)
+// Peterson.bpl_AllErrorsAtOnce_Iteration3_EagerFloydHoareAutomaton.ats (2018/08/13 05:05:46)
+
+PetriNet net = (
+	alphabet = {"assume true;" "flag1 := 1;" "turn := 0;" "assume flag0 == 0 || turn == 1;" "assume !(critical == 0);" "assume critical == 0;" "critical := 1;" "critical := 0;" "flag1 := 0;" "assume !true;" "assume true;" "assume true;" "flag0 := 1;" "turn := 1;" "assume flag1 == 0 || turn == 0;" "assume !(critical == 0);" "assume critical == 0;" "critical := 1;" "critical := 0;" "flag0 := 0;" "assume !true;" "assume true;" "critical := 0;assume true;" },
+	places = {"5#L56true" "6#L52true" "7#L57true" "9#L58true" "10#Thread1Err0ASSERT_VIOLATIONASSERTtrue" "11#L53true" "12#L54true" "14#L59true" "15#L55true" "16#~initENTRYtrue" "18#L33true" "19#L38true" "20#L39true" "22#L34true" "23#L35true" "25#Thread0Err0ASSERT_VIOLATIONASSERTtrue" "26#L36true" "27#L37true" "28#L32true" "29#~initENTRYtrue" "30#true" "32#(= critical 0)" "Black: 32#(= critical 0)" "Black: 30#true" "36#true" "38#(<= 1 flag0)" "39#(and (<= turn 0) (<= 1 flag0))" "Black: 38#(<= 1 flag0)" "Black: 39#(and (<= turn 0) (<= 1 flag0))" },
+	transitions = {
+		({"22#L34true" "Black: 39#(and (<= turn 0) (<= 1 flag0))" } "turn := 1;" {"23#L35true" "Black: 39#(and (<= turn 0) (<= 1 flag0))" })
+		({"Black: 39#(and (<= turn 0) (<= 1 flag0))" "15#L55true" } "assume flag0 == 0 || turn == 1;" {"5#L56true" "Black: 39#(and (<= turn 0) (<= 1 flag0))" })
+		({"14#L59true" } "flag1 := 0;" {"6#L52true" })
+		({"Black: 32#(= critical 0)" "5#L56true" } "assume !(critical == 0);" {"Black: 32#(= critical 0)" "10#Thread1Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"Black: 30#true" "5#L56true" } "assume critical == 0;" {"Black: 30#true" "7#L57true" })
+		({"19#L38true" "Black: 30#true" } "critical := 0;" {"Black: 30#true" "20#L39true" })
+		({"Black: 38#(<= 1 flag0)" "12#L54true" } "turn := 0;" {"Black: 38#(<= 1 flag0)" "15#L55true" })
+		({"Black: 32#(= critical 0)" "9#L58true" "30#true" } "critical := 0;" {"32#(= critical 0)" "Black: 30#true" "14#L59true" })
+		({"Black: 30#true" "26#L36true" } "assume critical == 0;" {"Black: 30#true" "27#L37true" })
+		({"32#(= critical 0)" "Black: 30#true" "27#L37true" } "critical := 1;" {"Black: 32#(= critical 0)" "19#L38true" "30#true" })
+		({"Black: 32#(= critical 0)" "27#L37true" } "critical := 1;" {"Black: 32#(= critical 0)" "19#L38true" })
+		({"38#(<= 1 flag0)" "Black: 39#(and (<= turn 0) (<= 1 flag0))" "12#L54true" } "turn := 0;" {"39#(and (<= turn 0) (<= 1 flag0))" "Black: 38#(<= 1 flag0)" "15#L55true" })
+		({"32#(= critical 0)" "Black: 30#true" "7#L57true" } "critical := 1;" {"Black: 32#(= critical 0)" "9#L58true" "30#true" })
+		({"20#L39true" "38#(<= 1 flag0)" } "flag0 := 0;" {"36#true" "Black: 38#(<= 1 flag0)" "28#L32true" })
+		({"28#L32true" } "assume true;" {"18#L33true" })
+		({"Black: 32#(= critical 0)" "7#L57true" } "critical := 1;" {"Black: 32#(= critical 0)" "9#L58true" })
+		({"23#L35true" } "assume flag1 == 0 || turn == 0;" {"26#L36true" })
+		({"Black: 32#(= critical 0)" "5#L56true" "30#true" } "assume critical == 0;" {"32#(= critical 0)" "Black: 30#true" "7#L57true" })
+		({"Black: 32#(= critical 0)" "19#L38true" "30#true" } "critical := 0;" {"32#(= critical 0)" "Black: 30#true" "20#L39true" })
+		({"16#~initENTRYtrue" "Black: 32#(= critical 0)" "29#~initENTRYtrue" "30#true" } "critical := 0;assume true;" {"32#(= critical 0)" "Black: 30#true" "6#L52true" "28#L32true" })
+		({"6#L52true" } "assume true;" {"11#L53true" })
+		({"Black: 32#(= critical 0)" "26#L36true" "30#true" } "assume critical == 0;" {"32#(= critical 0)" "Black: 30#true" "27#L37true" })
+		({"Black: 32#(= critical 0)" "26#L36true" } "assume !(critical == 0);" {"Black: 32#(= critical 0)" "25#Thread0Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"18#L33true" "36#true" "Black: 38#(<= 1 flag0)" } "flag0 := 1;" {"38#(<= 1 flag0)" "22#L34true" })
+		({"11#L53true" } "flag1 := 1;" {"12#L54true" })
+		({"20#L39true" "39#(and (<= turn 0) (<= 1 flag0))" } "flag0 := 0;" {"36#true" "Black: 39#(and (<= turn 0) (<= 1 flag0))" "28#L32true" })
+		({"Black: 30#true" "9#L58true" } "critical := 0;" {"Black: 30#true" "14#L59true" })
+		({"22#L34true" "39#(and (<= turn 0) (<= 1 flag0))" "Black: 38#(<= 1 flag0)" } "turn := 1;" {"38#(<= 1 flag0)" "23#L35true" "Black: 39#(and (<= turn 0) (<= 1 flag0))" })
+	},
+	initialMarking = {"16#~initENTRYtrue" "Black: 32#(= critical 0)" "36#true" "Black: 38#(<= 1 flag0)" "Black: 39#(and (<= turn 0) (<= 1 flag0))" "29#~initENTRYtrue" "30#true" },
+	acceptingPlaces = {"25#Thread0Err0ASSERT_VIOLATIONASSERTtrue" "10#Thread1Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"assume true;" "flag1 := 1;" "turn := 0;" "assume flag0 == 0 || turn == 1;" "assume !(critical == 0);" "assume critical == 0;" "critical := 1;" "critical := 0;" "flag1 := 0;" "assume !true;" "assume true;" "assume true;" "flag0 := 1;" "turn := 1;" "assume flag1 == 0 || turn == 0;" "assume !(critical == 0);" "assume critical == 0;" "critical := 1;" "critical := 0;" "flag0 := 0;" "assume !true;" "assume true;" "critical := 0;assume true;" },
+	states = {"43#true" "44#false" "45#(<= 1 flag1)" "46#(and (<= 1 flag1) (= turn 1))" },
+	initialStates = {"43#true" },
+	finalStates = {"44#false" },
+	transitions = {
+		("43#true" "assume true;" "43#true")
+		("43#true" "flag0 := 1;" "43#true")
+		("43#true" "assume true;" "43#true")
+		("43#true" "turn := 1;" "43#true")
+		("43#true" "flag1 := 1;" "45#(<= 1 flag1)")
+		("43#true" "assume flag1 == 0 || turn == 0;" "43#true")
+		("43#true" "assume critical == 0;" "43#true")
+		("43#true" "critical := 1;" "43#true")
+		("43#true" "critical := 0;" "43#true")
+		("43#true" "flag0 := 0;" "43#true")
+		("43#true" "critical := 0;assume true;" "43#true")
+		("45#(<= 1 flag1)" "turn := 0;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "assume flag0 == 0 || turn == 1;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "assume critical == 0;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "critical := 1;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "critical := 0;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "flag1 := 0;" "43#true")
+		("45#(<= 1 flag1)" "assume true;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "flag0 := 1;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "turn := 1;" "46#(and (<= 1 flag1) (= turn 1))")
+		("45#(<= 1 flag1)" "assume flag1 == 0 || turn == 0;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "assume critical == 0;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "critical := 1;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "critical := 0;" "45#(<= 1 flag1)")
+		("45#(<= 1 flag1)" "flag0 := 0;" "45#(<= 1 flag1)")
+		("46#(and (<= 1 flag1) (= turn 1))" "assume flag1 == 0 || turn == 0;" "44#false")
+		("46#(and (<= 1 flag1) (= turn 1))" "turn := 0;" "45#(<= 1 flag1)")
+		("46#(and (<= 1 flag1) (= turn 1))" "assume flag0 == 0 || turn == 1;" "46#(and (<= 1 flag1) (= turn 1))")
+		("46#(and (<= 1 flag1) (= turn 1))" "assume critical == 0;" "46#(and (<= 1 flag1) (= turn 1))")
+		("46#(and (<= 1 flag1) (= turn 1))" "critical := 1;" "46#(and (<= 1 flag1) (= turn 1))")
+		("46#(and (<= 1 flag1) (= turn 1))" "critical := 0;" "46#(and (<= 1 flag1) (= turn 1))")
+		("46#(and (<= 1 flag1) (= turn 1))" "flag1 := 0;" "43#true")
+	}
+);

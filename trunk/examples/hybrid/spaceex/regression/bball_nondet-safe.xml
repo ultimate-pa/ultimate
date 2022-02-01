@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="ball_template">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="v" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="g" type="real" local="false" d1="1" d2="1" dynamics="const" />
+    <param name="c" type="real" local="false" d1="1" d2="1" dynamics="const" />
+    <param name="eps" type="real" local="false" d1="1" d2="1" dynamics="const" />
+    <param name="hop" type="label" local="false" />
+    <param name="w1" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="w2" type="real" local="false" d1="1" d2="1" dynamics="any" />    <location id="1" name="always" x="195.5" y="224.0" width="177.0" height="70.0">
+      <invariant>x &gt;= 0 &amp; -0.05 &lt;= w1 &lt;= 0.05 &amp; -0.1 &lt;= w2 &lt;= 0.1 </invariant>
+      <flow>x' == v &amp; v' == -g + w1</flow>
+    </location>
+    <transition source="1" target="1">
+      <label>hop</label>
+      <guard>x &lt;= eps &amp; v &lt; 0</guard>
+      <assignment>v := -c*v + w2</assignment>
+      <labelposition x="-41.0" y="-69.0" />
+    </transition>
+  </component>
+  <component id="system">
+    <note>A model of the vertical position x of a bouncing ball, with nondeterministic disturbances on the fall speed and the jump speed.
+
+Note the difference the choice of template directions makes: 
+Try box, octagonal and uniform with at least 10 constraints and watch for termination. 
+
+Variables: x,v</note>
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="v" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="hop" type="label" local="false" />
+    <param name="w1" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="w2" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <bind component="ball_template" as="ball" x="238.0" y="106.0">
+      <map key="x">x</map>
+      <map key="v">v</map>
+      <map key="g">1</map>
+      <map key="c">0.75</map>
+      <map key="eps">0</map>
+      <map key="hop">hop</map>
+      <map key="w1">w1</map>
+      <map key="w2">w2</map>
+    </bind>
+  </component>
+</sspaceex>
+

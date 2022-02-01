@@ -1,0 +1,58 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2018-09-22
+//
+// Revealed problem in current finitePrefix2PetriNet operation.
+// Simplified version of Bug_finitePrefix2PetriNet_05.ats
+
+
+//print(net);
+//print(finitePrefix( net));
+print(finitePrefix2PetriNet( finitePrefix( net, false) ));
+
+PetriNet net = (
+	alphabet = { burnWood rp ps sr },
+	places = { wood p rock paper scissors },
+	transitions = {
+		( {wood p } burnWood { p } )
+		( {rock } rp {paper } )
+		( {paper p } ps {scissors p } )
+		( {scissors } sr {rock } )
+	},
+	initialMarking = {wood rock  p },
+	acceptingPlaces = {scissors }
+);
+
+
+// Only accepted by original: "burnWood" "rp" "ps" "sr" "rp" "ps"
+
+// Result of finitePrefix2PetriNet
+//
+// PetriNet net = (
+// 	alphabet = {"burnWood" "ps" "rp" "sr" },
+// 	places = {"c4:CorrespPlace: p" "c3:CorrespPlace: paper" "c6:CorrespPlace: p" "c5:CorrespPlace: scissors" "c9:CorrespPlace: rock" "c8:CorrespPlace: p" "c2:CorrespPlace: wood" },
+// 	transitions = {
+// 		({"c8:CorrespPlace: p" "c2:CorrespPlace: wood" } "burnWood" {"c6:CorrespPlace: p" })
+// 		({"c3:CorrespPlace: paper" "c8:CorrespPlace: p" } "ps" {"c5:CorrespPlace: scissors" "c8:CorrespPlace: p" })
+// 		({"c8:CorrespPlace: p" "c2:CorrespPlace: wood" } "burnWood" {"c4:CorrespPlace: p" })
+// 		({"c9:CorrespPlace: rock" } "rp" {"c3:CorrespPlace: paper" })
+// 		({"c5:CorrespPlace: scissors" } "sr" {"c9:CorrespPlace: rock" })
+// 		({"c4:CorrespPlace: p" "c3:CorrespPlace: paper" } "ps" {"c6:CorrespPlace: p" "c5:CorrespPlace: scissors" })
+// 	},
+// 	initialMarking = {"c9:CorrespPlace: rock" "c8:CorrespPlace: p" "c2:CorrespPlace: wood" },
+// 	acceptingPlaces = {"c5:CorrespPlace: scissors" }
+// );
+
+// Unfortunately, we cannot yet print a BranchingProcess in textual form.
+//
+
+// Problem (my momentary assessment):
+//
+// We merge condition c6 (successor of a cut-off event labelled by ps) with 
+// condition c10 (successor of companion labelled by burnWood).
+// c6 is in co-relation with c5 (labelled by scissors)
+// c10 is in co-relation with c7 (labelled by scissors) and c9 (labelled by rock)
+// 
+// I think we need a finitePrefix2PetriNet operation that can only merge two
+// conditions if the sets of labels of all co-related conditions coincide.
+// To make sure that we do not miss conditions, we need a finite prefix that
+// is larger than the finite complete prefix.

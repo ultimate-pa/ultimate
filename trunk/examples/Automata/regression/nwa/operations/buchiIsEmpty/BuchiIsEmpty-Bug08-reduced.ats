@@ -1,0 +1,24 @@
+// Testfile dumped by Ultimate at 2013/11/28 13:18:49
+
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 3);
+getAcceptedLassoWord(nwa);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c },
+	internalAlphabet = {a0 a1 a2 a3 a4 a5 a6 },
+	returnAlphabet = {r },
+	states = {s0 q0 s2 s3 s4 s6 r0 },
+	initialStates = {q0 },
+	finalStates = {q0 },
+	callTransitions = {
+		 (q0 c r0)
+	},
+	internalTransitions = {
+		 (s3 a1 r0)
+		 (r0 a1 q0)
+	},
+	returnTransitions = {
+		 (r0 q0 r s3)
+	}
+);

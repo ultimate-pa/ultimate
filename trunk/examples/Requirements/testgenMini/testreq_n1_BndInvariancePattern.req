@@ -1,0 +1,18 @@
+/*
+ - ReqTestResultTest: Found Test for testgen_req1_Globally_BndInvariance_tt4   
+Set Inputs:
+ 	I1 := true  
+ Wait at most 1  for: 
+	O1 == true  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait at most 5  for: 
+	O1 == true
+*/
+
+Input I1 is bool 
+Output O1 is bool 
+
+
+req1: Globally, it is always the case that if "I1" holds, then "O1" holds for at least "5" time units

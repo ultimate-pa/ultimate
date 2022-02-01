@@ -1,0 +1,20 @@
+#Fri Mar 11 18:30:02 CET 2016
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+#Fri Mar 11 18:30:02 CET 2016
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopInvariantsAndEnsures
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Assert\ CodeBlocks=OUTSIDE_LOOP_FIRST1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Kind\ of\ artifact\ that\ is\ visualized=INTERPOLANT_AUTOMATON
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
+#Fri Mar 11 18:30:02 CET 2016
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.gui=
+@de.uni_freiburg.informatik.ultimate.gui=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\temp\\uppaal2boogie\\u2b01_single_pca.bpl
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\Users\\Sergio\\AppData\\Local\\Temp\\lastUltimateToolchain.xml

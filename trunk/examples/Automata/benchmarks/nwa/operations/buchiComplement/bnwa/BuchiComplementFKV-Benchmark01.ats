@@ -1,0 +1,13 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 01.06.2013
+
+parseAutomata("../../../../../regression/nwa/Stratfor.ats");
+
+NestedWordAutomaton nwa2 = buchiComplementFKV(someSCT2001result);
+print(numberOfStates(nwa2));
+assert(numberOfStates(nwa2) == 71); //with old complementation it have been 13170 states
+assert(!buchiIsEmpty(nwa2));
+NestedWordAutomaton nwa3 = buchiComplementFKV(someTerminationBlueGreenResult);
+print(numberOfStates(nwa3));
+assert(numberOfStates(nwa3) == 19511);
+assert(!buchiIsEmpty(nwa3));

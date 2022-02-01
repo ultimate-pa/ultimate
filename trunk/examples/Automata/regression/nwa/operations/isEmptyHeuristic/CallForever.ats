@@ -1,0 +1,23 @@
+// Author: dietsch@cs.uni-freiburg.de
+// Date: 2020-04-24
+//
+// Simple NWA with disconnected final state and call loop. 
+
+assert(isEmptyHeuristic(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a" },
+	returnAlphabet = {"r" },
+	states = {"q0" "q1" "q2"},
+	initialStates = {"q0"},
+	finalStates = {"q2"},
+	callTransitions = {
+		("q1" "c" "q1")
+	},
+	internalTransitions = {
+		("q0" "a" "q1")
+	},
+	returnTransitions = {
+	}
+);

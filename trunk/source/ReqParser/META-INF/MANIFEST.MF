@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ReqParser
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.reqparser;singleton:=true
+Bundle-Version: 0.2.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.reqparser.Activator
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: com.github.jhoenicke.javacup,
+ de.uni_freiburg.informatik.ultimate.lib.srparse,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.util
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.reqparser

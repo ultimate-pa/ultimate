@@ -1,0 +1,44 @@
+// Author: musab@informatik.uni-freiburg.de
+// Date:  9.02.2013
+// This file contains only automata definitions.
+
+NestedWordAutomaton nwa1 = (
+  callAlphabet = {a b c},
+  internalAlphabet = {},
+  returnAlphabet = {r s},
+  states = {q0 q1 qAcc},
+  initialStates = {q0},
+  finalStates = {qAcc},
+  callTransitions = {(q0 a q1) (q1 b q1) (q1 c qAcc)},
+  internalTransitions = {}, 
+  returnTransitions = { (q1 q0 r q1)
+                        (q0 q1 s qAcc)
+                        (q1 q0 s qAcc)}
+);
+
+
+// This is basically a finite automaton
+// accepts words which contain exactly 2 b's.
+NestedWordAutomaton accepts2Bs = ( 
+  callAlphabet = {},
+  internalAlphabet = {a b c d},
+  returnAlphabet = {},
+  states = {q0 q1 qAcc qNotAcc},
+  initialStates = {q0},
+  finalStates = {qAcc},
+  callTransitions = {},
+  internalTransitions = {(q0 a q0)
+                         (q0 b q1)
+                         (q0 c q0)
+                         (q0 d q0)
+                         (q1 a q1)
+                         (q1 b qAcc)
+                         (q1 c q1)
+                         (q1 d q1)
+                         (qAcc b qNotAcc)
+                         (qNotAcc a qNotAcc)
+                         (qNotAcc b qNotAcc)
+                         (qNotAcc c qNotAcc)
+                         (qNotAcc d qNotAcc)},
+  returnTransitions = {}
+);

@@ -1,0 +1,101 @@
+DONE:
+- unary minus
+- ACSL Parser > use Logger instead of Syso
+- typedef
+- merge with trunk ...
+- unique naming
+- compounds in compounds
+- bug fix in next acsl (acsl at the end of methods)
+- handle contract on unnamed in param
+- preprozessor include file pfad preference page
+- unary expressions post und pre decr/incr
+- if (c1 && c2){} -> if(xlat(c1)) {b=xlat(c2)}else{b=false}if(b){}
+- ultimate mode for codan plugin
+- loops / if
+- FIX 	public Result visit(Dispatcher main, IASTSimpleDeclaration node) { ...
+		assert node.getDeclarators().length == 1; // FIXME wrong assumption! (i.e. for(int i=1, u1=2; ...))
+- implement: ExpressionList
+- assertion error lVars must be updated before accessing in FOR loop body
+- bugs in modifies clause fixed
+- bool vs int! (C99 Standard :: bool == 0 | 1)
+- scoping on modified expressions in while loops without body fixed
+- refactoring of c handler
+	-> ResultStatement and ResultVariable removed
+	-> acsl insertion refactored
+- += *= %= -= /= implemented
+- && and || conditions in loops fixed
+- bool vs int bug fix
+- if/else construction for && and || fixed
+- function calls
+- function calls: how to get the return type?
+- contracts on loops
+- assert on in parameters not talking about #in~VarName / general naming
+  in ACSLHandler fixed, it now depends on the CHandler, which takes care of
+  right naming depend on scopes.
+- warum keine warning wenn contract on unnamed in param
+- CDT Plugin + Results
+- Website + Results
+- function calls bool vs int...
+- methodIDs not required
+- while(true) --> error #tu~true !!
+
+- c function calls -> side effect handler
+- bool vs int ...
+- empty operators like for(;;) {} => while (true) {} ???
+- empty operators like while (true) {} <- unendliche schleif
+- void in params
+- CDTPlugin: drop down box fuer toolchains
+- assume wird zu assume und nicht zu assert
+- long, long long, short, unsinged wird "unterstützt" (in Boogie alles int, da die Restriktionen noch fehlen)
+- nondet ist nun nicht mehr _X sondern _long, _short, etc
+- bugfix für label übersetzung bzgl. nachfolgender "Bodys"
+- TypeCheker für int in bool context : fixed -> wir infrieren Typen
+        warning, wenn nicht inferiert werden konnte!
+- switch case : done
+        ignore casts and throw a UnprovableResult
+        now supporting nested switch
+- Casts done
+        return a unprovable result / displayed as warning!
+- Integer, Float and Char Constant support added
+- Bug Fix ACSL und TypeHandler
+- Ausgabe eines Setting Strings (hat Matthias gemacht)
+- Bugs im Compiler:
+        NullPointerException:
+            s3_clnt_3_BUG.cil.c
+            s3_clnt_3.cil.c
+                diese beiden Beispiele verwenden beide Pointer - die NullPointerException kommt zB. aus folgender Zeile:
+                void *__cil_tmp56 ;
+                Der Übersetzer weiß noch nicht, was er mit dem void machen soll - und ich um ehrlich zu sein auch noch nicht ...
+        Syntax error:
+            Diese Beispiel laufen alle einige Sekunden/wenige Minuten und könnten Kandidaten für einen ersten Benchmark-Vergleich sein ;)
+            s3_srvr_11_BUG.cil.c
+                4294967040 war zu groß um mit Integer geparsed zu werden
+                Lösung: BigInteger
+            s3_srvr_12_BUG.cil.c
+            s3_srvr_13_BUG.cil.c
+                Vermutlich das selbe Problem - läuft nun auch durch 
+        Unsupported syntax: s3_srvr_1.cil.c
+            void Methode ERR hat ein return -1 statement!
+            Jetzt gibt es auch eine verständliche Fehlermeldung!
+- void method: return -1;
+         eindeutige Fehlermeldung für outParams wenn void method!
+- if im switch so umbauen, dass keine hilfsvariable benötigt wird
+- refator switch case in seperated function!
+- deklarationen in for schleifen, etc fixen!
+- short variable names in boogie
+- short type added as int
+- arrays
+- array fixes
+- modifies clause
+- missing function deklarations <-- how to add transitive modifies clause?
+- structs in boogie AST
+- C -> extended Boogie
+
+TODO
+- Struct Initializer
+- Array Initializer for Array of Structs
+- TypeChecker for structs
+- StructExpander: Boogie Structs -> Fields
+- Boogie Parser
+- MM
+- Architecture dependant checks (sizeof, etc)

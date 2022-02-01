@@ -1,0 +1,34 @@
+Input x0008 is bool
+Input x0007 is bool
+Input x0009 is bool
+Input x0006 is bool
+Input x0010 is bool
+Input x0005 is bool
+Input x0012 is bool
+Input x0002 is bool
+Input x0003 is bool
+Input x0015 is bool
+Input x0014 is bool
+Input x0001 is bool
+Input x0004 is bool
+Input x0000 is bool
+Input x0013 is bool
+Input x0011 is bool
+
+ID000: Globally, it is always the case that if "x0000 && !x0001" holds, then "x0000" holds for at least "1" time units
+ID001: Globally, it is always the case that if "!x0002" holds, then "x0003" holds after at most "1" time units
+ID002: Globally, it is always the case that if "x0002 && x0004" holds, then "x0005" holds as well
+ID003: Globally, it is always the case that if "x0002 && !x0004" holds, then "!x0005" holds as well
+ID004: Globally, it is always the case that if "!x0006 && !x0001" holds, then "!x0006" holds for at least "1" time units
+ID005: Globally, it is always the case that if "x0001" holds, then "x0003" holds after at most "1" time units
+ID006: Globally, it is always the case that if "x0007" holds, then "!x0008" holds as well
+ID007: Globally, it is always the case that if "!x0009 && !x0000 && !x0010 && !x0006 && !x0002" holds, then "x0003" holds as well
+ID008: Globally, it is always the case that if "x0011 || !x0012" holds, then "x0001" holds as well
+ID009: Globally, it is always the case that if "x0008 || !x0013 || !x0014" holds, then "x0011" holds as well
+ID010: After "x0003" until "!x0000 && !x0010", it is always the case that "x0003" holds
+ID011: Globally, it is always the case that if "x0002 && !x0001" holds, then "x0002" holds for at least "1" time units
+ID012: Globally, it is always the case that if "x0009 && !x0001" holds, then "x0009" holds for at least "1" time units
+ID013: After "x0015" until "!x0015", it is always the case that if "x0015" holds, then "!x0008" holds after at most "200" time units
+ID014: Globally, it is always the case that if "x0010 && !x0001" holds, then "x0010" holds for at least "1" time units
+ID015: Globally, it is always the case that if "!x0005 && x0002" holds, then "!x0002" holds after at most "1" time units
+ID016: After "x0003" until "!x0002", it is always the case that "x0003" holds

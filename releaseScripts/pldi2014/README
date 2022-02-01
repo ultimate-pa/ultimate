@@ -1,0 +1,21 @@
+This is the tool for the PLDI2014 submission
+
+    Control Flow Refinement with Fairness
+
+    
+Requirements:
+64bit Linux system with Java
+
+Usage:
+If you want to analyze termination of the program foo.c then execute the
+shellscript
+./buchiAutomizer.sh foo.c
+
+
+
+
+For our evaluation we used the benchmark set from
+  2013CAV - Brockschmidt,Cook,Fuhs - Better termination proving through cooperation
+which is available at the following website.
+http://verify.rwth-aachen.de/brockschmidt/Cooperating-T2/
+http://verify.rwth-aachen.de/brockschmidt/Cooperating-T2/all_examples.c.tar.gz

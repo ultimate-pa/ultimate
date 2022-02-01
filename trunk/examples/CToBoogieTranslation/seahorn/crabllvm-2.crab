@@ -1,0 +1,75 @@
+
+(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int) declare foo(@V_5:arr_int,@V_6:arr_int,@V_8:arr_int)
+_1:
+  @V_9 = @V_8;
+  @V_7 = @V_6;
+  @V_3 = @V_5;
+  _2 = array_read(@V_3,x);
+  _store = _2+1;
+  array_write(@V_3,x,_store);
+--> []
+
+(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int) declare bar(@V_14:arr_int,@V_15:arr_int,@V_16:arr_int)
+_1:
+  @V_9 = @V_16;
+  @V_7 = @V_15;
+  @V_3 = @V_14;
+  _2 = array_read(@V_7,y);
+  _store = _2+1;
+  array_write(@V_7,y,_store);
+--> []
+
+_check_SGE_0:int declare main()
+_call:
+  assume (forall l in [0,0] % 4 :: @V_3[l]=5);
+  assume (forall l in [0,0] % 4 :: @V_7[l]=3);
+  assume (forall l in [0,36] % 4 :: @V_9[l]=0);
+  (@V_3,@V_7,@V_9)= call foo(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int);
+  i.0 = 0;
+--> [_i.0;]
+_i.0:
+--> [__@bb_1;__@bb_2;]
+__@bb_1:
+  assume (i.0 <= 9);
+--> [_4;]
+_4:
+  _6 =* ;
+--> [__@bb_3;__@bb_4;]
+__@bb_3:
+  assume (_6 = 0);
+--> [_11;]
+_11:
+  _12 = array_read(@V_3,x);
+  _store2 = a + 4*i.0;
+  array_write(@V_9,_store2,_12);
+--> [_14;]
+_14:
+  _br3 = i.0+1;
+  i.0 = _br3;
+--> [_i.0;]
+__@bb_4:
+  assume (_6 != 0);
+--> [_8;]
+_8:
+  _9 = array_read(@V_7,y);
+  _store = a + 4*i.0;
+  array_write(@V_9,_store,_9);
+--> [_14;]
+__@bb_2:
+  assume (-i.0 <= -10);
+  i.0.lcssa = i.0;
+--> [PHILowerICmp;]
+PHILowerICmp:
+  (@V_3,@V_7,@V_9)= call bar(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int);
+  _16 = i.0.lcssa+-1;
+  _17 = a + 4*_16;
+  _check_SGE_0 = array_read(@V_9,_17);
+  check_SGE_0 = (-_check_SGE_0 <= 0);
+  _19 = (_check_SGE_0 <= 6);
+  @V_33 = true ;
+  _20 = ite(check_SGE_0,_19,@V_33);
+  zext _20:1 to _call4:32;
+  assert (-_call4 <= -1);
+  return _check_SGE_0;
+--> []
+

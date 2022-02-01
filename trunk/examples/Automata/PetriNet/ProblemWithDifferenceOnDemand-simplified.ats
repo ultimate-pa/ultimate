@@ -1,0 +1,47 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/07/30 09:55:00)
+// SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/07/30 09:55:01)
+
+assert(!isEmpty(differencePairwiseOnDemand(net, nwa)));
+
+
+PetriNet net = (
+	alphabet = {"a2" "#1#assume true;" "a1" "a3" "a4" "a5" "#12#assume g != -1;" "#13#assume true;" "a0" },
+	places = {"threadTwo2" "threadTwo1" "7#Thread2EXITtrue" "threadTwo0" "p2" "p1" "p3" "13#Thread1FINALtrue" "14#Thread1EXITtrue" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" "p0" "19#(<= 0 g)" "Black: 19#(<= 0 g)" },
+	transitions = {
+		({"p0" "Black: 19#(<= 0 g)" "threadTwo0" } "a0" {"19#(<= 0 g)" "threadTwo1" "p1" })
+		({"p1" } "a1" {"p2" })
+		({"19#(<= 0 g)" "threadTwo1" } "a2" {"threadTwo2" "Black: 19#(<= 0 g)" })
+		({"Black: 19#(<= 0 g)" "p2" } "a5" {"Black: 19#(<= 0 g)" "15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" })
+	},
+	initialMarking = {"p0" "Black: 19#(<= 0 g)" "threadTwo0" },
+	acceptingPlaces = {"15#Thread1Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"a2" "#1#assume true;" "a1" "a3" "a4" "a5" "#12#assume g != -1;" "#13#assume true;" "a0" },
+	states = {"green" "red" "yellow" },
+	initialStates = {"green" },
+	finalStates = {"red" },
+	transitions = {
+		("green" "a2" "yellow")
+		("green" "a1" "green")
+		("green" "a3" "green")
+		("green" "a4" "green")
+		("green" "a5" "green")
+		("green" "a0" "green")
+		("red" "a2" "red")
+		("red" "a1" "red")
+		("red" "a3" "red")
+		("red" "a4" "red")
+		("red" "a5" "red")
+		("red" "a0" "red")
+		("yellow" "a2" "yellow")
+		("yellow" "a1" "green")
+		("yellow" "a3" "yellow")
+		("yellow" "a4" "green")
+		("yellow" "a5" "red")
+		("yellow" "a0" "green")
+	}
+);

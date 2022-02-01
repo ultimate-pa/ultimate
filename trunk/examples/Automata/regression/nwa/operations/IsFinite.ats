@@ -1,0 +1,24 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2017-06-29
+
+
+assert (isFinite(nwa));
+
+NestedWordAutomaton nwa = (
+  callAlphabet = { "c" },
+  internalAlphabet = { "a"  },
+  returnAlphabet = { "r" },
+  states = {q0 q1 q2 q3 },
+  initialStates = {q0},
+  finalStates = {q3},
+  callTransitions = {
+        (q0 "c" q0)
+  },
+  internalTransitions = {
+  },
+  returnTransitions = {
+        (q0 "r" q1)
+        (q1 "r" q2)
+        (q2 "r" q3)
+  }
+);

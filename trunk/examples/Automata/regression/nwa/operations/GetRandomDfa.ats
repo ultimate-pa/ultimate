@@ -1,0 +1,11 @@
+// Author: Daniel Tischner
+// Date: 2014-11-25
+//
+// Test results of a random DFA generator.
+
+//Available constructors are:
+//size, alphabetSize, numOfAccStates(, 100, true, false, true, true)
+//size, alphabetSize, numOfAccStates, percOfTotality, ensureIsConnected(, false, true, true)
+//size, alphabetSize, numOfAccStates, percOfTotality, ensureIsConnected, ensureStatesReachFinal, ensureIsUniform(, true)
+//size, alphabetSize, numOfAccStates, percOfTotality, ensureIsConnected, ensureStatesReachFinal, ensureIsUniform, enableCaching
+print(getRandomDfa(5, 3, 3));

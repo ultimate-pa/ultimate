@@ -1,0 +1,33 @@
+/*
+ * Example that shows that the delayed rank decrease is incompatible to
+ * tight level rankings (and elastic level rankings).
+ * Date: 2016-01-03
+ * Author: Matthias Heizmann
+ */
+
+
+print(numberOfStates(nwa));
+print(isSemiDeterministic(nwa));
+print(buchiComplementFKV(nwa,"ELASTIC", 777));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {"a" "b" },
+	returnAlphabet = { },
+	states = {"q3" "q2" "q1" },
+	initialStates = {"q3" },
+	finalStates = {"q2" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		("q3" "a" "q3")
+		("q3" "a" "q2")
+		("q2" "a" "q1")
+		("q1" "a" "q1")
+		("q3" "a" "q1")
+		("q2" "a" "q1")
+	},
+	returnTransitions = {
+	}
+);

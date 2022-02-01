@@ -1,0 +1,13 @@
+// Date: 19.05.2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+parseAutomata("../../ProgramVerification-Ministerprasident.ats");
+
+assert(numberOfStates(determinize(McCarthyInterpolantAutomaton_Iteration12)) == 66);
+assert(numberOfStates(determinize(McCarthyInterpolantAutomaton_Iteration16)) == 95);
+assert(numberOfStates(determinize(McCarthyAbstraction16)) == 1985);
+assert(numberOfStates(determinize(Ackermann_Abstraction19)) == 631);
+assert(numberOfStates(determinize(Ackermann_Abstraction24)) == 5567);
+// 2014-08-13 Matthias: an old result for the following seemd to be 151
+assert(numberOfStates(determinize(Ackermann_InterpolantAutomaton_Iteration39)) == 157);

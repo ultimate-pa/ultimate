@@ -1,0 +1,36 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: GuiRCP Plug-in
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui;singleton:=true
+Bundle-Version: 0.2.1
+Require-Bundle: 
+ org.eclipse.ui;visibility:=reexport,
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.gui.preferencepages,
+ de.uni_freiburg.informatik.ultimate.gui.logging
+Export-Package: 
+ de.uni_freiburg.informatik.ultimate.gui;uses:="org.eclipse.ui,de.uni_freiburg.informatik.ultimate.ep.interfaces",
+ de.uni_freiburg.informatik.ultimate.gui.actions;
+  uses:="org.eclipse.jface.action,
+   org.eclipse.ui,
+   org.eclipse.ui.actions,
+   org.eclipse.jface.viewers,
+   de.uni_freiburg.informatik.ultimate.plugins.general",
+ de.uni_freiburg.informatik.ultimate.gui.advisors;
+  uses:="org.eclipse.jface.action,
+   org.eclipse.ui.application,
+   org.eclipse.ui,
+   de.uni_freiburg.informatik.ultimate.plugins.general",
+ de.uni_freiburg.informatik.ultimate.gui.dialogs;uses:="org.eclipse.swt.widgets,de.uni_freiburg.informatik.ultimate.ep.interfaces",
+ de.uni_freiburg.informatik.ultimate.gui.interfaces;uses:="de.uni_freiburg.informatik.ultimate.model,org.eclipse.jface.viewers",
+ de.uni_freiburg.informatik.ultimate.gui.misc,
+ de.uni_freiburg.informatik.ultimate.gui.provider;uses:="org.eclipse.jface.viewers",
+ de.uni_freiburg.informatik.ultimate.gui.views;
+  uses:="org.eclipse.ui,
+   org.eclipse.jface.viewers,
+   org.eclipse.ui.part,
+   org.eclipse.swt.widgets"
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.gui

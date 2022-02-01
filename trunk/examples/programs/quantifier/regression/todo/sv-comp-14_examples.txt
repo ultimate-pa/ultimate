@@ -1,0 +1,505 @@
+[10318] bitvector (35):
+
+1 working
+jain_1_safe
+
+2 overapproximation flag
+modulus_*, parity_*
+
+26 unknown
+gcd_2_*, gcd_3_*, gcd_4_*, interleave_*, jain_2_*, jain_4_*, jain_5_*, jain_6_*,
+jain_7_*, s3_*, soft_*
+
+1 TraceChecker.getFailurePath()
+gcd_1_*
+
+-- Translation:
+
+5 bitvector operation with non-integer
+byte_add_*, num_*
+
+---
+
+[10318] bitvector-regression (13):
+
+4 working
+pointer_extension3_*, pointer_extension_*
+
+2 no result
+integerpromotion_*
+
+7 wrong result
+implicitunsignedconversion_*, pointer_extension2_*, signextension*
+
+-- Translation:
+
+1 implicit cast (float to int)
+implicitfloatconversion_*
+
+---
+
+[10257] ddv-machzwd (13):
+
+-- Translation:
+
+13 enum
+- all -
+
+---
+
+[10319] eca (133) [only checked *_00]:
+
+133 unknown
+- all -
+
+---
+
+[10259] heap-manipulation (18):
+
+-- Translation:
+
+2 #define -> error
+bubble_sort_linux_false, bubble_sort_linux_true
+
+2 assert rop.lrVal.cType instanceof CPointer
+merge_sort_false, merge_sort_true
+
+2 ClassCastException: ResultExpression is no ResultExpressionListRec
+sll_to_dll_rev_false, sll_to_dll_rev_true
+
+2 function parameter addressoffed
+merge_sort_false.cil, merge_sort_true.cil
+
+2 global struct initialization
+bubble_sort_linux_false.cil, bubble_sort_linux_true.cil
+
+2 pointer casts weird
+sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
+
+2 struct pointer dereference
+tree_*
+
+4 void pointer addressoffed
+dll_*
+
+---
+
+[10259] ldv-challenges (15):
+
+-- Translation:
+
+14 assert rex.declCTypes.size() == rex.decl.size()
+- all others -
+
+1 NullPointerException
+main7-*
+
+---
+
+[10265] ldv-commit-tester (62):
+
+-- Translation:
+
+3 array in struct in struct
+m0_false_drivers-hwmon-*, m0_true_drivers-hwmon-ibmpex-*,
+m0_true_drivers-hwmon-s3c-*
+
+1 assert mapped.typeDeclarations.isEmpty()
+m0_false_drivers-net-b44-*
+
+31 enum
+m0_false_drivers-media-*, m0_false_drivers-scsi-*, m0_false_sound-*,
+m0_true_drivers-media-radio-*, m0_true_drivers-media-rc-*,
+m0_true_drivers-media-video-cx88-cx88-dvb-*,
+m0_true_drivers-media-video-cx88-cx8802-ko-*, m0_true_drivers-net-myri10ge-*,
+m0_true_sound-oss-*, main0_*, main1_*, main2_*, main3_false_*,
+main3_true_drivers-*, main4_false_*, main7_*, main8_*
+
+2 assert rex.declCTypes.size() == rex.decl.size()
+m0_true_drivers-media-video-cx88-cx88-blackbird-*
+
+25 union
+m0_false_drivers-block-*, m0_false_drivers-net-slip-*,
+m0_false_drivers-staging-*, m0_false_drivers-usb-*,
+m0_true_drivers-hwmon-pmbus-*, m0_true_drivers-net-forcedeth-*,
+m0_true_drivers-net-slip-*, m0_true_drivers-staging-*,
+m0_true_drivers-usb-*, m0_true_sound-core-*, main3_true_arch-*, main4_true_*
+
+---
+
+ldv-consumption (164):
+
+TODO
+
+---
+
+[10266] ldv-linux-3.0 (41):
+
+-- Translation:
+
+15 union
+module_get_put-drivers-block-drbd-*, module_get_put-drivers-block-loop*,
+module_get_put-drivers-block-pktcdvd*, module_get_put-drivers-bluetooth-*,
+module_get_put-drivers-char-*, module_get_put-drivers-gpu-*,
+module_get_put-drivers-net-atl1c-*, module_get_put-drivers-net-ppp_*,
+module_get_put-drivers-scsi-*, module_get_put-drivers-tty-*,
+usb_urb-drivers-media-video-*, usb_urb-drivers-usb-misc-*,
+usb_urb-drivers-vhost-*
+
+26 enum
+module_get_put-drivers-atm-*, module_get_put-drivers-block-paride*,
+module_get_put-drivers-hid-*, module_get_put-drivers-hwmon-*,
+module_get_put-drivers-isdn-*, module_get_put-drivers-net-pppox*,
+module_get_put-drivers-net-sis900*, module_get_put-drivers-net-wan-*,
+module_get_put-drivers-staging-*, module_get_put-drivers-usb-*,
+module_get_put-drivers-video-*, usb_urb-drivers-hid-*,
+usb_urb-drivers-input-*, usb_urb-drivers-media-dvb-*, usb_urb-drivers-misc-*,
+usb_urb-drivers-mtd-*, usb_urb-drivers-net-*, usb_urb-drivers-scsi-*,
+usb_urb-drivers-staging-*, usb_urb-drivers-usb-serial-*, usb_urb-drivers-uwb-*,
+usb_urb-drivers-video-*
+
+---
+
+ldv-linux-3.4-simple (1155):
+
+TODO
+
+---
+
+[10219] ldv-linux-3.7.3 (11):
+
+-- Translation:
+
+11 union
+- all -
+
+---
+
+[10278] ldv-regression (94):
+
+20 working
+1_3.c_*, just_*, mutex_lock_int.c_false.cil, mutex_lock_struct.c_false.cil,
+nested_structure_noptr*, oomInt.c_*, rule57_ebda_blast.c_false.cil,
+stateful_check_false.cil, structure_*, test08_*, test22_true, test24_false,
+test25_false, test28_false, test_cut_*, test_malloc-1_true, test_while_*
+
+27 wrong result
+alias_of_return.c_true_1.cil, alias_of_return_2.c_true_1.cil,
+mutex_lock_int.c_true_1.cil, mutex_lock_struct.c_true_1.cil,
+nested_structure.c_true.cil, nested_structure_ptr.c_true.cil,
+nested_structure_ptr_true, nested_structure_true,
+rule57_ebda_blast.c_true_1.cil, test03_*, test04_*, test07_*, test09_*,
+test11_*, test13_*, test14_*, test15_*, test16_*, test19_*, test20_*,
+test22_true, test24_true, test25_true, test28_true, test_address*,
+test_malloc-1_true.cil, volatile_*
+
+7 NestedSsaBuilder
+sizeofparameters_test.c_true.cil, test01_*, test02_*, test12_*, test17_*,
+test21_*, test_malloc-2_true, test_malloc-2_true.cil
+
+-- Translation:
+
+4 Address of something that is not on the heap
+test_union_cast-2_true, test18_*, test30_*
+
+1 double
+test_union_cast-2_true.cil
+
+1 function name hidden in parentheses
+fo_* 
+
+1 hexadecimals
+test_union_cast.c_true.cil
+
+1 function pointer used
+callfpointer*
+
+2 pointer as offset
+alias_of_return.c_true.cil, alias_of_return_2.c_true.cil
+
+2 pointer fields renamed
+test26_*
+
+2 pointer struct I
+test27_*
+
+1 TODO for Alex
+rule60_list.c_true.cil
+
+5 pointer void return value
+alt_*, ex3_*, recursive_*, rule60_list2*
+
+1 StringLiteral
+test_overflow*
+
+7 type error: expected pointer, got INT
+nested_structure_ptr_true.cil, nested_structure_true.cil, test05_*, test06_*,
+test10_*, test23_*
+
+7 union
+test_union.c_*, test_union_cast-1_*, test_union_cast.c_true_1.cil, test29_*
+
+1 void function call ITE
+stateful_check_false
+
+---
+
+[10266] list-ext-properties (20):
+
+1 unknown
+960521-1_false-valid-free
+
+-- Translation:
+
+3 array in struct in struct
+test-0158_*
+
+2 auxVar wrong type
+test-0019_*
+
+2 empty enum identifier
+test-0214_*, test-0217_*
+
+2 memory access with struct operation
+960521-1_false-valid-deref, 960521-1_true
+
+4 struct pointer dereference
+test_0232_*, test_0504_*, test_0513_*
+
+6 recursive struct
+list_*, simple_*
+
+---
+
+[10270] list-properties (17):
+
+6 empty enum identifier
+*.cil
+
+11 recursive struct
+- all others -
+
+---
+
+[10319] locks (13):
+
+13 unknown
+- all -
+
+---
+
+[10272] loops (72):
+
+26 working
+count_up_down_false, for_infinite_*, insertion_sort_false, invert_string_false,
+linear_search_false, matrix_false, nec11_*, nec20_*, sum_array_false,
+terminator_01_false, terminator_02_*, terminator_03_*, trex01_*, trex02_*,
+trex03_false, trex04_*, veris.c_sendmail_*, while_*
+
+21 unknown
+array_*, eureka_01_*, for_bounded_*, invert_string_true, list_*, matrix_true,
+n.c11_*, string_*, sum0*
+
+1 no specification
+terminator_01_true
+
+6 wrong result
+count_up_down_true, insertion_sort_true, linear_sea.ch_true, sum_array_true,
+trex03_true, verisec_sendmail_*
+
+-- Translation:
+
+1 #define -> error
+bubble_sort_false
+
+2 #ifndef
+veris.c_OpenSER_*, verisec_OpenSER_*
+
+1 array cast fail
+bubble_sort_true
+        
+2 array no size but initialization
+vogal_*
+
+2 array size is an expression
+heavy_*
+
+1 continue
+n.c24_*
+
+2 float
+lu*
+
+1 assert rex.declCTypes.size() == rex.decl.size()
+s3_false
+
+4 missing modifies
+compact_false, eureka_05_*, n.c40_*, nec40_*, 
+
+2 type cast exception
+veris.c_NetBSD-*, verisec_NetBSD-*
+
+---
+
+[10224] memsafety (36):
+
+1 working
+20051113-1.c_false-valid-memtrack, lockfree-3.0_true
+
+4 wrong result
+960521-1_false-valid-free, lockfree-3.1*, lockfree-3.2*, lockfree-3.3*
+
+-- Translation:
+
+2 #define -> error
+test-0134_true, test-0137_false-valid-deref
+
+2 BoogieASTUtil.getLeftMostId()
+960521-1_false-valid-deref, 960521-1_true
+
+1 ClassCastException: ResultExpression is no ResultExpressionListRec
+test-0521_true
+
+3 empty enum identifier
+test-0214_true, test-0217_true, test-0218_true
+
+2 getWriteCall() rType == null
+test-0019_*
+
+5 TODO mixed
+test-0232_*, test-0504_*, test-0513_*
+
+1 pointer struct II
+20020406-1_false-valid-memtrack
+
+9 size_t
+test-0219_true, test-0220_true, test-0234_*, test-0235_*, test-0236_*,
+test-0237_*
+
+3 array in struct in struct
+test-0158_*
+
+2 TypeHandler.visit(Dispatcher main, IASTElaboratedTypeSpecifier node)
+test-0102_*
+
+---
+
+[10224] memsafety-ext (8):
+
+-- Translation:
+
+7 getWriteCall() rType == null
+- all others -
+
+---
+
+[10265] ntdrivers (10):
+
+-- Translation:
+
+10 typedef with function pointer
+- all -
+
+---
+
+[10319] ntdrivers-simplified (10):
+
+10 unknown
+- all -
+
+---
+
+product-lines (597):
+
+TODO
+
+---
+
+[10320] recursive (35):
+
+8 working
+Ackermann02_false, Ackermann_false, Addition02_false, Addition_false,
+EvenOdd03_false, gcd01_true, gcd, McCarthy91_false
+
+26 unknown
+- all others -
+
+-- Translation:
+
+1 implementation
+Fibonacci04_false
+
+---
+
+[10224] ssh (36):
+
+-- Translation:
+
+36 assert rex.declCTypes.size() == rex.decl.size()
+- all -
+
+---
+
+[10319] ssh-simplified (26):
+
+26 unknown
+- all -
+
+---
+
+[10320] systemc (64):
+
+64 unknown
+- all -
+
+--------------------------------------------
+error                                           count   example (* = TODO)
+
+Matthias:
+StrongestPostDeterminizer.reviewInductiveInternal()
+
+
+union                                           68      ---
+enum                                            70      *
+assert rex.declCTypes.size() == rex.decl.size() 17      *
+recursive struct                                          17      recursiveStruct
+empty enum identifier                           11      *
+typedef with function pointer                   10      *
+array in struct in struct                       9       arrayInStructInStruct
+getWriteCall() rType == null                    9       *
+type error: expected pointer, got INT           7       pointerTypeError
+struct pointer dereference                      6       structPointerDereference
+#define -> error                                5       define
+bitvector operation with non-integer            5       bitvectorOperationNoInt
+pointer void return value                       5       pointerVoidReturnType
+Address of something that is not on the heap    4       *
+missing modifies                                4       modifies1, modifies2
+void pointer addressoffed                       4       voidPointerAddressof
+ClassCastException: ResultExpressionListRec     3       *
+#ifndef                                         2       ---
+array no size but initialization                2       arrayNoSize
+array size is an expression                     2       arraySizeExpression
+assert rop.lrVal.cType instanceof CPointer      2       *
+auxVar wrong type                               2       auxVarType
+float                                           2       float
+function parameter addressoffed                 2       *
+global struct initialization                    2       globalStructInit
+memory access with struct operation             2       memoryAccessStruct
+pointer as offset                               2       pointerAsOffset
+pointer casts weird                             2       pointerWeird
+pointer fields renamed                          2       *
+pointer struct I                                2       *
+TypeHandler.visit(IASTElaboratedTypeSpecifier)  2       *
+array cast fail                                 1       arrayAsParam
+assert mapped.typeDeclarations.isEmpty()        1       *
+continue                                        1       continue
+double                                          1       double
+function name hidden in parentheses             1       *
+function pointer used                           1       *
+hexadecimals                                    1       *
+implementation                                  1       --- (error in example)
+implicit cast (float to int)                    1       implicitCast
+pointer struct II                               1       *
+StringLiteral                                   1       *
+TraceChecker.getFailurePath()                   1       ?
+void function call ITE                          1       voidFunctionITE

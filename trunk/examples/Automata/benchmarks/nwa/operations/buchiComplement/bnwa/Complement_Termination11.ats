@@ -1,0 +1,91 @@
+// Testfile dumped by Ultimate at 2013/11/10 16:40:07
+
+// 2014-08-10 Matthias: I commented out the following operations, because they
+// do not allow to run the tests.
+// Searching for lassos takes to much time and the test will not terminate in a
+// few minutes.
+// However, I do not want to check for timout in the search for lassos because
+// I expect that this is a fast operation and a bug is responsible for 
+// nontermination. But I do not want to analyze this bug now.
+print(numberOfStates(nwa));
+// NestedWordAutomaton complement = buchiComplementFKV(nwa);
+// print(numberOfStates(complement));
+// assert(numberOfStates(complement) == 1352); // highest rank is 9 // with MatthiasTightLevelRankingStateGenerator result was 9252 and minimizeSevpa reduced it to 4097
+// NestedWordAutomaton live = removeNonLiveStates(complement);
+// print(numberOfStates(live));
+// assert(numberOfStates(live) == 1352);
+// minimizeSevpa(complement); //reduced to 1096
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"28call x := decrease(x);" },
+	internalAlphabet = {"17res := a - 7;" "18assume true;" "21res := a - 1;" "24assume !(x > 0);assume true;" "27assume true;" "26assume x > 0;" },
+	returnAlphabet = {"19return call x := decrease(x);" },
+	states = {"32#(and unseeded (or (not |old(unseeded)|) unseeded))" "408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))" "2828#(and (<= |old(oldRank)| oldRank) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank))" "11#unseeded" "41#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "465#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "26#(<= 0 oldRank)" "63#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (= oldRank (+ x (- 1))))" "242#(and (<= x (+ oldRank 1)) (<= (+ x 6) oldRank))" "329#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" },
+	initialStates = {"11#unseeded" },
+	finalStates = {"17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" },
+	callTransitions = {
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "28call x := decrease(x);" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "28call x := decrease(x);" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "28call x := decrease(x);" "41#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("26#(<= 0 oldRank)" "28call x := decrease(x);" "2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))")
+		 ("329#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "28call x := decrease(x);" "408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+	},
+	internalTransitions = {
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "17res := a - 7;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "17res := a - 7;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "18assume true;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "18assume true;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "21res := a - 1;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "21res := a - 1;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "24assume !(x > 0);assume true;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "24assume !(x > 0);assume true;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "27assume true;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "27assume true;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "26assume x > 0;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "26assume x > 0;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "17res := a - 7;" "465#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "18assume true;" "408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "21res := a - 1;" "408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))" "17res := a - 7;" "2828#(and (<= |old(oldRank)| oldRank) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank))")
+		 ("2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))" "18assume true;" "2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))")
+		 ("2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))" "21res := a - 1;" "2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))")
+		 ("2828#(and (<= |old(oldRank)| oldRank) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank))" "18assume true;" "2828#(and (<= |old(oldRank)| oldRank) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank))")
+		 ("11#unseeded" "17res := a - 7;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("11#unseeded" "17res := a - 7;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("11#unseeded" "21res := a - 1;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("11#unseeded" "21res := a - 1;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("11#unseeded" "24assume !(x > 0);assume true;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("11#unseeded" "24assume !(x > 0);assume true;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("11#unseeded" "26assume x > 0;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("11#unseeded" "26assume x > 0;" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("41#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "21res := a - 1;" "41#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("41#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "17res := a - 7;" "63#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (= oldRank (+ x (- 1))))")
+		 ("41#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "18assume true;" "41#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("465#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "18assume true;" "465#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "17res := a - 7;" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "18assume true;" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "21res := a - 1;" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "24assume !(x > 0);assume true;" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "27assume true;" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "26assume x > 0;" "329#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "24assume !(x > 0);assume true;" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "26assume x > 0;" "329#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))")
+		 ("52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))" "18assume true;" "52#(and (<= x (+ oldRank 1)) (= oldRank (+ x (- 1))))")
+		 ("26#(<= 0 oldRank)" "24assume !(x > 0);assume true;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("26#(<= 0 oldRank)" "27assume true;" "26#(<= 0 oldRank)")
+		 ("26#(<= 0 oldRank)" "26assume x > 0;" "26#(<= 0 oldRank)")
+		 ("63#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (= oldRank (+ x (- 1))))" "18assume true;" "63#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (= oldRank (+ x (- 1))))")
+		 ("242#(and (<= x (+ oldRank 1)) (<= (+ x 6) oldRank))" "24assume !(x > 0);assume true;" "242#(and (<= x (+ oldRank 1)) (<= (+ x 6) oldRank))")
+		 ("242#(and (<= x (+ oldRank 1)) (<= (+ x 6) oldRank))" "27assume true;" "242#(and (<= x (+ oldRank 1)) (<= (+ x 6) oldRank))")
+		 ("242#(and (<= x (+ oldRank 1)) (<= (+ x 6) oldRank))" "26assume x > 0;" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+	},
+	returnTransitions = {
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "32#(and unseeded (or (not |old(unseeded)|) unseeded))" "19return call x := decrease(x);" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("32#(and unseeded (or (not |old(unseeded)|) unseeded))" "32#(and unseeded (or (not |old(unseeded)|) unseeded))" "19return call x := decrease(x);" "32#(and unseeded (or (not |old(unseeded)|) unseeded))")
+		 ("408#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "329#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "19return call x := decrease(x);" "26#(<= 0 oldRank)")
+		 ("2435#(and (<= |old(oldRank)| oldRank) (<= 0 oldRank))" "26#(<= 0 oldRank)" "19return call x := decrease(x);" "26#(<= 0 oldRank)")
+		 ("2828#(and (<= |old(oldRank)| oldRank) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank))" "26#(<= 0 oldRank)" "19return call x := decrease(x);" "26#(<= 0 oldRank)")
+		 ("465#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "329#(and (<= x (+ oldRank 1)) (<= 0 oldRank) (= oldRank (+ x (- 1))))" "19return call x := decrease(x);" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))")
+		 ("63#(and (<= |old(oldRank)| oldRank) (<= x (+ oldRank 1)) (<= (+ |old(oldRank)| decrease_res 7) (+ oldRank decrease_a)) (= oldRank (+ x (- 1))))" "17#(or unseeded (and (> oldRank (+ x (- 1))) (>= oldRank 0)))" "19return call x := decrease(x);" "242#(and (<= x (+ oldRank 1)) (<= (+ x 6) oldRank))")
+	}
+);

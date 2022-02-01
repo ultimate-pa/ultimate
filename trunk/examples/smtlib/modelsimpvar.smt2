@@ -1,0 +1,16 @@
+(set-option :produce-models true)
+(set-logic QF_UFLIRA)
+(declare-fun heaterExample_t_init () Real)
+(declare-fun heaterExample_t_off_0 () Real)
+(declare-fun heaterExample_t_on_0 () Real)
+(declare-fun heaterExample_t_old_1 () Real)
+(declare-fun heaterExample_t_1 () Real)
+(declare-fun heaterExample_t_new_1 () Real)
+(assert (! (and (= heaterExample_t_on_0 1.0) (= heaterExample_t_off_0 10.0) (>= heaterExample_t_init heaterExample_t_on_0) (<= heaterExample_t_init heaterExample_t_off_0) true) :named ssa_0))
+(assert (! (and (= heaterExample_t_old_1 heaterExample_t_init) (>= heaterExample_t_old_1 heaterExample_t_on_0) (<= heaterExample_t_new_1 heaterExample_t_old_1) (= heaterExample_t_1 heaterExample_t_new_1) true) :named ssa_1))
+;(assert (! (and (not (and (>= heaterExample_t_1 1.0) (<= heaterExample_t_1 10.0))) true) :named ssa_2))
+(check-sat)
+; heaterExample_t_1 gets removed by tableau simplifier and we need to compute a correct value for it anyway...
+(get-value (heaterExample_t_init heaterExample_t_off_0 heaterExample_t_old_1 heaterExample_t_on_0 heaterExample_t_1 heaterExample_t_new_1))
+(exit)
+

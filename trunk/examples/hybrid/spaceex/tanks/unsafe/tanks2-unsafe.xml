@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" math="SpaceEx" version="0.2">
+  <component id="tanks">
+    <param d1="1" d2="1" dynamics="const" local="false" name="v_in" type="real" />
+    <param d1="1" d2="1" dynamics="const" local="false" name="v_out" type="real" />
+    <param d1="1" d2="1" dynamics="const" local="false" name="t_max" type="real" />
+    <param d1="1" d2="1" dynamics="any" local="false" name="t_local" type="real" />
+    <param d1="1" d2="1" dynamics="any" local="false" name="t_global" type="real" />
+    <param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" />
+    <param d1="1" d2="1" dynamics="any" local="false" name="tank1" type="real" />
+    <param d1="1" d2="1" dynamics="any" local="false" name="tank2" type="real" />
+    <location height="185.0" id="0" name="tanksClosed" width="200.0" x="224.0" y="898.0">
+      <invariant>t_local &gt;= 0
+&amp; tank1&gt;= 0
+&amp; tank2&gt;= 0</invariant>
+      <flow>t_local' == 1 &amp; 
+tank1' == 0 &amp;
+tank2' == 0</flow>
+    </location>
+    <location height="185.0" id="1" name="tank1Open" width="200.0" x="1298.0" y="728.0">
+      <invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0
+&amp; tank2&gt;= 0
+&amp; tank1 &lt;= tank2</invariant>
+      <flow>t_local' == 1 &amp; 
+tank1' ==0- v_out &amp;
+tank2' == v_in</flow>
+    </location>
+    <location height="185.0" id="2" name="tank2Open" width="200.0" x="760.0" y="304.0">
+      <invariant>t_local &lt;= t_max
+&amp; tank1 &lt;=  tank_max 
+&amp;  tank2 &gt;= 0</invariant>
+      <flow>t_local' == 1 &amp;
+tank1' == v_in &amp;
+tank2' == 0- v_out</flow>
+    </location>
+    <transition asap="false" bezier="false" source="0" target="1" timedriven="false">
+      <guard>t_local &gt;= 0
+&amp; tank2 &lt;=tank1</guard>
+      <labelposition height="78.0" width="164.0" x="176.0" y="-40.0" />
+      <middlepoint x="737.0" y="943.0" />
+      <waypoints>
+        <aftermiddle>1093.0,865.0</aftermiddle>
+      </waypoints>
+    </transition>
+    <transition asap="false" bezier="false" source="0" target="2" timedriven="false">
+      <guard>t_local &gt;= 0
+&amp; tank1 &lt;= tank2</guard>
+      <labelposition height="100.0" width="270.0" x="-112.0" y="-201.0" />
+      <middlepoint x="301.0" y="611.0" />
+      <waypoints>
+        <aftermiddle>443.0,428.0</aftermiddle>
+      </waypoints>
+    </transition>
+    <transition asap="false" bezier="false" source="1" target="0" timedriven="false">
+      <guard>t_local &gt;= t_max</guard>
+      <assignment>t_local := 0</assignment>
+      <labelposition height="64.0" width="276.0" x="-268.0" y="-75.0" />
+      <middlepoint x="1048.0" y="729.0" />
+      <waypoints>
+        <aftermiddle>757.0,778.0</aftermiddle>
+      </waypoints>
+    </transition>
+    <transition asap="false" bezier="false" source="2" target="0" timedriven="false">
+      <guard>t_local &gt;= t_max</guard>
+      <assignment>t_local := 0</assignment>
+      <labelposition height="74.0" width="136.0" x="157.0" y="52.0" />
+      <middlepoint x="599.0" y="530.0" />
+      <waypoints>
+        <aftermiddle>458.0,671.0</aftermiddle>
+      </waypoints>
+    </transition>
+  </component>
+  <component id="system">
+    <param name="v_in" type="real" local="false" d1="1" d2="1" dynamics="const" controlled="true" />
+    <param name="v_out" type="real" local="false" d1="1" d2="1" dynamics="const" controlled="true" />
+    <param name="t_max" type="real" local="false" d1="1" d2="1" dynamics="const" controlled="true" />
+    <param name="t_local" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="t_global" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" controlled="true" />
+    <param name="tank1" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="tank2" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="tanks" as="tanks" x="371.0" y="228.0">
+      <map key="v_in">v_in</map>
+      <map key="v_out">v_out</map>
+      <map key="t_max">t_max</map>
+      <map key="t_local">t_local</map>
+      <map key="t_global">t_global</map>
+      <map key="tank_max">tank_max</map>
+      <map key="tank1">tank1</map>
+      <map key="tank2">tank2</map>
+    </bind>
+  </component>
+</sspaceex>
+

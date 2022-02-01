@@ -1,0 +1,10 @@
+#Mon Aug 07 19:03:14 CEST 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer=0.1.20
+file_export_version=3.0
+#Mon Aug 07 19:03:14 CEST 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/SmtParser\ Mode=UltimateTreeAutomizer
+@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.20
+file_export_version=3.0

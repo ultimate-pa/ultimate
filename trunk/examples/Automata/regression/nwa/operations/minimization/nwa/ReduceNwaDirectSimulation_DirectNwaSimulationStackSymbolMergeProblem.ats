@@ -1,0 +1,69 @@
+// Author: Christian Schilling
+// Date: 2016-06-08
+// 
+// Language: (a + b)(c1 r a* + c2 r a a*)
+// Merging states {q1, q2} and {q3, q4} changes the language.
+// This reveals a bug in reduceNwaDirectSimulation().
+// 
+// The trick here is that the automaton is nondeterministic such that each of
+// the above states are equivalent with the same stack, but when we merge
+// {q1, q2} the stacks can be mixed.
+// In particular, the stacks q1.q1, q2.q2, q1.q2, and q2.q1 are all equivalent,
+// which was not the case before merging.
+//
+// Bug fixed at Jun 10, 2016 by Daniel Tischner.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 7);
+assert(shrinkNwaSize == 7);
+assert(minimizeNwaPmaxSatDirectBiSize == 7);
+assert(minimizeNwaPmaxSatDirectSize == 7);
+assert(reduceNwaDirectSimulationSize == 7);
+assert(reduceNwaDirectSimulationBSize == 7);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 7);
+// assert(reduceNwaDelayedSimulationSize == 4);
+// assert(reduceNwaDelayedSimulationBSize == 4);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c1 c2},
+	internalAlphabet = {a b},
+	returnAlphabet = {r},
+	states = {q0 q1 q2 q3 q4 q5 q6 qf},
+	initialStates = {q0},
+	finalStates = {qf},
+	callTransitions = {
+		(q1 c1 q3)
+		(q1 c1 q4)
+		(q1 c2 q6)
+		(q2 c1 q6)
+		(q2 c2 q3)
+		(q2 c2 q4)
+	},
+	internalTransitions = {
+		(q0 a q1)
+		(q0 b q2)
+		(q5 a qf)
+		(qf a qf)
+	},
+	returnTransitions = {
+		(q3 q1 r qf)
+		(q4 q1 r qf)
+		(q3 q2 r q5)
+		(q4 q2 r q5)
+		(q6 q1 r qf)
+		(q6 q2 r qf)
+	}
+);

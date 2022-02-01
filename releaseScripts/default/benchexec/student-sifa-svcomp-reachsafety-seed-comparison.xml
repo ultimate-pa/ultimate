@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
+ 
+  <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+
+
+  <rundefinition name="Sifa INT">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+	<option name="--sifa.abstract.domain">IntervalDomain</option>
+  </rundefinition>
+
+  <rundefinition name="Automizer">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan INT">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf</option>
+  </rundefinition>
+
+  <rundefinition name="AbsInt INT">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf</option>
+  </rundefinition>
+    
+  <tasks name="Loops">
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+  </tasks>
+
+  <tasks name="ReachSafety32">
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Heap.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ProductLines.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Recursive.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Sequentialized.set</includesfile>
+  </tasks>
+
+  <tasks name="ReachSafety64">
+    <includesfile>../../../trunk/examples/svcomp/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
+  </tasks>
+
+</benchmark>

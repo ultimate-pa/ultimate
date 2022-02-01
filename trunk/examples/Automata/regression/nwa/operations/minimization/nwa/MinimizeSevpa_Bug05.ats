@@ -1,0 +1,66 @@
+// Author: Matthias
+// Date: 22.09.2012
+//
+// Example that shows that we may not only split partitions along linear
+// predecessors but also along hierarchical predecessors.
+//
+// Problem with run fibonacciENTRY assume !(n < 1); L20 assume !(n == 1); L24 call< fibonacciENTRY assume n < 1;res = ... L20'' assume res >= 0; fibonacciEXIT > returnL24' call< fibonacciENTRY assume n < 1;res = ... L20'' assume res >= 0; fibonacciEXIT > returnL25 res = tmpFst + tmpS... L20'' assume !(res >= 0); fibonacciErr0EnsuresViolation 
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 13);
+assert(shrinkNwaSize == 13);
+assert(minimizeNwaPmaxSatDirectBiSize == 13);
+assert(minimizeNwaPmaxSatDirectSize == 13);
+assert(reduceNwaDirectSimulationSize == 13);
+assert(reduceNwaDirectSimulationBSize == 13);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 13);
+// assert(reduceNwaDelayedSimulationSize == 13);
+// assert(reduceNwaDelayedSimulationBSize == 13);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 13);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call34" "call32" },
+	internalAlphabet = {"assume n < 1;res = ...18" "assume !(n < 1);20" "assume n == 1;res :=...23" "assume !(n == 1);25" "res = tmpFst + tmpS...28" "assume !(res >= 0);31" "assume res >= 0;30" },
+	returnAlphabet = {"return35" "return33" },
+	states = {"fibonacciEXIT478" "L20''479" "L20''476" "L20477" "fibonacciENTRY474" "fibonacciErr0EnsuresViolation496" "fibonacciEXIT497" "fibonacciErr0EnsuresViolation498" "fibonacciEXIT493" "L20''495" "L20''494" "L25489" "L20''488" "L25490" "L24'484" "L25486" "fibonacciEXIT481" "L24480" "L24'483" },
+	initialStates = {"fibonacciENTRY474" },
+	finalStates = {"fibonacciErr0EnsuresViolation496" "fibonacciErr0EnsuresViolation498" },
+	callTransitions = {
+		 ("L24'484" "call34" "fibonacciENTRY474")
+		 ("L24480" "call32" "fibonacciENTRY474")
+		 ("L24'483" "call34" "fibonacciENTRY474")
+	},
+	internalTransitions = {
+		 ("L20''479" "assume res >= 0;30" "fibonacciEXIT481")
+		 ("L20''476" "assume res >= 0;30" "fibonacciEXIT478")
+		 ("L20477" "assume n == 1;res :=...23" "L20''479")
+		 ("L20477" "assume !(n == 1);25" "L24480")
+		 ("fibonacciENTRY474" "assume n < 1;res = ...18" "L20''476")
+		 ("fibonacciENTRY474" "assume !(n < 1);20" "L20477")
+		 ("L20''495" "assume !(res >= 0);31" "fibonacciErr0EnsuresViolation498")
+		 ("L20''495" "assume res >= 0;30" "fibonacciEXIT481")
+		 ("L20''494" "assume !(res >= 0);31" "fibonacciErr0EnsuresViolation496")
+		 ("L20''494" "assume res >= 0;30" "fibonacciEXIT497")
+		 ("L25489" "res = tmpFst + tmpS...28" "L20''494")
+		 ("L20''488" "assume res >= 0;30" "fibonacciEXIT493")
+		 ("L25490" "res = tmpFst + tmpS...28" "L20''495")
+		 ("L25486" "res = tmpFst + tmpS...28" "L20''488")
+	},
+	returnTransitions = {
+		 ("fibonacciEXIT478" "L24480" "return33" "L24'483")
+		 ("fibonacciEXIT497" "L24480" "return33" "L24'484")
+		 ("fibonacciEXIT481" "L24'483" "return35" "L25489")
+	}
+);

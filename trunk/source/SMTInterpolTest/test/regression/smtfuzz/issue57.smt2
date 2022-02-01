@@ -1,0 +1,10 @@
+(set-logic UF)
+(declare-fun v0 () Bool)
+(declare-fun v3 () Bool)
+(declare-fun v16 () Bool)
+(assert (not (exists ((q4 Bool) (q5 Bool) (q6 Bool)) (not (xor q5 v16 q4 v0 (xor v16 v3) q5)))))
+(push 1)
+(check-sat)
+(pop 1)
+(check-sat)
+

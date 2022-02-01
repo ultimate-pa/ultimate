@@ -1,0 +1,95 @@
+// Testfile dumped by Ultimate at 2013/11/28 13:18:49
+
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 7);
+getAcceptedLassoWord(nwa);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c0 c1 },
+	internalAlphabet = {a0 a1 a2 a3 a4 a5 a6 },
+	returnAlphabet = {r0 r1 },
+	states = {s0 s1 s2 s3 s4 s6 s5 },
+	initialStates = {s6 },
+	finalStates = {s1 },
+	callTransitions = {
+		 (s0 c0 s1)
+		 (s0 c0 s5)
+		 (s1 c0 s2)
+		 (s3 c0 s3)
+		 (s3 c1 s3)
+		 (s5 c0 s1)
+		 (s5 c0 s5)
+		 (s6 c0 s1)
+		 (s6 c0 s6)
+		 (s6 c1 s1)
+		 (s6 c1 s6)
+	},
+	internalTransitions = {
+		 (s1 a0 s4)
+		 (s1 a1 s4)
+		 (s1 a2 s4)
+		 (s1 a3 s0)
+		 (s1 a4 s4)
+		 (s1 a5 s4)
+		 (s1 a6 s4)
+		 (s2 a0 s2)
+		 (s2 a1 s2)
+		 (s2 a2 s2)
+		 (s2 a3 s5)
+		 (s2 a4 s2)
+		 (s2 a5 s2)
+		 (s2 a6 s2)
+		 (s3 a0 s3)
+		 (s3 a1 s1)
+		 (s3 a1 s5)
+		 (s3 a3 s3)
+		 (s3 a4 s3)
+		 (s3 a5 s3)
+		 (s3 a6 s3)
+		 (s4 a1 s4)
+		 (s4 a2 s4)
+		 (s4 a3 s0)
+		 (s4 a4 s4)
+		 (s4 a5 s4)
+		 (s4 a6 s4)
+		 (s5 a0 s5)
+		 (s5 a1 s1)
+		 (s5 a1 s5)
+		 (s5 a2 s5)
+		 (s5 a3 s5)
+		 (s5 a4 s5)
+		 (s5 a5 s5)
+		 (s5 a6 s5)
+		 (s6 a0 s1)
+		 (s6 a0 s6)
+		 (s6 a1 s1)
+		 (s6 a1 s6)
+		 (s6 a2 s1)
+		 (s6 a2 s6)
+		 (s6 a3 s1)
+		 (s6 a3 s6)
+		 (s6 a4 s1)
+		 (s6 a4 s6)
+		 (s6 a5 s1)
+		 (s6 a5 s6)
+		 (s6 a6 s1)
+		 (s6 a6 s6)
+	},
+	returnTransitions = {
+		 (s3 s3 r0 s3)
+		 (s3 s6 r0 s3)
+		 (s3 s0 r1 s3)
+		 (s3 s1 r1 s3)
+		 (s3 s3 r1 s3)
+		 (s3 s5 r1 s3)
+		 (s3 s6 r1 s3)
+		 (s5 s3 r0 s3)
+		 (s5 s0 r1 s3)
+		 (s5 s3 r1 s3)
+		 (s5 s5 r1 s3)
+		 (s6 s6 r0 s1)
+		 (s6 s6 r0 s6)
+		 (s6 s6 r1 s1)
+		 (s6 s6 r1 s6)
+	}
+);

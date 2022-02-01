@@ -1,0 +1,17 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 09.01.2014
+
+parseAutomata("../../../SimpleBuchiAutomata.ats");
+
+print(numberOfStates(finitelyManyAWithSinkState));
+NestedWordAutomaton complement = buchiComplementFKV(finitelyManyAWithSinkState);
+print(numberOfStates(complement));
+assert(numberOfStates(complement) == 12);
+NestedWordAutomaton live = removeNonLiveStates(complement);
+print(numberOfStates(live));
+assert(numberOfStates(live) == 9);
+
+assert(buchiAccepts(finitelyManyAWithSinkState, [ a a b a, b ]));
+assert(!buchiAccepts(finitelyManyAWithSinkState, [ a a b a, a ]));
+assert(!buchiAccepts(complement, [ a a b a, b ]));
+assert(buchiAccepts(complement, [ a a b a, a ]));

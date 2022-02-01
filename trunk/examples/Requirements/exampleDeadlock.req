@@ -1,0 +1,16 @@
+Input x0003 is bool
+Input x0006 is bool
+Input x0001 is bool
+Input x0005 is bool
+Input x0004 is bool
+Input x0000 is bool
+Input x0002 is bool
+
+ID000: Globally, it is never the case that "x0000" holds
+ID001: Globally, it is always the case that if "x0000" holds then "x0001" holds after at most 10 time units
+ID002: Globally, it is always the case that if "x0002" holds, then "!x0003" holds after at most "10" time units
+ID003: Globally, it is always the case that once "x0003" becomes satisfied it holds for at least "15" time units
+ID004: Globally, it is always the case that if "x0004" holds and is succeeded by "x0005" then "x0006" previously held
+ID005: Globally, it is always the case that if "x0004" holds, then "x0006" previously held
+ID006: Globally, it is always the case that "x0006" holds
+ID007: Globally, it is always the case that once "x0006" becomes satisfied it holds for at least 10 time units

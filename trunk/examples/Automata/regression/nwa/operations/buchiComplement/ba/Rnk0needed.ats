@@ -1,0 +1,29 @@
+/*
+ * demonstrates that we need rank 0 if we use tight level rankings
+ * Date: 2016-01-02
+ * Author: Matthias Heizmann
+ */
+
+
+print(numberOfStates(nwa));
+print(isSemiDeterministic(nwa));
+// print(buchiComplementFKV(nwa,"Schewe", 777));
+print(buchiComplementationEvaluation(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {"a" "b" },
+	returnAlphabet = { },
+	states = {"s" "r" "f" "t" },
+	initialStates = {"s" },
+	finalStates = {"f" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		("s" "a" "s")
+		("s" "a" "f")
+		("f" "a" "t")
+	},
+	returnTransitions = {
+	}
+);

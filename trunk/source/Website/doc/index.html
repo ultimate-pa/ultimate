@@ -1,0 +1,71 @@
+<html>
+<head>
+<title>Project: Website</title>
+</head>
+<body>
+	<h1>Project: Website</h1>
+	<h2>Project Description</h2>
+	This project is a simple servlet container which can be loaded e.g. on
+	a Tomcat server. It holds the index.jsp file, which represents the
+	websites interface to the user.
+	<br />
+	<b>It depends on the project <i>WebUltimateBridge</i>, which is
+		added to the lib folder as jar file.
+	</b>
+	<h2>ACE: Ajax Cloud Editor</h2>
+	<h3>Overview and Links</h3>
+	The editor used on the website. Supports syntax highlighting and is
+	written in Java-Script.
+	<ul>
+		<li>Project website: <a href="http://ace.ajax.org/">ace.ajax.org</a></li>
+		<li>Can be downloaded here: <a
+			href="https://github.com/ajaxorg/ace">Git Repository</a></li>
+		<li>Demo: <a href="http://ace.ajax.org/build/kitchen-sink.html">Kitchen
+				Sink</a></li>
+	</ul>
+
+	<h3>Build ace with Boogie syntax high-lighting</h3>
+	The following procedure was taken from
+	<a href="https://github.com/ajaxorg/ace/wiki/Building-ace">here</a> and
+	slightly extended to add the Boogie highlighting.
+	<br /> Install npmjs on your system:
+	<code>curl http://npmjs.org/install.sh | sh</code>
+	<br />
+	<br /> Then:
+	<br />
+
+	<ol>
+		<li>run: <code>git clone git://github.com/ajaxorg/ace.git</code></li>
+		<li>run: <code>cd ace</code></li>
+		<li>run: <code>git submodule update --init --recursive</code></li>
+		<li>run: <code>make clean</code></li>
+		<li>run: <code>npm install dryice@0.3.1</code></li>
+		<li>copy boogie files to <code>./lib/ace/mode</code></li>
+		<li>add '<code>"boogie",</code>' to <code>Makefile.dryice.js</code>
+			where the other syntax high lightings are listed
+		</li>
+		<li>run: <code>make build</code></li>
+	</ol>
+
+	Find the Boogie syntax highlighting files
+	<a href="./">here</a>
+
+	<br />
+	<br />
+	<i><b>Note:</b> The boogie syntax highlighting mode was sent to the
+		developer(s) of ACE (i.e. fabian.jakobs@web.de &lt;Fabian Jakobs&gt;)
+		so that they can add it to their repository and maintain it. This
+		would make the above description obsolete and the provided and
+		compressed default <code>.js</code> files!</i>
+	<h2>See also</h2>
+	<ul>
+		<li><a href="../../WebInterface/doc/index.html">WebInterface
+				documentation</a></li>
+		<li><a href="../../Website/doc/index.html">Website documentation</a></li>
+		<li><a href="../../WebsiteEclipseBridge/doc/index.html">WebsiteEclipseBridge
+				documentation</a></li>
+		<li><a href="../../WebUltimateBridge/doc/index.html">WebUltimateBridge
+				documentation</a></li>
+	</ul>
+</body>
+</html>

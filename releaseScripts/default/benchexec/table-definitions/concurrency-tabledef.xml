@@ -1,0 +1,157 @@
+<?xml version="1.0" ?>
+<!DOCTYPE table PUBLIC "+//IDN sosy-lab.org//DTD BenchExec table 1.10//EN" "https://www.sosy-lab.org/benchexec/table-1.10.dtd">
+<table>
+  <!-- default columns -->
+  <column title="status"/>
+  <column title="cputime" displayTitle="CPU Time"/>
+  <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+  <!-- Trace Abstraction-specific columns -->
+  <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+  <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+  <!-- ======= -->
+  <!-- RESULTS -->
+  <!-- ======= -->
+
+  <!-- results for Automizer (Vanilla) -->
+  <!-- =============================== -->
+  <result filename="*.results.Automizer FA.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- BasicCegarLoop-specific columns -->
+    <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
+    <column hidden="true" sourceUnit="ms" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
+  </result>
+
+  <!-- results for Petri Automizer -->
+  <!-- =========================== -->
+  <result filename="*.results.Automizer PN.xml" />
+
+  <!-- results for Automizer with Petri net LBE -->
+  <!-- ======================================== -->
+  <result filename="*.results.Automizer FA.SemanticLBE.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- BasicCegarLoop-specific columns -->
+    <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
+    <column hidden="true" sourceUnit="ms" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+
+  <!-- results for Petri Automizer with Petri net LBE -->
+  <!-- ============================================== -->
+  <result filename="*.results.Automizer PN.SemanticLBE.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+
+  <!-- results for Automizer with one-shot Sleep Set POR, using Delay Set variant -->
+  <!-- ========================================================================== -->
+  <result filename="*.results.Automizer FA.Delay.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- BasicCegarLoop-specific columns -->
+    <column hidden="true" sourceUnit="ms" title="minimizationTime"   displayTitle="Minimization Time">[^\d](\d+(\.\d+)?)ms AutomataMinimizationTime</column>
+    <column hidden="true" sourceUnit="ms" title="differenceTime"     displayTitle="Difference Time">AutomataDifference: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" sourceUnit="ms" title="deadendRemovalTime" displayTitle="Dead End Removal Time">DeadEndRemovalTime: (\d+(\.\d+)?)ms</column>
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">CachedIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+
+  <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant -->
+  <!-- ============================================================================ -->
+  <result filename="*.results.Automizer SLEEP_SET_FA.Delay.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+
+  <!-- results for Automizer with integrated Sleep Set POR, using New States variant -->
+  <!-- ============================================================================= -->
+  <result filename="*.results.Automizer SLEEP_SET_FA.NewStates.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+  </result>
+
+  <!-- results for Automizer with integrated Sleep Set POR, using Delay Set variant, with one-shot Petri net LBE -->
+  <!-- ========================================================================================================= -->
+  <result filename="*.results.Automizer SLEEP_SET_FA.SemanticLbe.Delay.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+    <!-- POR-specific columns -->
+    <column hidden="true" title="porTime"          displayTitle="POR: Reduction time"        sourceUnit="ms">PartialOrderReductionTime: (\d+(\.\d+)?)ms</column>
+    <column hidden="true" title="porSmtIndepTime"  displayTitle="POR: Independence SMT Time" sourceUnit="ms">DistributingIndependenceRelation.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+    <column hidden="true" title="porCondOnlyIndep" displayTitle="POR: Conditional Independencies">DistributingIndependenceRelation.*SemanticIndependenceRelation.Independence Queries: \[[^\]]*positive conditional: (\d+),</column>
+
+    <!-- LBE-specific columns -->
+    <column hidden="true" title="lbeIterations"   displayTitle="LBE: Iterations">Lipton Reduction Statistics:.*[^\d](\d+) FixpointIterations</column>
+    <column hidden="true" title="lbeSmtIndepTime" displayTitle="LBE: Independence SMT time" sourceUnit="ms">Lipton Reduction Statistics:.*SemanticIndependenceRelation\.Query Time \[ms\]: \[ total: (\d+),</column>
+  </result>
+</table>

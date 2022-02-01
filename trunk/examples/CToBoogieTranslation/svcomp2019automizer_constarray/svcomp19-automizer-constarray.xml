@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
+
+  <option name="-tc">/storage/repos/ultimate/trunk/examples/toolchains/AutomizerC.xml</option>
+
+  <rundefinition name="ConstArrays">
+    <option name="-s">/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/svcomp-Reach-32bit-Automizer_Default_ConstArrays.epf</option>
+  </rundefinition>
+  
+  <rundefinition name="StoreChains">
+    <option name="-s">/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/svcomp-Reach-32bit-Automizer_Default_StoreChains.epf</option>
+  </rundefinition>
+
+  <rundefinition name="Selects">
+    <option name="-s">/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/svcomp-Reach-32bit-Automizer_Default_Select.epf</option>
+  </rundefinition>
+
+  <tasks name="Initializer">
+    <include>/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_1.c</include>
+    <include>/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_10.c</include>
+    <include>/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_100.c</include>
+    <include>/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_1000.c</include>
+    <include>/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_10000.c</include>
+    <include>/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_100000.c</include>
+    <include>/storage/repos/ultimate/trunk/examples/CToBoogieTranslation/svcomp2019automizer_constarray/initializer_1000000.c</include>
+  </tasks>
+
+</benchmark>

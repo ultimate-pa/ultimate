@@ -1,0 +1,38 @@
+// Date: 19.05.2013
+// Author: heizmann@informatik.uni-freiburg.de 
+
+assert(accepts(difference(nwa1,nwa2), []));
+
+NestedWordAutomaton nwa1 = (
+	callAlphabet = {"a0" "a1" },
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {"a0" "a1" },
+	states = {"q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q0" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q1" "a1" "q1")
+		 ("q0" "a1" "q1")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton nwa2 = (
+	callAlphabet = {"a0" "a1" },
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {"a0" "a1" },
+	states = {"p1" "p0" },
+	initialStates = {"p0" },
+	finalStates = {},
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("p1" "a0" "p0")
+		 ("p0" "a1" "p1")
+	},
+	returnTransitions = {
+	}
+);

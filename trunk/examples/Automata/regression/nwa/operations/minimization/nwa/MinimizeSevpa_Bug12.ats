@@ -1,0 +1,69 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 28.10.2012
+//
+// Reveals Bug in r7441 in DoubleDeckerAutomaton.
+// Return true for each reachable DoubleDecker not only for DoubleDeckers
+// which can reach a final state.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 17);
+assert(shrinkNwaSize == 16);
+assert(minimizeNwaPmaxSatDirectBiSize == 15);
+assert(minimizeNwaPmaxSatDirectSize == 18);
+assert(reduceNwaDirectSimulationSize == 15);
+assert(reduceNwaDirectSimulationBSize == 18);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 18);
+// assert(reduceNwaDelayedSimulationSize == 15);
+// assert(reduceNwaDelayedSimulationBSize == 15);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 15);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call102" "call100" "call98" "call96" "call104" },
+	internalAlphabet = {"assume x > 100;res :...70" "assume !(b == c);64" "assume b == c;65" "assume true;67" "assume true;76" "assume x <= 101;res ...79" "assume !(x > 100);72" "z = x;84" "assume z > 150;z = ...87" "assume !(x <= 101);r...81" "assume true;83" "assume z < 100;z = ...92" "assume true;95" "assume !(z < 100);re...94" "assume !(z > 150);88" },
+	returnAlphabet = {"return103" "return101" "return99" "return97" "return105" },
+	states = {"McCarthyImpENTRY305" "MainENTRY304" "L20307" "L19308" "L29'311" "McCarthyRecEXIT313" "L29'312" "McCarthyImpEXIT317" "McCarthyImpEXIT316" "L63324" "L20325" "L62320" "L19'321" "MainErr0AssertViolation335" "L63333" "McCarthyRecEXIT330" "L62331" "McCarthyRecENTRY302" "MainErr0AssertViolation329" },
+	initialStates = {"MainENTRY304" },
+	finalStates = {"MainErr0AssertViolation335" "MainErr0AssertViolation329" },
+	callTransitions = {
+		 ("L62320" "call98" "McCarthyImpENTRY305")
+		 ("L19'321" "call104" "McCarthyRecENTRY302")
+		 ("L62331" "call98" "McCarthyImpENTRY305")
+		 ("MainENTRY304" "call96" "McCarthyRecENTRY302")
+		 ("L19308" "call102" "McCarthyRecENTRY302")
+	},
+	internalTransitions = {
+		 ("L63324" "assume !(b == c);64" "MainErr0AssertViolation329")
+		 ("L20325" "assume true;76" "McCarthyRecEXIT330")
+		 ("L63333" "assume !(b == c);64" "MainErr0AssertViolation335")
+		 ("McCarthyImpENTRY305" "assume !(x <= 101);r...81" "L29'311")
+		 ("McCarthyImpENTRY305" "assume x <= 101;res ...79" "L29'312")
+		 ("L20307" "assume true;76" "McCarthyRecEXIT313")
+		 ("L29'311" "assume true;83" "McCarthyImpEXIT316")
+		 ("L29'312" "assume true;83" "McCarthyImpEXIT317")
+		 ("McCarthyRecENTRY302" "assume x > 100;res :...70" "L20307")
+		 ("McCarthyRecENTRY302" "assume !(x > 100);72" "L19308")
+	},
+	returnTransitions = {
+		 ("McCarthyRecEXIT330" "L19308" "return103" "L19'321")
+		 ("McCarthyRecEXIT330" "MainENTRY304" "return97" "L62331")
+		 ("McCarthyRecEXIT330" "L19'321" "return105" "L20325")
+		 ("McCarthyRecEXIT313" "L19308" "return103" "L19'321")
+		 ("McCarthyRecEXIT313" "MainENTRY304" "return97" "L62320")
+		 ("McCarthyRecEXIT313" "L19'321" "return105" "L20325")
+		 ("McCarthyImpEXIT317" "L62320" "return99" "L63324")
+		 ("McCarthyImpEXIT317" "L62331" "return99" "L63333")
+		 ("McCarthyImpEXIT316" "L62331" "return99" "L63333")
+	}
+);

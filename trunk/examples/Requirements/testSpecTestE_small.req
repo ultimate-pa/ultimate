@@ -1,0 +1,9 @@
+
+Input I0 is int 
+Output O0 is bool 
+Internal S0 is bool 
+
+req1 : Globally , it is always the case that if "I0 == 3" holds then "S0" holds after at most 10 time units.
+req3 : Globally , it is always the case that if "S1 && S0" holds then "O0" holds after at most 10 time units.
+Input S1 is bool 
+

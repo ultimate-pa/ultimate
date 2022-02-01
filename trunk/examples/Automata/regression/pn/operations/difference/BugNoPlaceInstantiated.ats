@@ -1,0 +1,52 @@
+// Adding the first transition labelled with c does not
+// trigger the adding the s1-s2 transition, although the
+// corresponding places are in co-relation.
+// (Regression test for an "at least one place has to be instantiated" bug)
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2019-12-19
+
+PetriNet differencePairwiseOnDemand = differencePairwiseOnDemand(net, nwa);
+assert(isEmpty(differencePairwiseOnDemand));
+assert(numberOfPlaces(differencePairwiseOnDemand) == 8);
+
+PetriNet difference = difference(net, nwa);
+assert(isEmpty(difference));
+assert(numberOfPlaces(difference) == 10);
+print(difference);
+
+
+PetriNet net = (
+	alphabet = {a b c},
+	places = {p1 p2 p3 p4 p5 p6 s1 s2},
+	transitions = {
+		({p1} c {p2})
+		({p2} b {p3})
+		({p3} a {p4})
+		({p4} c {p5})
+		({p5} a {p6})
+		({p6} a {p6})
+		({p6} b {p6})
+		({s1} a {s2})
+	},
+	initialMarking = {p1 s1},
+	acceptingPlaces = {p6 p7}
+);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b c},
+	returnAlphabet = {},
+	states = {qinit q qacc},
+	initialStates = {qinit},
+	finalStates = {qacc},
+	callTransitions = {},
+	internalTransitions = {
+		(qinit a qinit) (qinit b qinit)
+		(qinit c q)
+		(q a q) (q b q)
+		(q c qacc)
+		(qacc a qacc) (qacc b qacc) (qacc c qacc)
+	},
+	returnTransitions = {}
+);

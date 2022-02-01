@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<key id="programfile" attr.name="programfile" for="graph"/>
+<key id="programhash" attr.name="programhash" for="graph"/>
+<key id="sourcecodelang" attr.name="sourcecodelang" for="graph"/>
+<key id="producer" attr.name="producer" for="graph"/>
+<key id="specification" attr.name="specification" for="graph"/>
+<key id="creationtime" attr.name="creationtime" for="graph"/>
+<key id="witness-type" attr.name="witness-type" for="graph"/>
+<key id="architecture" attr.name="architecture" for="graph"/>
+<key id="entry" attr.name="entry" for="node">
+<default>false</default>
+</key>
+<key id="nodetype" attr.name="nodetype" for="node">
+<default>path</default>
+</key>
+<key id="violation" attr.name="violation" for="node">
+<default>false</default>
+</key>
+<key id="cyclehead" attr.name="cyclehead" for="node">
+<default>false</default>
+</key>
+<key id="invariant" attr.name="invariant" for="node">
+<default>true</default>
+</key>
+<key id="endline" attr.name="endline" for="edge"/>
+<key id="enterLoopHead" attr.name="enterLoopHead" for="edge">
+<default>false</default>
+</key>
+<key id="enterFunction" attr.name="enterFunction" for="edge"/>
+<key id="startline" attr.name="startline" for="edge"/>
+<key id="returnFrom" attr.name="returnFrom" for="edge"/>
+<key id="assumption" attr.name="assumption" for="edge"/>
+<key id="tokens" attr.name="tokens" for="edge"/>
+<key id="control" attr.name="control" for="edge"/>
+<key id="originfile" attr.name="originfile" for="edge">
+<default>/storage/ultimate/trunk/examples/witness-checking/term-approve/simple.c</default>
+</key>
+<key id="sourcecode" attr.name="sourcecode" for="edge"/>
+<graph edgedefault="directed">
+<data key="programfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/simple.c</data>
+<data key="programhash">2aa42c7e4f135d0bddc6e095101751d40e1e264f</data>
+<data key="sourcecodelang">C</data>
+<data key="producer">Automizer</data>
+<data key="specification">CHECK( init(main()), LTL(F end) )
+
+</data>
+<data key="creationtime">2017-11-03T15:58Z</data>
+<data key="witness-type">violation_witness</data>
+<data key="architecture">64bit</data>
+<node id="N0">
+<data key="entry">true</data>
+</node>
+<node id="N1">
+<data key="cyclehead">true</data>
+</node>
+<node id="N2"/>
+<edge id="E0" source="N0" target="N1">
+<data key="endline">3</data>
+<data key="enterLoopHead">true</data>
+<data key="startline">3</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/simple.c</data>
+<data key="sourcecode">int i=0;</data>
+</edge>
+<edge id="E1" source="N1" target="N2">
+<data key="endline">4</data>
+<data key="startline">4</data>
+<data key="control">condition-true</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/simple.c</data>
+<data key="sourcecode">[1]</data>
+</edge>
+<edge id="E2" source="N2" target="N1">
+<data key="endline">6</data>
+<data key="enterLoopHead">true</data>
+<data key="startline">6</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/simple.c</data>
+<data key="sourcecode">i=0</data>
+</edge>
+</graph>
+</graphml>

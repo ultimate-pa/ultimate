@@ -1,0 +1,12 @@
+/*
+*/
+
+Input I1 is bool
+Input I2 is bool
+Internal X is bool
+Internal Y is bool
+Output O1 is bool
+
+req1: Globally, it is always the case that if "I1" holds, then "X" holds as well
+req1: Globally, it is always the case that if "I2" holds, then "Y" holds as well
+req1: Globally, it is always the case that if "X && Y" holds, then "O1" holds as well

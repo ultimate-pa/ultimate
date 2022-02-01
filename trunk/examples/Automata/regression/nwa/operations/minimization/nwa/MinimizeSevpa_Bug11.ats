@@ -1,0 +1,68 @@
+// Testfile dumped by Ultimate at 2012/10/13 16:49:14
+//
+// Reveals bug in revision 7230.
+//
+// Problem with run #49835#MainENTRY call< #49837#McCarthyRecENTRY assume x > 100;res :... #49841#L20 assume true; #49845#McCarthyRecEXIT > return#49851#L62 call< #49855#McCarthyImpENTRY assume !(x <= 101);r... #49859#L29' assume true; #49865#McCarthyImpEXIT > return#49877#L63 assume !(b == c); #49882#MainErr0AssertViolation 
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 17);
+assert(shrinkNwaSize == 16);
+assert(minimizeNwaPmaxSatDirectBiSize == 15);
+assert(minimizeNwaPmaxSatDirectSize == 15);
+assert(reduceNwaDirectSimulationSize == 15);
+assert(reduceNwaDirectSimulationBSize == 15);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 15);
+// assert(reduceNwaDelayedSimulationSize == 15);
+// assert(reduceNwaDelayedSimulationBSize == 15);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 15);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call1155" "call1157" "call1159" "call1161" "call1163" },
+	internalAlphabet = {"assume !(z < 100);re...1153" "assume true;1135" "assume true;1154" "assume !(x > 100);1131" "assume x > 100;res :...1129" "assume true;1126" "assume b == c;1124" "assume !(b == c);1123" "assume z < 100;z = ...1151" "assume !(z > 150);1147" "assume z > 150;z = ...1146" "z = x;1143" "assume true;1142" "assume !(x <= 101);r...1140" "assume x <= 101;res ...1138" },
+	returnAlphabet = {"return1156" "return1158" "return1160" "return1162" "return1164" },
+	states = {"#49706#L29'49706" "#49740#MainErr0AssertViolation49740" "#49704#L2049704" "#49742#L2049742" "#49708#L29'49708" "#49733#L6349733" "#49696#McCarthyRecENTRY49696" "#49697#McCarthyImpENTRY49697" "#49728#L19'49728" "#49702#L1949702" "#49761#MainErr0AssertViolation49761" "#49756#L6349756" "#49725#L6249725" "#49694#MainENTRY49694" "#49715#McCarthyRecEXIT49715" "#49745#McCarthyRecEXIT49745" "#49719#McCarthyImpEXIT49719" "#49747#L6249747" "#49717#McCarthyImpEXIT49717" },
+	initialStates = {"#49694#MainENTRY49694" },
+	finalStates = {"#49761#MainErr0AssertViolation49761" "#49740#MainErr0AssertViolation49740" },
+	callTransitions = {
+		 ("#49702#L1949702" "call1161" "#49696#McCarthyRecENTRY49696")
+		 ("#49725#L6249725" "call1157" "#49697#McCarthyImpENTRY49697")
+		 ("#49728#L19'49728" "call1163" "#49696#McCarthyRecENTRY49696")
+		 ("#49694#MainENTRY49694" "call1155" "#49696#McCarthyRecENTRY49696")
+		 ("#49747#L6249747" "call1157" "#49697#McCarthyImpENTRY49697")
+	},
+	internalTransitions = {
+		 ("#49706#L29'49706" "assume true;1142" "#49717#McCarthyImpEXIT49717")
+		 ("#49704#L2049704" "assume true;1135" "#49715#McCarthyRecEXIT49715")
+		 ("#49708#L29'49708" "assume true;1142" "#49719#McCarthyImpEXIT49719")
+		 ("#49696#McCarthyRecENTRY49696" "assume !(x > 100);1131" "#49702#L1949702")
+		 ("#49696#McCarthyRecENTRY49696" "assume x > 100;res :...1129" "#49704#L2049704")
+		 ("#49697#McCarthyImpENTRY49697" "assume !(x <= 101);r...1140" "#49706#L29'49706")
+		 ("#49697#McCarthyImpENTRY49697" "assume x <= 101;res ...1138" "#49708#L29'49708")
+		 ("#49742#L2049742" "assume true;1135" "#49745#McCarthyRecEXIT49745")
+		 ("#49733#L6349733" "assume !(b == c);1123" "#49740#MainErr0AssertViolation49740")
+		 ("#49756#L6349756" "assume !(b == c);1123" "#49761#MainErr0AssertViolation49761")
+	},
+	returnTransitions = {
+		 ("#49715#McCarthyRecEXIT49715" "#49694#MainENTRY49694" "return1156" "#49725#L6249725")
+		 ("#49715#McCarthyRecEXIT49715" "#49702#L1949702" "return1162" "#49728#L19'49728")
+		 ("#49715#McCarthyRecEXIT49715" "#49728#L19'49728" "return1164" "#49742#L2049742")
+		 ("#49719#McCarthyImpEXIT49719" "#49725#L6249725" "return1158" "#49733#L6349733")
+		 ("#49719#McCarthyImpEXIT49719" "#49747#L6249747" "return1158" "#49756#L6349756")
+		 ("#49717#McCarthyImpEXIT49717" "#49747#L6249747" "return1158" "#49756#L6349756")
+		 ("#49745#McCarthyRecEXIT49745" "#49694#MainENTRY49694" "return1156" "#49747#L6249747")
+		 ("#49745#McCarthyRecEXIT49745" "#49702#L1949702" "return1162" "#49728#L19'49728")
+		 ("#49745#McCarthyRecEXIT49745" "#49728#L19'49728" "return1164" "#49742#L2049742")
+	}
+);

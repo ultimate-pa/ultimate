@@ -1,0 +1,23 @@
+<project name="proj1" default="create_json" basedir="." >
+	<property name="html.dir" location="../html" />
+	<property name="json.dir" location="../WebContent/json" />
+
+	<description>
+        Ant Script that converts .html files to .json files
+    </description>
+
+	<target name="create_json" >
+		<echo>Converting .html in ${html.dir} to .json in ${json.dir}</echo>
+		<apply executable="java">
+			<arg value="-jar" />
+			<arg value="${html.dir}/convertHTMLtoJSON.jar" />
+			<srcfile />
+			<arg value="${json.dir}" />
+
+			<fileset dir="${html.dir}" casesensitive="yes">
+				<include name="**/*.html" />
+			</fileset>
+		</apply>
+	</target>
+
+</project>

@@ -1,0 +1,60 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2014-08-11
+//
+// Test incremental inclusion with random automata
+
+	// First argument: size of alphabet
+	// Second argument: number of states
+	// Third argument: transition density of internal transitions in per mille
+	// Fourth argument: transition density of call transitions in per mille -- use 0 here
+	// Fifth argument: transition density of return transitions in per mille -- use 0 here
+	// Sixth argument: amount of accepting states in per mille.
+	int counter = 0;
+	while(true){
+		counter++;
+		print("Test number:"+counter);
+		NestedWordAutomaton A = getRandomNwa(2, 30, 240, 0, 0, 300);
+		NestedWordAutomaton B1 = getRandomNwa(2, 30, 240, 0, 0, 300);
+		NestedWordAutomaton B2 = getRandomNwa(2, 30, 240, 0, 0, 300);
+		NestedWordAutomaton B3 = getRandomNwa(2, 30, 240, 0, 0, 300);
+		print(A);
+		print(B1);
+		print(B2);
+		boolean IICCheck = Jeffery_Test_2(A,NwaList(B3,NwaList(B1, B2)),2);	
+		if(!IICCheck){
+			print("IIC2 ERROR");
+			print(A);
+			print(B1);
+			print(B2);
+			break;	
+		}
+		IICCheck = Jeffery_Test_2(A,NwaList(B3,NwaList(B1, B2)),3);	
+		if(!IICCheck){
+			print("IIC3 ERROR");
+			print(A);
+			print(B1);
+			print(B2);
+			break;	
+		}
+		IICCheck = Jeffery_Test_2(A,NwaList(B3,NwaList(B1, B2)),4);	
+		if(!IICCheck){
+			print("IIC4 ERROR");
+			print(A);
+			print(B1);
+			print(B2);
+			break;	
+		}
+		IICCheck = Jeffery_Test_2(A,NwaList(B3,NwaList(B1, B2)),5);	
+		if(!IICCheck){
+			print("IIC4 ERROR");
+			print(A);
+			print(B1);
+			print(B2);
+			break;	
+		}
+	}
+	//isIncluded = IncrementalInclusionCheck4(A,NwaList(B1, B2));
+	//print(isIncluded);
+	//isIncluded = IncrementalInclusionCheck5(A,NwaList(B1, B2));
+	//print(isIncluded);
+

@@ -1,0 +1,29 @@
+package de.uni_freiburg.informatik.ultimate.astbuilder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
+Grammar ::=
+        packageName	: String
+        imports		: ArrayList<String>
+        nodeTable	: HashMap<String,Node>
+        ;
+
+Node ::=
+        name		: String
+        parent		: Node
+        interfaces	: String
+        comment		: String
+        usedTypes	: HashSet<String>
+        isAbstract	: &?boolean
+        parameters	: &?Parameter[]
+        ;
+
+Parameter ::=
+        name		    : String
+        type		    : &String
+        comment		    : String
+        isWriteable	    : boolean
+        isWriteableOnce : boolean
+        isOptional	    : boolean
+        ;

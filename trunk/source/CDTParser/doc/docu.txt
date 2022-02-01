@@ -1,0 +1,28 @@
+/*
+ * This document contains information about the CDTPARSER
+ * @author Markus Lindenmann
+ * @author Oleksii Saukh
+ * @author Stefan Wissert
+ */
+ 
+PACKAGE STRUCTURE
+
+de.uni_freiburg.informatik.ultimate.cdt.parser
+ |-preference
+ 		
+
+GENERAL INFORMATION
+
+CDTParser is a part of ULTIMATE project. Current project perform lexical and syntactical
+analysis of C files.
+
+FILE INFORMATION
+
+Package: [de.uni_freiburg.informatik.ultimate.cdt.parser.preferences]
+	- PreferencePage - Class provides to the user the availability to specify the
+	include-paths, which are needed to resolve all includes in the given C-File.
+Package: [de.uni_freiburg.informatik.ultimate.cdt.parser]
+	- Activator - The activator class controls the plug-in life cycle
+	- CDTParser - class describes CDTParser Plugin, it starts the
+		CDT-Parser on a given C-File(s). The resources are taken
+		out of the lib-Folder, these should be updated manually.

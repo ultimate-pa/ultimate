@@ -1,0 +1,2589 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <key attr.name="originFileName" attr.type="string" for="edge" id="originfile">
+  <default>test/programs/benchmarks/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--firmware--google--memconsole.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</default>
+ </key>
+ <key attr.name="invariant" attr.type="string" for="node" id="invariant"/>
+ <key attr.name="invariant.scope" attr.type="string" for="node" id="invariant.scope"/>
+ <key attr.name="namedValue" attr.type="string" for="node" id="named"/>
+ <key attr.name="nodeType" attr.type="string" for="node" id="nodetype">
+  <default>path</default>
+ </key>
+ <key attr.name="isFrontierNode" attr.type="boolean" for="node" id="frontier">
+  <default>false</default>
+ </key>
+ <key attr.name="isViolationNode" attr.type="boolean" for="node" id="violation">
+  <default>false</default>
+ </key>
+ <key attr.name="isEntryNode" attr.type="boolean" for="node" id="entry">
+  <default>false</default>
+ </key>
+ <key attr.name="isSinkNode" attr.type="boolean" for="node" id="sink">
+  <default>false</default>
+ </key>
+ <key attr.name="enterLoopHead" attr.type="boolean" for="edge" id="enterLoopHead">
+  <default>false</default>
+ </key>
+ <key attr.name="violatedProperty" attr.type="string" for="node" id="violatedProperty"/>
+ <key attr.name="threadId" attr.type="string" for="edge" id="threadId"/>
+ <key attr.name="sourcecodeLanguage" attr.type="string" for="graph" id="sourcecodelang"/>
+ <key attr.name="programFile" attr.type="string" for="graph" id="programfile"/>
+ <key attr.name="programHash" attr.type="string" for="graph" id="programhash"/>
+ <key attr.name="specification" attr.type="string" for="graph" id="specification"/>
+ <key attr.name="memoryModel" attr.type="string" for="graph" id="memorymodel"/>
+ <key attr.name="architecture" attr.type="string" for="graph" id="architecture"/>
+ <key attr.name="producer" attr.type="string" for="graph" id="producer"/>
+ <key attr.name="sourcecode" attr.type="string" for="edge" id="sourcecode"/>
+ <key attr.name="startline" attr.type="int" for="edge" id="startline"/>
+ <key attr.name="startoffset" attr.type="int" for="edge" id="startoffset"/>
+ <key attr.name="lineColSet" attr.type="string" for="edge" id="lineCols"/>
+ <key attr.name="control" attr.type="string" for="edge" id="control"/>
+ <key attr.name="assumption" attr.type="string" for="edge" id="assumption"/>
+ <key attr.name="assumption.scope" attr.type="string" for="edge" id="assumption.scope"/>
+ <key attr.name="enterFunction" attr.type="string" for="edge" id="enterFunction"/>
+ <key attr.name="returnFromFunction" attr.type="string" for="edge" id="returnFrom"/>
+ <key attr.name="predecessor" attr.type="string" for="edge" id="predecessor"/>
+ <key attr.name="successor" attr.type="string" for="edge" id="successor"/>
+ <key attr.name="witness-type" attr.type="string" for="graph" id="witness-type"/>
+ <graph edgedefault="directed">
+  <data key="witness-type">correctness_witness</data>
+  <data key="sourcecodelang">C</data>
+  <data key="producer">CPAchecker 1.6.1-svn 22638M</data>
+  <data key="specification">CHECK( init(main()), LTL(G ! call(__VERIFIER_error())) )</data>
+  <data key="programfile">test/programs/benchmarks/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--firmware--google--memconsole.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</data>
+  <data key="programhash">005c2f872e626a2e07e83d566846fc82f53bb333</data>
+  <data key="memorymodel">precise</data>
+  <data key="architecture">64bit</data>
+  <node id="N337">
+   <data key="entry">true</data>
+  </node>
+  <node id="N545"/>
+  <edge source="N337" target="N545">
+   <data key="sourcecode">extern struct kobject *firmware_kobj ;</data>
+   <data key="startline">206</data>
+   <data key="startoffset">5943</data>
+  </edge>
+  <node id="N557"/>
+  <edge source="N545" target="N557">
+   <data key="sourcecode">static char *memconsole_baseaddr  ;</data>
+   <data key="startline">249</data>
+   <data key="startoffset">7340</data>
+  </edge>
+  <node id="N558"/>
+  <edge source="N557" target="N558">
+   <data key="sourcecode">static size_t memconsole_length  ;</data>
+   <data key="startline">250</data>
+   <data key="startoffset">7376</data>
+  </edge>
+  <node id="N560"/>
+  <edge source="N558" target="N560">
+   <data key="sourcecode">static struct bin_attribute memconsole_bin_attr  =    {{"log", (umode_t )292}, 0UL, (void *)0, &amp; memconsole_read, (ssize_t (*)(struct file * ,
+                                                                            struct kobject * ,
+                                                                            struct bin_attribute * ,
+                                                                            char * ,
+                                                                            loff_t  ,
+                                                                            size_t  ))0,
+    (int (*)(struct file * , struct kobject * , struct bin_attribute *attr , struct vm_area_struct *vma ))0};</data>
+   <data key="startline">266</data>
+   <data key="startoffset">7951</data>
+  </edge>
+  <node id="N564"/>
+  <edge source="N560" target="N564">
+   <data key="sourcecode">static struct dmi_system_id memconsole_dmi_table[1]  __attribute__((__section__(".init.data")))  = {      {(int (*)(struct dmi_system_id  const  * ))0,
+      "Google Board", {{(unsigned char)9, {(char )'G', (char )'o', (char )'o', (char )'g',
+                                           (char )'l', (char )'e', (char )',', (char )' ',
+                                           (char )'I', (char )'n', (char )'c', (char )'.',
+                                           (char )'\000'}}, {(unsigned char)0, {(char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0,
+                                                                                (char)0}},
+                       {(unsigned char)0, {(char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0, (char)0,
+                                           (char)0, (char)0, (char)0, (char)0}}, {(unsigned char)0,
+                                                                                  {(char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0,
+                                                                                   (char)0}}},
+      (void *)0}};</data>
+   <data key="startline">591</data>
+   <data key="startoffset">19221</data>
+  </edge>
+  <node id="N565"/>
+  <edge source="N564" target="N565">
+   <data key="sourcecode">extern struct dmi_system_id  const  __mod_dmi_device_table  __attribute__((__unused__,
+__alias__("memconsole_dmi_table"))) ;</data>
+   <data key="startline">738</data>
+   <data key="startoffset">32392</data>
+  </edge>
+  <node id="N568"/>
+  <edge source="N565" target="N568">
+   <data key="sourcecode">static char const   __mod_author166[20]  __attribute__((__used__, __unused__, __section__(".modinfo"),
+__aligned__(1)))  = 
+  {      (char const   )'a',      (char const   )'u',      (char const   )'t',      (char const   )'h', 
+        (char const   )'o',      (char const   )'r',      (char const   )'=',      (char const   )'G', 
+        (char const   )'o',      (char const   )'o',      (char const   )'g',      (char const   )'l', 
+        (char const   )'e',      (char const   )',',      (char const   )' ',      (char const   )'I', 
+        (char const   )'n',      (char const   )'c',      (char const   )'.',      (char const   )'\000'};</data>
+   <data key="startline">818</data>
+   <data key="startoffset">34431</data>
+  </edge>
+  <node id="N569"/>
+  <edge source="N568" target="N569">
+   <data key="sourcecode">static char const   __mod_license167[12]  __attribute__((__used__, __unused__, __section__(".modinfo"),
+__aligned__(1)))  = 
+  {      (char const   )'l',      (char const   )'i',      (char const   )'c',      (char const   )'e', 
+        (char const   )'n',      (char const   )'s',      (char const   )'e',      (char const   )'=', 
+        (char const   )'G',      (char const   )'P',      (char const   )'L',      (char const   )'\000'};</data>
+   <data key="startline">823</data>
+   <data key="startoffset">34947</data>
+  </edge>
+  <node id="N573"/>
+  <edge source="N569" target="N573">
+   <data key="sourcecode">int LDV_IN_INTERRUPT  ;</data>
+   <data key="startline">829</data>
+   <data key="startoffset">35290</data>
+  </edge>
+  <node id="N576"/>
+  <edge source="N573" target="N576">
+   <data key="sourcecode">int ldv_mutex  =    1;</data>
+   <data key="startline">906</data>
+   <data key="startoffset">36698</data>
+  </edge>
+  <node id="N339"/>
+  <edge source="N576" target="N339">
+   <data key="sourcecode">struct file *var_group1 ;</data>
+   <data key="startline">831</data>
+   <data key="startoffset">35333</data>
+  </edge>
+  <node id="N340"/>
+  <edge source="N339" target="N340">
+   <data key="sourcecode">struct kobject *var_group2 ;</data>
+   <data key="startline">832</data>
+   <data key="startoffset">35361</data>
+  </edge>
+  <node id="N341"/>
+  <edge source="N340" target="N341">
+   <data key="sourcecode">struct bin_attribute *var_memconsole_read_0_p2 ;</data>
+   <data key="startline">833</data>
+   <data key="startoffset">35392</data>
+  </edge>
+  <node id="N342"/>
+  <edge source="N341" target="N342">
+   <data key="sourcecode">char *var_memconsole_read_0_p3 ;</data>
+   <data key="startline">834</data>
+   <data key="startoffset">35443</data>
+  </edge>
+  <node id="N343"/>
+  <edge source="N342" target="N343">
+   <data key="sourcecode">loff_t var_memconsole_read_0_p4 ;</data>
+   <data key="startline">835</data>
+   <data key="startoffset">35478</data>
+  </edge>
+  <node id="N344"/>
+  <edge source="N343" target="N344">
+   <data key="sourcecode">size_t var_memconsole_read_0_p5 ;</data>
+   <data key="startline">836</data>
+   <data key="startoffset">35514</data>
+  </edge>
+  <node id="N345"/>
+  <edge source="N344" target="N345">
+   <data key="sourcecode">int tmp ;</data>
+   <data key="startline">837</data>
+   <data key="startoffset">35550</data>
+  </edge>
+  <node id="N346"/>
+  <edge source="N345" target="N346">
+   <data key="sourcecode">int tmp___0 ;</data>
+   <data key="startline">838</data>
+   <data key="startoffset">35562</data>
+  </edge>
+  <node id="N347"/>
+  <edge source="N346" target="N347">
+   <data key="sourcecode">int tmp___1 ;</data>
+   <data key="startline">839</data>
+   <data key="startoffset">35578</data>
+  </edge>
+  <node id="N348"/>
+  <edge source="N347" target="N348">
+   <data key="sourcecode">LDV_IN_INTERRUPT = 1;</data>
+   <data key="startline">843</data>
+   <data key="startoffset">35603</data>
+  </edge>
+  <node id="N349"/>
+  <edge source="N348" target="N349">
+   <data key="sourcecode">ldv_initialize();</data>
+   <data key="startline">844</data>
+   <data key="startoffset">35627</data>
+  </edge>
+  <node id="N286"/>
+  <edge source="N349" target="N286">
+   <data key="sourcecode">tmp = memconsole_init();</data>
+   <data key="startline">845</data>
+   <data key="startoffset">35647</data>
+   <data key="enterFunction">memconsole_init</data>
+  </edge>
+  <node id="N288"/>
+  <edge source="N286" target="N288">
+   <data key="sourcecode">int ret ;</data>
+   <data key="startline">742</data>
+   <data key="startoffset">32660</data>
+  </edge>
+  <node id="N289"/>
+  <edge source="N288" target="N289">
+   <data key="sourcecode">int tmp ;</data>
+   <data key="startline">743</data>
+   <data key="startoffset">32672</data>
+  </edge>
+  <node id="N290"/>
+  <edge source="N289" target="N290">
+   <data key="sourcecode">bool tmp___0 ;</data>
+   <data key="startline">744</data>
+   <data key="startoffset">32684</data>
+  </edge>
+  <node id="N291"/>
+  <edge source="N290" target="N291">
+   <data key="sourcecode">unsigned long __cil_tmp4 ;</data>
+   <data key="startline">745</data>
+   <data key="startoffset">32701</data>
+  </edge>
+  <node id="N292"/>
+  <edge source="N291" target="N292">
+   <data key="sourcecode">unsigned long __cil_tmp5 ;</data>
+   <data key="startline">746</data>
+   <data key="startoffset">32730</data>
+  </edge>
+  <node id="N293"/>
+  <edge source="N292" target="N293">
+   <data key="sourcecode">struct dmi_system_id *__cil_tmp6 ;</data>
+   <data key="startline">747</data>
+   <data key="startoffset">32759</data>
+  </edge>
+  <node id="N294"/>
+  <edge source="N293" target="N294">
+   <data key="sourcecode">struct dmi_system_id  const  *__cil_tmp7 ;</data>
+   <data key="startline">748</data>
+   <data key="startoffset">32796</data>
+  </edge>
+  <node id="N295"/>
+  <edge source="N294" target="N295">
+   <data key="sourcecode">unsigned long __cil_tmp8 ;</data>
+   <data key="startline">749</data>
+   <data key="startoffset">32841</data>
+  </edge>
+  <node id="N296"/>
+  <edge source="N295" target="N296">
+   <data key="sourcecode">struct bin_attribute  const  *__cil_tmp9 ;</data>
+   <data key="startline">750</data>
+   <data key="startoffset">32870</data>
+  </edge>
+  <node id="N297"/>
+  <edge source="N296" target="N297">
+   <data key="sourcecode">__cil_tmp4 = 0 * 344UL;</data>
+   <data key="startline">754</data>
+   <data key="startoffset">32924</data>
+  </edge>
+  <node id="N298"/>
+  <edge source="N297" target="N298">
+   <data key="sourcecode">__cil_tmp5 = (unsigned long )(memconsole_dmi_table) + __cil_tmp4;</data>
+   <data key="startline">755</data>
+   <data key="startoffset">32950</data>
+  </edge>
+  <node id="N299"/>
+  <edge source="N298" target="N299">
+   <data key="sourcecode">__cil_tmp6 = (struct dmi_system_id *)__cil_tmp5;</data>
+   <data key="startline">756</data>
+   <data key="startoffset">33018</data>
+  </edge>
+  <node id="N300"/>
+  <edge source="N299" target="N300">
+   <data key="sourcecode">__cil_tmp7 = (struct dmi_system_id  const  *)__cil_tmp6;</data>
+   <data key="startline">757</data>
+   <data key="startoffset">33114</data>
+  </edge>
+  <node id="N301"/>
+  <edge source="N300" target="N301">
+   <data key="sourcecode">tmp = dmi_check_system(__cil_tmp7);</data>
+   <data key="startline">758</data>
+   <data key="startoffset">33134</data>
+  </edge>
+  <node id="N303"/>
+  <edge source="N301" target="N303">
+   <data key="sourcecode">[(tmp == 0) == 0]</data>
+   <data key="startline">760</data>
+   <data key="startoffset">33174</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N304"/>
+  <edge source="N301" target="N304">
+   <data key="sourcecode">[!((tmp == 0) == 0)]</data>
+   <data key="startline">760</data>
+   <data key="startoffset">33174</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N285"/>
+  <edge source="N304" target="N285">
+   <data key="sourcecode">return (-19);</data>
+   <data key="startline">763</data>
+   <data key="startoffset">33197</data>
+   <data key="returnFrom">memconsole_init</data>
+  </edge>
+  <node id="N329"/>
+  <edge source="N285" target="N329">
+   <data key="startline">799</data>
+   <data key="startoffset">33963</data>
+  </edge>
+  <node id="N350"/>
+  <edge source="N285" target="N350">
+   <data key="startline">845</data>
+   <data key="startoffset">35647</data>
+  </edge>
+  <node id="N375">
+   <data key="invariant">(ldv_mutex == 1) &amp;&amp; (tmp == 0) &amp;&amp; (((memconsole_length &gt;= 0ULL) &amp;&amp; (memconsole_length &lt;= 65535ULL)) || ((memconsole_length &gt;= 18446744073709486081ULL) &amp;&amp; (memconsole_length &lt;= 18446744073709551615ULL)))</data>
+   <data key="invariant.scope">main</data>
+  </node>
+  <edge source="N350" target="N375">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">[!((tmp == 0) == 0)]</data>
+   <data key="startline">847</data>
+   <data key="startoffset">35682</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N384"/>
+  <edge source="N350" target="N384">
+   <data key="sourcecode">[(tmp == 0) == 0]</data>
+   <data key="startline">847</data>
+   <data key="startoffset">35682</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N472"/>
+  <edge source="N384" target="N472">
+   <data key="sourcecode">ldv_check_final_state();</data>
+   <data key="startline">893</data>
+   <data key="startoffset">36544</data>
+   <data key="enterFunction">ldv_check_final_state</data>
+  </edge>
+  <node id="N476"/>
+  <edge source="N472" target="N476">
+   <data key="sourcecode">[!(ldv_mutex == 1)]</data>
+   <data key="startline">1030</data>
+   <data key="startoffset">38385</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N477"/>
+  <edge source="N472" target="N477">
+   <data key="sourcecode">[ldv_mutex == 1]</data>
+   <data key="startline">1030</data>
+   <data key="startoffset">38385</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N471"/>
+  <edge source="N477" target="N471">
+   <data key="sourcecode">return;</data>
+   <data key="startline">1037</data>
+   <data key="startoffset">38457</data>
+   <data key="returnFrom">ldv_check_final_state</data>
+  </edge>
+  <node id="N386"/>
+  <edge source="N471" target="N386">
+   <data key="startline">893</data>
+   <data key="startoffset">36544</data>
+  </edge>
+  <node id="N336"/>
+  <edge source="N386" target="N336">
+   <data key="sourcecode">return;</data>
+   <data key="startline">895</data>
+   <data key="startoffset">36575</data>
+   <data key="returnFrom">main</data>
+  </edge>
+  <node id="N389"/>
+  <edge source="N476" target="N389">
+   <data key="sourcecode">ldv_blast_assert();</data>
+   <data key="startline">1034</data>
+   <data key="startoffset">38425</data>
+   <data key="enterFunction">ldv_blast_assert</data>
+  </edge>
+  <node id="N392"/>
+  <edge source="N389" target="N392">
+   <data key="sourcecode">__VERIFIER_error();</data>
+   <data key="startline">902</data>
+   <data key="startoffset">36633</data>
+  </edge>
+  <node id="N400"/>
+  <edge source="N392" target="N400">
+   <data key="startline">915</data>
+   <data key="startoffset">36886</data>
+   <data key="returnFrom">ldv_blast_assert</data>
+  </edge>
+  <node id="N415"/>
+  <edge source="N392" target="N415">
+   <data key="startline">937</data>
+   <data key="startoffset">37221</data>
+   <data key="returnFrom">ldv_blast_assert</data>
+  </edge>
+  <node id="N430"/>
+  <edge source="N392" target="N430">
+   <data key="startline">959</data>
+   <data key="startoffset">37546</data>
+   <data key="returnFrom">ldv_blast_assert</data>
+  </edge>
+  <node id="N444"/>
+  <edge source="N392" target="N444">
+   <data key="startline">982</data>
+   <data key="startoffset">37834</data>
+   <data key="returnFrom">ldv_blast_assert</data>
+  </edge>
+  <node id="N454"/>
+  <edge source="N392" target="N454">
+   <data key="startline">997</data>
+   <data key="startoffset">38008</data>
+   <data key="returnFrom">ldv_blast_assert</data>
+  </edge>
+  <node id="N468"/>
+  <edge source="N392" target="N468">
+   <data key="startline">1019</data>
+   <data key="startoffset">38276</data>
+   <data key="returnFrom">ldv_blast_assert</data>
+  </edge>
+  <edge source="N392" target="N477">
+   <data key="startline">1034</data>
+   <data key="startoffset">38425</data>
+   <data key="returnFrom">ldv_blast_assert</data>
+  </edge>
+  <node id="N469"/>
+  <edge source="N468" target="N469">
+   <data key="sourcecode">ldv_mutex = 1;</data>
+   <data key="startline">1022</data>
+   <data key="startoffset">38308</data>
+  </edge>
+  <node id="N462"/>
+  <edge source="N469" target="N462">
+   <data key="sourcecode">return;</data>
+   <data key="startline">1023</data>
+   <data key="startoffset">38325</data>
+   <data key="returnFrom">mutex_unlock</data>
+  </edge>
+  <node id="N455"/>
+  <edge source="N454" target="N455">
+   <data key="sourcecode">nondetermined = __VERIFIER_nondet_int();</data>
+   <data key="startline">1001</data>
+   <data key="startoffset">38060</data>
+  </edge>
+  <node id="N457"/>
+  <edge source="N455" target="N457">
+   <data key="sourcecode">[(nondetermined == 0) == 0]</data>
+   <data key="startline">1003</data>
+   <data key="startoffset">38095</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N458"/>
+  <edge source="N455" target="N458">
+   <data key="sourcecode">[!((nondetermined == 0) == 0)]</data>
+   <data key="startline">1003</data>
+   <data key="startoffset">38095</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N447"/>
+  <edge source="N458" target="N447">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">1007</data>
+   <data key="startoffset">38162</data>
+   <data key="returnFrom">mutex_trylock</data>
+  </edge>
+  <node id="N459"/>
+  <edge source="N457" target="N459">
+   <data key="sourcecode">ldv_mutex = 2;</data>
+   <data key="startline">1004</data>
+   <data key="startoffset">38128</data>
+  </edge>
+  <edge source="N459" target="N447">
+   <data key="sourcecode">return (1);</data>
+   <data key="startline">1005</data>
+   <data key="startoffset">38135</data>
+   <data key="returnFrom">mutex_trylock</data>
+  </edge>
+  <node id="N445"/>
+  <edge source="N444" target="N445">
+   <data key="sourcecode">ldv_mutex = 2;</data>
+   <data key="startline">985</data>
+   <data key="startoffset">37866</data>
+  </edge>
+  <node id="N438"/>
+  <edge source="N445" target="N438">
+   <data key="sourcecode">return;</data>
+   <data key="startline">986</data>
+   <data key="startoffset">37883</data>
+   <data key="returnFrom">mutex_lock</data>
+  </edge>
+  <node id="N431"/>
+  <edge source="N430" target="N431">
+   <data key="sourcecode">atomic_value_after_dec = __VERIFIER_nondet_int();</data>
+   <data key="startline">963</data>
+   <data key="startoffset">37582</data>
+  </edge>
+  <node id="N433"/>
+  <edge source="N431" target="N433">
+   <data key="sourcecode">[atomic_value_after_dec == 0]</data>
+   <data key="startline">965</data>
+   <data key="startoffset">37668</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N434"/>
+  <edge source="N431" target="N434">
+   <data key="sourcecode">[!(atomic_value_after_dec == 0)]</data>
+   <data key="startline">965</data>
+   <data key="startoffset">37668</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N423"/>
+  <edge source="N434" target="N423">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">971</data>
+   <data key="startoffset">37734</data>
+   <data key="returnFrom">atomic_dec_and_mutex_lock</data>
+  </edge>
+  <node id="N435"/>
+  <edge source="N433" target="N435">
+   <data key="sourcecode">ldv_mutex = 2;</data>
+   <data key="startline">966</data>
+   <data key="startoffset">37677</data>
+  </edge>
+  <edge source="N435" target="N423">
+   <data key="sourcecode">return (1);</data>
+   <data key="startline">967</data>
+   <data key="startoffset">37704</data>
+   <data key="returnFrom">atomic_dec_and_mutex_lock</data>
+  </edge>
+  <node id="N416"/>
+  <edge source="N415" target="N416">
+   <data key="sourcecode">nondetermined = __VERIFIER_nondet_int();</data>
+   <data key="startline">941</data>
+   <data key="startoffset">37257</data>
+  </edge>
+  <node id="N418"/>
+  <edge source="N416" target="N418">
+   <data key="sourcecode">[(nondetermined == 0) == 0]</data>
+   <data key="startline">943</data>
+   <data key="startoffset">37308</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N419"/>
+  <edge source="N416" target="N419">
+   <data key="sourcecode">[!((nondetermined == 0) == 0)]</data>
+   <data key="startline">943</data>
+   <data key="startoffset">37308</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N408"/>
+  <edge source="N419" target="N408">
+   <data key="sourcecode">return (-4);</data>
+   <data key="startline">947</data>
+   <data key="startoffset">37383</data>
+   <data key="returnFrom">mutex_lock_killable</data>
+  </edge>
+  <node id="N420"/>
+  <edge source="N418" target="N420">
+   <data key="sourcecode">ldv_mutex = 2;</data>
+   <data key="startline">944</data>
+   <data key="startoffset">37341</data>
+  </edge>
+  <edge source="N420" target="N408">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">945</data>
+   <data key="startoffset">37356</data>
+   <data key="returnFrom">mutex_lock_killable</data>
+  </edge>
+  <node id="N401"/>
+  <edge source="N400" target="N401">
+   <data key="sourcecode">nondetermined = __VERIFIER_nondet_int();</data>
+   <data key="startline">919</data>
+   <data key="startoffset">36922</data>
+  </edge>
+  <node id="N403"/>
+  <edge source="N401" target="N403">
+   <data key="sourcecode">[(nondetermined == 0) == 0]</data>
+   <data key="startline">921</data>
+   <data key="startoffset">36973</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N404"/>
+  <edge source="N401" target="N404">
+   <data key="sourcecode">[!((nondetermined == 0) == 0)]</data>
+   <data key="startline">921</data>
+   <data key="startoffset">36973</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N393"/>
+  <edge source="N404" target="N393">
+   <data key="sourcecode">return (-4);</data>
+   <data key="startline">925</data>
+   <data key="startoffset">37040</data>
+   <data key="returnFrom">mutex_lock_interruptible</data>
+  </edge>
+  <node id="N405"/>
+  <edge source="N403" target="N405">
+   <data key="sourcecode">ldv_mutex = 2;</data>
+   <data key="startline">922</data>
+   <data key="startoffset">36994</data>
+  </edge>
+  <edge source="N405" target="N393">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">923</data>
+   <data key="startoffset">37013</data>
+   <data key="returnFrom">mutex_lock_interruptible</data>
+  </edge>
+  <node id="N359">
+   <data key="invariant">(ldv_mutex == 1) &amp;&amp; (tmp == 0) &amp;&amp; (((memconsole_length &gt;= 0ULL) &amp;&amp; (memconsole_length &lt;= 65535ULL)) || ((memconsole_length &gt;= 18446744073709486081ULL) &amp;&amp; (memconsole_length &lt;= 18446744073709551615ULL)))</data>
+   <data key="invariant.scope">main</data>
+  </node>
+  <edge source="N375" target="N359">
+   <data key="sourcecode">tmp___1 = __VERIFIER_nondet_int();</data>
+   <data key="startline">856</data>
+   <data key="startoffset">35801</data>
+  </edge>
+  <node id="N361">
+   <data key="invariant">(ldv_mutex == 1) &amp;&amp; !(tmp___1 == 0) &amp;&amp; (tmp == 0) &amp;&amp; (((memconsole_length &gt;= 0ULL) &amp;&amp; (memconsole_length &lt;= 65535ULL)) || ((memconsole_length &gt;= 18446744073709486081ULL) &amp;&amp; (memconsole_length &lt;= 18446744073709551615ULL)))</data>
+   <data key="invariant.scope">main</data>
+  </node>
+  <edge source="N359" target="N361">
+   <data key="sourcecode">[(tmp___1 == 0) == 0]</data>
+   <data key="startline">858</data>
+   <data key="startoffset">35840</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N362">
+   <data key="invariant">(ldv_mutex == 1) &amp;&amp; (tmp___1 == 0) &amp;&amp; (tmp == 0) &amp;&amp; (((memconsole_length &gt;= 0ULL) &amp;&amp; (memconsole_length &lt;= 65535ULL)) || ((memconsole_length &gt;= 18446744073709486081ULL) &amp;&amp; (memconsole_length &lt;= 18446744073709551615ULL)))</data>
+   <data key="invariant.scope">main</data>
+  </node>
+  <edge source="N359" target="N362">
+   <data key="sourcecode">[!((tmp___1 == 0) == 0)]</data>
+   <data key="startline">858</data>
+   <data key="startoffset">35840</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N319"/>
+  <edge source="N362" target="N319">
+   <data key="sourcecode">memconsole_exit();</data>
+   <data key="startline">889</data>
+   <data key="startoffset">36501</data>
+   <data key="enterFunction">memconsole_exit</data>
+  </edge>
+  <node id="N321"/>
+  <edge source="N319" target="N321">
+   <data key="sourcecode">struct bin_attribute  const  *__cil_tmp1 ;</data>
+   <data key="startline">784</data>
+   <data key="startoffset">33723</data>
+  </edge>
+  <node id="N322"/>
+  <edge source="N321" target="N322">
+   <data key="sourcecode">__cil_tmp1 = (struct bin_attribute  const  *)(&amp; memconsole_bin_attr);</data>
+   <data key="startline">788</data>
+   <data key="startoffset">33790</data>
+  </edge>
+  <node id="N323"/>
+  <edge source="N322" target="N323">
+   <data key="sourcecode">sysfs_remove_bin_file(firmware_kobj, __cil_tmp1);</data>
+   <data key="startline">789</data>
+   <data key="startoffset">33849</data>
+  </edge>
+  <node id="N318"/>
+  <edge source="N323" target="N318">
+   <data key="sourcecode">return;</data>
+   <data key="startline">791</data>
+   <data key="startoffset">33905</data>
+   <data key="returnFrom">memconsole_exit</data>
+  </edge>
+  <node id="N334"/>
+  <edge source="N318" target="N334">
+   <data key="startline">809</data>
+   <data key="startoffset">34053</data>
+  </edge>
+  <edge source="N318" target="N384">
+   <data key="startline">889</data>
+   <data key="startoffset">36501</data>
+  </edge>
+  <node id="N331"/>
+  <edge source="N334" target="N331">
+   <data key="sourcecode">return;</data>
+   <data key="startline">811</data>
+   <data key="startoffset">34078</data>
+   <data key="returnFrom">cleanup_module</data>
+  </edge>
+  <node id="N364"/>
+  <edge source="N361" target="N364">
+   <data key="sourcecode">tmp___0 = __VERIFIER_nondet_int();</data>
+   <data key="startline">864</data>
+   <data key="startoffset">35905</data>
+  </edge>
+  <node id="N366"/>
+  <edge source="N364" target="N366">
+   <data key="sourcecode">[tmp___0 == 0]</data>
+   <data key="startline">866</data>
+   <data key="startoffset">35954</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="N364" target="N375">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">[!(tmp___0 == 0)]</data>
+   <data key="startline">866</data>
+   <data key="startoffset">35954</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N24"/>
+  <edge source="N366" target="N24">
+   <data key="sourcecode">memconsole_read(var_group1, var_group2, var_memconsole_read_0_p2, var_memconsole_read_0_p3,
+                        var_memconsole_read_0_p4, var_memconsole_read_0_p5);</data>
+   <data key="startline">874</data>
+   <data key="startoffset">36103</data>
+   <data key="enterFunction">memconsole_read</data>
+  </edge>
+  <node id="N26"/>
+  <edge source="N24" target="N26">
+   <data key="sourcecode">ssize_t tmp ;</data>
+   <data key="startline">253</data>
+   <data key="startoffset">7592</data>
+  </edge>
+  <node id="N27"/>
+  <edge source="N26" target="N27">
+   <data key="sourcecode">void *__cil_tmp8 ;</data>
+   <data key="startline">254</data>
+   <data key="startoffset">7608</data>
+  </edge>
+  <node id="N28"/>
+  <edge source="N27" target="N28">
+   <data key="sourcecode">void const   *__cil_tmp9 ;</data>
+   <data key="startline">255</data>
+   <data key="startoffset">7629</data>
+  </edge>
+  <node id="N29"/>
+  <edge source="N28" target="N29">
+   <data key="sourcecode">__cil_tmp8 = (void *)buf;</data>
+   <data key="startline">259</data>
+   <data key="startoffset">7667</data>
+  </edge>
+  <node id="N30"/>
+  <edge source="N29" target="N30">
+   <data key="sourcecode">__cil_tmp9 = (void const   *)memconsole_baseaddr;</data>
+   <data key="startline">260</data>
+   <data key="startoffset">7695</data>
+  </edge>
+  <node id="N31"/>
+  <edge source="N30" target="N31">
+   <data key="sourcecode">tmp = memory_read_from_buffer(__cil_tmp8, count, &amp; pos, __cil_tmp9, memconsole_length);</data>
+   <data key="startline">261</data>
+   <data key="startoffset">7777</data>
+  </edge>
+  <node id="N23"/>
+  <edge source="N31" target="N23">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">263</data>
+   <data key="startoffset">7849</data>
+   <data key="returnFrom">memconsole_read</data>
+  </edge>
+  <edge source="N23" target="N375">
+   <data key="enterLoopHead">true</data>
+   <data key="startline">874</data>
+   <data key="startoffset">36103</data>
+  </edge>
+  <node id="N325"/>
+  <edge source="N329" target="N325">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">801</data>
+   <data key="startoffset">33994</data>
+   <data key="returnFrom">init_module</data>
+  </edge>
+  <node id="N212"/>
+  <edge source="N303" target="N212">
+   <data key="sourcecode">tmp___0 = found_memconsole();</data>
+   <data key="startline">766</data>
+   <data key="startoffset">33221</data>
+   <data key="enterFunction">found_memconsole</data>
+  </edge>
+  <node id="N214"/>
+  <edge source="N212" target="N214">
+   <data key="sourcecode">unsigned int address ;</data>
+   <data key="startline">462</data>
+   <data key="startoffset">14337</data>
+  </edge>
+  <node id="N215"/>
+  <edge source="N214" target="N215">
+   <data key="sourcecode">size_t length ;</data>
+   <data key="startline">463</data>
+   <data key="startoffset">14362</data>
+  </edge>
+  <node id="N216"/>
+  <edge source="N215" target="N216">
+   <data key="sourcecode">size_t cur ;</data>
+   <data key="startline">464</data>
+   <data key="startoffset">14380</data>
+  </edge>
+  <node id="N217"/>
+  <edge source="N216" target="N217">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">465</data>
+   <data key="startoffset">14395</data>
+  </edge>
+  <node id="N218"/>
+  <edge source="N217" target="N218">
+   <data key="sourcecode">struct biosmemcon_ebda *hdr ;</data>
+   <data key="startline">466</data>
+   <data key="startoffset">14409</data>
+  </edge>
+  <node id="N219"/>
+  <edge source="N218" target="N219">
+   <data key="sourcecode">void *tmp___0 ;</data>
+   <data key="startline">467</data>
+   <data key="startoffset">14441</data>
+  </edge>
+  <node id="N220"/>
+  <edge source="N219" target="N220">
+   <data key="sourcecode">phys_addr_t __cil_tmp7 ;</data>
+   <data key="startline">468</data>
+   <data key="startoffset">14459</data>
+  </edge>
+  <node id="N221"/>
+  <edge source="N220" target="N221">
+   <data key="sourcecode">u8 *__cil_tmp8 ;</data>
+   <data key="startline">469</data>
+   <data key="startoffset">14486</data>
+  </edge>
+  <node id="N222"/>
+  <edge source="N221" target="N222">
+   <data key="sourcecode">u8 __cil_tmp9 ;</data>
+   <data key="startline">470</data>
+   <data key="startoffset">14505</data>
+  </edge>
+  <node id="N223"/>
+  <edge source="N222" target="N223">
+   <data key="sourcecode">size_t __cil_tmp10 ;</data>
+   <data key="startline">471</data>
+   <data key="startoffset">14523</data>
+  </edge>
+  <node id="N224"/>
+  <edge source="N223" target="N224">
+   <data key="sourcecode">size_t __cil_tmp11 ;</data>
+   <data key="startline">472</data>
+   <data key="startoffset">14546</data>
+  </edge>
+  <node id="N225"/>
+  <edge source="N224" target="N225">
+   <data key="sourcecode">phys_addr_t __cil_tmp12 ;</data>
+   <data key="startline">473</data>
+   <data key="startoffset">14569</data>
+  </edge>
+  <node id="N226"/>
+  <edge source="N225" target="N226">
+   <data key="sourcecode">u32 __cil_tmp13 ;</data>
+   <data key="startline">474</data>
+   <data key="startoffset">14597</data>
+  </edge>
+  <node id="N227"/>
+  <edge source="N226" target="N227">
+   <data key="sourcecode">int __cil_tmp14 ;</data>
+   <data key="startline">475</data>
+   <data key="startoffset">14617</data>
+  </edge>
+  <node id="N228"/>
+  <edge source="N227" target="N228">
+   <data key="sourcecode">int __cil_tmp15 ;</data>
+   <data key="startline">476</data>
+   <data key="startoffset">14637</data>
+  </edge>
+  <node id="N229"/>
+  <edge source="N228" target="N229">
+   <data key="sourcecode">int __cil_tmp16 ;</data>
+   <data key="startline">477</data>
+   <data key="startoffset">14657</data>
+  </edge>
+  <node id="N230"/>
+  <edge source="N229" target="N230">
+   <data key="sourcecode">int __cil_tmp17 ;</data>
+   <data key="startline">478</data>
+   <data key="startoffset">14677</data>
+  </edge>
+  <node id="N231"/>
+  <edge source="N230" target="N231">
+   <data key="sourcecode">int __cil_tmp18 ;</data>
+   <data key="startline">479</data>
+   <data key="startoffset">14697</data>
+  </edge>
+  <node id="N232"/>
+  <edge source="N231" target="N232">
+   <data key="sourcecode">int __cil_tmp19 ;</data>
+   <data key="startline">480</data>
+   <data key="startoffset">14717</data>
+  </edge>
+  <node id="N233"/>
+  <edge source="N232" target="N233">
+   <data key="sourcecode">u32 __cil_tmp20 ;</data>
+   <data key="startline">481</data>
+   <data key="startoffset">14737</data>
+  </edge>
+  <node id="N234"/>
+  <edge source="N233" target="N234">
+   <data key="sourcecode">u32 __cil_tmp21 ;</data>
+   <data key="startline">482</data>
+   <data key="startoffset">14757</data>
+  </edge>
+  <node id="N9"/>
+  <edge source="N234" target="N9">
+   <data key="sourcecode">address = get_bios_ebda();</data>
+   <data key="startline">486</data>
+   <data key="startoffset">14786</data>
+   <data key="enterFunction">get_bios_ebda</data>
+  </edge>
+  <node id="N11"/>
+  <edge source="N9" target="N11">
+   <data key="sourcecode">unsigned int address ;</data>
+   <data key="startline">231</data>
+   <data key="startoffset">6978</data>
+  </edge>
+  <node id="N12"/>
+  <edge source="N11" target="N12">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">232</data>
+   <data key="startoffset">7003</data>
+  </edge>
+  <node id="N13"/>
+  <edge source="N12" target="N13">
+   <data key="sourcecode">phys_addr_t __cil_tmp3 ;</data>
+   <data key="startline">233</data>
+   <data key="startoffset">7017</data>
+  </edge>
+  <node id="N14"/>
+  <edge source="N13" target="N14">
+   <data key="sourcecode">unsigned short *__cil_tmp4 ;</data>
+   <data key="startline">234</data>
+   <data key="startoffset">7044</data>
+  </edge>
+  <node id="N15"/>
+  <edge source="N14" target="N15">
+   <data key="sourcecode">unsigned short __cil_tmp5 ;</data>
+   <data key="startline">235</data>
+   <data key="startoffset">7075</data>
+  </edge>
+  <node id="N16"/>
+  <edge source="N15" target="N16">
+   <data key="sourcecode">__cil_tmp3 = (phys_addr_t )1038;</data>
+   <data key="startline">239</data>
+   <data key="startoffset">7127</data>
+  </edge>
+  <node id="N1"/>
+  <edge source="N16" target="N1">
+   <data key="sourcecode">tmp = phys_to_virt(__cil_tmp3);</data>
+   <data key="startline">240</data>
+   <data key="startoffset">7155</data>
+   <data key="enterFunction">phys_to_virt</data>
+  </edge>
+  <node id="N3"/>
+  <edge source="N1" target="N3">
+   <data key="sourcecode">unsigned long __cil_tmp2 ;</data>
+   <data key="startline">215</data>
+   <data key="startoffset">6517</data>
+  </edge>
+  <node id="N4"/>
+  <edge source="N3" target="N4">
+   <data key="sourcecode">unsigned long __cil_tmp3 ;</data>
+   <data key="startline">216</data>
+   <data key="startoffset">6546</data>
+  </edge>
+  <node id="N5"/>
+  <edge source="N4" target="N5">
+   <data key="sourcecode">__cil_tmp2 = (unsigned long )address;</data>
+   <data key="startline">220</data>
+   <data key="startoffset">6584</data>
+  </edge>
+  <node id="N6"/>
+  <edge source="N5" target="N6">
+   <data key="sourcecode">__cil_tmp3 = __cil_tmp2 + 0xffff880000000000UL;</data>
+   <data key="startline">221</data>
+   <data key="startoffset">6624</data>
+  </edge>
+  <node id="N0"/>
+  <edge source="N6" target="N0">
+   <data key="sourcecode">return ((void *)__cil_tmp3);</data>
+   <data key="startline">222</data>
+   <data key="startoffset">6674</data>
+   <data key="returnFrom">phys_to_virt</data>
+  </edge>
+  <node id="N108"/>
+  <edge source="N0" target="N108">
+   <data key="startline">350</data>
+   <data key="startoffset">11008</data>
+  </edge>
+  <node id="N17"/>
+  <edge source="N0" target="N17">
+   <data key="startline">240</data>
+   <data key="startoffset">7149</data>
+  </edge>
+  <node id="N208"/>
+  <edge source="N0" target="N208">
+   <data key="startline">455</data>
+   <data key="startoffset">14211</data>
+  </edge>
+  <node id="N242"/>
+  <edge source="N0" target="N242">
+   <data key="startline">498</data>
+   <data key="startoffset">14975</data>
+  </edge>
+  <node id="N259"/>
+  <edge source="N0" target="N259">
+   <data key="startline">517</data>
+   <data key="startoffset">15394</data>
+  </edge>
+  <node id="N260"/>
+  <edge source="N259" target="N260">
+   <data key="sourcecode">hdr = (struct biosmemcon_ebda *)tmp___0;</data>
+   <data key="startline">518</data>
+   <data key="startoffset">15435</data>
+  </edge>
+  <node id="N261"/>
+  <edge source="N260" target="N261">
+   <data key="sourcecode">__cil_tmp13 = *((u32 *)hdr);</data>
+   <data key="startline">521</data>
+   <data key="startoffset">15508</data>
+  </edge>
+  <node id="N263"/>
+  <edge source="N261" target="N263">
+   <data key="sourcecode">[__cil_tmp13 == 3735927486U]</data>
+   <data key="startline">522</data>
+   <data key="startoffset">15529</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N264"/>
+  <edge source="N261" target="N264">
+   <data key="sourcecode">[!(__cil_tmp13 == 3735927486U)]</data>
+   <data key="startline">522</data>
+   <data key="startoffset">15529</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N267"/>
+  <edge source="N264" target="N267">
+   <data key="sourcecode">__cil_tmp14 = 78 &lt;&lt; 24;</data>
+   <data key="startline">532</data>
+   <data key="startoffset">15664</data>
+  </edge>
+  <node id="N268"/>
+  <edge source="N267" target="N268">
+   <data key="sourcecode">__cil_tmp15 = 79 &lt;&lt; 16;</data>
+   <data key="startline">533</data>
+   <data key="startoffset">15706</data>
+  </edge>
+  <node id="N269"/>
+  <edge source="N268" target="N269">
+   <data key="sourcecode">__cil_tmp16 = 67 &lt;&lt; 8;</data>
+   <data key="startline">534</data>
+   <data key="startoffset">15734</data>
+  </edge>
+  <node id="N270"/>
+  <edge source="N269" target="N270">
+   <data key="sourcecode">__cil_tmp17 = 77 | __cil_tmp16;</data>
+   <data key="startline">535</data>
+   <data key="startoffset">15747</data>
+  </edge>
+  <node id="N271"/>
+  <edge source="N270" target="N271">
+   <data key="sourcecode">__cil_tmp18 = __cil_tmp17 | __cil_tmp15;</data>
+   <data key="startline">536</data>
+   <data key="startoffset">15811</data>
+  </edge>
+  <node id="N272"/>
+  <edge source="N271" target="N272">
+   <data key="sourcecode">__cil_tmp19 = __cil_tmp18 | __cil_tmp14;</data>
+   <data key="startline">537</data>
+   <data key="startoffset">15828</data>
+  </edge>
+  <node id="N273"/>
+  <edge source="N272" target="N273">
+   <data key="sourcecode">__cil_tmp20 = (u32 )__cil_tmp19;</data>
+   <data key="startline">538</data>
+   <data key="startoffset">15887</data>
+  </edge>
+  <node id="N274"/>
+  <edge source="N273" target="N274">
+   <data key="sourcecode">__cil_tmp21 = *((u32 *)hdr);</data>
+   <data key="startline">539</data>
+   <data key="startoffset">15924</data>
+  </edge>
+  <node id="N276"/>
+  <edge source="N274" target="N276">
+   <data key="sourcecode">[__cil_tmp21 == __cil_tmp20]</data>
+   <data key="startline">540</data>
+   <data key="startoffset">15947</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N277"/>
+  <edge source="N274" target="N277">
+   <data key="sourcecode">[!(__cil_tmp21 == __cil_tmp20)]</data>
+   <data key="startline">540</data>
+   <data key="startoffset">15947</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N280">
+   <data key="invariant">(length &lt;= 261120ULL) &amp;&amp; (address &gt;= 1U) &amp;&amp; (memconsole_length == 0ULL) &amp;&amp; (__cil_tmp7 == (unsigned long int) address) &amp;&amp; (__cil_tmp9 &gt;= 0U) &amp;&amp; (address &lt;= 1048560U) &amp;&amp; (ldv_mutex == 1) &amp;&amp; (__cil_tmp9 &lt;= 255U) &amp;&amp; (((length &gt;= 0ULL) &amp;&amp; (cur == 0ULL)) || ((__cil_tmp10 == (unsigned long int) address) &amp;&amp; (__cil_tmp15 == 5177344) &amp;&amp; (__cil_tmp16 == 17152) &amp;&amp; (__cil_tmp20 == (unsigned int) __cil_tmp19) &amp;&amp; (__cil_tmp14 == 1308622848) &amp;&amp; (length &gt;= 1ULL) &amp;&amp; (__cil_tmp12 == __cil_tmp11)))</data>
+   <data key="invariant.scope">found_memconsole</data>
+  </node>
+  <edge source="N277" target="N280">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">cur = cur + 1UL;</data>
+   <data key="startline">549</data>
+   <data key="startoffset">16076</data>
+  </edge>
+  <node id="N253">
+   <data key="invariant">(ldv_mutex == 1) &amp;&amp; (length &gt;= 1ULL) &amp;&amp; (length &lt;= 261120ULL) &amp;&amp; (address &gt;= 1U) &amp;&amp; (address &lt;= 1048560U) &amp;&amp; (memconsole_length == 0ULL) &amp;&amp; (__cil_tmp7 == (unsigned long int) address) &amp;&amp; (__cil_tmp9 &gt;= 0U) &amp;&amp; (__cil_tmp9 &lt;= 255U)</data>
+   <data key="invariant.scope">found_memconsole</data>
+  </node>
+  <edge source="N280" target="N253">
+   <data key="sourcecode">[cur &lt; length]</data>
+   <data key="startline">508</data>
+   <data key="startoffset">15206</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N254">
+   <data key="invariant">(ldv_mutex == 1) &amp;&amp; (length &gt;= 0ULL) &amp;&amp; (length &lt;= 261120ULL) &amp;&amp; (address &gt;= 1U) &amp;&amp; (address &lt;= 1048560U) &amp;&amp; (memconsole_length == 0ULL) &amp;&amp; (__cil_tmp7 == (unsigned long int) address) &amp;&amp; (__cil_tmp9 &gt;= 0U) &amp;&amp; (__cil_tmp9 &lt;= 255U)</data>
+   <data key="invariant.scope">found_memconsole</data>
+  </node>
+  <edge source="N280" target="N254">
+   <data key="sourcecode">[!(cur &lt; length)]</data>
+   <data key="startline">508</data>
+   <data key="startoffset">15206</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N283"/>
+  <edge source="N254" target="N283">
+   <data key="sourcecode">printk("&lt;6&gt;BIOS console EBDA structure not found!\n");</data>
+   <data key="startline">554</data>
+   <data key="startoffset">16147</data>
+  </edge>
+  <node id="N211"/>
+  <edge source="N283" target="N211">
+   <data key="sourcecode">return ((bool )0);</data>
+   <data key="startline">556</data>
+   <data key="startoffset">16216</data>
+   <data key="returnFrom">found_memconsole</data>
+  </edge>
+  <node id="N306"/>
+  <edge source="N211" target="N306">
+   <data key="startline">766</data>
+   <data key="startoffset">33221</data>
+  </edge>
+  <node id="N308"/>
+  <edge source="N306" target="N308">
+   <data key="sourcecode">[(tmp___0 == 0) == 0]</data>
+   <data key="startline">768</data>
+   <data key="startoffset">33261</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N309"/>
+  <edge source="N306" target="N309">
+   <data key="sourcecode">[!((tmp___0 == 0) == 0)]</data>
+   <data key="startline">768</data>
+   <data key="startoffset">33261</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="N309" target="N285">
+   <data key="sourcecode">return (-19);</data>
+   <data key="startline">771</data>
+   <data key="startoffset">33288</data>
+   <data key="returnFrom">memconsole_init</data>
+  </edge>
+  <node id="N311"/>
+  <edge source="N308" target="N311">
+   <data key="sourcecode">__cil_tmp8 = (unsigned long )(&amp; memconsole_bin_attr) + 16;</data>
+   <data key="startline">774</data>
+   <data key="startoffset">33312</data>
+  </edge>
+  <node id="N312"/>
+  <edge source="N311" target="N312">
+   <data key="sourcecode">*((size_t *)__cil_tmp8) = memconsole_length;</data>
+   <data key="startline">775</data>
+   <data key="startoffset">33373</data>
+  </edge>
+  <node id="N313"/>
+  <edge source="N312" target="N313">
+   <data key="sourcecode">__cil_tmp9 = (struct bin_attribute  const  *)(&amp; memconsole_bin_attr);</data>
+   <data key="startline">776</data>
+   <data key="startoffset">33468</data>
+  </edge>
+  <node id="N315"/>
+  <edge source="N313" target="N315">
+   <data key="sourcecode">ret = (int )sysfs_create_bin_file(firmware_kobj, __cil_tmp9);</data>
+   <data key="startline">777</data>
+   <data key="startoffset">33504</data>
+  </edge>
+  <node id="N316"/>
+  <edge source="N315" target="N316">
+   <data key="sourcecode">ret = (int )sysfs_create_bin_file(firmware_kobj, __cil_tmp9);</data>
+   <data key="startline">777</data>
+   <data key="startoffset">33492</data>
+  </edge>
+  <edge source="N316" target="N285">
+   <data key="sourcecode">return (ret);</data>
+   <data key="startline">779</data>
+   <data key="startoffset">33568</data>
+   <data key="returnFrom">memconsole_init</data>
+  </edge>
+  <node id="N256"/>
+  <edge source="N253" target="N256">
+   <data key="sourcecode">__cil_tmp10 = (size_t )address;</data>
+   <data key="startline">514</data>
+   <data key="startoffset">15276</data>
+  </edge>
+  <node id="N257"/>
+  <edge source="N256" target="N257">
+   <data key="sourcecode">__cil_tmp11 = __cil_tmp10 + cur;</data>
+   <data key="startline">515</data>
+   <data key="startoffset">15340</data>
+  </edge>
+  <node id="N258"/>
+  <edge source="N257" target="N258">
+   <data key="sourcecode">__cil_tmp12 = (phys_addr_t )__cil_tmp11;</data>
+   <data key="startline">516</data>
+   <data key="startoffset">15349</data>
+  </edge>
+  <edge source="N258" target="N1">
+   <data key="sourcecode">tmp___0 = phys_to_virt(__cil_tmp12);</data>
+   <data key="startline">517</data>
+   <data key="startoffset">15417</data>
+   <data key="enterFunction">phys_to_virt</data>
+  </edge>
+  <node id="N112"/>
+  <edge source="N276" target="N112">
+   <data key="sourcecode">found_v2_header(hdr);</data>
+   <data key="startline">542</data>
+   <data key="startoffset">15991</data>
+   <data key="enterFunction">found_v2_header</data>
+  </edge>
+  <node id="N114"/>
+  <edge source="N112" target="N114">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">357</data>
+   <data key="startoffset">11157</data>
+  </edge>
+  <node id="N115"/>
+  <edge source="N114" target="N115">
+   <data key="sourcecode">unsigned long __cil_tmp3 ;</data>
+   <data key="startline">358</data>
+   <data key="startoffset">11171</data>
+  </edge>
+  <node id="N116"/>
+  <edge source="N115" target="N116">
+   <data key="sourcecode">unsigned long __cil_tmp4 ;</data>
+   <data key="startline">359</data>
+   <data key="startoffset">11200</data>
+  </edge>
+  <node id="N117"/>
+  <edge source="N116" target="N117">
+   <data key="sourcecode">u32 __cil_tmp5 ;</data>
+   <data key="startline">360</data>
+   <data key="startoffset">11229</data>
+  </edge>
+  <node id="N118"/>
+  <edge source="N117" target="N118">
+   <data key="sourcecode">unsigned long __cil_tmp6 ;</data>
+   <data key="startline">361</data>
+   <data key="startoffset">11248</data>
+  </edge>
+  <node id="N119"/>
+  <edge source="N118" target="N119">
+   <data key="sourcecode">unsigned long __cil_tmp7 ;</data>
+   <data key="startline">362</data>
+   <data key="startoffset">11277</data>
+  </edge>
+  <node id="N120"/>
+  <edge source="N119" target="N120">
+   <data key="sourcecode">unsigned long __cil_tmp8 ;</data>
+   <data key="startline">363</data>
+   <data key="startoffset">11306</data>
+  </edge>
+  <node id="N121"/>
+  <edge source="N120" target="N121">
+   <data key="sourcecode">unsigned long __cil_tmp9 ;</data>
+   <data key="startline">364</data>
+   <data key="startoffset">11335</data>
+  </edge>
+  <node id="N122"/>
+  <edge source="N121" target="N122">
+   <data key="sourcecode">u16 __cil_tmp10 ;</data>
+   <data key="startline">365</data>
+   <data key="startoffset">11364</data>
+  </edge>
+  <node id="N123"/>
+  <edge source="N122" target="N123">
+   <data key="sourcecode">int __cil_tmp11 ;</data>
+   <data key="startline">366</data>
+   <data key="startoffset">11384</data>
+  </edge>
+  <node id="N124"/>
+  <edge source="N123" target="N124">
+   <data key="sourcecode">unsigned long __cil_tmp12 ;</data>
+   <data key="startline">367</data>
+   <data key="startoffset">11404</data>
+  </edge>
+  <node id="N125"/>
+  <edge source="N124" target="N125">
+   <data key="sourcecode">unsigned long __cil_tmp13 ;</data>
+   <data key="startline">368</data>
+   <data key="startoffset">11434</data>
+  </edge>
+  <node id="N126"/>
+  <edge source="N125" target="N126">
+   <data key="sourcecode">unsigned long __cil_tmp14 ;</data>
+   <data key="startline">369</data>
+   <data key="startoffset">11464</data>
+  </edge>
+  <node id="N127"/>
+  <edge source="N126" target="N127">
+   <data key="sourcecode">unsigned long __cil_tmp15 ;</data>
+   <data key="startline">370</data>
+   <data key="startoffset">11494</data>
+  </edge>
+  <node id="N128"/>
+  <edge source="N127" target="N128">
+   <data key="sourcecode">u16 __cil_tmp16 ;</data>
+   <data key="startline">371</data>
+   <data key="startoffset">11524</data>
+  </edge>
+  <node id="N129"/>
+  <edge source="N128" target="N129">
+   <data key="sourcecode">int __cil_tmp17 ;</data>
+   <data key="startline">372</data>
+   <data key="startoffset">11544</data>
+  </edge>
+  <node id="N130"/>
+  <edge source="N129" target="N130">
+   <data key="sourcecode">unsigned long __cil_tmp18 ;</data>
+   <data key="startline">373</data>
+   <data key="startoffset">11564</data>
+  </edge>
+  <node id="N131"/>
+  <edge source="N130" target="N131">
+   <data key="sourcecode">unsigned long __cil_tmp19 ;</data>
+   <data key="startline">374</data>
+   <data key="startoffset">11594</data>
+  </edge>
+  <node id="N132"/>
+  <edge source="N131" target="N132">
+   <data key="sourcecode">unsigned long __cil_tmp20 ;</data>
+   <data key="startline">375</data>
+   <data key="startoffset">11624</data>
+  </edge>
+  <node id="N133"/>
+  <edge source="N132" target="N133">
+   <data key="sourcecode">unsigned long __cil_tmp21 ;</data>
+   <data key="startline">376</data>
+   <data key="startoffset">11654</data>
+  </edge>
+  <node id="N134"/>
+  <edge source="N133" target="N134">
+   <data key="sourcecode">u16 __cil_tmp22 ;</data>
+   <data key="startline">377</data>
+   <data key="startoffset">11684</data>
+  </edge>
+  <node id="N135"/>
+  <edge source="N134" target="N135">
+   <data key="sourcecode">int __cil_tmp23 ;</data>
+   <data key="startline">378</data>
+   <data key="startoffset">11704</data>
+  </edge>
+  <node id="N136"/>
+  <edge source="N135" target="N136">
+   <data key="sourcecode">unsigned long __cil_tmp24 ;</data>
+   <data key="startline">379</data>
+   <data key="startoffset">11724</data>
+  </edge>
+  <node id="N137"/>
+  <edge source="N136" target="N137">
+   <data key="sourcecode">unsigned long __cil_tmp25 ;</data>
+   <data key="startline">380</data>
+   <data key="startoffset">11754</data>
+  </edge>
+  <node id="N138"/>
+  <edge source="N137" target="N138">
+   <data key="sourcecode">unsigned long __cil_tmp26 ;</data>
+   <data key="startline">381</data>
+   <data key="startoffset">11784</data>
+  </edge>
+  <node id="N139"/>
+  <edge source="N138" target="N139">
+   <data key="sourcecode">unsigned long __cil_tmp27 ;</data>
+   <data key="startline">382</data>
+   <data key="startoffset">11814</data>
+  </edge>
+  <node id="N140"/>
+  <edge source="N139" target="N140">
+   <data key="sourcecode">u16 __cil_tmp28 ;</data>
+   <data key="startline">383</data>
+   <data key="startoffset">11844</data>
+  </edge>
+  <node id="N141"/>
+  <edge source="N140" target="N141">
+   <data key="sourcecode">int __cil_tmp29 ;</data>
+   <data key="startline">384</data>
+   <data key="startoffset">11864</data>
+  </edge>
+  <node id="N142"/>
+  <edge source="N141" target="N142">
+   <data key="sourcecode">unsigned long __cil_tmp30 ;</data>
+   <data key="startline">385</data>
+   <data key="startoffset">11884</data>
+  </edge>
+  <node id="N143"/>
+  <edge source="N142" target="N143">
+   <data key="sourcecode">unsigned long __cil_tmp31 ;</data>
+   <data key="startline">386</data>
+   <data key="startoffset">11914</data>
+  </edge>
+  <node id="N144"/>
+  <edge source="N143" target="N144">
+   <data key="sourcecode">unsigned long __cil_tmp32 ;</data>
+   <data key="startline">387</data>
+   <data key="startoffset">11944</data>
+  </edge>
+  <node id="N145"/>
+  <edge source="N144" target="N145">
+   <data key="sourcecode">unsigned long __cil_tmp33 ;</data>
+   <data key="startline">388</data>
+   <data key="startoffset">11974</data>
+  </edge>
+  <node id="N146"/>
+  <edge source="N145" target="N146">
+   <data key="sourcecode">u16 __cil_tmp34 ;</data>
+   <data key="startline">389</data>
+   <data key="startoffset">12004</data>
+  </edge>
+  <node id="N147"/>
+  <edge source="N146" target="N147">
+   <data key="sourcecode">int __cil_tmp35 ;</data>
+   <data key="startline">390</data>
+   <data key="startoffset">12024</data>
+  </edge>
+  <node id="N148"/>
+  <edge source="N147" target="N148">
+   <data key="sourcecode">int __cil_tmp36 ;</data>
+   <data key="startline">391</data>
+   <data key="startoffset">12044</data>
+  </edge>
+  <node id="N149"/>
+  <edge source="N148" target="N149">
+   <data key="sourcecode">unsigned long __cil_tmp37 ;</data>
+   <data key="startline">392</data>
+   <data key="startoffset">12064</data>
+  </edge>
+  <node id="N150"/>
+  <edge source="N149" target="N150">
+   <data key="sourcecode">unsigned long __cil_tmp38 ;</data>
+   <data key="startline">393</data>
+   <data key="startoffset">12094</data>
+  </edge>
+  <node id="N151"/>
+  <edge source="N150" target="N151">
+   <data key="sourcecode">unsigned long __cil_tmp39 ;</data>
+   <data key="startline">394</data>
+   <data key="startoffset">12124</data>
+  </edge>
+  <node id="N152"/>
+  <edge source="N151" target="N152">
+   <data key="sourcecode">unsigned long __cil_tmp40 ;</data>
+   <data key="startline">395</data>
+   <data key="startoffset">12154</data>
+  </edge>
+  <node id="N153"/>
+  <edge source="N152" target="N153">
+   <data key="sourcecode">u16 __cil_tmp41 ;</data>
+   <data key="startline">396</data>
+   <data key="startoffset">12184</data>
+  </edge>
+  <node id="N154"/>
+  <edge source="N153" target="N154">
+   <data key="sourcecode">u32 __cil_tmp42 ;</data>
+   <data key="startline">397</data>
+   <data key="startoffset">12204</data>
+  </edge>
+  <node id="N155"/>
+  <edge source="N154" target="N155">
+   <data key="sourcecode">unsigned long __cil_tmp43 ;</data>
+   <data key="startline">398</data>
+   <data key="startoffset">12224</data>
+  </edge>
+  <node id="N156"/>
+  <edge source="N155" target="N156">
+   <data key="sourcecode">unsigned long __cil_tmp44 ;</data>
+   <data key="startline">399</data>
+   <data key="startoffset">12254</data>
+  </edge>
+  <node id="N157"/>
+  <edge source="N156" target="N157">
+   <data key="sourcecode">u32 __cil_tmp45 ;</data>
+   <data key="startline">400</data>
+   <data key="startoffset">12284</data>
+  </edge>
+  <node id="N158"/>
+  <edge source="N157" target="N158">
+   <data key="sourcecode">u32 __cil_tmp46 ;</data>
+   <data key="startline">401</data>
+   <data key="startoffset">12304</data>
+  </edge>
+  <node id="N159"/>
+  <edge source="N158" target="N159">
+   <data key="sourcecode">phys_addr_t __cil_tmp47 ;</data>
+   <data key="startline">402</data>
+   <data key="startoffset">12324</data>
+  </edge>
+  <node id="N160"/>
+  <edge source="N159" target="N160">
+   <data key="sourcecode">printk("&lt;6&gt;BIOS console v2 EBDA structure found at %p\n", hdr);</data>
+   <data key="startline">406</data>
+   <data key="startoffset">12368</data>
+  </edge>
+  <node id="N161"/>
+  <edge source="N160" target="N161">
+   <data key="sourcecode">__cil_tmp3 = (unsigned long )hdr;</data>
+   <data key="startline">407</data>
+   <data key="startoffset">12427</data>
+  </edge>
+  <node id="N162"/>
+  <edge source="N161" target="N162">
+   <data key="sourcecode">__cil_tmp4 = __cil_tmp3 + 4;</data>
+   <data key="startline">408</data>
+   <data key="startoffset">12463</data>
+  </edge>
+  <node id="N163"/>
+  <edge source="N162" target="N163">
+   <data key="sourcecode">__cil_tmp5 = *((u32 *)__cil_tmp4);</data>
+   <data key="startline">409</data>
+   <data key="startoffset">12516</data>
+  </edge>
+  <node id="N164"/>
+  <edge source="N163" target="N164">
+   <data key="sourcecode">__cil_tmp6 = 0 + 6;</data>
+   <data key="startline">410</data>
+   <data key="startoffset">12544</data>
+  </edge>
+  <node id="N165"/>
+  <edge source="N164" target="N165">
+   <data key="sourcecode">__cil_tmp7 = 4 + __cil_tmp6;</data>
+   <data key="startline">411</data>
+   <data key="startoffset">12553</data>
+  </edge>
+  <node id="N166"/>
+  <edge source="N165" target="N166">
+   <data key="sourcecode">__cil_tmp8 = (unsigned long )hdr;</data>
+   <data key="startline">412</data>
+   <data key="startoffset">12584</data>
+  </edge>
+  <node id="N167"/>
+  <edge source="N166" target="N167">
+   <data key="sourcecode">__cil_tmp9 = __cil_tmp8 + __cil_tmp7;</data>
+   <data key="startline">413</data>
+   <data key="startoffset">12620</data>
+  </edge>
+  <node id="N168"/>
+  <edge source="N167" target="N168">
+   <data key="sourcecode">__cil_tmp10 = *((u16 *)__cil_tmp9);</data>
+   <data key="startline">414</data>
+   <data key="startoffset">12674</data>
+  </edge>
+  <node id="N169"/>
+  <edge source="N168" target="N169">
+   <data key="sourcecode">__cil_tmp11 = (int )__cil_tmp10;</data>
+   <data key="startline">415</data>
+   <data key="startoffset">12698</data>
+  </edge>
+  <node id="N170"/>
+  <edge source="N169" target="N170">
+   <data key="sourcecode">__cil_tmp12 = 0 + 8;</data>
+   <data key="startline">416</data>
+   <data key="startoffset">12733</data>
+  </edge>
+  <node id="N171"/>
+  <edge source="N170" target="N171">
+   <data key="sourcecode">__cil_tmp13 = 4 + __cil_tmp12;</data>
+   <data key="startline">417</data>
+   <data key="startoffset">12756</data>
+  </edge>
+  <node id="N172"/>
+  <edge source="N171" target="N172">
+   <data key="sourcecode">__cil_tmp14 = (unsigned long )hdr;</data>
+   <data key="startline">418</data>
+   <data key="startoffset">12803</data>
+  </edge>
+  <node id="N173"/>
+  <edge source="N172" target="N173">
+   <data key="sourcecode">__cil_tmp15 = __cil_tmp14 + __cil_tmp13;</data>
+   <data key="startline">419</data>
+   <data key="startoffset">12826</data>
+  </edge>
+  <node id="N174"/>
+  <edge source="N173" target="N174">
+   <data key="sourcecode">__cil_tmp16 = *((u16 *)__cil_tmp15);</data>
+   <data key="startline">420</data>
+   <data key="startoffset">12885</data>
+  </edge>
+  <node id="N175"/>
+  <edge source="N174" target="N175">
+   <data key="sourcecode">__cil_tmp17 = (int )__cil_tmp16;</data>
+   <data key="startline">421</data>
+   <data key="startoffset">12922</data>
+  </edge>
+  <node id="N176"/>
+  <edge source="N175" target="N176">
+   <data key="sourcecode">__cil_tmp18 = 0 + 4;</data>
+   <data key="startline">422</data>
+   <data key="startoffset">12943</data>
+  </edge>
+  <node id="N177"/>
+  <edge source="N176" target="N177">
+   <data key="sourcecode">__cil_tmp19 = 4 + __cil_tmp18;</data>
+   <data key="startline">423</data>
+   <data key="startoffset">12966</data>
+  </edge>
+  <node id="N178"/>
+  <edge source="N177" target="N178">
+   <data key="sourcecode">__cil_tmp20 = (unsigned long )hdr;</data>
+   <data key="startline">424</data>
+   <data key="startoffset">13013</data>
+  </edge>
+  <node id="N179"/>
+  <edge source="N178" target="N179">
+   <data key="sourcecode">__cil_tmp21 = __cil_tmp20 + __cil_tmp19;</data>
+   <data key="startline">425</data>
+   <data key="startoffset">13064</data>
+  </edge>
+  <node id="N180"/>
+  <edge source="N179" target="N180">
+   <data key="sourcecode">__cil_tmp22 = *((u16 *)__cil_tmp21);</data>
+   <data key="startline">426</data>
+   <data key="startoffset">13079</data>
+  </edge>
+  <node id="N181"/>
+  <edge source="N180" target="N181">
+   <data key="sourcecode">__cil_tmp23 = (int )__cil_tmp22;</data>
+   <data key="startline">427</data>
+   <data key="startoffset">13118</data>
+  </edge>
+  <node id="N182"/>
+  <edge source="N181" target="N182">
+   <data key="sourcecode">printk("&lt;6&gt;BIOS console buffer at 0x%.8x, start = %d, end = %d, num_bytes = %d\n",
+         __cil_tmp5, __cil_tmp11, __cil_tmp17, __cil_tmp23);</data>
+   <data key="startline">429</data>
+   <data key="startoffset">13283</data>
+  </edge>
+  <node id="N183"/>
+  <edge source="N182" target="N183">
+   <data key="sourcecode">__cil_tmp24 = 0 + 6;</data>
+   <data key="startline">430</data>
+   <data key="startoffset">13299</data>
+  </edge>
+  <node id="N184"/>
+  <edge source="N183" target="N184">
+   <data key="sourcecode">__cil_tmp25 = 4 + __cil_tmp24;</data>
+   <data key="startline">431</data>
+   <data key="startoffset">13322</data>
+  </edge>
+  <node id="N185"/>
+  <edge source="N184" target="N185">
+   <data key="sourcecode">__cil_tmp26 = (unsigned long )hdr;</data>
+   <data key="startline">432</data>
+   <data key="startoffset">13355</data>
+  </edge>
+  <node id="N186"/>
+  <edge source="N185" target="N186">
+   <data key="sourcecode">__cil_tmp27 = __cil_tmp26 + __cil_tmp25;</data>
+   <data key="startline">433</data>
+   <data key="startoffset">13392</data>
+  </edge>
+  <node id="N187"/>
+  <edge source="N186" target="N187">
+   <data key="sourcecode">__cil_tmp28 = *((u16 *)__cil_tmp27);</data>
+   <data key="startline">434</data>
+   <data key="startoffset">13451</data>
+  </edge>
+  <node id="N188"/>
+  <edge source="N187" target="N188">
+   <data key="sourcecode">__cil_tmp29 = (int )__cil_tmp28;</data>
+   <data key="startline">435</data>
+   <data key="startoffset">13488</data>
+  </edge>
+  <node id="N189"/>
+  <edge source="N188" target="N189">
+   <data key="sourcecode">__cil_tmp30 = 0 + 8;</data>
+   <data key="startline">436</data>
+   <data key="startoffset">13509</data>
+  </edge>
+  <node id="N190"/>
+  <edge source="N189" target="N190">
+   <data key="sourcecode">__cil_tmp31 = 4 + __cil_tmp30;</data>
+   <data key="startline">437</data>
+   <data key="startoffset">13546</data>
+  </edge>
+  <node id="N191"/>
+  <edge source="N190" target="N191">
+   <data key="sourcecode">__cil_tmp32 = (unsigned long )hdr;</data>
+   <data key="startline">438</data>
+   <data key="startoffset">13565</data>
+  </edge>
+  <node id="N192"/>
+  <edge source="N191" target="N192">
+   <data key="sourcecode">__cil_tmp33 = __cil_tmp32 + __cil_tmp31;</data>
+   <data key="startline">439</data>
+   <data key="startoffset">13602</data>
+  </edge>
+  <node id="N193"/>
+  <edge source="N192" target="N193">
+   <data key="sourcecode">__cil_tmp34 = *((u16 *)__cil_tmp33);</data>
+   <data key="startline">440</data>
+   <data key="startoffset">13645</data>
+  </edge>
+  <node id="N194"/>
+  <edge source="N193" target="N194">
+   <data key="sourcecode">__cil_tmp35 = (int )__cil_tmp34;</data>
+   <data key="startline">441</data>
+   <data key="startoffset">13684</data>
+  </edge>
+  <node id="N195"/>
+  <edge source="N194" target="N195">
+   <data key="sourcecode">__cil_tmp36 = __cil_tmp35 - __cil_tmp29;</data>
+   <data key="startline">442</data>
+   <data key="startoffset">13733</data>
+  </edge>
+  <node id="N196"/>
+  <edge source="N195" target="N196">
+   <data key="sourcecode">memconsole_length = (size_t )__cil_tmp36;</data>
+   <data key="startline">443</data>
+   <data key="startoffset">13782</data>
+  </edge>
+  <node id="N197"/>
+  <edge source="N196" target="N197">
+   <data key="sourcecode">__cil_tmp37 = 0 + 6;</data>
+   <data key="startline">444</data>
+   <data key="startoffset">13806</data>
+  </edge>
+  <node id="N198"/>
+  <edge source="N197" target="N198">
+   <data key="sourcecode">__cil_tmp38 = 4 + __cil_tmp37;</data>
+   <data key="startline">445</data>
+   <data key="startoffset">13843</data>
+  </edge>
+  <node id="N199"/>
+  <edge source="N198" target="N199">
+   <data key="sourcecode">__cil_tmp39 = (unsigned long )hdr;</data>
+   <data key="startline">446</data>
+   <data key="startoffset">13862</data>
+  </edge>
+  <node id="N200"/>
+  <edge source="N199" target="N200">
+   <data key="sourcecode">__cil_tmp40 = __cil_tmp39 + __cil_tmp38;</data>
+   <data key="startline">447</data>
+   <data key="startoffset">13913</data>
+  </edge>
+  <node id="N201"/>
+  <edge source="N200" target="N201">
+   <data key="sourcecode">__cil_tmp41 = *((u16 *)__cil_tmp40);</data>
+   <data key="startline">448</data>
+   <data key="startoffset">13965</data>
+  </edge>
+  <node id="N202"/>
+  <edge source="N201" target="N202">
+   <data key="sourcecode">__cil_tmp42 = (u32 )__cil_tmp41;</data>
+   <data key="startline">449</data>
+   <data key="startoffset">14001</data>
+  </edge>
+  <node id="N203"/>
+  <edge source="N202" target="N203">
+   <data key="sourcecode">__cil_tmp43 = (unsigned long )hdr;</data>
+   <data key="startline">450</data>
+   <data key="startoffset">14030</data>
+  </edge>
+  <node id="N204"/>
+  <edge source="N203" target="N204">
+   <data key="sourcecode">__cil_tmp44 = __cil_tmp43 + 4;</data>
+   <data key="startline">451</data>
+   <data key="startoffset">14081</data>
+  </edge>
+  <node id="N205"/>
+  <edge source="N204" target="N205">
+   <data key="sourcecode">__cil_tmp45 = *((u32 *)__cil_tmp44);</data>
+   <data key="startline">452</data>
+   <data key="startoffset">14109</data>
+  </edge>
+  <node id="N206"/>
+  <edge source="N205" target="N206">
+   <data key="sourcecode">__cil_tmp46 = __cil_tmp45 + __cil_tmp42;</data>
+   <data key="startline">453</data>
+   <data key="startoffset">14125</data>
+  </edge>
+  <node id="N207"/>
+  <edge source="N206" target="N207">
+   <data key="sourcecode">__cil_tmp47 = (phys_addr_t )__cil_tmp46;</data>
+   <data key="startline">454</data>
+   <data key="startoffset">14196</data>
+  </edge>
+  <edge source="N207" target="N1">
+   <data key="sourcecode">tmp = phys_to_virt(__cil_tmp47);</data>
+   <data key="startline">455</data>
+   <data key="startoffset">14217</data>
+   <data key="enterFunction">phys_to_virt</data>
+  </edge>
+  <node id="N34"/>
+  <edge source="N263" target="N34">
+   <data key="sourcecode">found_v1_header(hdr);</data>
+   <data key="startline">524</data>
+   <data key="startoffset">15573</data>
+   <data key="enterFunction">found_v1_header</data>
+  </edge>
+  <node id="N36"/>
+  <edge source="N34" target="N36">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">274</data>
+   <data key="startoffset">8629</data>
+  </edge>
+  <node id="N37"/>
+  <edge source="N36" target="N37">
+   <data key="sourcecode">unsigned long __cil_tmp3 ;</data>
+   <data key="startline">275</data>
+   <data key="startoffset">8643</data>
+  </edge>
+  <node id="N38"/>
+  <edge source="N37" target="N38">
+   <data key="sourcecode">unsigned long __cil_tmp4 ;</data>
+   <data key="startline">276</data>
+   <data key="startoffset">8672</data>
+  </edge>
+  <node id="N39"/>
+  <edge source="N38" target="N39">
+   <data key="sourcecode">unsigned long __cil_tmp5 ;</data>
+   <data key="startline">277</data>
+   <data key="startoffset">8701</data>
+  </edge>
+  <node id="N40"/>
+  <edge source="N39" target="N40">
+   <data key="sourcecode">unsigned long __cil_tmp6 ;</data>
+   <data key="startline">278</data>
+   <data key="startoffset">8730</data>
+  </edge>
+  <node id="N41"/>
+  <edge source="N40" target="N41">
+   <data key="sourcecode">u32 __cil_tmp7 ;</data>
+   <data key="startline">279</data>
+   <data key="startoffset">8759</data>
+  </edge>
+  <node id="N42"/>
+  <edge source="N41" target="N42">
+   <data key="sourcecode">unsigned long __cil_tmp8 ;</data>
+   <data key="startline">280</data>
+   <data key="startoffset">8778</data>
+  </edge>
+  <node id="N43"/>
+  <edge source="N42" target="N43">
+   <data key="sourcecode">unsigned long __cil_tmp9 ;</data>
+   <data key="startline">281</data>
+   <data key="startoffset">8807</data>
+  </edge>
+  <node id="N44"/>
+  <edge source="N43" target="N44">
+   <data key="sourcecode">unsigned long __cil_tmp10 ;</data>
+   <data key="startline">282</data>
+   <data key="startoffset">8836</data>
+  </edge>
+  <node id="N45"/>
+  <edge source="N44" target="N45">
+   <data key="sourcecode">unsigned long __cil_tmp11 ;</data>
+   <data key="startline">283</data>
+   <data key="startoffset">8866</data>
+  </edge>
+  <node id="N46"/>
+  <edge source="N45" target="N46">
+   <data key="sourcecode">u16 __cil_tmp12 ;</data>
+   <data key="startline">284</data>
+   <data key="startoffset">8896</data>
+  </edge>
+  <node id="N47"/>
+  <edge source="N46" target="N47">
+   <data key="sourcecode">int __cil_tmp13 ;</data>
+   <data key="startline">285</data>
+   <data key="startoffset">8916</data>
+  </edge>
+  <node id="N48"/>
+  <edge source="N47" target="N48">
+   <data key="sourcecode">unsigned long __cil_tmp14 ;</data>
+   <data key="startline">286</data>
+   <data key="startoffset">8936</data>
+  </edge>
+  <node id="N49"/>
+  <edge source="N48" target="N49">
+   <data key="sourcecode">unsigned long __cil_tmp15 ;</data>
+   <data key="startline">287</data>
+   <data key="startoffset">8966</data>
+  </edge>
+  <node id="N50"/>
+  <edge source="N49" target="N50">
+   <data key="sourcecode">unsigned long __cil_tmp16 ;</data>
+   <data key="startline">288</data>
+   <data key="startoffset">8996</data>
+  </edge>
+  <node id="N51"/>
+  <edge source="N50" target="N51">
+   <data key="sourcecode">unsigned long __cil_tmp17 ;</data>
+   <data key="startline">289</data>
+   <data key="startoffset">9026</data>
+  </edge>
+  <node id="N52"/>
+  <edge source="N51" target="N52">
+   <data key="sourcecode">u16 __cil_tmp18 ;</data>
+   <data key="startline">290</data>
+   <data key="startoffset">9056</data>
+  </edge>
+  <node id="N53"/>
+  <edge source="N52" target="N53">
+   <data key="sourcecode">int __cil_tmp19 ;</data>
+   <data key="startline">291</data>
+   <data key="startoffset">9076</data>
+  </edge>
+  <node id="N54"/>
+  <edge source="N53" target="N54">
+   <data key="sourcecode">unsigned long __cil_tmp20 ;</data>
+   <data key="startline">292</data>
+   <data key="startoffset">9096</data>
+  </edge>
+  <node id="N55"/>
+  <edge source="N54" target="N55">
+   <data key="sourcecode">unsigned long __cil_tmp21 ;</data>
+   <data key="startline">293</data>
+   <data key="startoffset">9126</data>
+  </edge>
+  <node id="N56"/>
+  <edge source="N55" target="N56">
+   <data key="sourcecode">unsigned long __cil_tmp22 ;</data>
+   <data key="startline">294</data>
+   <data key="startoffset">9156</data>
+  </edge>
+  <node id="N57"/>
+  <edge source="N56" target="N57">
+   <data key="sourcecode">unsigned long __cil_tmp23 ;</data>
+   <data key="startline">295</data>
+   <data key="startoffset">9186</data>
+  </edge>
+  <node id="N58"/>
+  <edge source="N57" target="N58">
+   <data key="sourcecode">u16 __cil_tmp24 ;</data>
+   <data key="startline">296</data>
+   <data key="startoffset">9216</data>
+  </edge>
+  <node id="N59"/>
+  <edge source="N58" target="N59">
+   <data key="sourcecode">int __cil_tmp25 ;</data>
+   <data key="startline">297</data>
+   <data key="startoffset">9236</data>
+  </edge>
+  <node id="N60"/>
+  <edge source="N59" target="N60">
+   <data key="sourcecode">unsigned long __cil_tmp26 ;</data>
+   <data key="startline">298</data>
+   <data key="startoffset">9256</data>
+  </edge>
+  <node id="N61"/>
+  <edge source="N60" target="N61">
+   <data key="sourcecode">unsigned long __cil_tmp27 ;</data>
+   <data key="startline">299</data>
+   <data key="startoffset">9286</data>
+  </edge>
+  <node id="N62"/>
+  <edge source="N61" target="N62">
+   <data key="sourcecode">unsigned long __cil_tmp28 ;</data>
+   <data key="startline">300</data>
+   <data key="startoffset">9316</data>
+  </edge>
+  <node id="N63"/>
+  <edge source="N62" target="N63">
+   <data key="sourcecode">unsigned long __cil_tmp29 ;</data>
+   <data key="startline">301</data>
+   <data key="startoffset">9346</data>
+  </edge>
+  <node id="N64"/>
+  <edge source="N63" target="N64">
+   <data key="sourcecode">u16 __cil_tmp30 ;</data>
+   <data key="startline">302</data>
+   <data key="startoffset">9376</data>
+  </edge>
+  <node id="N65"/>
+  <edge source="N64" target="N65">
+   <data key="sourcecode">unsigned long __cil_tmp31 ;</data>
+   <data key="startline">303</data>
+   <data key="startoffset">9396</data>
+  </edge>
+  <node id="N66"/>
+  <edge source="N65" target="N66">
+   <data key="sourcecode">unsigned long __cil_tmp32 ;</data>
+   <data key="startline">304</data>
+   <data key="startoffset">9426</data>
+  </edge>
+  <node id="N67"/>
+  <edge source="N66" target="N67">
+   <data key="sourcecode">unsigned long __cil_tmp33 ;</data>
+   <data key="startline">305</data>
+   <data key="startoffset">9456</data>
+  </edge>
+  <node id="N68"/>
+  <edge source="N67" target="N68">
+   <data key="sourcecode">unsigned long __cil_tmp34 ;</data>
+   <data key="startline">306</data>
+   <data key="startoffset">9486</data>
+  </edge>
+  <node id="N69"/>
+  <edge source="N68" target="N69">
+   <data key="sourcecode">u32 __cil_tmp35 ;</data>
+   <data key="startline">307</data>
+   <data key="startoffset">9516</data>
+  </edge>
+  <node id="N70"/>
+  <edge source="N69" target="N70">
+   <data key="sourcecode">phys_addr_t __cil_tmp36 ;</data>
+   <data key="startline">308</data>
+   <data key="startoffset">9536</data>
+  </edge>
+  <node id="N71"/>
+  <edge source="N70" target="N71">
+   <data key="sourcecode">printk("&lt;6&gt;BIOS console v1 EBDA structure found at %p\n", hdr);</data>
+   <data key="startline">312</data>
+   <data key="startoffset">9573</data>
+  </edge>
+  <node id="N72"/>
+  <edge source="N71" target="N72">
+   <data key="sourcecode">__cil_tmp3 = 0 + 1;</data>
+   <data key="startline">313</data>
+   <data key="startoffset">9639</data>
+  </edge>
+  <node id="N73"/>
+  <edge source="N72" target="N73">
+   <data key="sourcecode">__cil_tmp4 = 4 + __cil_tmp3;</data>
+   <data key="startline">314</data>
+   <data key="startoffset">9678</data>
+  </edge>
+  <node id="N74"/>
+  <edge source="N73" target="N74">
+   <data key="sourcecode">__cil_tmp5 = (unsigned long )hdr;</data>
+   <data key="startline">315</data>
+   <data key="startoffset">9692</data>
+  </edge>
+  <node id="N75"/>
+  <edge source="N74" target="N75">
+   <data key="sourcecode">__cil_tmp6 = __cil_tmp5 + __cil_tmp4;</data>
+   <data key="startline">316</data>
+   <data key="startoffset">9754</data>
+  </edge>
+  <node id="N76"/>
+  <edge source="N75" target="N76">
+   <data key="sourcecode">__cil_tmp7 = *((u32 *)__cil_tmp6);</data>
+   <data key="startline">317</data>
+   <data key="startoffset">9790</data>
+  </edge>
+  <node id="N77"/>
+  <edge source="N76" target="N77">
+   <data key="sourcecode">__cil_tmp8 = 0 + 5;</data>
+   <data key="startline">318</data>
+   <data key="startoffset">9805</data>
+  </edge>
+  <node id="N78"/>
+  <edge source="N77" target="N78">
+   <data key="sourcecode">__cil_tmp9 = 4 + __cil_tmp8;</data>
+   <data key="startline">319</data>
+   <data key="startoffset">9840</data>
+  </edge>
+  <node id="N79"/>
+  <edge source="N78" target="N79">
+   <data key="sourcecode">__cil_tmp10 = (unsigned long )hdr;</data>
+   <data key="startline">320</data>
+   <data key="startoffset">9858</data>
+  </edge>
+  <node id="N80"/>
+  <edge source="N79" target="N80">
+   <data key="sourcecode">__cil_tmp11 = __cil_tmp10 + __cil_tmp9;</data>
+   <data key="startline">321</data>
+   <data key="startoffset">9895</data>
+  </edge>
+  <node id="N81"/>
+  <edge source="N80" target="N81">
+   <data key="sourcecode">__cil_tmp12 = *((u16 *)__cil_tmp11);</data>
+   <data key="startline">322</data>
+   <data key="startoffset">9937</data>
+  </edge>
+  <node id="N82"/>
+  <edge source="N81" target="N82">
+   <data key="sourcecode">__cil_tmp13 = (int )__cil_tmp12;</data>
+   <data key="startline">323</data>
+   <data key="startoffset">9976</data>
+  </edge>
+  <node id="N83"/>
+  <edge source="N82" target="N83">
+   <data key="sourcecode">__cil_tmp14 = 0 + 7;</data>
+   <data key="startline">324</data>
+   <data key="startoffset">10011</data>
+  </edge>
+  <node id="N84"/>
+  <edge source="N83" target="N84">
+   <data key="sourcecode">__cil_tmp15 = 4 + __cil_tmp14;</data>
+   <data key="startline">325</data>
+   <data key="startoffset">10048</data>
+  </edge>
+  <node id="N85"/>
+  <edge source="N84" target="N85">
+   <data key="sourcecode">__cil_tmp16 = (unsigned long )hdr;</data>
+   <data key="startline">326</data>
+   <data key="startoffset">10067</data>
+  </edge>
+  <node id="N86"/>
+  <edge source="N85" target="N86">
+   <data key="sourcecode">__cil_tmp17 = __cil_tmp16 + __cil_tmp15;</data>
+   <data key="startline">327</data>
+   <data key="startoffset">10132</data>
+  </edge>
+  <node id="N87"/>
+  <edge source="N86" target="N87">
+   <data key="sourcecode">__cil_tmp18 = *((u16 *)__cil_tmp17);</data>
+   <data key="startline">328</data>
+   <data key="startoffset">10147</data>
+  </edge>
+  <node id="N88"/>
+  <edge source="N87" target="N88">
+   <data key="sourcecode">__cil_tmp19 = (int )__cil_tmp18;</data>
+   <data key="startline">329</data>
+   <data key="startoffset">10186</data>
+  </edge>
+  <node id="N89"/>
+  <edge source="N88" target="N89">
+   <data key="sourcecode">__cil_tmp20 = 0 + 9;</data>
+   <data key="startline">330</data>
+   <data key="startoffset">10221</data>
+  </edge>
+  <node id="N90"/>
+  <edge source="N89" target="N90">
+   <data key="sourcecode">__cil_tmp21 = 4 + __cil_tmp20;</data>
+   <data key="startline">331</data>
+   <data key="startoffset">10244</data>
+  </edge>
+  <node id="N91"/>
+  <edge source="N90" target="N91">
+   <data key="sourcecode">__cil_tmp22 = (unsigned long )hdr;</data>
+   <data key="startline">332</data>
+   <data key="startoffset">10291</data>
+  </edge>
+  <node id="N92"/>
+  <edge source="N91" target="N92">
+   <data key="sourcecode">__cil_tmp23 = __cil_tmp22 + __cil_tmp21;</data>
+   <data key="startline">333</data>
+   <data key="startoffset">10314</data>
+  </edge>
+  <node id="N93"/>
+  <edge source="N92" target="N93">
+   <data key="sourcecode">__cil_tmp24 = *((u16 *)__cil_tmp23);</data>
+   <data key="startline">334</data>
+   <data key="startoffset">10357</data>
+  </edge>
+  <node id="N94"/>
+  <edge source="N93" target="N94">
+   <data key="sourcecode">__cil_tmp25 = (int )__cil_tmp24;</data>
+   <data key="startline">335</data>
+   <data key="startoffset">10410</data>
+  </edge>
+  <node id="N95"/>
+  <edge source="N94" target="N95">
+   <data key="sourcecode">printk("&lt;6&gt;BIOS console buffer at 0x%.8x, start = %d, end = %d, num = %d\n", __cil_tmp7,
+         __cil_tmp13, __cil_tmp19, __cil_tmp25);</data>
+   <data key="startline">337</data>
+   <data key="startoffset">10555</data>
+  </edge>
+  <node id="N96"/>
+  <edge source="N95" target="N96">
+   <data key="sourcecode">__cil_tmp26 = 0 + 9;</data>
+   <data key="startline">338</data>
+   <data key="startoffset">10571</data>
+  </edge>
+  <node id="N97"/>
+  <edge source="N96" target="N97">
+   <data key="sourcecode">__cil_tmp27 = 4 + __cil_tmp26;</data>
+   <data key="startline">339</data>
+   <data key="startoffset">10612</data>
+  </edge>
+  <node id="N98"/>
+  <edge source="N97" target="N98">
+   <data key="sourcecode">__cil_tmp28 = (unsigned long )hdr;</data>
+   <data key="startline">340</data>
+   <data key="startoffset">10641</data>
+  </edge>
+  <node id="N99"/>
+  <edge source="N98" target="N99">
+   <data key="sourcecode">__cil_tmp29 = __cil_tmp28 + __cil_tmp27;</data>
+   <data key="startline">341</data>
+   <data key="startoffset">10664</data>
+  </edge>
+  <node id="N100"/>
+  <edge source="N99" target="N100">
+   <data key="sourcecode">__cil_tmp30 = *((u16 *)__cil_tmp29);</data>
+   <data key="startline">342</data>
+   <data key="startoffset">10707</data>
+  </edge>
+  <node id="N101"/>
+  <edge source="N100" target="N101">
+   <data key="sourcecode">memconsole_length = (size_t )__cil_tmp30;</data>
+   <data key="startline">343</data>
+   <data key="startoffset">10766</data>
+  </edge>
+  <node id="N102"/>
+  <edge source="N101" target="N102">
+   <data key="sourcecode">__cil_tmp31 = 0 + 1;</data>
+   <data key="startline">344</data>
+   <data key="startoffset">10790</data>
+  </edge>
+  <node id="N103"/>
+  <edge source="N102" target="N103">
+   <data key="sourcecode">__cil_tmp32 = 4 + __cil_tmp31;</data>
+   <data key="startline">345</data>
+   <data key="startoffset">10813</data>
+  </edge>
+  <node id="N104"/>
+  <edge source="N103" target="N104">
+   <data key="sourcecode">__cil_tmp33 = (unsigned long )hdr;</data>
+   <data key="startline">346</data>
+   <data key="startoffset">10846</data>
+  </edge>
+  <node id="N105"/>
+  <edge source="N104" target="N105">
+   <data key="sourcecode">__cil_tmp34 = __cil_tmp33 + __cil_tmp32;</data>
+   <data key="startline">347</data>
+   <data key="startoffset">10883</data>
+  </edge>
+  <node id="N106"/>
+  <edge source="N105" target="N106">
+   <data key="sourcecode">__cil_tmp35 = *((u32 *)__cil_tmp34);</data>
+   <data key="startline">348</data>
+   <data key="startoffset">10942</data>
+  </edge>
+  <node id="N107"/>
+  <edge source="N106" target="N107">
+   <data key="sourcecode">__cil_tmp36 = (phys_addr_t )__cil_tmp35;</data>
+   <data key="startline">349</data>
+   <data key="startoffset">10993</data>
+  </edge>
+  <edge source="N107" target="N1">
+   <data key="sourcecode">tmp = phys_to_virt(__cil_tmp36);</data>
+   <data key="startline">350</data>
+   <data key="startoffset">11008</data>
+   <data key="enterFunction">phys_to_virt</data>
+  </edge>
+  <node id="N243"/>
+  <edge source="N242" target="N243">
+   <data key="sourcecode">__cil_tmp8 = (u8 *)tmp;</data>
+   <data key="startline">499</data>
+   <data key="startoffset">15009</data>
+  </edge>
+  <node id="N244"/>
+  <edge source="N243" target="N244">
+   <data key="sourcecode">__cil_tmp9 = *__cil_tmp8;</data>
+   <data key="startline">500</data>
+   <data key="startoffset">15035</data>
+  </edge>
+  <node id="N245"/>
+  <edge source="N244" target="N245">
+   <data key="sourcecode">length = (size_t )__cil_tmp9;</data>
+   <data key="startline">501</data>
+   <data key="startoffset">15081</data>
+  </edge>
+  <node id="N246"/>
+  <edge source="N245" target="N246">
+   <data key="sourcecode">length = length &lt;&lt; 10;</data>
+   <data key="startline">502</data>
+   <data key="startoffset">15095</data>
+  </edge>
+  <edge source="N246" target="N280">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">cur = (size_t )0;</data>
+   <data key="startline">503</data>
+   <data key="startoffset">15120</data>
+  </edge>
+  <node id="N209"/>
+  <edge source="N208" target="N209">
+   <data key="sourcecode">memconsole_baseaddr = (char *)tmp;</data>
+   <data key="startline">456</data>
+   <data key="startoffset">14276</data>
+  </edge>
+  <node id="N111"/>
+  <edge source="N209" target="N111">
+   <data key="sourcecode">return;</data>
+   <data key="startline">458</data>
+   <data key="startoffset">14287</data>
+   <data key="returnFrom">found_v2_header</data>
+  </edge>
+  <node id="N278"/>
+  <edge source="N111" target="N278">
+   <data key="startline">542</data>
+   <data key="startoffset">15991</data>
+  </edge>
+  <edge source="N278" target="N211">
+   <data key="sourcecode">return ((bool )1);</data>
+   <data key="startline">544</data>
+   <data key="startoffset">16035</data>
+   <data key="returnFrom">found_memconsole</data>
+  </edge>
+  <node id="N18"/>
+  <edge source="N17" target="N18">
+   <data key="sourcecode">__cil_tmp4 = (unsigned short *)tmp;</data>
+   <data key="startline">241</data>
+   <data key="startoffset">7214</data>
+  </edge>
+  <node id="N19"/>
+  <edge source="N18" target="N19">
+   <data key="sourcecode">__cil_tmp5 = *__cil_tmp4;</data>
+   <data key="startline">242</data>
+   <data key="startoffset">7221</data>
+  </edge>
+  <node id="N20"/>
+  <edge source="N19" target="N20">
+   <data key="sourcecode">address = (unsigned int )__cil_tmp5;</data>
+   <data key="startline">243</data>
+   <data key="startoffset">7249</data>
+  </edge>
+  <node id="N21"/>
+  <edge source="N20" target="N21">
+   <data key="sourcecode">address = address &lt;&lt; 4;</data>
+   <data key="startline">244</data>
+   <data key="startoffset">7298</data>
+  </edge>
+  <node id="N8"/>
+  <edge source="N21" target="N8">
+   <data key="sourcecode">return (address);</data>
+   <data key="startline">246</data>
+   <data key="startoffset">7326</data>
+   <data key="returnFrom">get_bios_ebda</data>
+  </edge>
+  <node id="N235"/>
+  <edge source="N8" target="N235">
+   <data key="startline">486</data>
+   <data key="startoffset">14786</data>
+  </edge>
+  <node id="N237"/>
+  <edge source="N235" target="N237">
+   <data key="sourcecode">[address == 0]</data>
+   <data key="startline">488</data>
+   <data key="startoffset">14825</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N238"/>
+  <edge source="N235" target="N238">
+   <data key="sourcecode">[!(address == 0)]</data>
+   <data key="startline">488</data>
+   <data key="startoffset">14825</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N241"/>
+  <edge source="N238" target="N241">
+   <data key="sourcecode">__cil_tmp7 = (phys_addr_t )address;</data>
+   <data key="startline">497</data>
+   <data key="startoffset">14937</data>
+  </edge>
+  <edge source="N241" target="N1">
+   <data key="sourcecode">tmp = phys_to_virt(__cil_tmp7);</data>
+   <data key="startline">498</data>
+   <data key="startoffset">14975</data>
+   <data key="enterFunction">phys_to_virt</data>
+  </edge>
+  <node id="N239"/>
+  <edge source="N237" target="N239">
+   <data key="sourcecode">printk("&lt;6&gt;BIOS EBDA non-existent.\n");</data>
+   <data key="startline">490</data>
+   <data key="startoffset">14853</data>
+  </edge>
+  <edge source="N239" target="N211">
+   <data key="sourcecode">return ((bool )0);</data>
+   <data key="startline">492</data>
+   <data key="startoffset">14896</data>
+   <data key="returnFrom">found_memconsole</data>
+  </edge>
+  <node id="N109"/>
+  <edge source="N108" target="N109">
+   <data key="sourcecode">memconsole_baseaddr = (char *)tmp;</data>
+   <data key="startline">351</data>
+   <data key="startoffset">11043</data>
+  </edge>
+  <node id="N33"/>
+  <edge source="N109" target="N33">
+   <data key="sourcecode">return;</data>
+   <data key="startline">353</data>
+   <data key="startoffset">11084</data>
+   <data key="returnFrom">found_v1_header</data>
+  </edge>
+  <node id="N265"/>
+  <edge source="N33" target="N265">
+   <data key="startline">524</data>
+   <data key="startoffset">15573</data>
+  </edge>
+  <edge source="N265" target="N211">
+   <data key="sourcecode">return ((bool )1);</data>
+   <data key="startline">526</data>
+   <data key="startoffset">15609</data>
+   <data key="returnFrom">found_memconsole</data>
+  </edge>
+ </graph>
+</graphml>

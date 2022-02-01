@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="aut1">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="jump" type="label" local="false" />
+    <location id="1" name="loc1" x="236.0" y="874.0">
+      <invariant>0&lt;= x &lt;= 5</invariant>
+      <flow>x'==4</flow>
+    </location>
+    <location id="2" name="loc2" x="444.0" y="528.0" width="108.0" height="88.0">
+      <invariant>0&lt;= x &lt;= 1000</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="3" name="loc3" x="839.0" y="820.0" width="110.0" height="86.0">
+      <invariant>0&lt;= x &lt;= 9999</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="4" name="loc4" x="1578.0" y="672.0" width="108.0" height="92.0">
+      <invariant>0&lt;= x &lt;= 1000</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="5" name="loc5" x="836.0" y="317.0">
+      <invariant>0&lt;= x &lt;= 1000</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="6" name="loc6" x="817.0" y="498.0">
+      <invariant>0&lt;= x &lt;= 1000</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="7" name="loc7" x="1193.0" y="99.0">
+      <invariant>0&lt;= x &lt;= 1000</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="8" name="loc8" x="582.0" y="398.0">
+      <invariant>0&lt;= x  &lt;= 1000</invariant>
+      <flow>x'==0.5</flow>
+    </location>
+    <location id="9" name="loc9" x="1273.0" y="414.0">
+      <invariant>0&lt;= x &lt;= 1000</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="10" name="loc10" x="596.0" y="175.0">
+      <invariant>0&lt;= x &lt;= 1000</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="11" name="loc11" x="996.0" y="230.0" width="132.0" height="96.0">
+      <invariant>0 &lt;= x &lt;= 1000</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="12" name="loc12" x="610.0" y="547.0">
+      <invariant>0 &lt;= x &lt;= 500</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="13" name="loc13" x="250.0" y="244.0" width="120.0" height="66.0">
+      <invariant>0 &lt;= x &lt;= 4000</invariant>
+      <flow>x'==0</flow>
+    </location>
+    <location id="14" name="loc14" x="1349.0" y="767.0">
+      <flow>x'==0</flow>
+    </location>
+    <location id="15" name="loc15" x="1056.0" y="670.0">
+      <flow>x'==0</flow>
+    </location>
+    <location id="16" name="loc16" x="136.0" y="454.0">
+      <invariant>0 &lt;= x &lt;= 100</invariant>
+      <flow>x'==5</flow>
+    </location>
+    <location id="17" name="loc17" x="576.0" y="956.0">
+      <invariant>0 &lt;= x &lt;= 10</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="18" name="loc18" x="1512.0" y="413.0">
+      <invariant>0 &lt;= x &lt;= 1000</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="19" name="loc19" x="1446.0" y="198.0">
+      <invariant>100 &lt;= x &lt;= 200</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="20" name="loc20" x="1107.0" y="939.0">
+      <invariant>0 &lt;= x&lt;= 9000</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <transition source="1" target="2">
+      <label>jump</label>
+      <labelposition x="-24.0" y="-35.0" />
+    </transition>
+    <transition source="2" target="3">
+      <assignment>x:=50</assignment>
+      <labelposition x="-20.0" y="-50.0" />
+    </transition>
+    <transition source="2" target="4">
+      <assignment>x := 6000</assignment>
+      <labelposition x="-31.0" y="-49.0" width="70.0" height="50.0" />
+    </transition>
+    <transition source="4" target="5">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="5" target="6">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="6" target="7">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="6" target="8">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="4" target="9">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="6" target="9">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="5" target="8">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="8" target="10">
+      <assignment>x:=40</assignment>
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="10" target="7">
+      <assignment>x:=1000</assignment>
+      <labelposition x="1.0" y="2.0" width="84.0" height="50.0" />
+    </transition>
+    <transition source="7" target="9">
+      <assignment>x:=50</assignment>
+      <labelposition x="-18.0" y="-60.0" />
+    </transition>
+    <transition source="3" target="4">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="3" target="9">
+      <assignment>x:=50</assignment>
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="9" target="8">
+      <assignment>x:=42</assignment>
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="1" target="3">
+      <assignment>x:=50</assignment>
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="3" target="11">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="5" target="11">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="7" target="11">
+      <labelposition x="37.0" y="-6.0" />
+    </transition>
+    <transition source="4" target="12">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="12" target="6">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="10" target="13">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="13" target="2">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="15" target="14">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="14" target="9">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="14" target="3">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="6" target="15">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="16" target="2">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="16" target="1">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="13" target="16">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="1" target="17">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="9" target="19">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="7" target="19">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="18" target="9">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="18" target="19">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="17" target="20">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="20" target="14">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="20" target="3">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="20" target="15">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="9" target="7">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="10" target="2">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="2" target="17">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="2" target="12">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="12" target="5">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="18" target="11">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="10" target="5">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+    <transition source="19" target="6">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+  </component>
+  <component id="aut2">
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="jump" type="label" local="false" />
+    <location id="1" name="loc1" x="204.0" y="217.0">
+      <invariant>y &lt;= 5</invariant>
+      <flow>y'==4</flow>
+    </location>
+    <location id="2" name="loc2" x="392.0" y="219.0">
+      <invariant>y&lt;=1000</invariant>
+      <flow>y'==0</flow>
+    </location>
+    <transition source="1" target="2">
+      <label>jump</label>
+      <labelposition x="-26.0" y="1.0" />
+    </transition>
+  </component>
+  <component id="sys1">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="jump" type="label" local="false" />
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="aut1" as="aut1_1" x="572.0" y="390.0">
+      <map key="x">x</map>
+      <map key="jump">jump</map>
+    </bind>
+    <bind component="aut2" as="aut2_1" x="649.0" y="399.0">
+      <map key="y">y</map>
+      <map key="jump">jump</map>
+    </bind>
+  </component>
+</sspaceex>
+

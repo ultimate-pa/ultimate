@@ -1,0 +1,838 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" math="SpaceEx" version="0.2">
+<component id="tanks">
+<param d1="1" d2="1" dynamics="const" local="false" name="v_in" type="real"/>
+<param d1="1" d2="1" dynamics="const" local="false" name="v_out" type="real"/>
+<param d1="1" d2="1" dynamics="const" local="false" name="t_max" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="t_local" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="t_global" type="real"/>
+<param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" />
+<param d1="1" d2="1" dynamics="any" local="false" name="tank1" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank2" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank3" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank4" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank5" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank6" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank7" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank8" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank9" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank10" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank11" type="real"/>
+<location height="185.0" id="0" name="tanksClosed" width="200.0" x="300.0" y="292.0">
+<invariant>t_local &gt;= 0
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out </flow>
+</location>
+<location height="185.0" id="1" name="tank1Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == v_in - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="2" name="tank2Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == v_in - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="3" name="tank3Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == v_in - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="4" name="tank4Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == v_in - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="5" name="tank5Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == v_in - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="6" name="tank6Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == v_in - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="7" name="tank7Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == v_in - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="8" name="tank8Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == v_in - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="9" name="tank9Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == v_in - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="10" name="tank10Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == v_in - v_out &amp;
+tank11' == 0 - v_out</flow>
+</location>
+<location height="185.0" id="11" name="tank11Open" width="200.0" x="550.0" y="292.0">
+<invariant>t_local &lt;= t_max
+&amp; tank1&gt;= 0 &amp; tank1&lt;=tank_max
+&amp; tank2&gt;= 0 &amp; tank2&lt;=tank_max
+&amp; tank3&gt;= 0 &amp; tank3&lt;=tank_max
+&amp; tank4&gt;= 0 &amp; tank4&lt;=tank_max
+&amp; tank5&gt;= 0 &amp; tank5&lt;=tank_max
+&amp; tank6&gt;= 0 &amp; tank6&lt;=tank_max
+&amp; tank7&gt;= 0 &amp; tank7&lt;=tank_max
+&amp; tank8&gt;= 0 &amp; tank8&lt;=tank_max
+&amp; tank9&gt;= 0 &amp; tank9&lt;=tank_max
+&amp; tank10&gt;= 0 &amp; tank10&lt;=tank_max
+&amp; tank11&gt;= 0 &amp; tank11&lt;=tank_max
+</invariant>
+<flow>t_local' == 1 &amp; t_global' == 1 &amp;
+tank1' == 0 - v_out &amp;
+tank2' == 0 - v_out &amp;
+tank3' == 0 - v_out &amp;
+tank4' == 0 - v_out &amp;
+tank5' == 0 - v_out &amp;
+tank6' == 0 - v_out &amp;
+tank7' == 0 - v_out &amp;
+tank8' == 0 - v_out &amp;
+tank9' == 0 - v_out &amp;
+tank10' == 0 - v_out &amp;
+tank11' == v_in - v_out </flow>
+</location>
+ 
+<transition asap="false" bezier="false" source="0" target="1" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank1&lt;=tank2
+&amp; tank1&lt;=tank3
+&amp; tank1&lt;=tank4
+&amp; tank1&lt;=tank5
+&amp; tank1&lt;=tank6
+&amp; tank1&lt;=tank7
+&amp; tank1&lt;=tank8
+&amp; tank1&lt;=tank9
+&amp; tank1&lt;=tank10
+&amp; tank1&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="2" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank2&lt;=tank1
+&amp; tank2&lt;=tank3
+&amp; tank2&lt;=tank4
+&amp; tank2&lt;=tank5
+&amp; tank2&lt;=tank6
+&amp; tank2&lt;=tank7
+&amp; tank2&lt;=tank8
+&amp; tank2&lt;=tank9
+&amp; tank2&lt;=tank10
+&amp; tank2&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="3" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank3&lt;=tank1
+&amp; tank3&lt;=tank2
+&amp; tank3&lt;=tank4
+&amp; tank3&lt;=tank5
+&amp; tank3&lt;=tank6
+&amp; tank3&lt;=tank7
+&amp; tank3&lt;=tank8
+&amp; tank3&lt;=tank9
+&amp; tank3&lt;=tank10
+&amp; tank3&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="4" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank4&lt;=tank1
+&amp; tank4&lt;=tank2
+&amp; tank4&lt;=tank3
+&amp; tank4&lt;=tank5
+&amp; tank4&lt;=tank6
+&amp; tank4&lt;=tank7
+&amp; tank4&lt;=tank8
+&amp; tank4&lt;=tank9
+&amp; tank4&lt;=tank10
+&amp; tank4&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="5" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank5&lt;=tank1
+&amp; tank5&lt;=tank2
+&amp; tank5&lt;=tank3
+&amp; tank5&lt;=tank4
+&amp; tank5&lt;=tank6
+&amp; tank5&lt;=tank7
+&amp; tank5&lt;=tank8
+&amp; tank5&lt;=tank9
+&amp; tank5&lt;=tank10
+&amp; tank5&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="6" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank6&lt;=tank1
+&amp; tank6&lt;=tank2
+&amp; tank6&lt;=tank3
+&amp; tank6&lt;=tank4
+&amp; tank6&lt;=tank5
+&amp; tank6&lt;=tank7
+&amp; tank6&lt;=tank8
+&amp; tank6&lt;=tank9
+&amp; tank6&lt;=tank10
+&amp; tank6&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="7" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank7&lt;=tank1
+&amp; tank7&lt;=tank2
+&amp; tank7&lt;=tank3
+&amp; tank7&lt;=tank4
+&amp; tank7&lt;=tank5
+&amp; tank7&lt;=tank6
+&amp; tank7&lt;=tank8
+&amp; tank7&lt;=tank9
+&amp; tank7&lt;=tank10
+&amp; tank7&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="8" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank8&lt;=tank1
+&amp; tank8&lt;=tank2
+&amp; tank8&lt;=tank3
+&amp; tank8&lt;=tank4
+&amp; tank8&lt;=tank5
+&amp; tank8&lt;=tank6
+&amp; tank8&lt;=tank7
+&amp; tank8&lt;=tank9
+&amp; tank8&lt;=tank10
+&amp; tank8&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="9" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank9&lt;=tank1
+&amp; tank9&lt;=tank2
+&amp; tank9&lt;=tank3
+&amp; tank9&lt;=tank4
+&amp; tank9&lt;=tank5
+&amp; tank9&lt;=tank6
+&amp; tank9&lt;=tank7
+&amp; tank9&lt;=tank8
+&amp; tank9&lt;=tank10
+&amp; tank9&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="10" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank10&lt;=tank1
+&amp; tank10&lt;=tank2
+&amp; tank10&lt;=tank3
+&amp; tank10&lt;=tank4
+&amp; tank10&lt;=tank5
+&amp; tank10&lt;=tank6
+&amp; tank10&lt;=tank7
+&amp; tank10&lt;=tank8
+&amp; tank10&lt;=tank9
+&amp; tank10&lt;=tank11
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="0" target="11" timedriven="false">
+<guard>t_local &gt;= 0
+&amp; tank11&lt;=tank1
+&amp; tank11&lt;=tank2
+&amp; tank11&lt;=tank3
+&amp; tank11&lt;=tank4
+&amp; tank11&lt;=tank5
+&amp; tank11&lt;=tank6
+&amp; tank11&lt;=tank7
+&amp; tank11&lt;=tank8
+&amp; tank11&lt;=tank9
+&amp; tank11&lt;=tank10
+</guard>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+<transition asap="false" bezier="false" source="1" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="2" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="3" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="4" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="5" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="6" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="7" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="8" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="9" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="10" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+<transition asap="false" bezier="false" source="11" target="0" timedriven="false">
+<guard>t_local &gt;= t_max</guard>
+<assignment>t_local := 0
+&amp; tank1'==tank1
+&amp; tank2'==tank2
+&amp; tank3'==tank3
+&amp; tank4'==tank4
+&amp; tank5'==tank5
+&amp; tank6'==tank6
+&amp; tank7'==tank7
+&amp; tank8'==tank8
+&amp; tank9'==tank9
+&amp; tank10'==tank10
+&amp; tank11'==tank11
+</assignment>
+<labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
+<middlepoint x="1050.0" y="435.0"/>
+<waypoints>
+	<aftermiddle>, 300.0, 435.0</aftermiddle>
+</waypoints>
+</transition>
+ 
+</component>
+<component id="system">
+<param d1="1" d2="1" dynamics="const" local="false" name="v_in" type="real"/>
+<param d1="1" d2="1" dynamics="const" local="false" name="v_out" type="real"/>
+<param d1="1" d2="1" dynamics="const" local="false" name="t_max" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="t_local" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="t_global" type="real"/>
+<param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" controlled="true" />
+<param d1="1" d2="1" dynamics="any" local="false" name="tank0" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank1" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank2" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank3" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank4" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank5" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank6" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank7" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank8" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank9" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank10" type="real"/>
+<param d1="1" d2="1" dynamics="any" local="false" name="tank11" type="real"/>
+<bind as="tanks" component="tanks" height="100.0" width="200.0" x="400.0" y="300.0">
+	<map key="v_in">v_in</map>
+	<map key="v_out">v_out</map>
+	<map key="t_max">t_max</map>
+	<map key="t_local">t_local</map>
+	<map key="t_global">t_global</map>
+	<map key="tank_max">tank_max</map>
+<map key="tank0">tank0</map>
+<map key="tank1">tank1</map>
+<map key="tank2">tank2</map>
+<map key="tank3">tank3</map>
+<map key="tank4">tank4</map>
+<map key="tank5">tank5</map>
+<map key="tank6">tank6</map>
+<map key="tank7">tank7</map>
+<map key="tank8">tank8</map>
+<map key="tank9">tank9</map>
+<map key="tank10">tank10</map>
+<map key="tank11">tank11</map>
+</bind>
+</component>
+</sspaceex>

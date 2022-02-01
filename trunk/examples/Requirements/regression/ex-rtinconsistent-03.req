@@ -1,0 +1,8 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results: 4
+// 2018-09-07: Should be consistent, was reported as inconsistent 
+Input A is bool
+Input B is bool 
+Input C is bool 
+
+req1: Globally, it is always the case that if "(A && !B)" holds, then "C" holds after at most 10 time units
+req2: Globally, it is always the case that if "(!A && !B)" holds, then "!C" holds after at most 10 time units

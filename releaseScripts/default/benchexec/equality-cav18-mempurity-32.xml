@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="90" hardtimelimit="112" cpuCores="4">
+
+    <option name="--generate-csv" />
+    <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+
+    <rundefinition name="AutomizerCamel">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="Taipan">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_imprecise">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_imprecise.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="Taipan_imprecise">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ_imprecise.epf</option>
+    </rundefinition>
+
+    <rundefinition name="AbsInt_mostprecise">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_mostprecise.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="Taipan_mostprecise">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ_mostprecise.epf</option>
+    </rundefinition>
+
+    <rundefinition name="AbsInt_precise">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_precise.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="Taipan_precise">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ_precise.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_preciseopt">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_preciseopt.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="Taipan_preciseopt">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ_preciseopt.epf</option>
+    </rundefinition>
+    
+        <rundefinition name="AbsInt_smtcomp">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_smtcomp.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="Taipan_smtcomp">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ_smtcomp.epf</option>
+    </rundefinition>
+    
+    <tasks name="32bitMem">
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Arrays.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Heap.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-LinkedLists.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Other.set</includesfile>
+    </tasks>
+    
+</benchmark>

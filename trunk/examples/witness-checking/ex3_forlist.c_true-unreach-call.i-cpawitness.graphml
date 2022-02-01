@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <key attr.name="originFileName" attr.type="string" for="edge" id="originfile">
+  <default>test/programs/benchmarks/ldv-regression/ex3_forlist.c_true-unreach-call.i</default>
+ </key>
+ <key attr.name="invariant" attr.type="string" for="node" id="invariant"/>
+ <key attr.name="invariant.scope" attr.type="string" for="node" id="invariant.scope"/>
+ <key attr.name="namedValue" attr.type="string" for="node" id="named"/>
+ <key attr.name="nodeType" attr.type="string" for="node" id="nodetype">
+  <default>path</default>
+ </key>
+ <key attr.name="isFrontierNode" attr.type="boolean" for="node" id="frontier">
+  <default>false</default>
+ </key>
+ <key attr.name="isViolationNode" attr.type="boolean" for="node" id="violation">
+  <default>false</default>
+ </key>
+ <key attr.name="isEntryNode" attr.type="boolean" for="node" id="entry">
+  <default>false</default>
+ </key>
+ <key attr.name="isSinkNode" attr.type="boolean" for="node" id="sink">
+  <default>false</default>
+ </key>
+ <key attr.name="enterLoopHead" attr.type="boolean" for="edge" id="enterLoopHead">
+  <default>false</default>
+ </key>
+ <key attr.name="violatedProperty" attr.type="string" for="node" id="violatedProperty"/>
+ <key attr.name="threadId" attr.type="string" for="edge" id="threadId"/>
+ <key attr.name="sourcecodeLanguage" attr.type="string" for="graph" id="sourcecodelang"/>
+ <key attr.name="programFile" attr.type="string" for="graph" id="programfile"/>
+ <key attr.name="programHash" attr.type="string" for="graph" id="programhash"/>
+ <key attr.name="specification" attr.type="string" for="graph" id="specification"/>
+ <key attr.name="memoryModel" attr.type="string" for="graph" id="memorymodel"/>
+ <key attr.name="architecture" attr.type="string" for="graph" id="architecture"/>
+ <key attr.name="producer" attr.type="string" for="graph" id="producer"/>
+ <key attr.name="sourcecode" attr.type="string" for="edge" id="sourcecode"/>
+ <key attr.name="startline" attr.type="int" for="edge" id="startline"/>
+ <key attr.name="startoffset" attr.type="int" for="edge" id="startoffset"/>
+ <key attr.name="lineColSet" attr.type="string" for="edge" id="lineCols"/>
+ <key attr.name="control" attr.type="string" for="edge" id="control"/>
+ <key attr.name="assumption" attr.type="string" for="edge" id="assumption"/>
+ <key attr.name="assumption.scope" attr.type="string" for="edge" id="assumption.scope"/>
+ <key attr.name="enterFunction" attr.type="string" for="edge" id="enterFunction"/>
+ <key attr.name="returnFromFunction" attr.type="string" for="edge" id="returnFrom"/>
+ <key attr.name="predecessor" attr.type="string" for="edge" id="predecessor"/>
+ <key attr.name="successor" attr.type="string" for="edge" id="successor"/>
+ <key attr.name="witness-type" attr.type="string" for="graph" id="witness-type"/>
+ <graph edgedefault="directed">
+  <data key="witness-type">correctness_witness</data>
+  <data key="sourcecodelang">C</data>
+  <data key="producer">CPAchecker 1.6.1-svn 22638M</data>
+  <data key="specification">CHECK( init(main()), LTL(G ! call(__VERIFIER_error())) )</data>
+  <data key="programfile">test/programs/benchmarks/ldv-regression/ex3_forlist.c_true-unreach-call.i</data>
+  <data key="programhash">35d30cdccac93bddd26c3755048a0b29ad39c8fa</data>
+  <data key="memorymodel">precise</data>
+  <data key="architecture">32bit</data>
+  <node id="N54">
+   <data key="entry">true</data>
+  </node>
+  <node id="N73"/>
+  <edge source="N54" target="N73">
+   <data key="sourcecode">void *pp[2];</data>
+   <data key="startline">12</data>
+   <data key="startoffset">123</data>
+  </edge>
+  <node id="N74"/>
+  <edge source="N73" target="N74">
+   <data key="sourcecode">int pstate[2];</data>
+   <data key="startline">13</data>
+   <data key="startoffset">136</data>
+  </edge>
+  <node id="N78"/>
+  <edge source="N74" target="N78">
+   <data key="sourcecode">int counter = 1;</data>
+   <data key="startline">45</data>
+   <data key="startoffset">504</data>
+  </edge>
+  <node id="N56"/>
+  <edge source="N78" target="N56">
+   <data key="sourcecode">int *a;</data>
+   <data key="startline">52</data>
+   <data key="startoffset">583</data>
+  </edge>
+  <node id="N57"/>
+  <edge source="N56" target="N57">
+   <data key="sourcecode">int *b;</data>
+   <data key="startline">53</data>
+   <data key="startoffset">592</data>
+  </edge>
+  <node id="N6"/>
+  <edge source="N57" target="N6">
+   <data key="sourcecode">init();</data>
+   <data key="startline">54</data>
+   <data key="startoffset">601</data>
+   <data key="enterFunction">init</data>
+  </edge>
+  <node id="N8"/>
+  <edge source="N6" target="N8">
+   <data key="sourcecode">int i;</data>
+   <data key="startline">16</data>
+   <data key="startoffset">167</data>
+  </edge>
+  <node id="N10">
+   <data key="invariant">(counter == 1) &amp;&amp; ((i == 2) || (i == 1) || (i == 0))</data>
+   <data key="invariant.scope">init</data>
+  </node>
+  <edge source="N8" target="N10">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">i=0</data>
+   <data key="startline">17</data>
+   <data key="startoffset">181</data>
+  </edge>
+  <node id="N12">
+   <data key="invariant">(counter == 1) &amp;&amp; ((i == 1) || (i == 0))</data>
+   <data key="invariant.scope">init</data>
+  </node>
+  <edge source="N10" target="N12">
+   <data key="sourcecode">[i &lt; 2]</data>
+   <data key="startline">17</data>
+   <data key="startoffset">186</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N13">
+   <data key="invariant">(counter == 1) &amp;&amp; (i == 2)</data>
+   <data key="invariant.scope">init</data>
+  </node>
+  <edge source="N10" target="N13">
+   <data key="sourcecode">[!(i &lt; 2)]</data>
+   <data key="startline">17</data>
+   <data key="startoffset">186</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N58"/>
+  <edge source="N13" target="N58">
+   <data key="startline">54</data>
+   <data key="startoffset">601</data>
+   <data key="returnFrom">init</data>
+  </edge>
+  <node id="N48"/>
+  <edge source="N58" target="N48">
+   <data key="sourcecode">a = malloc(sizeof(int));</data>
+   <data key="startline">55</data>
+   <data key="startoffset">610</data>
+   <data key="enterFunction">malloc</data>
+  </edge>
+  <node id="N51"/>
+  <edge source="N48" target="N51">
+   <data key="sourcecode">return counter++;</data>
+   <data key="startline">47</data>
+   <data key="startoffset">554</data>
+  </edge>
+  <node id="N47"/>
+  <edge source="N51" target="N47">
+   <data key="sourcecode">return counter++;</data>
+   <data key="startline">47</data>
+   <data key="startoffset">554</data>
+   <data key="returnFrom">malloc</data>
+  </edge>
+  <node id="N59"/>
+  <edge source="N47" target="N59">
+   <data key="startline">55</data>
+   <data key="startoffset">610</data>
+  </edge>
+  <node id="N60"/>
+  <edge source="N47" target="N60">
+   <data key="startline">56</data>
+   <data key="startoffset">636</data>
+  </edge>
+  <node id="N62"/>
+  <edge source="N60" target="N62">
+   <data key="sourcecode">[a == 0]</data>
+   <data key="startline">57</data>
+   <data key="startoffset">665</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N63"/>
+  <edge source="N60" target="N63">
+   <data key="sourcecode">[!(a == 0)]</data>
+   <data key="startline">57</data>
+   <data key="startoffset">665</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N61"/>
+  <edge source="N63" target="N61">
+   <data key="sourcecode">[!(b == 0)]</data>
+   <data key="startline">57</data>
+   <data key="startoffset">673</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="N63" target="N62">
+   <data key="sourcecode">[b == 0]</data>
+   <data key="startline">57</data>
+   <data key="startoffset">673</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N17"/>
+  <edge source="N61" target="N17">
+   <data key="sourcecode">f(a);</data>
+   <data key="startline">60</data>
+   <data key="startoffset">694</data>
+   <data key="enterFunction">f</data>
+  </edge>
+  <node id="N19"/>
+  <edge source="N17" target="N19">
+   <data key="sourcecode">int i;</data>
+   <data key="startline">24</data>
+   <data key="startoffset">253</data>
+  </edge>
+  <node id="N21">
+   <data key="invariant">(counter == 3) &amp;&amp; ((i == 2) || (i == 1) || (i == 0))</data>
+   <data key="invariant.scope">f</data>
+  </node>
+  <edge source="N19" target="N21">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">i=0</data>
+   <data key="startline">25</data>
+   <data key="startoffset">267</data>
+  </edge>
+  <node id="N23">
+   <data key="invariant">(counter == 3) &amp;&amp; ((i == 1) || (i == 0))</data>
+   <data key="invariant.scope">f</data>
+  </node>
+  <edge source="N21" target="N23">
+   <data key="sourcecode">[i &lt; 2]</data>
+   <data key="startline">25</data>
+   <data key="startoffset">270</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N28"/>
+  <edge source="N21" target="N28">
+   <data key="sourcecode">[!(i &lt; 2)]</data>
+   <data key="startline">25</data>
+   <data key="startoffset">270</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N65"/>
+  <edge source="N28" target="N65">
+   <data key="startline">60</data>
+   <data key="startoffset">694</data>
+   <data key="returnFrom">f</data>
+  </edge>
+  <node id="N66"/>
+  <edge source="N28" target="N66">
+   <data key="startline">61</data>
+   <data key="startoffset">701</data>
+   <data key="returnFrom">f</data>
+  </edge>
+  <node id="N31"/>
+  <edge source="N66" target="N31">
+   <data key="sourcecode">g(a);</data>
+   <data key="startline">62</data>
+   <data key="startoffset">708</data>
+   <data key="enterFunction">g</data>
+  </edge>
+  <node id="N33"/>
+  <edge source="N31" target="N33">
+   <data key="sourcecode">int i;</data>
+   <data key="startline">35</data>
+   <data key="startoffset">378</data>
+  </edge>
+  <node id="N35">
+   <data key="invariant">(counter == 3) &amp;&amp; ((i == 2) || (i == 1) || (i == 0))</data>
+   <data key="invariant.scope">g</data>
+  </node>
+  <edge source="N33" target="N35">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">i=0</data>
+   <data key="startline">36</data>
+   <data key="startoffset">390</data>
+  </edge>
+  <node id="N37">
+   <data key="invariant">(counter == 3) &amp;&amp; ((i == 1) || (i == 0))</data>
+   <data key="invariant.scope">g</data>
+  </node>
+  <edge source="N35" target="N37">
+   <data key="sourcecode">[i &lt; 2]</data>
+   <data key="startline">36</data>
+   <data key="startoffset">395</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N38">
+   <data key="invariant">(counter == 3) &amp;&amp; (i == 2)</data>
+   <data key="invariant.scope">g</data>
+  </node>
+  <edge source="N35" target="N38">
+   <data key="sourcecode">[!(i &lt; 2)]</data>
+   <data key="startline">36</data>
+   <data key="startoffset">395</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N67"/>
+  <edge source="N38" target="N67">
+   <data key="startline">62</data>
+   <data key="startoffset">708</data>
+   <data key="returnFrom">g</data>
+  </edge>
+  <node id="N68"/>
+  <edge source="N38" target="N68">
+   <data key="startline">64</data>
+   <data key="startoffset">716</data>
+   <data key="returnFrom">g</data>
+  </edge>
+  <node id="N53"/>
+  <edge source="N68" target="N53">
+   <data key="sourcecode">return 0;</data>
+   <data key="startline">68</data>
+   <data key="startoffset">733</data>
+   <data key="returnFrom">main</data>
+  </edge>
+  <edge source="N67" target="N31">
+   <data key="sourcecode">g(b);</data>
+   <data key="startline">64</data>
+   <data key="startoffset">716</data>
+   <data key="enterFunction">g</data>
+  </edge>
+  <node id="N40"/>
+  <edge source="N37" target="N40">
+   <data key="sourcecode">[(pp[i]) == pointer]</data>
+   <data key="startline">37</data>
+   <data key="startoffset">412</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N46"/>
+  <edge source="N37" target="N46">
+   <data key="sourcecode">[!((pp[i]) == pointer)]</data>
+   <data key="startline">37</data>
+   <data key="startoffset">412</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="N46" target="N35">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">i++</data>
+   <data key="startline">36</data>
+   <data key="startoffset">386</data>
+  </edge>
+  <node id="N42"/>
+  <edge source="N40" target="N42">
+   <data key="sourcecode">[(pstate[i]) == 1]</data>
+   <data key="startline">39</data>
+   <data key="startoffset">436</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N43"/>
+  <edge source="N40" target="N43">
+   <data key="sourcecode">[!((pstate[i]) == 1)]</data>
+   <data key="startline">39</data>
+   <data key="startoffset">436</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N1"/>
+  <edge source="N43" target="N1">
+   <data key="sourcecode">__blast_assert ()</data>
+   <data key="startline">39</data>
+   <data key="startoffset">458</data>
+   <data key="enterFunction">__blast_assert</data>
+  </edge>
+  <node id="N4"/>
+  <edge source="N1" target="N4">
+   <data key="sourcecode">__VERIFIER_error();</data>
+   <data key="startline">6</data>
+   <data key="startoffset">97</data>
+  </edge>
+  <node id="N44"/>
+  <edge source="N4" target="N44">
+   <data key="startline">39</data>
+   <data key="startoffset">435</data>
+   <data key="returnFrom">__blast_assert</data>
+  </edge>
+  <node id="N45"/>
+  <edge source="N44" target="N45">
+   <data key="sourcecode">((pstate[i]==1) ? (0) : __blast_assert ());</data>
+   <data key="startline">39</data>
+   <data key="startoffset">434</data>
+  </edge>
+  <edge source="N45" target="N46">
+   <data key="sourcecode">pstate[i]=2;</data>
+   <data key="startline">40</data>
+   <data key="startoffset">481</data>
+  </edge>
+  <edge source="N42" target="N44">
+   <data key="sourcecode">(0)</data>
+   <data key="startline">39</data>
+   <data key="startoffset">452</data>
+  </edge>
+  <edge source="N65" target="N17">
+   <data key="sourcecode">f(b);</data>
+   <data key="startline">61</data>
+   <data key="startoffset">701</data>
+   <data key="enterFunction">f</data>
+  </edge>
+  <node id="N25"/>
+  <edge source="N23" target="N25">
+   <data key="sourcecode">[!((pp[i]) == 0)]</data>
+   <data key="startline">26</data>
+   <data key="startoffset">290</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="N26"/>
+  <edge source="N23" target="N26">
+   <data key="sourcecode">[(pp[i]) == 0]</data>
+   <data key="startline">26</data>
+   <data key="startoffset">290</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="N27"/>
+  <edge source="N26" target="N27">
+   <data key="sourcecode">pp[i]=pointer;</data>
+   <data key="startline">27</data>
+   <data key="startoffset">305</data>
+  </edge>
+  <edge source="N27" target="N28">
+   <data key="sourcecode">pstate[i]=1;</data>
+   <data key="startline">28</data>
+   <data key="startoffset">327</data>
+  </edge>
+  <edge source="N25" target="N21">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">i++</data>
+   <data key="startline">25</data>
+   <data key="startoffset">261</data>
+  </edge>
+  <edge source="N62" target="N53">
+   <data key="sourcecode">return -1;</data>
+   <data key="startline">58</data>
+   <data key="startoffset">681</data>
+   <data key="returnFrom">main</data>
+  </edge>
+  <edge source="N59" target="N48">
+   <data key="sourcecode">b = malloc(sizeof(int));</data>
+   <data key="startline">56</data>
+   <data key="startoffset">636</data>
+   <data key="enterFunction">malloc</data>
+  </edge>
+  <node id="N14"/>
+  <edge source="N12" target="N14">
+   <data key="sourcecode">pp[i]=0;</data>
+   <data key="startline">18</data>
+   <data key="startoffset">198</data>
+  </edge>
+  <node id="N15"/>
+  <edge source="N14" target="N15">
+   <data key="sourcecode">pstate[i]=0;</data>
+   <data key="startline">19</data>
+   <data key="startoffset">216</data>
+  </edge>
+  <edge source="N15" target="N10">
+   <data key="enterLoopHead">true</data>
+   <data key="sourcecode">i++</data>
+   <data key="startline">17</data>
+   <data key="startoffset">189</data>
+  </edge>
+ </graph>
+</graphml>

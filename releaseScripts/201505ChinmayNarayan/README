@@ -1,0 +1,27 @@
+This is a special release of Ultimate with a wrapper script to run our
+Trace Abstraction Concurrent setting. Using this setting you can verify
+concurrent Boogie programs that use our conventions (i.e., each procedure
+is a thread). Some examples for boogie programs that follow this convention
+can be found in the "examples" folder.
+    
+
+
+Requirements:
+64bit Linux system with Java
+
+
+
+Usage:
+If you want to analyze termination of the program foo.bpl then execute the
+shellscript
+./AutomizerConcurrent.sh foo.bpl
+
+
+
+Website:
+http://ultimate.informatik.uni-freiburg.de/
+
+
+
+Maintainer:
+heizmann@informatik.uni-freiburg.de

@@ -1,0 +1,26 @@
+[L1-L2]              requires ain == 51;
+         VAL         [ain=51]
+[L5]                 a := ain;
+         VAL         [a=51, ain=51]
+[L6]                 r := 0;
+         VAL         [a=51, ain=51, r=0]
+[L8]     COND TRUE   a > 0
+         VAL         [a=51, ain=51, r=0]
+[L9]     COND TRUE   a < 100
+         VAL         [a=51, ain=51, r=0]
+[L10]    COND FALSE  !(a % 2 == 0)
+         VAL         [a=51, ain=51, r=0]
+[L13]                r := r + 1;
+         VAL         [a=51, ain=51, r=1]
+[L15]                a := a + a + 1;
+         VAL         [a=103, ain=51, r=1]
+[L9]     COND FALSE  !(a < 100)
+         VAL         [a=103, ain=51, r=1]
+[L17]                r := r + r;
+         VAL         [a=103, ain=51, r=2]
+[L18]                a := -a - a - a - 1;
+         VAL         [a=-310, ain=51, r=2]
+[L8]     COND FALSE  !(a > 0)
+         VAL         [a=-310, ain=51, r=2]
+[L20]                assert r == 0;
+         VAL         [a=-310, ain=51, r=2]

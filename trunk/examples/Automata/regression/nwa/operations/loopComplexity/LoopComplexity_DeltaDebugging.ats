@@ -1,0 +1,28 @@
+// Author: Thomas Lang, heizmann@informatik.uni-freiburg.de
+// Date: 2015-06-08
+//
+
+NestedWordAutomaton lcbautomaton01 = (
+	callAlphabet = {},
+	internalAlphabet = {"a0" },
+	returnAlphabet = {},
+	states = {"q12" "q6" "q5" "q10" "q8" "q11" "q7" "q2" "q1" "q4" "q3" "q0" "q9" },
+	initialStates = {"q0" },
+	finalStates = {},
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q8" "a0" "q2")
+		 ("q2" "a0" "q2")
+		 ("q0" "a0" "q8")
+		 ("q0" "a0" "q7")
+		 ("q0" "a0" "q4")
+		 ("q0" "a0" "q3")
+	},
+	returnTransitions = {
+	}
+);
+
+//print(loopComplexity(lcbautomaton01));
+//print(loopComplexityPeakOptimization(lcbautomaton01));
+//assert(loopComplexity(lcbautomaton01) == loopComplexityPeakOptimization(lcbautomaton01));

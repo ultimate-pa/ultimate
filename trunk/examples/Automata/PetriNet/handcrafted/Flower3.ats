@@ -1,0 +1,16 @@
+// Date:  2018-05-22
+// Author: schaetzc@tf.uni-freiburg.de
+
+print(finitePrefix(n));
+
+PetriNet n = (
+  alphabet = {a b c},
+  places = {p0},
+  transitions = {
+    ({p0} a {p0})
+    ({p0} b {p0})
+    ({p0} c {p0})
+  },
+  initialMarking = {p0},
+  acceptingPlaces = {p0}
+);

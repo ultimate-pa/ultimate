@@ -1,0 +1,20 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+(set-option :interpolant-check-mode true)
+(set-option :print-terms-cse false)
+
+(set-logic QF_AUFLIA)
+(declare-fun u () Int)
+(declare-fun v () Int)
+(declare-fun w () Int)
+(declare-fun i () Int)
+(declare-fun k () Int)
+(declare-fun a () (Array Int Int))
+
+(assert (! (not (= v w)) :named A))
+(assert (! (= ((as const (Array Int Int)) w) (store ((as const (Array Int Int)) v) k u)) :named B))
+
+(check-sat)
+(get-proof)
+(get-interpolants A B)
+(exit)

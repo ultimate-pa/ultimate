@@ -1,0 +1,6 @@
+#Tue Jul 31 15:33:09 CEST 2018
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter/Ignore\ all\ commands\ and\ only\ execute\ below\ command=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter/Command=finitePrefix(difference($1, $2, \"HEURISTIC\"));

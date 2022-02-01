@@ -1,0 +1,14 @@
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
+	<plugin id="HA_CFGBuilder"/>
+	<plugin id="CFGReducer"/>
+	<plugin id="ErrorLocationGenerator"/>
+	<subchain>
+		<plugin id="SafetyChecker"/>
+	</subchain>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/>
+
+	</toolchain>
+</rundefinition>

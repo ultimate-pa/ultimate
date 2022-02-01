@@ -1,0 +1,80 @@
+// heizmann@informatik.uni-freiburg.de 2015-05-16
+// Effect of different complementations for Buchi automata applied to a 
+// simplified version of an automaton that occurred in our termination analysis.
+
+// Note for Matthias: Example shows that your implementation is incompatible to
+// a rank limitation.
+// Reson: {(€,s0,2X)(€,s1,3)(€,q0,3)(€,r1,3)} has only one successor under b, 
+// namely  {(€,s0,2)(€,s1,2X)(€,q0,3)(€,r1,3)}. State s1 is not willing to 
+// sacrifice its rank in a second transition, since there is no direct gain
+// in the form of an higher odd rank (which would be the case if maxrank is 5).
+
+NestedWordAutomaton buchiInterpolantAutomaton = (
+	callAlphabet = {},
+	internalAlphabet = {"b" "a" },
+	returnAlphabet = {},
+	states = {"q0" "s0" "s1" "r0" "r1" },
+	initialStates = {"q0" },
+	finalStates = {"s0" "r0" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q0" "a" "q0")
+		 ("q0" "a" "r0")
+
+		 ("q0" "b" "s0")
+		 ("q0" "b" "q0")
+		 
+		 ("r0" "b" "r1")
+		 ("r1" "b" "r1")
+
+		 ("s0" "b" "s1")
+		 ("s1" "b" "s1")
+	},
+	returnTransitions = {
+	}
+);
+
+// language of automaton is empty
+assert(buchiIsEmpty(buchiInterpolantAutomaton));
+
+// automaton is semi-deterministic
+assert(isSemiDeterministic(buchiInterpolantAutomaton));
+
+// complementation for TABAs proposed by Fanda and Jan
+// produces the smallest result (as expected)
+NestedWordAutomaton bs = buchiComplementNCSB(buchiInterpolantAutomaton);
+// print(bs);
+print(numberOfStates(bs));
+
+// Matthias' implementation of rank-based complementation with maxrank restricted to 3.
+NestedWordAutomaton fkvMaxrank3 = buchiComplementFKV(buchiInterpolantAutomaton,"HEIMAT2",3);
+// print(fkvMaxrank3);
+print(numberOfStates(fkvMaxrank3));
+// produces a wrong result, does not accept a.b^\omega
+assert(buchiAccepts(fkvMaxrank3, ["a", "b"]));
+
+// Matthias' implementation of rank-based complementation with maxrank restricted to 5.
+NestedWordAutomaton fkvMaxrank5 = buchiComplementFKV(buchiInterpolantAutomaton,"HEIMAT2",5);
+// print(fkvMaxrank5);
+print(numberOfStates(fkvMaxrank5));
+
+
+// all three complement automata have only live states, no non-live states can be removed
+assert(numberOfStates(removeNonLiveStates(bs)) == 10);
+assert(numberOfStates(removeNonLiveStates(fkvMaxrank3)) == 22);
+assert(numberOfStates(removeNonLiveStates(fkvMaxrank5)) == 24);
+
+
+// surprisingly, after a Hopcroft-based size reduction the maxrank5 algorithm has
+// the smallest number of states
+assert(numberOfStates(minimizeSevpa(removeNonLiveStates(bs))) == 2);
+assert(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank3))) == 8);
+assert(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank5))) == 8);
+
+
+// after a Buchi size reduction based on delayed simulation the result of
+// the bs algorithm has the smallest number of states
+assert(numberOfStates(buchiReduce(removeNonLiveStates(bs))) == 1);
+assert(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank3))) == 8);
+assert(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank5))) == 8);

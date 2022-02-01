@@ -1,0 +1,1547 @@
+/*  This file contains the whole grammar for the ACSL-Parser, basically
+	the grammar is obtained from the Frama-C tooling. 
+File-History:
+	- 30.01. Initial commit, basic stuff implemented but some things missing (weak/strong/ACTL)
+*/
+
+package de.uni_freiburg.informatik.ultimate.acsl.parser;
+
+import com.github.jhoenicke.javacup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory.ComplexSymbol;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Arrays;
+
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocation;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+
+parser Parser;
+option java15, compact_red, newpositions;
+
+parser code {:
+    /** The ILogger instance. */
+    protected ILogger mILogger;
+    
+	/** Holds an ACSL node. */
+	private ACSLNode acslNode;
+	
+	/** Offset to be added to the line numbers. */
+	private int lineNumberOffset;
+	
+	/** Offset to be added to the column numbers on the first line (to account the removed comment delimiter). */
+	private int columnNumberOffset;
+
+	/** List of expressions. */
+	public LinkedList<Expression> expressionList = new LinkedList<Expression>();
+	
+	/** Binary expressions operator list. */
+	public LinkedList<BinaryExpression.Operator> opList = new LinkedList<BinaryExpression.Operator>();
+	
+	/** Temporary loop annotation. */
+	public LoopAnnot tempLoopAnnot;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param s the Scanner object.
+	 * @param sf the SymbolFactory object.
+	 * @param ILogger the ILogger object to be used.
+	 */
+	public Parser(com.github.jhoenicke.javacup.runtime.Scanner s, com.github.jhoenicke.javacup.runtime.SymbolFactory sf, ILogger ILogger) {
+		this(s, sf);
+		mILogger = ILogger;
+	}
+	
+	/**
+	 * Getter for ACSL node.
+	 *  
+	 * @return the ACSL node.
+	 */
+	public ACSLNode getAcslNode() {
+		return this.acslNode;
+	}
+	
+	/**
+	 * Setter for the ACSL node.
+	 * 
+	 * @param value the ACSL node to set.
+	 */
+	public void setAcslNode(ACSLNode value) {
+		this.acslNode = value;
+	}
+	
+	/**
+	 * Getter for the current line number offset.
+	 * 
+	 * @return the current line number offset.
+	 */
+	public int getLineNumberOffset() {
+		return this.lineNumberOffset;
+	}
+	
+	/**
+	 * Setter for the line number offset.
+	 * 
+	 * @param value the line number offset to set.
+	 */
+	public void setLineNumberOffset(int value) {
+		this.lineNumberOffset = value;
+	}
+	
+	
+	/**
+	 * Getter for the column number offset.
+	 *
+	 * @return the current column number offset.
+	 */
+	public int getColumnNumberOffset() {
+		return this.columnNumberOffset;
+	}
+
+	/**
+	 * Setter for the column number offset.
+	 *
+	 * @param value the column number offset to set.
+	 */
+	public void setColumnNumberOffset(int value) {
+		this.columnNumberOffset = value;
+	}
+
+
+	/**
+	 * Parse a specific comment.
+	 *
+	 * @param input the input string to be parsed
+	 * @param lineOffset the line number offset.
+	 * @param columnOffset the column number offset.
+	 * @return the parsed comment in an <code>ACSLNode</code>
+	 * @throws Exception Well yeah - care for it ...
+	 */
+	public static ACSLNode parseComment(String input, int lineOffset, int columnOffset) throws Exception {
+		java.io.InputStream instream = new java.io.ByteArrayInputStream(input.getBytes());
+		ComplexSymbolFactory sf = new ComplexSymbolFactory();
+		Scanner scanner = new Scanner(instream, sf);
+		Parser parser = new Parser(scanner, sf);
+		parser.setLineNumberOffset(lineOffset);
+		parser.setColumnNumberOffset(columnOffset);
+		parser.parse();
+		return parser.getAcslNode();
+	}
+	
+	/**
+	 * Parse a specific comment.
+	 * 
+	 * @param input the input string to be parsed
+	 * @param lineOffset the line number offset.
+	 * @param columnOffset the column number offset.
+	 * @param ILogger the ILogger object to be used.
+	 * @return the parsed comment in an <code>ACSLNode</code>
+	 * @throws Exception Well yeah - care for it ...
+	 */
+	public static ACSLNode parseComment(String input, int lineOffset, int columnOffset, ILogger ILogger) throws Exception {
+		java.io.InputStream instream = new java.io.ByteArrayInputStream(input.getBytes());
+		ComplexSymbolFactory sf = new ComplexSymbolFactory();
+		Scanner scanner = new Scanner(instream, sf);
+		Parser parser = new Parser(scanner, sf, ILogger);
+		parser.setLineNumberOffset(lineOffset);
+		parser.setColumnNumberOffset(columnOffset);
+		parser.parse();
+		return parser.getAcslNode();
+	}
+
+
+	/**
+	 * Main method.
+	 * 
+	 * @param args the program parameters
+	 * @throws Exception Well yeah - care for it ...
+	 */
+	public static void main(String args[]) throws Exception {
+		ComplexSymbolFactory sf = new ComplexSymbolFactory();
+		java.io.FileInputStream fio = new java.io.FileInputStream("test.txt");
+		Scanner scanner = new Scanner(fio, sf);
+		Parser parser = new Parser(scanner, sf);
+		parser.parse();
+	}
+	
+	@Override
+	public void unrecovered_syntax_error(Symbol sym) throws Exception {
+        Assertion a = new Assertion(null);
+        if (sym.sym != 1 /*EOF*/) {
+			final ComplexSymbol csym = (ComplexSymbol) sym;
+   		 	a.setLocation(createAdjustedLocation(csym.getLeft().getLine(), csym.getLeft().getColumn(), csym.getRight().getLine(), csym.getRight().getColumn()));
+		} else {
+			a.setLocation(createAdjustedLocation(0, 0, 0, 0));
+		}
+		report_fatal_error("Syntax Error: " + sym.toString(), a);
+	}
+	
+	@Override
+	public void report_fatal_error(String message, Object info)
+    			throws java.lang.Exception
+    {
+    	if (info instanceof ACSLNode) {
+    		throw new ACSLSyntaxErrorException((ACSLNode)info, message);
+    	} else {
+    		throw new RuntimeException(message);
+    	}
+    }
+
+	public ACSLSourceLocation createAdjustedLocation(int sline, int scolumn, int eline, int ecolumn) {
+	    return new ACSLSourceLocation(sline + getLineNumberOffset(), scolumn + (sline == 0 ? getColumnNumberOffset() : 0), eline + getLineNumberOffset(), ecolumn + (eline == 0 ? getColumnNumberOffset() : 0));
+	}
+
+:}
+
+action code {:
+
+	public <T extends ACSLNode> T setNodeLocationFromSymbols(T node, Symbol sBegin, Symbol sEnd) {
+		final ComplexSymbol left = (ComplexSymbol) sBegin;
+		final ComplexSymbol right = (ComplexSymbol) sEnd;
+	    node.setLocation(parser.createAdjustedLocation(left.getLeft().getLine(), left.getLeft().getColumn(), 
+	    	right.getRight().getLine(), right.getRight().getColumn()));
+	    return node;
+	}
+
+	public <T extends ACSLNode> T setNodeLocationFromSymbols(T node, Symbol sym) {
+	    return setNodeLocationFromSymbols(node, sym, sym);
+	}
+
+	public <T extends ACSLNode> T setNodeLocationFromNodes(T node, ACSLNode nBegin, ACSLNode nEnd) {
+	    node.setLocation(new ACSLSourceLocation(nBegin.getLocation().getStartLine(), nBegin.getLocation().getStartColumn(), 
+	    	nEnd.getLocation().getEndLine(), nEnd.getLocation().getEndColumn()));
+	    return node;
+	}
+:}
+
+scan with {: return getScanner().next_token(); :}
+
+/* Terminals */
+terminal FREEABLE, MALLOCABLE;
+terminal MODULE, FUNCTION, CONTRACT, INCLUDE, EXT_AT, EXT_LET; /*, CEOF;*/
+terminal String IDENTIFIER;
+terminal String TYPENAME;
+terminal String STRING_LITERAL;
+terminal String CONSTANT;
+terminal String CONSTANT_FLOAT;
+terminal String CONSTANT10;
+terminal String VOID, CHAR, SIGNED, UNSIGNED, SHORT, LONG, DOUBLE, STRUCT, ENUM, UNION;
+terminal String INT, INTEGER, REAL, BOOLEAN, FLOAT;
+terminal String STAR;
+terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
+terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
+terminal FORALL, EXISTS, IFF, IMPLIES, AND, OR, NOT, SEPARATED;
+terminal GLOBALLY, FINALLY, UNTIL, NEXT, WEAKUNTIL, RELEASE;
+terminal TRUE, FALSE, OLD, AT, RESULT, BLOCK_LENGTH, BASE_ADDR;
+terminal VALID, VALID_INDEX, VALID_RANGE, FRESH, DOLLAR;
+terminal QUESTION, MINUS, PLUS, AMP, SLASH, PERCENT, LSQUARE, RSQUARE;
+terminal GLOBAL, INVARIANT, VARIANT, DECREASES, FOR, LABEL, ASSERT, SEMICOLON, NULL, EMPTY, LTL;
+terminal REQUIRES, ENSURES, ASSIGNS, LOOP, NOTHING, SLICE, IMPACT, PRAGMA, FROM;
+terminal EXITS, BREAKS, CONTINUES, RETURNS;
+terminal READS, WRITES;
+terminal LOGIC, PREDICATE, INDUCTIVE, AXIOMATIC, AXIOM, LEMMA, LBRACE, RBRACE;
+terminal GHOST, MODEL, CASE;
+terminal BSUNION, INTER;
+terminal LTCOLON, COLONGT, TYPE, BEHAVIOR, BEHAVIORS, ASSUMES, COMPLETE, DISJOINT;
+terminal TERMINATES;
+terminal BIFF, BIMPLIES, HAT, HATHAT, PIPE, TILDE, GTGT, LTLT;
+terminal SIZEOF, LAMBDA, LET;
+terminal TYPEOF, BSTYPE;
+terminal WITH, CONST;
+terminal AP;
+terminal INITIALIZED;
+terminal prec_named, prec_forall, prec_exists, prec_lambda, prec_question, prec_no_rel,
+		 prec_rel_list, prec_cast, prec_unary_op, prec_par;
+/*terminal symbols for starting */
+terminal LSTART, GSTART;
+
+non terminal String identifier, string, any_identifier, identifier_or_typename, label_name, type_spec;
+non terminal Expression lexpr, lexpr_inner, lexpr_rel, lexpr_end_rel, constant, constant_option, ltlexpr;
+non terminal CodeAnnot code_annotation;
+non terminal LoopAnnot loop_annot_stack, loop_annot_opt, loop_annotations;
+non terminal String[] ne_behavior_name_list, behavior_name_list;
+non terminal List<String> behavior_name;
+non terminal BinaryExpression.Operator relation;
+non terminal LoopInvariant loop_invariant;
+non terminal LoopVariant loop_variant;
+non terminal LoopAssigns loop_effects;
+non terminal Expression[] ne_lexpr_list, zones, ne_zones, assigns;
+non terminal List<Requires> requires, ne_requires;
+non terminal Terminates terminates, ne_terminates;
+non terminal Decreases decreases, ne_decreases;
+non terminal List<ContractStatement> simple_clauses, ne_simple_clauses, behavior_body;
+non terminal List<Assumes> assumes;
+non terminal List<Behavior> behaviors, ne_behaviors;
+non terminal Completeness complete_or_disjoint, ne_complete_or_disjoint;
+non terminal Contract contract;
+non terminal TypeInvariant type_annot;
+non terminal StringBuffer var_spec_bis, abs_param_list, stars;
+non terminal String logic_type, var_spec, poly_id_type;
+non terminal List<String> ne_tvar_list, ne_label_list;
+non terminal Parameter parameter;
+non terminal ModelVariable model_annot;
+non terminal ACSLType logic_rt_type;
+non terminal List<Parameter> ne_parameters;
+non terminal Parameter[] parameters, opt_parameters;
+non terminal PolyIdentifier poly_id;
+non terminal List<Case> indcases;
+non terminal LogicStatement logic_def, logic_decl;
+non terminal List<LogicStatement> logic_decls;
+non terminal ACSLType type_spec_cv, cast_logic_type;
+non terminal lexpr_list, lexpr_option, rel_list, lexpr_binder, bounded_var, binders,
+			 range,
+			 field_init, array_init, update, field_path_elt, field_init_elt, array_path_elt, array_init_elt,
+			 update_elt, path, path_elt, binders_reentrance, decl_spec, 
+			 abs_spec_option, abs_spec,
+			 tabs, abs_spec_bis, ne_logic_type_list,
+			 decl, annotation, post_cond_kind, post_cond, decl_list, beg_code_annotation, 
+			 poly_id_type_add_typename, typedef,
+			 reads_clause, ne_datacons_list, datacons_list, datacons,
+			 ne_type_list, keyword, c_keyword, acsl_c_keyword, is_acsl_spec, is_acsl_decl_or_code_annot,
+			 is_acsl_other, is_ext_spec, bs_keyword, wildcard, local, global, start_grammar;
+
+/* Precedence */
+precedence right prec_named;
+precedence nonassoc IDENTIFIER, TYPENAME, SEPARATED;
+precedence nonassoc prec_forall, prec_exists, prec_lambda, LET;
+precedence right QUESTION, prec_question;
+precedence left IFF;
+precedence right IMPLIES;
+precedence left OR;
+precedence left HATHAT;
+precedence left AND;
+precedence left PIPE;
+precedence left BIFF;
+precedence right BIMPLIES;
+precedence left HAT;
+precedence left AMP;
+precedence nonassoc prec_no_rel;
+precedence left prec_rel_list; /* for list of relations (LT GT LE GE EQ NE) */
+precedence left LT;
+precedence left LTLT, GTGT;
+precedence left PLUS, MINUS;
+precedence left STAR, SLASH, PERCENT, CONST;
+precedence left UNTIL, WEAKUNTIL, RELEASE;
+precedence right GLOBALLY, FINALLY, NEXT;
+precedence right prec_cast, TILDE, NOT, prec_unary_op;
+precedence nonassoc LTCOLON, COLONGT;
+precedence left DOT, ARROW, LSQUARE;
+precedence right prec_par;
+precedence right AP;
+/* bottom up - highest precedence */
+
+/* start */
+start with start_grammar;
+
+/* mehrere Einstiegspunkte... ? */
+start_grammar::= LSTART local 
+{: 				if(parser.mILogger!=null){
+					parser.mILogger.debug("Start Parsing Local");
+				} else {
+					System.out.println("Start Parsing Local");
+				} :} 
+| GSTART global {: 
+	if(parser.mILogger!=null){
+		parser.mILogger.debug("Start Parsing Global");
+	} else {
+		System.out.println("Start Parsing Global");
+	} :}
+;
+
+/* Trennung von Local und Global Annotations */
+/* contract kann in beiden vorkommen, siehe Function Contract vs. Statement Contract */
+local::= 
+ contract 
+| annotation
+;
+
+global::= 
+ contract
+| decl_list
+; 
+
+
+/*Real-Start of Grammar */
+lexpr_list::=
+ /* epsilon */ 
+| ne_lexpr_list  
+;
+
+ne_lexpr_list::= 
+ lexpr:expr 
+ {: RESULT = new Expression[] {expr}; :} 
+| lexpr:expr COMMA ne_lexpr_list:exprList
+ {: ArrayList<Expression> tempList = new ArrayList<Expression>();
+ 	tempList.add(expr);
+ 	for (Expression ex : exprList) {
+ 		tempList.add(ex);
+ 	}
+ 	RESULT = tempList.toArray(new Expression[1]); :}
+;
+
+lexpr_option::=
+ /* epsilon */ 
+| lexpr         
+;
+
+
+/* TODO: right treatment of all expressions... */
+lexpr::=
+/* predicates */
+ lexpr:e1 IMPLIES lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2), e1$, e2$); :}
+| lexpr:e1 IFF lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2), e1$, e2$); :} 
+| lexpr:e1 OR lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2), e1$, e2$); :}    
+| lexpr:e1 AND lexpr:e2 {:RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2), e1$, e2$); :}    
+| lexpr:e1 HATHAT lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICXOR, e1, e2), e1$, e2$); :}   
+/* terms */
+| lexpr:e1 AMP lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.BITAND, e1, e2), e1$, e2$); :}
+| lexpr:e1 PIPE lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.BITOR, e1, e2), e1$, e2$); :} 
+| lexpr:e1 HAT lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.BITXOR, e1, e2), e1$, e2$); :}
+| lexpr:e1 BIMPLIES lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.BITIMPLIES, e1, e2), e1$, e2$); :}
+| lexpr:e1 BIFF lexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.BITIFF, e1, e2), e1$, e2$); :}
+| lexpr:e1 QUESTION lexpr:e2 COLON lexpr:e3 {: RESULT = setNodeLocationFromSymbols(new IfThenElseExpression(e1, e2, e3), e1$, e3$); :}  %prec prec_question 
+/* both terms and predicates */
+| any_identifier:id COLON2 lexpr:expr {: RESULT = setNodeLocationFromSymbols(new SyntacticNamingExpression(id, expr), id$, expr$); :} %prec prec_named 
+| lexpr_rel:expr {: RESULT = expr; :} %prec prec_rel_list 
+;
+
+/* LTL extension */
+ltlexpr::=
+  GLOBALLY:op ltlexpr:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, e), op$, e$); :} 
+| FINALLY:op ltlexpr:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LTLFINALLY, e), op$, e$); :} 
+| NEXT:op ltlexpr:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LTLNEXT, e), op$, e$); :} 
+| NOT:op ltlexpr:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e), op$, e$); :} 
+| ltlexpr:e1 UNTIL ltlexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LTLUNTIL, e1, e2), e1$, e2$); :} 
+| ltlexpr:e1 WEAKUNTIL ltlexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LTLWEAKUNTIL, e1, e2), e1$, e2$); :} 
+| ltlexpr:e1 RELEASE ltlexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LTLRELEASE, e1, e2), e1$, e2$); :} 
+| ltlexpr:e1 IMPLIES ltlexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2), e1$, e2$); :} 
+| ltlexpr:e1 IFF ltlexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2), e1$, e2$); :} 
+| ltlexpr:e1 OR ltlexpr:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2), e1$, e2$); :}
+| ltlexpr:e1 AND ltlexpr:e2 {:RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2), e1$, e2$); :}
+| AP LPAR lexpr:e RPAR {: RESULT = e; :}
+| LPAR ltlexpr:e RPAR {: RESULT = e; :} 
+;
+
+lexpr_rel::=
+ lexpr_end_rel:expr {: RESULT = expr; :} %prec prec_no_rel 
+| lexpr_inner:expr rel_list:exprRel 
+  {: Expression tempExpr = null;
+  	 if (parser.expressionList.size() >= 2) {
+  	 	while(!parser.expressionList.isEmpty()) {
+  	 		if (tempExpr==null) {
+  	 			Expression right = parser.expressionList.poll();
+  	 			Expression left = parser.expressionList.poll();
+  	 			tempExpr = setNodeLocationFromNodes(new BinaryExpression(parser.opList.poll(), left, right), left, right);
+  	 		} else {
+  	 			Expression right = parser.expressionList.poll();
+  	 			Expression left = tempExpr;
+  	 			tempExpr = setNodeLocationFromNodes(new BinaryExpression(parser.opList.poll(), left, right), left, right);
+  	 		}	
+  	 	}
+  	 	RESULT = setNodeLocationFromNodes(new BinaryExpression(parser.opList.poll(), expr, tempExpr), expr, tempExpr);
+  	 } else {
+		tempExpr = parser.expressionList.poll();
+  	 	RESULT = setNodeLocationFromNodes(new BinaryExpression(parser.opList.poll(), expr, tempExpr), expr, tempExpr);
+  	 } :} %prec prec_rel_list
+;
+
+lexpr_binder::=
+ LET bounded_var EQUAL lexpr SEMICOLON lexpr %prec LET 
+| FORALL binders SEMICOLON lexpr  %prec prec_forall
+| EXISTS binders SEMICOLON lexpr  %prec prec_exists
+| LAMBDA binders SEMICOLON lexpr  %prec prec_lambda
+;
+
+lexpr_end_rel::=
+  lexpr_inner:expr {: RESULT = expr; :} %prec prec_no_rel
+| lexpr_binder:e {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e$); :}
+| NOT:op lexpr_binder:e {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), op$, e$); :}  
+;
+
+rel_list::=
+ relation:op lexpr_end_rel:endRel
+ {: parser.expressionList.add(endRel);
+ 	parser.opList.add(op); :} %prec prec_rel_list
+| relation:op lexpr_inner:expr rel_list  
+ {: parser.expressionList.add(expr);
+ 	parser.opList.add(op); :} %prec prec_rel_list
+;
+
+relation::=
+ LT		{: RESULT = BinaryExpression.Operator.COMPLT; :}   
+| GT   	{: RESULT = BinaryExpression.Operator.COMPGT; :}
+| LE   	{: RESULT = BinaryExpression.Operator.COMPLEQ; :}
+| GE   	{: RESULT = BinaryExpression.Operator.COMPGEQ; :}
+| EQ   	{: RESULT = BinaryExpression.Operator.COMPEQ; :}
+| NE   	{: RESULT = BinaryExpression.Operator.COMPNEQ; :}
+    /* C. Marche: added to produce better error messages */
+| EQUAL {: RESULT = BinaryExpression.Operator.COMPEQ; :}
+;
+
+/* TODO: Finish Expression!! */
+lexpr_inner::=
+ string:s {: RESULT = setNodeLocationFromSymbols(new StringLiteral(s), s$); :}
+| NOT:op lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e), op$, e$); :}
+| TRUE:e {: RESULT = setNodeLocationFromSymbols(new BooleanLiteral(true), e$); :}
+| FALSE:e {: RESULT = setNodeLocationFromSymbols(new BooleanLiteral(false), e$); :}
+| VALID:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new ValidExpression(expr), l$, r$); :}
+| FREEABLE:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new FreeableExpression(expr), l$, r$); :}
+| MALLOCABLE:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new MallocableExpression(expr), l$, r$); :}
+| VALID_INDEX:l LPAR lexpr:e1 COMMA lexpr:e2 RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| VALID_RANGE:l LPAR lexpr:e COMMA lexpr COMMA lexpr RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$);  :}
+| INITIALIZED:l LPAR lexpr:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| FRESH:l LPAR lexpr:e RPAR:r  {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| NULL:e {: RESULT = setNodeLocationFromSymbols(new NullPointer(), e$); :}
+| constant:expr {: RESULT = expr; :}
+| lexpr_inner:e1 PLUS lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHPLUS, e1, e2), e1$, e2$); :}
+| lexpr_inner:e1 MINUS lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHMINUS, e1, e2), e1$, e2$); :}
+| lexpr_inner:e1 STAR lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHMUL, e1, e2), e1$, e2$); :} 
+| lexpr_inner:e1 SLASH lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHDIV, e1, e2), e1$, e2$); :}
+| lexpr_inner:e1 PERCENT lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHMOD, e1, e2), e1$, e2$); :} 
+| lexpr_inner:e ARROW identifier_or_typename:i {: RESULT = setNodeLocationFromSymbols(new FieldAccessExpression(e, i), e$, i$); :} // TODO Deref e
+| lexpr_inner:e DOT identifier_or_typename:i {: RESULT = setNodeLocationFromSymbols(new FieldAccessExpression(e, i), e$, i$); :}
+| lexpr_inner:l LSQUARE range:e RSQUARE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| lexpr_inner:array LSQUARE lexpr:indices RSQUARE:r {: RESULT = setNodeLocationFromSymbols(new ArrayAccessExpression(array, new Expression[] {indices}), array$, r$); :}
+| MINUS:op lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.MINUS, e), op$, e$); :} %prec prec_unary_op 
+| PLUS:op  lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.PLUS, e), op$, e$); :} %prec prec_unary_op 
+| TILDE:op lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LOGICCOMPLEMENT, e), op$, e$); :}
+| STAR:op  lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.POINTER, e), op$, e$); :} %prec prec_unary_op 
+| AMP:op   lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.ADDROF, e), op$, e$);  :} %prec prec_unary_op 
+| SIZEOF:l LPAR lexpr:expr RPAR:r 
+ {: SizeOfExpression sexpr = setNodeLocationFromSymbols(new SizeOfExpression(), l$, r$); 
+ 	sexpr.setFormula(expr);
+ 	RESULT = sexpr; :}
+| SIZEOF:l LPAR logic_type:lt RPAR:r 
+ {: SizeOfExpression sexpr = setNodeLocationFromSymbols(new SizeOfExpression(), l$, r$);
+ 	sexpr.setLogicType(new ACSLType(lt));
+ 	RESULT = sexpr; :}
+| OLD:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new OldValueExpression(expr), l$, r$);  :}
+| AT:l LPAR lexpr:expr COMMA label_name:label RPAR:r {: RESULT = setNodeLocationFromSymbols(new AtLabelExpression(expr, label), l$, r$);  :}
+| BASE_ADDR:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new BaseAddrExpression(expr), l$, r$);  :}
+| BLOCK_LENGTH:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new BlockLengthExpression(expr), l$, r$);  :}
+| RESULT:e {: RESULT = setNodeLocationFromSymbols(new ACSLResultExpression(), e$); :}
+| SEPARATED:l LPAR ne_lexpr_list:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| identifier:e1 LPAR ne_lexpr_list:e2 RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
+| identifier:e1 LBRACE ne_tvar_list:e2 RBRACE LPAR ne_lexpr_list:e3 RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
+| identifier:e1 LBRACE ne_tvar_list:e2 RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
+| identifier:ident {: RESULT = setNodeLocationFromSymbols(new IdentifierExpression(ident), ident$);  :} %prec IDENTIFIER 
+| lexpr_inner:e1 GTGT lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, e2$); :}
+| lexpr_inner:e1 LTLT lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, e2$); :}
+| LPAR:l lexpr:e RPAR:r {: RESULT = e; :} %prec prec_par 
+| LPAR:l range:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| LPAR:l cast_logic_type:e1 RPAR lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new CastExpression(e1, e2), l$, e2$); :} %prec prec_cast 
+| lexpr_inner:e1 LTCOLON lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, e2$); :} %prec prec_cast 
+| lexpr_inner:e1 COLONGT logic_type:e2 {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, e2$); :} %prec prec_cast 
+| lexpr_inner:e1 COLONGT lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, e2$); :} %prec prec_cast 
+| TYPEOF:l LPAR lexpr:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| BSTYPE:l LPAR type_spec:e STAR RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+    /* tsets */
+| EMPTY:e {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e$); :}
+| BSUNION:l LPAR lexpr_list:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| INTER:l LPAR lexpr_list:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| LBRACE:l lexpr:e RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| LBRACE:l lexpr:e1 PIPE binders:e2 RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| LBRACE:l lexpr:e1 PIPE binders:e2 SEMICOLON lexpr:e3 RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+    /* Aggregated object initialization */
+| LBRACE:l field_init:e RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| LBRACE:l array_init:e RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+| LBRACE:l lexpr:e1 WITH update:e2 RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
+;
+
+string::=
+ STRING_LITERAL:s {: RESULT = s; :}
+| string:s1 STRING_LITERAL:s2 {: RESULT = s1 + s2; :}
+;
+
+range::=
+ lexpr_option DOTDOT lexpr_option
+;
+
+/*** Aggregated object initialization ***/
+
+field_path_elt::=
+ DOT identifier_or_typename 
+;
+
+field_init_elt::=
+ field_path_elt EQUAL lexpr 
+;
+
+field_init::=
+ field_init_elt                  
+| field_init_elt COMMA field_init 
+;
+
+array_path_elt::=
+ LSQUARE lexpr RSQUARE      
+| LSQUARE range RSQUARE      
+;
+
+array_init_elt::=
+ array_path_elt EQUAL lexpr 
+;
+
+array_init::=
+ array_init_elt                  
+| array_init_elt COMMA array_init 
+;
+
+/*** Functional update ***/
+update::=
+ update_elt                  
+| update_elt COMMA update 
+;
+
+update_elt::=
+ path EQUAL lexpr                
+| path EQUAL LBRACE WITH update RBRACE 
+;
+
+path::=
+ path_elt      
+| path_elt path 
+;
+
+path_elt::=
+ field_path_elt 
+| array_path_elt 
+;
+
+/*** binders ***/
+
+binders::=
+ binders_reentrance 
+;
+
+binders_reentrance::=
+ decl_spec 
+| binders_reentrance COMMA decl_spec
+| binders_reentrance COMMA var_spec
+;
+
+decl_spec::=
+ type_spec var_spec 
+;
+
+var_spec::=
+ var_spec_bis:var
+ {: RESULT = var.toString(); :}    
+| stars:st var_spec_bis:var
+ {: RESULT = st.toString() + var.toString(); :}
+;
+
+constant::=
+ CONSTANT:value
+ // 2016-03-09 the following line was changed from IntegerLiteral to RealLiteral by Matthias
+ {: RESULT = setNodeLocationFromSymbols(new IntegerLiteral(value), value$); :}  
+| CONSTANT10:value 
+ {: RESULT = setNodeLocationFromSymbols(new IntegerLiteral(value), value$); :}
+| CONSTANT_FLOAT:value 
+ {: RESULT = setNodeLocationFromSymbols(new RealLiteral(value), value$); :}
+;
+
+constant_option::=
+ constant:c
+ {: RESULT = c; :} 
+| /* empty */
+ {: RESULT = null; :}  
+;
+
+var_spec_bis::=
+ identifier:id
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(id);
+ 	RESULT = sb; :}     
+| var_spec_bis:var LSQUARE constant_option:constopt RSQUARE
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(var);
+ 	sb.append("[");
+ 	if (constopt != null) {
+ 		if (constopt instanceof IntegerLiteral) {
+ 			sb.append(((IntegerLiteral)constopt).getValue());
+ 		} else if (constopt instanceof RealLiteral) {
+ 			sb.append(((RealLiteral)constopt).getValue());
+ 		}
+ 	}
+ 	sb.append("]");
+ 	RESULT = sb; :}
+| LPAR var_spec:var RPAR
+ {: RESULT = new StringBuffer("(" + var + ")"); :} 
+| var_spec_bis:var LPAR abs_param_list:abs RPAR
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(var);
+ 	sb.append("(");
+ 	sb.append(abs);
+ 	sb.append(")");
+ 	RESULT = sb; :}
+;
+
+abs_param_list::=
+ logic_type:lt 
+ {: RESULT = new StringBuffer(lt); :}
+| abs_param_list:abs COMMA logic_type:lt
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(abs);
+ 	sb.append(",");
+ 	sb.append(lt);
+ 	RESULT = sb; :} 
+;
+
+
+/*** restricted type expressions ***/
+
+ne_parameters::=
+ parameter:param
+ {: RESULT = new ArrayList<Parameter>();
+ 	RESULT.add(param); :} 
+| parameter:param COMMA ne_parameters:list
+ {: ArrayList<Parameter> paramList = new ArrayList<Parameter>();
+ 	paramList.add(param);
+ 	paramList.addAll(list);
+ 	RESULT = paramList; :} 
+;
+
+/* identifier here as typename */
+parameter::=
+ type_spec:t var_spec:var
+ {: ACSLType type = new ACSLType(t);
+ 	RESULT = setNodeLocationFromSymbols(new Parameter(type, var), t$, var$); :} 
+| identifier:i var_spec:var
+ {: ACSLType type = new ACSLType(i);
+ 	RESULT = setNodeLocationFromSymbols(new Parameter(type, var), i$, var$); 	:} 
+;
+
+
+/*** type expressions ***/
+
+/* TODO hier geben wir nur type_spec zur�ck der rest ist seltsam*/
+logic_type::=
+ type_spec:type abs_spec_option 
+ {: RESULT = type; :} %prec TYPENAME
+;
+
+
+type_spec_cv::=
+     type_spec:t
+ {: RESULT = setNodeLocationFromSymbols(new ACSLType(t), t$);  :}
+|    CONST:c type_spec:t
+ {: RESULT = setNodeLocationFromSymbols(new ACSLType(t), c$, t$);  :}
+|    type_spec:t CONST:c 
+ {: RESULT = setNodeLocationFromSymbols(new ACSLType(t), t$, c$);  :}
+;
+
+cast_logic_type::=
+ type_spec_cv:tcs abs_spec_option 
+{: RESULT = tcs; :}
+ | type_spec_cv:tcs abs_spec CONST
+ {: RESULT = tcs; :} 
+;
+
+logic_rt_type::=
+ identifier:id
+ {: RESULT = setNodeLocationFromSymbols(new ACSLType(id), id$);  :}
+| logic_type:type
+ {: RESULT = setNodeLocationFromSymbols(new ACSLType(type), type$); :}  
+;
+
+abs_spec_option::=
+ /* empty */ %prec TYPENAME  
+| abs_spec 
+;
+
+abs_spec::=
+                    tabs 
+| stars                   %prec TYPENAME 
+| stars              tabs                
+| stars abs_spec_bis      %prec TYPENAME 
+| stars abs_spec_bis tabs                
+|       abs_spec_bis tabs                
+|       abs_spec_bis      %prec TYPENAME 
+;
+
+abs_spec_bis::=
+ LPAR abs_spec RPAR 
+| abs_spec_bis LPAR abs_param_list RPAR
+;
+
+stars::=
+ STAR:star
+ {: RESULT = new StringBuffer("*"); :}       
+| stars:st STAR:star
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(st);
+ 	sb.append("*");
+ 	RESULT = sb; :} 
+;
+
+tabs::=
+ LSQUARE constant_option RSQUARE %prec TYPENAME
+| LSQUARE constant_option RSQUARE tabs
+;
+
+/* TODO: Vorerst String bessere Lösung? */
+type_spec::=
+ INTEGER:i {: RESULT = i; :}         
+| REAL:r {: RESULT = r; :}           
+| BOOLEAN:b {: RESULT = b; :}        
+| VOID:v {: RESULT = v; :}           
+| CHAR:c {: RESULT = c; :}                 
+| SIGNED:s CHAR:c {: RESULT = s + " " + c; :}         
+| UNSIGNED:u CHAR:c {: RESULT = u + " " + c; :}       
+| INT:i {: RESULT = i; :}                   
+| SIGNED:s INT:i {: RESULT = s + " " + i; :}           
+| UNSIGNED:u INT:i {: RESULT = u + " " + i; :}         
+| UNSIGNED:u {: RESULT = u; :}       
+| SHORT:s {: RESULT = s; :}               
+| SIGNED:s SHORT:sh {: RESULT = s + " " + sh; :}       
+| UNSIGNED:u SHORT:s {: RESULT = u + " " + s; :}     
+| LONG:l {: RESULT = l; :}                
+| SIGNED:s LONG:l {: RESULT = s + " " + l; :}          
+| UNSIGNED:u LONG:l {: RESULT = u + " " + l; :}        
+| SIGNED:s LONG:l INT:i {: RESULT = s + " " + l + " " + i; :}      
+| LONG:l INT:i {: RESULT = l + " "+ i; :}            
+| UNSIGNED:u LONG:l INT:i {: RESULT = u + " " + l + " " + i; :}     
+| LONG:l LONG:o {: RESULT = l + " " + o; :}         
+| SIGNED:s LONG:l LONG {: RESULT = s + " " + l + " " + l; :} 
+| UNSIGNED:u LONG:l LONG {: RESULT = u + " " + l + " " + l; :}
+| LONG:l LONG INT:i {: RESULT = l + " " + l + " " + i; :} 
+| SIGNED:s LONG:l LONG INT:i {: RESULT = s + " " + l + " " + l + " " + i; :} 
+| UNSIGNED:u LONG:l LONG INT:i {: RESULT = u + " " + l + " " + l + " " + i; :} 
+| FLOAT:f {: RESULT = f; :}             
+| DOUBLE:d {: RESULT = d; :}           
+| LONG:l DOUBLE:d {: RESULT = l + " " + d; :}       
+| STRUCT:s  identifier:i {: RESULT = s + " " + i; :} 
+| ENUM:e    identifier:i {: RESULT = e + " " + i; :} 
+| UNION:u   identifier:i {: RESULT = u + " " + i; :}  
+| TYPENAME:t {: RESULT = t; :}          
+| TYPENAME:t LT ne_logic_type_list GT {: RESULT = t; :} %prec TYPENAME 
+;
+
+ne_logic_type_list::=
+ logic_type                          
+| logic_type COMMA  ne_logic_type_list 
+;
+
+/*** from annotations ***/
+
+/*** function and statement contracts ***/
+
+contract::=
+ requires:req terminates:term decreases:de simple_clauses:sim behaviors:be complete_or_disjoint:com
+ {: ArrayList<ContractStatement> list = new ArrayList<ContractStatement>();
+ 	list.addAll(req);
+ 	if (term != null) {
+ 		list.add(term);
+ 	}
+ 	if (de != null) {
+ 		list.add(de);
+ 	}
+ 	list.addAll(sim);
+ 	
+ 	// use the first symbol that actually matched as left anchor (req$.xleft is null if no requires are specified)
+ 	Symbol firstSymbol$ = req$;
+ 	for (Symbol sym : Arrays.asList(req$, term$, de$, sim$, be$, com$)) {
+ 		firstSymbol$ = sym;
+ 		if (((ComplexSymbol)sym).getLeft() != null) {
+ 			 break;
+ 		}
+ 	}
+ 	RESULT = setNodeLocationFromSymbols(new Contract(list.toArray(new ContractStatement[0]), be.toArray(new Behavior[0]), com), firstSymbol$, com$);
+ 	parser.setAcslNode(RESULT);:}
+ /* TODO Rest wird nicht gebraucht? */
+ /*
+| requires ne_terminates REQUIRES 
+| requires terminates ne_decreases REQUIRES
+| requires terminates ne_decreases TERMINATES     
+| requires terminates decreases ne_simple_clauses REQUIRES
+| requires terminates decreases ne_simple_clauses TERMINATES
+| requires terminates decreases ne_simple_clauses DECREASES
+| requires terminates decreases simple_clauses ne_behaviors TERMINATES
+| requires terminates decreases simple_clauses ne_behaviors DECREASES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  REQUIRES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  TERMINATES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  DECREASES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  BEHAVIOR
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  ASSIGNS
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  post_cond_kind
+*/
+;
+
+requires::= 
+ ne_requires:req
+ {: RESULT = req; :} 
+| /*epsilon*/ 
+ {: RESULT = new ArrayList<Requires>(); :}
+;
+
+ne_requires::=
+ REQUIRES:r lexpr:expr SEMICOLON:s requires:req
+ {: 
+ 	Requires requires = setNodeLocationFromSymbols(new Requires(expr), r$, s$);
+ 	req.add(requires);
+ 	RESULT = req; 
+	:} 
+;
+
+terminates::=
+ /* epsilon */
+ {: RESULT = null; :}              
+| ne_terminates:terminates
+ {: RESULT = terminates; :}
+;
+
+ne_terminates::=
+ TERMINATES:l lexpr:expr SEMICOLON:r {: RESULT = setNodeLocationFromSymbols(new Terminates(expr), l$, r$); :} 
+;
+
+decreases::=
+ /* epsilon */
+ {: RESULT = null; :}   
+| ne_decreases:decreases 
+ {: RESULT = decreases; :}
+;
+
+ne_decreases::=
+  DECREASES:l lexpr:expr SEMICOLON:r {: RESULT = setNodeLocationFromSymbols(new Decreases(expr), l$, r$); :}
+| DECREASES:l lexpr:expr FOR any_identifier:id SEMICOLON:r {: RESULT = setNodeLocationFromSymbols(new Decreases(expr, id), l$, r$); :}  
+;
+
+simple_clauses::=
+ /* epsilon */
+ {: RESULT = new ArrayList<ContractStatement>(); :}
+| ne_simple_clauses:simpleClauses 
+ {: RESULT = simpleClauses; :}
+;
+
+ne_simple_clauses::=
+ post_cond_kind:p lexpr:expr SEMICOLON:s simple_clauses:simClauses
+ {: 
+ 	Ensures ensures = setNodeLocationFromSymbols(new Ensures(expr), p$, s$);
+ 	simClauses.add(ensures);
+ 	RESULT = simClauses; :}
+| ASSIGNS:a assigns:ass SEMICOLON:s simple_clauses:simClauses
+ {: 
+ 	Assigns assigns = setNodeLocationFromSymbols(new Assigns(ass), a$, s$);
+ 	simClauses.add(assigns);
+ 	RESULT = simClauses; :} 
+;
+
+post_cond_kind::=
+ post_cond 
+;
+
+behaviors::=
+ /* epsilon */
+ {: RESULT = new ArrayList<Behavior>(); :} 
+| ne_behaviors:behaviors
+ {: RESULT = behaviors; :} 
+;
+
+ne_behaviors::=
+ BEHAVIOR:l behavior_name:name COLON behavior_body:body behaviors:behaviorList
+ {: Behavior behavior = setNodeLocationFromSymbols(new Behavior(name.toArray(new String[0]), body.toArray(new ContractStatement[0])), l$, body$);
+ 	behaviorList.add(behavior);
+ 	RESULT = behaviorList; :}
+;
+     
+behavior_body::=
+ assumes:ass requires:req simple_clauses:sim
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	body.addAll(sim);
+ 	RESULT = body; :} 
+| assumes:ass ne_requires:req ASSUMES
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	RESULT = body; :}     
+| assumes:ass requires:req ne_simple_clauses:sim ASSUMES
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	body.addAll(sim);
+ 	RESULT = body; :}
+| assumes:ass requires:req ne_simple_clauses:sim REQUIRES
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	body.addAll(sim);
+ 	RESULT = body; :}
+;
+
+assumes::=
+ /* epsilon */ 
+ {: RESULT = new ArrayList<Assumes>(); :}
+| ASSUMES:a lexpr:expr SEMICOLON:s assumes:assu
+ {: Assumes assume = setNodeLocationFromSymbols(new Assumes(expr), a$, s$);
+ 	assu.add(assume);
+ 	RESULT = assu; :}   
+;
+
+complete_or_disjoint::=
+ /* epsilon */
+ {: RESULT = new Completeness(); :} 
+| ne_complete_or_disjoint:completeness
+ {: RESULT = completeness; :} 
+;
+
+ne_complete_or_disjoint::=
+ COMPLETE BEHAVIORS behavior_name_list:names SEMICOLON complete_or_disjoint:completeness
+ {: String[] complete = completeness.getCompleteBehaviors();
+ 	ArrayList<String> list = new ArrayList<String>();
+ 	for (String name : complete) {
+ 		list.add(name);
+ 	}
+ 	for (String name : names) {
+ 		list.add(name);
+ 	}
+ 	completeness.setCompleteBehaviors(list.toArray(new String[0]));
+ 	RESULT = completeness; :}     
+| DISJOINT BEHAVIORS behavior_name_list:names SEMICOLON complete_or_disjoint:completeness
+ {: String[] disjoint = completeness.getDisjointBehaviors();
+ 	ArrayList<String> list = new ArrayList<String>();
+ 	for (String name : disjoint) {
+ 		list.add(name);
+ 	}
+ 	for (String name : names) {
+ 		list.add(name);
+ 	}
+ 	completeness.setDisjointBehaviors(list.toArray(new String[0]));
+ 	RESULT = completeness; :} 
+;
+
+/*** assigns and tsets ***/
+
+assigns::=
+ zones:zones {: RESULT = zones; :}
+/*| ne_zones FROM zones*/ 
+;
+
+zones ::=
+ ne_zones:zones {: RESULT = zones; :}
+| NOTHING 		{: RESULT = new Expression[0]; :} 
+;
+
+ne_zones ::=
+ ne_lexpr_list:list
+ {: RESULT = list; :} 
+;
+
+/*** annotations ***/
+
+annotation::=
+ loop_annotations
+| FOR ne_behavior_name_list COLON contract
+| code_annotation 
+| code_annotation beg_code_annotation
+;
+
+/*** loop annotations ***/
+
+loop_annotations::=
+ loop_annot_stack:loopAnnot 
+ {: RESULT = loopAnnot;
+ 	parser.setAcslNode(RESULT); :}
+;
+
+/* TODO: gather loop assigns that are related to the same behavior */
+loop_annot_stack::=
+ loop_invariant:inv loop_annot_opt:loop
+ {: ArrayList<LoopStatement> stmts = new ArrayList<LoopStatement>();
+ 	stmts.add(inv);
+ 	stmts.addAll(Arrays.asList(loop.getLoopStmt()));
+ 	RESULT = setNodeLocationFromSymbols(new LoopAnnot(loop.getLoopBehavior(), stmts.toArray(new LoopStatement[1])), inv$, loop$);
+ 	parser.tempLoopAnnot = RESULT; :}  
+| loop_effects:ass loop_annot_opt:loop
+ {: ArrayList<LoopStatement> stmts = new ArrayList<LoopStatement>();
+ 	stmts.add(ass);
+ 	stmts.addAll(Arrays.asList(loop.getLoopStmt()));
+ 	RESULT = setNodeLocationFromSymbols(new LoopAnnot(loop.getLoopBehavior(), stmts.toArray(new LoopStatement[1])), ass$, loop$);
+ 	parser.tempLoopAnnot = RESULT; :}
+| FOR:f ne_behavior_name_list:names COLON loop_annot_stack:loop
+ {: LoopForBehavior forBehavior = new LoopForBehavior(names, loop.getLoopStmt()); // TODO: set location for this
+	ArrayList<LoopForBehavior> list = new ArrayList<LoopForBehavior>();
+	list.add(forBehavior);
+	list.addAll(Arrays.asList(parser.tempLoopAnnot.getLoopBehavior()));
+	ArrayList<LoopStatement> slist = new ArrayList<LoopStatement>();
+	slist.addAll(Arrays.asList(parser.tempLoopAnnot.getLoopStmt()));
+	for (LoopStatement ls : loop.getLoopStmt()) {
+		slist.remove(ls);
+	}
+	RESULT = setNodeLocationFromSymbols(new LoopAnnot(list.toArray(new LoopForBehavior[0]), slist.toArray(new LoopStatement[0])), f$, loop$);
+	parser.tempLoopAnnot = RESULT; :}
+| loop_variant:var loop_annot_opt:loop
+ {: ArrayList<LoopStatement> stmts = new ArrayList<LoopStatement>();
+ 	stmts.add(var);
+ 	stmts.addAll(Arrays.asList(loop.getLoopStmt()));
+ 	RESULT = setNodeLocationFromSymbols(new LoopAnnot(loop.getLoopBehavior(), stmts.toArray(new LoopStatement[1])), var$, loop$);
+ 	parser.tempLoopAnnot = RESULT; :} 
+;
+
+loop_annot_opt::=
+ /* epsilon */
+ {: RESULT = new LoopAnnot(new LoopForBehavior[0], new LoopStatement[0]); :}  
+| loop_annot_stack:loop 
+ {: RESULT = loop; :}
+;
+
+loop_effects::=
+ LOOP:l ASSIGNS assigns:assign SEMICOLON:s
+ {: RESULT = setNodeLocationFromSymbols(new LoopAssigns(assign), l$, s$); :} 
+;
+
+loop_invariant::=
+ LOOP:l INVARIANT:i lexpr:expr SEMICOLON:s
+ {: RESULT = setNodeLocationFromSymbols(new LoopInvariant(expr), l$, s$); :} 
+;
+
+loop_variant::=
+ LOOP:l VARIANT:v lexpr:expr SEMICOLON:s
+ {: RESULT = setNodeLocationFromSymbols(new LoopVariant(expr), l$, s$); :}
+| LOOP:l VARIANT:v lexpr:expr FOR:f any_identifier:st SEMICOLON:s
+ {: RESULT = setNodeLocationFromSymbols(new LoopVariant(expr, st), l$, s$); :}   
+;
+
+/*** code annotations ***/
+
+beg_code_annotation::=
+ IMPACT 
+| SLICE 
+| FOR 
+| ASSERT 
+| INVARIANT 
+;
+
+code_annotation::=    
+  FOR:f ne_behavior_name_list:benames COLON ASSERT:a lexpr:expr SEMICOLON:s 
+  {: 
+  	 RESULT = setNodeLocationFromSymbols(new CodeAnnotBehavior(setNodeLocationFromSymbols(new CodeForBehavior(benames, setNodeLocationFromSymbols(new Assertion(expr), a$, expr$)), f$, expr$)), f$, s$);
+  	 parser.setAcslNode(RESULT); :}
+| FOR:f ne_behavior_name_list:benames COLON INVARIANT:i lexpr:expr SEMICOLON:s
+  {: 
+  	 RESULT = setNodeLocationFromSymbols(new CodeAnnotBehavior(setNodeLocationFromSymbols(new CodeForBehavior(benames, setNodeLocationFromSymbols(new CodeInvariant(expr), i$, expr$)), f$, expr$)), f$, s$);
+  	 parser.setAcslNode(RESULT); :}		
+| ASSERT:a lexpr:expr SEMICOLON:s 
+  {: 
+  	 RESULT = setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new Assertion(expr), a$, expr$)), a$, s$);
+	 parser.setAcslNode(RESULT); :}    
+| INVARIANT:i lexpr:expr SEMICOLON:s 
+  {: 
+  	 RESULT = setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new CodeInvariant(expr), i$, expr$)), i$, s$);
+	 parser.setAcslNode(RESULT); :}
+;
+
+/*** declarations and logical definitions ***/
+
+/* TODO m�gliche Liste von logic definitions? */
+decl_list::=
+ decl            
+| decl decl_list
+;  
+
+decl::=
+ GLOBAL:l INVARIANT any_identifier:i COLON lexpr:e SEMICOLON:s
+ {: GlobalInvariant gInv = setNodeLocationFromSymbols(new GlobalInvariant(i, e), l$, s$);
+
+ 	parser.setAcslNode(gInv); :} 
+| LTL:l INVARIANT any_identifier:i COLON ltlexpr:e SEMICOLON:s
+ {: GlobalLTLInvariant ltlInv = setNodeLocationFromSymbols(new GlobalLTLInvariant(i, e), l$, s$);
+
+ 	parser.setAcslNode(ltlInv); :} 
+| type_annot:tInv
+ {: parser.setAcslNode(tInv); :}  
+| model_annot:model
+ {: parser.setAcslNode(model); :} 
+| logic_def:ldef
+ {: parser.setAcslNode(ldef); :}
+;
+
+type_annot::=
+ TYPE:t INVARIANT any_identifier:id LPAR parameter:param RPAR EQUAL
+    lexpr:expr SEMICOLON:s
+ {: RESULT = setNodeLocationFromSymbols(new TypeInvariant(id, expr, param), t$, s$); :}
+;
+
+model_annot::=
+ MODEL:l type_spec:type LBRACE parameter:param RBRACE:r
+ {: RESULT = setNodeLocationFromSymbols(new ModelVariable(new ACSLType(type), param), l$, r$); :}
+| MODEL:l identifier:id LBRACE parameter:param RBRACE:r
+ {: RESULT = setNodeLocationFromSymbols(new ModelVariable(new ACSLType(id), param), l$, r$); :}
+;
+
+poly_id_type::=
+ identifier:id
+ {: RESULT = id; :}
+| identifier:id LT ne_tvar_list:list GT
+ {: RESULT = id + "<" + list.toString() + ">"; :}
+;
+
+/* we need to recognize the typename as soon as it has been declared, so
+  so that it can be used in data constructors in the type definition itself
+*/
+poly_id_type_add_typename::=
+ poly_id_type 
+;
+
+poly_id::=
+ poly_id_type:id
+ {: RESULT = setNodeLocationFromSymbols(new PolyIdentifier(id), id$); :} 
+| identifier:id LBRACE ne_label_list:list RBRACE:r
+ {: RESULT = setNodeLocationFromSymbols(new PolyIdentifier(id, list.toArray(new String[0]), new String[0]), id$, r$); :} 
+| identifier:id LBRACE ne_label_list:llist RBRACE LT ne_tvar_list:vlist GT:r
+ {: RESULT = setNodeLocationFromSymbols(new PolyIdentifier(id, llist.toArray(new String[0]), vlist.toArray(new String[0])), id$, r$); :}
+;
+
+opt_parameters::=
+ /*epsilon*/
+ {: RESULT = null; :} 
+| parameters:params
+ {: RESULT = params; :} 
+;
+
+parameters::=
+ LPAR ne_parameters:list RPAR
+ {: RESULT = list.toArray(new Parameter[0]); :} 
+;
+
+logic_def::=
+/* logic function definition */
+ LOGIC:l logic_rt_type:type poly_id:id opt_parameters:param EQUAL lexpr:expr SEMICOLON:r
+ {: if (param == null) {
+ 		RESULT = setNodeLocationFromSymbols(new LogicFunction(id, type, expr), l$, r$);
+ 	} else {
+ 		RESULT = setNodeLocationFromSymbols(new LogicFunction(id, param, type, expr), l$, r$);
+ 	} :}
+/* predicate definition */
+| PREDICATE:l poly_id:id opt_parameters:param EQUAL lexpr:expr SEMICOLON:r
+ {: if (param == null) {
+ 		RESULT = setNodeLocationFromSymbols(new Predicate(id, expr), l$, r$);
+ 	} else {
+ 		RESULT = setNodeLocationFromSymbols(new Predicate(id, param, expr), l$, r$);
+ 	} :}
+/* inductive predicate definition */
+| INDUCTIVE:l poly_id:id parameters:param LBRACE indcases:cases RBRACE:r
+ {: RESULT = setNodeLocationFromSymbols(new Inductive(id, param, cases.toArray(new Case[0])), l$, r$); :}
+| LEMMA:l poly_id:id COLON lexpr:expr SEMICOLON:r
+ {: RESULT = setNodeLocationFromSymbols(new Lemma(id, expr), l$, r$); :}
+| AXIOMATIC:l any_identifier:id LBRACE logic_decls:ldecls RBRACE:r
+ {: RESULT = setNodeLocationFromSymbols(new Axiomatic(new PolyIdentifier(id), ldecls.toArray(new LogicStatement[0])), l$, r$); :}
+/* types are not supported */
+/*| TYPE poly_id_type_add_typename EQUAL typedef SEMICOLON */
+;
+
+logic_decls::=
+ /* epsilon */
+ {: RESULT = new ArrayList<LogicStatement>(); :}
+| logic_decl:ldecl logic_decls:list
+ {: list.add(0, ldecl);
+ 	RESULT = list; :}	
+;
+
+logic_decl::=
+ logic_def:ldef
+ {: RESULT = ldef; :}  
+/* logic function declaration / no idea what reads_clause is */
+/*| LOGIC logic_rt_type poly_id opt_parameters reads_clause SEMICOLON*/
+/* predicate declaration / no idea what reads_clause is */
+/*| PREDICATE poly_id opt_parameters reads_clause SEMICOLON*/
+/* type declaration / not supported */
+/*| TYPE poly_id_type SEMICOLON*/
+/* axiom */
+| AXIOM:l poly_id:id COLON lexpr:expr SEMICOLON:r
+ {: RESULT = setNodeLocationFromSymbols(new Axiom(id, expr), l$, r$); :}
+;
+
+reads_clause::=
+ /* epsilon */ 
+| READS zones 
+;
+
+typedef::=
+ ne_datacons_list 
+| logic_type 
+;
+
+datacons_list::=
+ /* epsilon */ 
+| PIPE datacons datacons_list 
+;
+
+ne_datacons_list::=
+ datacons datacons_list 
+| PIPE datacons datacons_list 
+;
+
+datacons::=
+ identifier 
+| identifier LPAR ne_type_list RPAR 
+;
+
+ne_type_list::=
+ logic_type 
+| logic_type COMMA ne_type_list
+; 
+
+indcases::=
+ /* epsilon */
+ {: RESULT = new ArrayList<Case>(); :}  
+| CASE:l poly_id:id COLON lexpr:expr SEMICOLON:r indcases:list
+ {: list.add(0, setNodeLocationFromSymbols(new Case(id, expr), l$, r$));
+ 	RESULT = list; :} 
+;
+
+
+ne_tvar_list::=
+ identifier:id
+ {: RESULT = new ArrayList<String>();
+ 	RESULT.add(id); :}                     
+| identifier:id COMMA ne_tvar_list:vlist
+ {: ArrayList<String> list = new ArrayList<String>();
+ 	list.add(id);
+ 	list.addAll(vlist);
+ 	RESULT = vlist; :}  
+;
+
+ne_label_list::=
+ label_name:name
+ {: RESULT = new ArrayList<String>();
+ 	RESULT.add(name); :}                     
+| label_name:name COMMA ne_label_list:llist
+ {: ArrayList<String> list = new ArrayList<String>();
+ 	list.add(name);
+ 	list.addAll(llist);
+ 	RESULT = list; :} 
+;
+
+/* names */
+label_name::=
+ any_identifier:i
+ {: RESULT = i; :} 
+;
+
+behavior_name_list::=
+ /* epsilon */
+ {: RESULT = new String[0]; :}         
+| ne_behavior_name_list:behavlist 
+ {: RESULT = behavlist; :}
+;
+
+ne_behavior_name_list::=
+ behavior_name:be	{: RESULT = be.toArray(new String[1]);:}                           
+| behavior_name:be COMMA ne_behavior_name_list:bel
+{:
+	for (String s : bel) {
+		be.add(s);	
+	}
+	RESULT = be.toArray(new String[1]);
+:} 
+;
+
+behavior_name::=
+ any_identifier:s {:RESULT = new ArrayList<String>();
+ 					RESULT.add(s); :}
+;
+
+/* TODO: Keywords as BehaviorName? */
+any_identifier::=
+ identifier_or_typename:i {: RESULT = i;:} 
+/*| keyword */ 
+;
+
+identifier_or_typename::=
+ IDENTIFIER:i	{: RESULT = i;:} 
+| TYPENAME:t	{: RESULT = t;:}	  
+;
+
+identifier::=
+ IDENTIFIER:i {: RESULT = i;:}
+;
+
+bounded_var::=
+ identifier 
+| TYPENAME  /* Since TYPENAME cannot be accepted by lexpr rule */
+;
+
+c_keyword::=
+ CASE 
+| CHAR 
+| BOOLEAN 
+| CONST 
+| DOUBLE 
+| ELSE 
+| ENUM 
+| FLOAT 
+| IF 
+| INT 
+| LONG 
+| SHORT 
+| SIGNED 
+| SIZEOF 
+| STRUCT 
+| UNION 
+| UNSIGNED 
+| VOID 
+;
+
+acsl_c_keyword::=
+ FOR 
+;
+
+post_cond::=
+ ENSURES 
+| EXITS   
+| BREAKS  
+| CONTINUES 
+| RETURNS 
+;
+
+is_acsl_spec::=
+ post_cond  
+| ASSIGNS    
+| BEHAVIOR   
+| REQUIRES   
+| TERMINATES 
+| COMPLETE   
+| DECREASES  
+| DISJOINT   
+;
+
+is_acsl_decl_or_code_annot::=
+ ASSERT    
+| ASSUMES   
+| GLOBAL    
+| IMPACT    
+| INDUCTIVE 
+| INVARIANT 
+| LEMMA     
+| LOGIC     
+| LOOP      
+| PRAGMA    
+| PREDICATE  
+| SLICE     
+| TYPE      
+| MODEL     
+;
+
+is_acsl_other::=
+ AXIOM 
+| BEHAVIORS 
+| INTEGER 
+| LABEL 
+| READS 
+| REAL 
+| WRITES 
+;
+
+is_ext_spec::=
+ CONTRACT 
+| FUNCTION 
+| MODULE   
+| INCLUDE  
+| EXT_AT   
+| EXT_LET  
+;
+
+keyword::=
+ c_keyword      
+| acsl_c_keyword 
+| is_ext_spec    
+| is_acsl_spec   
+| is_acsl_decl_or_code_annot 
+| is_acsl_other  
+;
+
+
+bs_keyword::=
+ AT 
+| BASE_ADDR 
+| BLOCK_LENGTH 
+| EMPTY 
+| FALSE 
+| FORALL 
+| FRESH 
+| FROM 
+| INTER 
+| LAMBDA 
+| LET 
+| NOTHING 
+| NULL 
+| OLD 
+| RESULT 
+| SEPARATED 
+| TRUE 
+| BSTYPE 
+| TYPEOF 
+| BSUNION 
+| VALID 
+| VALID_INDEX 
+| VALID_RANGE 
+| INITIALIZED 
+| WITH 
+;
+
+wildcard::=
+ any_identifier 
+| bs_keyword 
+| AMP 
+| AND 
+| ARROW 
+| COLON 
+| COLON2 
+| COLONCOLON 
+| COLONGT 
+| COMMA 
+| CONSTANT
+| CONSTANT_FLOAT
+| CONSTANT10 
+| DOLLAR 
+| DOT 
+| DOTDOT 
+| DOTDOTDOT 
+| EQ 
+| EQUAL 
+| EXISTS 
+| GE 
+| GHOST 
+| GT 
+| GTGT 
+| HAT 
+| HATHAT 
+| IFF 
+| IMPLIES 
+| LBRACE 
+| LE 
+| LPAR 
+| LSQUARE 
+| LT 
+| LTCOLON 
+| LTLT 
+| MINUS 
+| NE 
+| NOT 
+| OR 
+| PERCENT 
+| PIPE 
+| PLUS 
+| QUESTION 
+| RBRACE 
+| RPAR 
+| RSQUARE 
+| SEMICOLON 
+| SLASH 
+| STAR 
+| STRING_LITERAL 
+| TILDE 
+;

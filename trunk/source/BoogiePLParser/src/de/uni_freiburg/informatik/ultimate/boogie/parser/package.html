@@ -1,0 +1,264 @@
+<html>
+<head></head>
+<body>
+ This package converts Boogie 2 input into an AST.  The resulting parse 
+ tree implements the INode interface. 
+ 
+ The AST is build according to the following grammar, start symbol is 
+ <code>unit</code>.  Here <code>^TRIGGER expr</code> stands for a node
+ with payload's name <code>TRIGGER</code> and a single child built
+ according to the rule <code>expr</code>.
+ 
+<pre>
+Unit ::= declarations: Declaration[];
+
+Declaration ::= 
+	filename  : String
+	lineNr    : int
+	attributes: Attribute[]
+	( {TypeDeclaration} 
+		isFinite   : boolean
+		identifier : String
+		typeParams : String[]
+		synonym    : ?ASTType
+	| {ConstDeclaration}
+		/**
+		 * True iff the constants are unique.  A unique constant
+		 * is disjoint from all other unique constants.
+		 */
+		isUnique    : boolean
+		/**
+		 * The constants declared, together with their type. 
+		 */
+		varList     : VarList
+		/**
+		 * The parent info.  This lists all the immediate parents p,
+		 * such that this &lt;: p.  If this is null, there is nothing
+		 * known about the parents, if this is empty, there are no
+		 * parents at all.
+		 */
+		parentInfo  : ParentEdge[]
+		/**
+		 * True iff this object is only an immediate parent
+		 * of those constants, that list this object in the parentInfo.
+		 */
+		isComplete  : boolean
+	| {Axiom}
+		formula     : Expression
+	| {FunctionDeclaration}
+		identifier  : String
+		typeParams : String[]
+		inParams    : VarList[]
+		outParam    : VarList
+		body        : ?Expression
+	| {VariableDeclaration}
+		variables   : VarList[]
+	| {/**
+		* Represents a procedure or an implementation.
+		*/ Procedure}
+		identifier  : String
+		typeParams : String[]
+		inParams    : VarList[]
+		outParams   : VarList[]
+		/**
+		 * The specification. It is null for an implementation and
+		 * != null (but its length may be 0) for a procedure.
+		 */
+		specification: Specification[]
+		/**
+		 * The body.  If this is an implementation (getSpecification() returns null)
+		 * this must be present, otherwise it is optional.
+		 */
+		body        : Body
+	);
+
+/**
+ * Represents an ast type.
+ * This is different from BoogieType, as it is not unified and still contains the
+ * names of the type parameters.
+ */
+ASTType ::=
+		realType : ?&IType
+	( {PrimitiveType}
+		name : String
+	| {NamedType}
+		name : String
+		typeArgs : ASTType[]
+	| {ArrayType}
+		typeParams : String[]
+		indexTypes : ASTType[]
+		valueType  : ASTType
+	);
+
+Attribute ::=
+	  {Trigger}
+		triggers: Expression[]
+	| {NamedAttribute}
+		name   : String
+		values : Expression[]
+	;
+	
+/**
+ * This node represents an expression.
+ * This base class is almost empty, the sub classes contain the possible types.
+ */
+Expression ::=
+	    /** The type of this expression.  This is set by the type-checker */
+		type   : ?&IType
+	( { BinaryExpression }
+		operator : Operator { LOGICIFF, LOGICIMPLIES, LOGICAND, LOGICOR,
+						   COMPLT, COMPGT, COMPLEQ, COMPGEQ, COMPEQ, COMPNEQ, COMPPO,
+						   BITVECCONCAT, ARITHPLUS, ARITHMINUS, ARITHMUL, ARITHDIV, ARITHMOD }
+		left  : Expression
+		right : Expression
+	| { UnaryExpression }
+		operator : Operator { LOGICNEG, ARITHNEGATIVE, OLD }
+		expr     : Expression
+	| { ArrayAccessExpression }
+		array   : Expression
+		indices : Expression[]
+	| { ArrayStoreExpression }
+		array   : Expression 
+		indices : Expression[]
+		value   : Expression
+	| { BitVectorAccessExpression }
+		/** The sub expression representing the bit-vector. */
+		bitvec  : Expression
+		/** The end index of this bit-vector access */
+		end     : int
+		/** The start index of this bit-vector access */
+		start   : int
+	| { BooleanLiteral }
+		value   : boolean
+	| { IntegerLiteral }
+	    /** The integer given as String.  This representation is used to support 
+	        arbitrarily large numbers.  We do not need to compute with them but
+	        give them 1-1 to the decision procedure. */
+		value   : String
+	| { BitvecLiteral }
+	    /** The value given as String.  This representation is used to support 
+	        arbitrarily large numbers.  We do not need to compute with them but
+	        give them 1-1 to the decision procedure. */
+		value   : String
+		/** The number of bits in this bitvector */ 
+		length  : int
+	| { /** Represents a string literal.  
+	        This is only used as attribute value, since strings are not otherwise 
+	        supported in Boogie.  A string literal never has a type. */
+	    StringLiteral }
+		value   : String
+	| { IdentifierExpression }
+		identifier : String
+	| { FunctionApplication }
+		identifier : String
+		arguments  : Expression[]
+	| { QuantifierExpression }
+		/** This is true for universal and false for existential quantifier */
+		isUniversal : boolean
+		typeParams  : String[]
+		parameters  : VarList[]
+		attributes  : Attribute[]
+		subformula  : Expression
+	| { /** This can be used as call forall parameter, or as if or 
+	     * while condition.  In all other places it is forbidden. */ 
+		WildcardExpression }
+	);
+
+/**
+ * Represents a list of names together with a type info, which is
+ * used for declaration of constants, variables, function parameters
+ * procedure parameters and logical variables.
+ * For function parameters the identifier list must contain at most
+ * one element (and zero means that the parameter has no name).
+ * In any other case the identifier list must not be empty.
+ * The where clause may only be present in procedures (but not 
+ * implementations) and in variable declarations.
+ */
+VarList ::=
+	identifiers : String[]
+	type        : ASTType
+	whereClause : ?Expression
+	;
+	
+Specification ::=
+	filename    : String
+	lineNr      : int
+	isFree      : boolean
+	( { RequiresSpecification} 
+		formula: Expression
+	| { EnsuresSpecification}
+		formula: Expression
+	| { ModifiesSpecification}
+		identifiers : String[]
+	| { LoopInvariantSpecification }
+		formula : Expression
+	);
+
+Body ::=
+	localVars   : VariableDeclaration[]
+	block       : &Statement[]
+	;
+
+Statement ::=
+	filename  : String
+	lineNr    : int
+	( { Label }
+		name    : String
+	| { AssertStatement }
+		formula : Expression
+	| { AssumeStatement }
+		formula : Expression
+	| { HavocStatement }
+		identifiers : String[]
+	| { AssignmentStatement }
+		lhs     : LeftHandSide[]
+		rhs     : Expression[]
+	| { CallStatement }
+		isForall  : boolean
+		lhs       : String[]
+		methodName: String
+		arguments : Expression[]
+	| { IfStatement }
+		condition : Expression
+		thenPart  : Statement[]
+		elsePart  : Statement[]
+	| { WhileStatement }
+		condition  : Expression
+		invariants : LoopInvariantSpecification[]
+		body       : Statement[]         
+	| { BreakStatement }
+		/** The label.  If null breaks the immediate surrounding while loop */
+		label : ?String
+	| { ReturnStatement }
+	| { GotoStatement }
+		labels : String[]
+	);
+	
+LeftHandSide ::=
+	    type : ?&IType
+	( { VariableLHS }
+		identifier : String
+	| { ArrayLHS }
+		array   : LeftHandSide
+		indices : Expression[]
+	);
+ParentEdge ::=
+		/**
+		 * True if this parent edge is unique.  In that case the
+		 * <emph>children</emph> of this constant are disjoint from 
+		 * the children of any other constant declared with the
+		 * same unique parentNode. 
+		 */
+		isUnique   : boolean
+		/**
+		 * The name of the parent
+		 */
+		identifier : String
+	;
+ </pre>
+ 
+ The terminals <code>id strlit intlit bvlit boollit</code> are childless
+ nodes that contain the literal string in the payload.  A 
+ <code>boollit</code> must contain "true" or "false", 
+ a <code>bvlit</code> a string like "4bv3".
+</body>

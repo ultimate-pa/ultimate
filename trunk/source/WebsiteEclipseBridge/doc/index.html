@@ -1,0 +1,149 @@
+<html>
+<head>
+<title>Project: WebsiteEclipseBridge</title>
+</head>
+<body>
+	<h1>Project: WebsiteEclipseBridge</h1>
+	<h2>Project Description</h2>
+	This project starts OSGi on Tomcat in which an Equinox/Eclipse
+	environment is started. All Ultimate plug-ins (except all plug-ins
+	contributing to the GUI, i.e. Jung*, CDTDummyParser, CDTPlugin, GuiRCP
+	and log4j) are started in OSGi as a bundle.
+	<h3>High-level Sketch</h3>
+	The following picture describes the rough sketch and i.e. the data flow
+	of the website. It is in many cases obsolete and not complete, but it
+	describes the basic idea in an easy manner:
+	<br />
+	<img src="./20120215-WebsiteSketch.png" />
+	<br />
+	<br />
+	<h3>Project dependencies</h3>
+	The following picture describes the structure of the web project.
+	<br />
+	<img src="./schema.png" />
+	<h3>Useful Links</h3>
+	<a
+		href="http://angelozerr.wordpress.com/category/java/osgi/equinox/equinox-servletbridge/">Equinox
+		Servlet Bridge by Example</a>
+	<h2>How to run the Website</h2>
+	<h3>Prepare your Eclipse</h3>
+	Assuming you are using Eclipse RCP, the following Plug-Ins are required
+	to run the Web-Server.
+	<ul>
+		<li><b>JST Server Adapters</b></li>
+		<li><b>JST Server Adapters Extension</b></li>
+		<li><b>Eclipse Java EE Developer Tools</b></li>
+		<li><b>WAR Products (Incubation)</b></li>
+		<li><b>Equinox Target Components</b></li>
+		<li>Eclipse Java Web Developer Tools</li>
+		<li>Eclipse Web Developer Tools</li>
+	</ul>
+	Only the bold ones are necessary - the others are optional and add some
+	features that might help during the development process.
+	<br /> To install these packages, go to
+	<code>Help</code>
+	&gt;
+	<code>Install new Software</code>
+	:
+	<br />
+	<img src="install_new_soft0.png" />
+	<br /> Then select the corresponding repository for your Eclipse
+	release in the new window:
+	<br />
+	<img src="install_new_soft.png" />
+	<br /> Select the packages listed above and start the installation.
+	<i>If the installation process of this packages runs into
+		dependency problems it might help to install the Eclipse updates
+		before installing the new plug-ins.</i>
+	<br /> Click on <i>Add required Plugins</i> in the <i>Configuration</i> tab 
+	in <i>/WebsiteEclipseBridge/WebsiteEclipseBridge.warproduct</i>
+	<h3>Option A: Run the web projects from Eclipse</h3>
+	<ol>
+		<li>Download Tomcat and add a server adapter to your Eclipse. For
+			this, follow these steps:
+			<ul>
+				<li>Download Tomcat from <a href="jakarta.apache.org/tomcat">jakarta.apache.org/tomcat</a></li>
+				<li>Extract the compressed file to a location, where you want
+					to have it</li>
+				<li>In Eclipse, open your Servers view:<br /> <img
+					src="server_view.png" />.<br />
+				<i>Note: if it is not in this list, select <code>Other
+							...</code></i></li>
+				<li>Right click in the newly opened Servers view and select <code>new</code>&gt;<code>Server
+						...</code></li>
+				<li>Select Tomcat in the version you downloaded it, and follow
+					the wizard.</li>
+			</ul> (for more details refer to <a
+			href="http://help.eclipse.org/indigo/index.jsp?topic=%2Forg.eclipse.jst.server.ui.doc.user%2Ftopics%2Ftomcat.html">this</a>)
+		</li>
+		<li>Add the Projects <code>Website</code> and <code>WebsiteEclipseBridge</code>
+			to the server, by right clicking the new server in Servers view.<br />
+			<img src="addPro.png" />
+		</li>
+		<li>Start Tomcat, by right clicking the server in Servers view
+			and selecting start.</li>
+		<li>When Tomcat is in state <i>started</i>, open the eclipse
+			console view
+		</li>
+		<li>run the osgi command <i>ss</i> to see the osgi status; The
+			bundles <code>WebInterface</code> should be in State <i>RESOLVED</i>.
+			Start this bundle with <code>start WebInterface</code> or <code>start
+				#ID</code>, where <code>#ID</code> is the ID number of WebInterface.
+		</li>
+		<li>You can now connect to: <a
+			href="http://localhost:8080/Website/">the Website</a> and <a
+			href="http://localhost:8080/WebsiteEclipseBridge/if">the
+				WebUltimateInterface</a></li>
+	</ol>
+	<b>Note:</b>
+	<i>Check the OSGi status with <code>ss</code>. All bundles should
+		be &lt;&lt;LAZY&gt;&gt;, RESOLVED or STARTED except the unused and
+		system dependent window toolkits! If this is not the case, check the
+		missing bundle dependencies of the effected bundles witch <code>bundle
+			#ID</code></i>
+	<br />
+	<b>Note:</b>
+	<i>You might want to add the <a href="./logging.properties">logging.properties</a>
+		file to your server's configuration, to see Ultimates log4j output.
+	</i>
+	<br />
+	<b>Note:</b>
+	<i>Eclipse might want to start multiple instances of your Tomcat
+		Server accidently during the auto-publishing process. You can monitor
+		and prevent this behaviour in the Debug view which can be found the
+		same way as the Servers view, described above.</i>
+	<br />
+	<b>Note:</b>
+	<i>If some changes seem to be not published correctly and
+		automatically, use the <code>Clean...</code> and <code>Clean
+			Tomcat working directory</code> functions on the corresponding Server in
+		Servers view.
+	</i>
+	<h3>Option B: Run the web projects on external Tomcat</h3>
+	Export the Website project as <i>WAR File</i> using filename Website.war and
+	WebsiteEclipseBridge as <i>WAR product</i> using filename
+	WebsiteEclipseBridge.war and copy the two war files into tomcat's <i>Webapps</i>
+	folder.
+	<h2>Open Points:</h2>
+	<ul>
+		<li>Toolchain definition is only an example - i.e. the settings
+			are not really working as some of them might not exist anymore.</li>
+		<li>Design of the Website can easily be changed if required
+			(nearly everything concerning the layout is defined in CSS)</li>
+		<li>Open multiple files automatically in multiple tabs is not as
+			easy as expected and was not implemented, as this behavior is browser
+			dependent. The current workaround is to open multiple tabs and open
+			the files in each tab.</li>
+	</ul>
+	<h2>See also</h2>
+	<ul>
+		<li><a href="../../WebInterface/doc/index.html">WebInterface
+				documentation</a></li>
+		<li><a href="../../Website/doc/index.html">Website
+				documentation</a></li>
+		<li><a href="../../WebsiteEclipseBridge/doc/index.html">WebsiteEclipseBridge
+				documentation</a></li>
+		<li><a href="../../WebUltimateBridge/doc/index.html">WebUltimateBridge
+				documentation</a></li>
+	</ul>
+</body>

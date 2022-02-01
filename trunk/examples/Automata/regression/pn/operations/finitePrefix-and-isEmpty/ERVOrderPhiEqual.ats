@@ -1,0 +1,31 @@
+// Date:  11.06.2012
+// Author: j.jarecki@gmx.de
+// Example where there are two Events e,e' generated during the construction
+// of the prefix' such that:
+//		p(e) = p(e') = t3
+//		|[e]| = |[e']|		(this is implied by the next condition)
+//		phi([e]) = phi([e'])
+// But:
+//		Min([e]) != Min([e'])
+// and therefore [e] <_R [e'], which holds in one direction alsways since
+// <_R is the total order suggested in TACAS 1996 paper.
+
+
+BranchingProcess bp = finitePrefix(equalphi);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 10);
+
+assert(!isEmpty(equalphi));
+
+
+PetriNet equalphi = (
+  alphabet = {t1 t2 t3},
+  places = {s0 s1 s2 s3},
+  transitions = {
+    ({s1 s0} t1 {s3})
+    ({s0 s2} t2 {s3})
+    ({s3} t3 {s0})
+  },
+  initialMarking = {s0 s1 s2},
+  acceptingPlaces = {s0}
+);

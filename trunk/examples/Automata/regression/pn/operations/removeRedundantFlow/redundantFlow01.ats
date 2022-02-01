@@ -1,0 +1,17 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2020-02-20
+//
+
+PetriNet res = removeRedundantFlow(net);
+print(res);
+
+PetriNet net = (
+	alphabet = { a b c },
+	places = { p0 p1 p2 red0 red1 },
+	transitions = {
+		({p0 red0 } a {p1 red1 })
+		({p1 red1 } b {p2 red1 })
+	},
+	initialMarking = {p0 red0 },
+	acceptingPlaces = {p2 }
+);

@@ -1,0 +1,48 @@
+// reveals bug in revision 7230
+//
+// problem: t1 and t2 are merged
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 6);
+assert(shrinkNwaSize == 6);
+assert(minimizeNwaPmaxSatDirectBiSize == 6);
+assert(minimizeNwaPmaxSatDirectSize == 6);
+assert(reduceNwaDirectSimulationSize == 6);
+assert(reduceNwaDirectSimulationBSize == 6);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
+// assert(reduceNwaDelayedSimulationSize == 6);
+// assert(reduceNwaDelayedSimulationBSize == 6);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 6);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c_1" "c_2"},
+	internalAlphabet = {"i_1" "i_2"},
+	returnAlphabet = {"r_1"},
+	states = {"q0" "q1" "qE" "t0" "t1" "t2"},
+	initialStates = {"q0" "q1"},
+	finalStates = {"qE"},
+	callTransitions = {
+		 ("q0" "c_1" "t0")
+		 ("q1" "c_2" "t0")
+	},
+	internalTransitions = {
+		 ("t0" "i_1" "t1")
+		 ("t0" "i_2" "t2")
+	},
+	returnTransitions = {
+		 ("t1" "q0"  "r_1" "qE")
+		 ("t2" "q1"  "r_1" "qE")
+	}
+);

@@ -1,0 +1,44 @@
+//State machine model
+CONST State1 IS 1
+CONST State2 IS 2
+CONST State3 IS 3
+
+INTERNAL State IS int
+INPUT trigger IS bool
+INPUT reset IS bool
+OUTPUT blinker IS bool
+OUTPUT warnblinker IS bool
+OUTPUT selfdestruct IS bool
+OUTPUT statuslamp1 IS bool
+OUTPUT statuslamp2 IS bool
+OUTPUT statuslamp3 IS bool
+
+//Constraint_State: Globally, it is always the case that "State >= 1 && State <= 3" holds.
+
+req01: Globally, it is always the case that if "reset" holds then "State == State1"  holds after at most 10 time units.
+
+req02tr: Globally, it is always the case that if "State == State1" holds then "trigger" toggles "State == State2 && statuslamp2" at most 50 time units later.
+req03tr: Globally, it is always the case that if "State == State2" holds then "trigger" toggles "State == State3 && statuslamp3" at most 50 time units later.
+req04tr: Globally, it is always the case that if "State == State3" holds then "trigger" toggles "State == State1 && statuslamp1" at most 50 time units later.
+
+req05: Globally, it is always the case that if "State == State1" holds then "!blinker"  holds after at most 10 time units.
+req06: Globally, it is always the case that if "State == State2" holds then "warnblinker"  holds after at most 10 time units.
+req07: Globally, it is always the case that if "State == State3" holds then "!selfdestruct"  holds after at most 10 time units.
+
+
+//// test sequence
+// t=  0: reset
+// t= 10: trigger, (!reset)
+// t= 11: !trigger
+// t= 53: !trigger, reset
+// t= 55: trigger, reset				-> warnblinker (✔) 
+// t= 57: !trigger, reset
+// t= 62: !trigger
+// t=106: !trigger						-> statuslamp3 (✔)
+// t=116: !trigger						-> !selfdestruct (✔), statuslamp3 (✔)
+
+//// test sequence
+// t=  0: reset
+// t= 10: trigger
+// t= 12: !trigger
+// t= 52: !trigger 						-> statuslamp2 (✔)

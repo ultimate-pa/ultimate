@@ -1,0 +1,7 @@
+// FuntionApplication 'prev()'
+INPUT P is int
+INPUT R is bool
+INPUT S is int
+INPUT T is int
+
+req1: After "P > prev(P)", it is always the case that "prev(R) && S > prev(T)" holds

@@ -1,0 +1,42 @@
+#Wed Feb 24 11:15:41 CET 2016
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ALWAYS
+
+
+#Wed Feb 24 11:15:41 CET 2016
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/interpolation\ mode=ForwardPredicates
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_ModelsAndUnsatCoreMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
+@de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ standard\ solver\ (from\ RCFGBuilder)\ with\ FP\ interpolation\ as\ fallback=false
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Timeout\ in\ seconds=30
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ live\ variables\ in\ FP/BP\ interpolation=true
+
+#Wed Feb 24 11:15:41 CET 2016
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:2000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+#Wed Feb 24 11:15:41 CET 2016
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
+
+#Wed Feb 24 11:15:41 CET 2016
+file_export_version=3.0
+\!/instance/UltimateCore=
+/instance/UltimateCore/Log\ level\ for\ plugins=info
+/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
+/instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=false
+@UltimateCore=0.0.1
+

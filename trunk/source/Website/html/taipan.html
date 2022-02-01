@@ -1,0 +1,80 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<body>
+	<h1>Taipan</h1>
+	<p>Ultimate Taipan is a software model checker that is implemented
+		in the Ultimate framework.</p>
+
+	<h2>Web interface</h2>
+	<p>
+		<span style="font-variant: small-caps">Ultimate</span> Taipan is
+		available via a web interface.
+	</p>
+
+
+	<h2>Developers</h2>
+	<p>
+	<ul>
+		<li><a
+			href="https://swt.informatik.uni-freiburg.de/staff/dietsch">Daniel
+				Dietsch</a></li>
+		<li><a
+			href="https://swt.informatik.uni-freiburg.de/staff/greitschus">Marius
+				Greitschus</a></li>
+	</ul>
+	</p>
+
+	<h2>Download</h2>
+	<p>
+		We try to provide regular releases for Windows and Linux at <a
+			href="https://github.com/ultimate-pa/ultimate/releases">our
+			GitHub release page</a>.
+	</p>
+	<h3>SV-COMP</h3>
+	<ul>
+		<li><a
+			href="https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2017/UltimateTaipan-linux.zip"><span
+				style="font-variant: small-caps">Ultimate</span> Taipan for SV-COMP
+				2017 </a></li>
+	</ul>
+	<p>
+		All archives available here contain commandline versions of <span
+			style="font-variant: small-caps">Ultimate</span> Taipan that
+		participate(d) in the <a href="https://sv-comp.sosy-lab.org">Competition
+			on Software Verification (SV-COMP)</a>. They are build for x86-64 linux
+		and can be run using the provided Python script
+		<code>Ultimate.py</code>
+		as follows.
+	</p>
+	<p>
+		<code>Ultimate.py [-h] [--version] [--full-output] [--validate]
+			spec {32bit,64bit} {simple,precise} file [file ...]</code>
+		<br />
+	</p>
+	<p>Mandatory arguments</p>
+	<ul>
+		<li><code>spec</code><br /> An property (.prp) file from SVCOMP.</li>
+		<li><code>{32bit,64bit}</code><br /> Choose which architecture
+			(defined as per SV-COMP rules) should be assumed.</li>
+		<li><code>{simple,precise}</code><br /> Ultimate does not use
+			the distinction between simple and precise memory model and always
+			assumes precise. For compatibility reasons, you have to provide
+			either value.</li>
+		<li><code>file</code><br />Either one C file or one C file and
+			one witness as matching .graphml file.</li>
+	</ul>
+	<p>Optional arguments</p>
+	<ul>
+		<li><code>-h, --help</code><br /> Show a help message and exit.</li>
+		<li><code>--version</code><br />Print <span
+			style="font-variant: small-caps">Ultimate</span> Taipan's version and
+			exit.</li>
+		<li><code>--full-output</code><br /> Print <span
+			style="font-variant: small-caps">Ultimate</span> Taipan's full output
+			to stderr after verification ends.</li>
+		<li><code>--validate </code><br />Validate the provided witness</li>
+	</ul>
+	</p>
+
+</body>
+</html>

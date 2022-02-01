@@ -1,0 +1,4 @@
+Note that there are two variants of the benchmark in the "variants" directory.
+You need to manually select the variant that you want to run.
+This can be done simply by moving the variant you do _not_ want somewhere
+else (i.e., leave only the variant you want in the "variants" directory).

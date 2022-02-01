@@ -1,0 +1,34 @@
+// Reveals Bug in new dead end removal for DoubleDeckers
+// Date: 27.10.2012
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+NestedWordAutomaton result = removeDeadEnds(nwa);
+assert(numberOfStates(result) == 9);
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call16" "call14" },
+	internalAlphabet = {"g = g + 1;0" "assume g <= 2;3" "assume !(g <= 2);6" "assume true;8" "g = 0;9" "assume !(g != 3);11" "assume g != 3;12" "assume true;13" },
+	returnAlphabet = {"return17" "return15" },
+	states = {"sEntry" "s10" "qEx1" "q9" "L18'42" "MainErr0AssertViolation43" "sEx" "rAcc" "MainErr0AssertViolation47" "MainFINAL44" "MainEXIT45" "MainEXIT49" "MainFINAL48" "rInit" "qEntry" "q4" "r10" "sEntry2" "q10" "q5" },
+	initialStates = {"r10" "q5" },
+	finalStates = {"rAcc" },
+	callTransitions = {
+		 ("q9" "call14" "sEntry")
+		 ("r10" "call16" "sEntry2")
+		 ("q5" "call14" "sEntry")
+	},
+	internalTransitions = {
+		 ("sEntry" "g = g + 1;0" "s10")
+		 ("s10" "assume g <= 2;3" "q9")
+		 ("s10" "assume !(g <= 2);6" "sEx")
+		 ("sEntry2" "g = g + 1;0" "s10")
+		 ("q10" "assume true;8" "qEx1")
+	},
+	returnTransitions = {
+		 ("qEx1" "r10" "return17" "rAcc")
+		 ("qEx1" "q5" "return15" "q10")
+		 ("sEx" "q9" "return15" "q10")
+	}
+);

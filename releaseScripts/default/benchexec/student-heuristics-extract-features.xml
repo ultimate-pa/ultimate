@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+
+	<rundefinition name="AutomizerBplInline with feature extraction">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.extract.smt.features.during.analysis">true</option>
+		<option name="--traceabstraction.smt.feature.extraction.dump.path.">./dump</option>
+	</rundefinition>
+
+	<tasks name="Pdr">
+		<includesfile>../../../trunk/examples/bench-pdr-boogie.set</includesfile>
+	</tasks>
+</benchmark>

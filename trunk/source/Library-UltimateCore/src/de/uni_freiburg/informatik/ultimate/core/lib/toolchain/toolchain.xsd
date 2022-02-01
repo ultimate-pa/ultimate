@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"	xmlns:jxb="http://java.sun.com/xml/ns/jaxb" jxb:version="2.0">	<xsd:element name="rundefinition" type="RunDefinition"/>	<xsd:complexType name="RunDefinition">		<xsd:sequence>			<xsd:element name="name" minOccurs="1" maxOccurs="1"				nillable="false">				<xsd:simpleType>					<xsd:restriction base="xsd:string">						<xsd:whiteSpace value="collapse" />						<xsd:minLength value="3" />					</xsd:restriction>				</xsd:simpleType>			</xsd:element>			<xsd:element name="toolchain" type="ToolchainListType"				minOccurs="1" maxOccurs="1" />			<xsd:element name="options" minOccurs="0" maxOccurs="1">				<xsd:complexType>					<xsd:sequence>						<xsd:element name="option" type="OptionType" />					</xsd:sequence>				</xsd:complexType>			</xsd:element>		</xsd:sequence>	</xsd:complexType>	<xsd:complexType name="OptionType">		<xsd:attribute name="name" type="xsd:string" />		<xsd:attribute name="value" type="xsd:anySimpleType" />		<xsd:attribute name="changeable" type="xsd:boolean" />	</xsd:complexType>	<xsd:complexType name="ToolchainListType">		<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+			<xsd:choice>				<xsd:element name="plugin" type="PluginType" />
+				<xsd:element name="subchain" type="SubchainType" />
+			</xsd:choice>		</xsd:sequence>	</xsd:complexType>
+
+	<xsd:complexType name="PluginType">		<xsd:sequence>
+			<xsd:element name="serialize" type="SerializeType"
+				minOccurs="0" maxOccurs="1" />			<xsd:element name="dropmodels" type="DropmodelType"				minOccurs="0" maxOccurs="1" />
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:string" />
+	</xsd:complexType>
+
+	<xsd:complexType name="SubchainType">
+		<xsd:sequence maxOccurs="unbounded">
+			<xsd:choice>				<xsd:element name="plugin" type="PluginType" />
+				<xsd:element name="subchain" type="SubchainType" />
+			</xsd:choice>		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="SerializeType">
+		<xsd:sequence>
+			<xsd:element name="parser" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="model" type="ToolchainModelType"
+				minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="ToolchainModelType">		<xsd:attribute name="id">			<xsd:simpleType>				<xsd:restriction base="xsd:string">					<xsd:pattern value="mostrecent|[A-Za-z0-9.]+" />				</xsd:restriction>			</xsd:simpleType>		</xsd:attribute>	</xsd:complexType>	<xsd:complexType name="DropmodelType">		<xsd:sequence>			<xsd:element name="parser" minOccurs="0" maxOccurs="1" />			<xsd:element name="model" type="ModelIdOnlyType"				minOccurs="0" maxOccurs="unbounded" />		</xsd:sequence>	</xsd:complexType>	<xsd:complexType name="ModelIdOnlyType">		<xsd:attribute name="id">			<xsd:simpleType>				<xsd:restriction base="xsd:string">					<xsd:pattern value="[A-Za-z0-9.]+" />				</xsd:restriction>			</xsd:simpleType>		</xsd:attribute>	</xsd:complexType>
+</xsd:schema>

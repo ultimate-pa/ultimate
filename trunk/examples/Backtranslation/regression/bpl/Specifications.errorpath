@@ -1,0 +1,5 @@
+[L20]           z := 0;
+         VAL    [z=0]
+[L21]    FCALL  call z := inc(z);
+[L2-L3]         requires x > 0;
+         VAL    [z=0]

@@ -1,0 +1,36 @@
+[L18]              y := 0;
+       VAL         [y=0]
+[L19]  CALL        call z := inc(y);
+       VAL         [x=0]
+[L6]   COND FALSE  !(x > 10)
+       VAL         [x=0]
+[L9]               y := x + 5;
+       VAL         [x=0, y=5]
+[L10]  CALL        call res := inc(y);
+       VAL         [x=5]
+[L6]   COND FALSE  !(x > 10)
+       VAL         [x=5]
+[L9]               y := x + 5;
+       VAL         [x=5, y=10]
+[L10]  CALL        call res := inc(y);
+       VAL         [x=10]
+[L6]   COND FALSE  !(x > 10)
+       VAL         [x=10]
+[L9]               y := x + 5;
+       VAL         [x=10, y=15]
+[L10]  CALL        call res := inc(y);
+       VAL         [x=15]
+[L6]   COND TRUE   x > 10
+       VAL         [x=15]
+[L7]               res := x + 1;
+       VAL         [res=16, x=15]
+[L10]  RET         call res := inc(y);
+       VAL         [res=16, x=10, y=15]
+[L10]  RET         call res := inc(y);
+       VAL         [res=16, x=5, y=10]
+[L10]  RET         call res := inc(y);
+       VAL         [res=16, x=0, y=5]
+[L19]  RET         call z := inc(y);
+       VAL         [y=0, z=16]
+[L20]              assert z == 0;
+       VAL         [y=0, z=16]

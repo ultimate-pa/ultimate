@@ -1,0 +1,187 @@
+// Testfile dumped by Ultimate at 2012/10/13 16:45:45
+//
+// Reveals bug in revision 7230.
+//
+// Problem with run #25280#TestENTRY x = 1;havoc n; #25283#L22 call< #25287#encTENTRY x_local = x;n_local... #25291#L39loopEntry' assume star; #25295#L42 call< #25293#encLTENTRY x_local = x;n_local... #25297#L109 call< #25299#encLLTENTRY assume x == 0;ret :=... #25303#L123' assume x == 0 <==> r... #25307#encLLTEXIT > return#25311#L109' assume CallRet;ret :... #25315#L115' assume x == 0 || x =... #25319#encLTEXIT > return#25326#L42' assume !!blockCall;h... #25336#L45 assume !star;x_local... #25346#L50 call< #25355#encLTENTRY x_local = x;n_local... #25363#L109 call< #25299#encLLTENTRY assume !(x == 0);ret... #25301#L123' assume x == 0 <==> r... #25305#encLLTEXIT > return#25383#L109' assume !CallRet; #25387#L115 call< #25317#encRLTENTRY assume !(x == 1);ret... #25323#L133' assume x == 1 <==> r... #25333#encRLTEXIT > return#25419#L115' assume x == 0 || x =... #25437#encLTEXIT > return#25450#L50' assume !blockCall;re... #25466#encTFINAL assume !(x == 1 ==> ... #25485#encRLTErr0EnsuresViolation 
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 85);
+assert(shrinkNwaSize == 81);
+assert(minimizeNwaPmaxSatDirectBiSize == 80);
+assert(minimizeNwaPmaxSatDirectSize == 86);
+assert(reduceNwaDirectSimulationSize == 84);
+assert(reduceNwaDirectSimulationBSize == 86);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 86);
+// assert(reduceNwaDelayedSimulationSize == 84);
+// assert(reduceNwaDelayedSimulationBSize == 80);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 80);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call775" "call773" "call767" "call771" "call765" "call769" "call781" "call779" "call777" },
+	internalAlphabet = {"assume !star;x_local...687" "assume star;ret = t...686" "assume !!blockCall;h...683" "assume !blockCall;re...682" "assume star;678" "x_local = x;n_local...674" "assume !(x == 0 || x...673" "assume x == 0 || x =...672" "assume n_local > 0;700" "assume !star;havoc n...696" "assume star;ret = t...695" "assume !!blockCall;h...692" "assume !blockCall;re...691" "assume !CallRet;669" "assume CallRet;ret :...667" "assume !(ret != fals...660" "assume ret != false;661" "assume true;662" "x_local = x;n_local...663" "x = 1;havoc n;658" "assume x == 1 ==> re...747" "assume !true;746" "assume !star;744" "assume x == 1;ret :=...751" "assume !(x == 1 ==> ...748" "assume !blockCall;re...739" "assume star;ret = t...743" "assume !!blockCall;h...740" "assume x == 0 <==> r...763" "assume !(x == 0);ret...761" "assume !(x == 0 <==>...764" "assume x == 1 <==> r...755" "assume !(x == 1);ret...753" "assume x == 0;ret :=...759" "assume !(x == 1 <==>...756" "assume !blockCall;re...713" "assume !!blockCall;h...714" "assume star;ret = t...717" "assume !star;718" "assume !!blockCall;h...705" "assume !blockCall;re...704" "assume !star;n_local...709" "assume star;ret = t...708" "assume star;ret = t...728" "assume !star;havoc s...729" "assume !star;731" "assume true;735" "assume !(n_local > 0...720" "assume !blockCall;re...724" "assume !!blockCall;h...725" },
+	returnAlphabet = {"return774" "return772" "return770" "return766" "return768" "return782" "return780" "return778" "return776" },
+	states = {"#24778#L85loopEntry'24778" "#24643#L123'24643" "#24641#L123'24641" "#24782#L8824782" "#24647#encLLTEXIT24647" "#24780#L4224780" "#24645#encLLTEXIT24645" "#24771#L6724771" "#24651#L109'24651" "#24768#L77'24768" "#24649#L109'24649" "#24774#L39loopEntry'24774" "#24655#L115'24655" "#24653#L11524653" "#24659#encLTEXIT24659" "#24657#encRLTENTRY24657" "#24792#L42'24792" "#24663#L133'24663" "#24798#L4524798" "#24661#L133'24661" "#24796#L88'24796" "#24667#encRLTEXIT24667" "#24665#L42'24665" "#24785#L67'24785" "#24790#L67'24790" "#24670#L4524670" "#24788#L7024788" "#24668#encRLTEXIT24668" "#24672#L115'24672" "#24808#L67'24808" "#24673#L115'24673" "#24675#L5024675" "#24812#L7024812" "#24677#encLTEXIT24677" "#24678#encLTEXIT24678" "#24814#L67'24814" "#24800#L42'24800" "#24681#L42'24681" "#24802#L9124802" "#24683#L4524683" "#24804#L88'24804" "#24685#L5024685" "#24824#L42'24824" "#24688#L50'24688" "#24826#L9124826" "#24690#L5324690" "#24828#L88'24828" "#24692#L50'24692" "#24694#L57loopEntry'24694" "#24816#L42'24816" "#24696#encTFINAL24696" "#24698#L5924698" "#24820#L88'24820" "#24700#L7724700" "#24822#L4524822" "#24702#encTEXIT24702" "#24718#L57loopEntry'24718" "#24716#encRLTErr0EnsuresViolation24716" "#24714#L50'24714" "#24712#L5324712" "#24710#L22'24710" "#24706#L50'24706" "#24734#L77'24734" "#24732#L59'24732" "#24726#encTEXIT24726" "#24724#L7724724" "#24722#L5924722" "#24720#encTFINAL24720" "#24751#L85loopEntry'24751" "#24744#L6724744" "#24747#L39loopEntry'24747" "#24740#L8024740" "#24742#L77'24742" "#24736#L6224736" "#24738#L59'24738" "#24764#L59'24764" "#24628#L2224628" "#24766#L8024766" "#24630#L39loopEntry'24630" "#24625#TestENTRY24625" "#24762#L6224762" "#24626#encTENTRY24626" "#24637#L10924637" "#24757#L77'24757" "#24639#encLLTENTRY24639" "#24759#L8824759" "#24633#L4224633" "#24753#L4224753" "#24635#encLTENTRY24635" "#24755#L59'24755" },
+	initialStates = {"#24625#TestENTRY24625" "#24626#encTENTRY24626" },
+	finalStates = {"#24716#encRLTErr0EnsuresViolation24716" },
+	callTransitions = {
+		 ("#24782#L8824782" "call781" "#24635#encLTENTRY24635")
+		 ("#24780#L4224780" "call771" "#24635#encLTENTRY24635")
+		 ("#24771#L6724771" "call777" "#24635#encLTENTRY24635")
+		 ("#24653#L11524653" "call769" "#24657#encRLTENTRY24657")
+		 ("#24675#L5024675" "call773" "#24635#encLTENTRY24635")
+		 ("#24685#L5024685" "call773" "#24635#encLTENTRY24635")
+		 ("#24698#L5924698" "call775" "#24635#encLTENTRY24635")
+		 ("#24700#L7724700" "call779" "#24635#encLTENTRY24635")
+		 ("#24724#L7724724" "call779" "#24635#encLTENTRY24635")
+		 ("#24722#L5924722" "call775" "#24635#encLTENTRY24635")
+		 ("#24744#L6724744" "call777" "#24635#encLTENTRY24635")
+		 ("#24628#L2224628" "call765" "#24626#encTENTRY24626")
+		 ("#24637#L10924637" "call767" "#24639#encLLTENTRY24639")
+		 ("#24759#L8824759" "call781" "#24635#encLTENTRY24635")
+		 ("#24633#L4224633" "call771" "#24635#encLTENTRY24635")
+		 ("#24753#L4224753" "call771" "#24635#encLTENTRY24635")
+	},
+	internalTransitions = {
+		 ("#24778#L85loopEntry'24778" "assume true;735" "#24782#L8824782")
+		 ("#24643#L123'24643" "assume x == 0 <==> r...763" "#24647#encLLTEXIT24647")
+		 ("#24641#L123'24641" "assume x == 0 <==> r...763" "#24645#encLLTEXIT24645")
+		 ("#24651#L109'24651" "assume CallRet;ret :...667" "#24655#L115'24655")
+		 ("#24768#L77'24768" "assume !blockCall;re...724" "#24720#encTFINAL24720")
+		 ("#24768#L77'24768" "assume !!blockCall;h...725" "#24766#L8024766")
+		 ("#24649#L109'24649" "assume !CallRet;669" "#24653#L11524653")
+		 ("#24774#L39loopEntry'24774" "assume !star;731" "#24778#L85loopEntry'24778")
+		 ("#24774#L39loopEntry'24774" "assume star;678" "#24780#L4224780")
+		 ("#24655#L115'24655" "assume x == 0 || x =...672" "#24659#encLTEXIT24659")
+		 ("#24792#L42'24792" "assume !!blockCall;h...683" "#24798#L4524798")
+		 ("#24657#encRLTENTRY24657" "assume x == 1;ret :=...751" "#24661#L133'24661")
+		 ("#24657#encRLTENTRY24657" "assume !(x == 1);ret...753" "#24663#L133'24663")
+		 ("#24798#L4524798" "assume !star;x_local...687" "#24675#L5024675")
+		 ("#24663#L133'24663" "assume x == 1 <==> r...755" "#24668#encRLTEXIT24668")
+		 ("#24796#L88'24796" "assume !!blockCall;h...740" "#24802#L9124802")
+		 ("#24661#L133'24661" "assume x == 1 <==> r...755" "#24667#encRLTEXIT24667")
+		 ("#24665#L42'24665" "assume !!blockCall;h...683" "#24670#L4524670")
+		 ("#24785#L67'24785" "assume !!blockCall;h...714" "#24788#L7024788")
+		 ("#24790#L67'24790" "assume !blockCall;re...713" "#24696#encTFINAL24696")
+		 ("#24790#L67'24790" "assume !!blockCall;h...714" "#24788#L7024788")
+		 ("#24670#L4524670" "assume !star;x_local...687" "#24675#L5024675")
+		 ("#24788#L7024788" "assume !star;718" "#24694#L57loopEntry'24694")
+		 ("#24672#L115'24672" "assume x == 0 || x =...672" "#24677#encLTEXIT24677")
+		 ("#24808#L67'24808" "assume !!blockCall;h...714" "#24812#L7024812")
+		 ("#24673#L115'24673" "assume x == 0 || x =...672" "#24678#encLTEXIT24678")
+		 ("#24812#L7024812" "assume !star;718" "#24718#L57loopEntry'24718")
+		 ("#24814#L67'24814" "assume !blockCall;re...713" "#24720#encTFINAL24720")
+		 ("#24814#L67'24814" "assume !!blockCall;h...714" "#24812#L7024812")
+		 ("#24800#L42'24800" "assume !!blockCall;h...683" "#24798#L4524798")
+		 ("#24800#L42'24800" "assume !blockCall;re...682" "#24696#encTFINAL24696")
+		 ("#24681#L42'24681" "assume !!blockCall;h...683" "#24683#L4524683")
+		 ("#24802#L9124802" "assume !star;744" "#24751#L85loopEntry'24751")
+		 ("#24683#L4524683" "assume !star;x_local...687" "#24685#L5024685")
+		 ("#24804#L88'24804" "assume !blockCall;re...739" "#24696#encTFINAL24696")
+		 ("#24804#L88'24804" "assume !!blockCall;h...740" "#24802#L9124802")
+		 ("#24824#L42'24824" "assume !!blockCall;h...683" "#24822#L4524822")
+		 ("#24824#L42'24824" "assume !blockCall;re...682" "#24720#encTFINAL24720")
+		 ("#24688#L50'24688" "assume !!blockCall;h...692" "#24690#L5324690")
+		 ("#24826#L9124826" "assume !star;744" "#24778#L85loopEntry'24778")
+		 ("#24690#L5324690" "assume !star;havoc n...696" "#24694#L57loopEntry'24694")
+		 ("#24828#L88'24828" "assume !blockCall;re...739" "#24720#encTFINAL24720")
+		 ("#24828#L88'24828" "assume !!blockCall;h...740" "#24826#L9124826")
+		 ("#24692#L50'24692" "assume !!blockCall;h...692" "#24690#L5324690")
+		 ("#24692#L50'24692" "assume !blockCall;re...691" "#24696#encTFINAL24696")
+		 ("#24694#L57loopEntry'24694" "assume n_local > 0;700" "#24698#L5924698")
+		 ("#24694#L57loopEntry'24694" "assume !(n_local > 0...720" "#24700#L7724700")
+		 ("#24816#L42'24816" "assume !!blockCall;h...683" "#24822#L4524822")
+		 ("#24696#encTFINAL24696" "assume x == 1 ==> re...747" "#24702#encTEXIT24702")
+		 ("#24820#L88'24820" "assume !!blockCall;h...740" "#24826#L9124826")
+		 ("#24822#L4524822" "assume !star;x_local...687" "#24685#L5024685")
+		 ("#24718#L57loopEntry'24718" "assume n_local > 0;700" "#24722#L5924722")
+		 ("#24718#L57loopEntry'24718" "assume !(n_local > 0...720" "#24724#L7724724")
+		 ("#24714#L50'24714" "assume !!blockCall;h...692" "#24712#L5324712")
+		 ("#24714#L50'24714" "assume !blockCall;re...691" "#24720#encTFINAL24720")
+		 ("#24712#L5324712" "assume !star;havoc n...696" "#24718#L57loopEntry'24718")
+		 ("#24710#L22'24710" "assume !(ret != fals...660" "#24716#encRLTErr0EnsuresViolation24716")
+		 ("#24706#L50'24706" "assume !!blockCall;h...692" "#24712#L5324712")
+		 ("#24734#L77'24734" "assume !!blockCall;h...725" "#24740#L8024740")
+		 ("#24732#L59'24732" "assume !!blockCall;h...705" "#24736#L6224736")
+		 ("#24720#encTFINAL24720" "assume x == 1 ==> re...747" "#24726#encTEXIT24726")
+		 ("#24720#encTFINAL24720" "assume !(x == 1 ==> ...748" "#24716#encRLTErr0EnsuresViolation24716")
+		 ("#24751#L85loopEntry'24751" "assume true;735" "#24759#L8824759")
+		 ("#24747#L39loopEntry'24747" "assume !star;731" "#24751#L85loopEntry'24751")
+		 ("#24747#L39loopEntry'24747" "assume star;678" "#24753#L4224753")
+		 ("#24740#L8024740" "assume !star;havoc s...729" "#24747#L39loopEntry'24747")
+		 ("#24742#L77'24742" "assume !blockCall;re...724" "#24696#encTFINAL24696")
+		 ("#24742#L77'24742" "assume !!blockCall;h...725" "#24740#L8024740")
+		 ("#24736#L6224736" "assume !star;n_local...709" "#24744#L6724744")
+		 ("#24738#L59'24738" "assume !!blockCall;h...705" "#24736#L6224736")
+		 ("#24738#L59'24738" "assume !blockCall;re...704" "#24696#encTFINAL24696")
+		 ("#24764#L59'24764" "assume !!blockCall;h...705" "#24762#L6224762")
+		 ("#24764#L59'24764" "assume !blockCall;re...704" "#24720#encTFINAL24720")
+		 ("#24766#L8024766" "assume !star;havoc s...729" "#24774#L39loopEntry'24774")
+		 ("#24630#L39loopEntry'24630" "assume star;678" "#24633#L4224633")
+		 ("#24625#TestENTRY24625" "x = 1;havoc n;658" "#24628#L2224628")
+		 ("#24762#L6224762" "assume !star;n_local...709" "#24771#L6724771")
+		 ("#24626#encTENTRY24626" "x_local = x;n_local...674" "#24630#L39loopEntry'24630")
+		 ("#24757#L77'24757" "assume !!blockCall;h...725" "#24766#L8024766")
+		 ("#24639#encLLTENTRY24639" "assume !(x == 0);ret...761" "#24641#L123'24641")
+		 ("#24639#encLLTENTRY24639" "assume x == 0;ret :=...759" "#24643#L123'24643")
+		 ("#24635#encLTENTRY24635" "x_local = x;n_local...663" "#24637#L10924637")
+		 ("#24755#L59'24755" "assume !!blockCall;h...705" "#24762#L6224762")
+	},
+	returnTransitions = {
+		 ("#24647#encLLTEXIT24647" "#24637#L10924637" "return768" "#24651#L109'24651")
+		 ("#24645#encLLTEXIT24645" "#24637#L10924637" "return768" "#24649#L109'24649")
+		 ("#24659#encLTEXIT24659" "#24675#L5024675" "return774" "#24688#L50'24688")
+		 ("#24659#encLTEXIT24659" "#24685#L5024685" "return774" "#24706#L50'24706")
+		 ("#24659#encLTEXIT24659" "#24780#L4224780" "return772" "#24816#L42'24816")
+		 ("#24659#encLTEXIT24659" "#24633#L4224633" "return772" "#24665#L42'24665")
+		 ("#24659#encLTEXIT24659" "#24753#L4224753" "return772" "#24792#L42'24792")
+		 ("#24659#encLTEXIT24659" "#24782#L8824782" "return782" "#24820#L88'24820")
+		 ("#24659#encLTEXIT24659" "#24759#L8824759" "return782" "#24796#L88'24796")
+		 ("#24659#encLTEXIT24659" "#24724#L7724724" "return780" "#24757#L77'24757")
+		 ("#24659#encLTEXIT24659" "#24700#L7724700" "return780" "#24734#L77'24734")
+		 ("#24659#encLTEXIT24659" "#24744#L6724744" "return778" "#24785#L67'24785")
+		 ("#24659#encLTEXIT24659" "#24771#L6724771" "return778" "#24808#L67'24808")
+		 ("#24659#encLTEXIT24659" "#24698#L5924698" "return776" "#24732#L59'24732")
+		 ("#24659#encLTEXIT24659" "#24722#L5924722" "return776" "#24755#L59'24755")
+		 ("#24667#encRLTEXIT24667" "#24653#L11524653" "return770" "#24672#L115'24672")
+		 ("#24668#encRLTEXIT24668" "#24653#L11524653" "return770" "#24673#L115'24673")
+		 ("#24677#encLTEXIT24677" "#24675#L5024675" "return774" "#24688#L50'24688")
+		 ("#24677#encLTEXIT24677" "#24685#L5024685" "return774" "#24706#L50'24706")
+		 ("#24677#encLTEXIT24677" "#24780#L4224780" "return772" "#24816#L42'24816")
+		 ("#24677#encLTEXIT24677" "#24633#L4224633" "return772" "#24681#L42'24681")
+		 ("#24677#encLTEXIT24677" "#24753#L4224753" "return772" "#24792#L42'24792")
+		 ("#24677#encLTEXIT24677" "#24782#L8824782" "return782" "#24820#L88'24820")
+		 ("#24677#encLTEXIT24677" "#24759#L8824759" "return782" "#24796#L88'24796")
+		 ("#24677#encLTEXIT24677" "#24724#L7724724" "return780" "#24757#L77'24757")
+		 ("#24677#encLTEXIT24677" "#24700#L7724700" "return780" "#24734#L77'24734")
+		 ("#24677#encLTEXIT24677" "#24744#L6724744" "return778" "#24785#L67'24785")
+		 ("#24677#encLTEXIT24677" "#24771#L6724771" "return778" "#24808#L67'24808")
+		 ("#24677#encLTEXIT24677" "#24698#L5924698" "return776" "#24732#L59'24732")
+		 ("#24677#encLTEXIT24677" "#24722#L5924722" "return776" "#24755#L59'24755")
+		 ("#24678#encLTEXIT24678" "#24675#L5024675" "return774" "#24692#L50'24692")
+		 ("#24678#encLTEXIT24678" "#24685#L5024685" "return774" "#24714#L50'24714")
+		 ("#24678#encLTEXIT24678" "#24780#L4224780" "return772" "#24824#L42'24824")
+		 ("#24678#encLTEXIT24678" "#24753#L4224753" "return772" "#24800#L42'24800")
+		 ("#24678#encLTEXIT24678" "#24782#L8824782" "return782" "#24828#L88'24828")
+		 ("#24678#encLTEXIT24678" "#24759#L8824759" "return782" "#24804#L88'24804")
+		 ("#24678#encLTEXIT24678" "#24724#L7724724" "return780" "#24768#L77'24768")
+		 ("#24678#encLTEXIT24678" "#24700#L7724700" "return780" "#24742#L77'24742")
+		 ("#24678#encLTEXIT24678" "#24744#L6724744" "return778" "#24790#L67'24790")
+		 ("#24678#encLTEXIT24678" "#24771#L6724771" "return778" "#24814#L67'24814")
+		 ("#24678#encLTEXIT24678" "#24698#L5924698" "return776" "#24738#L59'24738")
+		 ("#24678#encLTEXIT24678" "#24722#L5924722" "return776" "#24764#L59'24764")
+		 ("#24702#encTEXIT24702" "#24628#L2224628" "return766" "#24710#L22'24710")
+		 ("#24726#encTEXIT24726" "#24628#L2224628" "return766" "#24710#L22'24710")
+	}
+);

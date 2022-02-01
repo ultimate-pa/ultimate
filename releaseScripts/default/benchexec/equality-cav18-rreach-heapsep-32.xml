@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="180" hardtimelimit="200" cpuCores="2">
+
+    <option name="--generate-csv" />
+    <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+
+    <rundefinition name="Automizer">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/svcomp-Reach-32bit-Automizer_Camel+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AutomizerHeapSep">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/svcomp-Reach-32bit-Automizer_Camel+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="HeapSep">
+        <option name="-tc">../../../trunk/examples/toolchains/IcfgTransformerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/svcomp-Reach-32bit-Automizer_Camel+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    
+    <tasks name="32bitMem">
+        <include>../../../trunk/examples/svcomp/array-examples/data_structures_set_multi_proc_false-unreach-call_ground.i</include>
+        <include>../../../trunk/examples/svcomp/array-examples/data_structures_set_multi_proc_trivial_true-unreach-call_ground_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/array-examples/data_structures_set_multi_proc_true-unreach-call_ground.i</include>
+        <include>../../../trunk/examples/svcomp/array-examples/relax_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/array-examples/sanfoundry_43_true-unreach-call_ground.i</include>
+        <include>../../../trunk/examples/svcomp/array-examples/standard_strcmp_true-unreach-call_ground.i</include>
+        <include>../../../trunk/examples/svcomp/array-industry-pattern/array_of_struct_ptr_flag_init_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/array-industry-pattern/check_removal_from_set_after_insertion_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/avg05_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/avg10_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/avg20_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/avg40_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/avg60_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/avg_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/max05_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/max10_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/max20_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/max40_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/max60_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/max_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/rangesum05_false-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/rangesum10_false-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/rangesum20_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/rangesum40_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/rangesum_false-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sep05_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sep10_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sep20_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sep40_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sep60_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sep_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sum05_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sum10_true-unreach-call_true-termination.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sum20_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sum40_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sum60_true-unreach-call.i</include>
+        <include>../../../trunk/examples/svcomp/reducercommutativity/sum_true-unreach-call_true-termination.i</include>
+    </tasks>
+    
+</benchmark>

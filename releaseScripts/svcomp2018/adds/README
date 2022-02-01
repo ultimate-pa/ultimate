@@ -1,0 +1,100 @@
+This archive contains Ultimate.
+Please direct any questions to one of the maintainers and/or consult the
+websites.
+
+Websites:
+https://github.com/ultimate-pa/ultimate
+https://ultimate.informatik.uni-freiburg.de/
+
+Maintainers:
+Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+Alexander Nutz (nutz@informatik.uni-freiburg.de)
+Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+Christian Schilling (schillic@informatik.uni-freiburg.de)
+
+This archive also contains binaries for different theorem provers:
+ * Z3 (https://github.com/Z3Prover/z3) 
+   - Linux
+     master 4520fafa
+   - Windows
+     master 870017e2ceb5da85f5c7314bd7b35ca865af9a97
+ * CVC4 (http://cvc4.cs.nyu.edu/)
+   04-Aug-2016 05:31
+ * MathSAT5 (http://mathsat.fbk.eu)  
+   - Windows
+     MathSAT5 version 50d9330d8efd 
+     (Nov 16 2017 22:42:29, gmp 5.0.1, gcc 6.3.0, 64-bit)
+   - Linux 
+     MathSAT5 version 50d9330d8efd 
+     (Nov 16 2017 22:36:38, gmp 5.1.3, gcc 4.8.4, 64-bit)
+
+-------------------------------------------------------------------------------
+
+1. Requirements
+You require a working version of Python2.7. Its executable should be present in
+your PATH variable.
+
+2. Usage
+This Ultimate tool should be called by the Python wrapper script Ultimate.py. 
+The script supports the input parameters that are used in the SV-COMP and
+should be invoked as follows.
+
+ $ ./Ultimate.py --spec <propfile> --file <inputfile> --architecture <architecture>
+
+where
+ * <propfile> is a property file, usually with the ending *.prp,
+ * <inputfile> is a C program,
+ * <architecture> is either '32bit' or '64bit' (without quotes).
+
+Additional information can be found by invoking 
+ $ ./Ultimate.py --help
+ 
+The output of the Ultimate tool is written to the file "Ultimate.log" in the
+current working directory and the result is written to stdout. 
+
+If the property specified in the property file does not hold, a human
+readable counterexample is written to UltimateCounterExample.errorpath.
+
+Ultimate writes for many properties a violation or correctness witness to the
+file witness.graphml.
+
+3. Choosing the right parameters
+3.1 Property files 
+You can use property files as defined by SV-COMP'17 
+(https://sv-comp.sosy-lab.org/2017/rules.php and 
+https://github.com/sosy-lab/sv-benchmarks/releases/tag/svcomp17). 
+ * PropertyMemSafety.prp
+   The result is 'TRUE' iff all pointer dereferences are valid,
+   all deallocations are valid, and all allocated memory is eventually freed.
+ * PropertyOverflow.prp
+   The result is 'TRUE' iff no operations on signed integers results in an
+   overflow. (Operations on unsigned integers are not checked as their
+   behaviour is always defined by the C standard.)
+ * PropertyUnreachCall.prp
+   The result is 'TRUE' iff the program does not contain an execution that
+   calls the SV-COMP error function __VERIFIER_error().
+ * PropertyTermination.prp
+   The result is 'TRUE' iff every program execution reaches the end of the
+   program, i.e., iff all program executions are finite.  
+For each of this property files (except Termination.prp) Ultimate also checks
+if all ACSL specifications (e.g., "//@ assert x > 0") are valid.
+
+3.2 Architecture 
+The architecture parameter specifies whether the program is written for an
+ILP32 (32bit) or an LP64 (64bit) architecture.
+
+4. Results
+The wrapper script provides output to stdout that indicates whether the checked
+property is violated or not. The output can be one of the following:
+* TRUE
+  The property holds.
+* FALSE(P)
+  Generally means that the property is violated. P specifies which property is
+  violated.
+* UNKNOWN
+  Ultimate is not able to decide whether the property is satisfied or not.
+* ERROR: MSG
+  Indicates an abnormal termination of Ultimate due to some error. MSG usually
+  describes the error.
+  

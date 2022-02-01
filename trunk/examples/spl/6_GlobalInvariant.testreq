@@ -1,0 +1,8 @@
+Globally, it is always the case that if "d" holds then "x" holds as well.
+Globally, it is always the case that if "I_a" holds then "b" holds as well.
+Globally, it is always the case that if "I_a && I_f" holds then "x" holds as well.
+Globally, it is always the case that if "b && I_di" holds then "d" holds as well.
+Globally, it is always the case that if "b && I_ci" holds then "c" holds as well.
+Globally, it is always the case that if "c" holds then "e" holds as well.
+
+Globally, it is never the case that "x && e" holds.

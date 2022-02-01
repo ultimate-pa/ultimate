@@ -1,0 +1,18 @@
+[L4]               int a = 5;
+[L6]   EXPR        a++
+       VAL         [a=6, a++=5]
+[L6]   CALL, EXPR  f(a++)
+[L19]  EXPR        ++b
+[L19]              return ++b;
+[L6]   RET, EXPR   f(a++)
+       VAL         [a=6, a++=5, f(a++)=6]
+[L6]   CALL, EXPR  f(f(a++))
+[L19]  EXPR        ++b
+[L19]              return ++b;
+[L6]   RET, EXPR   f(f(a++))
+       VAL         [a=6, a++=5, f(a++)=6, f(f(a++))=7]
+[L6]               a = f(f(a++))
+[L8]   COND TRUE   a != 8
+       VAL         [a=7]
+[L14]              __VERIFIER_error()
+       VAL         [a=7]

@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( G(F"t==1" && F"t==0") ) )

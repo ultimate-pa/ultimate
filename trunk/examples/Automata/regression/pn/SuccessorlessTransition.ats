@@ -1,0 +1,17 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2018-07-24
+
+assert(accepts(noSuccTransition, [a b]));
+assert(!isEmpty(noSuccTransition));
+
+PetriNet noSuccTransition = (
+	alphabet = {a b },
+	places = {p0 p1 p2 },
+	transitions = {
+		({p0} a {})
+		({p0} a {p1})
+		({p1} b {p2})
+	},
+	initialMarking = {p0 },
+	acceptingPlaces = {p2 }
+);

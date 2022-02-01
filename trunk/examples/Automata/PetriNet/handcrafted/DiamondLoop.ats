@@ -1,0 +1,32 @@
+// Date:  2018-05-08
+// Author: schaetzc@tf.uni-freiburg.de
+//
+// Petri Net n. 
+//
+//    ,---[c]---,
+//    v         |
+//   (0)--[a]->(1)
+//    `---[b]--^
+
+assert(accepts(n, []));
+assert(accepts(n, [a c]));
+assert(accepts(n, [b c]));
+assert(accepts(n, [a c b c]));
+assert(!accepts(n, [a]));
+assert(!accepts(n, [b]));
+assert(!accepts(n, [c]));
+assert(!accepts(n, [a b c]));
+
+print(finitePrefix(n));
+
+PetriNet n = (
+  alphabet = {a b c},
+  places = {p0 p1},
+  transitions = {
+    ({p0} a {p1})
+    ({p0} b {p1}) 
+    ({p1} c {p0})
+  },
+  initialMarking = {p0},
+  acceptingPlaces = {p0}
+);

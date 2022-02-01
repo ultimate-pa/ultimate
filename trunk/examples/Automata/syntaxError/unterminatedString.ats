@@ -1,0 +1,24 @@
+// Author: Alexander Nutz
+// Date: 3.5.2013
+// Bug: Ultimate Crash if String has no end.
+
+PetriNet trace1 = (
+	alphabet = {init a1 a2 a3 a4 a5 a6 b1 b2 b3 b4 b5 b6 eow},
+	places = {"n1<=0" "n2<n1-1" "n2<n1-2" "n2>=0" "n1<n2" "n2<n1" "n1<=tmp2" "n2<=tmp1" "true-1" "true-2" "true-3" "final"},
+	transitions = {
+//transitions excluding self loops
+		({"n1<=0"} b6 {"n1<n2"})
+		({"n1<n2"} b3 {"n1<=tmp2"})
+		({"n1<=tmp2"} b2 {"true-1"})
+		({"n2<n1-1"} a6 {"n2<n1-2"}) 
+		({"n2<n1-2"} a3 {"n2<=tmp1"})
+		({"n2<=tmp1"} a2 {"true-2})
+		({"n2>=0"} init {"true-3"})
+		{{"true-1"} eow {"final"})
+		{{"true-2"} eow {"final"})
+		{{"true-3"} eow {"final"})
+//self loops
+	},
+	initial Marking = {"n1<=0" "n2<n1-1" "n2>=0"},
+	acceptingPlaces = {"final"}
+);

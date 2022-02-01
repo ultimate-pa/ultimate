@@ -1,0 +1,28 @@
+// Testfile dumped by Ultimate at 2011/10/31 13:20:53
+
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 21);
+
+assert(!isEmpty(net));
+
+PetriNet net = (
+	alphabet = {"t9_nr07" "t5_nr03" "t6_nr06" "t10_nr09"  "t2_nr01" "t11_nr10" "t12" "t7_nr08" "t3_nr02" "t1_nr00" "t8_nr05" "t4_nr04" },
+	places = {"$Ultimate##2.4255" "p01_violation" "p02_ultimate" "ic0" "p04_ultimate" "p5_empty" "$Ultimate##2.557" "p7_init" "p08_ultimate" "p9_ultimate" "p10_emtpyStack" "$Ultimate##2.7169" "p12_ultimate" "Thread0FINAL324" "is174" "p15_init" "p16_ultimate" "is107" "p18_ultimate" "$Ultimate##2.749" "Thread1FINAL33" "$Ultimate##2.4Violation121" "Thread1EXIT94" "$Ultimate##2.6310" "$Ultimate##2.886" "p25_ultimate" "true0" "$Ultimate##2.3160" "p28_ultimate" "Thread0EXIT283" },
+	transitions = {
+		( {"p7_init" "p15_init" } "t1_nr00" {"p16_ultimate" "$Ultimate##2.886" } )
+		( {"p16_ultimate" } "t2_nr01" {"p25_ultimate" } )
+		( {"$Ultimate##2.886" } "t3_nr02" {"p28_ultimate" } )
+		( {"p28_ultimate" } "t4_nr04" {"p08_ultimate" } )
+		( {"p25_ultimate" } "t5_nr03" {"p18_ultimate" } )
+		( {"p08_ultimate" } "t6_nr06" {"$Ultimate##2.3160" } )
+		( {"$Ultimate##2.3160" } "t7_nr08" {"$Ultimate##2.4255" } )
+		( {"p18_ultimate" } "t8_nr05" {"p12_ultimate" } )
+		( {"p12_ultimate" } "t9_nr07" {"p02_ultimate" } )
+		( {"p02_ultimate" "p10_emtpyStack" } "t10_nr09" {"p04_ultimate" "p10_emtpyStack" } )
+		( {"p04_ultimate" "p5_empty" "p10_emtpyStack" } "t11_nr10" {"p9_ultimate" "true0" "ic0" } )
+		( {"$Ultimate##2.4255" "ic0" } "t12" {"p01_violation" "ic0" } )
+	},
+	initialMarking = {"p7_init" "p15_init" "p5_empty" "p10_emtpyStack" },
+	acceptingPlaces = {"$Ultimate##2.4Violation121" "p01_violation" }
+);

@@ -1,0 +1,52 @@
+// Testfile dumped by Ultimate at 2011/11/28 01:11:40
+
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 204);
+
+assert(!isEmpty(net));
+
+PetriNet net = (
+	alphabet = {"[critical = 0;]258" "[assume critical == 0;]238" "[critical = 0;]191" "[flag0 = 0;]90" "[assume !(critical == 0);]103" "[critical = 0;]14" "[assume true;]159" "[assume true;]81" "[assume !(critical == 0);]110" "[assume !true;]262" "[assume true;]94" "[flag0 = 1;]2" "[flag1 = 0;]169" "[turn = 1;]307" "[assume flag0 == 0 || turn == 1;]77" "[turn = 0;]1" "[assume true;]86" "[assume flag1 == 0 || turn == 0;]264" "[assume true;]269" "[flag1 = 1;]186" "[assume !true;]238" "[critical = 1;]78" "[critical = 1;]181" "[assume critical == 0;]42" },
+	places = {"#69#{$emptyStack=(= v__critical 0)}0" "#70##57#InitializeSharedVariablesINIT0" "#71#{$emptyStack=true}0" "#76##36#Thread0EXIT0" "#77##34#$Ultimate##2.50" "#78##35#Thread0FINAL0" "#79##41#$Ultimate##2.30" "#72#{$emptyStack=true}0" "#73#{$emptyStack=(= v__critical 0)}0" "#74##33#$Ultimate##2.60" "#75##37#$Ultimate##2.80" "#85##42#$Ultimate##2.40" "#84##45#InitializeSharedVariablesFINAL0" "#87##48#$Ultimate##2.20" "#86##43#$Ultimate##2.4Violation0" "#81##39#$Ultimate##2.10" "#80##40#$Ultimate##2.20" "#83##44#InitializeSharedVariablesINIT0" "#82##38#$Ultimate##2.70" "#93##50#$Ultimate##2.40" "#92##54#$Ultimate##2.70" "#95##56#$Ultimate##2.80" "#94##51#$Ultimate##2.30" "#89##46#Thread1FINAL0" "#88##49#$Ultimate##2.10" "#91##55#$Ultimate##2.60" "#90##47#Thread1EXIT0" "#102#{$emptyStack=(= v__flag0 1)}0" "#103#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#100#{$emptyStack=true}0" "#101#{$emptyStack=(= v__flag0 1)}0" "#98##52#$Ultimate##2.50" "#99#{$emptyStack=true}0" "#96##58#InitializeSharedVariablesFINAL0" "#97##53#$Ultimate##2.4Violation0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" },
+	transitions = {
+		( {"#82##38#$Ultimate##2.70" "#101#{$emptyStack=(= v__flag0 1)}0" "#100#{$emptyStack=true}0" } "[flag0 = 0;]90" {"#75##37#$Ultimate##2.80" "#99#{$emptyStack=true}0" "#102#{$emptyStack=(= v__flag0 1)}0" } )
+		( {"#93##50#$Ultimate##2.40" "#71#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" } "[assume critical == 0;]238" {"#98##52#$Ultimate##2.50" "#73#{$emptyStack=(= v__critical 0)}0" "#72#{$emptyStack=true}0" } )
+		( {"#87##48#$Ultimate##2.20" "#102#{$emptyStack=(= v__flag0 1)}0" } "[turn = 0;]1" {"#94##51#$Ultimate##2.30" "#102#{$emptyStack=(= v__flag0 1)}0" } )
+		( {"#77##34#$Ultimate##2.50" "#73#{$emptyStack=(= v__critical 0)}0" "#72#{$emptyStack=true}0" } "[critical = 1;]78" {"#74##33#$Ultimate##2.60" "#71#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" } )
+		( {"#82##38#$Ultimate##2.70" "#103#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#100#{$emptyStack=true}0" } "[flag0 = 0;]90" {"#75##37#$Ultimate##2.80" "#99#{$emptyStack=true}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } )
+		( {"#92##54#$Ultimate##2.70" } "[flag1 = 0;]169" {"#95##56#$Ultimate##2.80" } )
+		( {"#87##48#$Ultimate##2.20" "#101#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } "[turn = 0;]1" {"#94##51#$Ultimate##2.30" "#103#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#102#{$emptyStack=(= v__flag0 1)}0" } )
+		( {"#81##39#$Ultimate##2.10" "#99#{$emptyStack=true}0" "#102#{$emptyStack=(= v__flag0 1)}0" } "[flag0 = 1;]2" {"#80##40#$Ultimate##2.20" "#101#{$emptyStack=(= v__flag0 1)}0" "#100#{$emptyStack=true}0" } )
+		( {"#80##40#$Ultimate##2.20" "#103#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#102#{$emptyStack=(= v__flag0 1)}0" } "[turn = 1;]307" {"#79##41#$Ultimate##2.30" "#101#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } )
+		( {"#74##33#$Ultimate##2.60" "#72#{$emptyStack=true}0" } "[critical = 0;]191" {"#82##38#$Ultimate##2.70" "#72#{$emptyStack=true}0" } )
+		( {"#77##34#$Ultimate##2.50" "#69#{$emptyStack=(= v__critical 0)}0" } "[critical = 1;]78" {"#74##33#$Ultimate##2.60" "#69#{$emptyStack=(= v__critical 0)}0" } )
+		( {"#83##44#InitializeSharedVariablesINIT0" "#70##57#InitializeSharedVariablesINIT0" "#72#{$emptyStack=true}0" } "[critical = 0;]258" {"#84##45#InitializeSharedVariablesFINAL0" "#96##58#InitializeSharedVariablesFINAL0" "#72#{$emptyStack=true}0" } )
+		( {"#74##33#$Ultimate##2.60" "#71#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" } "[critical = 0;]191" {"#82##38#$Ultimate##2.70" "#73#{$emptyStack=(= v__critical 0)}0" "#72#{$emptyStack=true}0" } )
+		( {"#75##37#$Ultimate##2.80" "#72#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" "#102#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#100#{$emptyStack=true}0" } "[assume !true;]238" {"#78##35#Thread0FINAL0" "#72#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" "#102#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#100#{$emptyStack=true}0" } )
+		( {"#98##52#$Ultimate##2.50" "#69#{$emptyStack=(= v__critical 0)}0" } "[critical = 1;]181" {"#91##55#$Ultimate##2.60" "#69#{$emptyStack=(= v__critical 0)}0" } )
+		( {"#85##42#$Ultimate##2.40" "#71#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" } "[assume critical == 0;]42" {"#77##34#$Ultimate##2.50" "#73#{$emptyStack=(= v__critical 0)}0" "#72#{$emptyStack=true}0" } )
+		( {"#88##49#$Ultimate##2.10" } "[flag1 = 1;]186" {"#87##48#$Ultimate##2.20" } )
+		( {"#95##56#$Ultimate##2.80" } "[assume true;]94" {"#88##49#$Ultimate##2.10" } )
+		( {"#85##42#$Ultimate##2.40" "#69#{$emptyStack=(= v__critical 0)}0" } "[assume !(critical == 0);]110" {"#86##43#$Ultimate##2.4Violation0" "#69#{$emptyStack=(= v__critical 0)}0" } )
+		( {"#84##45#InitializeSharedVariablesFINAL0" "#96##58#InitializeSharedVariablesFINAL0" } "[assume true;]159" {"#75##37#$Ultimate##2.80" "#95##56#$Ultimate##2.80" } )
+		( {"#75##37#$Ultimate##2.80" } "[assume true;]269" {"#81##39#$Ultimate##2.10" } )
+		( {"#78##35#Thread0FINAL0" } "[assume true;]86" {"#76##36#Thread0EXIT0" } )
+		( {"#98##52#$Ultimate##2.50" "#73#{$emptyStack=(= v__critical 0)}0" "#72#{$emptyStack=true}0" } "[critical = 1;]181" {"#91##55#$Ultimate##2.60" "#71#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" } )
+		( {"#93##50#$Ultimate##2.40" "#69#{$emptyStack=(= v__critical 0)}0" } "[assume !(critical == 0);]103" {"#97##53#$Ultimate##2.4Violation0" "#69#{$emptyStack=(= v__critical 0)}0" } )
+		( {"#82##38#$Ultimate##2.70" "#102#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } "[flag0 = 0;]90" {"#75##37#$Ultimate##2.80" "#102#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } )
+		( {"#94##51#$Ultimate##2.30" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } "[assume flag0 == 0 || turn == 1;]77" {"#93##50#$Ultimate##2.40" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } )
+		( {"#89##46#Thread1FINAL0" } "[assume true;]81" {"#90##47#Thread1EXIT0" } )
+		( {"#93##50#$Ultimate##2.40" "#72#{$emptyStack=true}0" } "[assume critical == 0;]238" {"#98##52#$Ultimate##2.50" "#72#{$emptyStack=true}0" } )
+		( {"#95##56#$Ultimate##2.80" "#72#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" "#102#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#100#{$emptyStack=true}0" } "[assume !true;]262" {"#89##46#Thread1FINAL0" "#72#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" "#102#{$emptyStack=(= v__flag0 1)}0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" "#100#{$emptyStack=true}0" } )
+		( {"#91##55#$Ultimate##2.60" "#71#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" } "[critical = 0;]14" {"#92##54#$Ultimate##2.70" "#73#{$emptyStack=(= v__critical 0)}0" "#72#{$emptyStack=true}0" } )
+		( {"#91##55#$Ultimate##2.60" "#72#{$emptyStack=true}0" } "[critical = 0;]14" {"#92##54#$Ultimate##2.70" "#72#{$emptyStack=true}0" } )
+		( {"#80##40#$Ultimate##2.20" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } "[turn = 1;]307" {"#79##41#$Ultimate##2.30" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" } )
+		( {"#83##44#InitializeSharedVariablesINIT0" "#70##57#InitializeSharedVariablesINIT0" "#71#{$emptyStack=true}0" "#69#{$emptyStack=(= v__critical 0)}0" } "[critical = 0;]258" {"#84##45#InitializeSharedVariablesFINAL0" "#96##58#InitializeSharedVariablesFINAL0" "#73#{$emptyStack=(= v__critical 0)}0" "#72#{$emptyStack=true}0" } )
+		( {"#79##41#$Ultimate##2.30" } "[assume flag1 == 0 || turn == 0;]264" {"#85##42#$Ultimate##2.40" } )
+		( {"#81##39#$Ultimate##2.10" "#100#{$emptyStack=true}0" } "[flag0 = 1;]2" {"#80##40#$Ultimate##2.20" "#100#{$emptyStack=true}0" } )
+		( {"#85##42#$Ultimate##2.40" "#72#{$emptyStack=true}0" } "[assume critical == 0;]42" {"#77##34#$Ultimate##2.50" "#72#{$emptyStack=true}0" } )
+	},
+	initialMarking = {"#102#{$emptyStack=(= v__flag0 1)}0" "#69#{$emptyStack=(= v__critical 0)}0" "#70##57#InitializeSharedVariablesINIT0" "#71#{$emptyStack=true}0" "#99#{$emptyStack=true}0" "#83##44#InitializeSharedVariablesINIT0" "#104#{$emptyStack=(and (= v__turn 0) (= v__flag0 1))}0" },
+	acceptingPlaces = {"#86##43#$Ultimate##2.4Violation0" "#97##53#$Ultimate##2.4Violation0" }
+);

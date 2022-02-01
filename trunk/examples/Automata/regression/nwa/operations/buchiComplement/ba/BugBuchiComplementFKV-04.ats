@@ -1,0 +1,24 @@
+// Date: May 2014
+// Matthias Heizmann
+// revealed bugs in buchiComplementFKV (while implementing Sven Schewes 
+// optimizations)
+
+buchiComplementFKV(infeasibleN);
+
+NestedWordAutomaton infeasibleN = (
+  callAlphabet = { },
+  internalAlphabet = { "a" "b" },
+  returnAlphabet = { },
+  states = {q r s},
+  initialStates = {q},
+  finalStates = {s},
+  callTransitions = { },
+  internalTransitions = { 
+    (q "b" q) 
+	(q "a" q) 
+    (q "a" r) 
+    (r "a" s)
+    (s "a" r)
+  }, 
+  returnTransitions = { }
+);

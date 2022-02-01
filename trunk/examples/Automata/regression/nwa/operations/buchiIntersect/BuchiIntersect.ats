@@ -1,0 +1,39 @@
+// Examples for testing correctness of buchiIntersect operation
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 31.05.2013
+
+
+parseAutomata("../../SimpleBuchiAutomata.ats");
+
+
+NestedWordAutomaton nwa1 = buchiIntersect(finitelyManyA, infinitelyManyA);
+assert(numberOfStates(nwa1) == 4);
+assert(buchiIsEmpty(nwa1));
+
+NestedWordAutomaton nwa2 = buchiIntersect(finitelyManyA, finitelyManyB);
+assert(numberOfStates(nwa2) == 4);
+assert(buchiIsEmpty(nwa2));
+
+NestedWordAutomaton nwa3 = buchiIntersect(infinitelyManyA, AfollowedByB);
+assert(numberOfStates(nwa3) == 2);
+assert(buchiAccepts(nwa3, [, a b b ]));
+
+NestedWordAutomaton nwa4 = buchiIntersect(nwa3, finitelyManyB);
+assert(numberOfStates(nwa4) == 6);
+assert(buchiIsEmpty(nwa4));
+
+NestedWordAutomaton nwa5 = buchiIntersect(finitelyManyA, AfollowedByB);
+assert(numberOfStates(nwa5) == 4);
+assert(buchiIsEmpty(nwa5));
+
+NestedWordAutomaton nwa6 = buchiIntersect(finitelyManyB, AfollowedByB);
+assert(numberOfStates(nwa6) == 3);
+assert(buchiIsEmpty(nwa6));
+
+
+parseAutomata("../../SimpleBuchiNwa.ats");
+
+NestedWordAutomaton nwa7 = buchiIntersect(finitelyManyAInEachContext, infinitelyManyAWithCallReturn);
+assert(buchiAccepts(nwa7, [  , a c< ]));
+assert(!buchiAccepts(nwa7, [ a c<  a b >r a , b ]));
+assert(numberOfStates(nwa7) == 8);

@@ -1,0 +1,140 @@
+Input x0051 is bool
+Input x0006 is bool
+Input x0049 is bool
+Input x0005 is bool
+Input x0045 is bool
+Input x0039 is bool
+Input x0017 is bool
+Input x0042 is bool
+Input x0020 is bool
+Input x0014 is bool
+Input x0004 is bool
+Input x0024 is bool
+Input x0026 is bool
+Input x0000 is bool
+Input x0025 is bool
+Input x0037 is bool
+Input x0009 is bool
+Input x0028 is bool
+Input x0036 is bool
+Input x0035 is bool
+Input x0023 is bool
+Input x0029 is bool
+Input x0032 is bool
+Input x0031 is bool
+Input x0047 is bool
+Input x0056 is bool
+Input x0003 is bool
+Input x0018 is bool
+Input x0043 is bool
+Input x0021 is bool
+Input x0013 is bool
+Input x0011 is bool
+Input x0008 is bool
+Input x0010 is bool
+Input x0044 is bool
+Input x0038 is bool
+Input x0030 is bool
+Input x0022 is bool
+Input x0019 is bool
+Input x0001 is bool
+Input x0057 is bool
+Input x0054 is bool
+Input x0046 is bool
+Input x0034 is bool
+Input x0052 is bool
+Input x0007 is bool
+Input x0041 is bool
+Input x0055 is bool
+Input x0016 is bool
+Input x0053 is bool
+Input x0012 is bool
+Input x0002 is bool
+Input x0050 is bool
+Input x0040 is bool
+Input x0015 is bool
+Input x0048 is bool
+Input x0027 is bool
+Input x0033 is bool
+
+ID000: Globally, it is always the case that "x0000" holds
+ID001: Globally, it is always the case that "x0001" holds
+ID002: Globally, it is never the case that "!x0001 && !x0000" holds
+ID003: Globally, it is always the case that if "!x0001" holds then "x0000" holds as well
+ID004: Globally, it is always the case that if "!x0000" holds then "x0001" holds as well
+ID005: Globally, it is always the case that "x0002" holds
+ID006: Globally, it is always the case that "x0003" holds
+ID007: Globally, it is never the case that "!x0002 && !x0003" holds
+ID008: Globally, it is always the case that if "!x0003" holds then "x0002" holds as well
+ID009: Globally, it is always the case that if "!x0002" holds then "x0003" holds as well
+ID010: Globally, it is always the case that "x0004" holds
+ID011: Globally, it is always the case that "x0005" holds
+ID012: Globally, it is never the case that "!x0004 && !x0005" holds
+ID013: Globally, it is always the case that if "!x0005" holds then "x0004" holds as well
+ID014: Globally, it is always the case that if "!x0004" holds then "x0005" holds as well
+ID015: Globally, it is always the case that "x0006 && x0007" holds
+ID016: Globally, it is never the case that "!x0006 && !x0007" holds
+ID017: Globally, it is always the case that if "!x0006" holds then "x0007" holds as well
+ID018: Globally, it is always the case that if "!x0007" holds then "x0006" holds as well
+ID019: Globally, it is always the case that "x0008 || x0009 || x0010 || x0011" holds
+ID020: Globally, it is never the case that "x0008 && x0009" holds
+ID021: Globally, it is never the case that "x0009 && x0010" holds
+ID022: Globally, it is never the case that "x0010 && x0011" holds
+ID023: Globally, it is never the case that "x0008 && x0010" holds
+ID024: Globally, it is never the case that "x0008 && x0011" holds
+ID025: Globally, it is never the case that "x0009 && x0011" holds
+ID026: Globally, it is always the case that if "!x0012" holds then "!x0013" holds as well
+ID027: Globally, it is always the case that if "x0012" holds then "x0013" holds as well
+ID028: Globally, it is always the case that "x0014" holds
+ID029: Globally, it is never the case that "x0015 && x0016" holds
+ID030: Globally, it is never the case that "x0017 && x0016" holds
+ID031: Globally, it is never the case that "x0017 && x0015" holds
+ID032: Globally, it is always the case that "x0018 || x0019 || x0020" holds
+ID033: Globally, it is never the case that "x0018 && x0019" holds
+ID034: Globally, it is never the case that "x0018 && x0020" holds
+ID035: Globally, it is never the case that "x0019 && x0020" holds
+ID036: Globally, it is always the case that "x0021 || x0022" holds
+ID037: Globally, it is never the case that "x0021 && x0022" holds
+ID038: Globally, it is always the case that "x0023 || x0024 || x0025" holds.
+ID039: Globally, it is never the case that "x0023 && x0024" holds
+ID040: Globally, it is never the case that "x0023 && x0025" holds
+ID041: Globally, it is never the case that "x0024 && x0025" holds
+ID042: Globally, it is always the case that if "x0024" holds then "x0026" holds as well
+ID043: Globally, it is always the case that if "x0025" holds then "x0026" holds as well
+ID044: Globally, it is always the case that if "!x0026" holds then "x0023" holds as well
+ID045: Globally, it is always the case that if "x0023" holds then "x0018" holds as well
+ID046: Globally, it is always the case that if "x0025" holds then "x0020" holds as well
+ID047: Globally, it is always the case that if "x0024" holds then "x0019" holds as well
+ID048: Globally, it is always the case that if "x0027" holds then "x0028" holds as well
+ID049: Globally, it is always the case that if "!x0027" holds then "x0029" holds as well
+ID050: Globally, it is always the case that if "!x0006 && x0026" holds then "x0030" holds as well
+ID051: Globally, it is always the case that "x0031 || x0032 || x0033" holds
+ID052: Globally, it is never the case that "x0031 && x0032" holds
+ID053: Globally, it is never the case that "x0031 && x0033" holds
+ID054: Globally, it is never the case that "x0032 && x0033" holds
+ID055: Globally, it is always the case that if "x0034 || x0035 || x0036" holds then "x0031" holds as well.
+ID056: Globally, it is always the case that if "x0037" holds then "x0031" holds as well.
+ID057: Globally, it is never the case that "x0034 && x0037" holds.
+ID058: Globally, it is always the case that if "x0038 || x0039" holds then "x0031" holds as well
+ID059: Globally, it is always the case that if "x0040 || x0041" holds then "x0032" holds as well
+ID060: Globally, it is always the case that if "x0042 || x0043" holds then "x0033" holds as well
+ID061: Globally, it is always the case that "x0038 || x0040 || x0042" holds
+ID062: Globally, it is never the case that "x0038 && x0040" holds
+ID063: Globally, it is never the case that "x0038 && x0042" holds
+ID064: Globally, it is never the case that "x0040 && x0042" holds
+ID065: Globally, it is always the case that if "x0044 || x0045 || x0046" holds then "x0033" holds as well.
+ID066: Globally, it is always the case that if "x0047" holds then "x0033" holds as well
+ID067: Globally, it is always the case that "x0048" holds
+ID068: Globally, it is always the case that "x0049" holds
+ID069: Globally, it is always the case that if "!x0006 && !x0012 && !x0026" holds then "!x0006" holds after at most 1 time units
+ID070: Globally, it is always the case that if "!x0006 && x0012" holds then "x0050 && x0051" holds after at most 1 time units
+ID071: Globally, it is always the case that if "x0026" holds then "!x0051" holds as well.
+ID072: Globally, it is always the case that if "!x0001 || !x0038 || x0044" holds then "!x0051" holds as well.
+ID073: Globally, it is always the case that if "x0044" holds then "x0052" holds as well.
+ID074: Globally, it is always the case that if "!x0044" holds then "x0052" holds as well.
+ID075: After "x0053" until "!x0053", it is never the case that "x0027" holds.
+ID076: After "x0053" until "!x0053", it is always the case that if "x0053" holds then "x0054" holds after at most 28800 time units
+ID077: Globally, it is never the case that "x0023 && !x0052 && x0055" holds
+ID078: After "x0053 && x0023" until "!x0053", it is never the case that "!x0052" holds
+ID079: Globally, it is always the case that if "!x0006 && x0012" holds then "x0056" holds as well.
+ID080: Globally, it is always the case that if "!x0006 && !x0012" holds then "x0057" holds as well.

@@ -1,0 +1,60 @@
+// author nutz@informatik.uni-freiburg.de
+// file for basic testing of tree automata operations
+
+Word w = [a b c];
+print(w);
+Tree t1 = Tree [ g(a, f(f(b))) ];
+Tree t2 = Tree [ a ];
+print(t1);
+print(t2);
+
+TreeAutomaton ta1 = ( 
+  rankedAlphabet = { 
+    (0, {a b})
+    (1, {f})
+    (2, {g})
+  },
+  states = {q1 q2},
+  finalStates = {q2},
+  transitionTable = {
+    (() a q1)
+    (() b q1)
+    ((q1) f q1)
+    ((q1 q1) g q2)
+  }
+);
+
+print(ta1);
+
+TreeAutomaton ta2 = (
+  rankedAlphabet = { 
+    (0, {a b})
+    (1, {f})
+    (2, {g})
+  },
+  states = {p q r},
+  finalStates = {r},
+  transitionTable = {
+    (() a p)
+    (() b q)
+    ((r) f r)
+    ((r r) g r)
+  }
+);
+
+
+
+assert(accepts(ta1, Tree [ g(f(a), b) ]));
+assert(accepts(ta1, Tree [ g(a, f(f(b))) ]));
+assert(accepts(ta1, Tree [ a ]));
+
+assert(accepts(ta2, Tree [ g(f(a), b) ]));
+assert(accepts(ta2, Tree [ g(a, f(f(b))) ]));
+assert(accepts(ta2, Tree [ a ]));
+
+
+
+TreeAutomaton taIntersect = Intersect(ta1, ta2);
+print(taIntersect);
+//assert(false);
+assert(!TreeEmptinessCheck(taIntersect));

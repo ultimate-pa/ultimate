@@ -1,0 +1,15 @@
+// Author: schaetzc@tf.uni-freiburg.de
+// Date:  2018-08-13
+//
+// Net without any places or transitions.
+
+assert(isEmpty(n));
+assert(numberOfConditions(finitePrefix(n)) == 0);
+
+PetriNet n = (
+  alphabet = {a},
+  places = {},
+  transitions = {},
+  initialMarking = {},
+  acceptingPlaces = {}
+);

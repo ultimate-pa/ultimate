@@ -1,0 +1,31 @@
+// Example obtained from Ming-Hsien that demonstrates that omitting
+// transitions that annihilate an even rank can save states.
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2015-10-13
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(nwa);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(removeDeadEnds(complementNCSB)) == 10);
+
+//print(complementNCSB);
+NestedWordAutomaton complementFKV = buchiComplementFKV(nwa, "HEIMAT2", 77);
+print(numberOfStates(complementFKV));
+assert(numberOfStates(removeDeadEnds(complementFKV)) == 14);
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {a b},
+	returnAlphabet = { },
+	states = {s0 s1 s2},
+	initialStates = {s0},
+	finalStates = {s2},
+	callTransitions = { },
+	internalTransitions = { 
+		(s0 b s0) (s0 b s2)
+		(s2 b s1)
+		(s1 a s2)
+	}, 
+	returnTransitions = { }
+);

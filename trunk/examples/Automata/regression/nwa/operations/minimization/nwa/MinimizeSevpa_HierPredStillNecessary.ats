@@ -1,0 +1,50 @@
+// Example that splitting hierarchical predecessors of incoming returns is
+// still needed even if splitting hierarchical predecessors of outgoing returns
+// is used
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 7);
+assert(shrinkNwaSize == 7);
+assert(minimizeNwaPmaxSatDirectBiSize == 7);
+assert(minimizeNwaPmaxSatDirectSize == 7);
+assert(reduceNwaDirectSimulationSize == 7);
+assert(reduceNwaDirectSimulationBSize == 7);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 7);
+// assert(reduceNwaDelayedSimulationSize == 7);
+// assert(reduceNwaDelayedSimulationBSize == 7);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 7);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a" "b"},
+	returnAlphabet = {"r"},
+	states = {"q0" "q1" "q2" "q3" "q4" "q5" "qE"},
+	initialStates = {"q0"},
+	finalStates = {"qE"},
+	callTransitions = {
+		 ("q1" "c" "q3")
+		 ("q2" "c" "q3")
+	},
+	internalTransitions = {
+		 ("q0" "a" "q1")
+		 ("q0" "b" "q2")
+		 ("q3" "a" "q4")
+		 ("q5" "b" "qE")
+	},
+	returnTransitions = {
+		 ("q4" "q1" "r" "qE")
+		 ("q4" "q2" "r" "q5")
+	}
+);

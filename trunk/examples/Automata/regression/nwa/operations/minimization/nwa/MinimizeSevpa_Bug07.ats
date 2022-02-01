@@ -1,0 +1,120 @@
+// Testfile dumped by Ultimate at 2012/09/29 23:08:05
+//
+// Problem with run TestENTRY x = 1;havoc n; L22 call< encTENTRY x_local = x;n_local... L38loopEntry' assume star; L41 call< encLTENTRY x_local = x;n_local... L107 call< encLLTENTRY PARALLELassume x == ... encLLTEXIT > returnL107' assume CallRet;ret :... L113' assume true; encLTEXIT > returnL41' assume !!blockCall;h... L44 assume !star;x_local... L49 call< encLTENTRY x_local = x;n_local... L107 call< encLLTENTRY PARALLELassume x == ... encLLTEXIT > returnL107' assume !CallRet; L113 call< encRLTENTRY PARALLELassume x != ... encRLTEXIT > returnL113' assume true; encLTEXIT > returnL49' assume !!blockCall;h... L52 assume !star;havoc n... L56loopEntry' assume !(n_local > 0... L76 call< encLTENTRY x_local = x;n_local... L107 call< encLLTENTRY PARALLELassume x == ... encLLTEXIT > returnL107' assume CallRet;ret :... L113' assume true; encLTEXIT > returnL76' assume !!blockCall;h... L79 assume star;ret = t... encTFINAL assume true; encTEXIT > returnL22' assume !(ret != fals... TestErr0AssertViolation 
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 52);
+assert(shrinkNwaSize == 49);
+assert(minimizeNwaPmaxSatDirectBiSize == 50);
+assert(minimizeNwaPmaxSatDirectSize == 51);
+assert(reduceNwaDirectSimulationSize == 50);
+assert(reduceNwaDirectSimulationBSize == 51);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 51);
+// assert(reduceNwaDelayedSimulationSize == 50);
+// assert(reduceNwaDelayedSimulationBSize == 50);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 50);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call357" "call359" "call369" "call371" "call355" "call365" "call367" "call361" "call363" },
+	internalAlphabet = {"assume !blockCall;re...275" "assume true;340" "assume !true;339" "assume star;ret = t...279" "assume !star;337" "assume !!blockCall;h...276" "assume star;ret = t...336" "assume !star;x_local...280" "assume !!blockCall;h...285" "assume !blockCall;re...284" "assume !star;324" "x_local = x;n_local...257" "assume !star;havoc s...322" "assume !CallRet;263" "assume star;ret = t...321" "assume CallRet;ret :...261" "assume true;266" "x_local = x;n_local...267" "assume !blockCall;re...332" "assume !!blockCall;h...333" "assume star;271" "assume true;328" "assume ret != false;...373" "PARALLELassume x == ...375" "assume !!blockCall;h...307" "assume !blockCall;re...306" "assume !star;311" "assume star;ret = t...310" "assume !(n_local > 0...313" "assume !blockCall;re...317" "PARALLELassume x != ...377" "assume !!blockCall;h...318" "assume !(ret != fals...254" "assume star;ret = t...288" "assume !star;havoc n...289" "x = 1;havoc n;252" "assume n_local > 0;293" "assume !blockCall;re...297" "assume !!blockCall;h...298" "assume star;ret = t...301" "assume !star;n_local...302" },
+	returnAlphabet = {"return356" "return372" "return358" "return368" "return370" "return364" "return366" "return360" "return362" },
+	states = {"L56loopEntry'76116" "L5876118" "L49'76112" "L5276114" "L76'76124" "L58'76126" "L7676120" "L113'76101" "encLTEXIT76103" "encLTEXIT76097" "encRLTEXIT76099" "L4976109" "L41'76105" "L4476107" "L84loopEntry'76150" "L4176151" "encTFINAL76148" "L38loopEntry'76146" "L4176159" "L84loopEntry'76157" "encTEXIT76153" "L6176132" "L7976130" "L76'76128" "L6676143" "encTFINAL76140" "L38loopEntry'76138" "L7976136" "L41'76185" "L87'76184" "L41'76190" "L66'76176" "L6976180" "L8776168" "TestErr0AssertViolation76173" "encTEXIT76161" "L8776163" "L22'76165" "L10776083" "encLTENTRY76081" "encLLTEXIT76087" "encLLTENTRY76085" "L11376091" "L107'76089" "encRLTENTRY76095" "L113'76093" "L9076202" "TestENTRY76071" "encTENTRY76075" "L9076194" "L2276073" "L87'76192" "L4176079" "L38loopEntry'76077" "L87'76197" },
+	initialStates = {"TestENTRY76071" },
+	finalStates = {"TestErr0AssertViolation76173" },
+	callTransitions = {
+		 ("L5876118" "call365" "encLTENTRY76081")
+		 ("L7676120" "call369" "encLTENTRY76081")
+		 ("L4976109" "call363" "encLTENTRY76081")
+		 ("L4176151" "call361" "encLTENTRY76081")
+		 ("L4176159" "call361" "encLTENTRY76081")
+		 ("L6676143" "call367" "encLTENTRY76081")
+		 ("L8776168" "call371" "encLTENTRY76081")
+		 ("L8776163" "call371" "encLTENTRY76081")
+		 ("L10776083" "call357" "encLLTENTRY76085")
+		 ("L11376091" "call359" "encRLTENTRY76095")
+		 ("L2276073" "call355" "encTENTRY76075")
+		 ("L4176079" "call361" "encLTENTRY76081")
+	},
+	internalTransitions = {
+		 ("L56loopEntry'76116" "assume n_local > 0;293" "L5876118")
+		 ("L56loopEntry'76116" "assume !(n_local > 0...313" "L7676120")
+		 ("L49'76112" "assume !!blockCall;h...285" "L5276114")
+		 ("L5276114" "assume !star;havoc n...289" "L56loopEntry'76116")
+		 ("L76'76124" "assume !!blockCall;h...318" "L7976130")
+		 ("L58'76126" "assume !!blockCall;h...298" "L6176132")
+		 ("L113'76101" "assume true;266" "encLTEXIT76103")
+		 ("L41'76105" "assume !!blockCall;h...276" "L4476107")
+		 ("L4476107" "assume !star;x_local...280" "L4976109")
+		 ("L84loopEntry'76150" "assume true;328" "L8776163")
+		 ("encTFINAL76148" "assume true;340" "encTEXIT76161")
+		 ("L38loopEntry'76146" "assume !star;324" "L84loopEntry'76157")
+		 ("L38loopEntry'76146" "assume star;271" "L4176159")
+		 ("L84loopEntry'76157" "assume true;328" "L8776168")
+		 ("L6176132" "assume star;ret = t...301" "encTFINAL76140")
+		 ("L6176132" "assume !star;n_local...302" "L6676143")
+		 ("L7976130" "assume !star;havoc s...322" "L38loopEntry'76138")
+		 ("L7976130" "assume star;ret = t...321" "encTFINAL76140")
+		 ("L76'76128" "assume !!blockCall;h...318" "L7976136")
+		 ("encTFINAL76140" "assume true;340" "encTEXIT76153")
+		 ("L38loopEntry'76138" "assume !star;324" "L84loopEntry'76150")
+		 ("L38loopEntry'76138" "assume star;271" "L4176151")
+		 ("L7976136" "assume !star;havoc s...322" "L38loopEntry'76146")
+		 ("L7976136" "assume star;ret = t...321" "encTFINAL76148")
+		 ("L41'76185" "assume !blockCall;re...275" "encTFINAL76140")
+		 ("L41'76185" "assume !!blockCall;h...276" "L4476107")
+		 ("L87'76184" "assume !!blockCall;h...333" "L9076194")
+		 ("L41'76190" "assume !!blockCall;h...276" "L4476107")
+		 ("L66'76176" "assume !!blockCall;h...307" "L6976180")
+		 ("L66'76176" "assume !blockCall;re...306" "encTFINAL76140")
+		 ("L6976180" "assume !star;311" "L56loopEntry'76116")
+		 ("L6976180" "assume star;ret = t...310" "encTFINAL76140")
+		 ("L22'76165" "assume !(ret != fals...254" "TestErr0AssertViolation76173")
+		 ("encLTENTRY76081" "x_local = x;n_local...257" "L10776083")
+		 ("encLLTENTRY76085" "PARALLELassume x == ...375" "encLLTEXIT76087")
+		 ("L107'76089" "assume !CallRet;263" "L11376091")
+		 ("L107'76089" "assume CallRet;ret :...261" "L113'76093")
+		 ("encRLTENTRY76095" "PARALLELassume x != ...377" "encRLTEXIT76099")
+		 ("L113'76093" "assume true;266" "encLTEXIT76097")
+		 ("L9076202" "assume !star;337" "L84loopEntry'76157")
+		 ("TestENTRY76071" "x = 1;havoc n;252" "L2276073")
+		 ("L9076194" "assume !star;337" "L84loopEntry'76150")
+		 ("encTENTRY76075" "x_local = x;n_local...267" "L38loopEntry'76077")
+		 ("L87'76192" "assume !blockCall;re...332" "encTFINAL76140")
+		 ("L87'76192" "assume !!blockCall;h...333" "L9076194")
+		 ("L38loopEntry'76077" "assume star;271" "L4176079")
+		 ("L87'76197" "assume !!blockCall;h...333" "L9076202")
+	},
+	returnTransitions = {
+		 ("encLTEXIT76103" "L8776168" "return372" "L87'76197")
+		 ("encLTEXIT76103" "L8776163" "return372" "L87'76192")
+		 ("encLTEXIT76103" "L6676143" "return368" "L66'76176")
+		 ("encLTEXIT76103" "L7676120" "return370" "L76'76128")
+		 ("encLTEXIT76103" "L4976109" "return364" "L49'76112")
+		 ("encLTEXIT76103" "L5876118" "return366" "L58'76126")
+		 ("encLTEXIT76103" "L4176151" "return362" "L41'76185")
+		 ("encLTEXIT76103" "L4176159" "return362" "L41'76190")
+		 ("encLTEXIT76103" "L4176079" "return362" "L41'76105")
+		 ("encLTEXIT76097" "L8776168" "return372" "L87'76184")
+		 ("encLTEXIT76097" "L8776163" "return372" "L87'76184")
+		 ("encLTEXIT76097" "L6676143" "return368" "L66'76176")
+		 ("encLTEXIT76097" "L7676120" "return370" "L76'76124")
+		 ("encLTEXIT76097" "L4176151" "return362" "L41'76105")
+		 ("encLTEXIT76097" "L4176159" "return362" "L41'76105")
+		 ("encRLTEXIT76099" "L11376091" "return360" "L113'76101")
+		 ("encTEXIT76153" "L2276073" "return356" "L22'76165")
+ 		 ("encTEXIT76161" "L2276073" "return356" "L22'76165")
+		 ("encLLTEXIT76087" "L10776083" "return358" "L107'76089")
+	}
+);

@@ -1,0 +1,135 @@
+// Testfile dumped by Ultimate at 2011/12/14 17:56:21
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+// int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed)); // TODO error
+// int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed)); // TODO error
+
+assert(minimizeSevpaSize == 3);
+assert(shrinkNwaSize == 3);
+assert(minimizeNwaPmaxSatDirectBiSize == 3);
+assert(minimizeNwaPmaxSatDirectSize == 3);
+assert(minimizeDfaSimulationSize == 3);
+assert(reduceNwaDirectSimulationSize == 3);
+assert(reduceNwaDirectSimulationBSize == 3);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 3);
+assert(buchiReduceSize == 3);
+assert(reduceNwaDelayedSimulationSize == 3);
+assert(reduceNwaDelayedSimulationBSize == 3);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 3);
+// assert(reduceBuchiFairDirectSimulationSize == 3); // TODO add correct number after error is fixed
+// assert(reduceBuchiFairSimulationSize == 2); // TODO add correct number after error is fixed
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"30" "20" "10" },
+	returnAlphabet = {},
+	states = {"{(E,n,1)(E,init,1)}_30" "{(E,n,3)(E,init,1)}_40" "{(E, init)}_10" "{(E, n), (E, init)}_20" "{(E,nStrict,0)(E,n,1)(E,init,1)}_70" "{(E,nStrict,2)(E,n,3)(E,init,1)}_80" "{(E,n,1)(E,init,3)}_50" "{(E, nStrict), (E, n), (E, init)}_60" "{(E,nStrict,0X)(E,n,3)(E,init,1)}_110" "{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "{(E,nStrict,0X)(E,n,1)(E,init,1)}_100" "{(E,nStrict,0X)(E,n,0)(E,init,1)}_150" "{(E,nStrict,0X)(E,n,0X)(E,init,1)}_130" "{(E,nStrict,0)(E,n,0X)(E,init,1)}_140" },
+	initialStates = {"{(E, init)}_10" },
+	finalStates = {"{(E,n,1)(E,init,1)}_30" "{(E,n,3)(E,init,1)}_40" "{(E,n,1)(E,init,3)}_50" "{(E,nStrict,0)(E,n,1)(E,init,1)}_70" "{(E,nStrict,2)(E,n,3)(E,init,1)}_80" "{(E,nStrict,2)(E,n,1)(E,init,3)}_90" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("{(E, init)}_10" "10" "{(E, n), (E, init)}_20")
+		 ("{(E, init)}_10" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E, init)}_10" "10" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E, init)}_10" "10" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E, init)}_10" "20" "{(E, n), (E, init)}_20")
+		 ("{(E, init)}_10" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E, init)}_10" "20" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E, init)}_10" "20" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E, init)}_10" "30" "{(E, n), (E, init)}_20")
+		 ("{(E, init)}_10" "30" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E, init)}_10" "30" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E, init)}_10" "30" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E, n), (E, init)}_20" "10" "{(E, n), (E, init)}_20")
+		 ("{(E, n), (E, init)}_20" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E, n), (E, init)}_20" "10" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E, n), (E, init)}_20" "10" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E, n), (E, init)}_20" "20" "{(E, n), (E, init)}_20")
+		 ("{(E, n), (E, init)}_20" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E, n), (E, init)}_20" "20" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E, n), (E, init)}_20" "20" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E, n), (E, init)}_20" "30" "{(E, nStrict), (E, n), (E, init)}_60")
+		 ("{(E, n), (E, init)}_20" "30" "{(E,nStrict,0)(E,n,1)(E,init,1)}_70")
+		 ("{(E, n), (E, init)}_20" "30" "{(E,nStrict,2)(E,n,3)(E,init,1)}_80")
+		 ("{(E, n), (E, init)}_20" "30" "{(E,nStrict,2)(E,n,1)(E,init,3)}_90")
+		 ("{(E,n,1)(E,init,1)}_30" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,n,1)(E,init,1)}_30" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,n,1)(E,init,1)}_30" "30" "{(E,nStrict,0X)(E,n,1)(E,init,1)}_100")
+		 ("{(E,n,3)(E,init,1)}_40" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,n,3)(E,init,1)}_40" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,n,3)(E,init,1)}_40" "30" "{(E,nStrict,0X)(E,n,1)(E,init,1)}_100")
+		 ("{(E,n,1)(E,init,3)}_50" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,n,1)(E,init,3)}_50" "10" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E,n,1)(E,init,3)}_50" "10" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E,n,1)(E,init,3)}_50" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,n,1)(E,init,3)}_50" "20" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E,n,1)(E,init,3)}_50" "20" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E,n,1)(E,init,3)}_50" "30" "{(E,nStrict,0X)(E,n,1)(E,init,1)}_100")
+		 ("{(E,n,1)(E,init,3)}_50" "30" "{(E,nStrict,0X)(E,n,3)(E,init,1)}_110")
+		 ("{(E,n,1)(E,init,3)}_50" "30" "{(E,nStrict,0X)(E,n,1)(E,init,3)}_120")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "10" "{(E, n), (E, init)}_20")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "10" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "10" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "20" "{(E, n), (E, init)}_20")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "20" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "20" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "30" "{(E, nStrict), (E, n), (E, init)}_60")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "30" "{(E,nStrict,0)(E,n,1)(E,init,1)}_70")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "30" "{(E,nStrict,2)(E,n,3)(E,init,1)}_80")
+		 ("{(E, nStrict), (E, n), (E, init)}_60" "30" "{(E,nStrict,2)(E,n,1)(E,init,3)}_90")
+		 ("{(E,nStrict,0)(E,n,1)(E,init,1)}_70" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0)(E,n,1)(E,init,1)}_70" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0)(E,n,1)(E,init,1)}_70" "30" "{(E,nStrict,0X)(E,n,0X)(E,init,1)}_130")
+		 ("{(E,nStrict,2)(E,n,3)(E,init,1)}_80" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,2)(E,n,3)(E,init,1)}_80" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,2)(E,n,3)(E,init,1)}_80" "30" "{(E,nStrict,0X)(E,n,1)(E,init,1)}_100")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "10" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "10" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "20" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "20" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "30" "{(E,nStrict,0X)(E,n,1)(E,init,1)}_100")
+		 ("{(E,nStrict,2)(E,n,1)(E,init,3)}_90" "30" "{(E,nStrict,0X)(E,n,1)(E,init,3)}_120")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,1)}_100" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,1)}_100" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,1)}_100" "30" "{(E,nStrict,0)(E,n,0X)(E,init,1)}_140")
+		 ("{(E,nStrict,0X)(E,n,3)(E,init,1)}_110" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,3)(E,init,1)}_110" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,3)(E,init,1)}_110" "30" "{(E,nStrict,0)(E,n,0X)(E,init,1)}_140")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "10" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "10" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "20" "{(E,n,3)(E,init,1)}_40")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "20" "{(E,n,1)(E,init,3)}_50")
+		 ("{(E,nStrict,0X)(E,n,1)(E,init,3)}_120" "30" "{(E,nStrict,0)(E,n,0X)(E,init,1)}_140")
+		 ("{(E,nStrict,0X)(E,n,0X)(E,init,1)}_130" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,0X)(E,init,1)}_130" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,0X)(E,init,1)}_130" "30" "{(E,nStrict,0X)(E,n,0X)(E,init,1)}_130")
+		 ("{(E,nStrict,0)(E,n,0X)(E,init,1)}_140" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0)(E,n,0X)(E,init,1)}_140" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0)(E,n,0X)(E,init,1)}_140" "30" "{(E,nStrict,0X)(E,n,0)(E,init,1)}_150")
+		 ("{(E,nStrict,0X)(E,n,0)(E,init,1)}_150" "10" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,0)(E,init,1)}_150" "20" "{(E,n,1)(E,init,1)}_30")
+		 ("{(E,nStrict,0X)(E,n,0)(E,init,1)}_150" "30" "{(E,nStrict,0)(E,n,0X)(E,init,1)}_140")
+	},
+	returnTransitions = {
+	}
+);

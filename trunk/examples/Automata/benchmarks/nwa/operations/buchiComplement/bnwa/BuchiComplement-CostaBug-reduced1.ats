@@ -1,0 +1,49 @@
+// 2015-07-30, Matthias Heizmann
+// reveals bug in buchiComplementNCSB and buchiComplementFKV
+// obtained from termination analysis of CostaDouble.bpl
+
+NestedLassoWord nlw = [ "b" "c"< >"r" "c"<  , "c"< >"r" "c"< "c"< >"r" >"r" "a" "c"<  ];
+boolean accepted = buchiAccepts(ia, nlw);
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ia);
+boolean acceptedComplementNCSB = buchiAccepts(complementNCSB, nlw);
+NestedWordAutomaton complementFKV = buchiComplementFKV(ia);
+boolean acceptedComplementFKV = buchiAccepts(complementFKV, nlw);
+assert(!accepted);
+assert(acceptedComplementNCSB);
+assert(acceptedComplementFKV);
+
+
+
+NestedWordAutomaton ia = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a" "b" },
+	returnAlphabet = {"r" },
+	states = {"s0" "s3" "q0" "s1" "q1" "sX" },
+	initialStates = {"q0" },
+	finalStates = {"s0" },
+	callTransitions = {
+		 ("s0" "c" "s1")
+		 ("q0" "c" "q1")
+		 ("s1" "c" "s1")
+		 ("q1" "c" "q1")
+	},
+	internalTransitions = {
+		 ("s3" "a" "s0")
+		 ("q0" "a" "q0")
+		 ("q0" "b" "q1")
+// 		 ("s1" "a" "s1")
+		 ("q1" "a" "q1")
+// 		 ("sX" "a" "s0")
+// 		 ("q1" "a" "q1")
+// 		 ("s1" "a" "s1")
+// 		 ("s3" "a" "s0")
+//  	 ("s0" "a" "s0")
+	},
+	returnTransitions = {
+		 ("s1" "s0" "r" "s3")
+		 ("s1" "s1" "r" "s1")
+// 		 ("q1" "q0" "r" "q0")
+		 ("q1" "q1" "r" "s0")
+		 ("q1" "q1" "r" "q1")
+	}
+);

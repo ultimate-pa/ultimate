@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="aut1">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="jump" type="label" local="false" />
+    <location id="1" name="loc1" x="204.0" y="178.0">
+      <invariant>x &lt;= 5</invariant>
+      <flow>x'==4</flow>
+    </location>
+    <location id="2" name="loc2" x="376.0" y="177.0">
+      <invariant>x &lt;= 1000</invariant>
+    </location>
+    <location id="3" name="loc3" x="545.0" y="235.0">
+      <invariant>x &lt;= 9999</invariant>
+    </location>
+    <location id="4" name="loc4" x="549.0" y="135.0">
+      <invariant>x &lt;= 5000</invariant>
+    </location>
+    <transition source="1" target="2">
+      <label>jump</label>
+      <labelposition x="-24.0" y="-35.0" />
+    </transition>
+    <transition source="2" target="3">
+      <labelposition x="-20.0" y="-50.0" />
+    </transition>
+    <transition source="2" target="4">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+  </component>
+  <component id="aut2">
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="jump" type="label" local="false" />
+    <location id="1" name="loc1" x="204.0" y="217.0">
+      <invariant>y &lt;= 5</invariant>
+      <flow>y'==4</flow>
+    </location>
+    <location id="2" name="loc2" x="392.0" y="219.0">
+      <invariant>y&lt;=1000</invariant>
+    </location>
+    <transition source="1" target="2">
+      <label>jump</label>
+      <labelposition x="-26.0" y="1.0" />
+    </transition>
+  </component>
+  <component id="aut3">
+    <param name="z" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="jump" type="label" local="false" />
+    <location id="1" name="loc1" x="184.0" y="218.0">
+      <invariant>z &lt;= 5</invariant>
+      <flow>z'==4</flow>
+    </location>
+    <location id="2" name="loc2" x="377.0" y="223.0">
+      <invariant>z&lt;=1000</invariant>
+    </location>
+    <transition source="1" target="2">
+      <label>jump</label>
+      <labelposition x="-20.0" y="-54.0" />
+    </transition>
+  </component>
+  <component id="sys1">
+    <param name="jump" type="label" local="false" />
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="z" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="aut2" as="aut2_1" x="496.0" y="280.0">
+      <map key="y">y</map>
+      <map key="jump">jump</map>
+    </bind>
+    <bind component="aut3" as="aut3_1" x="470.0" y="371.0">
+      <map key="z">z</map>
+      <map key="jump">jump</map>
+    </bind>
+    <bind component="aut1" as="aut1_1" x="501.0" y="194.0">
+      <map key="x">x</map>
+      <map key="jump">jump</map>
+    </bind>
+  </component>
+</sspaceex>
+

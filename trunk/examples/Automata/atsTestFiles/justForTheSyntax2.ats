@@ -1,0 +1,45 @@
+// Author: musab@informatik.uni-freiburg.de
+// Date:  16.04.2013
+// A file to explain the syntax
+
+parseAutomata("nwaDefinitions01.ats");
+parseAutomata("nwaDefinitions02.ats");
+
+// Define some words
+NestedWord nw1 = [a b c ];
+NestedLassoWord nlw1 = [a b c, a b];
+// Define some testcases
+assert(accepts(acceptsWithC, nw1));
+assert(!buchiAccepts(acceptsWithC, nlw1));
+// Define some new words
+NestedWord nw2 = [a< >r c<];
+NestedLassoWord nlw2 = [a< b< c<, i< m< j< >o >k >l];
+// Define a new nestedword automaton
+NestedWordAutomaton nwa2 = complement(nwa1);
+// Define new testcases
+assert(accepts(nwa1, nw2));
+assert(!accepts(nwa2, nw2));
+
+NestedWordAutomaton nwa3 = (
+  callAlphabet = {c a l l},
+  internalAlphabet = {a  b c},
+  returnAlphabet = {r e t u r n},
+  states = {q0 q1 q2 q3},
+  initialStates = {q0},
+  finalStates = {q3},
+  callTransitions = {(q0 c q1) (q1 a q2) (q2 l q3) (q3 l q3)},
+  internalTransitions = { },
+  returnTransitions = {(q0 q1 r q1)
+                       (q1 q0 e q1)
+                       (q0 q2 t q2)
+                       (q2 q3 u q3)
+                       (q1 q3 r q3)
+                       (q1 q2 n q3)
+                       }
+);
+
+// Define further test cases
+assert(!isEmpty(nwa3));
+assert(!accepts(nwa3, nw1));
+assert(!buchiAccepts(nwa3, nlw2));
+

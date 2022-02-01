@@ -1,0 +1,50 @@
+// Author: Christian, Daniel, Matthias
+// Date: 2017-01-12
+//
+// Problem reported by Daniel on 2016-10-02.
+// http://i.imgur.com/HdN5QwS.jpg
+// Solved by using ANP relations.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int minimizeNwaPmaxSatDelayedBiSize = numberOfStates(minimizeNwaPmaxSatDelayedBi(preprocessed));
+
+assert(minimizeSevpaSize == 3);
+assert(shrinkNwaSize == 3);
+assert(minimizeNwaPmaxSatDirectSize == 3);
+assert(minimizeNwaPmaxSatDirectSize == 3);
+assert(reduceNwaDirectSimulationSize == 3);
+assert(reduceNwaDirectSimulationBSize == 3);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 3);
+// assert(reduceNwaDelayedSimulationSize == 3);
+// assert(reduceNwaDelayedSimulationBSize == 3);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 3);
+assert(minimizeNwaPmaxSatDelayedBiSize == 3);
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {"c" },
+    internalAlphabet = {"a" },
+    returnAlphabet = {"r" },
+    states = {"q0" "q1" "qf" },
+    initialStates = {"q0" },
+    finalStates = {"qf" },
+    callTransitions = {
+         ("q0" "c" "q1")
+    },
+    internalTransitions = {
+         ("q0" "a" "qf")
+    },
+    returnTransitions = {
+         ("q1" "q0" "r" "q0")
+    }
+);

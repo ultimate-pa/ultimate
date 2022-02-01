@@ -1,0 +1,37 @@
+// Testfile dumped by Ultimate at 2012/08/06 16:59:34
+
+print(finitePrefix2PetriNet( finitePrefix( net, true) ));
+
+PetriNet net = (
+	alphabet = {a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23 },
+	places = {p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 },
+	transitions = {
+		( {p13 p29 } a15 {p26 p29 } )
+		( {p11 p30 p29 } a9 {p6 p30 p29 } )
+		( {p12 } a12 {p18 } )
+		( {p14 } a2 {p19 } )
+		( {p11 } a0 {p7 } )
+		( {p13 p30 } a16 {p25 p30 } )
+		( {p22 p31 p30 } a7 {p24 p23 p29 } )
+		( {p19 } a3 {p15 } )
+		( {p26 p23 p29 } a18 {p21 p31 p30 } )
+		( {p16 } a13 {p13 } )
+		( {p15 p29 } a5 {p28 p29 } )
+		( {p28 p23 p29 } a6 {p22 p31 p30 } )
+
+		( {p1 } a19 {p4 } )
+
+		( {p4 } a12 {p18 } )
+		( {p20 } a14 {p16 } )
+
+		( {p7 } a1 {p14 } )
+		( {p21 p31 p30 } a17 {p1 p23 p29 } )
+		( {p18 } a11 {p20 } )
+
+
+		( {p28 p30 } a6 {p22 p30 } )
+		( {p10 p9 } a22 {p11 p12 } )
+	},
+	initialMarking = {p2 p3 p30 p31 },
+	acceptingPlaces = {p25 p27 }
+);

@@ -1,0 +1,32 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 08.11.2013
+
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 7);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call #t~ret1 := nondet();" "call ULTIMATE.init();" "call #t~ret0 := nondet();" "call #t~ret2 := main();" },
+	internalAlphabet = {"assume !!(~x~2 > 0 &..." "assume #t~ret0 != 0;" "assume true;" "assume !(~x~2 > 0 &&..." "~x~2 := #t~ret1;havo..." "assume !true;" "assume !(#t~ret0 != ..." "havoc ~anyValue~1;#r..." "havoc ~x~2;havoc ~y~..." },
+	returnAlphabet = {"return call #t~ret0 := nondet();" "return call #t~ret2 := main();" "return call #t~ret1 := nondet();" "return call ULTIMATE.init();" },
+	states = {"83#nondetFINAL" "65#nondetENTRY" "76#nondetEXIT" "59#L18" "39#ULTIMATE.initEXIT" "s1" "q3" "t0" "53#L17" "q2" "72#nondetFINAL" "q0" "77#L18'" "80#L21" "70#nondetFINAL" "q5" "87#L17" "q4" "t1" "89#L18'" "75#nondetEXIT" "46#mainENTRY" "62#L18" "50#L18'''" "67#nondetENTRY" "s0" "q1" "78#L18'" "54#L17" "t2" },
+	initialStates = {"q2" },
+	finalStates = {"83#nondetFINAL" "65#nondetENTRY" "s1" "q0" "77#L18'" "80#L21" "70#nondetFINAL" "q5" "87#L17" "q4" "89#L18'" "62#L18" "s0" "t2" },
+	callTransitions = {
+		 ("q1" "call #t~ret0 := nondet();" "t1")
+		 ("q3" "call #t~ret1 := nondet();" "s0")
+		 ("q5" "call #t~ret0 := nondet();" "s0")
+	},
+	internalTransitions = {
+		 ("q2" "assume #t~ret0 != 0;" "q1")
+ 		 ("q2" "assume !(#t~ret0 != ..." "q3")
+		 ("q4" "~x~2 := #t~ret1;havo..." "q5")
+		 ("t1" "assume true;" "t2")
+		 ("q1" "assume true;" "q2")
+		 ("s0" "havoc ~anyValue~1;#r..." "s1")
+	},
+	returnTransitions = {
+		 ("s1" "q5" "return call #t~ret0 := nondet();" "q5")
+		 ("s1" "q3" "return call #t~ret1 := nondet();" "q4")
+		 ("t2" "q1" "return call #t~ret0 := nondet();" "77#L18'")
+	}
+);

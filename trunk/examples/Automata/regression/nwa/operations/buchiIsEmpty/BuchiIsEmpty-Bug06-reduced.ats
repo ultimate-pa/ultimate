@@ -1,0 +1,29 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: November 2013
+
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 5);
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {"c" },
+    internalAlphabet = {"a" },
+    returnAlphabet = {"r0" "r1" },
+    states = {"q2" "q1" "q4" "q3" "q0" },
+    initialStates = {"q0" },
+    finalStates = {"q2"  },
+    callTransitions = {
+         ("q2" "c" "q4")
+         ("q4" "c" "q3")
+         ("q3" "c" "q4")
+    },
+    internalTransitions = {
+         ("q4" "a" "q2")
+         ("q0" "a" "q3")
+    },
+    returnTransitions = {
+         ("q2" "q3" "r1" "q1")
+         ("q1" "q4" "r0" "q3")
+         ("q3" "q2" "r1" "q0")
+         ("q0" "q3" "r0" "q1")
+    }
+);

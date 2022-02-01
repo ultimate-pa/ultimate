@@ -1,0 +1,93 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 01.06.2013
+
+parseAutomata("../../../SimpleBuchiAutomata.ats");
+
+NestedWordAutomaton nwa = buchiComplementFKV(finitelyManyA);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 4);
+assert(!buchiIsEmpty(nwa));
+
+
+nwa = buchiComplementFKV(infinitelyManyA);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 3);
+assert(!buchiIsEmpty(nwa));
+
+
+NestedWordAutomaton nwa = buchiComplementFKV(AfollowedByB);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 4);
+assert(!buchiIsEmpty(nwa));
+
+
+NestedWordAutomaton nwa = buchiComplementFKV(all);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 1);
+assert(buchiIsEmpty(nwa));
+
+
+NestedWordAutomaton nwa = buchiComplementFKV(allTwoState);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 3);
+assert(buchiIsEmpty(nwa));
+
+
+parseAutomata("../../../../../benchmarks/nwa/operations/buchiComplement/ba/SizeChangeTermination2001.ats");
+
+NestedWordAutomaton nwa = buchiComplementFKV(infeasible);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 80);
+assert(buchiIsEmpty(nwa));
+
+
+NestedWordAutomaton nwa = buchiComplementFKV(infeasibleN);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 11);
+assert(!buchiIsEmpty(nwa));
+
+
+
+parseAutomata("../../../../../benchmarks/nwa/operations/buchiComplement/ba/TerminationTraceAbstractionBlueGreen.ats");
+
+
+NestedWordAutomaton nwa = buchiComplementFKV(manualIA1);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 4);
+assert(!buchiIsEmpty(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(manualIA2);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 14);
+assert(!buchiIsEmpty(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(interpolantAutomaton1);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 4);
+assert(!buchiIsEmpty(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(interpolantAutomaton2);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 8);
+assert(!buchiIsEmpty(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(interpolantAutomaton3);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 9);
+assert(!buchiIsEmpty(nwa));
+print(numberOfStates(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(interpolantAutomaton4);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 10);
+assert(!buchiIsEmpty(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(interpolantAutomaton5);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 13);
+assert(!buchiIsEmpty(nwa));
+
+NestedWordAutomaton nwa = buchiComplementFKV(interpolantAutomaton6);
+print(numberOfStates(nwa));
+assert(numberOfStates(nwa) == 13);
+assert(!buchiIsEmpty(nwa));

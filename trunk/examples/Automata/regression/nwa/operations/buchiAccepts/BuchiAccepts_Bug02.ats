@@ -1,0 +1,40 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 19.5.2011
+
+// Reveals Bug of acceptance check in revision 3719
+
+assert(buchiAccepts(3StateAll, [, a]));
+assert(!buchiAccepts(buchiComplementFKV(3StateAll), [, a]));
+
+NestedWordAutomaton 3StateAll = (
+  callAlphabet = { },
+  internalAlphabet = {a},
+  returnAlphabet = { },
+  states = {q0 q1 q2},
+  initialStates = {q0},
+  finalStates = {q2},
+  callTransitions = { },
+  internalTransitions = { (q0 a q0) (q0 a q1) (q1 a q2) (q2 a q1) }, 
+  returnTransitions = { }
+);
+
+// 2015-08-03 heizmann@informatik.uni-freiburg.de added similar example
+
+assert(buchiAccepts(nwa, [a , b]));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {a b},
+	returnAlphabet = { },
+	states = {q0 q1 q2},
+	initialStates = {q0},
+	finalStates = {q1},
+	callTransitions = { },
+	internalTransitions = {
+		(q0 a q1)
+		(q0 a q2)
+		(q1 b q2)
+		(q2 b q1)
+	}, 
+	returnTransitions = { }
+);

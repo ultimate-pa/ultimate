@@ -1,0 +1,26 @@
+// Testfile dumped by Ultimate at 2020/04/24 15:58:03
+//
+// 
+
+assert(!isEmpty(nwa));
+assert(!isEmptyHeuristic(nwa));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c1},
+	internalAlphabet = {a2 },
+	returnAlphabet = {r1},
+	states = {s6 s7 s8 s9 },
+	initialStates = {s6 },
+	finalStates = {s9 },
+	callTransitions = {
+        (s6 c1 s7)
+        (s8 c1 s7)
+	},
+	internalTransitions = {
+        (s7 a2 s8)
+	},
+	returnTransitions = {
+        (s8 s8 r1 s9)
+	}
+);

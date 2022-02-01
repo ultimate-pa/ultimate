@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="32GB" timelimit="9000s" hardtimelimit="9000s" cpuCores="8">
+	<rundefinition name="Ultimate ReqAnalyzer">
+		<option name="-tc">/storage/repos/ultimate/trunk/examples/toolchains/ReqCheck.xml</option>
+		<option name="-s">/storage/repos/ultimate/trunk/examples/settings/reqanalyzer/reqanalyzer-nonlin.epf</option>
+
+<option name="--traceabstraction.limit.analysis.time">300</option>
+<option name="--pea2boogie.always.use.all.invariants.during.rt-inconsistency.checks">true</option>
+<option name="--pea2boogie.check.vacuity">true</option>
+<option name="--pea2boogie.check.consistency">true</option>
+<option name="--pea2boogie.check.rt-inconsistency">true</option>
+<option name="--pea2boogie.report.trivial.rt-consistency">false</option>
+<option name="--pea2boogie.rt-inconsistency.range">2</option>
+
+		<tasks name="All">
+			<includesfile>/storage/repos/re2019-exp/req-new.set</includesfile>
+		</tasks>
+
+  <tasks name="Paper">
+    <includesfile>/storage/repos/re2019-exp/in_paper_new.set</includesfile>
+  </tasks>
+
+  <tasks name="Bosch">
+    <includesfile>/storage/repos/re2019-exp/bosch.set</includesfile>
+  </tasks>
+
+  <tasks name="Big">
+    <include>/storage/repos/re2019-exp/all.new.req</include>
+  </tasks>
+
+
+	</rundefinition>
+</benchmark>

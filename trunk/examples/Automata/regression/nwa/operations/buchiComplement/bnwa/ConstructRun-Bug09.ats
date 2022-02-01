@@ -1,0 +1,64 @@
+// Date: November 2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+// bug in run construction - not checked yet
+
+
+NestedWordAutomaton result = buchiComplementFKV(nwa);
+
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {"3055a0" "3056a1" },
+    internalAlphabet = {"3055a0" "3056a1" },
+    returnAlphabet = {"3055a0" "3056a1" },
+    states = {"q2" "q1" "q4" "q3" "q0" },
+    initialStates = {"q0" },
+    finalStates = {"q4" "q0" },
+    callTransitions = {
+         ("q2" "3056a1" "q1")
+         ("q1" "3056a1" "q2")
+    },
+    internalTransitions = {
+         ("q1" "3055a0" "q4")
+         ("q1" "3055a0" "q3")
+         ("q0" "3055a0" "q2")
+         ("q0" "3056a1" "q1")
+    },
+    returnTransitions = {
+         ("q2" "q1" "3055a0" "q2")
+         ("q2" "q0" "3055a0" "q2")
+         ("q2" "q0" "3055a0" "q0")
+         ("q4" "q2" "3055a0" "q3")
+         ("q3" "q1" "3055a0" "q2")
+         ("q0" "q2" "3055a0" "q0")
+    }
+);
+
+
+// another automaton for same problem
+NestedWordAutomaton automaton = (
+    callAlphabet = {"3055a0" "3056a1" },
+    internalAlphabet = {"3055a0" "3056a1" },
+    returnAlphabet = {"3055a0" "3056a1" },
+    states = {"q2" "q1" "q4" "q3" "q0" },
+    initialStates = {"q0" },
+    finalStates = {"q1" "q4" },
+    callTransitions = {
+         ("q3" "3055a0" "q0")
+    },
+    internalTransitions = {
+         ("q2" "3055a0" "q3")
+         ("q2" "3056a1" "q4")
+         ("q4" "3055a0" "q1")
+         ("q0" "3056a1" "q2")
+    },
+    returnTransitions = {
+         ("q2" "q3" "3056a1" "q2")
+         ("q1" "q3" "3055a0" "q2")
+         ("q1" "q0" "3055a0" "q4")
+         ("q0" "q1" "3055a0" "q3")
+         ("q0" "q3" "3055a0" "q3")
+         ("q0" "q2" "3056a1" "q2")
+         ("q0" "q0" "3056a1" "q0")
+    }
+);

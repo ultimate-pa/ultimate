@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="benchmark">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="rundefinition"/>
+          <xs:element ref="option"/>
+          <xs:element ref="propertyfile"/>
+          <xs:element ref="tasks"/>
+          <xs:element ref="requiredfiles"/>
+          <xs:element ref="resultfiles"/>
+          <xs:element ref="require"/>
+        </xs:choice>
+        <xs:element minOccurs="0" ref="columns"/>
+      </xs:sequence>
+      <xs:attribute name="tool" use="required"/>
+      <xs:attribute name="memlimit"/>
+      <xs:attribute name="timelimit"/>
+      <xs:attribute name="hardtimelimit"/>
+      <xs:attribute name="cpuCores"/>
+      <xs:attribute name="threads"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="rundefinition">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="tasks"/>
+        <xs:element ref="option"/>
+        <xs:element ref="propertyfile"/>
+        <xs:element ref="requiredfiles"/>
+      </xs:choice>
+      <xs:attribute name="name"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="tasks">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="include"/>
+        <xs:element ref="includesfile"/>
+        <xs:element ref="exclude"/>
+        <xs:element ref="excludesfile"/>
+        <xs:element ref="append"/>
+        <xs:element ref="withoutfile"/>
+        <xs:element ref="option"/>
+        <xs:element ref="propertyfile"/>
+        <xs:element ref="requiredfiles"/>
+      </xs:choice>
+      <xs:attribute name="name"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="include" type="xs:string"/>
+  <xs:element name="includesfile" type="xs:string"/>
+  <xs:element name="exclude" type="xs:string"/>
+  <xs:element name="excludesfile" type="xs:string"/>
+  <xs:element name="withoutfile" type="xs:string"/>
+  <xs:element name="append" type="xs:string"/>
+  <xs:element name="requiredfiles" type="xs:string"/>
+  <xs:element name="resultfiles" type="xs:string"/>
+  <xs:element name="require">
+    <xs:complexType mixed="true">
+      <xs:attribute name="cpuModel"/>
+      <xs:attribute name="cpuCores" default="1"/>
+      <xs:attribute name="memory" default="1"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="option">
+    <xs:complexType mixed="true">
+      <xs:attribute name="name" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="propertyfile" type="xs:string"/>
+  <xs:element name="columns">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="column"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="column">
+    <xs:complexType mixed="true">
+      <xs:attribute name="title"/>
+      <xs:attribute name="numberOfDigits"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

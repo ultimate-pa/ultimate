@@ -1,0 +1,52 @@
+//
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 6);
+assert(shrinkNwaSize == 5);
+assert(minimizeNwaPmaxSatDirectBiSize == 5);
+assert(minimizeNwaPmaxSatDirectSize == 5);
+assert(reduceNwaDirectSimulationSize == 5);
+assert(reduceNwaDirectSimulationBSize == 5);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
+// assert(reduceNwaDelayedSimulationSize == 5);
+// assert(reduceNwaDelayedSimulationBSize == 5);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c1" "c2"},
+	internalAlphabet = {"i1"},
+	returnAlphabet = {"r"},
+	states = {"q0" "q1" "q2" "p1" "p2" "t1" "t2" "s1" "s2" "pE" "qE"},
+	initialStates = {"q0"},
+	finalStates = {"pE" "qE"},
+	callTransitions = {
+		 ("p1" "c1" "s1")
+		 ("p2" "c2" "s2")
+		 ("q1" "c1" "t1")
+		 ("q2" "c2" "t2")
+	},
+	internalTransitions = {
+		 ("q0" "i1" "p1")
+		 ("q0" "i1" "p2")
+		 ("q0" "i1" "q1")
+		 ("q0" "i1" "q2")
+	},
+	returnTransitions = {
+		 ("t1" "q1" "r" "qE")
+		 ("t2" "q2" "r" "qE")
+		 ("s1" "p1" "r" "pE")
+		 ("s2" "p2" "r" "pE")
+	}
+);

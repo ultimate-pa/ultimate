@@ -1,0 +1,83 @@
+// Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+// Date: 2016-07-18
+//
+// Example that shows some problems with summary computations.
+// There are two summaries where spoiler goes to s1 and duplicator
+// may choose between dA and dB.
+// In one of these summaries (spoiler moves to kandel) duplicator has to
+// move to dA in order to visit an accepting state.
+// In one of these summaries (spoiler moves to rosskopf) duplicator has to
+// move to dB in order to visit an accepting state.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 18);
+assert(shrinkNwaSize == 16);
+assert(minimizeNwaPmaxSatDirectBiSize == 16);
+assert(minimizeNwaPmaxSatDirectSize == 16);
+assert(reduceNwaDirectSimulationSize == 16);
+assert(reduceNwaDirectSimulationBSize == 16);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 16);
+// assert(reduceNwaDelayedSimulationSize == 14);
+// assert(reduceNwaDelayedSimulationBSize == 14);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 14);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"rossk" "kand" "a" "b" "d" "sl"},
+	returnAlphabet = {"r"},
+	states = {
+		"s0" "s1"
+		"d0" "dA" "dB"
+		"pe" "p_rosskopf" "p_kandel" "p2" "px"
+		"me" "mxA" "mxB"
+		"rosskopf1" "rosskopf2A" "rosskopf2B"
+		"kandel1" "kandel2A" "kandel2B"
+	},
+	initialStates = {"s0" "d0" },
+	finalStates = {"pe" "kandel2A" "rosskopf2B"},
+	callTransitions = {
+		 ("s0" "c" "pe")
+		 ("d0" "c" "me")
+	},
+	internalTransitions = {
+		 ("pe" "rossk" "p_rosskopf")
+		 ("pe" "kand" "p_kandel")
+		 ("p_rosskopf" "a" "p2")
+		 ("p_kandel" "a" "p2")
+		 ("p2" "b" "px")
+		 
+		 ("me" "rossk" "rosskopf1")
+		 ("rosskopf1" "a" "rosskopf2A")
+		 ("rosskopf1" "a" "rosskopf2B")
+		 ("rosskopf2A" "b" "mxA")
+		 ("rosskopf2B" "b" "mxB")
+		 ("me" "kand" "kandel1")
+		 ("kandel1" "a" "kandel2A")
+		 ("kandel1" "a" "kandel2B")
+		 ("kandel2A" "b" "mxA")
+		 ("kandel2B" "b" "mxB")
+		 
+		 ("s1" "d" "s0")
+		 ("s1" "sl" "s1")
+  		 ("dA" "d" "d0")
+		 ("dB" "d" "d0")
+		 ("dA" "sl" "dA")
+	},
+	returnTransitions = {
+		 ("mxA" "d0" "r" "dA")
+		 ("mxB" "d0" "r" "dB")
+		 ("px" "s0" "r" "s1")
+	}
+);

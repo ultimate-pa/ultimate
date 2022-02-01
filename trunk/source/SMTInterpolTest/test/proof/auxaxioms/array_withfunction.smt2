@@ -1,0 +1,16 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+
+(set-logic QF_AUFLIA)
+(declare-sort U 0)
+(declare-fun f (U) U)
+(declare-fun i () U)
+(declare-fun j () U)
+(declare-fun v () U)
+(declare-fun a () (Array U U))
+(assert (= i j))
+(assert (not (= (select (store a (f i) v) (f j)) v)))
+
+(check-sat)
+(set-option :print-terms-cse false)
+(get-proof)

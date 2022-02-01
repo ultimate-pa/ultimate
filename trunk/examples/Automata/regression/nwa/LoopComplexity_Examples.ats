@@ -1,0 +1,103 @@
+// Author: Thomas Lang, heizmann@informatik.uni-freiburg.de
+// Date: 2015-04-25
+//
+
+NestedWordAutomaton LC0 = (
+  callAlphabet = { },
+  internalAlphabet = { "0" "1" },
+  returnAlphabet = { },
+  states = {q0 q1 },
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 "0" q1)
+	(q0 "1" q1)},
+  returnTransitions = {}
+);
+
+NestedWordAutomaton LC1 = (
+  callAlphabet = { },
+  internalAlphabet = { "0" "1" },
+  returnAlphabet = { },
+  states = {q0 q1 },
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 "0" q1)
+	(q0 "1" q1)
+	(q1 "0" q0)
+	(q1 "1" q0)},
+  returnTransitions = {}
+);
+
+NestedWordAutomaton LC2 = (
+  callAlphabet = { },
+  internalAlphabet = { "0" "1" },
+  returnAlphabet = { },
+  states = {q0 q1 q2 },
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 "0" q1)
+	(q0 "1" q2)
+	(q1 "0" q2)
+	(q1 "1" q0)
+	(q2 "0" q0)
+	(q2 "1" q1)},
+  returnTransitions = {}
+);
+
+NestedWordAutomaton LC3 = (
+  callAlphabet = { },
+  internalAlphabet = { "0" "1" },
+  returnAlphabet = { },
+  states = {q0 q1 q2 q3 q4 q5 },
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 "0" q1)
+	(q0 "1" q5)
+    (q1 "0" q2)
+	(q1 "1" q0)
+    (q2 "0" q3)
+	(q2 "1" q1)
+    (q3 "0" q4)
+	(q3 "1" q2)
+    (q4 "0" q5)
+	(q4 "1" q3)
+    (q5 "0" q0)
+	(q5 "1" q4)},
+  returnTransitions = {}
+);
+
+NestedWordAutomaton LCTEST1 = (
+  callAlphabet = { },
+  internalAlphabet = { "0" "1" },
+  returnAlphabet = { },
+  states = {q0 q1 q2 q3 q4 q5 q6},
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 "0" q0)},
+  returnTransitions = {}
+);
+
+NestedWordAutomaton Cycle = (
+  callAlphabet = { },
+  internalAlphabet = { "0" },
+  returnAlphabet = { },
+  states = {q0 q1 q2},
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 "0" q1)
+	(q1 "0" q2)
+    (q2 "0" q0)},
+  returnTransitions = {}
+);

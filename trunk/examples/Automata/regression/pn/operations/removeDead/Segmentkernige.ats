@@ -1,0 +1,23 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2020-02-12
+//
+// Reveals bug in removeDead.
+// Do not consider co-related of all ancestors of accepting,
+// but only co-related of accepting places.
+
+PetriNet vital = removeDead(net);
+assert(numberOfTransitions(vital) == 2);
+// assert(numberOfPlaces(vital) == 55);
+print(vital);
+
+PetriNet net = (
+	alphabet = { enabler mover dead },
+	places = { p0 p1 p2 pdead pacc },
+	transitions = {
+		({p0 } enabler {p2 })
+        ({p1 p2 } mover {pacc })
+        ({p1 } dead {pdead })
+	},
+	initialMarking = {p0 p1 },
+	acceptingPlaces = {pacc }
+);

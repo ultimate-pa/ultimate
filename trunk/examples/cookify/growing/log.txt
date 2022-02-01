@@ -1,0 +1,55 @@
+2012-11-06 15:34:21,843 INFO  [AbstractCegarLoop.java:312]: ====== [mainErr0AssertViolation]== Iteration 2============
+2012-11-06 15:34:21,855 INFO  [AnnotateAndAsserter.java:66]: Conjunction of SSA is sat
+2012-11-06 15:34:21,856 DEBUG [TraceChecker.java:205]: Valuations of some variables
+2012-11-06 15:34:21,857 DEBUG [TraceChecker.java:214]: Value of enc_havoc_main_T_foo_0: true
+2012-11-06 15:34:21,857 DEBUG [TraceChecker.java:214]: Value of enc_havoc_main_T_ret_1: true
+2012-11-06 15:34:21,857 DEBUG [TraceChecker.java:214]: Value of enc_main_T_cookiefy_args_sp_2: 3
+2012-11-06 15:34:21,857 DEBUG [TraceChecker.java:214]: Value of enc_havoc_main_T_ret_11: false
+2012-11-06 15:34:21,858 DEBUG [TraceChecker.java:214]: Value of enc_main_T_foo_3: true
+2012-11-06 15:34:21,858 DEBUG [TraceChecker.java:214]: Value of main_CookiefyRet_13: false
+2012-11-06 15:34:21,858 DEBUG [TraceChecker.java:214]: Value of enc_main_TL_sp_5: 3
+2012-11-06 15:34:21,858 DEBUG [TraceChecker.java:214]: Value of enc_main_T_pp_2: 0
+2012-11-06 15:34:21,858 DEBUG [TraceChecker.java:214]: Value of main_sp_-1: 3
+2012-11-06 15:34:21,858 DEBUG [TraceChecker.java:214]: Value of enc_havoc_main_T_sp_0: 3
+2012-11-06 15:34:21,859 DEBUG [TraceChecker.java:214]: Value of enc_main_TL_pp_5: 1
+2012-11-06 15:34:21,859 DEBUG [TraceChecker.java:214]: Value of enc_havoc_main_T_pp_0: 0
+2012-11-06 15:34:21,859 DEBUG [TraceChecker.java:214]: Value of main_foo_-1: true
+2012-11-06 15:34:21,859 DEBUG [TraceChecker.java:214]: Value of enc_main_T_cookiefy_args_foo_2: true
+2012-11-06 15:34:21,859 DEBUG [TraceChecker.java:214]: Value of enc_main_T_ret_8: false
+2012-11-06 15:34:21,859 DEBUG [TraceChecker.java:214]: Value of enc_main_TL_foo_5: true
+2012-11-06 15:34:21,860 DEBUG [TraceChecker.java:214]: Value of enc_main_TL_ret_6: false
+2012-11-06 15:34:21,860 DEBUG [TraceChecker.java:214]: Value of enc_main_T_sp_3: 3
+2012-11-06 15:34:21,860 INFO  [PredicateAbstractionCegarLoop.java:45]: Counterexample might be feasible
+2012-11-06 15:34:21,860 INFO  [PredicateAbstractionCegarLoop.java:49]: call CookiefyRet := enc_havoc_main_T(foo, intStack, boolStack, idStack, ppStack, sp, 0);
+2012-11-06 15:34:21,860 INFO  [PredicateAbstractionCegarLoop.java:49]: ret := true;
+2012-11-06 15:34:21,860 INFO  [PredicateAbstractionCegarLoop.java:49]: call ret := enc_main_T(foo, intStack, boolStack, idStack, ppStack, sp, pp);
+2012-11-06 15:34:21,860 INFO  [PredicateAbstractionCegarLoop.java:49]: intStack := cookiefy_args_intStack;boolStack := cookiefy_args_boolStack;idStack := cookiefy_args_idStack;ppStack := cookiefy_args_ppStack;sp := cookiefy_args_sp;foo := cookiefy_args_foo;
+2012-11-06 15:34:21,860 INFO  [PredicateAbstractionCegarLoop.java:49]: assume !(pp == 2);
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: call ret := enc_main_TL(foo, intStack, boolStack, idStack, ppStack, sp, 1);
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: ret := true;ret := !foo;
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: assume true;
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: Return - Corresponding call: call ret := enc_main_TL(foo, intStack, boolStack, idStack, ppStack, sp, 1);
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: assume !ret;
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: assume true;
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: Return - Corresponding call: call ret := enc_main_T(foo, intStack, boolStack, idStack, ppStack, sp, pp);
+2012-11-06 15:34:21,861 INFO  [PredicateAbstractionCegarLoop.java:49]: assume true;
+2012-11-06 15:34:21,862 INFO  [PredicateAbstractionCegarLoop.java:49]: Return - Corresponding call: call CookiefyRet := enc_havoc_main_T(foo, intStack, boolStack, idStack, ppStack, sp, 0);
+2012-11-06 15:34:21,862 INFO  [PredicateAbstractionCegarLoop.java:49]: assume !(CookiefyRet != false);
+2012-11-06 15:34:21,862 WARN  [TraceAbstractionObserver.java:291]: No kind of specification checked at this location in line 15 can be violated.
+2012-11-06 15:34:21,862 DEBUG [TraceAbstractionObserver.java:258]: Ommiting computation of Hoare annotation
+2012-11-06 15:34:21,863 WARN  [TraceAbstractionObserver.java:176]: Statistics:   Iterations 2. CFG has 32 locations,1 error locations. Cover queries: 75 tivial, 1407 nontrivial. EdgeCheck queries: 1996 tivial, 0 lazy, 1351 nontrivial. Satisfiability queries: 0 tivial, 1407 nontrivial. DeadEndRemovalTime: 1 Minimization removed 3 in time 1 Biggest abstraction had 32 states.
+2012-11-06 15:34:21,863 WARN  [TraceAbstractionObserver.java:177]: PC#: 0
+2012-11-06 15:34:21,863 WARN  [TraceAbstractionObserver.java:178]: TIME#: 0
+2012-11-06 15:34:21,863 WARN  [TraceAbstractionObserver.java:179]: ManipulationTIME#: 27
+2012-11-06 15:34:21,863 WARN  [TraceAbstractionObserver.java:180]: EC#: 1351
+2012-11-06 15:34:21,863 WARN  [TraceAbstractionObserver.java:181]: TIME#: 1913
+2012-11-06 15:34:21,863 WARN  [TraceAbstractionObserver.java:182]: ManipulationTIME#: 593
+2012-11-06 15:34:21,863 INFO  [ModelContainer.java:138]:  has 0 nodes.
+2012-11-06 15:34:21,864 DEBUG [PersistenceAwareModelManager.java:106]: Inserting enc_einzeiler.bpl TraceAbstraction CFG 06.11 03:34:21
+2012-11-06 15:34:21,864 INFO  [Application.java:888]: Finished executing Toolchain !
+2012-11-06 15:34:21,864 INFO  [Benchmark.java:73]: Parser took 2ms
+2012-11-06 15:34:21,864 INFO  [Benchmark.java:73]: Boogie Preprocessor took 3ms
+2012-11-06 15:34:21,864 INFO  [Benchmark.java:73]: RCFGBuilder took 255ms
+2012-11-06 15:34:21,864 INFO  [Benchmark.java:73]: TraceAbstraction took 2853ms
+2012-11-06 15:34:21,864 INFO  [Application.java:890]: --------------------------------------------------------------------------------
+

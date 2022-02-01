@@ -1,0 +1,11 @@
+// author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+// date: 2016-09-14
+//
+// Demonstrates the use of the method.
+// Arguments:
+// - number of states
+// - number of letters
+// - transition density (per mille)
+// - acceptance density (per mille)
+
+print(getRandomNwaTv(10, 3, 110, 20));

@@ -1,0 +1,9 @@
+Input x0001 is bool
+Input x0000 is bool
+Input x0002 is bool
+
+ID000: Globally, it is never the case that "x0000 && x0001" holds
+ID001: Globally, it is always the case that if "x0002" holds then "x0000" holds after at most 10 time units
+ID002: Globally, it is always the case that if "x0002" holds then "x0001" holds after at most 8 time units
+ID003: Globally, it is always the case that once "!x0002" becomes satisfied it holds for at least "15" time units
+ID004: Globally, it is always the case that once "x0002" becomes satisfied it holds for less than 1 time units

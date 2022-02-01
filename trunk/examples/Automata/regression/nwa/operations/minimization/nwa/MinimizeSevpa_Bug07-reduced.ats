@@ -1,0 +1,61 @@
+// fault description: merge of states q0 and q5
+// reason: only successor node is the same with the same call symbol
+//
+// deterministic run description:
+// 1. c_0: go to q1 -> q0 on stack
+// 2. i_1: go to q2
+// 3. r_2_: go to q3 -> q0 from stack
+// 4. c_2: go to q1 -> q3 on stack
+// 5. i_1: go to q2
+// 6. r_4_: go to qE -> q3 from stack -> word accepted
+//
+// 7. c_0: go to q1 -> q5 on stack
+// 8. r_2_: go to q3 -> q5 from stack
+// from here see 4.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 6);
+assert(shrinkNwaSize == 6);
+assert(minimizeNwaPmaxSatDirectBiSize == 6);
+assert(minimizeNwaPmaxSatDirectSize == 6);
+assert(reduceNwaDirectSimulationSize == 6);
+assert(reduceNwaDirectSimulationBSize == 6);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
+// assert(reduceNwaDelayedSimulationSize == 6);
+// assert(reduceNwaDelayedSimulationBSize == 6);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 6);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c_0" "c_1" "c_2" "c_3"},
+	internalAlphabet = {"i_1" "i_2"},
+	returnAlphabet = {"r_1_" "r_2_" "r_3_" "r_4_"},
+	states = {"q0" "q1" "q2" "q3" "q4" "q5" "qE"},
+	initialStates = {"q0"},
+	finalStates = {"qE"},
+	callTransitions = {
+		 ("q0" "c_0" "q1")
+		 ("q3" "c_2" "q1")
+		 ("q5" "c_0" "q1")
+	},
+	internalTransitions = {
+		 ("q1" "i_1" "q2")
+		 ("qE" "i_2" "q5")
+	},
+	returnTransitions = {
+		 ("q1" "q5" "r_2_" "q3")
+		 ("q2" "q0" "r_2_" "q3")
+		 ("q2" "q3" "r_4_" "qE")
+	}
+);

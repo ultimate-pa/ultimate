@@ -1,0 +1,30 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2020-02-13
+//
+// Reveals conceptual problem in computation of vital transitions.
+// Maybe a finite prefix does not provide all information
+// that are necesssary for computing vital transitions.
+
+
+print(removeDead(net));
+// print(getAcceptedWord(net));
+// print(finitePrefix(net));
+
+
+PetriNet net = (
+	alphabet = {al a1 a2 a3 a2Acc a5 aDouble2 aHalf1 a8 a9 a10 a11 ar a13 a14 a15 a16 aHalf2 aDouble1 aNo1 aNo2 a21 a22 a23 },
+	places = {p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 pl1 pr1 p13 p14 pl2 p16 p17 pr2 p19 p20 p21 pl3 px1 pl4 p25 p26 pAcc p28 py1 py2 px2 },
+	transitions = {
+		( {pr1 } ar {pr2 } )
+		( {pl1 } al {pl2 } )
+		( {pl3 px2 } aHalf1 {pl4 px1 } )
+		( {pr2 px1 } aDouble1 {pr2 px2 } )
+		( {pl2 px1 } aDouble2 {pl3 px2 } )
+		( {pl4 } aNo2 {pl2 } )
+		( {pr2 px2 } aHalf2 {pr2 px1 } )
+		( {pl2 px2 } a2Acc {pAcc } )
+		( {pl2 } aNo1 {pl3 } )
+	},
+	initialMarking = {pl1 pr1 px1 },
+	acceptingPlaces = {pAcc }
+);

@@ -1,0 +1,27 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+(set-option :model-check-mode true)
+(set-option :print-terms-cse false)
+
+(set-logic QF_LIA)
+(declare-fun i () Int)
+(declare-fun j () Int)
+(declare-fun k () Int)
+(declare-fun l () Int)
+
+(push 1)
+(assert (=> ((_ divisible 1) i)
+            ((_ divisible 23488273894323) 55167471405251924785089513)
+	    ((_ divisible 83289342839945) 55167471405251924785089513)))
+(check-sat)
+(get-proof)
+(pop 1)
+
+(push 1)
+(assert (not (=> ((_ divisible 2348723948531) i)
+                 ((_ divisible 23488273894323) i)
+	    	 ((_ divisible 55167471405251924785089513) i))))
+(check-sat)
+(get-proof)
+(pop 1)
+
