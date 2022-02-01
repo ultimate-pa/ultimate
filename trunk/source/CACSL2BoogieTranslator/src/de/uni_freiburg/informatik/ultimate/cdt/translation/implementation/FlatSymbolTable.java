@@ -123,12 +123,11 @@ public class FlatSymbolTable {
 		mMultiparseInformation = mst;
 		mScopeCounter = 1;
 		mCHookSkip = n -> {
-			if (n instanceof IASTExpression && n.getParent() instanceof IASTSwitchStatement) {
-				if (((IASTSwitchStatement) n.getParent()).getControllerExpression() == n) {
-					// the controller expression is not part of the scope of the switch
-					// so the scope holder for the controller expression is the parent of the switch...
-					return n.getParent().getParent();
-				}
+			if (n instanceof IASTExpression && n.getParent() instanceof IASTSwitchStatement
+					&& ((IASTSwitchStatement) n.getParent()).getControllerExpression() == n) {
+				// the controller expression is not part of the scope of the switch
+				// so the scope holder for the controller expression is the parent of the switch...
+				return n.getParent().getParent();
 			}
 			return n;
 		};
@@ -419,8 +418,6 @@ public class FlatSymbolTable {
 	public String getCIdForBoogieId(final String boogieId) {
 		return mBoogieIdToCId.get(boogieId);
 	}
-	
-
 
 	/**
 	 * Fetches the Boogie Declaration for the given C Declaration
@@ -472,14 +469,6 @@ public class FlatSymbolTable {
 		return Collections.unmodifiableMap(mBoogieIdToCId);
 	}
 
-/**
- * @cyrus, to get the declared global variables.
- * @return global scope. 
- */
-	public Map<String, SymbolTableValue> getGlobalScope() {
-		return mGlobalScope;
-	}
-	
 	private static boolean hasOwnScope(final IASTNode node) {
 		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement;
 		final boolean hasExplicitScope =
