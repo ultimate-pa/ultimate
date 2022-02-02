@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -192,7 +193,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 		// TODO (Marcel 2022-01-12) New Variable Ábstraction provide abstracted variables here
-		final VariableAbstraction<L> varAb = new VariableAbstraction<>();
+		final VariableAbstraction<L> varAb = new VariableAbstraction<>(mCopyFactory);
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
