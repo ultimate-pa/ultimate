@@ -34,19 +34,21 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 
-public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstraction<Set<IProgramVar>, L> {
+public class VariableAbstraction<L extends IIcfgTransition<?>>
+		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
@@ -156,6 +158,13 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 	@Override
 	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> level) {
 		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
-		return IAbstraction.super.restrict(input, level);
+		return IRefinableAbstraction.super.restrict(input, level);
+	}
+
+	@Override
+	public Set<IProgramVar> refine(final Set<IProgramVar> current,
+			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
+		// TODO compute updated set of constraining variables
+		return null;
 	}
 }
