@@ -1,0 +1,18 @@
+#Fri Apr 10 13:08:01 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=false
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+
+ 
+#Fri Apr 10 13:08:01 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+#Sat Mar 15 16:00:32 CET 2014
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=false

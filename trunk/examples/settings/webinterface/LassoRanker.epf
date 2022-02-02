@@ -1,0 +1,30 @@
+ #Fri Apr 10 12:56:34 CEST 2015
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=NONLINEAR
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=NONLINEAR
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Only\ non-decreasing\ invariants=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
+
+#Fri Apr 10 12:56:34 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=LoopFreeBlock
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+#Fri Apr 10 12:56:34 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=LARGE_BLOCK
+
+#Sat Mar 15 16:00:32 CET 2014
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=false

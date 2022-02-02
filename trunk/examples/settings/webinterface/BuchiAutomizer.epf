@@ -1,0 +1,27 @@
+#Fri Apr 10 13:03:27 CEST 2015
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (GNTA\ synthesis)=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/GNTA\ analysis=NONLINEAR
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=NONLINEAR
+
+#Fri Apr 10 13:03:27 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+ 
+#Fri Apr 10 13:03:27 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+#Sat Mar 15 16:00:32 CET 2014
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=false
