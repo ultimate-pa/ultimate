@@ -17,3 +17,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.smtinterpol
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.tracecheckerutils
+Import-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency

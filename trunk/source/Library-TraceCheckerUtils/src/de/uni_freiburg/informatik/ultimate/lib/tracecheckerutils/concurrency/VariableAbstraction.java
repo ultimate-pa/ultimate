@@ -39,15 +39,18 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 
 public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstraction<Set<IProgramVar>, L> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
+	private final ICopyActionFactory<L> mCopyFactory;
 
-	public VariableAbstraction() {
+	public VariableAbstraction(final ICopyActionFactory<L> copyFactory) {
 		this.automaton = null;
+		mCopyFactory = copyFactory;
 		// We need a Script to build a new TransFormula
 		/*
 		 * this.automaton = automaton; final Set<IProgramVar> allVars = new HashSet<>(); for (final IPredicate s :
@@ -95,9 +98,7 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 		// where do I get the Script???
 
 		// now wrap the formula
-
-		return inLetter;
-
+		return mCopyFactory.copy(inLetter, newFormula, newFormula);
 	}
 
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
