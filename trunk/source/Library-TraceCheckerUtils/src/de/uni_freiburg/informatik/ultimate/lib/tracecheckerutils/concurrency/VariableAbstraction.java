@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 
