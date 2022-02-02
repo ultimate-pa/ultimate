@@ -193,7 +193,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 		// TODO (Marcel 2022-01-12) New Variable Ábstraction provide abstracted variables here
-		final VariableAbstraction<L> varAb = new VariableAbstraction<>(mCopyFactory);
+		final VariableAbstraction<L> varAb = new VariableAbstraction<>(mCopyFactory, mCsToolkit.getManagedScript());
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
@@ -282,10 +282,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
+				// HERE
 				.threadSeparated()
 				// Retrieve the constructed relation.
 				.build();
 	}
+	// Somewhere in this flow, there should be a Option, that you should abstract
 
 	private ManagedScript constructIndependenceScript() {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings()

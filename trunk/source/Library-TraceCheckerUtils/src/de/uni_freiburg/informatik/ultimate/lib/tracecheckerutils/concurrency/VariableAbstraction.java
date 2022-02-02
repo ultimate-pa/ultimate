@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAb
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -94,10 +97,11 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 		transform.addAll(utf.getAssignedVars());
 		transform.removeAll(setVariables);
 
-		final Map<IProgramVar, TermVariable> nInVars = utf.getInVars();
-		final Map<IProgramVar, TermVariable> nOutVars = utf.getOutVars();
-		final Set<TermVariable> nAuxVars = utf.getAuxVars();
+		final Map<IProgramVar, TermVariable> nInVars = new HashMap<>(utf.getInVars());
+		final Map<IProgramVar, TermVariable> nOutVars = new HashMap<>(utf.getOutVars());
+		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
 		// mMscript.constructFreshCopy(null);
+		// code anpassen
 		for (final IProgramVar v : transform) {
 			// Case: The variable to havoce out is not the variable that is freshly assigned, but one that is a part of
 			// the assignment
@@ -118,13 +122,9 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 		}
 		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false,
 				utf.getNonTheoryConsts(), false, utf.getBranchEncoders(), false);
-		// tfBuilder.addProgramConst(utf.getNonTheoryConsts()); //
-		tfBuilder.setInfeasibility(utf.isInfeasible());
+		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.setFormula(utf.getFormula());
-		final UnmodifiableTransFormula newFormula = tfBuilder.finishConstruction(null); // Script :'(
-
-		return newFormula;
-
+		return tfBuilder.finishConstruction(mMscript);
 	}
 
 	public L abstractLetterSOMETHINGELSE(final L inLetter) {
