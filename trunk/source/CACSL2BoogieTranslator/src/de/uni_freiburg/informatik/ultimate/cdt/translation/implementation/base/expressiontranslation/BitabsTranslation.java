@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2021 Cyrus Liu (yliu195@stevens.edu)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Thomas Lang
  * Copyright (C) 2015 University of Freiburg
@@ -228,17 +229,17 @@ public class BitabsTranslation {
 			}
 		}
 
-		final Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
-		final Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression lit1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final Expression left_cmp1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_1);
-		final Expression left_cmp0 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_0);
-		final Expression right_cmp1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_1);
-		final Expression right_cmp0 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_0);
+		final Expression leftCmp1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, lit1);
+		final Expression leftCmp0 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, lit0);
+		final Expression rightCmp1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, lit1);
+		final Expression rightCmp0 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, lit0);
 
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
@@ -246,30 +247,30 @@ public class BitabsTranslation {
 				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 
 		// bit-size(left/right) = 1 <==> (left/right == 1) || (left/right ==0)
-		final Expression left_size1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_cmp1, left_cmp0);
-		final Expression right_size1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_cmp1, right_cmp0);
+		final Expression leftSize1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, leftCmp1, leftCmp0);
+		final Expression rightSize1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, rightCmp1, rightCmp0);
 
 		// a|1 -> a
-		final Expression left_1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp1, right_size1);
-		final Expression right_1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1, right_cmp1);
-		final Expression either_1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_1, right_1);
+		final Expression left1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftCmp1, rightSize1);
+		final Expression right1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftSize1, rightCmp1);
+		final Expression either1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left1, right1);
 
 		// adding log_or rule here (a|b) == 0, when both operands are 0
-		final Expression or_1 = ExpressionFactory.constructIfThenElseExpression(loc, either_1, literal_1, func);
+		final Expression or1 = ExpressionFactory.constructIfThenElseExpression(loc, either1, lit1, func);
 
 		// for the case, a|0 = a when a is bloolean or one bit size?
-		final Expression left_0 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_cmp0, right_size1);
-		final Expression right_0 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1, right_cmp0);
+		final Expression left0 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftCmp0, rightSize1);
+		final Expression right0 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftSize1, rightCmp0);
 
-		final Expression left_0_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_0, right, or_1);
-		return ExpressionFactory.constructIfThenElseExpression(loc, right_0, left, left_0_ite);
+		final Expression left0Ite = ExpressionFactory.constructIfThenElseExpression(loc, left0, right, or1);
+		return ExpressionFactory.constructIfThenElseExpression(loc, right0, left, left0Ite);
 	}
 
 	/**
@@ -280,28 +281,28 @@ public class BitabsTranslation {
 	public Expression abstractShiftRight(final ILocation loc, final int op, final Expression left,
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname = "shiftRight";
-		final Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
-		final Expression literal_31 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "31");
-		final Expression literal_63 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "63");
+		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression lit1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+		final Expression lit31 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "31");
+		final Expression lit63 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "63");
 
-		final Expression right_cmp_31 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_31);
-		final Expression right_cmp_63 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_63);
-		final Expression right_cmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
-				right_cmp_31, right_cmp_63);
+		final Expression rightCmp31 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, lit31);
+		final Expression rightCmp63 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, lit63);
+		final Expression rightCmp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
+				rightCmp31, rightCmp63);
 
 		// left/right operand is positive and right/left operand is 31
-		final Expression left_pos =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, left, literal_0);
-		final Expression left_cond_pos =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_pos, right_cmp);
+		final Expression leftPos =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, left, lit0);
+		final Expression leftCondPos =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftPos, rightCmp);
 
 		if (right instanceof IntegerLiteral) {
 			final String valueRight = ((IntegerLiteral) right).getValue();
 			if (valueRight.equals("31") || valueRight.equals("63")) {
-				return ExpressionFactory.constructIfThenElseExpression(loc, left_pos, literal_0, literal_1);
+				return ExpressionFactory.constructIfThenElseExpression(loc, leftPos, lit0, lit1);
 			}
 		}
 
@@ -316,16 +317,16 @@ public class BitabsTranslation {
 			func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 		}
-		final Expression pos_ite = ExpressionFactory.constructIfThenElseExpression(loc, left_cond_pos, literal_0, func);
+		final Expression posIte = ExpressionFactory.constructIfThenElseExpression(loc, leftCondPos, lit0, func);
 
 		// shiftRight on an negative number is unconventional, but according to the
 		// evaluation from gcc compiler, a>>31 would results in -1
-		final Expression left_neg =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, left, literal_0);
-		final Expression left_cond_neg =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_neg, right_cmp);
+		final Expression leftNeg =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, left, lit0);
+		final Expression leftCondNeg =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftNeg, rightCmp);
 
-		return ExpressionFactory.constructIfThenElseExpression(loc, left_cond_neg, literal_1, pos_ite);
+		return ExpressionFactory.constructIfThenElseExpression(loc, leftCondNeg, lit1, posIte);
 
 	}
 
@@ -336,29 +337,29 @@ public class BitabsTranslation {
 			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname = "bitwiseXOr";
 
-		final Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
-		final Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression lit1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final Expression left_cmp1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_1);
-		final Expression left_cmp0 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, literal_0);
+		final Expression leftCmp1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, lit1);
+		final Expression leftCmp0 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, lit0);
 
-		final Expression right_cmp1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_1);
-		final Expression right_cmp0 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, literal_0);
-		final Expression left_right_eq =
+		final Expression rightCmp1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, lit1);
+		final Expression rightCmp0 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, lit0);
+		final Expression leftRightEq =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, left, right);
 
 		// bit-size(left/right) = 1 <==> (left/right == 1) || (left/right ==0), this is
 		// not true when we represent integer in a fixed size bit-vector.
-		final Expression left_size1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, left_cmp1, left_cmp0);
-		final Expression right_size1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, right_cmp1, right_cmp0);
-		final Expression left_right_size1 =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, left_size1, right_size1);
+		final Expression leftSize1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, leftCmp1, leftCmp0);
+		final Expression rightSize1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, rightCmp1, rightCmp0);
+		final Expression leftRightSize1 =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftSize1, rightSize1);
 
 		// Thinking about in binary world, when it comes to bit 0 or 1
 
@@ -368,14 +369,14 @@ public class BitabsTranslation {
 				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
 
 		// rule xor-0, for xor-1 rule, not stand, 0111 ^ 0001, negate doesn't work
-		final Expression right_ite_0 = ExpressionFactory.constructIfThenElseExpression(loc, right_cmp0, left, func);
-		final Expression left_ite_0 =
-				ExpressionFactory.constructIfThenElseExpression(loc, left_cmp0, right, right_ite_0);
+		final Expression rightIte0 = ExpressionFactory.constructIfThenElseExpression(loc, rightCmp0, left, func);
+		final Expression leftIte0 =
+				ExpressionFactory.constructIfThenElseExpression(loc, leftCmp0, right, rightIte0);
 
-		final Expression logic_xor =
-				ExpressionFactory.constructIfThenElseExpression(loc, left_right_eq, literal_0, literal_1);
+		final Expression logicXor =
+				ExpressionFactory.constructIfThenElseExpression(loc, leftRightEq, lit0, lit1);
 
-		return ExpressionFactory.constructIfThenElseExpression(loc, left_right_size1, logic_xor, left_ite_0);
+		return ExpressionFactory.constructIfThenElseExpression(loc, leftRightSize1, logicXor, leftIte0);
 	}
 
 	/*
@@ -420,55 +421,54 @@ public class BitabsTranslation {
 
 		final BoogieType bType = (BoogieType) idLeft.getType();
 		// Create the LRValue for the assignment statement.
-		final VariableLHS idLhs_left =
+		final VariableLHS idLhsLeft =
 				new VariableLHS(loc, idLeft.getType(), idLeft.getIdentifier(), idLeft.getDeclarationInformation());
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
-		final Expression literal_1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
-		final Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression lit1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
+		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
 		// for declare the auxiliary vars.
 		if (node.getOperand2() instanceof IASTBinaryExpression) {
 			// for the general bitwise assignment case, we build up assume statements.
 
-			final IASTBinaryExpression rhs_bit = getBitwiseBinary((IASTBinaryExpression) node.getOperand2());
-			final boolean bit_op = BitabsTranslation.isBitwiseOperator(rhs_bit.getOperator());
+			final IASTBinaryExpression rhsBit = getBitwiseBinary((IASTBinaryExpression) node.getOperand2());
+			final boolean bitOp = BitabsTranslation.isBitwiseOperator(rhsBit.getOperator());
 			// make sure the bitiwse operator is right after the assignment operator in the
 			// expression, if not, it would be treated as a normal binary expression.
-			if (!bit_op) {
+			if (!bitOp) {
 				// TODO, x = 1+x&(x-3)?
 				throw new UnsupportedOperationException("ToDo, x = 1+x&(x-3)?...");
 			}
-			final ExpressionResult rhs_opr1 = (ExpressionResult) main.dispatch(rhs_bit.getOperand1());
-			final ExpressionResult rhs_opr2 = (ExpressionResult) main.dispatch(rhs_bit.getOperand2());
+			final ExpressionResult rhsOpr1 = (ExpressionResult) main.dispatch(rhsBit.getOperand1());
+			final ExpressionResult rhsOpr2 = (ExpressionResult) main.dispatch(rhsBit.getOperand2());
 
 			// array address expression, getValue() return exceptions.
 			final ExpressionResult rl = exprResultTransformer
-					.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr1, loc, lType, node);
+					.makeRepresentationReadyForConversionAndRexBoolToInt(rhsOpr1, loc, lType, node);
 			final ExpressionResult rr = exprResultTransformer
-					.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr2, loc, lType, node);
+					.makeRepresentationReadyForConversionAndRexBoolToInt(rhsOpr2, loc, lType, node);
 			builder.addAllExceptLrValue(rl);
 			builder.addAllExceptLrValue(rr);
 			final Expression opr1 = rl.getLrValue().getValue();
 			final Expression opr2 = rr.getLrValue().getValue();
 
-			final Expression opr1_eq0 =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, literal_0);
-			final Expression opr2_eq0 =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, literal_0);
-			final Expression opr1_eq1 =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, literal_1);
-			final Expression opr2_eq1 =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, literal_1);
-			final Expression opr1_bit =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr1_eq1);
-			final Expression opr2_bit =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr2_eq0, opr2_eq1);
-			final Expression cond_and_0 =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1_eq0, opr2_eq0);
-
-			final Expression cond_rhs =
+			final Expression opr1Eq0 =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, lit0);
+			final Expression opr2Eq0 =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, lit0);
+			final Expression opr1Eq1 =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr1, lit1);
+			final Expression opr2Eq1 =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, opr2, lit1);
+			final Expression opr1Bit =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1Eq0, opr1Eq1);
+			final Expression opr2Bit =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr2Eq0, opr2Eq1);
+			final Expression condAnd0 =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, opr1Eq0, opr2Eq0);
+			final Expression condRhs =
 					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, opr1, opr2);
 
 			// Declare Global variable for assume abstraction, and, or general rules.
@@ -479,97 +479,97 @@ public class BitabsTranslation {
 					new VarList[] { new VarList(loc, new String[] { bId }, astType) });
 			// Declare a global variable, and register it to the global cope.
 			declarations.add(declVar);
-			final IdentifierExpression bit_var =
+			final IdentifierExpression bitVar =
 					ExpressionFactory.constructIdentifierExpression(loc, bType, bId, decInfo);
 			final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc, bType, bId, decInfo);
 
-			if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryAnd) {
+			if (rhsBit.getOperator() == IASTBinaryExpression.op_binaryAnd) {
 
-				final Expression rhs_ite = ExpressionFactory.constructIfThenElseExpression(loc, cond_rhs, opr1, opr2);
-				final Expression formula_left =
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, idLeft, bit_var);
+				final Expression rhsIte = ExpressionFactory.constructIfThenElseExpression(loc, condRhs, opr1, opr2);
+				final Expression formulaLeft =
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, idLeft, bitVar);
 
-				final IfStatement ifstmt_and = assumeIte(chandler, procedureManager, builder, lType, node, leftOperand,
+				final IfStatement ifstmtAnd = assumeIte(chandler, procedureManager, builder, lType, node, leftOperand,
 						nameHandler, auxVarInfoBuilder, mSymboltable, exprResultTransformer, expressionTranslation,
-						main, rhs_bit, opr1, opr2, rhs_ite, formula_left, idLhs);
+						main, rhsBit, opr1, opr2, rhsIte, formulaLeft, idLhs);
 
 				// add another if else nested statement statically to capture the bit-wise
 				// operations in the stem position
 				// and-1 rule condition
-				final Expression opr1_bit1 = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.LOGICAND, opr1_eq1, opr2_bit);
-				final Expression opr2_bit1 = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.LOGICAND, opr1_bit, opr2_eq1);
+				final Expression opr1Bit1 = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.LOGICAND, opr1Eq1, opr2Bit);
+				final Expression opr2Bit1 = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.LOGICAND, opr1Bit, opr2Eq1);
 
 				final AssignmentStatement assignLiteral = StatementFactory.constructAssignmentStatement(loc,
-						new LeftHandSide[] { idLhs_left }, new Expression[] { literal_0 });
+						new LeftHandSide[] { idLhsLeft }, new Expression[] { lit0 });
 				final AssignmentStatement assignOpr1 = StatementFactory.constructAssignmentStatement(loc,
-						new LeftHandSide[] { idLhs_left }, new Expression[] { opr1 });
+						new LeftHandSide[] { idLhsLeft }, new Expression[] { opr1 });
 				final AssignmentStatement assignOpr2 = StatementFactory.constructAssignmentStatement(loc,
-						new LeftHandSide[] { idLhs_left }, new Expression[] { opr2 });
+						new LeftHandSide[] { idLhsLeft }, new Expression[] { opr2 });
 
-				final IfStatement ifstmt_opr1 =
-						new IfStatement(loc, opr2_bit1, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_and });
-				final IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit1, new Statement[] { assignOpr2 },
-						new Statement[] { ifstmt_opr1 });
-				final IfStatement ifstmt1 = new IfStatement(loc, cond_and_0, new Statement[] { assignLiteral },
-						new Statement[] { ifstmt_opr2 });
+				final IfStatement ifstmtOpr1 =
+						new IfStatement(loc, opr2Bit1, new Statement[] { assignOpr1 }, new Statement[] { ifstmtAnd });
+				final IfStatement ifstmtOpr2 = new IfStatement(loc, opr1Bit1, new Statement[] { assignOpr2 },
+						new Statement[] { ifstmtOpr1 });
+				final IfStatement ifstmt1 = new IfStatement(loc, condAnd0, new Statement[] { assignLiteral },
+						new Statement[] { ifstmtOpr2 });
 				builder.addStatement(ifstmt1);
 				return builder.build();
 
 			}
-			if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryOr) {
-				final Expression or_rhs_ite =
-						ExpressionFactory.constructIfThenElseExpression(loc, cond_rhs, opr2, opr1);
-				final Expression or_formula_left = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.COMPGEQ, leftOperand.getLrValue().getValue(), bit_var);
+			if (rhsBit.getOperator() == IASTBinaryExpression.op_binaryOr) {
+				final Expression orRhsIte =
+						ExpressionFactory.constructIfThenElseExpression(loc, condRhs, opr2, opr1);
+				final Expression orFormulaLeft = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPGEQ, leftOperand.getLrValue().getValue(), bitVar);
 
-				final IfStatement ifstmt_or = assumeIte(chandler, procedureManager, builder, lType, node, leftOperand,
+				final IfStatement ifstmtOr = assumeIte(chandler, procedureManager, builder, lType, node, leftOperand,
 						nameHandler, auxVarInfoBuilder, mSymboltable, exprResultTransformer, expressionTranslation,
-						main, rhs_bit, opr1, opr2, or_rhs_ite, or_formula_left, idLhs);
+						main, rhsBit, opr1, opr2, orRhsIte, orFormulaLeft, idLhs);
 				// add another if else nested statement statically to capture the bit-wise
 				// operations in the stem position
 
 				// or-0 rule condition
-				final Expression opr1_bit0 = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.LOGICAND, opr1_eq0, opr2_bit);
-				final Expression opr2_bit0 = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.LOGICAND, opr1_bit, opr2_eq0);
+				final Expression opr1Bit0 = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.LOGICAND, opr1Eq0, opr2Bit);
+				final Expression opr2Bit0 = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.LOGICAND, opr1Bit, opr2Eq0);
 				// or-1 rule condition
-				final Expression opr1_bit1 = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.LOGICAND, opr1_eq1, opr2_bit);
-				final Expression opr2_bit1 = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.LOGICAND, opr1_bit, opr2_eq1);
-				final Expression cond_or1 = ExpressionFactory.newBinaryExpression(loc,
-						BinaryExpression.Operator.LOGICOR, opr1_bit1, opr2_bit1);
+				final Expression opr1Bit1 = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.LOGICAND, opr1Eq1, opr2Bit);
+				final Expression opr2Bit1 = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.LOGICAND, opr1Bit, opr2Eq1);
+				final Expression condOr1 = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.LOGICOR, opr1Bit1, opr2Bit1);
 
 				final AssignmentStatement assignLiteral1 = StatementFactory.constructAssignmentStatement(loc,
-						new LeftHandSide[] { idLhs_left }, new Expression[] { literal_1 });
+						new LeftHandSide[] { idLhsLeft }, new Expression[] { lit1 });
 				final AssignmentStatement assignOpr1 = StatementFactory.constructAssignmentStatement(loc,
-						new LeftHandSide[] { idLhs_left }, new Expression[] { opr1 });
+						new LeftHandSide[] { idLhsLeft }, new Expression[] { opr1 });
 				final AssignmentStatement assignOpr2 = StatementFactory.constructAssignmentStatement(loc,
-						new LeftHandSide[] { idLhs_left }, new Expression[] { opr2 });
+						new LeftHandSide[] { idLhsLeft }, new Expression[] { opr2 });
 				// nondet() assignment.
-				final IfStatement ifstmt_opr1 =
-						new IfStatement(loc, opr2_bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmt_or });
-				final IfStatement ifstmt_opr2 = new IfStatement(loc, opr1_bit0, new Statement[] { assignOpr2 },
-						new Statement[] { ifstmt_opr1 });
-				final IfStatement ifstmt1 = new IfStatement(loc, cond_or1, new Statement[] { assignLiteral1 },
-						new Statement[] { ifstmt_opr2 });
+				final IfStatement ifstmtOpr1 =
+						new IfStatement(loc, opr2Bit0, new Statement[] { assignOpr1 }, new Statement[] { ifstmtOr });
+				final IfStatement ifstmtOpr2 = new IfStatement(loc, opr1Bit0, new Statement[] { assignOpr2 },
+						new Statement[] { ifstmtOpr1 });
+				final IfStatement ifstmt1 = new IfStatement(loc, condOr1, new Statement[] { assignLiteral1 },
+						new Statement[] { ifstmtOpr2 });
 				// change the order to test result, general first
 				builder.addStatement(ifstmt1);
 				return builder.build();
 
 			}
-			if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryXor) {
-				final ExpressionResult xor_abs = (ExpressionResult) main.dispatch(rhs_bit);
-				final ExpressionResultBuilder builder_xor = new ExpressionResultBuilder();
-				builder_xor.addAllExceptLrValue(leftOperand);
+			if (rhsBit.getOperator() == IASTBinaryExpression.op_binaryXor) {
+				final ExpressionResult xorAbs = (ExpressionResult) main.dispatch(rhsBit);
+				final ExpressionResultBuilder builderXor = new ExpressionResultBuilder();
+				builderXor.addAllExceptLrValue(leftOperand);
 				final ExpressionResult rightOperandSwitched = exprResultTransformer
-						.makeRepresentationReadyForConversionAndRexBoolToInt(xor_abs, loc, lType, node);
-				builder_xor.addAllIncludingLrValue(rightOperandSwitched);
+						.makeRepresentationReadyForConversionAndRexBoolToInt(xorAbs, loc, lType, node);
+				builderXor.addAllIncludingLrValue(rightOperandSwitched);
 				return chandler.makeAssignment(loc, leftOperand.getLrValue(), leftOperand.getNeighbourUnionFields(),
-						builder_xor.build(), node);
+						builderXor.build(), node);
 
 			}
 			throw new UnsupportedOperationException("No general rules for bitiwse operator other than &, | in assume");
@@ -581,18 +581,18 @@ public class BitabsTranslation {
 				// TODO, x = expr1 + ~expr2?
 				throw new UnsupportedOperationException("ToDo, x = expr1 + ~expr2?...");
 			}
-			final Expression formula_neg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-					leftOperand.getLrValue().getValue(), literal_0);
-			final Expression formula_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-					leftOperand.getLrValue().getValue(), literal_0);
-			final Expression com_pos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-					uopr.getLrValue().getValue(), literal_0);
+			final Expression formulaNeg = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+					leftOperand.getLrValue().getValue(), lit0);
+			final Expression formulaPos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+					leftOperand.getLrValue().getValue(), lit0);
+			final Expression comPos = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+					uopr.getLrValue().getValue(), lit0);
 
-			final AssumeStatement assume_then = new AssumeStatement(loc, formula_neg);
-			final AssumeStatement assume_else = new AssumeStatement(loc, formula_pos);
-			final IfStatement ifstmt_com =
-					new IfStatement(loc, com_pos, new Statement[] { assume_then }, new Statement[] { assume_else });
-			builder.addStatement(ifstmt_com);
+			final AssumeStatement assumeThen = new AssumeStatement(loc, formulaNeg);
+			final AssumeStatement assumeElse = new AssumeStatement(loc, formulaPos);
+			final IfStatement ifstmtCom =
+					new IfStatement(loc, comPos, new Statement[] { assumeThen }, new Statement[] { assumeElse });
+			builder.addStatement(ifstmtCom);
 
 		}
 		return builder.build();
@@ -606,59 +606,59 @@ public class BitabsTranslation {
 
 		final ILocation loc = locationFactory.createCLocation(node);
 		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
-		final Expression left_val = leftOperand.getLrValue().getValue();
+		final Expression leftVal = leftOperand.getLrValue().getValue();
 		final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
 		if (node.getOperand2() instanceof IASTBinaryExpression) {
-			final IASTBinaryExpression rhs_bit = getBitwiseBinary((IASTBinaryExpression) node.getOperand2());
-			final boolean bit_op = BitabsTranslation.isBitwiseOperator(rhs_bit.getOperator());
+			final IASTBinaryExpression rhsBit = getBitwiseBinary((IASTBinaryExpression) node.getOperand2());
+			final boolean bitOp = BitabsTranslation.isBitwiseOperator(rhsBit.getOperator());
 
 			// make sure the bitiwse operator is right after the a relational operator in the expression, if not, it
 			// would be treated as a normal integer binary expression.
-			if (!bit_op) {
+			if (!bitOp) {
 				// TODO, x = 1+x&(x-3)?
 				throw new UnsupportedOperationException("ToDo, x = 1+x&(x-3)?...");
 			}
-			final ExpressionResult rhs_opr1 = (ExpressionResult) main.dispatch(rhs_bit.getOperand1());
-			final ExpressionResult rhs_opr2 = (ExpressionResult) main.dispatch(rhs_bit.getOperand2());
+			final ExpressionResult rhsOpr1 = (ExpressionResult) main.dispatch(rhsBit.getOperand1());
+			final ExpressionResult rhsOpr2 = (ExpressionResult) main.dispatch(rhsBit.getOperand2());
 
 			// array address expression, getValue() return exceptions.
 			final ExpressionResult rl = exprResultTransformer
-					.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr1, loc, lType, node);
+					.makeRepresentationReadyForConversionAndRexBoolToInt(rhsOpr1, loc, lType, node);
 			final ExpressionResult rr = exprResultTransformer
-					.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr2, loc, lType, node);
+					.makeRepresentationReadyForConversionAndRexBoolToInt(rhsOpr2, loc, lType, node);
 			builder.addAllExceptLrValue(rl);
 			builder.addAllExceptLrValue(rr);
 			final Expression opr1 = rl.getLrValue().getValue();
 			final Expression opr2 = rr.getLrValue().getValue();
 
-			final Expression opr1_signed =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, literal_0);
-			final Expression opr2_signed =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, literal_0);
-			final Expression opr_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-					opr1_signed, opr2_signed);
+			final Expression opr1Signed =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, lit0);
+			final Expression opr2Signed =
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, lit0);
+			final Expression oprSigned = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+					opr1Signed, opr2Signed);
 
-			if (rhs_bit.getOperator() == IASTBinaryExpression.op_binaryAnd) {
+			if (rhsBit.getOperator() == IASTBinaryExpression.op_binaryAnd) {
 				final String funcname = "bitwiseAnd";
 				final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-				final Expression func_and = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+				final Expression funcAnd = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 						new Expression[] { opr1, opr2 }, mTypeHandler.getBoogieTypeForCType(lType));
 
-				final Expression left_opr1 =
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, left_val, opr1);
-				final Expression left_opr2 =
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, left_val, opr2);
+				final Expression leftOpr1 =
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, leftVal, opr1);
+				final Expression leftOpr2 =
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, leftVal, opr2);
 				final Expression andLe = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-						left_opr1, left_opr2);
+						leftOpr1, leftOpr2);
 
 				final Expression andElse = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-						left_val, func_and);
+						leftVal, funcAnd);
 				final Expression resultIte =
-						ExpressionFactory.constructIfThenElseExpression(loc, opr_signed, andLe, andElse);
+						ExpressionFactory.constructIfThenElseExpression(loc, oprSigned, andLe, andElse);
 				final CPrimitive typeOfResult = new CPrimitive(CPrimitives.INT);
 				final RValue rval = new RValue(resultIte, typeOfResult, true, false);
 				builder.setLrValue(rval);
@@ -696,22 +696,22 @@ public class BitabsTranslation {
 			final Expression rhsIte, final Expression formulaLeft, final VariableLHS idLhs) {
 		// We need to create a new id expression to store the expression here.
 		// leftOperand we supposed to be an idExpression, implicit cast
-		final IdentifierExpression id_left = (IdentifierExpression) leftOperand.getLrValue().getValue();
+		final IdentifierExpression idLeft = (IdentifierExpression) leftOperand.getLrValue().getValue();
 		final ILocation loc = idLhs.getLoc();
 		// Create the LRValue for the assignment statement.
-		final VariableLHS idLhs_left =
-				new VariableLHS(loc, id_left.getType(), id_left.getIdentifier(), id_left.getDeclarationInformation());
-		final LRValue idLhs_lrVal = new LocalLValue(idLhs_left, lType, false, false, null);
+		final VariableLHS idLhsLeft =
+				new VariableLHS(loc, idLeft.getType(), idLeft.getIdentifier(), idLeft.getDeclarationInformation());
+		final LRValue idLhsLrVal = new LocalLValue(idLhsLeft, lType, false, false, null);
 
-		final Expression literal_0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final ExpressionResult rhs_opr2 = (ExpressionResult) main.dispatch(rhsBit.getOperand2());
+		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final ExpressionResult rhsOpr2 = (ExpressionResult) main.dispatch(rhsBit.getOperand2());
 
-		final Expression opr1_signed =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, literal_0);
-		final Expression opr2_signed =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, literal_0);
-		final Expression opr_signed = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-				opr1_signed, opr2_signed);
+		final Expression opr1Signed =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr1, lit0);
+		final Expression opr2Signed =
+				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, opr2, lit0);
+		final Expression oprSigned = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+				opr1Signed, opr2Signed);
 
 		// for the elseStmt, we write it to an assignment with __VERRIFIER_nondet_int()
 		// (nondet funciton) call
@@ -731,7 +731,7 @@ public class BitabsTranslation {
 		final ExpressionResult nondetSwitched = exprResultTransformer
 				.makeRepresentationReadyForConversionAndRexBoolToInt(nondetResult, loc, lType, node);
 		final ExpressionResult assignElse =
-				cHandler.makeAssignment(loc, idLhs_lrVal, leftOperand.getNeighbourUnionFields(), nondetSwitched, node);
+				cHandler.makeAssignment(loc, idLhsLrVal, leftOperand.getNeighbourUnionFields(), nondetSwitched, node);
 
 		// We need to register this auxiliary variable, and this is local variable;
 
@@ -739,16 +739,16 @@ public class BitabsTranslation {
 		final CDeclaration auxCdecl = new CDeclaration(lType, nondetName);
 		final DeclarationInformation auxDeclInfo =
 				new DeclarationInformation(StorageClass.LOCAL, procedureManager.getCurrentProcedureID());
-		final SymbolTableValue aux_stv = new SymbolTableValue(auxvarinfo.getExp().getIdentifier(),
+		final SymbolTableValue auxStv = new SymbolTableValue(auxvarinfo.getExp().getIdentifier(),
 				auxvarinfo.getVarDec(), auxCdecl, auxDeclInfo, node, false);
-		symbolTable.storeCSymbol(node, auxvarinfo.getExp().getIdentifier(), aux_stv);
+		symbolTable.storeCSymbol(node, auxvarinfo.getExp().getIdentifier(), auxStv);
 
 		final ExpressionResult rightOperandSwitched =
-				exprResultTransformer.makeRepresentationReadyForConversionAndRexBoolToInt(rhs_opr2, loc, lType, node);
+				exprResultTransformer.makeRepresentationReadyForConversionAndRexBoolToInt(rhsOpr2, loc, lType, node);
 		builder.addAllIncludingLrValue(rightOperandSwitched);
 
-		final AssumeStatement assume_pos = new AssumeStatement(loc, opr_signed);
-		final AssumeStatement assume_stmt = new AssumeStatement(loc, formulaLeft);
+		final AssumeStatement assumePos = new AssumeStatement(loc, oprSigned);
+		final AssumeStatement assumeStmt = new AssumeStatement(loc, formulaLeft);
 		final AssignmentStatement assignVal = StatementFactory.constructAssignmentStatement(loc,
 				new LeftHandSide[] { idLhs }, new Expression[] { rhsIte });
 
@@ -764,9 +764,9 @@ public class BitabsTranslation {
 		final List<Statement> thenStmt = new ArrayList<>();
 		final List<Statement> elseStmt = new ArrayList<>(exprAssign.getStatements());
 		thenStmt.add(assignVal);
-		thenStmt.add(assume_pos);
-		thenStmt.add(assume_stmt);
-		return new IfStatement(loc, opr_signed, thenStmt.toArray(new Statement[thenStmt.size()]),
+		thenStmt.add(assumePos);
+		thenStmt.add(assumeStmt);
+		return new IfStatement(loc, oprSigned, thenStmt.toArray(new Statement[thenStmt.size()]),
 				elseStmt.toArray(new Statement[elseStmt.size()]));
 
 	}
@@ -842,12 +842,12 @@ public class BitabsTranslation {
 		case IASTBinaryExpression.op_binaryXorAssign:
 			return binExpr;
 		default: {
-			final boolean left_bit = containBitwise(binExpr.getOperand1());
-			final boolean right_bit = containBitwise(binExpr.getOperand2());
-			if (left_bit) {
+			final boolean leftBit = containBitwise(binExpr.getOperand1());
+			final boolean rightBit = containBitwise(binExpr.getOperand2());
+			if (leftBit) {
 				return getBitwiseBinary((IASTBinaryExpression) binExpr.getOperand1());
 			}
-			if (right_bit) {
+			if (rightBit) {
 				return getBitwiseBinary((IASTBinaryExpression) binExpr.getOperand2());
 			}
 			throw new UnsupportedOperationException(
