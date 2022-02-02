@@ -25,6 +25,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.xnf
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,

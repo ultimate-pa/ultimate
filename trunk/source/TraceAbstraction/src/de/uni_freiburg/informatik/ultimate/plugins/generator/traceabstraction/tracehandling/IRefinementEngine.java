@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
