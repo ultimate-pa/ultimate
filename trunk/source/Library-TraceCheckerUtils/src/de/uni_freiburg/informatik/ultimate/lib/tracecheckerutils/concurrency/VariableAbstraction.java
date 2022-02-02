@@ -62,19 +62,36 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 		 */
 	}
 
+	/**
+	 * @param inLetter
+	 *            is the Letter that will be abstracted
+	 * @param setVariables
+	 *            are the Variables that describe the states of the automaton, e.g. the set of variables that
+	 *            saves/preserves off of havocing a variable
+	 * @return new Letter with all variables abstracted that have no occurrence in any constraining variables
+	 */
 	@Override
 	public L abstractLetter(final L inLetter, final Set<IProgramVar> setVariables) {
-		final Set<IProgramVar> transform = inLetter.getTransformula().getInVars().keySet();
-		transform.addAll(inLetter.getTransformula().getAssignedVars());
+		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(), setVariables);
+		return mCopyFactory.copy(inLetter, newFormula, newFormula);
+	}
+
+	/**
+	 *
+	 * @param utf
+	 * @param setVariables
+	 * @return
+	 */
+
+	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
+			final Set<IProgramVar> setVariables) {
+		final Set<IProgramVar> transform = utf.getInVars().keySet();
+		transform.addAll(utf.getAssignedVars());
 		transform.removeAll(setVariables);
 
-		// Wenn variablen von inLetter nicht in setVariables vorkommen, dann variablen havocen, d.h. in auxvars und aus
-		// invars und outvars raus
-
-		// transform comprises all variables that should be havoced out
-		final Map<IProgramVar, TermVariable> nInVars = inLetter.getTransformula().getInVars();
-		final Map<IProgramVar, TermVariable> nOutVars = inLetter.getTransformula().getOutVars();
-		final Set<TermVariable> nAuxVars = inLetter.getTransformula().getAuxVars();
+		final Map<IProgramVar, TermVariable> nInVars = utf.getInVars();
+		final Map<IProgramVar, TermVariable> nOutVars = utf.getOutVars();
+		final Set<TermVariable> nAuxVars = utf.getAuxVars();
 		for (final IProgramVar v : transform) {
 			// Case: The variable to havoce out is not the variable that is freshly assigned, but one that is a part of
 			// the assignment
@@ -88,27 +105,14 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 				// what is with the mFormula? Shoudnt we change something there?
 			}
 		}
-		final TransFormulaBuilder tfBuilder =
-				new TransFormulaBuilder(nInVars, nOutVars, false, inLetter.getTransformula().getNonTheoryConsts(),
-						false, inLetter.getTransformula().getBranchEncoders(), false);
-		// tfBuilder.addProgramConst(inLetter.getTransformula().getNonTheoryConsts());
-		tfBuilder.setInfeasibility(inLetter.getTransformula().isInfeasible());
-		tfBuilder.setFormula(inLetter.getTransformula().getFormula());
-		final UnmodifiableTransFormula newFormula = tfBuilder.finishConstruction(null); // mScript
-		// where do I get the Script???
+		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false,
+				utf.getNonTheoryConsts(), false, utf.getBranchEncoders(), false);
+		// tfBuilder.addProgramConst(utf.getNonTheoryConsts()); //
+		tfBuilder.setInfeasibility(utf.isInfeasible());
+		tfBuilder.setFormula(utf.getFormula());
+		final UnmodifiableTransFormula newFormula = tfBuilder.finishConstruction(null); // Script :'(
 
-		// now wrap the formula
-		return mCopyFactory.copy(inLetter, newFormula, newFormula);
-	}
-
-	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
-			final Set<IProgramVar> setProgamVars) {
-		// TransFormulaBuilder aufrufem
-		// SMTUtils benutzen "Quatifier exists"
-		// vllt. variaben von outvars/invars nach mauxvars schieben
-		// Schritt 2
-
-		return utf;
+		return newFormula;
 
 	}
 
