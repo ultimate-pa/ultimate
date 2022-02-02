@@ -148,8 +148,14 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 
 	@Override
 	public ILattice<Set<IProgramVar>> getHierarchy() {
-		// TODO Auto-generated method stub
-		return new PowersetLattice();
+		// TODO Fix this, set is "constrained vars", below is meant for "ignored vars"
+		// TODO fix this so that top / bottom of hierarchy are defined (i.e. pass set of all program variables)
+		return new PowersetLattice<>();
 	}
 
+	@Override
+	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> level) {
+		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
+		return IAbstraction.super.restrict(input, level);
+	}
 }
