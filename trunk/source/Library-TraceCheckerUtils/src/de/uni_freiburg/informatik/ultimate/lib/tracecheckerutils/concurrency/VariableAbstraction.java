@@ -28,14 +28,17 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 
@@ -45,6 +48,7 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 
 	public VariableAbstraction() {
 		this.automaton = null;
+		// We need a Script to build a new TransFormula
 		/*
 		 * this.automaton = automaton; final Set<IProgramVar> allVars = new HashSet<>(); for (final IPredicate s :
 		 * this.automaton.getInitialStates()) { final Set<IProgramVar> vars = s.getVars(); final Iterator<IProgramVar>
@@ -57,16 +61,40 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 
 	@Override
 	public L abstractLetter(final L inLetter, final Set<IProgramVar> setVariables) {
-		final Set<IProgramVar> transform = inLetter.getTransformula().getAssignedVars();
-
-		// Wenn variablen von inLetter nicht in setVariables vorkommen, dann können die Outvariablen gehavoced werden
+		final Set<IProgramVar> transform = inLetter.getTransformula().getInVars().keySet();
+		transform.addAll(inLetter.getTransformula().getAssignedVars());
 		transform.removeAll(setVariables);
-		for (final IProgramVar v : transform) {
-			// Here I need to refind th Level where i have to quantify the variables
-		}
 
-		// UnmodifiableTransFormulaBuilder
-		// andere abstractionsmethode aufrufen
+		// Wenn variablen von inLetter nicht in setVariables vorkommen, dann variablen havocen, d.h. in auxvars und aus
+		// invars und outvars raus
+
+		// transform comprises all variables that should be havoced out
+		final Map<IProgramVar, TermVariable> nInVars = inLetter.getTransformula().getInVars();
+		final Map<IProgramVar, TermVariable> nOutVars = inLetter.getTransformula().getOutVars();
+		final Set<TermVariable> nAuxVars = inLetter.getTransformula().getAuxVars();
+		for (final IProgramVar v : transform) {
+			// Case: The variable to havoce out is not the variable that is freshly assigned, but one that is a part of
+			// the assignment
+			if (nInVars.containsKey(v)) {
+				nInVars.remove(v);
+				nAuxVars.add(v.getTermVariable());
+			}
+			// Case: the variabel is the varable that is freshly assigned
+			if (nOutVars.containsKey(v)) {
+				nAuxVars.add(v.getTermVariable());
+				// what is with the mFormula? Shoudnt we change something there?
+			}
+		}
+		final TransFormulaBuilder tfBuilder =
+				new TransFormulaBuilder(nInVars, nOutVars, false, inLetter.getTransformula().getNonTheoryConsts(),
+						false, inLetter.getTransformula().getBranchEncoders(), false);
+		// tfBuilder.addProgramConst(inLetter.getTransformula().getNonTheoryConsts());
+		tfBuilder.setInfeasibility(inLetter.getTransformula().isInfeasible());
+		tfBuilder.setFormula(inLetter.getTransformula().getFormula());
+		final UnmodifiableTransFormula newFormula = tfBuilder.finishConstruction(null); // mScript
+		// where do I get the Script???
+
+		// now wrap the formula
 
 		return inLetter;
 
