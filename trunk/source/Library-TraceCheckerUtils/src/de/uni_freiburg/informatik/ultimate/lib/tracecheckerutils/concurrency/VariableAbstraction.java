@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
@@ -47,10 +48,14 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
+	private final ManagedScript mMscript;
 
-	public VariableAbstraction(final ICopyActionFactory<L> copyFactory) {
+	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript) {
 		this.automaton = null;
 		mCopyFactory = copyFactory;
+		mMscript = mscript;
+		// mmscript.constructFreshTermVariable(null, null)
+		// hier das benutzen
 		// We need a Script to build a new TransFormula
 		/*
 		 * this.automaton = automaton; final Set<IProgramVar> allVars = new HashSet<>(); for (final IPredicate s :
@@ -65,14 +70,15 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 	/**
 	 * @param inLetter
 	 *            is the Letter that will be abstracted
-	 * @param setVariables
+	 * @param constrainingVariables
 	 *            are the Variables that describe the states of the automaton, e.g. the set of variables that
 	 *            saves/preserves off of havocing a variable
 	 * @return new Letter with all variables abstracted that have no occurrence in any constraining variables
 	 */
 	@Override
-	public L abstractLetter(final L inLetter, final Set<IProgramVar> setVariables) {
-		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(), setVariables);
+	public L abstractLetter(final L inLetter, final Set<IProgramVar> constrainingVariables) {
+		final UnmodifiableTransFormula newFormula =
+				abstractTransFormula(inLetter.getTransformula(), constrainingVariables);
 		return mCopyFactory.copy(inLetter, newFormula, newFormula);
 	}
 
@@ -92,14 +98,20 @@ public class VariableAbstraction<L extends IIcfgTransition<?>> implements IAbstr
 		final Map<IProgramVar, TermVariable> nInVars = utf.getInVars();
 		final Map<IProgramVar, TermVariable> nOutVars = utf.getOutVars();
 		final Set<TermVariable> nAuxVars = utf.getAuxVars();
+		// mMscript.constructFreshCopy(null);
 		for (final IProgramVar v : transform) {
 			// Case: The variable to havoce out is not the variable that is freshly assigned, but one that is a part of
 			// the assignment
+
+			// example x = x+1; x is in in inVars, and in OutVars
 			if (nInVars.containsKey(v)) {
 				nInVars.remove(v);
 				nAuxVars.add(v.getTermVariable());
+				// Term nOutVars.get(v)
+				// remove from outvars
+				// nOutVars.remove(v);
 			}
-			// Case: the variabel is the varable that is freshly assigned
+			// Case: the variable is the variable that is freshly assigned
 			if (nOutVars.containsKey(v)) {
 				nAuxVars.add(v.getTermVariable());
 				// what is with the mFormula? Shoudnt we change something there?
