@@ -39,6 +39,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
@@ -126,6 +128,30 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 
+	/**
+	 * Main function of the {@link AcceleratedInterpolation} interpolant generation scheme.
+	 *
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 * @param logger
+	 *            An {@link ILogger}
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param predicateUnifier
+	 *            A {@link IPredicateUnifier}
+	 * @param prefs
+	 *            {@link ITraceCheckPreferences}
+	 * @param counterexample
+	 *            A possible counterexample
+	 * @param icfg
+	 *            An {@link IIcfg}
+	 * @param loopdetector
+	 *            A {@link ILoopdetector}
+	 * @param loopPreprocessor
+	 *            A {@link ILoopPreprocessor}
+	 * @param accelerator
+	 *            An {@link IAccelerator}
+	 */
 	public AcceleratedInterpolationCore(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
 			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
@@ -382,6 +408,11 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 					final UnmodifiableTransFormula epsilon = constructEpsilon();
 					final L epsilonTransition = (L) mIcfgEdgeFactory.createInternalTransition(newExitLocation, target,
 							target.getPayload(), epsilon);
+
+					if (mAccelerator.isOverapprox()) {
+						new Overapprox("Because of loopacceleration", (ILocation) target)
+								.annotate(acceleratedTransition);
+					}
 
 					final Term acceleratedTransitionDefaultVars = mPredHelper.normalizeTerm(loopAcceleration);
 					final Term epsilonDefaultVars = mPredHelper.normalizeTerm(epsilon);

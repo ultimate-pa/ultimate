@@ -35,6 +35,7 @@ public class AcceleratorWernerOverapprox implements IAccelerator {
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
 	private final IIcfgSymbolTable mSymbolTable;
+	private final boolean mIsOverapprox;
 
 	/**
 	 * Construct a new loop accelerator using {@link WernerLoopAccelerationIcfgTransformer}.
@@ -55,6 +56,7 @@ public class AcceleratorWernerOverapprox implements IAccelerator {
 		mServices = services;
 		mFoundAcceleration = false;
 		mSymbolTable = symbolTable;
+		mIsOverapprox = true;
 	}
 
 	@Override
@@ -88,6 +90,11 @@ public class AcceleratorWernerOverapprox implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 
 }

@@ -29,13 +29,17 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.IVasr;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.Qvasr;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstraction;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractionJoin;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -47,8 +51,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -95,7 +102,7 @@ public class QvasrsSummarizer {
 				SimplificationTechnique.POLY_PAC);
 		topologicClosure = SmtUtils.toDnf(mServices, mScript, topologicClosure,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final List<Term> disjuncts = QvasrUtils.splitDisjunction(topologicClosure);
+		final Set<Term> disjuncts = QvasrUtils.splitDisjunction(topologicClosure);
 		final Map<Term, Term> outToInMap = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> outVar : transitionFormula.getOutVars().entrySet()) {
 			if (transitionFormula.getInVars().containsKey(outVar.getKey())) {
@@ -104,6 +111,12 @@ public class QvasrsSummarizer {
 				outToInMap.put(outVar.getValue(), outVar.getValue());
 			}
 		}
+
+		final Set<Triple<Pair<Term, Term>, IVasr<Rational>, Rational[][]>> simulationMatrices = new HashSet<>();
+		final int tfDimension = transitionFormula.getAssignedVars().size();
+		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
+		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
+
 		for (final Term pre : disjuncts) {
 			final Term preInvar = Substitution.apply(mScript, outToInMap, pre);
 			for (final Term post : disjuncts) {
@@ -113,6 +126,24 @@ public class QvasrsSummarizer {
 						QvasrUtils.buildFormula(transitionFormula, conjunctionPreTfPost, mScript);
 				final QvasrAbstraction preTfPostAbstraction =
 						QvasrAbstractor.computeAbstraction(mScript, conjunctionFormula);
+
+				final Triple<Rational[][], Rational[][], QvasrAbstraction> abstractionWithSimulations =
+						QvasrAbstractionJoin.join(mScript, bestAbstraction, preTfPostAbstraction);
+				final Pair<Term, Term> prePostPair = new Pair<>(pre, post);
+				simulationMatrices.add(new Triple<>(prePostPair, preTfPostAbstraction.getVasr(),
+						abstractionWithSimulations.getSecond()));
+				bestAbstraction = abstractionWithSimulations.getThird();
+			}
+		}
+		final QvasrsAbstraction qvasrsAbstraction =
+				new QvasrsAbstraction(bestAbstraction.getSimulationMatrix(), disjuncts);
+		for (final Triple<Pair<Term, Term>, IVasr<Rational>, Rational[][]> qvasrSimulationPair : simulationMatrices) {
+			final Term pre = qvasrSimulationPair.getFirst().getFirst();
+			final Term post = qvasrSimulationPair.getFirst().getSecond();
+			final Qvasr qvasrImage =
+					QvasrAbstractionJoin.image(qvasrSimulationPair.getSecond(), qvasrSimulationPair.getThird());
+			for (final Pair<Rational[], Rational[]> translatedTransformer : qvasrImage.getTransformer()) {
+				qvasrsAbstraction.addTransition(new Triple<>(pre, translatedTransformer, post));
 			}
 		}
 		return null;

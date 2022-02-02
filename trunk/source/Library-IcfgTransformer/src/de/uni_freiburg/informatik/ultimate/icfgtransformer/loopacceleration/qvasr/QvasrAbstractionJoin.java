@@ -186,7 +186,16 @@ public final class QvasrAbstractionJoin {
 		return new Pair<>(lhsRational, rhsRational);
 	}
 
-	private static Qvasr image(final IVasr<Rational> v, final Rational[][] t) {
+	/**
+	 * Compute the image from a {@link IVasr} along a {@link Rational} simulation matrix.
+	 *
+	 * @param v
+	 *            A {@link IVasr}
+	 * @param t
+	 *            A 2d-{@link Rational} matrix
+	 * @return A {@link IVasr} whose transformers have been translated along the simulation matrix.
+	 */
+	public static Qvasr image(final IVasr<Rational> v, final Rational[][] t) {
 		final Qvasr abstractionImage = new Qvasr();
 		for (final Pair<Rational[], Rational[]> resetAdditionPair : v.getTransformer()) {
 			final Rational[][] resetVectorTransposed =
@@ -320,11 +329,9 @@ public final class QvasrAbstractionJoin {
 		if (upperMatrix.length == 0 || upperMatrix[0].length == 0) {
 			return lowerMatrix;
 		}
-
 		if (lowerMatrix.length == 0 || lowerMatrix[0].length == 0) {
 			return upperMatrix;
 		}
-
 		final int joinedMatrixLength = upperMatrix.length + lowerMatrix.length;
 		final Rational[][] horizontallyJoinedMatrix = new Rational[joinedMatrixLength][upperMatrix[0].length];
 		int i = 0;

@@ -371,15 +371,18 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 * Determines if the given locations have a "join conflict".
 	 *
 	 * Locations (l1, l2) have a join conflict if from l1, it is possible to reach (within the thread) a JoinCurrent
-	 * transition that may (but need not) correspond to a JoinOther transition belonging to the thread of l2.
+	 * transition that may correspond to a JoinOther transition belonging to the thread of l2.
 	 */
 	private boolean hasJoinConflict(final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
 		final String joinedThread = otherLoc.getProcedure();
 		if (joinedThread.equals(persistentLoc.getProcedure())) {
 			return false;
 		}
-		return IcfgUtils.canReachCached(persistentLoc,
-				e -> mInfo.mayBeJoinOf(joinedThread, e) && !mInfo.mustBeJoinOf(joinedThread, e),
+		// Note: A previous version did not consider edges to be conflicting if they necessarily had to join
+		// "joinedThread". This was however unsound on programs where the *JoinCurrent edge was in a thread that had a
+		// commutativity conflict with another thread: As the thread blocked on the join and no join conflict was found,
+		// the commutativity conflict was ignored.
+		return IcfgUtils.canReachCached(persistentLoc, e -> mInfo.mayBeJoinOf(joinedThread, e),
 				e -> !ExtendedConcurrencyInformation.isThreadLocal(e), l -> mJoinConflicts.contains(l, joinedThread),
 				(l, r) -> mJoinConflicts.set(l, joinedThread, r));
 	}

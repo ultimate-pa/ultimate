@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
@@ -44,6 +45,8 @@ public class QvasrLoopSummarization {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mScript;
+	private final IPredicateUnifier mPredUnifier;
+	private boolean mIsOverapprox;
 
 	/**
 	 * Construct a new Qvasr-Loopsummarizer.
@@ -54,12 +57,16 @@ public class QvasrLoopSummarization {
 	 *            {@link IUltimateServiceProvider}
 	 * @param script
 	 *            {@link ManagedScript}
+	 * @param predUnifier
+	 *            A {@link IPredicateUnifier}
 	 */
 	public QvasrLoopSummarization(final ILogger logger, final IUltimateServiceProvider services,
-			final ManagedScript script) {
+			final ManagedScript script, final IPredicateUnifier predUnifier) {
 		mLogger = logger;
 		mServices = services;
 		mScript = script;
+		mPredUnifier = predUnifier;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -70,8 +77,14 @@ public class QvasrLoopSummarization {
 	 * @return A loop acceleration computed using Qvasr in form of a{@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula getQvasrAcceleration(final UnmodifiableTransFormula loopTransitionFormula) {
-		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript);
-		return qvasrSummarizer.summarizeLoop(loopTransitionFormula);
+		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript, mPredUnifier);
+		final UnmodifiableTransFormula loopSummary = qvasrSummarizer.summarizeLoop(loopTransitionFormula);
+		mIsOverapprox = qvasrSummarizer.isOverapprox();
+		return loopSummary;
+	}
+
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 
 }
