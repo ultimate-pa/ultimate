@@ -27,14 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * A family of abstraction functions that take a letter as input and return an "abstracted" letter. Here we do not
- * prescribe a fixed notion of "abstraction", but a client domain (e.g. program analysis) may fix such a notion.
+ * An abstraction function that caches the result computed by an underlying abstraction function. This can be used to
+ * avoid redundant computations, but also to ensure that similar inputs to the abstraction function yield (reference-)
+ * equal abstracted letters.
  *
- * The family of abstraction functions is indexed by so-called "abstraction levels", which form a lattice structure.
- * Abstraction with the lattice's bottom element corresponds to the identity, and abstraction with the top element is so
- * broad that all abstracted letters commute.
+ * This class makes use of {@link #restrict(Object, Object)} to possibly lower the abstraction level, in order to re-use
+ * cached abstractions for different levels (as long as {@link #restrict(Object, Object)} returns the same
+ * representative level).
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -43,38 +45,40 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
  * @param <L>
  *            The type of letters to abstract
  */
-public interface IAbstraction<H, L> {
-	/**
-	 * The lattice of abstraction levels
-	 */
-	ILattice<H> getHierarchy();
+public class CachedAbstraction<H, L> implements IAbstraction<H, L> {
+
+	private final IAbstraction<H, L> mUnderlying;
+	private final NestedMap2<L, H, L> mCache = new NestedMap2<>();
 
 	/**
-	 * Applies abstraction to a letter.
+	 * Creates a new cached abstraction function.
 	 *
-	 * @param input
-	 *            The letter to abstract
-	 * @param level
-	 *            The abstraction level
-	 * @return the abstracted letter
+	 * @param underlying
+	 *            The underlying abstraction function to cache
 	 */
-	L abstractLetter(L input, H level);
+	public CachedAbstraction(final IAbstraction<H, L> underlying) {
+		mUnderlying = underlying;
+	}
 
-	/**
-	 * Computes a lower abstraction level down to which the abstraction will return the same result for a given letter
-	 * as for the given level. This information can be used to avoid redundant computations.
-	 *
-	 * The default implementation simply returns the given level.
-	 *
-	 * @param input
-	 *            A letter to abstract
-	 * @param level
-	 *            An initial abstraction level
-	 * @return an abstraction level x such that x &lt;= level and for all y such that x &lt;= y &lt;= level, a call
-	 *         <code>abstractLetter(input, y)</code> will return the same (or an equivalent) result as the call
-	 *         <code>abstractLetter(input, level)</code>.
-	 */
-	default H restrict(final L input, final H level) {
-		return level;
+	@Override
+	public ILattice<H> getHierarchy() {
+		return mUnderlying.getHierarchy();
+	}
+
+	@Override
+	public L abstractLetter(final L input, final H level) {
+		final H restricted = restrict(input, level);
+		if (mCache.containsKey(input, restricted)) {
+			return mCache.get(input, restricted);
+		}
+
+		final L abstracted = mUnderlying.abstractLetter(input, restricted);
+		mCache.put(input, restricted, abstracted);
+		return abstracted;
+	}
+
+	@Override
+	public H restrict(final L input, final H level) {
+		return mUnderlying.restrict(input, level);
 	}
 }
