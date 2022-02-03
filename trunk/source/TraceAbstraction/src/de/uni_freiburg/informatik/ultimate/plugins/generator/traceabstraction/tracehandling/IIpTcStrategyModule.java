@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 
 /**
  * An {@link IIpTcStrategyModule} acts as a constructor for an {@link IInterpolatingTraceCheck} (<b>I</b>nter<b>p</b>
