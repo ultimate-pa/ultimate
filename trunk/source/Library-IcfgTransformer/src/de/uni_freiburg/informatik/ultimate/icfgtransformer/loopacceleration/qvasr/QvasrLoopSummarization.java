@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  *
@@ -77,6 +78,11 @@ public class QvasrLoopSummarization {
 	 * @return A loop acceleration computed using Qvasr in form of a{@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula getQvasrAcceleration(final UnmodifiableTransFormula loopTransitionFormula) {
+
+		if (!SmtUtils.isArrayFree(loopTransitionFormula.getFormula())) {
+			throw new UnsupportedOperationException("Qvasr do not support arrays.");
+		}
+
 		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript, mPredUnifier);
 		final UnmodifiableTransFormula loopSummary = qvasrSummarizer.summarizeLoop(loopTransitionFormula);
 		mIsOverapprox = qvasrSummarizer.isOverapprox();

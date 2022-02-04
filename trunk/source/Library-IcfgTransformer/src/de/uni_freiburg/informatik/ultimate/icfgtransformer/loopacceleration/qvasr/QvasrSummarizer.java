@@ -112,7 +112,7 @@ public class QvasrSummarizer {
 		}
 		final Map<IProgramVar, TermVariable> inVarsReal = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVarsReal = new HashMap<>();
-		for (final IProgramVar assVar : su.getDeterministicAssignment().keySet()) {
+		for (final IProgramVar assVar : transitionFormula.getOutVars().keySet()) {
 			if (transitionFormula.getInVars().containsKey(assVar)) {
 				inVarsReal.put(assVar, transitionFormula.getInVars().get(assVar));
 			} else if (transitionFormula.getOutVars().containsKey(assVar)) {
@@ -122,7 +122,7 @@ public class QvasrSummarizer {
 				outVarsReal.put(assVar, transitionFormula.getOutVars().get(assVar));
 			}
 		}
-		final int tfDimension = transitionFormula.getAssignedVars().size();
+		final int tfDimension = transitionFormula.getOutVars().size();
 		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
 		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
 		final Term transitionTerm = transitionFormula.getFormula();
@@ -242,7 +242,6 @@ public class QvasrSummarizer {
 		}
 		final IPredicate guardPred = predUnifier.getTruePredicate();
 		final Term post = predTransformer.strongestPostcondition(guardPred, tf);
-		final Term pre = predTransformer.pre(guardPred, tf);
 
 		final Term postSub = Substitution.apply(script, defaultToOut, post);
 		qvasrDimensionConjunction.add(postSub);
