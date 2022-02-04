@@ -55,6 +55,7 @@ public class DepthFirstTraversal<L, S> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
+	private final S mStartState;
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, S> mVisitor;
 
@@ -64,7 +65,8 @@ public class DepthFirstTraversal<L, S> {
 	private int mIndentLevel = -1;
 
 	/**
-	 * Performs a depth-first traversal. This constructor is called purely for its side-effects.
+	 * Performs a depth-first traversal starting from the operand's initial state. This constructor is called purely for
+	 * its side-effects.
 	 *
 	 * @param services
 	 *            automata services used for logging and timeout management
@@ -80,11 +82,35 @@ public class DepthFirstTraversal<L, S> {
 	public DepthFirstTraversal(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
 			final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+		this(services, operand, order, visitor,
+				DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state"));
+	}
+
+	/**
+	 * Performs a depth-first traversal. This constructor is called purely for its side-effects.
+	 *
+	 * @param services
+	 *            automata services used for logging and timeout management
+	 * @param operand
+	 *            The automaton to be traversed
+	 * @param order
+	 *            The order in which transitions for each state should be explored
+	 * @param visitor
+	 *            A visitor to traverse the automaton
+	 * @param startingState
+	 *            A state from which the traversal starts.
+	 * @throws AutomataOperationCanceledException
+	 *             in case of timeout or cancellation
+	 */
+	public DepthFirstTraversal(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final IDfsVisitor<L, S> visitor, final S startingState) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
 		mOperand = operand;
+		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
 
@@ -92,8 +118,7 @@ public class DepthFirstTraversal<L, S> {
 	}
 
 	private void traverse() throws AutomataOperationCanceledException {
-		final S initial = DataStructureUtils.getOneAndOnly(mOperand.getInitialStates(), "initial state");
-		visitState(initial);
+		visitState(mStartState);
 
 		while (!mWorklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -138,7 +163,7 @@ public class DepthFirstTraversal<L, S> {
 			}
 		}
 
-		final boolean abort = backtrackUntil(initial);
+		final boolean abort = backtrackUntil(mStartState);
 		if (abort) {
 			mLogger.debug("visitor aborted search");
 			return;
@@ -175,12 +200,12 @@ public class DepthFirstTraversal<L, S> {
 		debugIndent("visiting state %s", state);
 
 		final boolean pruneSuccessors;
-		if (mOperand.isInitial(state)) {
-			debugIndent("-> state is initial");
-			assert !mDfs.hasStarted() : "initial state should be first visited state";
+		if (mStartState.equals(state)) {
+			debugIndent("-> state is start state");
+			assert !mDfs.hasStarted() : "start state should be first visited state";
 			pruneSuccessors = mVisitor.addStartState(state);
 		} else {
-			assert mDfs.hasStarted() : "first visited state should be initial state";
+			assert mDfs.hasStarted() : "first visited state should be start state";
 			pruneSuccessors = mVisitor.discoverState(state);
 		}
 		if (mVisitor.isFinished()) {
