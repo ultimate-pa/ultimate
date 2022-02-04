@@ -129,6 +129,10 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 			final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
 			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
 		}
+		for (final TermVariable auxVar : nAuxVars) {
+			tfBuilder.addAuxVar(auxVar);
+
+		}
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.setFormula(utf.getFormula());
 		return tfBuilder.finishConstruction(mMscript);
