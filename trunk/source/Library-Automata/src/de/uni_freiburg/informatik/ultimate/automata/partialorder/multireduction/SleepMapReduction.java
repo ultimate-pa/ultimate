@@ -31,7 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.ToIntBiFunction;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -51,13 +51,13 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 	private final IDfsOrder<L, R> mOrder;
 	private final List<IIndependenceRelation<S, L>> mRelations;
 	private final ISleepMapStateFactory<L, S, R> mStateFactory;
-	private final BiFunction<R, L, Integer> mBudgetFunction;
+	private final ToIntBiFunction<R, L> mBudgetFunction;
 
 	private final R mInitial;
 
 	public SleepMapReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final List<IIndependenceRelation<S, L>> relations, final IDfsOrder<L, R> order,
-			final ISleepMapStateFactory<L, S, R> stateFactory, final BiFunction<R, L, Integer> budget) {
+			final ISleepMapStateFactory<L, S, R> stateFactory, final ToIntBiFunction<R, L> budget) {
 		mOperand = operand;
 		mOrder = order;
 		mRelations = relations;
@@ -132,12 +132,12 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 		final Map<L, Integer> explored = mOperand.lettersInternal(currentState).stream()
 				.filter(b -> comp.compare(b, letter) < 0 && !isPruned(state, b))
-				.map(b -> new Pair<>(b, mBudgetFunction.apply(state, b)))
+				.map(b -> new Pair<>(b, mBudgetFunction.applyAsInt(state, b)))
 				.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
 		final SleepMap<L, S> succSleepMap = currentSleepMap.computeSuccessor(currentState, letter, explored);
 
 		final R succSleepMapState = mStateFactory.createSleepMapState(currentTransitionOpt.get().getSucc(),
-				succSleepMap, mBudgetFunction.apply(state, letter));
+				succSleepMap, mBudgetFunction.applyAsInt(state, letter));
 		return Set.of(new OutgoingInternalTransition<>(letter, succSleepMapState));
 	}
 
@@ -161,7 +161,7 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 			return false;
 		}
 		final int oldCost = sleepMap.getPrice(letter);
-		final int newCost = mBudgetFunction.apply(state, letter);
+		final int newCost = mBudgetFunction.applyAsInt(state, letter);
 		assert newCost <= mStateFactory.getBudget(state) : "Budget limit exceeded";
 		return oldCost <= newCost;
 	}
