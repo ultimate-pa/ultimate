@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
 /**
