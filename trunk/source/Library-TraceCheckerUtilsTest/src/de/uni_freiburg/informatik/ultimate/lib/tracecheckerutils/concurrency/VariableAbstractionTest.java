@@ -119,7 +119,7 @@ public class VariableAbstractionTest {
 	}
 
 	@Test
-	public void testesttest() {
+	public void yIsXTimesTwo() {
 		// y = x*2
 		// Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		// Map<IProgramVar, TermVariable> outVars = new HashMap<>();
@@ -128,7 +128,7 @@ public class VariableAbstractionTest {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		tfb.addInVar(x, x.getTermVariable());
 		tfb.addOutVar(y, y.getTermVariable());
-		tfb.addOutVar(x, x.getTermVariable());
+		// tfb.addOutVar(x, x.getTermVariable());
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
@@ -137,13 +137,35 @@ public class VariableAbstractionTest {
 		runTestAbstraction(utf, constrVars);
 	}
 
+	@Test
+	public void xIsXPlusOne() {
+		// x = x+1
+		// Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+		// Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+		final Term formula = parseWithVariables("(= (+ x 1 ) x)");
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
+		tfb.addInVar(x, x.getTermVariable());
+
+		tfb.addOutVar(x, x.getTermVariable());
+		tfb.addOutVar(x, x.getTermVariable());
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
+		final Set<IProgramVar> constrVars = new HashSet<>();
+		runTestAbstraction(utf, constrVars);
+	}
+
 	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> constrainingVars) {
 		final UnmodifiableTransFormula abstracted = mVaAbs.abstractTransFormula(utf, constrainingVars);
-		assert utf == abstracted : "Does nothing at all";
-		assert utf != abstracted : "Does nothing at all";
+		assert !utf.equals(abstracted) : "Does nothing at all";
+
+		for (final IProgramVar iv : abstracted.getOutVars().keySet()) {
+			assert !abstracted.getAuxVars().contains(iv.getTermVariable()) : "auxVar in OutVar";
+		}
 
 		for (final IProgramVar iv : abstracted.getInVars().keySet()) {
-			assert abstracted.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar";
+			assert !abstracted.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar";
 		}
 
 	}

@@ -106,25 +106,29 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 		// mMscript.constructFreshCopy(null);
 		// code anpassen
 		for (final IProgramVar v : transform) {
-			// Case: The variable to havoce out is not the variable that is freshly assigned, but one that is a part of
-			// the assignment
-
 			// example x = x+1; x is in in inVars, and in OutVars
 			// add outVar(x) to auxVars
-			// outVar(x) := new variable (TermVariable
+			// outVar(x) := new variable (TermVariable)
 			if (nInVars.containsKey(v)) {
 				nAuxVars.add(nInVars.get(v));
 				nInVars.remove(v);
+				// -> Okay, this is strange behavior - If i have this line executing, i'm getting the errors
 			}
 			if (nOutVars.containsKey(v)) {
 				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
+				nAuxVars.add(nOutVars.get(v));
 				nOutVars.put(v, nov);
 			}
 
 		}
+		final TransFormulaBuilder tfBuilder;
 		final Set<IProgramConst> ntc = new HashSet<>(utf.getNonTheoryConsts());
-		final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
-		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
+		if (utf.getBranchEncoders().isEmpty()) {
+			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, true, null, false);
+		} else {
+			final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
+			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
+		}
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.setFormula(utf.getFormula());
 		return tfBuilder.finishConstruction(mMscript);
