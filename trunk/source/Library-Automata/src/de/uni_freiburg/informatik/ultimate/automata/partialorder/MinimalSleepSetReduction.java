@@ -124,6 +124,11 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, R>> internalSuccessors(final R state, final L letter) {
+		final ImmutableSet<L> currentSleepSet = mStateFactory.getSleepSet(state);
+		if (currentSleepSet.contains(letter)) {
+			return Collections.emptySet();
+		}
+
 		final S currentState = mStateFactory.getOriginalState(state);
 		final var currentTransitionOpt = DataStructureUtils.getOnly(mOperand.internalSuccessors(currentState, letter),
 				"Automaton must be deterministic");
@@ -131,7 +136,6 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 			return Collections.emptySet();
 		}
 
-		final ImmutableSet<L> currentSleepSet = mStateFactory.getSleepSet(state);
 		final Comparator<L> comp = mOrder.getOrder(state);
 		final Stream<L> explored = mOperand.lettersInternal(currentState).stream()
 				.filter(x -> comp.compare(x, letter) < 0 && !currentSleepSet.contains(x));
