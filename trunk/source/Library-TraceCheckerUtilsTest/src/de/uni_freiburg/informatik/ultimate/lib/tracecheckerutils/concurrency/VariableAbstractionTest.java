@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,11 +40,13 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independence.SemanticIndependenceConditionGenerator;
@@ -60,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -75,6 +79,9 @@ public class VariableAbstractionTest {
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 	private SemanticIndependenceConditionGenerator mGenerator;
+	ICopyActionFactory<IcfgEdge> mCopyFactory;
+	CfgSmtToolkit mToolkit;
+	VariableAbstraction<IcfgEdge> mVaAbs;
 
 	// variables for SimpleSet example
 	private IProgramVar x, y, a, b, sz, r1, r2, s1, s2;
@@ -83,9 +90,6 @@ public class VariableAbstractionTest {
 	private IProgramVar arr, max, top, e1, e2;
 
 	private Term axioms;
-
-	VariableAbstraction<IIcfgTransition<?>> vaeX = new VariableAbstraction<>();
-	// VariableAbstraction in die ModelCheckerUtils
 
 	@Before
 	public void setUp() {
@@ -103,6 +107,9 @@ public class VariableAbstractionTest {
 
 		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript,
 				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
+		mToolkit = new CfgSmtToolkit(null, mMgdScript, mSymbolTable, null, null, null, null, null, null);
+		mCopyFactory = new IcfgCopyFactory(mServices, mToolkit);
+		mVaAbs = new VariableAbstraction<>(mCopyFactory, mMgdScript);
 
 	}
 
@@ -112,81 +119,33 @@ public class VariableAbstractionTest {
 	}
 
 	@Test
-	public void isInIsIn() {
-		runTest(isIn(x, r1), isIn(y, r2), mScript.term("true"));
+	public void testesttest() {
+		// y = x*2
+		// Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+		// Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+		final Term formula = parseWithVariables("(= (* x 2 ) y)");
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
+		tfb.addInVar(x, x.getTermVariable());
+		tfb.addOutVar(y, y.getTermVariable());
+		tfb.addOutVar(x, x.getTermVariable());
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
+		final Set<IProgramVar> constrVars = new HashSet<>();
+		constrVars.add(y);
+		runTestAbstraction(utf, constrVars);
 	}
 
-	@Test
-	public void addIsIn() {
-		final Term expected =
-				parseWithVariables("(or (distinct x y) (= a x) (= b x) (and (distinct a (- 1)) (distinct b (- 1))))");
-		runTest(add(x), isIn(y, r1), expected);
-	}
+	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> constrainingVars) {
+		final UnmodifiableTransFormula abstracted = mVaAbs.abstractTransFormula(utf, constrainingVars);
+		assert utf == abstracted : "Does nothing at all";
+		assert utf != abstracted : "Does nothing at all";
 
-	@Test
-	public void clearIsIn() {
-		final Term expected = parseWithVariables("(and (distinct a x) (distinct b x))");
-		runTest(clear(), isIn(x, r1), expected);
-	}
+		for (final IProgramVar iv : abstracted.getInVars().keySet()) {
+			assert abstracted.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar";
+		}
 
-	@Test
-	public void getSizeIsIn() {
-		runTest(getSize(s1), isIn(x, r1), mScript.term("true"));
-	}
-
-	@Test
-	public void clearAdd() {
-		runTest(clear(), add(x), null);
-	}
-
-	@Test
-	public void getSizeClear() {
-		final Term expected = parseWithVariables("(= sz 0)");
-		runTest(getSize(s1), clear(), expected);
-	}
-
-	@Test
-	public void getSizeAdd() {
-		final Term expected = parseWithVariables("(or (= a x) (= b x) (and (distinct a (- 1)) (distinct b (- 1))))");
-		runTest(getSize(s1), add(x), expected);
-	}
-
-	@Test
-	public void popPop() {
-		final Term expected = parseWithVariables("(= top (- 1))");
-		runTest(pop(s1), pop(s2), expected);
-	}
-
-	@Test
-	public void popPush() {
-		// Note: The commutativity condition (and (> top (- 1)) (= (select arr top) e1) (< top max)) from the paper
-		// only guarantees equivalence "with respect to stack semantics", i.e., observational equivalence.
-		// Instead, we find the trivial case of a full 0-capacity stack, which guarantees our notion of commutativity.
-		final Term expected = parseWithVariables("(and (= top (- max 1)) (= max 0))");
-		runTest(pop(s1), push(e1, r1), expected);
-	}
-
-	@Test
-	public void popIsEmpty() {
-		final Term expected = parseWithVariables("(distinct top 0)");
-		runTest(pop(s1), isEmpty(r1), expected);
-	}
-
-	@Test
-	public void pushPush() {
-		final Term expected = parseWithVariables("(= (+ top 1) max)");
-		runTest(push(e1, r1), push(e2, r2), expected);
-	}
-
-	@Test
-	public void pushIsEmpty() {
-		final Term expected = parseWithVariables("(distinct top (- 1))");
-		runTest(push(e1, r2), isEmpty(r1), expected);
-	}
-
-	@Test
-	public void isEmptyIsEmpty() {
-		runTest(isEmpty(r1), isEmpty(r2), mScript.term("true"));
 	}
 
 	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term expected) {

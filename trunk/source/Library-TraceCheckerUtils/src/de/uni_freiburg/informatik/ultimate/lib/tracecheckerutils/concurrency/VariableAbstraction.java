@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
@@ -95,7 +96,7 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> setVariables) {
-		final Set<IProgramVar> transform = utf.getInVars().keySet();
+		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
 		transform.addAll(utf.getAssignedVars());
 		transform.removeAll(setVariables);
 
@@ -109,21 +110,21 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 			// the assignment
 
 			// example x = x+1; x is in in inVars, and in OutVars
+			// add outVar(x) to auxVars
+			// outVar(x) := new variable (TermVariable
 			if (nInVars.containsKey(v)) {
+				nAuxVars.add(nInVars.get(v));
 				nInVars.remove(v);
-				nAuxVars.add(v.getTermVariable());
-				// Term nOutVars.get(v)
-				// remove from outvars
-				// nOutVars.remove(v);
 			}
-			// Case: the variable is the variable that is freshly assigned
 			if (nOutVars.containsKey(v)) {
-				nAuxVars.add(v.getTermVariable());
-				// what is with the mFormula? Shoudnt we change something there?
+				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
+				nOutVars.put(v, nov);
 			}
+
 		}
-		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false,
-				utf.getNonTheoryConsts(), false, utf.getBranchEncoders(), false);
+		final Set<IProgramConst> ntc = new HashSet<>(utf.getNonTheoryConsts());
+		final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
+		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.setFormula(utf.getFormula());
 		return tfBuilder.finishConstruction(mMscript);
