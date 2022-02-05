@@ -119,26 +119,11 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 		if (isPruned(state, letter)) {
 			return Collections.emptySet();
 		}
-
-		final S currentState = mStateFactory.getOriginalState(state);
-		final var currentTransitionOpt = DataStructureUtils.getOnly(mOperand.internalSuccessors(currentState, letter),
-				"Automaton must be deterministic");
-		if (currentTransitionOpt.isEmpty()) {
+		final R successor = computeSuccessorWithBudget(state, letter, mBudgetFunction.applyAsInt(state, letter));
+		if (successor == null) {
 			return Collections.emptySet();
 		}
-
-		final SleepMap<L, S> currentSleepMap = mStateFactory.getSleepMap(state);
-		final Comparator<L> comp = mOrder.getOrder(state);
-
-		final Map<L, Integer> explored = mOperand.lettersInternal(currentState).stream()
-				.filter(b -> comp.compare(b, letter) < 0 && !isPruned(state, b))
-				.map(b -> new Pair<>(b, mBudgetFunction.applyAsInt(state, b)))
-				.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
-		final SleepMap<L, S> succSleepMap = currentSleepMap.computeSuccessor(currentState, letter, explored);
-
-		final R succSleepMapState = mStateFactory.createSleepMapState(currentTransitionOpt.get().getSucc(),
-				succSleepMap, mBudgetFunction.applyAsInt(state, letter));
-		return Set.of(new OutgoingInternalTransition<>(letter, succSleepMapState));
+		return Set.of(new OutgoingInternalTransition<>(letter, successor));
 	}
 
 	@Override
@@ -149,6 +134,25 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 	@Override
 	public Iterable<OutgoingReturnTransition<L, R>> returnSuccessors(final R state, final R hier, final L letter) {
 		return Collections.emptySet();
+	}
+
+	R computeSuccessorWithBudget(final R state, final L letter, final int budget) {
+		final S currentState = mStateFactory.getOriginalState(state);
+		final var currentTransitionOpt = DataStructureUtils.getOnly(mOperand.internalSuccessors(currentState, letter),
+				"Automaton must be deterministic");
+		if (currentTransitionOpt.isEmpty()) {
+			return null;
+		}
+
+		final SleepMap<L, S> currentSleepMap = mStateFactory.getSleepMap(state);
+		final Comparator<L> comp = mOrder.getOrder(state);
+
+		final Map<L, Integer> explored = mOperand.lettersInternal(currentState).stream()
+				.filter(b -> comp.compare(b, letter) < 0 && !isPruned(state, b))
+				.map(b -> new Pair<>(b, mBudgetFunction.applyAsInt(state, b)))
+				.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+		final SleepMap<L, S> succSleepMap = currentSleepMap.computeSuccessor(currentState, letter, explored);
+		return mStateFactory.createSleepMapState(currentTransitionOpt.get().getSucc(), succSleepMap, budget);
 	}
 
 	private int maximumBudget() {
