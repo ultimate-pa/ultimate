@@ -118,11 +118,8 @@ public class VariableAbstractionTest {
 		mScript.exit();
 	}
 
-	@Test
-	public void yIsXTimesTwo() {
+	public UnmodifiableTransFormula yIsXTimesTwo() {
 		// y = x*2
-		// Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		// Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 		final Term formula = parseWithVariables("(= (* x 2 ) y)");
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
@@ -132,9 +129,36 @@ public class VariableAbstractionTest {
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
+		return utf;
+	}
+
+	@Test
+	public void rightSideAbstracted() {
+		// abstract variable on right side, but not left side
 		final Set<IProgramVar> constrVars = new HashSet<>();
 		constrVars.add(y);
-		runTestAbstraction(utf, constrVars);
+		runTestAbstraction(yIsXTimesTwo(), constrVars);
+	}
+
+	@Test
+	public void leftSideAbstracton() {
+		final Set<IProgramVar> constrVars = new HashSet<>();
+		constrVars.add(x);
+		runTestAbstraction(yIsXTimesTwo(), constrVars);
+	}
+
+	@Test
+	public void bothSidesDifferentVariablesEmptyConstrVars() {
+		final Set<IProgramVar> constrVars = new HashSet<>();
+		runTestAbstraction(yIsXTimesTwo(), constrVars);
+	}
+
+	@Test
+	public void DoNothingFullConstrVars() {
+		final Set<IProgramVar> constrVars = new HashSet<>();
+		constrVars.add(x);
+		constrVars.add(y);
+		runTestAbstraction(yIsXTimesTwo(), constrVars);
 	}
 
 	@Test
@@ -147,8 +171,8 @@ public class VariableAbstractionTest {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		tfb.addInVar(x, x.getTermVariable());
 
-		tfb.addOutVar(x, x.getTermVariable());
-		tfb.addOutVar(x, x.getTermVariable());
+		tfb.addOutVar(x, mMgdScript.constructFreshCopy(x.getTermVariable()));
+		// tfb.addOutVar(x, x.getTermVariable());
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
@@ -157,16 +181,21 @@ public class VariableAbstractionTest {
 	}
 
 	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> constrainingVars) {
-		final UnmodifiableTransFormula abstracted = mVaAbs.abstractTransFormula(utf, constrainingVars);
-		assert !utf.equals(abstracted) : "Does nothing at all";
+		final UnmodifiableTransFormula abstractedTF = mVaAbs.abstractTransFormula(utf, constrainingVars);
+		assert !utf.equals(abstractedTF) : "Does nothing at all";
 
-		for (final IProgramVar iv : abstracted.getOutVars().keySet()) {
-			assert !abstracted.getAuxVars().contains(iv.getTermVariable()) : "auxVar in OutVar";
+		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
+			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
 		}
 
-		for (final IProgramVar iv : abstracted.getInVars().keySet()) {
-			assert !abstracted.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar";
+		for (final IProgramVar iv : abstractedTF.getOutVars().keySet()) {
+			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in OutVar "
+					+ iv.getTermVariable().toString();
 		}
+		// This Test fails for every abstraction, that does something with the outVar
+		// Is the Test not good or is the actual code not good?
+		final LBool working = TransFormulaUtils.checkImplication(utf, abstractedTF, mMgdScript);
+		assert working != LBool.SAT : "IS SAT";
 
 	}
 

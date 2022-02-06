@@ -139,7 +139,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
 			for (final IPredicate ip : lp) {
 				constrainingVars.addAll(ip.getVars());
-
 			}
 		}
 		return constrainingVars;

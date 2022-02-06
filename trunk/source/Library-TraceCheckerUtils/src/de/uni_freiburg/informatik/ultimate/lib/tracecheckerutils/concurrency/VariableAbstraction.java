@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -90,15 +92,15 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 	/**
 	 *
 	 * @param utf
-	 * @param setVariables
+	 * @param constrainingVars
 	 * @return
 	 */
 
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
-			final Set<IProgramVar> setVariables) {
+			final Set<IProgramVar> constrainingVars) {
 		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
 		transform.addAll(utf.getAssignedVars());
-		transform.removeAll(setVariables);
+		transform.removeAll(constrainingVars);
 
 		final Map<IProgramVar, TermVariable> nInVars = new HashMap<>(utf.getInVars());
 		final Map<IProgramVar, TermVariable> nOutVars = new HashMap<>(utf.getOutVars());
@@ -109,15 +111,15 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 			// example x = x+1; x is in in inVars, and in OutVars
 			// add outVar(x) to auxVars
 			// outVar(x) := new variable (TermVariable)
+
+			if (nOutVars.containsKey(v)) {
+				nAuxVars.add(nOutVars.get(v));
+				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
+				nOutVars.put(v, nov);
+			}
 			if (nInVars.containsKey(v)) {
 				nAuxVars.add(nInVars.get(v));
 				nInVars.remove(v);
-				// -> Okay, this is strange behavior - If i have this line executing, i'm getting the errors
-			}
-			if (nOutVars.containsKey(v)) {
-				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
-				nAuxVars.add(nOutVars.get(v));
-				nOutVars.put(v, nov);
 			}
 
 		}
@@ -131,7 +133,6 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 		}
 		for (final TermVariable auxVar : nAuxVars) {
 			tfBuilder.addAuxVar(auxVar);
-
 		}
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.setFormula(utf.getFormula());
@@ -173,7 +174,14 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 	@Override
 	public Set<IProgramVar> refine(final Set<IProgramVar> current,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-		// TODO compute updated set of constraining variables
-		return null;
+		final List<QualifiedTracePredicates> usedTracePredicates = refinement.getUsedTracePredicates();
+		final Set<IProgramVar> constrainingVars = new HashSet<>();
+		for (final QualifiedTracePredicates qtp : usedTracePredicates) {
+			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
+			for (final IPredicate ip : lp) {
+				constrainingVars.addAll(ip.getVars());
+			}
+		}
+		return constrainingVars;
 	}
 }
