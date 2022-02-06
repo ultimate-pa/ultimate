@@ -140,9 +140,11 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
 		final Set<IProgramVar> writes = tf.getOutVars().keySet();
 
-		DependencyRank deprank = mThreads.get(getThreadId(transition).iterator().next());
-		if (deprank == null) {
-			deprank = new DependencyRank();
+		DependencyRank deprank = new DependencyRank();
+		for (final String thread : getThreadId(transition)) {
+			if (mThreads.containsKey(thread)) {
+				deprank = deprank.getMax(mThreads.get(thread));
+			}
 		}
 
 		for (final IProgramVar var : reads) {
@@ -228,12 +230,12 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			return null;
 		}
 
-		if (!dependentOnLast) {
+		if (!dependentOnLast && lastStDeprank.containsRank(rank)) {
 			deprank = deprank.getMax(lastStDeprank.add(rank));
 		}
 
 		if (lastStDeprank != null && lastStDeprank.compareTo(deprank) > 0) {
-			// assert false;
+			return null;
 		}
 
 		final Map<String, DependencyRank> newThreads = new HashMap<>(mThreads);

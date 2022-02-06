@@ -72,6 +72,10 @@ public class DependencyRank implements Comparable<DependencyRank> {
 		return new DependencyRank(newRanks);
 	}
 
+	public boolean containsRank(final int rank) {
+		return mRanks.contains(rank);
+	}
+
 	/**
 	 * Calculates the maximal dependency rank out of two dependency ranks.
 	 *
