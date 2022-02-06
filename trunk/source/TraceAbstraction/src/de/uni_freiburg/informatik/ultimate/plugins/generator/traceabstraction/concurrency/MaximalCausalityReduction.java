@@ -57,6 +57,7 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mOperand;
 	private final McrStateFactory<L> mStateFactory;
 	private final IMcrState<L> mInitial;
+	private int mTransitionsEvaluated;
 
 	/**
 	 * Constructor.
@@ -79,6 +80,14 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 		assert oldInitial instanceof IMLPredicate;
 		mStateFactory = stateFactory;
 		mInitial = mStateFactory.createState(oldInitial);
+	}
+
+	/**
+	 * Logs statistics about number of transitions and states.
+	 */
+	public void reportStatistics() {
+		mLogger.info("MaximalCausalityReduction evaluated " + mTransitionsEvaluated + " transitions and produced "
+				+ mStateFactory.getNumberOfConstructedStates() + " states.");
 	}
 
 	@Override
@@ -136,6 +145,7 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 		assert successorState instanceof IMLPredicate;
 
 		final IMcrState<L> newState = mStateFactory.createNextState(mcrState, letter, (IMLPredicate) successorState);
+		mTransitionsEvaluated++;
 		if (newState == null) {
 			return Collections.emptySet();
 		}

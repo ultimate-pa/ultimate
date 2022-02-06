@@ -211,6 +211,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
 			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
 		}
+		if (mMcrFactory != null) {
+			mMcrFactory.reset();
+		}
 
 		switch (mMode) {
 		case SLEEP_DELAY_SET:
@@ -238,6 +241,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final MaximalCausalityReduction<L> mcr =
 					new MaximalCausalityReduction<>(mAutomataServices.getLoggingService(), input, mMcrFactory);
 			new DepthFirstTraversal<>(mAutomataServices, mcr, mDfsOrder, visitor);
+			mcr.reportStatistics();
 			break;
 		case NONE:
 			new DepthFirstTraversal<>(mAutomataServices, input, mDfsOrder, visitor);

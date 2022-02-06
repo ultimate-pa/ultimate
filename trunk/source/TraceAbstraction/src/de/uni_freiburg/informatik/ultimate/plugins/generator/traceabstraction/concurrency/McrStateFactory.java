@@ -126,4 +126,15 @@ public class McrStateFactory<L extends IIcfgTransition<?>> implements IEmptyStac
 		assert state instanceof IMcrState<?>;
 		return ((IMcrState<?>) state).getOldState();
 	}
+
+	public int getNumberOfConstructedStates() {
+		return mStates.size();
+	}
+
+	/**
+	 * Resets the factory. Any states constructed by the factory will be forgotten.
+	 */
+	public void reset() {
+		mStates.clear();
+	}
 }
