@@ -121,10 +121,22 @@ public class VariableAbstractionTest {
 	public UnmodifiableTransFormula yIsXTimesTwo() {
 		// y = x*2
 		final Term formula = parseWithVariables("(= (* x 2 ) y)");
-
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		tfb.addInVar(x, x.getTermVariable());
 		tfb.addOutVar(y, y.getTermVariable());
+		// tfb.addOutVar(x, x.getTermVariable());
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
+		return utf;
+	}
+
+	public UnmodifiableTransFormula xIsXPlusOne() {
+		// x = x+1
+		final Term formula = parseWithVariables("(= (+ x 1 ) x)");
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
+		tfb.addInVar(x, x.getTermVariable());
+		tfb.addOutVar(x, mMgdScript.constructFreshCopy(x.getTermVariable()));
 		// tfb.addOutVar(x, x.getTermVariable());
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
@@ -158,42 +170,46 @@ public class VariableAbstractionTest {
 		final Set<IProgramVar> constrVars = new HashSet<>();
 		constrVars.add(x);
 		constrVars.add(y);
-		runTestAbstraction(yIsXTimesTwo(), constrVars);
+		runTestAbstractionDoesNothing(yIsXTimesTwo(), constrVars);
+		runTestAbstractionDoesNothing(xIsXPlusOne(), constrVars);
 	}
 
 	@Test
-	public void xIsXPlusOne() {
-		// x = x+1
-		// Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		// Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		final Term formula = parseWithVariables("(= (+ x 1 ) x)");
-
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
-		tfb.addInVar(x, x.getTermVariable());
-
-		tfb.addOutVar(x, mMgdScript.constructFreshCopy(x.getTermVariable()));
-		// tfb.addOutVar(x, x.getTermVariable());
-		tfb.setFormula(formula);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
+	public void bothSidesSameVariable() {
 		final Set<IProgramVar> constrVars = new HashSet<>();
-		runTestAbstraction(utf, constrVars);
+		runTestAbstraction(xIsXPlusOne(), constrVars);
 	}
 
 	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> constrainingVars) {
 		final UnmodifiableTransFormula abstractedTF = mVaAbs.abstractTransFormula(utf, constrainingVars);
-		assert !utf.equals(abstractedTF) : "Does nothing at all";
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
 		}
 
 		for (final IProgramVar iv : abstractedTF.getOutVars().keySet()) {
-			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in OutVar "
+			assert !abstractedTF.getAuxVars().contains(abstractedTF.getOutVars().get(iv)) : "auxVar in OutVar "
 					+ iv.getTermVariable().toString();
 		}
-		// This Test fails for every abstraction, that does something with the outVar
-		// Is the Test not good or is the actual code not good?
+		LBool working = TransFormulaUtils.checkImplication(utf, abstractedTF, mMgdScript);
+		assert working != LBool.SAT : "IS SAT";
+		working = TransFormulaUtils.checkImplication(abstractedTF, utf, mMgdScript);
+		assert working != LBool.UNSAT : "IS UNSAT";
+
+	}
+
+	private void runTestAbstractionDoesNothing(final UnmodifiableTransFormula utf,
+			final Set<IProgramVar> constrainingVars) {
+		final UnmodifiableTransFormula abstractedTF = mVaAbs.abstractTransFormula(utf, constrainingVars);
+
+		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
+			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
+		}
+
+		for (final IProgramVar iv : abstractedTF.getOutVars().keySet()) {
+			assert !abstractedTF.getAuxVars().contains(abstractedTF.getOutVars().get(iv)) : "auxVar in OutVar "
+					+ iv.getTermVariable().toString();
+		}
 		final LBool working = TransFormulaUtils.checkImplication(utf, abstractedTF, mMgdScript);
 		assert working != LBool.SAT : "IS SAT";
 

@@ -182,6 +182,7 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 				constrainingVars.addAll(ip.getVars());
 			}
 		}
+		constrainingVars.addAll(current);
 		return constrainingVars;
 	}
 }
