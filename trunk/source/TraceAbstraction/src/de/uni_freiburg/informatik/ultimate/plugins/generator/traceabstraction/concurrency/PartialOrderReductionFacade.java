@@ -90,6 +90,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 	private StateSplitter<IPredicate> mStateSplitter;
 	private final PredicateFactory mPredicateFactory;
+	private final McrStateFactory<L> mMcrFactory;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -103,6 +104,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mIndependence = independence;
 		mPersistent = createPersistentSets(icfg, errorLocs);
 		mPredicateFactory = predicateFactory;
+		mMcrFactory = createMcrFactory();
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -116,6 +118,16 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return factory;
 		}
 		return new ISleepSetStateFactory.NoUnrolling<>();
+	}
+
+	private McrStateFactory<L> createMcrFactory() {
+		if (mMode != PartialOrderMode.MCR_WITH_DEPRANKS && mMode != PartialOrderMode.MCR_WITHOUT_DEPRANKS) {
+			return null;
+		}
+		final McrStateFactory<L> factory =
+				new McrStateFactory<>(mPredicateFactory, mMode == PartialOrderMode.MCR_WITH_DEPRANKS);
+		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, state -> state);
+		return factory;
 	}
 
 	public ISleepSetStateFactory<L, IPredicate, IPredicate> getSleepFactory() {
@@ -224,8 +236,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case MCR_WITH_DEPRANKS:
 		case MCR_WITHOUT_DEPRANKS:
 			final MaximalCausalityReduction<L> mcr =
-					new MaximalCausalityReduction<>(mAutomataServices.getLoggingService(), input,
-							new McrStateFactory<>(mPredicateFactory, mMode == PartialOrderMode.MCR_WITH_DEPRANKS));
+					new MaximalCausalityReduction<>(mAutomataServices.getLoggingService(), input, mMcrFactory);
 			new DepthFirstTraversal<>(mAutomataServices, mcr, mDfsOrder, visitor);
 			break;
 		case NONE:

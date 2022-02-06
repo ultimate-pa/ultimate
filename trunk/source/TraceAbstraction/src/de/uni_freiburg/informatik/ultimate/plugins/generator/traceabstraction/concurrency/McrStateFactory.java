@@ -114,4 +114,16 @@ public class McrStateFactory<L extends IIcfgTransition<?>> implements IEmptyStac
 	public IPredicate createEmptyStackState() {
 		return mEmptyStack;
 	}
+
+	/**
+	 * Gets the original state of a state constructed by this factory.
+	 *
+	 * @param state
+	 *            An MCR state.
+	 * @return The state in the original automaton.
+	 */
+	public IPredicate getOriginalState(final IPredicate state) {
+		assert state instanceof IMcrState<?>;
+		return ((IMcrState<?>) state).getOldState();
+	}
 }
