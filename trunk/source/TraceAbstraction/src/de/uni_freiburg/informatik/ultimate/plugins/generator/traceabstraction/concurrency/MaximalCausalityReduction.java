@@ -153,4 +153,20 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 			final IPredicate hier, final L letter) {
 		return Collections.emptySet();
 	}
+
+	@Override
+	public Set<L> lettersInternal(final IPredicate state) {
+		assert state instanceof IMcrState<?>;
+		return mOperand.lettersInternal(((IMcrState<?>) state).getOldState());
+	}
+
+	@Override
+	public Set<L> lettersCall(final IPredicate state) {
+		return Collections.emptySet();
+	}
+
+	@Override
+	public Set<L> lettersReturn(final IPredicate state, final IPredicate hier) {
+		return Collections.emptySet();
+	}
 }
