@@ -65,17 +65,6 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
 		mAllProgramVars = Collections.emptySet();
-		// mmscript.constructFreshTermVariable(null, null)
-		// hier das benutzen
-		// We need a Script to build a new TransFormula
-		/*
-		 * this.automaton = automaton; final Set<IProgramVar> allVars = new HashSet<>(); for (final IPredicate s :
-		 * this.automaton.getInitialStates()) { final Set<IProgramVar> vars = s.getVars(); final Iterator<IProgramVar>
-		 * iti = vars.iterator(); allVars.addAll(vars); final Iterable<OutgoingInternalTransition<L, IPredicate>>
-		 * nextStates = automaton.internalSuccessors(s); // I dont untestand what this gives back // while (s.)
-		 *
-		 * }
-		 */
 	}
 
 	/**
@@ -105,17 +94,10 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
 		transform.addAll(utf.getAssignedVars());
 		transform.removeAll(constrainingVars);
-
 		final Map<IProgramVar, TermVariable> nInVars = new HashMap<>(utf.getInVars());
 		final Map<IProgramVar, TermVariable> nOutVars = new HashMap<>(utf.getOutVars());
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
-		// mMscript.constructFreshCopy(null);
-		// code anpassen
 		for (final IProgramVar v : transform) {
-			// example x = x+1; x is in in inVars, and in OutVars
-			// add outVar(x) to auxVars
-			// outVar(x) := new variable (TermVariable)
-
 			if (nOutVars.containsKey(v)) {
 				nAuxVars.add(nOutVars.get(v));
 				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
@@ -141,23 +123,6 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.setFormula(utf.getFormula());
 		return tfBuilder.finishConstruction(mMscript);
-	}
-
-	public L abstractLetterSOMETHINGELSE(final L inLetter) {
-		// Abstract Letters here
-		final UnmodifiableTransFormula transform = inLetter.getTransformula();
-		final Set<IProgramVar> asVars = transform.getAssignedVars();
-		for (final IProgramVar av : asVars) {
-			// If av is not contained by the variables, that are used in the states, they can be abstracted
-
-		}
-		final UnmodifiableTransFormula transformedLetter;
-		return inLetter;
-	}
-
-	public L abstractLetterOccurence(final L Letter, final IPredicate inState, final IPredicate outState) {
-
-		return Letter;
 	}
 
 	// Verband - Lattice
