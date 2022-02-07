@@ -83,7 +83,7 @@ public class QvasrLoopSummarization {
 			throw new UnsupportedOperationException("Qvasr do not support arrays.");
 		}
 
-		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript, mPredUnifier);
+		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript);
 		final UnmodifiableTransFormula loopSummary = qvasrSummarizer.summarizeLoop(loopTransitionFormula);
 		mIsOverapprox = qvasrSummarizer.isOverapprox();
 		return loopSummary;
