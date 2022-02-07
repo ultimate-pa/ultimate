@@ -283,11 +283,31 @@ public class IcfgEdgeBuilder {
 
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
+		return constructInternalTransition(oldTransition, source, target, tf, false);
+	}
+
+	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf, final boolean connect) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
+		if (connect) {
+			source.addOutgoing(rtr);
+			target.addIncoming(rtr);
+		}
 		ModelUtils.copyAnnotations(oldTransition, rtr);
+		return rtr;
+	}
+
+	public IcfgEdge constructForkCurrentTransition(final IcfgForkThreadCurrentTransition oldTransition,
+			final UnmodifiableTransFormula tf, final boolean connect) {
+		final IcfgForkThreadCurrentTransition rtr = mEdgeFactory.createForkThreadCurrentTransition(
+				oldTransition.getSource(), oldTransition.getTarget(), oldTransition.getPayload(), tf,
+				oldTransition.getForkSmtArguments(), oldTransition.getNameOfForkedProcedure());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
 		return rtr;
 	}
 
