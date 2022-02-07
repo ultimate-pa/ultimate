@@ -27,7 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -35,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
@@ -58,6 +62,7 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 	private final McrStateFactory<L> mStateFactory;
 	private final IMcrState<L> mInitial;
 	private int mTransitionsEvaluated;
+	private final Map<L, Integer> mRanks;
 
 	/**
 	 * Constructor.
@@ -68,10 +73,12 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 	 *            The automaton to apply MCR on.
 	 * @param stateFactory
 	 *            An McrStateFactory.
+	 * @param order
+	 *            The IDfsOrder that defines an order of statements.
 	 */
 	public MaximalCausalityReduction(final ILoggingService loggingService,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> operand,
-			final McrStateFactory<L> stateFactory) {
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> operand, final McrStateFactory<L> stateFactory,
+			final IDfsOrder<L, IPredicate> order) {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "MCR supports only finite automata";
 
 		mLogger = loggingService.getLogger(MaximalCausalityReduction.class);
@@ -80,6 +87,14 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 		assert oldInitial instanceof IMLPredicate;
 		mStateFactory = stateFactory;
 		mInitial = mStateFactory.createState(oldInitial);
+		mRanks = new HashMap<>();
+
+		int index = 0;
+		for (final L letter : mOperand.getAlphabet().stream().sorted(order.getOrder(oldInitial))
+				.collect(Collectors.toList())) {
+			mRanks.put(letter, index);
+			index++;
+		}
 	}
 
 	/**
@@ -144,7 +159,8 @@ public class MaximalCausalityReduction<L extends IIcfgTransition<?>>
 		final IPredicate successorState = transition.get().getSucc();
 		assert successorState instanceof IMLPredicate;
 
-		final IMcrState<L> newState = mStateFactory.createNextState(mcrState, letter, (IMLPredicate) successorState);
+		final IMcrState<L> newState =
+				mStateFactory.createNextState(mcrState, letter, (IMLPredicate) successorState, mRanks);
 		mTransitionsEvaluated++;
 		if (newState == null) {
 			return Collections.emptySet();

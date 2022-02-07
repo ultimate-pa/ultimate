@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 
@@ -45,9 +47,11 @@ public interface IMcrState<L extends IIcfgTransition<?>> extends IMLPredicate {
 	 *            The transition to take.
 	 * @param newState
 	 *            The new state in the original automaton.
+	 * @param ranks
+	 *            A map from transitions to ranks.
 	 * @return A new state for the representative automaton, or null if the transition should be omitted.
 	 */
-	IMcrState<L> getNextState(L transition, IMLPredicate newState);
+	IMcrState<L> getNextState(L transition, IMLPredicate newState, Map<L, Integer> ranks);
 
 	/**
 	 * Gets the corresponding state in the original automaton.

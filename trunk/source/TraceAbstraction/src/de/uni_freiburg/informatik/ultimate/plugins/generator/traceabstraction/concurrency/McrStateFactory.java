@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -95,11 +96,13 @@ public class McrStateFactory<L extends IIcfgTransition<?>> implements IEmptyStac
 	 *            The transition to take.
 	 * @param successorState
 	 *            The successor state in the original automaton after taking the transition.
+	 * @param ranks
+	 *            A map from statements to ranks.
 	 * @return The new state of the representative automton, or null if the transition should be omitted.
 	 */
-	public IMcrState<L> createNextState(final IMcrState<L> state, final L transition,
-			final IMLPredicate successorState) {
-		final IMcrState<L> newState = state.getNextState(transition, successorState);
+	public IMcrState<L> createNextState(final IMcrState<L> state, final L transition, final IMLPredicate successorState,
+			final Map<L, Integer> ranks) {
+		final IMcrState<L> newState = state.getNextState(transition, successorState, ranks);
 		if (newState == null) {
 			return null;
 		}

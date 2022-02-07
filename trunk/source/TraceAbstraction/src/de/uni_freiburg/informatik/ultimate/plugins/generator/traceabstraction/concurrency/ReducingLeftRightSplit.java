@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.ListIterator;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
@@ -39,12 +40,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  *            The type of the letters.
  */
 public class ReducingLeftRightSplit<L extends IIcfgTransition<?>> extends LeftRightSplit<L> {
+	private final Map<L, Integer> mRanks;
 
 	/**
 	 * Creates a new reducing left-right split.
+	 *
+	 * @param ranks
+	 *            A map from transitions to ranks.
 	 */
-	public ReducingLeftRightSplit() {
+	public ReducingLeftRightSplit(final Map<L, Integer> ranks) {
 		super();
+		mRanks = ranks;
 	}
 
 	/**
@@ -52,9 +58,12 @@ public class ReducingLeftRightSplit<L extends IIcfgTransition<?>> extends LeftRi
 	 *
 	 * @param other
 	 *            The left-right split to copy.
+	 * @param ranks
+	 *            A map from transitions to ranks.
 	 */
-	public ReducingLeftRightSplit(final LeftRightSplit<L> other) {
+	public ReducingLeftRightSplit(final LeftRightSplit<L> other, final Map<L, Integer> ranks) {
 		super(other);
+		mRanks = ranks;
 	}
 
 	private void ensureReduction() {
@@ -71,8 +80,8 @@ public class ReducingLeftRightSplit<L extends IIcfgTransition<?>> extends LeftRi
 				if (firstRight == null) {
 					return;
 				}
-				final int currentRank = elem.mLetter.hashCode();
-				final int otherRank = firstRight.mLetter.hashCode();
+				final int currentRank = mRanks.get(elem.mLetter);
+				final int otherRank = mRanks.get(firstRight.mLetter);
 
 				if (currentRank > otherRank) {
 					moveEntry(iter.previousIndex(), elem.mLetter, Direction.RIGHT);
@@ -91,6 +100,6 @@ public class ReducingLeftRightSplit<L extends IIcfgTransition<?>> extends LeftRi
 
 	@Override
 	protected LeftRightSplit<L> duplicateThis() {
-		return new ReducingLeftRightSplit<>(this);
+		return new ReducingLeftRightSplit<>(this, mRanks);
 	}
 }

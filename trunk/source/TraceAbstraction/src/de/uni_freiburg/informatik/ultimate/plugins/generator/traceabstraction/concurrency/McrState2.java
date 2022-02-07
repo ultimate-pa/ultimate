@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -118,18 +119,18 @@ public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	 * @return The new McrState.
 	 */
 	@Override
-	public McrState2<L> getNextState(final L transition, final IMLPredicate successor) {
+	public McrState2<L> getNextState(final L transition, final IMLPredicate successor, final Map<L, Integer> ranks) {
 		final Set<LeftRightSplit<L>> newTemplates = new HashSet<>();
 		final Set<ReducingLeftRightSplit<L>> newSplits = new HashSet<>();
 
 		for (final LeftRightSplit<L> template : mTemplates) {
-			final ReducingLeftRightSplit<L> split = new ReducingLeftRightSplit<>(template);
+			final ReducingLeftRightSplit<L> split = new ReducingLeftRightSplit<>(template, ranks);
 			split.moveLast(Direction.RIGHT);
 			addStatementToSplit(split, transition, Direction.LEFT, newSplits, false);
 		}
 
 		for (final ReducingLeftRightSplit<L> split : mSplits) {
-			final ReducingLeftRightSplit<L> copy = new ReducingLeftRightSplit<>(split);
+			final ReducingLeftRightSplit<L> copy = new ReducingLeftRightSplit<>(split, ranks);
 			if (!addStatementToSplit(copy, transition, Direction.MIDDLE, newSplits, OPTIMIZE_DEAD_ENDS)) {
 				return null;
 			}

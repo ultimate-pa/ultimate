@@ -135,7 +135,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	 * @return The new McrState.
 	 */
 	@Override
-	public McrState<L> getNextState(final L transition, final IMLPredicate successor) {
+	public McrState<L> getNextState(final L transition, final IMLPredicate successor, final Map<L, Integer> ranks) {
 		final UnmodifiableTransFormula tf = transition.getTransformula();
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
 		final Set<IProgramVar> writes = tf.getOutVars().keySet();
@@ -152,8 +152,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			deprank = deprank.getMax(varRank);
 		}
 
-		// TODO: hashCode is not good rank.
-		final int rank = transition.hashCode();
+		final int rank = ranks.get(transition);
 		deprank = deprank.add(rank);
 
 		DependencyRank lastStDeprank;
@@ -226,7 +225,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			}
 		}
 
-		if (!dependentOnLast && mLastStatement.hashCode() > rank) {
+		if (!dependentOnLast && ranks.get(mLastStatement) > rank) {
 			return null;
 		}
 

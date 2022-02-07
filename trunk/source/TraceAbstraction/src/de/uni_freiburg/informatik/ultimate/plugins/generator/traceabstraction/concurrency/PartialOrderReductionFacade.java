@@ -238,8 +238,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			break;
 		case MCR_WITH_DEPRANKS:
 		case MCR_WITHOUT_DEPRANKS:
-			final MaximalCausalityReduction<L> mcr =
-					new MaximalCausalityReduction<>(mAutomataServices.getLoggingService(), input, mMcrFactory);
+			final MaximalCausalityReduction<L> mcr = new MaximalCausalityReduction<>(
+					mAutomataServices.getLoggingService(), input, mMcrFactory, mDfsOrder);
 			new DepthFirstTraversal<>(mAutomataServices, mcr, mDfsOrder, visitor);
 			mcr.reportStatistics();
 			break;
