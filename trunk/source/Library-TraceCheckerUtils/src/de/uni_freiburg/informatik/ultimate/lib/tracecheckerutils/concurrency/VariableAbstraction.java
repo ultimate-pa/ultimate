@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
 public class VariableAbstraction<L extends IIcfgTransition<?>>
 		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> {
@@ -165,7 +166,7 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 	public ILattice<Set<IProgramVar>> getHierarchy() {
 		// TODO Fix this, set is "constrained vars", below is meant for "ignored vars"
 		// TODO fix this so that top / bottom of hierarchy are defined (i.e. pass set of all program variables)
-		return new PowersetLattice<>();
+		return new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
 	}
 
 	@Override
