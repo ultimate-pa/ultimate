@@ -98,14 +98,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
-	private final ICopyActionFactory<L> mCopyFactory;
-
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
 	private final DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, IDfsVisitor<L, IPredicate>> mVisitor;
-	private final PartialOrderReductionFacade<L> mPOR;
+	private PartialOrderReductionFacade<L> mPOR;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
+
+	private Set<IProgramVar> mConstrainingVariables;
+	private final VariableAbstraction<L> mLetterAbstraction;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -115,8 +116,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
-		mCopyFactory = copyFactory;
 		mPartialOrderMode = mPref.getPartialOrderMode();
+		mLetterAbstraction = new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript());
+
+		if (mLetterAbstraction != null) {
+			mConstrainingVariables = mLetterAbstraction.getInitial();
+		}
 
 		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
@@ -191,8 +196,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
-		// TODO (Marcel 2022-01-12) New Variable Ábstraction provide abstracted variables here
-		final VariableAbstraction<L> varAb = new VariableAbstraction<>(mCopyFactory, mCsToolkit.getManagedScript());
+
+		if (mLetterAbstraction != null) {
+			mConstrainingVariables = mLetterAbstraction.refine(mConstrainingVariables, mRefinementResult);
+			final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(mCsToolkit);
+			mPOR = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, mIcfg, mErrorLocs,
+					mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
+					independenceRelation);
+		}
+
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
@@ -280,13 +292,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
 				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
 				// =========================================================================
+				// Apply abstraction to each letter before checking commutativity (if mLetterAbstraction is non-null).
+				.withAbstraction(mLetterAbstraction, mConstrainingVariables)
 				// Never consider letters of the same thread to be independent.
-				// HERE
 				.threadSeparated()
 				// Retrieve the constructed relation.
 				.build();
 	}
-	// Somewhere in this flow, there should be a Option, that you should abstract
 
 	private ManagedScript constructIndependenceScript() {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings()
