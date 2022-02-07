@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -119,11 +120,14 @@ public class VariableAbstractionTest {
 	}
 
 	public UnmodifiableTransFormula yIsXTimesTwo() {
+		final TermVariable xIn = mMgdScript.variable("x_in", mScript.sort("Int"));
+		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
+
 		// y = x*2
-		final Term formula = parseWithVariables("(= (* x 2 ) y)");
+		final Term formula = parseWithVariables("(= (* x_in 2 ) y_out)");
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
-		tfb.addInVar(x, x.getTermVariable());
-		tfb.addOutVar(y, y.getTermVariable());
+		tfb.addInVar(x, xIn);
+		tfb.addOutVar(y, yOut);
 		// tfb.addOutVar(x, x.getTermVariable());
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
@@ -132,11 +136,14 @@ public class VariableAbstractionTest {
 	}
 
 	public UnmodifiableTransFormula xIsXPlusOne() {
+		final TermVariable xIn = mMgdScript.variable("x_in", mScript.sort("Int"));
+		final TermVariable xOut = mMgdScript.variable("x_out", mScript.sort("Int"));
+
 		// x = x+1
-		final Term formula = parseWithVariables("(= (+ x 1 ) x)");
+		final Term formula = parseWithVariables("(= (+ x_in 1 ) x_out)");
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
-		tfb.addInVar(x, x.getTermVariable());
-		tfb.addOutVar(x, mMgdScript.constructFreshCopy(x.getTermVariable()));
+		tfb.addInVar(x, xIn);
+		tfb.addOutVar(x, xOut);
 		// tfb.addOutVar(x, x.getTermVariable());
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
@@ -358,7 +365,8 @@ public class VariableAbstractionTest {
 
 	private Term parseWithVariables(final String syntax) {
 		final String declarations = mSymbolTable.getGlobals().stream()
-				.map(pv -> "(" + pv.getTermVariable().getName() + " " + pv.getSort() + ")")
+				.map(pv -> "(" + pv.getTermVariable().getName() + "_in " + pv.getSort() + ") ("
+						+ pv.getTermVariable().getName() + "_out " + pv.getSort() + ") ")
 				.collect(Collectors.joining(" "));
 		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
