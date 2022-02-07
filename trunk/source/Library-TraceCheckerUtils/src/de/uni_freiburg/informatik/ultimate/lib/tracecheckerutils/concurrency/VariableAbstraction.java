@@ -59,13 +59,17 @@ public class VariableAbstraction<L extends IAction>
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final ManagedScript mMscript;
-	Set<IProgramVar> mAllProgramVars;
+	private final Set<IProgramVar> mAllProgramVars;
+	private final ILattice<Set<IProgramVar>> mHierarchy;
 
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript) {
 		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
+
+		// TODO pass real set of all program variables
 		mAllProgramVars = Collections.emptySet();
+		mHierarchy = new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
 	}
 
 	/**
@@ -137,9 +141,7 @@ public class VariableAbstraction<L extends IAction>
 
 	@Override
 	public ILattice<Set<IProgramVar>> getHierarchy() {
-		// TODO Fix this, set is "constrained vars", below is meant for "ignored vars"
-		// TODO fix this so that top / bottom of hierarchy are defined (i.e. pass set of all program variables)
-		return new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
+		return mHierarchy;
 	}
 
 	@Override
