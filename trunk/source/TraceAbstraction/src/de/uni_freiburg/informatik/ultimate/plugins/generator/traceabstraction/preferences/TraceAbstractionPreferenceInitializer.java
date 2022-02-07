@@ -148,6 +148,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
+	public static final String LABEL_LAZY_FINITE_AUTOMATON = "Construct finite automaton lazily";
 	public static final String LABEL_CONFIGURATION_ORDER = "Order on configurations for Petri net unfoldings";
 	public static final String LABEL_CUTOFF = "cut-off requires same transition";
 	public static final String LABEL_BACKFOLDING = "Use backfolding";
@@ -211,6 +212,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
 	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
+	private static final boolean DEF_LAZY_FINITE_AUTOMATON = false;
 	public static final boolean DEF_STOP_AFTER_FIRST_VIOLATION = true;
 	private static final CegarRestartBehaviour DEF_CEGAR_RESTART_BEHAVIOUR = CegarRestartBehaviour.ONLY_ONE_CEGAR;
 
@@ -487,6 +489,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						Minimization.values()),
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY, DEF_CONCURRENCY, PreferenceType.Combo,
 						Concurrency.values()),
+				new UltimatePreferenceItem<>(LABEL_LAZY_FINITE_AUTOMATON, DEF_LAZY_FINITE_AUTOMATON,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CONFIGURATION_ORDER, DEF_CONFIGURATION_ORDER, PreferenceType.Combo,
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),

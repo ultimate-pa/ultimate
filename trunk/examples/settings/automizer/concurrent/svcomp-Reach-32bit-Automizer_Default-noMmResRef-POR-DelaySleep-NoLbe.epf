@@ -54,6 +54,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PARTIAL_ORDER_FA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Large\ block\ encoding\ in\ concurrent\ analysis=OFF
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Partial\ Order\ Reduction\ in\ concurrent\ analysis=SLEEP_DELAY_SET
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Construct\ finite\ automaton\ lazily=true
 
 
 #Thu Oct 29 23:01:13 CET 2015

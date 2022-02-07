@@ -71,6 +71,7 @@ public final class TAPreferences {
 	private final Minimization mMinimize;
 	private final boolean mHoare;
 	private final Concurrency mAutomataTypeConcurrency;
+	private final boolean mLazyFiniteAutomaton;
 	private final HoareTripleChecks mHoareTripleChecks;
 	@Reflected(excluded = true)
 	private final IPreferenceProvider mPrefs;
@@ -147,6 +148,7 @@ public final class TAPreferences {
 
 		mAutomataTypeConcurrency =
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
+		mLazyFiniteAutomaton = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LAZY_FINITE_AUTOMATON);
 
 		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
 		mErrorLocTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
@@ -468,6 +470,13 @@ public final class TAPreferences {
 
 	public boolean useSMTFeatureExtraction() {
 		return mSMTFeatureExtraction;
+	}
+
+	/**
+	 * @return true if finite automaton should be constructed lazily.
+	 */
+	public boolean useLazyFiniteAutomaton() {
+		return mLazyFiniteAutomaton;
 	}
 
 	public String getSMTFeatureExtractionDumpPath() {

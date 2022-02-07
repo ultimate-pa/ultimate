@@ -370,9 +370,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 			final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
-			final PartialOrderMode porMode = mPref.getPartialOrderMode();
-			if (porMode != PartialOrderMode.NONE && porMode != PartialOrderMode.MCR_WITH_DEPRANKS
-					&& porMode != PartialOrderMode.MCR_WITHOUT_DEPRANKS) {
+			if (mPref.useLazyFiniteAutomaton()) {
 				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
 				automaton = new LazyPetriNet2FiniteAutomaton<>(new AutomataLibraryServices(getServices()),
 						mStateFactoryForRefinement, net, s -> areAllLocationsHopeless(hopelessCache, s));
