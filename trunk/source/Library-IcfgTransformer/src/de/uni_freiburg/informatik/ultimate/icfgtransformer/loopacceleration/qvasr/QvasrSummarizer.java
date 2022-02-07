@@ -128,7 +128,7 @@ public class QvasrSummarizer {
 		final Term transitionTerm = transitionFormula.getFormula();
 		final Term transitionTermDnf = SmtUtils.toDnf(mServices, mScript, transitionTerm,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final List<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
+		final Set<Term> disjuncts = QvasrUtils.splitDisjunction(transitionTermDnf);
 
 		for (final Term disjunct : disjuncts) {
 			final UnmodifiableTransFormula disjunctTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
@@ -172,7 +172,7 @@ public class QvasrSummarizer {
 		final Term[] outVarsReal = outvars.values().toArray(new Term[outvars.size()]);
 
 		final Map<TermVariable, TermVariable> defaultToOut = new HashMap<>();
-		for (final Entry<IProgramVar, TermVariable> invar : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> invar : invars.entrySet()) {
 			if (tf.getOutVars().containsKey(invar.getKey())) {
 				defaultToOut.put(invar.getKey().getTermVariable(), tf.getOutVars().get(invar.getKey()));
 			} else {
@@ -242,6 +242,8 @@ public class QvasrSummarizer {
 		}
 		final IPredicate guardPred = predUnifier.getTruePredicate();
 		final Term post = predTransformer.strongestPostcondition(guardPred, tf);
+		final Term pre = predTransformer.pre(guardPred, tf);
+
 		final Term postSub = Substitution.apply(script, defaultToOut, post);
 		qvasrDimensionConjunction.add(postSub);
 		Term loopSummary = SmtUtils.and(script.getScript(), qvasrDimensionConjunction);

@@ -157,7 +157,6 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 				Term loopAccelerationsForEntryLocationDisjunction;
 				final int loopSkip = 3;
 				if (loopAccelerations.size() > 1) {
-					// mtam = MetaTraceApplicationMethod.INVARIANT;
 					int currentPredCounter = cnt;
 					int currentIterationCounter = 0;
 					while (currentPredCounter < maxLoopPredicates + cnt) {

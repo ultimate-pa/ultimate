@@ -49,7 +49,17 @@ public interface IAccelerator {
 	 */
 	UnmodifiableTransFormula accelerateLoop(UnmodifiableTransFormula loop, final IcfgLocation loopHead);
 
+	/**
+	 * Signals the correct exit of the acceleration method.
+	 *
+	 * @return True when the acceleration method successfully compute an adequate loop acceleration.
+	 */
 	boolean accelerationFinishedCorrectly();
 
+	/**
+	 * Signals whether the computed acceleration is an overapproximation.
+	 *
+	 * @return
+	 */
 	boolean isOverapprox();
 }
