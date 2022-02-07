@@ -338,6 +338,15 @@ public class TransFormulaBuilder {
 		return constructTransFormulaFromTerm(pred.getFormula(), pred.getVars(), script);
 	}
 
+	public static UnmodifiableTransFormula constructTransFormulaFromPredicate(final TermTransferrer tt,
+			final Map<IProgramVarOrConst, IProgramVarOrConst> cache, final IPredicate pred,
+			final ManagedScript script) {
+		final Set<IProgramVar> newVars =
+				pred.getVars().stream().map(pv -> getOrTransferProgramVar(tt, cache, pv)).collect(Collectors.toSet());
+		final Term newTerm = tt.transform(pred.getFormula());
+		return constructTransFormulaFromTerm(newTerm, newVars, script);
+	}
+
 	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term, final Set<IProgramVar> vars,
 			final ManagedScript script) {
 		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(term, false);
@@ -619,15 +628,6 @@ public class TransFormulaBuilder {
 			final Map<IProgramVarOrConst, IProgramVarOrConst> cache, final TransFormula tf) {
 
 		final Function<TermVariable, TermVariable> transferTv = a -> (TermVariable) tt.transform(a);
-		final Function<IProgramVar, IProgramVar> getOrTransferProgramVar = oldPv -> {
-			IProgramVarOrConst newPv = cache.get(oldPv);
-			if (newPv == null) {
-				newPv = ProgramVarUtils.transferProgramVar(tt, oldPv);
-				cache.put(oldPv, newPv);
-			}
-			return (IProgramVar) newPv;
-		};
-
 		final Function<IProgramConst, IProgramConst> getOrTransferProgramConst = oldPc -> {
 			IProgramVarOrConst newPc = cache.get(oldPc);
 			if (newPc == null) {
@@ -648,13 +648,13 @@ public class TransFormulaBuilder {
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			final IProgramVar newPv = getOrTransferProgramVar.apply(entry.getKey());
+			final IProgramVar newPv = getOrTransferProgramVar(tt, cache, entry.getKey());
 			final TermVariable newTv = transferTv.apply(entry.getValue());
 			newInVars.put(newPv, newTv);
 		}
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			final IProgramVar newPv = getOrTransferProgramVar.apply(entry.getKey());
+			final IProgramVar newPv = getOrTransferProgramVar(tt, cache, entry.getKey());
 			final TermVariable newTv = transferTv.apply(entry.getValue());
 			newOutVars.put(newPv, newTv);
 		}
@@ -679,6 +679,16 @@ public class TransFormulaBuilder {
 		}
 
 		return new TransferResult(cache, tfb.finishConstruction(script));
+	}
+
+	private static IProgramVar getOrTransferProgramVar(final TermTransferrer tt,
+			final Map<IProgramVarOrConst, IProgramVarOrConst> cache, final IProgramVar oldPv) {
+		IProgramVarOrConst newPv = cache.get(oldPv);
+		if (newPv == null) {
+			newPv = ProgramVarUtils.transferProgramVar(tt, oldPv);
+			cache.put(oldPv, newPv);
+		}
+		return (IProgramVar) newPv;
 	}
 
 	public static final class TransferResult
