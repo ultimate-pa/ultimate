@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,11 +57,13 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final ManagedScript mMscript;
+	Set<IProgramVar> mAllProgramVars;
 
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript) {
 		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
+		mAllProgramVars = Collections.emptySet();
 		// mmscript.constructFreshTermVariable(null, null)
 		// hier das benutzen
 		// We need a Script to build a new TransFormula
@@ -168,7 +171,10 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 	@Override
 	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> level) {
 		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
-		return IRefinableAbstraction.super.restrict(input, level);
+		final Set<IProgramVar> nLevel = new HashSet<>(level);
+		nLevel.addAll(input.getTransformula().getOutVars().keySet());
+		nLevel.addAll(input.getTransformula().getInVars().keySet());
+		return nLevel;
 	}
 
 	@Override
