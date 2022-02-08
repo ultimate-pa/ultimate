@@ -62,13 +62,12 @@ public class VariableAbstraction<L extends IAction>
 	private final Set<IProgramVar> mAllProgramVars;
 	private final ILattice<Set<IProgramVar>> mHierarchy;
 
-	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript) {
+	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript, Set<IProgramVar> allProgramVars) {
 		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
-
 		// TODO pass real set of all program variables
-		mAllProgramVars = Collections.emptySet();
+		mAllProgramVars = allProgramVars;
 		mHierarchy = new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
 	}
 

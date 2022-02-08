@@ -120,8 +120,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
 		mPartialOrderMode = mPref.getPartialOrderMode();
-		mLetterAbstraction =
-				new RefinableCachedAbstraction<>(new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript()));
+
+		mLetterAbstraction = new RefinableCachedAbstraction<>(
+				new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), getAllVariables()));
 
 		if (mLetterAbstraction != null) {
 			mConstrainingVariables = mLetterAbstraction.getInitial();
@@ -138,6 +139,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
 			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
 		return input;
+	}
+
+	public Set<IProgramVar> getAllVariables() {
+		final Set<IProgramVar> allVars = new HashSet<>();
+		for (final L l : mAbstraction.getAlphabet()) {
+			allVars.addAll(l.getTransformula().getInVars().keySet());
+			allVars.addAll(l.getTransformula().getOutVars().keySet());
+		}
+		return allVars;
 	}
 
 	// returns the set of all variables that are used to describe states of the automaton

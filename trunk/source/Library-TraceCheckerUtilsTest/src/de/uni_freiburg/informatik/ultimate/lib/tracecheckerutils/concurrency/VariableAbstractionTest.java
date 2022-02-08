@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independence.SemanticIndependenceConditionGenerator;
@@ -110,7 +111,11 @@ public class VariableAbstractionTest {
 				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
 		mToolkit = new CfgSmtToolkit(null, mMgdScript, mSymbolTable, null, null, null, null, null, null);
 		mCopyFactory = new IcfgCopyFactory(mServices, mToolkit);
-		mVaAbs = new VariableAbstraction<>(mCopyFactory, mMgdScript);
+		final Set<IProgramVar> mAllVariables = new HashSet<>();
+		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
+			mAllVariables.add(nOV);
+		}
+		mVaAbs = new VariableAbstraction<>(mCopyFactory, mMgdScript, mAllVariables);
 
 	}
 
