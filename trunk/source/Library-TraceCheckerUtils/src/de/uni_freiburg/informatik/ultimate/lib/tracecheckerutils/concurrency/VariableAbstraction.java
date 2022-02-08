@@ -138,8 +138,9 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> level) {
 		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
 		final Set<IProgramVar> nLevel = new HashSet<>(level);
-		nLevel.addAll(input.getTransformula().getOutVars().keySet());
-		nLevel.addAll(input.getTransformula().getInVars().keySet());
+		nLevel.addAll(mAllProgramVars);
+		nLevel.removeAll(input.getTransformula().getOutVars().keySet());
+		nLevel.removeAll(input.getTransformula().getInVars().keySet());
 		return nLevel;
 	}
 
