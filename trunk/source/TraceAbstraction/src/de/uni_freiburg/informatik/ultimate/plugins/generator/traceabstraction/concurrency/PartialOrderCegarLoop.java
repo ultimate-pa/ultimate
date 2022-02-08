@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
@@ -142,13 +143,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	}
 
 	public Set<IProgramVar> getAllVariables() {
-		final Set<IProgramVar> allVars = new HashSet<>();
-		for (final L l : mAbstraction.getAlphabet()) {
-			allVars.addAll(l.getTransformula().getInVars().keySet());
-			allVars.addAll(l.getTransformula().getOutVars().keySet());
+		final Set<IProgramVar> allVariables = new HashSet<>();
+		for (final IProgramNonOldVar nOV : mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
+			allVariables.add(nOV);
 		}
-		return allVars;
+		return allVariables;
 	}
+	/*
+	 * public Set<IProgramVar> getAllVariables() { final Set<IProgramVar> allVars = new HashSet<>(); for (final L l :
+	 * mAbstraction.getAlphabet()) { allVars.addAll(l.getTransformula().getInVars().keySet());
+	 * allVars.addAll(l.getTransformula().getOutVars().keySet()); } return allVars; }
+	 */
 
 	// returns the set of all variables that are used to describe states of the automaton
 	public Set<IProgramVar> getAllConstrainingVariables() {

@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +61,8 @@ public class VariableAbstraction<L extends IAction>
 	private final Set<IProgramVar> mAllProgramVars;
 	private final ILattice<Set<IProgramVar>> mHierarchy;
 
-	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript, Set<IProgramVar> allProgramVars) {
+	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript,
+			final Set<IProgramVar> allProgramVars) {
 		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
@@ -146,10 +146,10 @@ public class VariableAbstraction<L extends IAction>
 	@Override
 	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> constrainingVars) {
 		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
-		final Set<IProgramVar> nLevel = new HashSet<>(constrainingVars);
-		nLevel.addAll(mAllProgramVars);
+		final Set<IProgramVar> nLevel = new HashSet<>(mAllProgramVars);
 		nLevel.removeAll(input.getTransformula().getOutVars().keySet());
 		nLevel.removeAll(input.getTransformula().getInVars().keySet());
+		nLevel.addAll(constrainingVars);
 		return nLevel;
 	}
 
