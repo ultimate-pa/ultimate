@@ -283,21 +283,84 @@ public class IcfgEdgeBuilder {
 
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
+		return constructInternalTransition(oldTransition, source, target, tf, false);
+	}
+
+	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf, final boolean connect) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
+		if (connect) {
+			source.addOutgoing(rtr);
+			target.addIncoming(rtr);
+		}
 		ModelUtils.copyAnnotations(oldTransition, rtr);
 		return rtr;
 	}
 
+	public IcfgForkThreadCurrentTransition constructForkCurrentTransition(
+			final IcfgForkThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf,
+			final boolean connect) {
+		final IcfgForkThreadCurrentTransition rtr =
+				mEdgeFactory.createForkThreadCurrentTransition(oldTransition.getSource(), oldTransition.getTarget(),
+						null, tf, oldTransition.getForkSmtArguments(), oldTransition.getNameOfForkedProcedure());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
+	public IcfgForkThreadOtherTransition constructForkOtherTransition(final IcfgForkThreadOtherTransition oldTransition,
+			final UnmodifiableTransFormula tf, final boolean connect) {
+		final IcfgForkThreadOtherTransition rtr =
+				mEdgeFactory.createForkThreadOtherTransition(oldTransition.getSource(), oldTransition.getTarget(), null,
+						tf, oldTransition.getCorrespondingIIcfgForkTransitionCurrentThread());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
+	public IcfgJoinThreadCurrentTransition constructJoinCurrentTransition(
+			final IcfgJoinThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf,
+			final boolean connect) {
+		final IcfgJoinThreadCurrentTransition rtr = mEdgeFactory.createJoinThreadCurrentTransition(
+				oldTransition.getSource(), oldTransition.getTarget(), null, tf, oldTransition.getJoinSmtArguments());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
+	public IcfgJoinThreadOtherTransition constructJoinOtherTransition(final IcfgJoinThreadOtherTransition oldTransition,
+			final UnmodifiableTransFormula tf, final boolean connect) {
+		final IcfgJoinThreadOtherTransition rtr =
+				mEdgeFactory.createJoinThreadOtherTransition(oldTransition.getSource(), oldTransition.getTarget(), null,
+						tf, oldTransition.getCorrespondingIIcfgJoinTransitionCurrentThread());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
-			final IcfgLocation target, final UnmodifiableTransFormula tf, final UnmodifiableTransFormula tfWithBe) {
+			final IcfgLocation target, final UnmodifiableTransFormula tf, final UnmodifiableTransFormula tfWithBe,
+			final boolean connect) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBe);
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
 		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			source.addOutgoing(rtr);
+			target.addIncoming(rtr);
+		}
 		return rtr;
 	}
 

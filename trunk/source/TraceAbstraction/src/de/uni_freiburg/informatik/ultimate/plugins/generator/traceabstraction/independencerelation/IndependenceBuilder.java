@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndepend
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DisjunctiveConditionalIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IndependenceRelationWithAbstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
@@ -319,6 +321,13 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 */
 		public B threadSeparated() {
 			return mCreator.apply(new ThreadSeparatingIndependenceRelation<>(mRelation));
+		}
+
+		public <H> B withAbstraction(final IAbstraction<H, L> abstraction, final H level) {
+			if (abstraction == null) {
+				return mCreator.apply(mRelation);
+			}
+			return mCreator.apply(new IndependenceRelationWithAbstraction<>(mRelation, abstraction, level));
 		}
 
 		/**

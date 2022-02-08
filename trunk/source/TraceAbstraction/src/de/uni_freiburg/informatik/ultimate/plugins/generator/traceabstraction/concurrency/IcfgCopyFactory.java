@@ -31,6 +31,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadCurrentTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadCurrentTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -61,8 +65,24 @@ public class IcfgCopyFactory implements ICopyActionFactory<IcfgEdge> {
 				throw new IllegalArgumentException(
 						"Action with branch encoders given, but no TF with branch encoders: " + original);
 			}
+			if (original instanceof IcfgForkThreadCurrentTransition) {
+				return mEdgeBuilder.constructForkCurrentTransition((IcfgForkThreadCurrentTransition) original,
+						newTransformula, false);
+			}
+			if (original instanceof IcfgForkThreadOtherTransition) {
+				return mEdgeBuilder.constructForkOtherTransition((IcfgForkThreadOtherTransition) original,
+						newTransformula, false);
+			}
+			if (original instanceof IcfgJoinThreadCurrentTransition) {
+				return mEdgeBuilder.constructJoinCurrentTransition((IcfgJoinThreadCurrentTransition) original,
+						newTransformula, false);
+			}
+			if (original instanceof IcfgJoinThreadOtherTransition) {
+				return mEdgeBuilder.constructJoinOtherTransition((IcfgJoinThreadOtherTransition) original,
+						newTransformula, false);
+			}
 			return mEdgeBuilder.constructInternalTransition(original, original.getSource(), original.getTarget(),
-					newTransformula);
+					newTransformula, false);
 		}
 
 		if (!(original instanceof IActionWithBranchEncoders)) {
@@ -70,6 +90,6 @@ public class IcfgCopyFactory implements ICopyActionFactory<IcfgEdge> {
 					"TF with branch encoders given for action without branch encoders: " + original);
 		}
 		return mEdgeBuilder.constructInternalTransition(original, original.getSource(), original.getTarget(),
-				newTransformula, newTransformulaWithBE);
+				newTransformula, newTransformulaWithBE, false);
 	}
 }

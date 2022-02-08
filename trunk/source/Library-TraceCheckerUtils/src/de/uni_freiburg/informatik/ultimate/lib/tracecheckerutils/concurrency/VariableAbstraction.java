@@ -37,7 +37,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -52,19 +53,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
-public class VariableAbstraction<L extends IIcfgTransition<?>>
+public class VariableAbstraction<L extends IAction>
 		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final ManagedScript mMscript;
-	Set<IProgramVar> mAllProgramVars;
+	private final Set<IProgramVar> mAllProgramVars;
+	private final ILattice<Set<IProgramVar>> mHierarchy;
 
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript) {
 		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
+
+		// TODO pass real set of all program variables
 		mAllProgramVars = Collections.emptySet();
+		mHierarchy = new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
 	}
 
 	/**
@@ -79,7 +84,14 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 	public L abstractLetter(final L inLetter, final Set<IProgramVar> constrainingVariables) {
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), constrainingVariables);
-		return mCopyFactory.copy(inLetter, newFormula, newFormula);
+
+		if (inLetter instanceof IActionWithBranchEncoders) {
+			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
+					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(),
+					constrainingVariables);
+			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
+		}
+		return mCopyFactory.copy(inLetter, newFormula, null);
 	}
 
 	/**
@@ -129,15 +141,13 @@ public class VariableAbstraction<L extends IIcfgTransition<?>>
 
 	@Override
 	public ILattice<Set<IProgramVar>> getHierarchy() {
-		// TODO Fix this, set is "constrained vars", below is meant for "ignored vars"
-		// TODO fix this so that top / bottom of hierarchy are defined (i.e. pass set of all program variables)
-		return new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
+		return mHierarchy;
 	}
 
 	@Override
-	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> level) {
+	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> constrainingVars) {
 		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
-		final Set<IProgramVar> nLevel = new HashSet<>(level);
+		final Set<IProgramVar> nLevel = new HashSet<>(constrainingVars);
 		nLevel.addAll(mAllProgramVars);
 		nLevel.removeAll(input.getTransformula().getOutVars().keySet());
 		nLevel.removeAll(input.getTransformula().getInVars().keySet());
