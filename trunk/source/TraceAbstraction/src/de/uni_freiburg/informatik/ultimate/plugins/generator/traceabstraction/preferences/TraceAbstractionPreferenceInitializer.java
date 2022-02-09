@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.CegarRestartBehaviour;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -110,6 +111,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
 	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
+
+	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
+	private static final AbstractionType DEF_POR_ABSTRACTION = AbstractionType.NONE;
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
@@ -508,6 +512,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, DEF_POR_ABSTRACTION, PreferenceType.Combo,
+						AbstractionType.values()),
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,

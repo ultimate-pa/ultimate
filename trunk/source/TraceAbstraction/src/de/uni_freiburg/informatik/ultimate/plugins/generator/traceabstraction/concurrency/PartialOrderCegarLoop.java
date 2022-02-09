@@ -122,8 +122,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				services, compositionFactory, transitionClazz);
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
-		mLetterAbstraction = new RefinableCachedAbstraction<>(
-				new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), getAllVariables()));
+		switch (mPref.getPorAbstraction()) {
+		case VARIABLES_GLOBAL:
+			mLetterAbstraction = new RefinableCachedAbstraction<>(
+					new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), getAllVariables()));
+			break;
+		case NONE:
+			mLetterAbstraction = null;
+			break;
+		default:
+			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
+		}
 
 		if (mLetterAbstraction != null) {
 			mConstrainingVariables = mLetterAbstraction.getInitial();

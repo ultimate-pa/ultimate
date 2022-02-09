@@ -80,6 +80,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
 	}
 
+	public enum AbstractionType {
+		NONE, VARIABLES_GLOBAL
+	}
+
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataServices;
 
