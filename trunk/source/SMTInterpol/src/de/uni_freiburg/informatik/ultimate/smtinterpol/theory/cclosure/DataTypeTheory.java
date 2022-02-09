@@ -68,10 +68,20 @@ public class DataTypeTheory implements ITheory {
 	/**
 	 * The list of cc-term pairs, whose equality we need to prpagate
 	 */
-	private final ArrayDeque<SymmetricPair<CCTerm>>mPendingEqualities = new ArrayDeque<>();
+	private final ArrayDeque<CCEquality> mPendingEqualities = new ArrayDeque<>();
 	/**
-	 * A map from selector name to the matching constructor.
-	 * This is used as a cache for {@link #getConstructor(ApplicationTerm)}
+	 * A pending conflict. This is null if no conflict is pending.
+	 */
+	private DataTypeLemma mPendingConflict = null;
+
+	/**
+	 * A pending conflict. This is null if no conflict is pending.
+	 */
+	private final ArrayDeque<DataTypeLemma> mPendingLemmas = new ArrayDeque<>();
+
+	/**
+	 * A map from selector name to the matching constructor. This is used as a cache
+	 * for {@link #getConstructor(ApplicationTerm)}
 	 */
 	private final LinkedHashMap<String, Constructor> mSelectorMap = new LinkedHashMap<>();
 	/**
@@ -87,12 +97,22 @@ public class DataTypeTheory implements ITheory {
 	 * The equalities of the term pairs in the list are the reason for the equality of the key pair
 	 * and are used to generate the unit clause.
 	 */
-	private final LinkedHashMap<SymmetricPair<CCTerm>, DataTypeLemma> mEqualityReasons = new LinkedHashMap<>();
+	private final LinkedHashMap<CCEquality, DataTypeLemma> mEqualityReasons = new LinkedHashMap<>();
 
 	public DataTypeTheory(final Clausifier clausifier, final Theory theory, final CClosure cclosure) {
 		mClausifier = clausifier;
 		mCClosure = cclosure;
 		mTheory = theory;
+	}
+
+	public void addPendingLemma(final DataTypeLemma lemma) {
+		mPendingLemmas.add(lemma);
+	}
+
+	private void processPendingLemmas() {
+		for (final DataTypeLemma lemma : mPendingLemmas) {
+			addPendingEquality(lemma.getMainEquality(), lemma);
+		}
 	}
 
 	/**
@@ -104,8 +124,14 @@ public class DataTypeTheory implements ITheory {
 		if (eq.getFirst() == eq.getSecond() || eq.getFirst().mRepStar == eq.getSecond().mRepStar) {
 			return;
 		}
-		mPendingEqualities.add(eq);
-		mEqualityReasons.put(eq, reason);
+		final CCEquality eqAtom = mCClosure.createEquality(eq.getFirst(), eq.getSecond(), false);
+		if (eqAtom == null) {
+			// this is a trivial disequality, so we need to create a conflict.
+			mPendingConflict = reason;
+		} else {
+			mPendingEqualities.add(eqAtom);
+			mEqualityReasons.put(eqAtom, reason);
+		}
 	}
 
 	@Override
@@ -119,6 +145,10 @@ public class DataTypeTheory implements ITheory {
 
 	@Override
 	public Clause setLiteral(final Literal literal) {
+		processPendingLemmas();
+		if (mPendingConflict != null) {
+			return computeClause(null, mPendingConflict);
+		}
 		return null;
 	}
 
@@ -128,6 +158,10 @@ public class DataTypeTheory implements ITheory {
 
 	@Override
 	public Clause checkpoint() {
+		processPendingLemmas();
+		if (mPendingConflict != null) {
+			return computeClause(null, mPendingConflict);
+		}
 
 		//Visit all ((_ is CONS) u) terms that are true and try to apply rule 3 or 9 on them
 		final CCTerm trueCC = mClausifier.getCCTerm(mTheory.mTrue);
@@ -155,9 +189,12 @@ public class DataTypeTheory implements ITheory {
 							if (prevIsApp.getArg() != trueIsApp.getArg()) {
 								reason.add(new SymmetricPair<>(prevIsApp.getArg(), trueIsApp.getArg()));
 							}
+							final Term[] testers = new Term[2];
+							testers[0] = prevIsApp.mFlatTerm;
+							testers[1] = trueIsApp.mFlatTerm;
 							@SuppressWarnings("unchecked")
 							final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_UNIQUE,
-									reason.toArray(new SymmetricPair[reason.size()]));
+									reason.toArray(new SymmetricPair[reason.size()]), testers);
 							final CongruencePath cp = new CongruencePath(mCClosure);
 							mClausifier.getLogger().debug("Conflict: Rule 9");
 							return cp.computeDTLemma(null, lemma, mClausifier.getEngine().isProofGenerationEnabled());
@@ -191,7 +228,11 @@ public class DataTypeTheory implements ITheory {
 				 */
 				if (isIndices.size() == dt.getConstructors().length) {
 					final ArrayList<SymmetricPair<CCTerm>> reason = new ArrayList<>();
-					for (final CCTerm isFun : isIndices.values()) {
+					final Term[] testers = new Term[dt.getConstructors().length];
+					int i = 0;
+					for (final Constructor consName : dt.getConstructors()) {
+						final CCTerm isFun = isIndices.get(consName.getName());
+						testers[i++] = isFun.mFlatTerm;
 						final CCTerm arg = ((CCAppTerm)isFun).mArg;
 						reason.add(new SymmetricPair<>(isFun, falseCC));
 						if (arg != cct) {
@@ -200,7 +241,7 @@ public class DataTypeTheory implements ITheory {
 					}
 					@SuppressWarnings("unchecked")
 					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_CASES,
-							reason.toArray(new SymmetricPair[reason.size()]));
+							reason.toArray(new SymmetricPair[reason.size()]), testers);
 					final CongruencePath cp = new CongruencePath(mCClosure);
 					mClausifier.getLogger().debug("Conflict: Rule 6");
 					return cp.computeDTLemma(null, lemma, mCClosure.getEngine().isProofGenerationEnabled());
@@ -356,7 +397,7 @@ public class DataTypeTheory implements ITheory {
 
 		if (trueTester != null) {
 			/* we know which constructor created the term, so return only matching selectors */
-			final Constructor c = datatype.findConstructor(trueTester.getIndices()[0]);
+			final Constructor c = datatype.getConstructor(trueTester.getIndices()[0]);
 			final Set<String> validSelectors = new HashSet<>();
 			validSelectors.addAll(Arrays.asList(c.getSelectors()));
 
@@ -369,7 +410,7 @@ public class DataTypeTheory implements ITheory {
 			/* we know at least which selectors cannot be right */
 			final Set<String> invalidSelectors = new HashSet<>();
 			for (final FunctionSymbol falseTester : falseTesters) {
-				final Constructor c = datatype.findConstructor(falseTester.getIndices()[0]);
+				final Constructor c = datatype.getConstructor(falseTester.getIndices()[0]);
 				invalidSelectors.addAll(Arrays.asList(c.getSelectors()));
 			}
 			for (final CCAppTerm s : selectors) {
@@ -463,11 +504,17 @@ public class DataTypeTheory implements ITheory {
 		return cp.computeDTLemma(null, lemma, mClausifier.getEngine().isProofGenerationEnabled());
 	}
 
+	public Clause computeClause(final CCEquality eq, final DataTypeLemma lemma) {
+		final boolean isProofEnabled = mClausifier.getEngine().isProofGenerationEnabled();
+		final CongruencePath cp = new CongruencePath(mCClosure);
+		return cp.computeDTLemma(eq, lemma, isProofEnabled);
+	}
+
 	@Override
 	public Literal getPropagatedLiteral() {
+		processPendingLemmas();
 		if (!mPendingEqualities.isEmpty()) {
-			final SymmetricPair<CCTerm> eqPair = mPendingEqualities.poll();
-			return mCClosure.createEquality(eqPair.getFirst(), eqPair.getSecond(), false);
+			return mPendingEqualities.poll();
 		}
 		return null;
 	}
@@ -476,10 +523,7 @@ public class DataTypeTheory implements ITheory {
 	public Clause getUnitClause(final Literal literal) {
 		final CCEquality eq = (CCEquality) literal;
 
-		final DataTypeLemma lemma = mEqualityReasons.get(new SymmetricPair<>(eq.getLhs(), eq.getRhs()));
-		final boolean isProofEnabled = mClausifier.getEngine().isProofGenerationEnabled();
-		final CongruencePath cp = new CongruencePath(mCClosure);
-		return cp.computeDTLemma(eq, lemma, isProofEnabled);
+		return computeClause(eq, mEqualityReasons.get(eq));
 	}
 
 	@Override
@@ -513,13 +557,17 @@ public class DataTypeTheory implements ITheory {
 	public Clause backtrackComplete() {
 		// if we constructed new terms, their equalities have been removed in the backtracking process,
 		// so we need to check if they are still valid.
+		mPendingConflict = null;
+		mPendingLemmas.clear();
 		mPendingEqualities.clear();
 		final ArrayQueue<CCTerm> newRecheckOnBacktrack = new ArrayQueue<>();
 		while (!mRecheckOnBacktrack.isEmpty()) {
+			CCTerm consTerm = null;
 			ApplicationTerm constructor = null;
 			final CCTerm checkTerm = mRecheckOnBacktrack.poll();
 			for (final CCTerm ct : ((CCAppTerm) checkTerm).mArg.mRepStar.mMembers) {
 				if (ct.mFlatTerm instanceof ApplicationTerm && ((ApplicationTerm) ct.mFlatTerm).getFunction().isConstructor()) {
+					consTerm = ct;
 					constructor = (ApplicationTerm) ct.mFlatTerm;
 					break;
 				}
@@ -539,12 +587,14 @@ public class DataTypeTheory implements ITheory {
 				final String selName = ((ApplicationTerm) checkTerm.mFlatTerm).getFunction().getName();
 				final Constructor c = mSelectorMap.get(selName);
 				assert c.getName().equals(constructor.getFunction().getName());
-				final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, reason);
 				for (int i = 0; i < c.getSelectors().length; i++) {
 					if (selName.equals(c.getSelectors()[i])) {
 						final CCTerm arg = mClausifier.getCCTerm(constructor.getParameters()[i]);
 						if (arg.mRepStar != checkTerm.mRepStar) {
-							addPendingEquality(new SymmetricPair<>(arg, checkTerm), lemma);
+							final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(arg, checkTerm);
+							final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, provedEq, reason,
+									consTerm);
+							addPendingLemma(lemma);
 						}
 						newRecheckOnBacktrack.add(checkTerm);
 					}
@@ -552,15 +602,21 @@ public class DataTypeTheory implements ITheory {
 			} else {
 				if (constructor.getFunction().getName().equals(((ApplicationTerm) checkTerm.mFlatTerm).getFunction().getIndices()[0])) {
 					final CCTerm ccTrue = mClausifier.getCCTerm(mTheory.mTrue);
-					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, reason);
 					if (ccTrue.mRepStar != checkTerm.mRepStar) {
-						addPendingEquality(new SymmetricPair<>(checkTerm, mClausifier.getCCTerm(mTheory.mTrue)), lemma);
+						final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(checkTerm,
+								mClausifier.getCCTerm(mTheory.mTrue));
+						final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, provedEq, reason, consTerm);
+						addPendingLemma(lemma);
 					}
 					newRecheckOnBacktrack.add(checkTerm);
 				}
 			}
 		}
 		mRecheckOnBacktrack = newRecheckOnBacktrack;
+		processPendingLemmas();
+		if (mPendingConflict != null) {
+			return computeClause(null, mPendingConflict);
+		}
 		return null;
 	}
 
@@ -599,9 +655,10 @@ public class DataTypeTheory implements ITheory {
 	private void Rule3(final CCAppTerm isTerm) {
 		// check if there is already a constructor application equal to the argument
 		final ApplicationTerm at = (ApplicationTerm) isTerm.mFlatTerm;
-		final Term arg = at.getParameters()[0];
+		final CCTerm arg = isTerm.mArg;
+		final Term argTerm = at.getParameters()[0];
 
-		final CCTerm argRep = isTerm.mArg.mRepStar;
+		final CCTerm argRep = arg.mRepStar;
 		final String consName = at.getFunction().getIndices()[0];
 		if (argRep == null) {
 			return;
@@ -618,7 +675,7 @@ public class DataTypeTheory implements ITheory {
 
 		// check if there are all selector applications on the eq class
 		final DataType dt = (DataType) at.getFunction().getParameterSorts()[0].getSortSymbol();
-		final Constructor c = dt.findConstructor(consName);
+		final Constructor c = dt.getConstructor(consName);
 
 		final LinkedHashMap<String, Term> selectorApps = new LinkedHashMap<>();
 		for (final String s : c.getSelectors()) {
@@ -630,10 +687,12 @@ public class DataTypeTheory implements ITheory {
 			while (argParInfo != null) {
 				if (argParInfo.mCCParents != null) {
 					for (final Parent p : argParInfo.mCCParents) {
-						if (p.getData().mFlatTerm instanceof ApplicationTerm) {
-							final String parFunName = ((ApplicationTerm) p.getData().mFlatTerm).getFunction().getName();
-							if (selectorApps.containsKey(parFunName)) {
-								selectorApps.put(parFunName, mTheory.term(parFunName, new Term[] {arg}));
+						final Term parentTerm = p.getData().getFlatTerm();
+						if (parentTerm instanceof ApplicationTerm) {
+							final FunctionSymbol parentFunc = ((ApplicationTerm) parentTerm).getFunction();
+							final String parentFuncName = parentFunc.getName();
+							if (selectorApps.containsKey(parentFuncName)) {
+								selectorApps.put(parentFuncName, mTheory.term(parentFunc, argTerm));
 							}
 						}
 					}
@@ -647,20 +706,15 @@ public class DataTypeTheory implements ITheory {
 		}
 
 		// create a new constructor application like C(s1(x), s2(x), ..., sm(x))
-
-		final Term consTerm = mTheory.term(consName, selectorApps.values().toArray(new Term[selectorApps.values().size()]));
+		final Sort consType = c.needsReturnOverload() ? argTerm.getSort() : null;
+		final Term consTerm = mTheory.term(consName, null, consType,
+				selectorApps.values().toArray(new Term[selectorApps.values().size()]));
 		final CCTerm consCCTerm = mClausifier.createCCTerm(consTerm, SourceAnnotation.EMPTY_SOURCE_ANNOT);
-		final SymmetricPair<CCTerm> eq = new SymmetricPair<>(argRep, consCCTerm);
-		final ArrayList<SymmetricPair<CCTerm>> reason = new ArrayList<>();
-		if (arg != argRep.mFlatTerm) {
-			reason.add(new SymmetricPair<>(mClausifier.getCCTerm(arg), argRep));
-		}
-		reason.add(new SymmetricPair<>(isTerm, mClausifier.getCCTerm(mTheory.mTrue)));
+		final SymmetricPair<CCTerm> eq = new SymmetricPair<>(arg, consCCTerm);
 		@SuppressWarnings("unchecked")
-		final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_CONSTRUCTOR,
-				reason.toArray(new SymmetricPair[reason.size()]));
-		addPendingEquality(eq, lemma);
-
+		final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_CONSTRUCTOR, eq,
+				new SymmetricPair[] { new SymmetricPair<>(isTerm, mClausifier.getCCTerm(mTheory.mTrue)) });
+		addPendingLemma(lemma);
 	}
 
 	/**
@@ -739,23 +793,24 @@ public class DataTypeTheory implements ITheory {
 				final ApplicationTerm memAt = (ApplicationTerm) mem.getFlatTerm();
 				if (consAt == null) {
 					consAt = memAt;
-					consCCTerm = mClausifier.getCCTerm(consAt);
+					consCCTerm = mem;
 					continue;
 				}
 				@SuppressWarnings("unchecked")
 				final SymmetricPair<CCTerm>[] reason = new SymmetricPair[] { new SymmetricPair<>(consCCTerm, mem) };
 				if (memAt.getFunction() == consAt.getFunction()) {
 					for (int i = 0; i < memAt.getParameters().length; i++) {
-						final CCTerm memArg = mClausifier.getCCTerm(memAt.getParameters()[i]);
 						final CCTerm consArg = mClausifier.getCCTerm(consAt.getParameters()[i]);
+						final CCTerm memArg = mClausifier.getCCTerm(memAt.getParameters()[i]);
 						if (memArg.mRepStar != consArg.mRepStar) {
-							final SymmetricPair<CCTerm> eqPair = new SymmetricPair<>(memArg, consArg);
-							final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_INJECTIVE, reason);
-							addPendingEquality(eqPair, lemma);
+							final SymmetricPair<CCTerm> eqPair = new SymmetricPair<>(consArg, memArg);
+							final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_INJECTIVE, eqPair, reason,
+									consCCTerm, mem);
+							addPendingLemma(lemma);
 						}
 					}
 				} else {
-					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_DISJOINT, reason);
+					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_DISJOINT, reason, consCCTerm, mem);
 					final CongruencePath cp = new CongruencePath(mCClosure);
 					return cp.computeDTLemma(null, lemma, mCClosure.getEngine().isProofGenerationEnabled());
 				}

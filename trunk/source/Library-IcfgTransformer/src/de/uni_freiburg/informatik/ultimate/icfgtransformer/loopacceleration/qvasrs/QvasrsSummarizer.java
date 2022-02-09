@@ -98,8 +98,12 @@ public class QvasrsSummarizer {
 		final Collection<TermVariable> quantOutVars = transitionFormula.getOutVars().values();
 		final Term quantifiedTransitionFormula = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.EXISTS,
 				quantOutVars, transitionFormula.getFormula());
+		/*
+		 * Get the topologic closure
+		 */
 		Term topologicClosure = PartialQuantifierElimination.eliminate(mServices, mScript, quantifiedTransitionFormula,
 				SimplificationTechnique.POLY_PAC);
+
 		topologicClosure = SmtUtils.toDnf(mServices, mScript, topologicClosure,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final Set<Term> disjuncts = QvasrUtils.splitDisjunction(topologicClosure);
@@ -146,6 +150,6 @@ public class QvasrsSummarizer {
 				qvasrsAbstraction.addTransition(new Triple<>(pre, translatedTransformer, post));
 			}
 		}
-		return null;
+		return QvasrsReach.reach(qvasrsAbstraction, mScript);
 	}
 }

@@ -291,4 +291,12 @@ public class Clause extends SimpleListable<Clause> {
 		}
 		return theory.term("or", args);
 	}
+
+	public Term[] toTermArray(final Theory theory) {
+		final Term[] literals = new Term[mLiterals.length];
+		for (int i = 0; i < mLiterals.length; ++i) {
+			literals[i] = mLiterals[i].getSMTFormula(theory, true);
+		}
+		return literals;
+	}
 }

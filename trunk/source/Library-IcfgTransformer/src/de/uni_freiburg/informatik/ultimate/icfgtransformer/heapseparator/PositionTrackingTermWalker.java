@@ -4,6 +4,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastr
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -60,6 +61,11 @@ public class PositionTrackingTermWalker extends TermWalker {
 	@Override
 	public void walk(final NonRecursive walker, final MatchTerm term) {
 		throw new UnsupportedOperationException("not yet implemented: MatchTerm");
+	}
+
+	@Override
+	public void walk(final NonRecursive walker, final LambdaTerm term) {
+		throw new UnsupportedOperationException();
 	}
 
 }

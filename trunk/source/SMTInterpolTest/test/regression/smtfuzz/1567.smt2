@@ -1,4 +1,4 @@
-(set-info :expect-errors 197)
+(set-info :expect-errors 196)
 (set-option :produce-unsat-cores true)
 (set-logic UF)
 (declare-fun v0 () Bool)

@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.PushPopChecker;
 
 /**
  * Simplify formulas, but keep their Boolean structure. Replace subformulas by true or false if this replacement leads

@@ -78,7 +78,7 @@ public class InterpolatorClauseTermInfo {
 	 */
 	public void computeResolutionLiterals(final Interpolator interpolator) {
 		assert isResolution();
-		final LinkedHashSet<Term> literals = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> literals = new LinkedHashSet<>();
 		final InterpolatorClauseTermInfo primInfo = interpolator.mClauseTermInfos.get(getPrimary());
 		literals.addAll(Arrays.asList(primInfo.getLiterals()));
 		for (final AnnotatedTerm antecedent : getAntecedents()) {
@@ -104,15 +104,16 @@ public class InterpolatorClauseTermInfo {
 			final AnnotatedTerm innerLemma = (AnnotatedTerm) ((ApplicationTerm) leafTerm).getParameters()[0];
 			mLemmaAnnotation = innerLemma.getAnnotations()[0];
 			clause = innerLemma.getSubterm();
+			mLiterals = computeLiterals(clause);
 		} else if (mNodeKind.equals(ProofConstants.FN_CLAUSE)) {
-			final AnnotatedTerm innerClause = (AnnotatedTerm) ((ApplicationTerm) leafTerm).getParameters()[1];
-			assert innerClause.getAnnotations()[0].getKey().equals(":input");
-			mSource = (String) innerClause.getAnnotations()[0].getValue();
-			clause = innerClause.getSubterm();
+			final AnnotatedTerm subProof = (AnnotatedTerm) ((ApplicationTerm) leafTerm).getParameters()[0];
+			assert subProof.getAnnotations()[0].getKey().equals(ProofConstants.ANNOTKEY_PROVES);
+			assert subProof.getAnnotations()[1].getKey().equals(ProofConstants.ANNOTKEY_INPUT);
+			mSource = (String) subProof.getAnnotations()[1].getValue();
+			mLiterals = (Term[]) subProof.getAnnotations()[0].getValue();
 		} else {
 			throw new AssertionError("Unknown leaf type");
 		}
-		mLiterals = computeLiterals(clause);
 	}
 
 	/**

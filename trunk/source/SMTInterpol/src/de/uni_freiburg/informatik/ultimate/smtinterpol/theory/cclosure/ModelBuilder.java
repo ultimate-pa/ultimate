@@ -89,6 +89,8 @@ public class ModelBuilder {
 				} else if (smtterm.getSort().isArraySort()) {
 					// filled in later by ArrayTheory
 					continue;
+				} else if (sort.getSortSymbol().isDatatype()) {
+					throw new UnsupportedOperationException("Modelproduction for data type theory not implemented.");
 				} else {
 					value = model.extendFresh(smtterm.getSort());
 				}

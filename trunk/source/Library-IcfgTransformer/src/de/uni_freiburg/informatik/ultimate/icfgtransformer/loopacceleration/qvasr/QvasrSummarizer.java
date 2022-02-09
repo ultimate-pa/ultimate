@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,13 +38,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -71,7 +72,6 @@ public class QvasrSummarizer {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
-	private final IPredicateUnifier mPredUnifier;
 	private boolean mIsOverapprox;
 
 	/**
@@ -87,12 +87,10 @@ public class QvasrSummarizer {
 	 * @param predUnifier
 	 *            A {@link IPredicateUnifier}
 	 */
-	public QvasrSummarizer(final ILogger logger, final IUltimateServiceProvider services, final ManagedScript script,
-			final IPredicateUnifier predUnifier) {
+	public QvasrSummarizer(final ILogger logger, final IUltimateServiceProvider services, final ManagedScript script) {
 		mLogger = logger;
 		mScript = script;
 		mServices = services;
-		mPredUnifier = predUnifier;
 		mIsOverapprox = false;
 	}
 
@@ -104,15 +102,9 @@ public class QvasrSummarizer {
 	 * @return A summary of these changes in form of a {@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula summarizeLoop(final UnmodifiableTransFormula transitionFormula) {
-		final SimultaneousUpdate su;
-		try {
-			su = SimultaneousUpdate.fromTransFormula(transitionFormula, mScript);
-		} catch (final Exception e) {
-			throw new UnsupportedOperationException("Could not compute Simultaneous Update!");
-		}
 		final Map<IProgramVar, TermVariable> inVarsReal = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVarsReal = new HashMap<>();
-		for (final IProgramVar assVar : su.getDeterministicAssignment().keySet()) {
+		for (final IProgramVar assVar : transitionFormula.getOutVars().keySet()) {
 			if (transitionFormula.getInVars().containsKey(assVar)) {
 				inVarsReal.put(assVar, transitionFormula.getInVars().get(assVar));
 			} else if (transitionFormula.getOutVars().containsKey(assVar)) {
@@ -122,7 +114,7 @@ public class QvasrSummarizer {
 				outVarsReal.put(assVar, transitionFormula.getOutVars().get(assVar));
 			}
 		}
-		final int tfDimension = transitionFormula.getAssignedVars().size();
+		final int tfDimension = transitionFormula.getOutVars().size();
 		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
 		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
 		final Term transitionTerm = transitionFormula.getFormula();
@@ -143,8 +135,8 @@ public class QvasrSummarizer {
 		final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer =
 				new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 		final IntvasrAbstraction intVasrAbstraction = QvasrUtils.qvasrAbstractionToInt(bestAbstraction);
-		return intVasrAbstractionToFormula(mScript, mServices, mPredUnifier, predTransformer, transitionFormula,
-				intVasrAbstraction, inVarsReal, outVarsReal);
+		return intVasrAbstractionToFormula(mScript, mServices, predTransformer, transitionFormula, intVasrAbstraction,
+				inVarsReal, outVarsReal);
 	}
 
 	/**
@@ -164,7 +156,7 @@ public class QvasrSummarizer {
 	 * @return An overapproximative loop summary computed from an {@link IntvasrAbstraction}.
 	 */
 	public static UnmodifiableTransFormula intVasrAbstractionToFormula(final ManagedScript script,
-			final IUltimateServiceProvider services, final IPredicateUnifier predUnifier,
+			final IUltimateServiceProvider services,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer,
 			final UnmodifiableTransFormula tf, final IntvasrAbstraction intvasrAbstraction,
 			final Map<IProgramVar, TermVariable> invars, final Map<IProgramVar, TermVariable> outvars) {
@@ -240,9 +232,9 @@ public class QvasrSummarizer {
 				}
 			}
 		}
-		final IPredicate guardPred = predUnifier.getTruePredicate();
+		final IPredicate guardPred = new BasicPredicate(0, new String[0], script.getScript().term("true"),
+				Collections.emptySet(), script.getScript().term("true"));
 		final Term post = predTransformer.strongestPostcondition(guardPred, tf);
-		final Term pre = predTransformer.pre(guardPred, tf);
 
 		final Term postSub = Substitution.apply(script, defaultToOut, post);
 		qvasrDimensionConjunction.add(postSub);
