@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * A simple combination of abstraction and independence: This relation applies abstraction to letters at a fixed
@@ -55,6 +56,12 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 		mUnderlying = underlying;
 		mAbstraction = abstraction;
 		mLevel = level;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		// TODO Auto-generated method stub
+		return mUnderlying.getStatistics();
 	}
 
 	@Override
