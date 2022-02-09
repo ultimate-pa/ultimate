@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
@@ -128,11 +129,18 @@ public class VariableAbstraction<L extends IAction>
 			final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
 			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
 		}
-		for (final TermVariable auxVar : nAuxVars) {
-			tfBuilder.addAuxVar(auxVar);
+		/*
+		 * for (final TermVariable auxVar : nAuxVars) { tfBuilder.addAuxVar(auxVar);
+		 *
+		 * }
+		 */
+		if (nAuxVars.isEmpty()) {
+			tfBuilder.setFormula(utf.getFormula());
+		} else {
+			tfBuilder.setFormula(mMscript.getScript().quantifier(QuantifiedFormula.EXISTS,
+					nAuxVars.toArray(TermVariable[]::new), utf.getFormula()));
 		}
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		tfBuilder.setFormula(utf.getFormula());
 		return tfBuilder.finishConstruction(mMscript);
 	}
 
