@@ -36,6 +36,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -61,6 +63,10 @@ public class VariableAbstraction<L extends IAction>
 	private final ManagedScript mMscript;
 	private final Set<IProgramVar> mAllProgramVars;
 	private final ILattice<Set<IProgramVar>> mHierarchy;
+
+	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final CfgSmtToolkit csToolkit) {
+		this(copyFactory, csToolkit.getManagedScript(), IcfgUtils.collectAllProgramVars(csToolkit));
+	}
 
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript,
 			final Set<IProgramVar> allProgramVars) {

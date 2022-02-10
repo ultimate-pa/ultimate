@@ -7,17 +7,22 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.ICopyActionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.IRefinableAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
@@ -94,7 +99,7 @@ public class CegarLoopUtils {
 					}
 					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
-							copyFactorySupplier.get(), transitionClazz);
+							constructPartialOrderAbstraction(taPrefs, root, copyFactorySupplier), transitionClazz);
 					break;
 				case PETRI_NET:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
@@ -149,5 +154,20 @@ public class CegarLoopUtils {
 	public static boolean isInsufficientThreadsLocation(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
 		return check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
+	}
+
+	private static <L extends IAction> IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L>
+			constructPartialOrderAbstraction(final TAPreferences prefs, final IIcfg<?> icfg,
+					final Supplier<ICopyActionFactory<L>> copyFactorySupplier) {
+		switch (prefs.getPorAbstraction()) {
+		case VARIABLES_GLOBAL:
+			return new VariableAbstraction<>(copyFactorySupplier.get(), icfg.getCfgSmtToolkit());
+		case VARIABLES_LOCAL:
+			throw new UnsupportedOperationException("local variable abstraction not fully implemented yet");
+		case NONE:
+			return null;
+		default:
+			throw new UnsupportedOperationException("Unknown abstraction type: " + prefs.getPorAbstraction());
+		}
 	}
 }
