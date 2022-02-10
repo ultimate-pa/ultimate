@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToIntBiFunction;
@@ -36,6 +38,22 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTrave
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 
+/**
+ * Optimistic budget function for {@link SleepMapReduction}: First tries allocating a low budget, and checks if this
+ * leads to an undesired automaton (typically, to reaching an accepting state). If so, the budget is increased
+ * step-by-step.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters
+ * @param <S>
+ *            The type of states in the unreduced automaton
+ * @param <R>
+ *            The type of states in the reduced automaton
+ * @param <V>
+ *            The type of visitor used to determine if a possible budget choice is desirable
+ */
 public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements ToIntBiFunction<R, L> {
 	private final AutomataLibraryServices mServices;
 	private final IDfsOrder<L, R> mOrder;
@@ -44,6 +62,8 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements T
 	private final Predicate<V> mIsSuccessful;
 
 	private SleepMapReduction<L, S, R> mReduction;
+
+	private final Map<R, Boolean> mSuccessCache = new HashMap<>();
 
 	public OptimisticBudget(final AutomataLibraryServices services, final IDfsOrder<L, R> order,
 			final ISleepMapStateFactory<L, S, R> stateFactory, final Supplier<V> makeVisitor,
@@ -72,20 +92,20 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements T
 		final SleepMap<L, S> sleepMap = mStateFactory.getSleepMap(state);
 		int maximumBudget;
 		if (sleepMap.contains(letter)) {
+			// Never return a budget higher than the price in the sleep map.
+			// Because the reduction considers the minimum of the two values, this would be pointless.
 			maximumBudget = sleepMap.getPrice(letter);
 		} else {
+			// Ensure invariant for budget functions: Must never exceed budget of the current state.
 			maximumBudget = mStateFactory.getBudget(state);
 		}
 
-		// TODO There are different strategies here:
-		// 1) count up from 0 to maximumBudget until successful
-		// 2) count down from maximumBudget to 0 while successful
-		// 3) binary search!
+		// Find the least budget that is successful.
 		for (int budget = 0; budget < maximumBudget; ++budget) {
 			final R successor = mReduction.computeSuccessorWithBudget(state, letter, budget);
 			if (successor == null) {
 				// should not happen in practice
-				continue;
+				break;
 			}
 
 			if (isSuccessful(successor)) {
@@ -93,12 +113,16 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements T
 			}
 		}
 
+		// We fall back to returning the maximum budget.
 		return maximumBudget;
 	}
 
 	private boolean isSuccessful(final R state) {
-		// TODO This test will be repeated for the same state many times during the budget determination. Cache it!
-		// TODO Caching should take into account monotonicity. Perhaps we can use covering to achieve this.
+		// TODO Caching should take into account monotonicity (if it holds); perhaps use covering to achieve this
+		return mSuccessCache.computeIfAbsent(state, this::checkIsSuccessful);
+	}
+
+	private boolean checkIsSuccessful(final R state) {
 		final V visitor = mMakeVisitor.get();
 		try {
 			new DepthFirstTraversal<>(mServices, mReduction, mOrder, visitor, state);
