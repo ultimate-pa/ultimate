@@ -31,7 +31,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
@@ -42,7 +44,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LeftRightSplit.Direction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -58,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	private static final boolean OPTIMIZE_DEAD_ENDS = true;
+	private static final boolean OPTIMIZE_FORK_JOIN = true;
 
 	private final IMLPredicate mOldState;
 	private final Map<String, DependencyRank> mThreads;
@@ -65,6 +71,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	private final Map<IProgramVar, L> mLastWriteSt;
 	private final L mLastStatement;
 	private final Set<LeftRightSplit<L>> mLeftRightSplits;
+	private final Map<IProgramVar, ConstantTerm> mThreadValues;
 
 	/**
 	 * Constructs a new McrState for the initial state.
@@ -79,6 +86,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		mLastWriteSt = Collections.emptyMap();
 		mLastStatement = null;
 		mLeftRightSplits = Collections.emptySet();
+		mThreadValues = Collections.emptyMap();
 	}
 
 	/**
@@ -96,16 +104,21 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	 *            The last statement executed.
 	 * @param leftRightSplits
 	 *            The set of left-right splits.
+	 * @param threadValues
+	 *            The values assigned to each thread variable.
 	 */
 	public McrState(final IMLPredicate oldState, final Map<String, DependencyRank> threads,
 			final Map<IProgramVar, DependencyRank> variables, final Map<IProgramVar, L> lastWriteSt,
-			final L lastStatement, final Set<LeftRightSplit<L>> leftRightSplits) {
+			final L lastStatement, final Set<LeftRightSplit<L>> leftRightSplits,
+			final Map<IProgramVar, ConstantTerm> threadValues) {
 		mOldState = oldState;
 		mThreads = threads;
 		mVariables = variables;
 		mLastWriteSt = lastWriteSt;
 		mLastStatement = lastStatement;
 		mLeftRightSplits = leftRightSplits;
+
+		mThreadValues = threadValues;
 	}
 
 	@Override
@@ -125,6 +138,78 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		return Set.of(transition.getPrecedingProcedure());
 	}
 
+	private static void handleForkTerm(final ApplicationTerm term, final Map<IProgramVar, ConstantTerm> assignedValues,
+			final Map<IProgramVar, TermVariable> outVars) {
+		if (!"=".equals(term.getFunction().getName())) {
+			return;
+		}
+		final Map<TermVariable, ConstantTerm> var2const = new HashMap<>();
+		if (term.getParameters().length == 2 && term.getParameters()[0] instanceof TermVariable
+				&& term.getParameters()[1] instanceof ConstantTerm) {
+			var2const.put((TermVariable) term.getParameters()[0], (ConstantTerm) term.getParameters()[1]);
+		}
+
+		assignedValues.putAll(outVars.entrySet().stream().filter(e -> var2const.containsKey(e.getValue()))
+				.collect(Collectors.toMap(e -> e.getKey(), e -> var2const.get(e.getValue()))));
+	}
+
+	private void handleFork(final L transition, final Map<IProgramVar, ConstantTerm> assignedValues) {
+		final Term term = transition.getTransformula().getFormula();
+		if (!(term instanceof ApplicationTerm)) {
+			return;
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		final Map<IProgramVar, TermVariable> outVars = transition.getTransformula().getOutVars();
+		if ("and".equals(appTerm.getFunction().getName())) {
+			for (int i = 0; i < appTerm.getParameters().length; i++) {
+				if (appTerm.getParameters()[i] instanceof ApplicationTerm) {
+					handleForkTerm((ApplicationTerm) appTerm.getParameters()[i], assignedValues, outVars);
+				}
+			}
+		} else {
+			handleForkTerm(appTerm, assignedValues, outVars);
+		}
+	}
+
+	private static boolean handleJoinTerm(final ApplicationTerm term, final Map<IProgramVar, ConstantTerm> knownValues,
+			final Map<IProgramVar, TermVariable> inVars) {
+		if (!"=".equals(term.getFunction().getName())) {
+			return true;
+		}
+		if (term.getParameters().length == 2 && term.getParameters()[0] instanceof TermVariable
+				&& term.getParameters()[1] instanceof ConstantTerm) {
+			final TermVariable tv = (TermVariable) term.getParameters()[0];
+			final Optional<IProgramVar> var =
+					inVars.entrySet().stream().filter(e -> e.getValue() == tv).map(e -> e.getKey()).findAny();
+			if (var.isPresent() && knownValues.containsKey(var.get())) {
+				final ConstantTerm constTerm = (ConstantTerm) term.getParameters()[1];
+				return knownValues.get(var.get()).hashCode() == constTerm.hashCode();
+			}
+		}
+		return true;
+	}
+
+	private boolean handleJoin(final L transition, final Map<IProgramVar, ConstantTerm> knownValues) {
+		final Term term = transition.getTransformula().getFormula();
+		if (!(term instanceof ApplicationTerm)) {
+			return true;
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		final Map<IProgramVar, TermVariable> inVars = transition.getTransformula().getInVars();
+		if ("and".equals(appTerm.getFunction().getName())) {
+			for (int i = 0; i < appTerm.getParameters().length; i++) {
+				if (appTerm.getParameters()[i] instanceof ApplicationTerm) {
+					if (!handleJoinTerm((ApplicationTerm) appTerm.getParameters()[i], knownValues, inVars)) {
+						return false;
+					}
+				}
+			}
+		} else {
+			return handleJoinTerm(appTerm, knownValues, inVars);
+		}
+		return true;
+	}
+
 	/**
 	 * Calculate the McrState after executing the given statement.
 	 *
@@ -139,6 +224,17 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		final UnmodifiableTransFormula tf = transition.getTransformula();
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
 		final Set<IProgramVar> writes = tf.getOutVars().keySet();
+
+		Map<IProgramVar, ConstantTerm> threadValues = mThreadValues;
+		if (OPTIMIZE_FORK_JOIN) {
+			if (transition instanceof IcfgForkThreadOtherTransition) {
+				threadValues = new HashMap<>(threadValues);
+				handleFork(transition, threadValues);
+			}
+			if (transition instanceof IcfgJoinThreadOtherTransition && !handleJoin(transition, threadValues)) {
+				return null;
+			}
+		}
 
 		DependencyRank deprank = new DependencyRank();
 		for (final String thread : getThreadId(transition)) {
@@ -249,7 +345,8 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			newLastWriteSt.put(var, transition);
 		}
 
-		return new McrState<>(successor, newThreads, newVariables, newLastWriteSt, transition, newLeftRightSplits);
+		return new McrState<>(successor, newThreads, newVariables, newLastWriteSt, transition, newLeftRightSplits,
+				threadValues);
 	}
 
 	/**
