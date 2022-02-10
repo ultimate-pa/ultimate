@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -61,14 +62,10 @@ public class ContainsQuantifier extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker) {
-			if (mQuantifierFound) {
+			if (mQuantifierFound || mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
 				// do nothing
 			} else {
-				if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
-					// do nothing
-				} else {
-					super.walk(walker);
-				}
+				super.walk(walker);
 			}
 		}
 
@@ -111,6 +108,12 @@ public class ContainsQuantifier extends NonRecursive {
 		public void walk(final NonRecursive walker, final MatchTerm term) {
 			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	/**

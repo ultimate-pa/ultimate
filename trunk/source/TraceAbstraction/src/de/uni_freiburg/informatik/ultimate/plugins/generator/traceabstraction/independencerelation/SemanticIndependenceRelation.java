@@ -175,8 +175,13 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final UnmodifiableTransFormula transFormula2 = compose(b, a);
 
 		if (context != null) {
-			final UnmodifiableTransFormula guard =
-					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
+			final UnmodifiableTransFormula guard;
+			if (mTransferrer == null) {
+				guard = TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
+			} else {
+				guard = TransFormulaBuilder.constructTransFormulaFromPredicate(mTransferrer, mTransferCache, context,
+						mManagedScript);
+			}
 			transFormula1 = compose(getTransFormula(guard), transFormula1);
 		}
 		return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);

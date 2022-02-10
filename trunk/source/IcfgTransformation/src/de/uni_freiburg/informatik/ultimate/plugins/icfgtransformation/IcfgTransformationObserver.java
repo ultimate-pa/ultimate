@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fast
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.mohr.IcfgLoopTransformerMohr;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer.DealingWithArraysTypes;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
@@ -173,6 +174,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyLoopAccelerationBiesenbach(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_JORDAN:
 			return applyLoopAccelerationJordan(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case LOOP_ACCELERATION_QVASR:
+			return applyLoopAccelerationQvasr(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_MOHR:
 			return applyLoopAccelerationMohr(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_WOELFING:
@@ -283,6 +286,13 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 				icfg.getIdentifier() + "Jordan", backtranslationTracker, mServices).getResult();
 	}
 
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationQvasr(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IcfgTransformationBacktranslator backtranslationTracker, final ReplacementVarFactory fac) {
+		return new QvasrIcfgTransformer<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "qvasr",
+				backtranslationTracker, mServices).getResult();
+	}
+
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationFastUPR(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IcfgTransformationBacktranslator backtranslationTracker, final ReplacementVarFactory fac) {
@@ -350,12 +360,12 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final LocalTransformer2 transformer = new LocalTransformer2(icfg.getCfgSmtToolkit().getManagedScript(), cfbo);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
-		final Function<Term, Term> backtranslation = (x -> new IntToBvBackTranslation(
-				icfg.getCfgSmtToolkit().getManagedScript(), new LinkedHashMap<>(transformer.getBacktranslationMap()),
-				Collections.emptySet(), null).transform(x));
+		final Function<Term, Term> backtranslation =
+				(x -> new IntToBvBackTranslation(icfg.getCfgSmtToolkit().getManagedScript(),
+						new LinkedHashMap<>(transformer.getBacktranslationMap()), Collections.emptySet(), null)
+								.transform(x));
 
 		backtranslationTracker.addExpressionBacktranslation(backtranslation);
-
 
 		final IIcfg<OUTLOC> result = icfgTransformer.getResult();
 		return result;

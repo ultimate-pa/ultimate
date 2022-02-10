@@ -21,7 +21,6 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -94,13 +93,12 @@ public class Theory {
 	private Sort mNumericSort, mRealSort, mStringSort, mBooleanSort;
 	private SortSymbol mBitVecSort, mFloatingPointSort;
 	private Sort mRoundingModeSort;
-	private final HashMap<String, FunctionSymbolFactory> mFunFactory = new HashMap<>();
+	private final ScopedHashMap<String, FunctionSymbolFactory> mFunFactory = new ScopedHashMap<>();
 	private final UnifyHash<FunctionSymbol> mModelValueCache = new UnifyHash<>();
 
 	private final ScopedHashMap<String, SortSymbol> mDeclaredSorts = new ScopedHashMap<>();
 	private final ScopedHashMap<String, FunctionSymbol> mDeclaredFuns = new ScopedHashMap<>();
 
-	private final UnifyHash<QuantifiedFormula> mQfCache = new UnifyHash<>();
 	private final UnifyHash<LetTerm> mLetCache = new UnifyHash<>();
 	private final UnifyHash<Term> mTermCache = new UnifyHash<>();
 	private final UnifyHash<TermVariable> mTvUnify = new UnifyHash<>();
@@ -171,8 +169,8 @@ public class Theory {
 		mXor = declareInternalFunction("xor", bool2, mBooleanSort, leftassoc);
 		declareInternalPolymorphicFunction("ite", generic1, new Sort[] { mBooleanSort, generic1[0], generic1[0] },
 				generic1[0], 0);
-		mTrue = term(declareInternalFunction("true", noarg, mBooleanSort, 0));
-		mFalse = term(declareInternalFunction("false", noarg, mBooleanSort, 0));
+		mTrue = (ApplicationTerm) term(declareInternalFunction("true", noarg, mBooleanSort, 0));
+		mFalse = (ApplicationTerm) term(declareInternalFunction("false", noarg, mBooleanSort, 0));
 		// Finally, declare logic specific functions
 		setLogic(logic);
 	}
@@ -315,18 +313,33 @@ public class Theory {
 		return term("ite", c, t, e);
 	}
 
-	private Term quantify(final int quant, final TermVariable[] vars, final Term f) {
-		if (f == mTrue || f == mFalse) {
-			return f;
+	public Term lambda(final TermVariable[] vars, final Term subterm) {
+		final int hash = LambdaTerm.hashLambda(vars, subterm);
+		for (final Term term : mTermCache.iterateHashCode(hash)) {
+			if (term instanceof LambdaTerm) {
+				final LambdaTerm lambda = (LambdaTerm) term;
+				if (lambda.getSubterm() == subterm && Arrays.equals(lambda.getVariables(), vars)) {
+					return lambda;
+				}
+			}
 		}
+		final LambdaTerm lambda = new LambdaTerm(vars, subterm, hash);
+		mTermCache.put(hash, lambda);
+		return lambda;
+	}
+
+	private Term quantify(final int quant, final TermVariable[] vars, final Term f) {
 		final int hash = QuantifiedFormula.hashQuantifier(quant, vars, f);
-		for (final QuantifiedFormula qf : mQfCache.iterateHashCode(hash)) {
-			if (qf.getQuantifier() == quant && qf.getSubformula() == f && Arrays.equals(vars, qf.getVariables())) {
-				return qf;
+		for (final Term term : mTermCache.iterateHashCode(hash)) {
+			if (term instanceof QuantifiedFormula) {
+				final QuantifiedFormula qf = (QuantifiedFormula) term;
+				if (qf.getQuantifier() == quant && qf.getSubformula() == f && Arrays.equals(vars, qf.getVariables())) {
+					return qf;
+				}
 			}
 		}
 		final QuantifiedFormula qf = new QuantifiedFormula(quant, vars, f, hash);
-		mQfCache.put(hash, qf);
+		mTermCache.put(hash, qf);
 		return qf;
 	}
 
@@ -601,7 +614,7 @@ public class Theory {
 		Sort mSort1, mSort2;
 
 		public MinusFunctionFactory(final Sort sort1, final Sort sort2) {
-			super("-");
+			super(SMTLIBConstants.MINUS);
 			mSort1 = sort1;
 			mSort2 = sort2;
 		}
@@ -640,31 +653,35 @@ public class Theory {
 		}
 	}
 
-	private void createNumericOperators(final Sort sort, final boolean isRational) {
+	private Term absDefinition(final TermVariable x) {
+		final Term zero = Rational.ZERO.toTerm(x.getSort());
+		return term(SMTLIBConstants.ITE, term(SMTLIBConstants.LT, x, zero), term(SMTLIBConstants.MINUS, x), x);
+	}
+
+	private void createNumericOperators(final Sort sort, final boolean isRealArith) {
 		final Sort[] sort1 = new Sort[] { sort };
 		final Sort[] sort2 = new Sort[] { sort, sort };
-		declareInternalFunction("+", sort2, sort, FunctionSymbol.LEFTASSOC);
+		declareInternalFunction(SMTLIBConstants.PLUS, sort2, sort, FunctionSymbol.LEFTASSOC);
 		defineFunction(new MinusFunctionFactory(sort, sort));
-		declareInternalFunction("*", sort2, sort, FunctionSymbol.LEFTASSOC);
+		declareInternalFunction(SMTLIBConstants.MUL, sort2, sort, FunctionSymbol.LEFTASSOC);
 		/* the functions /, div and mod are partial (for division by 0) and thus partially uninterpreted */
-		if (isRational) {
-			declareInternalFunction("/", sort2, sort, FunctionSymbol.LEFTASSOC | FunctionSymbol.UNINTERPRETEDINTERNAL);
-		} else {
-			declareInternalFunction("div", sort2, sort,
+		if (isRealArith) {
+			declareInternalFunction(SMTLIBConstants.DIVIDE, sort2, sort,
 					FunctionSymbol.LEFTASSOC | FunctionSymbol.UNINTERPRETEDINTERNAL);
-			declareInternalFunction("mod", sort2, sort, FunctionSymbol.UNINTERPRETEDINTERNAL);
+		} else {
+			declareInternalFunction(SMTLIBConstants.DIV, sort2, sort,
+					FunctionSymbol.LEFTASSOC | FunctionSymbol.UNINTERPRETEDINTERNAL);
+			declareInternalFunction(SMTLIBConstants.MOD, sort2, sort, FunctionSymbol.UNINTERPRETEDINTERNAL);
 			defineFunction(new DivisibleFunctionFactory());
 		}
 		final Sort sBool = mBooleanSort;
-		declareInternalFunction(">", sort2, sBool, FunctionSymbol.CHAINABLE);
-		declareInternalFunction(">=", sort2, sBool, FunctionSymbol.CHAINABLE);
-		declareInternalFunction("<", sort2, sBool, FunctionSymbol.CHAINABLE);
-		declareInternalFunction("<=", sort2, sBool, FunctionSymbol.CHAINABLE);
+		declareInternalFunction(SMTLIBConstants.GT, sort2, sBool, FunctionSymbol.CHAINABLE);
+		declareInternalFunction(SMTLIBConstants.GEQ, sort2, sBool, FunctionSymbol.CHAINABLE);
+		declareInternalFunction(SMTLIBConstants.LT, sort2, sBool, FunctionSymbol.CHAINABLE);
+		declareInternalFunction(SMTLIBConstants.LEQ, sort2, sBool, FunctionSymbol.CHAINABLE);
 
-		final TermVariable x = createTermVariable("x1", sort);
-		final Term zero = isRational ? decimal("0.0") : numeral("0");
-		final Term absx = term("ite", term(">=", x, zero), x, term("-", x));
-		declareInternalFunction("abs", sort1, new TermVariable[] { x }, absx, 0);
+		final TermVariable x = createTermVariable("x", sort);
+		declareInternalFunction(SMTLIBConstants.ABS, sort1, new TermVariable[] { x }, absDefinition(x), 0);
 	}
 
 	private void createIRAOperators() {
@@ -721,9 +738,7 @@ public class Theory {
 		defineFunction(new FunctionSymbolFactory("abs") {
 			@Override
 			public Term getDefinition(final TermVariable[] tvs, final Sort resultSort) {
-				final Term zero = (resultSort == mNumericSort) ? numeral("0") : decimal("0.0");
-				// abs x: (ite (>= x 0) x (- x))
-				return term("ite", term(">=", tvs[0], zero), tvs[0], term("-", tvs[0]));
+				return absDefinition(tvs[0]);
 			}
 
 			@Override
@@ -749,7 +764,7 @@ public class Theory {
 		// store : ((Array X Y) X Y) -> (Array X Y)
 		declareInternalPolymorphicFunction("store", generic2, new Sort[] { array, generic2[0], generic2[1] }, array, 0);
 		// const : (Y) -> (Array X Y)
-		declareInternalPolymorphicFunction("const", generic2, new Sort[] { generic2[1] }, array,
+		declareInternalPolymorphicFunction(SMTLIBConstants.CONST, generic2, new Sort[] { generic2[1] }, array,
 				FunctionSymbol.INTERNAL | FunctionSymbol.RETURNOVERLOAD);
 	}
 
@@ -1569,7 +1584,7 @@ public class Theory {
 		return symb;
 	}
 
-	public ApplicationTerm term(final FunctionSymbolFactory factory, final Term... parameters) {
+	public Term term(final FunctionSymbolFactory factory, final Term... parameters) {
 		final Sort[] sorts = parameters.length == 0 ? EMPTY_SORT_ARRAY : new Sort[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
 			sorts[i] = parameters[i].getSort();
@@ -1581,19 +1596,77 @@ public class Theory {
 		return term(fsym, parameters);
 	}
 
-	public ApplicationTerm term(final String func, final Term... parameters) {
-		final Sort[] paramSorts = parameters.length == 0 ? EMPTY_SORT_ARRAY : new Sort[parameters.length];
-		for (int i = 0; i < parameters.length; i++) {
-			paramSorts[i] = parameters[i].getSort();
+	public Term term(final String funcname, final String[] indices,
+			final Sort returnSort, final Term... params) throws SMTLIBException {
+		final Sort[] sorts = params.length == 0 ? Script.EMPTY_SORT_ARRAY : new Sort[params.length];
+		for (int i = 0; i < sorts.length; i++) {
+			sorts[i] = params[i].getSort();
 		}
-		final FunctionSymbol fsym = getFunctionWithResult(func, null, null, paramSorts);
+		final FunctionSymbol fsym = getFunctionWithResult(funcname, indices, returnSort, sorts);
 		if (fsym == null) {
-			return null;
+			final StringBuilder sb = new StringBuilder();
+			final PrintTerm pt = new PrintTerm();
+			sb.append("Undeclared function symbol (").append(funcname);
+			for (final Sort s : sorts) {
+				sb.append(' ');
+				pt.append(sb, s);
+			}
+			sb.append(')');
+			throw new SMTLIBException(sb.toString());
 		}
-		return term(fsym, parameters);
+		return term(fsym, params);
 	}
 
-	public ApplicationTerm term(final FunctionSymbol func, Term... parameters) {
+	public Term term(final String func, final Term... parameters) {
+		return term(func, null, null, parameters);
+	}
+
+	public Term term(final FunctionSymbol func, Term... parameters) {
+		// Special case for normalizing rationals: we want to use ConstantValue with Rational, for things
+		// like (/ 1.0 2.0), to avoid the overhead of parsing them again. To avoid two terms that look identical but are
+		// not equal, we don't create an ApplicationTerm when parsing rational constants.
+		if (func.isIntern() && func.getName().equals(SMTLIBConstants.DIVIDE) && parameters.length == 2
+				&& parameters[0] instanceof ConstantTerm && parameters[1] instanceof ConstantTerm
+				&& parameters[0].getSort() == getRealSort() && parameters[1].getSort() == getRealSort()) {
+			final ConstantTerm numTerm = (ConstantTerm) parameters[0];
+			final ConstantTerm denomTerm = (ConstantTerm) parameters[1];
+			BigInteger num = null, denom = null;
+			if (numTerm.getValue() instanceof Rational && denomTerm.getValue() instanceof Rational) {
+				final Rational numRat = (Rational) numTerm.getValue();
+				final Rational denomRat = (Rational) denomTerm.getValue();
+				if (numRat.isIntegral() && denomRat.isIntegral()) {
+					num = numRat.numerator();
+					denom = denomRat.numerator();
+				}
+			}
+			// make sure that num and denom have the right form such that the created
+			// rational term would be completely identical
+			if (num != null && denom.compareTo(BigInteger.ONE) > 0 && num.gcd(denom).equals(BigInteger.ONE)) {
+				final Rational value = Rational.valueOf(num, denom);
+				return constant(value, getRealSort());
+			}
+		}
+		if (func.isIntern() && func.getName().equals(SMTLIBConstants.MINUS) && parameters.length == 1
+				&& parameters[0] instanceof ConstantTerm
+				&& (parameters[0].getSort() == getNumericSort() || parameters[0].getSort() == getRealSort())) {
+			final ConstantTerm numTerm = (ConstantTerm) parameters[0];
+			if (numTerm.getValue() instanceof Rational) {
+				final Rational num = (Rational) numTerm.getValue();
+				// make sure that num has the right form. In particular we only allow negating integrals, as the
+				// normal form of -.5 is (/ (- 1.0) 2.0).
+				if (num.isIntegral() && num.signum() > 0) {
+					return constant(num.negate(), numTerm.getSort());
+				}
+			} else if (numTerm.getValue() instanceof BigInteger) {
+				final BigInteger num = (BigInteger) numTerm.getValue();
+				// make sure that num is positive.
+				if (num.signum() > 0) {
+					return constant(num.negate(), numTerm.getSort());
+				}
+			}
+		}
+
+		// Not a rational term to normalize
 		if (parameters.length == 0) {
 			parameters = EMPTY_TERM_ARRAY;
 		}
@@ -1698,6 +1771,7 @@ public class Theory {
 
 	public void push() {
 		if (!mGlobalDecls) {
+			mFunFactory.beginScope();
 			mDeclaredFuns.beginScope();
 			mDeclaredSorts.beginScope();
 		}
@@ -1705,6 +1779,7 @@ public class Theory {
 
 	public void pop() {
 		if (!mGlobalDecls) {
+			mFunFactory.endScope();
 			mDeclaredFuns.endScope();
 			mDeclaredSorts.endScope();
 		}
@@ -1719,8 +1794,8 @@ public class Theory {
 			args[i] = freeVars[i];
 			freeVarSorts[i] = freeVars[i].getSort();
 		}
-		final FunctionSymbol fsym = new FunctionSymbol("@" + tv.getName() + "_skolem_" + mSkolemCounter++, null,
-				freeVarSorts, tv.getSort(), null, null, 0);
+		final FunctionSymbol fsym = declareInternalFunction("@" + tv.getName() + "_skolem_" + mSkolemCounter++,
+				freeVarSorts, tv.getSort(), FunctionSymbol.UNINTERPRETEDINTERNAL); // TODO Change flag?
 		return term(fsym, args);
 	}
 

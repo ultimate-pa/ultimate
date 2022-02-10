@@ -57,7 +57,7 @@ public class FormulaUnLet extends TermTransformer {
 		 * Should defined functions be expanded.  Defaults to false.
 		 */
 		final boolean mExpandDefinitions;
-		UnletType(boolean lazy, boolean expandDefinitions) {
+		UnletType(final boolean lazy, final boolean expandDefinitions) {
 			mIsLazy = lazy;
 			mExpandDefinitions = expandDefinitions;
 		}
@@ -69,7 +69,7 @@ public class FormulaUnLet extends TermTransformer {
 	 * term variable defined in that scope to the corresponding term.
 	 */
 	private final ScopedHashMap<TermVariable,Term> mLetMap =
-			new ScopedHashMap<TermVariable, Term>(false);
+			new ScopedHashMap<>(false);
 
 	/**
 	 * The type of this unletter.
@@ -92,7 +92,7 @@ public class FormulaUnLet extends TermTransformer {
 	 * Create a FormulaUnLet.
 	 * @param type  The type of the unletter.
 	 */
-	public FormulaUnLet(UnletType type) {
+	public FormulaUnLet(final UnletType type) {
 		mType = type;
 	}
 
@@ -103,7 +103,7 @@ public class FormulaUnLet extends TermTransformer {
 	 * @param termSubst The substitution, which maps term variables to
 	 * the term with which they should be substituted.
 	 */
-	public void addSubstitutions(Map<TermVariable, Term> termSubst) {
+	public void addSubstitutions(final Map<TermVariable, Term> termSubst) {
 		mLetMap.putAll(termSubst);
 	}
 
@@ -113,13 +113,13 @@ public class FormulaUnLet extends TermTransformer {
 	 * @param term the term to unlet
 	 * @return the resulting let-free term.
 	 */
-	public Term unlet(Term term) {
+	public Term unlet(final Term term) {
 		return transform(term);
 	}
 
-	public void startVarScope(TermVariable[] vars) {
+	public void startVarScope(final TermVariable[] vars) {
 		/* check which variables are in the image of the substitution */
-		final HashSet<TermVariable> used = new HashSet<TermVariable>();
+		final HashSet<TermVariable> used = new HashSet<>();
 		for (final Map.Entry<TermVariable, Term> substTerms : mLetMap.entrySet()) {
 			if (!Arrays.asList(vars).contains(substTerms.getKey())) {
 				used.addAll(Arrays.asList(substTerms.getValue().getFreeVars()));
@@ -138,7 +138,7 @@ public class FormulaUnLet extends TermTransformer {
 		}
 	}
 
-	public TermVariable[] endVarScope(TermVariable[] vars) {
+	public TermVariable[] endVarScope(final TermVariable[] vars) {
 		TermVariable[] newVars = vars;
 		for (int i = 0; i < vars.length; i++) {
 			final Term newVar = mLetMap.get(vars[i]);
@@ -154,7 +154,7 @@ public class FormulaUnLet extends TermTransformer {
 	}
 
 	@Override
-	public void convert(Term term) {
+	public void convert(final Term term) {
 		if (term instanceof TermVariable) {
 			final Term value = mLetMap.get(term);
 			if (value == null) {
@@ -167,6 +167,10 @@ public class FormulaUnLet extends TermTransformer {
 		} else if (mType.mIsLazy && term instanceof LetTerm) {
 			final LetTerm letTerm = (LetTerm) term;
 			preConvertLet(letTerm, letTerm.getValues());
+		} else if (term instanceof LambdaTerm) {
+			final LambdaTerm lambda = (LambdaTerm) term;
+			startVarScope(lambda.getVariables());
+			super.convert(term);
 		} else if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula)term;
 			startVarScope(qf.getVariables());
@@ -189,7 +193,7 @@ public class FormulaUnLet extends TermTransformer {
 	}
 
 	@Override
-	public void preConvertLet(LetTerm oldLet, Term[] newValues) {
+	public void preConvertLet(final LetTerm oldLet, final Term[] newValues) {
 		mLetMap.beginScope();
 		final TermVariable[] vars = oldLet.getVariables();
 		for (int i = 0; i < vars.length; i++) {
@@ -199,20 +203,41 @@ public class FormulaUnLet extends TermTransformer {
 	}
 
 	@Override
-	public void postConvertLet(LetTerm oldLet, Term[] newValues, Term newBody) {
+	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
 		setResult(newBody);
 		mLetMap.endScope();
 	}
 
 	/**
-	 * Build the converted formula for a quantified formula.
-	 * This also ends the scope of the quantifier.
-	 * It stores the converted quantifier using {@link #setResult(Term)}.
-	 * @param old the quantifier to convert.
+	 * Build the converted formula for a lambda term. This also ends the scope of
+	 * the lambda term. It stores the converted quantifier using
+	 * {@link #setResult(Term)}.
+	 *
+	 * @param old     the quantifier to convert.
 	 * @param newBody the converted sub formula.
 	 */
 	@Override
-	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+	public void postConvertLambda(final LambdaTerm old, final Term newBody) {
+		final TermVariable[] vars = old.getVariables();
+		final TermVariable[] newVars = endVarScope(vars);
+		if (vars == newVars && old.getSubterm() == newBody) {
+			setResult(old);
+		} else {
+			final Theory theory = old.getTheory();
+			setResult(theory.lambda(newVars, newBody));
+		}
+	}
+
+	/**
+	 * Build the converted formula for a quantified formula. This also ends the
+	 * scope of the quantifier. It stores the converted quantifier using
+	 * {@link #setResult(Term)}.
+	 *
+	 * @param old     the quantifier to convert.
+	 * @param newBody the converted sub formula.
+	 */
+	@Override
+	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		final TermVariable[] vars = old.getVariables();
 		final TermVariable[] newVars = endVarScope(vars);
 		if (vars == newVars && old.getSubformula() == newBody) {
@@ -226,7 +251,7 @@ public class FormulaUnLet extends TermTransformer {
 	}
 
 	@Override
-	public void preConvertMatchCase(MatchTerm oldMatch, int caseNr) {
+	public void preConvertMatchCase(final MatchTerm oldMatch, final int caseNr) {
 		if (caseNr > 0) {
 			mMatchVars.add(endVarScope(oldMatch.getVariables()[caseNr - 1]));
 		}
@@ -235,13 +260,13 @@ public class FormulaUnLet extends TermTransformer {
 	}
 
 	@Override
-	public void postConvertMatch(MatchTerm oldMatch, Term newDataTerm, Term[] newCases) {
+	public void postConvertMatch(final MatchTerm oldMatch, final Term newDataTerm, final Term[] newCases) {
 		assert oldMatch.getCases().length > 0;
 		mMatchVars.add(endVarScope(oldMatch.getVariables()[oldMatch.getVariables().length - 1]));
-		TermVariable[][] oldVars = oldMatch.getVariables();
+		final TermVariable[][] oldVars = oldMatch.getVariables();
 		TermVariable[][] newVars = null;
 		for (int i = oldVars.length - 1; i >= 0; i--) {
-			TermVariable[] newVarsCase = mMatchVars.remove(mMatchVars.size() - 1);
+			final TermVariable[] newVarsCase = mMatchVars.remove(mMatchVars.size() - 1);
 			if (newVarsCase != oldVars[i]) {
 				if (newVars == null) {
 					newVars = oldVars.clone();

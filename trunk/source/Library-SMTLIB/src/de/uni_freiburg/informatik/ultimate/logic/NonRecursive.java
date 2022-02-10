@@ -61,7 +61,7 @@ public class NonRecursive {
 	 * The todo stack. It contains the terms to convert and some info how much
 	 * was already processed of this term.
 	 */
-	private final ArrayDeque<Walker> mTodo = new ArrayDeque<Walker>();
+	private final ArrayDeque<Walker> mTodo = new ArrayDeque<>();
 
 	/**
 	 * Walker that does some piece of work.  This can be added to
@@ -92,7 +92,7 @@ public class NonRecursive {
 	 * Enqueues a walker on the todo stack.
 	 * @param item the walker to enqueue.
 	 */
-	public void enqueueWalker(Walker item) {
+	public void enqueueWalker(final Walker item) {
 		mTodo.addLast(item);
 	}
 
@@ -101,7 +101,7 @@ public class NonRecursive {
 	 * todo stack is empty.
 	 * @param item the walker to execute initially.
 	 */
-	public void run(Walker item) {
+	public void run(final Walker item) {
 		mTodo.addLast(item);
 		run();
 	}
@@ -130,17 +130,19 @@ public class NonRecursive {
 	 */
 	public static abstract class TermWalker implements Walker {
 		protected Term mTerm;
-		public TermWalker(Term term) {
+		public TermWalker(final Term term) {
 			mTerm = term;
 		}
 		@Override
-		public void walk(NonRecursive walker) {
+		public void walk(final NonRecursive walker) {
 			if (mTerm instanceof ApplicationTerm) {
 				walk(walker, (ApplicationTerm) mTerm);
 			} else if (mTerm instanceof LetTerm) {
 				walk(walker, (LetTerm) mTerm);
 			} else if (mTerm instanceof AnnotatedTerm) {
 				walk(walker, (AnnotatedTerm) mTerm);
+			} else if (mTerm instanceof LambdaTerm) {
+				walk(walker, (LambdaTerm) mTerm);
 			} else if (mTerm instanceof QuantifiedFormula) {
 				walk(walker, (QuantifiedFormula) mTerm);
 			} else if (mTerm instanceof ConstantTerm) {
@@ -156,6 +158,7 @@ public class NonRecursive {
 		public abstract void walk(NonRecursive walker, AnnotatedTerm term);
 		public abstract void walk(NonRecursive walker, ApplicationTerm term);
 		public abstract void walk(NonRecursive walker, LetTerm term);
+		public abstract void walk(NonRecursive walker, LambdaTerm term);
 		public abstract void walk(NonRecursive walker, QuantifiedFormula term);
 		public abstract void walk(NonRecursive walker, TermVariable term);
 		public abstract void walk(NonRecursive walker, MatchTerm term);

@@ -60,16 +60,8 @@ public class EnumOption<E extends Enum<E>> extends Option {
 	@Override
 	public void set(final Object value) {
 		if (value instanceof String) {
-			try {
-				mValue = Enum.valueOf(mClass, (String) value);
-			} catch (final IllegalArgumentException ignored) {
-				// For convenience: Java enum constants usually are ALL UPPER
-				try {
-					mValue = Enum.valueOf(mClass, ((String) value).toUpperCase());
-				} catch (final IllegalArgumentException eignored) {
-					throwException(value);
-				}
-			}
+			// For convenience: Java enum constants are ALL UPPER
+			mValue = Enum.valueOf(mClass, ((String) value).toUpperCase());
 		} else if (mClass.isInstance(value)) {
 			mValue = (E) value;
 		} else {

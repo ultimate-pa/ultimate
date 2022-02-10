@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -93,6 +94,11 @@ public class DAGSize extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new InternalError("Input should be unletted");
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			walker.enqueueWalker(new TermOnceWalker(term.getSubterm()));
 		}
 
 		@Override

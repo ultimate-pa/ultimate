@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
@@ -70,6 +72,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.ICopyActionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.IRefinableAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.RefinableCachedAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -98,14 +102,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
-	private final ICopyActionFactory<L> mCopyFactory;
-
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
 	private final DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, IDfsVisitor<L, IPredicate>> mVisitor;
-	private final PartialOrderReductionFacade<L> mPOR;
+	private PartialOrderReductionFacade<L> mPOR;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
+
+	private Set<IProgramVar> mConstrainingVariables;
+	private final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> mLetterAbstraction;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -115,8 +120,23 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
-		mCopyFactory = copyFactory;
 		mPartialOrderMode = mPref.getPartialOrderMode();
+
+		switch (mPref.getPorAbstraction()) {
+		case VARIABLES_GLOBAL:
+			mLetterAbstraction = new RefinableCachedAbstraction<>(
+					new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), getAllVariables()));
+			break;
+		case NONE:
+			mLetterAbstraction = null;
+			break;
+		default:
+			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
+		}
+
+		if (mLetterAbstraction != null) {
+			mConstrainingVariables = mLetterAbstraction.getInitial();
+		}
 
 		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
@@ -131,6 +151,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return input;
 	}
 
+	public Set<IProgramVar> getAllVariables() {
+		final Set<IProgramVar> allVariables = new HashSet<>();
+		for (final IProgramNonOldVar nOV : mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
+			allVariables.add(nOV);
+		}
+		return allVariables;
+	}
+	/*
+	 * public Set<IProgramVar> getAllVariables() { final Set<IProgramVar> allVars = new HashSet<>(); for (final L l :
+	 * mAbstraction.getAlphabet()) { allVars.addAll(l.getTransformula().getInVars().keySet());
+	 * allVars.addAll(l.getTransformula().getOutVars().keySet()); } return allVars; }
+	 */
+
 	// returns the set of all variables that are used to describe states of the automaton
 	public Set<IProgramVar> getAllConstrainingVariables() {
 		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
@@ -139,7 +172,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
 			for (final IPredicate ip : lp) {
 				constrainingVars.addAll(ip.getVars());
-
 			}
 		}
 		return constrainingVars;
@@ -192,8 +224,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
-		// TODO (Marcel 2022-01-12) New Variable Ábstraction provide abstracted variables here
-		final VariableAbstraction<L> varAb = new VariableAbstraction<>(mCopyFactory, mCsToolkit.getManagedScript());
+
+		if (mLetterAbstraction != null) {
+			mConstrainingVariables = mLetterAbstraction.refine(mConstrainingVariables, mRefinementResult);
+			final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(mCsToolkit);
+			mPOR = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, mIcfg, mErrorLocs,
+					mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
+					independenceRelation);
+		}
+
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
 	}
@@ -281,13 +320,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
 				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
 				// =========================================================================
+				// Apply abstraction to each letter before checking commutativity (if mLetterAbstraction is non-null).
+				.withAbstraction(mLetterAbstraction, mConstrainingVariables)
 				// Never consider letters of the same thread to be independent.
-				// HERE
 				.threadSeparated()
 				// Retrieve the constructed relation.
 				.build();
 	}
-	// Somewhere in this flow, there should be a Option, that you should abstract
 
 	private ManagedScript constructIndependenceScript() {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings()

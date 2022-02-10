@@ -75,7 +75,7 @@ public class TableauxRow {
 
 	private static int addBigInteger(final ArrayList<BigInteger> bigInts, final BigInteger coeff) {
 		if (coeff.bitLength() <= LIMIT_BITS) {
-			return coeff.intValueExact();
+			return coeff.intValue();
 		} else {
 			bigInts.add(coeff);
 			return MARKER + bigInts.size() - 1;

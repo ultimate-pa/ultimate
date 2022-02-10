@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AcceleratedInterpolationLoopAccelerationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
@@ -382,6 +383,10 @@ public final class TAPreferences {
 
 	public boolean getSymmetricPor() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SYMM_POR);
+	}
+
+	public AbstractionType getPorAbstraction() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, AbstractionType.class);
 	}
 
 	public SimplificationTechnique getSimplificationTechnique() {

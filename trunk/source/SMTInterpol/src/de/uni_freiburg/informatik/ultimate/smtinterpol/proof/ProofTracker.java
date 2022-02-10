@@ -18,17 +18,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -59,42 +58,9 @@ public class ProofTracker implements IProofTracker{
 		return theory.annotatedTerm(annotions, term);
 	}
 
-	public Term quote(final Term atom) {
-		final Theory t = atom.getTheory();
-		return t.annotatedTerm(new Annotation[] { new Annotation(":quoted", null) }, atom);
-	}
-
 	@Override
 	public Term intern(final Term term, final Term intern) {
 		return buildRewrite(term, intern, ProofConstants.RW_INTERN);
-	}
-
-	@Override
-	public Term flatten(final Term orig, final Set<Term> flattenedOrs) {
-		final ArrayList<Term> flat = new ArrayList<>();
-		final ArrayDeque<Term> todoStack = new ArrayDeque<>();
-		final Term origTerm = getProvedTerm(orig);
-		todoStack.addFirst(origTerm);
-		while (!todoStack.isEmpty()) {
-			final Term t = todoStack.removeFirst();
-			if (flattenedOrs.contains(t)) {
-				final ApplicationTerm appTerm = (ApplicationTerm) t;
-				assert appTerm.getFunction().getName() == "or";
-				final Term[] params = appTerm.getParameters();
-				for (int i = params.length-1; i >= 0; i--) {
-					todoStack.addFirst(params[i]);
-				}
-			} else {
-				flat.add(t);
-			}
-		}
-		Term result;
-		if (flat.size() == 1) {
-			result = flat.get(0);
-		} else {
-			result = orig.getTheory().term("or", flat.toArray(new Term[flat.size()]));
-		}
-		return transitivity(orig, buildRewrite(origTerm, result, ProofConstants.RW_FLATTEN));
 	}
 
 	@Override
@@ -174,29 +140,6 @@ public class ProofTracker implements IProofTracker{
 	}
 
 	@Override
-	public Term orMonotony(final Term a, final Term[] b) {
-		assert b.length > 1;
-		final List<Term> impProofs = new ArrayList<>();
-		impProofs.add(getProof(a));
-		final Term[] params = new Term[b.length];
-		for (int i = 0; i < b.length; i++) {
-			final Term proofB = getProof(b[i]);
-			if (!isReflexivity(proofB)) {
-				impProofs.add(proofB);
-			}
-			params[i] = getProvedTerm(b[i]);
-		}
-		final Theory theory = a.getTheory();
-		final Term proof;
-		if (impProofs.size() == 1) {
-			proof = impProofs.get(0);
-		} else {
-			proof = theory.term(ProofConstants.FN_ORMONOTONY, impProofs.toArray(new Term[impProofs.size()]));
-		}
-		return buildProof(proof, theory.term("or", params));
-	}
-
-	@Override
 	public Term modusPonens(final Term asserted, final Term simpFormula) {
 		final Term simpProof = getProof(simpFormula);
 		if (isReflexivity(simpProof)) {
@@ -213,18 +156,10 @@ public class ProofTracker implements IProofTracker{
 	}
 
 	@Override
-	public Term auxAxiom(final Term axiom, final Annotation rule) {
+	public Term tautology(final Term axiom, final Annotation rule) {
 		final Theory t = axiom.getTheory();
 		final Term proof = t.term(ProofConstants.FN_TAUTOLOGY, t.annotatedTerm(new Annotation[] { rule }, axiom));
 		return buildProof(proof, axiom);
-	}
-
-	@Override
-	public Term split(final Term input, final Term splitTerm, final Annotation splitRule) {
-		final Theory t = input.getTheory();
-		final Term proof = t.term(ProofConstants.FN_SPLIT,
-				t.annotatedTerm(new Annotation[] { splitRule }, getProof(input)), splitTerm);
-		return buildProof(proof, splitTerm);
 	}
 
 	@Override
@@ -252,26 +187,20 @@ public class ProofTracker implements IProofTracker{
 	}
 
 	@Override
-	public Term exists(final QuantifiedFormula quant, final Term newBody) {
+	public Term quantCong(final QuantifiedFormula quant, final Term newBody) {
 		final Theory theory = quant.getTheory();
 		final Term subProof = getProof(newBody);
-		final Term formula = theory.exists(quant.getVariables(), getProvedTerm(newBody));
+		final boolean isForall = quant.getQuantifier() == QuantifiedFormula.FORALL;
+		final Term formula = isForall
+				? theory.forall(quant.getVariables(), getProvedTerm(newBody))
+				: theory.exists(quant.getVariables(), getProvedTerm(newBody));
 		if (isReflexivity(subProof)) {
 			return reflexivity(formula);
 		}
-		final Annotation[] annot = new Annotation[] { new Annotation(":vars", quant.getVariables()) };
-		final Term proof = theory.term(ProofConstants.FN_EXISTS, theory.annotatedTerm(annot, subProof));
+		final String quantType = isForall ? ":forall" : ":exists";
+		final Annotation[] annot = new Annotation[] { new Annotation(quantType, quant.getVariables()) };
+		final Term proof = theory.term(ProofConstants.FN_QUANT, theory.annotatedTerm(annot, subProof));
 		return buildProof(proof, formula);
-	}
-
-	@Override
-	public Term forall(final QuantifiedFormula quant, final Term negNewBody) {
-		final Theory theory = quant.getTheory();
-		final Term negQuant = theory.term("not",
-				theory.exists(quant.getVariables(), theory.term("not", quant.getSubformula())));
-		Term rewrite = buildRewrite(quant, negQuant, ProofConstants.RW_FORALL_EXISTS);
-		rewrite = congruence(rewrite, new Term[] { exists(quant, negNewBody) });
-		return rewrite;
 	}
 
 	@Override
@@ -305,10 +234,46 @@ public class ProofTracker implements IProofTracker{
 		final Theory theory = formula.getTheory();
 		final Term subProof = getProof(formula);
 		final Term body = getProvedTerm(formula);
-		final Term quantified = theory.annotatedTerm(new Annotation[] { new Annotation(":quoted", null) },
-				theory.forall(vars, body));
-		final Annotation[] annot = new Annotation[] { new Annotation(":vars", vars) };
-		final Term proof = theory.term(ProofConstants.FN_ALLINTRO, theory.annotatedTerm(annot, subProof));
+		final Term quantified = theory.forall(vars, body);
+		final Annotation[] annot = new Annotation[] { new Annotation(":body", body) };
+		final Term proof = theory.term(ProofConstants.FN_ALLINTRO,
+				theory.lambda(vars, theory.annotatedTerm(annot, subProof)));
 		return buildProof(proof, quantified);
+	}
+
+	private boolean equalModNotNot(Term t1, Term t2) {
+		if (t1 == t2) {
+			return true;
+		}
+		boolean negated = false;
+		while (t1 instanceof ApplicationTerm && ((ApplicationTerm) t1).getFunction().getName() == SMTLIBConstants.NOT) {
+			negated = !negated;
+			t1 = ((ApplicationTerm) t1).getParameters()[0];
+		}
+		while (t2 instanceof ApplicationTerm && ((ApplicationTerm) t2).getFunction().getName() == SMTLIBConstants.NOT) {
+			negated = !negated;
+			t2 = ((ApplicationTerm) t2).getParameters()[0];
+		}
+		return t1 == t2 && !negated;
+	}
+
+	@Override
+	public Term resolution(final Term asserted, final Term tautology) {
+		final Theory theory = tautology.getTheory();
+		final ApplicationTerm tautApp = (ApplicationTerm) getProvedTerm(tautology);
+		assert tautApp.getFunction().getName() == SMTLIBConstants.OR;
+		final Term[] clause = tautApp.getParameters();
+		final Annotation[] pivotAnnot = new Annotation[] { new Annotation(":pivot", clause[0]) };
+		final Term proof = theory.term(ProofConstants.FN_RES, getProof(asserted),
+				theory.annotatedTerm(pivotAnnot, getProof(tautology)));
+		assert equalModNotNot(theory.term("not", getProvedTerm(asserted)), clause[0]);
+		assert clause.length >= 2;
+		if (clause.length == 2) {
+			return buildProof(proof, clause[1]);
+		} else {
+			final Term[] stripped = new Term[clause.length - 1];
+			System.arraycopy(clause, 1, stripped, 0, stripped.length);
+			return buildProof(proof, theory.term("or", stripped));
+		}
 	}
 }
