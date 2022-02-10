@@ -228,6 +228,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends Basi
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 
 		if (mLetterAbstraction != null) {
+			mPOR.reportStatistics();
 			mAbstractionLevel = mLetterAbstraction.refine(mAbstractionLevel, mRefinementResult);
 			mPOR.setAbstractionLevel(mAbstractionLevel);
 		}
