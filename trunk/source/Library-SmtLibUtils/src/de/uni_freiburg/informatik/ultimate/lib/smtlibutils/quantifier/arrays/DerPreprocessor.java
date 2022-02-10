@@ -78,6 +78,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * universal quantification) of the form k'=k that have to be merged to the
  * operand term of the quantifier elimination.
  *
+ * TODO 20220210 Matthias: Take also care of cases like
+ * {@link QuantifierEliminationTodos#selfUpdateAraucariaSimplified}
+ * Idea: Introduce auxiliary variable for subterm, use subterm of dimension
+ * lower than arr to avoid nontermination.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

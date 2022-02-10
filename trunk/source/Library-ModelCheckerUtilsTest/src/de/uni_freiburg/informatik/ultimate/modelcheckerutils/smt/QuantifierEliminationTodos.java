@@ -335,6 +335,30 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void selfUpdateAraucaria() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "v_ArrVal_398", "v_ArrVal_400", "ULTIMATE.start_main_~l~0#1.base"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_#memory_$Pointer$.base_58"),
+			};
+		final String formulaAsString = "(forall ((v_ArrVal_391 (Array Int Int))) (let ((.cse0 (select (store (store v_ArrVal_391 8 v_ArrVal_398) 4 v_ArrVal_400) 0))) (or (not (= v_ArrVal_391 (store (select |v_#memory_$Pointer$.base_58| .cse0) 0 |ULTIMATE.start_main_~l~0#1.base|))) (not (= (select |#valid| .cse0) 0)))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void selfUpdateAraucariaSimplified() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "v1", "v2", "x"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (= a (store (select mem (select (store (store a 8 v1) 4 v2) 0)) 0 x)))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 
 
