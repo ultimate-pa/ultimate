@@ -81,11 +81,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 /**
@@ -130,6 +132,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		case NONE:
 			mLetterAbstraction = null;
 			break;
+		case VARIABLES_LOCAL:
+			mLetterAbstraction = null;
 		default:
 			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
 		}
@@ -206,8 +210,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		// todo: Diesem Kommentar in eine Methode verwandeln. Menge der benutzen Prädikaten berechnen.
 		final IHoareTripleChecker htc = getHoareTripleChecker();
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
-				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia;
+		if (mPref.getPorAbstraction() == AbstractionType.VARIABLES_LOCAL) {
+			ia = enhanceInterpolantAutomaton(InterpolantAutomatonEnhancement.NONE, predicateUnifier, htc,
+					mInterpolAutomaton);
+		} else {
+			ia = enhanceInterpolantAutomaton(mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc,
+					mInterpolAutomaton);
+		}
 		if (ia instanceof AbstractInterpolantAutomaton<?>) {
 			final AbstractInterpolantAutomaton<L> aia = (AbstractInterpolantAutomaton<L>) ia;
 			aia.switchToReadonlyMode();

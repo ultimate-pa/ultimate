@@ -81,7 +81,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	public enum AbstractionType {
-		NONE, VARIABLES_GLOBAL
+		NONE, VARIABLES_GLOBAL, VARIABLES_LOCAL
 	}
 
 	private final IUltimateServiceProvider mServices;

@@ -175,4 +175,15 @@ public class VariableAbstraction<L extends IAction>
 		constrainingVars.addAll(current);
 		return constrainingVars;
 	}
+
+	public Map<L, Set<IProgramVar>> refineSpecific(final Map<L, Set<IProgramVar>> current,
+			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
+		for (final QualifiedTracePredicates qtp : refinement.getUsedTracePredicates()) {
+			qtp.getTracePredicates().getPostcondition().getVars();
+			qtp.getTracePredicates().getPredicates();
+			// So how exactly are these things stored?
+		}
+
+		return null;
+	}
 }
