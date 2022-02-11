@@ -123,12 +123,11 @@ public class FlatSymbolTable {
 		mMultiparseInformation = mst;
 		mScopeCounter = 1;
 		mCHookSkip = n -> {
-			if (n instanceof IASTExpression && n.getParent() instanceof IASTSwitchStatement) {
-				if (((IASTSwitchStatement) n.getParent()).getControllerExpression() == n) {
-					// the controller expression is not part of the scope of the switch
-					// so the scope holder for the controller expression is the parent of the switch...
-					return n.getParent().getParent();
-				}
+			if (n instanceof IASTExpression && n.getParent() instanceof IASTSwitchStatement
+					&& ((IASTSwitchStatement) n.getParent()).getControllerExpression() == n) {
+				// the controller expression is not part of the scope of the switch
+				// so the scope holder for the controller expression is the parent of the switch...
+				return n.getParent().getParent();
 			}
 			return n;
 		};
