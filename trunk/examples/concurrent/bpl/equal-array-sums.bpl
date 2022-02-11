@@ -33,9 +33,7 @@ modifies m, x;
 
   i := 0;
   while (i < n) {
-    call lock();
     x := x + A[i];
-    call unlock();
     i := i + 1;
   }
 }
@@ -47,21 +45,7 @@ modifies m, y;
 
   j := 0;
   while (j < n) {
-    call lock();
     y := y + A[j];
-    call unlock();
     j := j + 1;
   }
-}
-
-procedure lock()
-modifies m;
-{
-  atomic { assume m == false; m := true; }
-}
-
-procedure unlock()
-modifies m;
-{
-  m := false;
 }
