@@ -172,18 +172,18 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname;
 		final BitabsTranslation bitAbs =
-				new BitabsTranslation(mTypeSizes, mSettings, mTypeHandler, mSymboltable, mFunctionDeclarations);
+				new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
 
-			return bitAbs.abstractAnd(loc, op, left, typeLeft, right, typeRight, hook);
+			return bitAbs.abstractAnd(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			return bitAbs.abstractOr(loc, op, left, typeLeft, right, typeRight, hook);
+			return bitAbs.abstractOr(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			return bitAbs.abstractXor(loc, op, left, typeLeft, right, typeRight, hook);
+			return bitAbs.abstractXor(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
 			final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
@@ -195,7 +195,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			return bitAbs.abstractShiftRight(loc, op, left, typeLeft, right, typeRight, hook);
+			return bitAbs.abstractShiftRight(loc, left, typeLeft, right, typeRight, hook);
 		default:
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -241,7 +241,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
 		// for bitwise complement translation
 		final BitabsTranslation bitAbs =
-				new BitabsTranslation(mTypeSizes, mSettings, mTypeHandler, mSymboltable, mFunctionDeclarations);
+				new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
 		return bitAbs.abstractCompl(loc, expr, type);
 	}
 
@@ -970,8 +970,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final List<Declaration> declarations, final INameHandler nameHandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
 			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
-		return new BitabsTranslation(mTypeSizes, mSettings, mTypeHandler, mSymboltable, mFunctionDeclarations)
-				.abstractAssign(chandler, procedureManager, declarations, this, nameHandler, auxVarInfoBuilder,
-						exprResultTransformer, main, locationFactory, node);
+		return new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations).abstractAssign(
+				chandler, procedureManager, declarations, this, nameHandler, auxVarInfoBuilder, exprResultTransformer,
+				main, locationFactory, node);
 	}
 }
