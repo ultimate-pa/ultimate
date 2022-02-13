@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	private static final boolean OPTIMIZE_DEAD_ENDS = true;
 	private static final boolean OPTIMIZE_FORK_JOIN = true;
+	private static final boolean OVERAPPROXIMATE_WRWC = true;
 
 	private final IMLPredicate mOldState;
 	private final Map<String, DependencyRank> mThreads;
@@ -72,6 +73,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	private final L mLastStatement;
 	private final Set<LeftRightSplit<L>> mLeftRightSplits;
 	private final Map<IProgramVar, ConstantTerm> mThreadValues;
+	private final Set<LeftRightSplit<L>> mTemplates;
 
 	/**
 	 * Constructs a new McrState for the initial state.
@@ -87,6 +89,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		mLastStatement = null;
 		mLeftRightSplits = Collections.emptySet();
 		mThreadValues = Collections.emptyMap();
+		mTemplates = Set.of(new LeftRightSplit<>());
 	}
 
 	/**
@@ -106,19 +109,21 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	 *            The set of left-right splits.
 	 * @param threadValues
 	 *            The values assigned to each thread variable.
+	 * @param templates
+	 *            A set of template left-right splits.
 	 */
 	public McrState(final IMLPredicate oldState, final Map<String, DependencyRank> threads,
 			final Map<IProgramVar, DependencyRank> variables, final Map<IProgramVar, L> lastWriteSt,
 			final L lastStatement, final Set<LeftRightSplit<L>> leftRightSplits,
-			final Map<IProgramVar, ConstantTerm> threadValues) {
+			final Map<IProgramVar, ConstantTerm> threadValues, final Set<LeftRightSplit<L>> templates) {
 		mOldState = oldState;
 		mThreads = threads;
 		mVariables = variables;
 		mLastWriteSt = lastWriteSt;
 		mLastStatement = lastStatement;
 		mLeftRightSplits = leftRightSplits;
-
 		mThreadValues = threadValues;
+		mTemplates = templates;
 	}
 
 	@Override
@@ -283,11 +288,12 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			}
 		}
 
-		if (mLastStatement != null) {
+		if (mLastStatement != null && !dependentOnLast) {
 			boolean done = false;
 
-			for (final IProgramVar var : DataStructureUtils
-					.intersection(mLastStatement.getTransformula().getInVars().keySet(), writes)) {
+			final Set<IProgramVar> rwIntersection =
+					DataStructureUtils.intersection(mLastStatement.getTransformula().getInVars().keySet(), writes);
+			for (final IProgramVar var : rwIntersection) {
 				// RWC
 				final DependencyRank dr = mVariables.get(var);
 				if (dr != null && dr.compareTo(deprank) <= 0) {
@@ -298,17 +304,21 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			}
 
 			if (!done) {
-				for (final IProgramVar var : DataStructureUtils
-						.intersection(mLastStatement.getTransformula().getInVars().keySet(), writes)) {
-					// TODO: WRWC
+				if (!rwIntersection.isEmpty()) {
+					if (!OVERAPPROXIMATE_WRWC) {
+						for (final LeftRightSplit<L> template : mTemplates) {
+							final ReducingLeftRightSplit<L> split = new ReducingLeftRightSplit<>(template, ranks);
+							split.moveLast(Direction.RIGHT);
+							addStatementToSplit(split, transition, Direction.LEFT, newLeftRightSplits, false);
+						}
+					}
+
 					deprank = deprank.getMax(lastStDeprank.add(rank));
 					dependentOnLast = true;
 				}
-			}
 
-			if (!done) {
-				for (final IProgramVar var : DataStructureUtils
-						.intersection(mLastStatement.getTransformula().getOutVars().keySet(), writes)) {
+				if (DataStructureUtils.haveNonEmptyIntersection(mLastStatement.getTransformula().getOutVars().keySet(),
+						writes)) {
 					if (lastStDeprank.compareTo(deprank) > 0) {
 						deprank = deprank.getMax(lastStDeprank.add(rank));
 						final LeftRightSplit<L> split = new LeftRightSplit<>();
@@ -345,8 +355,36 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			newLastWriteSt.put(var, transition);
 		}
 
+		Set<LeftRightSplit<L>> newTemplates = null;
+		if (!OVERAPPROXIMATE_WRWC) {
+			newTemplates = new HashSet<>();
+
+			for (final LeftRightSplit<L> template : mTemplates) {
+				final LeftRightSplit<L> copy = new LeftRightSplit<>(template);
+				addStatementToSplit(copy, transition, Direction.MIDDLE, newTemplates, false);
+			}
+		}
+
 		return new McrState<>(successor, newThreads, newVariables, newLastWriteSt, transition, newLeftRightSplits,
-				threadValues);
+				threadValues, newTemplates);
+	}
+
+	private <SPLIT extends LeftRightSplit<L>> boolean addStatementToSplit(final SPLIT split, final L letter,
+			final Direction direction, final Set<SPLIT> set, final boolean optimizeDeadEnds) {
+		final SPLIT duplicate = (SPLIT) split.addStatement(letter, direction);
+		if (!split.containsContradiction()) {
+			if (optimizeDeadEnds && split.willNeverContradict()) {
+				return false;
+			}
+			set.add(split);
+		}
+		if (duplicate != null && !duplicate.containsContradiction()) {
+			if (optimizeDeadEnds && duplicate.willNeverContradict()) {
+				return false;
+			}
+			set.add(split);
+		}
+		return true;
 	}
 
 	/**
@@ -361,7 +399,8 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mLastStatement, mLastWriteSt, mLeftRightSplits, mOldState, mThreads, mVariables);
+		return Objects.hash(mLastStatement, mLastWriteSt, mLeftRightSplits, mOldState, mThreads, mVariables,
+				mTemplates);
 	}
 
 	@Override
@@ -379,7 +418,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		return Objects.equals(mLastStatement, other.mLastStatement) && Objects.equals(mLastWriteSt, other.mLastWriteSt)
 				&& Objects.equals(mLeftRightSplits, other.mLeftRightSplits)
 				&& Objects.equals(mOldState, other.mOldState) && Objects.equals(mThreads, other.mThreads)
-				&& Objects.equals(mVariables, other.mVariables);
+				&& Objects.equals(mVariables, other.mVariables) && Objects.equals(mTemplates, other.mTemplates);
 	}
 
 	@Override
