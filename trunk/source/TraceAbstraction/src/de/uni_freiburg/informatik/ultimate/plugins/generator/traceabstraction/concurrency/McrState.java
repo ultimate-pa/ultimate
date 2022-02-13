@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
@@ -215,6 +216,11 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		return true;
 	}
 
+	private Set<IProgramVar> getWrites(final L transition) {
+		return TransFormulaUtils.computeAssignedVars(transition.getTransformula().getInVars(),
+				transition.getTransformula().getOutVars());
+	}
+
 	/**
 	 * Calculate the McrState after executing the given statement.
 	 *
@@ -228,7 +234,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	public McrState<L> getNextState(final L transition, final IMLPredicate successor, final Map<L, Integer> ranks) {
 		final UnmodifiableTransFormula tf = transition.getTransformula();
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
-		final Set<IProgramVar> writes = tf.getOutVars().keySet();
+		final Set<IProgramVar> writes = getWrites(transition);
 
 		Map<IProgramVar, ConstantTerm> threadValues = mThreadValues;
 		if (OPTIMIZE_FORK_JOIN) {
@@ -266,8 +272,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 
 		boolean dependentOnLast = mLastStatement == null
 				|| DataStructureUtils.haveNonEmptyIntersection(getThreadId(transition), getThreadId(mLastStatement))
-				|| DataStructureUtils.haveNonEmptyIntersection(reads,
-						mLastStatement.getTransformula().getOutVars().keySet());
+				|| DataStructureUtils.haveNonEmptyIntersection(reads, getWrites(mLastStatement));
 
 		final Set<LeftRightSplit<L>> newLeftRightSplits = new HashSet<>();
 
@@ -312,13 +317,11 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 							addStatementToSplit(split, transition, Direction.LEFT, newLeftRightSplits, false);
 						}
 					}
-
 					deprank = deprank.getMax(lastStDeprank.add(rank));
 					dependentOnLast = true;
 				}
 
-				if (DataStructureUtils.haveNonEmptyIntersection(mLastStatement.getTransformula().getOutVars().keySet(),
-						writes)) {
+				if (DataStructureUtils.haveNonEmptyIntersection(getWrites(mLastStatement), writes)) {
 					if (lastStDeprank.compareTo(deprank) > 0) {
 						deprank = deprank.getMax(lastStDeprank.add(rank));
 						final LeftRightSplit<L> split = new LeftRightSplit<>();
