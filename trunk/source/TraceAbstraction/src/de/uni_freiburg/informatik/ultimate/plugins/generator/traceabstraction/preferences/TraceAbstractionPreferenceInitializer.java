@@ -99,6 +99,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
+	public static final String LABEL_MCR_OPTIMIZE_FORK_JOIN = "MCR: Optimize fork and join";
+	private static final boolean DEF_MCR_OPTIMIZE_FORK_JOIN = true;
+
+	public static final String LABEL_MCR_OVERAPPROXIMATE_WRWC = "MCR: Overapproximate write-read-write conflicts";
+	private static final boolean DEF_MCR_OVERAPPROXIMATE_WRWC = true;
+
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
 	private static final boolean DEF_COND_POR = true;
 
@@ -506,6 +512,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PetriNetLbe.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
+				new UltimatePreferenceItem<>(LABEL_MCR_OPTIMIZE_FORK_JOIN, DEF_MCR_OPTIMIZE_FORK_JOIN,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MCR_OVERAPPROXIMATE_WRWC, DEF_MCR_OVERAPPROXIMATE_WRWC,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SYMM_POR, DEF_SYMM_POR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,

@@ -51,7 +51,8 @@ public interface IMcrState<L extends IIcfgTransition<?>> extends IMLPredicate {
 	 *            A map from transitions to ranks.
 	 * @return A new state for the representative automaton, or null if the transition should be omitted.
 	 */
-	IMcrState<L> getNextState(L transition, IMLPredicate newState, Map<L, Integer> ranks);
+	IMcrState<L> getNextState(L transition, IMLPredicate newState, Map<L, Integer> ranks, boolean optimizeForkJoin,
+			boolean overapproximateWrwc);
 
 	/**
 	 * Gets the corresponding state in the original automaton.

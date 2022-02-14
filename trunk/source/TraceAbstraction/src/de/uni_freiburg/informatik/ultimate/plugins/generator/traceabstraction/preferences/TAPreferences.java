@@ -90,6 +90,8 @@ public final class TAPreferences {
 	private final boolean mOverrideInterpolantAutomaton;
 	private final McrInterpolantMethod mMcrInterpolantMethod;
 	private final AcceleratedInterpolationLoopAccelerationTechnique mLoopAccelerationTechnique;
+	private final boolean mMcrOptimizeForkJoin;
+	private final boolean mMcrOverapproximateWrwc;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -192,6 +194,9 @@ public final class TAPreferences {
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
 						AcceleratedInterpolationLoopAccelerationTechnique.class);
 
+		mMcrOptimizeForkJoin = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MCR_OPTIMIZE_FORK_JOIN);
+		mMcrOverapproximateWrwc =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MCR_OVERAPPROXIMATE_WRWC);
 	}
 
 	/**
@@ -489,5 +494,13 @@ public final class TAPreferences {
 
 	public McrInterpolantMethod getMcrInterpolantMethod() {
 		return mMcrInterpolantMethod;
+	}
+
+	public boolean optimizeForkJoinForMcr() {
+		return mMcrOptimizeForkJoin;
+	}
+
+	public boolean overapproximateWrwcForMcr() {
+		return mMcrOverapproximateWrwc;
 	}
 }

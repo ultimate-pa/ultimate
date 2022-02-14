@@ -64,8 +64,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	private static final boolean OPTIMIZE_DEAD_ENDS = true;
-	private static final boolean OPTIMIZE_FORK_JOIN = true;
-	private static final boolean OVERAPPROXIMATE_WRWC = true;
 
 	private final IMLPredicate mOldState;
 	private final Map<String, DependencyRank> mThreads;
@@ -231,13 +229,14 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	 * @return The new McrState.
 	 */
 	@Override
-	public McrState<L> getNextState(final L transition, final IMLPredicate successor, final Map<L, Integer> ranks) {
+	public McrState<L> getNextState(final L transition, final IMLPredicate successor, final Map<L, Integer> ranks,
+			final boolean optimizeForkJoin, final boolean overapproximateWrwc) {
 		final UnmodifiableTransFormula tf = transition.getTransformula();
 		final Set<IProgramVar> reads = tf.getInVars().keySet();
 		final Set<IProgramVar> writes = getWrites(transition);
 
 		Map<IProgramVar, ConstantTerm> threadValues = mThreadValues;
-		if (OPTIMIZE_FORK_JOIN) {
+		if (optimizeForkJoin) {
 			if (transition instanceof IcfgForkThreadOtherTransition) {
 				threadValues = new HashMap<>(threadValues);
 				handleFork(transition, threadValues);
@@ -310,7 +309,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 
 			if (!done) {
 				if (!rwIntersection.isEmpty()) {
-					if (!OVERAPPROXIMATE_WRWC) {
+					if (!overapproximateWrwc) {
 						for (final LeftRightSplit<L> template : mTemplates) {
 							final ReducingLeftRightSplit<L> split = new ReducingLeftRightSplit<>(template, ranks);
 							split.moveLast(Direction.RIGHT);
@@ -359,7 +358,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		}
 
 		Set<LeftRightSplit<L>> newTemplates = null;
-		if (!OVERAPPROXIMATE_WRWC) {
+		if (!overapproximateWrwc) {
 			newTemplates = new HashSet<>();
 
 			for (final LeftRightSplit<L> template : mTemplates) {

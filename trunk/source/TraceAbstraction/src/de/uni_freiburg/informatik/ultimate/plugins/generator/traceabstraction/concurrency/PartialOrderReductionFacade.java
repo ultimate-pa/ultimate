@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -95,7 +96,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
-			final IIndependenceRelation<IPredicate, L> independence) {
+			final IIndependenceRelation<IPredicate, L> independence, final TAPreferences preferences) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 		mMode = mode;
@@ -105,7 +106,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mPersistent = createPersistentSets(icfg, errorLocs);
 		mDeadEndStore = createDeadEndStore();
 		mPredicateFactory = predicateFactory;
-		mMcrFactory = createMcrFactory();
+		mMcrFactory = createMcrFactory(preferences);
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -121,12 +122,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return new ISleepSetStateFactory.NoUnrolling<>();
 	}
 
-	private McrStateFactory<L> createMcrFactory() {
+	private McrStateFactory<L> createMcrFactory(final TAPreferences preferences) {
 		if (mMode != PartialOrderMode.MCR_WITH_DEPRANKS && mMode != PartialOrderMode.MCR_WITHOUT_DEPRANKS) {
 			return null;
 		}
 		final McrStateFactory<L> factory =
-				new McrStateFactory<>(mPredicateFactory, mMode == PartialOrderMode.MCR_WITH_DEPRANKS);
+				new McrStateFactory<>(mPredicateFactory, mMode == PartialOrderMode.MCR_WITH_DEPRANKS,
+						preferences.optimizeForkJoinForMcr(), preferences.overapproximateWrwcForMcr());
 		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, state -> state);
 		return factory;
 	}

@@ -47,6 +47,8 @@ public class McrStateFactory<L extends IIcfgTransition<?>> implements IEmptyStac
 	private final IPredicate mEmptyStack;
 	private final boolean mUseDependencyRanks;
 	private final HashMap<IMcrState<L>, IMcrState<L>> mStates;
+	private final boolean mOptimizeForkJoin;
+	private final boolean mOverapproximateWrwc;
 
 	/**
 	 * Creates the factory.
@@ -56,10 +58,13 @@ public class McrStateFactory<L extends IIcfgTransition<?>> implements IEmptyStac
 	 * @param useDependencyRanks
 	 *            true if the dependency ranks should be used.
 	 */
-	public McrStateFactory(final PredicateFactory factory, final boolean useDependencyRanks) {
+	public McrStateFactory(final PredicateFactory factory, final boolean useDependencyRanks,
+			final boolean optimizeForkJoin, final boolean overapproximateWrwc) {
 		mEmptyStack = factory.newEmptyStackPredicate();
 		mUseDependencyRanks = useDependencyRanks;
 		mStates = new HashMap<>();
+		mOptimizeForkJoin = optimizeForkJoin;
+		mOverapproximateWrwc = overapproximateWrwc;
 	}
 
 	/**
@@ -102,7 +107,8 @@ public class McrStateFactory<L extends IIcfgTransition<?>> implements IEmptyStac
 	 */
 	public IMcrState<L> createNextState(final IMcrState<L> state, final L transition, final IMLPredicate successorState,
 			final Map<L, Integer> ranks) {
-		final IMcrState<L> newState = state.getNextState(transition, successorState, ranks);
+		final IMcrState<L> newState =
+				state.getNextState(transition, successorState, ranks, mOptimizeForkJoin, mOverapproximateWrwc);
 		if (newState == null) {
 			return null;
 		}

@@ -457,9 +457,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			final IIndependenceRelation<IPredicate, L> indep =
 					IndependenceBuilder.<L> semantic(getServices(), mCsToolkit.getManagedScript(), false, false)
 							.withSyntacticCheck().cached().threadSeparated().build();
-			final PartialOrderReductionFacade<L> por =
-					new PartialOrderReductionFacade<>(getServices(), mPredicateFactory, mIcfg, mErrorLocs,
-							mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), indep);
+			final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(getServices(),
+					mPredicateFactory, mIcfg, mErrorLocs, mPref.getPartialOrderMode(), mPref.getDfsOrderType(),
+					mPref.getDfsOrderSeed(), indep, mPref);
 
 			// actually apply POR to automaton
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =

@@ -119,7 +119,8 @@ public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	 * @return The new McrState.
 	 */
 	@Override
-	public McrState2<L> getNextState(final L transition, final IMLPredicate successor, final Map<L, Integer> ranks) {
+	public McrState2<L> getNextState(final L transition, final IMLPredicate successor, final Map<L, Integer> ranks,
+			final boolean optimizeForkJoin, final boolean overapproximateWrwc) {
 		final Set<LeftRightSplit<L>> newTemplates = new HashSet<>();
 		final Set<ReducingLeftRightSplit<L>> newSplits = new HashSet<>();
 
