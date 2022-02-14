@@ -165,23 +165,35 @@
   <!-- === Maximal Causality Reduction integrated in TAR                                                           === -->
 	<!-- =============================================================================================================== -->
 
-	<rundefinition name="MCR_with_DEPRANKS_EAGER">
+	<!--rundefinition name="MCR_with_DEPRANKS_EAGER">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<rundefinition name="MCR_with_DEPRANKS_LAZY">
+	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy-NoForkJoinOpt-wrwc.epf</option>
+	</rundefinition>
+
+	<rundefinition name="MCR_with_DEPRANKS_LAZY+OverapproxWrW">
+	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy-NoForkJoinOpt.epf</option>
+	</rundefinition>
+
+	<rundefinition name="MCR_with_DEPRANKS_LAZY+ForkJoinOpt">
+	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy-wrwc.epf</option>
+	</rundefinition>
+
+	<rundefinition name="MCR_with_DEPRANKS_LAZY+ForkJoinOpt+OverapproxWrW">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy.epf</option>
 	</rundefinition>
 
-	<rundefinition name="MCR_with_DEPRANKS_BASICCEGAR">
+	<!--rundefinition name="MCR_with_DEPRANKS_BASICCEGAR">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-BasicCegarLoop.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="MCR_only_LRSPLITS">
+	<!--rundefinition name="MCR_only_LRSPLITS">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithoutDepranks.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="MCR_only_LRSPLITS_LAZY">
+	<rundefinition name="MCR_only_LRSPLITS_LAZY+ForkJoinOpt">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithoutDepranks-Lazy.epf</option>
 	</rundefinition>
 
