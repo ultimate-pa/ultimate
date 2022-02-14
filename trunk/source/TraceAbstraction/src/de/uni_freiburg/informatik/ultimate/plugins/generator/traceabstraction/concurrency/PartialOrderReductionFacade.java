@@ -31,7 +31,6 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -41,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -89,6 +88,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
 	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 	private StateSplitter<IPredicate> mStateSplitter;
+	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 	private final PredicateFactory mPredicateFactory;
 	private final McrStateFactory<L> mMcrFactory;
 
@@ -103,6 +103,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mIndependence = independence;
 		mPersistent = createPersistentSets(icfg, errorLocs);
+		mDeadEndStore = createDeadEndStore();
 		mPredicateFactory = predicateFactory;
 		mMcrFactory = createMcrFactory();
 	}
@@ -251,23 +252,15 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	/**
-	 * Creates a {@link DeadEndOptimizingSearchVisitor} suitable for use with this instance.
-	 *
-	 * @param <V>
-	 *            The type of underlying visitor
-	 * @param createUnderlying
-	 *            A method to create the underlying visitor. See
-	 *            {@link DeadEndOptimizingSearchVisitor#DeadEndOptimizingSearchVisitor(Supplier)} for details.
-	 * @return the new visitor
-	 */
-	public <V extends IDfsVisitor<L, IPredicate>> DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, V>
-			createDeadEndVisitor(final Supplier<V> createUnderlying) {
+	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore() {
 		if (mStateSplitter == null) {
-			return new DeadEndOptimizingSearchVisitor<>(createUnderlying);
+			return new IDeadEndStore.SimpleDeadEndStore<>();
 		}
-		return new DeadEndOptimizingSearchVisitor<>(createUnderlying, mStateSplitter::getOriginal,
-				mStateSplitter::getExtraInfo);
+		return new IDeadEndStore.ProductDeadEndStore<>(mStateSplitter::getOriginal, mStateSplitter::getExtraInfo);
+	}
+
+	public IDeadEndStore<IPredicate, IPredicate> getDeadEndStore() {
+		return mDeadEndStore;
 	}
 
 	/**

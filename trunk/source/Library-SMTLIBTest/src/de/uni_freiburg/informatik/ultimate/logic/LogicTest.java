@@ -71,7 +71,7 @@ public class LogicTest {
 		Assert.assertEquals("(+ x y i j)", sum.toString());
 		Assert.assertEquals("(+ x i y)", sum1.toString());
 		Assert.assertEquals("(+ i j x)", sum2.toString());
-		Assert.assertEquals("(* (/ (- 3) 7) i)", mul.toString());
+		Assert.assertEquals("(* (/ (- 3.0) 7.0) i)", mul.toString());
 	}
 
 	private Sort bitvec(final Theory theory, final int len) {

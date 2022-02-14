@@ -94,7 +94,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory;
-	private final DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, IDfsVisitor<L, IPredicate>> mVisitor;
 	private final PartialOrderReductionFacade<L> mPOR;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
@@ -112,7 +111,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), independenceRelation);
-		mVisitor = mPOR.createDeadEndVisitor(this::createVisitor);
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
@@ -157,10 +155,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		switchToOnDemandConstructionMode();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		mVisitor.reset();
+		final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 		try {
-			mPOR.apply(abstraction, mVisitor);
-			mCounterexample = getCounterexample();
+			mPOR.apply(abstraction, visitor);
+			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
 			assert mCounterexample == null || accepts(getServices(), abstraction, mCounterexample.getWord(),
@@ -180,9 +178,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		super.finish();
 	}
 
-	private IRun<L, IPredicate> getCounterexample() {
-		IDfsVisitor<L, IPredicate> visitor = mVisitor.getUnderlying();
-		if (visitor instanceof WrapperVisitor<?, ?, ?>) {
+	private IRun<L, IPredicate> getCounterexample(IDfsVisitor<L, IPredicate> visitor) {
+		while (visitor instanceof WrapperVisitor<?, ?, ?>) {
 			visitor = ((WrapperVisitor<L, IPredicate, IDfsVisitor<L, IPredicate>>) visitor).getBaseVisitor();
 		}
 		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
@@ -196,6 +193,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		IDfsVisitor<L, IPredicate> visitor;
 		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
+			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
 			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
 		} else {
 			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
@@ -210,7 +208,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 							(SleepSetStateFactoryForRefinement<L>) mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
 		}
-		return visitor;
+		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore());
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
@@ -351,7 +349,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 						.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
 			}
 
-			mVisitor.copyDeadEndInformation(state1, newState);
+			mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
 			return newState;
 		}
 	}

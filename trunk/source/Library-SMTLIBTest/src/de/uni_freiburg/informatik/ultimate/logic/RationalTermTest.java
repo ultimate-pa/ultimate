@@ -89,16 +89,16 @@ public final class RationalTermTest {
 		rat = Rational.valueOf(0, 2);
 		Assert.assertSame(term, rat.toTerm(realSort));
 
-		term = script.term("/", script.numeral("1"), script.numeral("2"));
+		term = script.term("/", script.decimal("1.0"), script.decimal("2.0"));
 		rat = Rational.valueOf(1, 2);
 		Assert.assertSame(term, rat.toTerm(realSort));
-		term = script.term("/", script.term("-", script.numeral("1")), script.numeral("2"));
+		term = script.term("/", script.term("-", script.decimal("1.0")), script.decimal("2.0"));
 		rat = Rational.valueOf(-1, 2);
 		Assert.assertSame(term, rat.toTerm(realSort));
-		term = script.term("/", script.numeral("7"), script.numeral("5"));
+		term = script.term("/", script.decimal("7.0"), script.decimal("5.0"));
 		rat = Rational.valueOf(7, 5);
 		Assert.assertSame(term, rat.toTerm(realSort));
-		term = script.term("/", script.term("-", script.numeral("41")), script.numeral("107"));
+		term = script.term("/", script.term("-", script.decimal("41.0")), script.decimal("107.0"));
 		rat = Rational.valueOf(123, -321);
 		Assert.assertSame(term, rat.toTerm(realSort));
 
@@ -109,6 +109,10 @@ public final class RationalTermTest {
 		Assert.assertEquals(term.toString(), "(- 0.0)");
 		term = script.term("-", script.numeral("2"));
 		Assert.assertEquals(term.toString(), "(- 2)");
+		term = script.term("/", script.numeral("1"), script.numeral("2"));
+		Assert.assertEquals(term.toString(), "(/ 1 2)");
+		term = script.term("/", script.term("-", script.numeral("1")), script.numeral("2"));
+		Assert.assertEquals(term.toString(), "(/ (- 1) 2)");
 		term = script.term("/", script.numeral("1"), script.term("-", script.numeral("2")));
 		Assert.assertEquals(term.toString(), "(/ 1 (- 2))");
 		term = script.term("/", script.numeral("3"), script.numeral("9"));
@@ -199,17 +203,17 @@ public final class RationalTermTest {
 		Assert.assertEquals(rat.toTerm(realSort).toString(), "0.0");
 
 		rat = Rational.valueOf(1, 2);
-		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ 1 2)");
+		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ 1.0 2.0)");
 		rat = Rational.valueOf(-1, 2);
-		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 1) 2)");
+		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 1.0) 2.0)");
 		rat = Rational.valueOf(1, -2);
-		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 1) 2)");
+		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 1.0) 2.0)");
 		rat = Rational.valueOf(3, -9);
-		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 1) 3)");
+		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 1.0) 3.0)");
 		rat = Rational.valueOf(7, 5);
-		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ 7 5)");
+		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ 7.0 5.0)");
 		rat = Rational.valueOf(123, -321);
-		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 41) 107)");
+		Assert.assertEquals(rat.toTerm(realSort).toString(), "(/ (- 41.0) 107.0)");
 	}
 
 	/**

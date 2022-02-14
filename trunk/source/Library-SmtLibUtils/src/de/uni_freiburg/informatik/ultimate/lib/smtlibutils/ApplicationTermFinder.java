@@ -33,6 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -41,11 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Find all subterms that are application terms with FunctionSymbol mName. The
- * boolean flag mOnlyOutermost defines if only the outermost occurrence is
- * returned (mOnlyOutermost == true) of if each occurrence is returned
- * (mOnlyOutermost == false) and hence the result may also contain terms that
- * are subterms of other result.
+ * Find all subterms that are application terms with FunctionSymbol mName. The boolean flag mOnlyOutermost defines if
+ * only the outermost occurrence is returned (mOnlyOutermost == true) of if each occurrence is returned (mOnlyOutermost
+ * == false) and hence the result may also contain terms that are subterms of other result.
  *
  * @deprecated Use {@link SmtUtils#extractApplicationTerms} instead.
  *
@@ -63,7 +62,6 @@ public class ApplicationTermFinder extends NonRecursive {
 	}
 
 	public ApplicationTermFinder(final Set<String> functionSymbolNames, final boolean onlyOutermost) {
-		super();
 		mFunctionSymbolNames = functionSymbolNames;
 		mOnlyOutermost = onlyOutermost;
 	}
@@ -129,6 +127,11 @@ public class ApplicationTermFinder extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final MatchTerm term) {
 			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

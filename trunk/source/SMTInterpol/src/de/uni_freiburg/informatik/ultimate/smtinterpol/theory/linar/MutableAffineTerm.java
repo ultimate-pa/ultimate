@@ -220,9 +220,7 @@ public class MutableAffineTerm {
 				final FunctionSymbol toReal = t.getFunction("to_real", intSort);
 				convme = t.term(toReal, convme);
 			}
-			if (me.getValue().equals(Rational.MONE)) {
-				convme = t.term(negate, convme);
-			} else if (!me.getValue().equals(Rational.ONE)) {
+			if (!me.getValue().equals(Rational.ONE)) {
 				final Term convfac = me.getValue().toTerm(numSort);
 				convme = t.term(times, convfac, convme);
 			}

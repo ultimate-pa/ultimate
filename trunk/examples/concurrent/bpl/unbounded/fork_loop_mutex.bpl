@@ -13,9 +13,9 @@ procedure thread() returns()
 modifies c;
 {
   while (*) {
-	c := c + 1;
-	assert c != 0;
-	c := c - 1;
+    c := c + 1;
+    assert c != 0;
+    c := c - 1;
   }
 }
 

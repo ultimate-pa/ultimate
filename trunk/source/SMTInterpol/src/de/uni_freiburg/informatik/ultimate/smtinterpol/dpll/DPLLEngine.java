@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.CuckooHashSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -447,7 +447,9 @@ public class DPLLEngine {
 		mDPLLStack.add(literal);
 		atom.mDecideLevel = mCurrentDecideLevel;
 		atom.mDecideStatus = literal;
-		atom.mLastStatus = atom.mDecideStatus;
+		if (!atom.preferredStatusIsLocked()) {
+			atom.mLastStatus = atom.mDecideStatus;
+		}
 		mAtoms.remove(atom);
 		assert !Config.EXPENSIVE_ASSERTS || checkDecideLevel();
 		mPendingWatcherList.moveAll(literal.negate().mWatchers);
@@ -1094,7 +1096,9 @@ public class DPLLEngine {
 					final Double nscore = scores.get(atom.negate());
 					final double Pscore = pscore == null ? 0 : pscore;
 					final double Nscore = nscore == null ? 0 : nscore;
-					atom.setPreferredStatus(Pscore > Nscore ? atom : atom.negate());
+					if (!atom.preferredStatusIsLocked()) {
+						atom.setPreferredStatus(Pscore > Nscore ? atom : atom.negate());
+					}
 				}
 			}
 			long lastTime;
@@ -1874,5 +1878,19 @@ public class DPLLEngine {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Randomly mess with the activity of Atoms, such that the Engine does not prefer atoms that have been active/inactive
+	 * so far.
+	 */
+	public void messWithActivityOfAtoms(final Random rnd) {
+		mAtoms.clear();
+		for (final DPLLAtom atom : mAtomList) {
+			atom.mActivity = atom.mActivity + rnd.nextDouble() * mAtomScale;
+			if (atom.mDecideStatus == null) {
+				mAtoms.add(atom);
+			}
+		}
 	}
 }

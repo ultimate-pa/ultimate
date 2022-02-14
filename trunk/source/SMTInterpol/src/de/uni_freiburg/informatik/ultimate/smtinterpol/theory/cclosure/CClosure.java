@@ -48,9 +48,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.EQAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -1230,7 +1229,7 @@ public class CClosure implements ITheory {
 	private Clause buildCongruence() {
 		SymmetricPair<CCAppTerm> cong;
 		while ((cong = mPendingCongruences.poll()) != null) {
-			getLogger().debug(new DebugMessage("PC {0}", cong));
+			getLogger().debug("PC %s", cong);
 			final CCAppTerm lhs = cong.getFirst();
 			final CCAppTerm rhs = cong.getSecond();
 			assert lhs.mArg.mRepStar == rhs.mArg.mRepStar

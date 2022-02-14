@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  *
@@ -72,6 +73,11 @@ public class QvasrsLoopSummarization {
 	 *         {@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula getQvasrsAcceleration(final UnmodifiableTransFormula loopTransitionFormula) {
+
+		if (!SmtUtils.isArrayFree(loopTransitionFormula.getFormula())) {
+			throw new UnsupportedOperationException("Qvasrs do not support arrays.");
+		}
+
 		final QvasrsSummarizer qvasrsSummarizer = new QvasrsSummarizer(mLogger, mServices, mScript);
 		return qvasrsSummarizer.summarizeLoop(loopTransitionFormula);
 	}

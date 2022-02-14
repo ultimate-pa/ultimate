@@ -62,6 +62,9 @@ public interface SMTLIBConstants {
 	public static final String SELECT = "select";
 	public static final String CONST = "const";
 
+	// Datatypes
+	public static final String IS = "is";
+
 	// Bitvector
 	public static final String BITVEC = "BitVec";
 	public static final String CONCAT = "concat";

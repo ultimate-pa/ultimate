@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2017 University of Freiburg
+ * Copyright (C) 2009-2021 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -21,8 +21,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -36,10 +34,12 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
@@ -114,11 +115,10 @@ public class ProofChecker extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive engine) {
 			final ProofChecker checker = (ProofChecker) engine;
-			final Term[] subProofs = new Term[mTerm.getParameters().length];
-			for (int i = subProofs.length - 1; i >= 1; i--) {
+			final Term[][] subProofs = new Term[mTerm.getParameters().length][];
+			for (int i = subProofs.length - 1; i >= 0; i--) {
 				subProofs[i] = checker.stackPop();
 			}
-			subProofs[0] = checker.stackPop();
 			checker.stackPush(checker.walkResolution(mTerm, subProofs), mTerm);
 		}
 	}
@@ -146,8 +146,8 @@ public class ProofChecker extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive engine) {
 			final ProofChecker checker = (ProofChecker) engine;
-			final Term rewrite = checker.stackPop();
-			final Term origFormula = checker.stackPop();
+			final Term[] rewrite = checker.stackPop();
+			final Term[] origFormula = checker.stackPop();
 			checker.stackPush(checker.walkModusPonens(mTerm, origFormula, rewrite), mTerm);
 		}
 	}
@@ -166,46 +166,14 @@ public class ProofChecker extends NonRecursive {
 
 		public void enqueue(final ProofChecker engine) {
 			engine.enqueueWalker(this);
-			engine.enqueueWalker(new ProofWalker(mTerm.getParameters()[0]));
+			engine.enqueueWalker(new ProofWalker(((AnnotatedTerm) mTerm.getParameters()[0]).getSubterm()));
 		}
 
 		@Override
 		public void walk(final NonRecursive engine) {
 			final ProofChecker checker = (ProofChecker) engine;
-			final Term subProof = checker.stackPop();
+			final Term[] subProof = checker.stackPop();
 			checker.stackPush(checker.walkClause(mTerm, subProof), mTerm);
-		}
-	}
-
-	/**
-	 * The proof walker that handles a {@literal @}split application after its first argument is converted. It just
-	 * calls the walkSplit function.
-	 */
-	static class SplitWalker implements Walker {
-		final ApplicationTerm mTerm;
-
-		public SplitWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals(ProofConstants.FN_SPLIT);
-			mTerm = term;
-		}
-
-		public void enqueue(final ProofChecker engine) {
-			final Term subproof = mTerm.getParameters()[0];
-			/* split expects an annotated proof as first parameter */
-			if (!(subproof instanceof AnnotatedTerm)) {
-				// push dummy proof as result an return
-				engine.reportError("Split without annotation: " + mTerm);
-				engine.stackPush(null, mTerm);
-				return;
-			}
-			engine.enqueueWalker(this);
-			engine.enqueueWalker(new ProofWalker(((AnnotatedTerm) subproof).getSubterm()));
-		}
-
-		@Override
-		public void walk(final NonRecursive engine) {
-			final ProofChecker checker = (ProofChecker) engine;
-			checker.stackPush(checker.walkSplit(mTerm, checker.stackPop()), mTerm);
 		}
 	}
 
@@ -234,7 +202,7 @@ public class ProofChecker extends NonRecursive {
 		public void walk(final NonRecursive engine) {
 			final ProofChecker checker = (ProofChecker) engine;
 			final Term[] params = mTerm.getParameters();
-			final Term[] subProofs = new Term[params.length];
+			final Term[][] subProofs = new Term[params.length][];
 			for (int i = params.length - 1; i >= 0; i--) {
 				subProofs[i] = checker.stackPop();
 			}
@@ -242,43 +210,15 @@ public class ProofChecker extends NonRecursive {
 		}
 	}
 
-	static class OrMonotonyWalker implements Walker {
-		final ApplicationTerm mTerm;
-
-		public OrMonotonyWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName() == ProofConstants.FN_ORMONOTONY;
-			mTerm = term;
-		}
-
-		public void enqueue(final ProofChecker engine) {
-			final Term[] params = mTerm.getParameters();
-			engine.enqueueWalker(this);
-			for (int i = params.length - 1; i >= 0; i--) {
-				engine.enqueueWalker(new ProofWalker(params[i]));
-			}
-		}
-
-		@Override
-		public void walk(final NonRecursive engine) {
-			final ProofChecker checker = (ProofChecker) engine;
-			final Term[] params = mTerm.getParameters();
-			final Term[] subProofs = new Term[params.length];
-			for (int i = params.length - 1; i >= 0; i--) {
-				subProofs[i] = checker.stackPop();
-			}
-			checker.stackPush(checker.walkOrMonotony(mTerm, subProofs), mTerm);
-		}
-	}
-
 	/**
 	 * The proof walker that handles a {@literal @}exists application after its arguments are converted. It just calls
 	 * the walkExists function.
 	 */
-	static class ExistsWalker implements Walker {
+	static class QuantWalker implements Walker {
 		final ApplicationTerm mTerm;
 
-		public ExistsWalker(final ApplicationTerm term) {
-			assert term.getFunction().getName().equals(ProofConstants.FN_EXISTS);
+		public QuantWalker(final ApplicationTerm term) {
+			assert term.getFunction().getName().equals(ProofConstants.FN_QUANT);
 			mTerm = term;
 		}
 
@@ -293,8 +233,8 @@ public class ProofChecker extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive engine) {
 			final ProofChecker checker = (ProofChecker) engine;
-			final Term subProof = checker.stackPop();
-			checker.stackPush(checker.walkExists(mTerm, subProof), mTerm);
+			final Term[] subProof = checker.stackPop();
+			checker.stackPush(checker.walkQuant(mTerm, subProof), mTerm);
 		}
 	}
 
@@ -309,9 +249,9 @@ public class ProofChecker extends NonRecursive {
 		public void enqueue(final ProofChecker engine) {
 			final Term[] params = mTerm.getParameters();
 			assert params.length == 1;
-			assert params[0] instanceof AnnotatedTerm;
+			final LambdaTerm lambda = (LambdaTerm) params[0];
 			engine.enqueueWalker(this);
-			engine.enqueueWalker(new ProofWalker(((AnnotatedTerm) params[0]).getSubterm()));
+			engine.enqueueWalker(new ProofWalker(((AnnotatedTerm) lambda.getSubterm()).getSubterm()));
 		}
 
 		@Override
@@ -345,7 +285,7 @@ public class ProofChecker extends NonRecursive {
 		public void walk(final NonRecursive engine) {
 			final ProofChecker checker = (ProofChecker) engine;
 			final Term[] params = mTerm.getParameters();
-			final Term[] subProofs = new Term[params.length];
+			final Term[][] subProofs = new Term[params.length][];
 			for (int i = params.length - 1; i >= 0; i--) {
 				subProofs[i] = checker.stackPop();
 			}
@@ -370,7 +310,7 @@ public class ProofChecker extends NonRecursive {
 			final ProofChecker checker = (ProofChecker) engine;
 
 			assert checker.isApplication("not", mClause[0]);
-			final Term firstAtom = checker.unquote(((ApplicationTerm) mClause[0]).getParameters()[0]);
+			final Term firstAtom = ((ApplicationTerm) mClause[0]).getParameters()[0];
 			assert firstAtom instanceof QuantifiedFormula && ((QuantifiedFormula) firstAtom).getQuantifier() == 1;
 			final QuantifiedFormula forallLit = (QuantifiedFormula) firstAtom;
 			final TermVariable[] vars = forallLit.getVariables();
@@ -380,32 +320,35 @@ public class ProofChecker extends NonRecursive {
 				checker.reportError("Lemma :inst needs substitution for all quantified variables.");
 				return;
 			}
-			final Map<TermVariable, Term> sigma = new HashMap<>();
-			for (int i = 0; i < vars.length; i++) {
-				sigma.put(vars[i], mSubstitution[i]);
-			}
-			final Term[] substClause = checker.substituteInQuantClause(forallLit.getSubformula(), sigma);
+			final Term lettedFormula = checker.mSkript.let(forallLit.getVariables(), mSubstitution,
+					forallLit.getSubformula());
+			final Term substFormula = new FormulaUnLet().unlet(lettedFormula);
 
 			// Check that an equality has been proven where the first parameter must match the substituted clause, and
 			// the second parameter must contain exactly the inst clause literals (but may have a different order).
-			final Term proved = checker.stackPop();
+			final Term[] provedClause = checker.stackPop();
+			if (provedClause == null || provedClause.length != 1) {
+				checker.reportError("Lemma :inst needs subproof for term equality.");
+				return;
+			}
+			final Term proved = provedClause[0];
 			if (!(proved instanceof ApplicationTerm)
 					|| ((ApplicationTerm) proved).getFunction().getName() != "=") {
 				checker.reportError("Lemma :inst needs subproof for term equality.");
 				return;
 			}
 			final ApplicationTerm provedEq = (ApplicationTerm) proved;
-			final Set<Term> proofInputLits =
-					new HashSet<>(Arrays.asList(checker.termToClause(provedEq.getParameters()[0])));
+			if (provedEq.getParameters()[0] != substFormula) {
+				checker.reportError("Lemma :inst needs subproof with matching lhs.");
+				return;
+			}
 			final Set<Term> proofOutputLits =
-					new HashSet<>(Arrays.asList(checker.termToClause(provedEq.getParameters()[1])));
-			final Set<Term> substLits = new HashSet<>(Arrays.asList(substClause));
-			final Set<Term> instLits = new HashSet<>(Arrays.asList(Arrays.copyOfRange(mClause, 1, mClause.length)));
-			if (!proofInputLits.equals(substLits) || !proofOutputLits.equals(instLits)) {
+					new HashSet<>(Arrays.asList(checker.createClause(provedEq.getParameters()[1])));
+			final Set<Term> instLits = new HashSet<>(Arrays.asList(mClause).subList(1, mClause.length));
+			if (!proofOutputLits.equals(instLits)) {
 				checker.reportError("Previously proved term equality does not match literals in lemma :inst.");
 				return;
 			}
-
 		}
 	}
 
@@ -429,14 +372,14 @@ public class ProofChecker extends NonRecursive {
 	int mError;
 
 	/**
-	 * The proof cache. It maps each converted proof to the boolean term it proves.
+	 * The proof cache. It maps each converted proof to the clause it proves.
 	 */
-	HashMap<Term, Term> mCacheConv;
+	HashMap<Term, Term[]> mCacheConv;
 
 	/**
 	 * The result stack. This contains the terms proved by the proof terms.
 	 */
-	Stack<Term> mStackResults = new Stack<>();
+	Stack<Term[]> mStackResults = new Stack<>();
 
 	/**
 	 * Defined quantified terms. This contains the {@literal @}AUX terms. TODO and the skolem terms.
@@ -496,9 +439,9 @@ public class ProofChecker extends NonRecursive {
 		run(new ProofWalker(proof));
 
 		assert (mStackResults.size() == 1);
-		final Term result = stackPop();
-		if (result != null && !isApplication("false", result)) {
-			reportError("The proof did not yield a contradiction but " + result);
+		final Term result[] = stackPop();
+		if (result != null && result.length > 0) {
+			reportError("The proof did not yield a contradiction but " + Arrays.toString(result));
 		}
 		// clear state
 		mAssertions = null;
@@ -560,10 +503,6 @@ public class ProofChecker extends NonRecursive {
 			new CongruenceWalker(proofTerm).enqueue(this);
 			break;
 
-		case ProofConstants.FN_ORMONOTONY:
-			new OrMonotonyWalker(proofTerm).enqueue(this);
-			break;
-
 		case ProofConstants.FN_TRANS:
 			new TransitivityWalker(proofTerm).enqueue(this);
 			break;
@@ -588,16 +527,12 @@ public class ProofChecker extends NonRecursive {
 			stackPush(walkRewrite(proofTerm), proofTerm);
 			break;
 
-		case ProofConstants.FN_SPLIT:
-			new SplitWalker(proofTerm).enqueue(this);
-			break;
-
 		case ProofConstants.FN_CLAUSE:
 			new ClauseWalker(proofTerm).enqueue(this);
 			break;
 
-		case ProofConstants.FN_EXISTS:
-			new ExistsWalker(proofTerm).enqueue(this);
+		case ProofConstants.FN_QUANT:
+			new QuantWalker(proofTerm).enqueue(this);
 			break;
 
 		case ProofConstants.FN_ALLINTRO:
@@ -623,7 +558,7 @@ public class ProofChecker extends NonRecursive {
 	 * @param lemmaApp
 	 *            The {@literal @}lemma application.
 	 */
-	Term walkLemma(final ApplicationTerm lemmaApp) {
+	Term[] walkLemma(final ApplicationTerm lemmaApp) {
 		/*
 		 * The argument of the @lemma application is a single clause annotated with the lemma type, which has as object
 		 * all the necessary annotation. For example (@lemma (! (or (not (= a b)) (not (= b c)) (= a c)) :CC ((= a c)
@@ -674,7 +609,7 @@ public class ProofChecker extends NonRecursive {
 			mLogger.error(annTerm);
 		}
 
-		return lemma;
+		return createClause(lemma);
 	}
 
 	/**
@@ -923,7 +858,7 @@ public class ProofChecker extends NonRecursive {
 				break;
 			}
 			case ":read-const-weakeq": {
-				if (!isApplication("const", endPoints.getSecond())) {
+				if (!isApplication(SMTLIBConstants.CONST, endPoints.getSecond())) {
 					reportError("Main weak path in read-const-weakeq not to a const array.");
 					return;
 				}
@@ -937,7 +872,8 @@ public class ProofChecker extends NonRecursive {
 			}
 			case ":const-weakeq": {
 				assert mainIdx == null;
-				if (!isApplication("const", endPoints.getFirst()) || !isApplication("const", endPoints.getSecond())) {
+				if (!isApplication(SMTLIBConstants.CONST, endPoints.getFirst())
+						|| !isApplication(SMTLIBConstants.CONST, endPoints.getSecond())) {
 					reportError("Main weak path in read-const-weakeq not to a const array.");
 					return;
 				}
@@ -1051,12 +987,12 @@ public class ProofChecker extends NonRecursive {
 		}
 		// No candidate equality was found but it could also be a select-const edge where a[i] and v are
 		// syntactically equal, in which case there is no equality.
-		if (isApplication("const", termPair.getFirst())
+		if (isApplication(SMTLIBConstants.CONST, termPair.getFirst())
 				&& checkSelectConst(((ApplicationTerm) termPair.getFirst()).getParameters()[0], termPair.getSecond(),
 						weakIdx, equalities)) {
 			return true;
 		}
-		if (isApplication("const", termPair.getSecond())
+		if (isApplication(SMTLIBConstants.CONST, termPair.getSecond())
 				&& checkSelectConst(((ApplicationTerm) termPair.getSecond()).getParameters()[0], termPair.getFirst(),
 						weakIdx, equalities)) {
 			return true;
@@ -1078,7 +1014,7 @@ public class ProofChecker extends NonRecursive {
 			}
 		}
 		// Check if array is (const value)
-		if (isApplication("const", array) && ((ApplicationTerm) array).getParameters()[0] == value) {
+		if (isApplication(SMTLIBConstants.CONST, array) && ((ApplicationTerm) array).getParameters()[0] == value) {
 			return true;
 		}
 		return false;
@@ -1416,7 +1352,7 @@ public class ProofChecker extends NonRecursive {
 			reportError("Lemma :inst must contain negated forall-literal as first literal.");
 			return;
 		}
-		final Term firstAtom = unquote(((ApplicationTerm) clause[0]).getParameters()[0]);
+		final Term firstAtom = ((ApplicationTerm) clause[0]).getParameters()[0];
 		if (!(firstAtom instanceof QuantifiedFormula) || ((QuantifiedFormula) firstAtom).getQuantifier() != 1) {
 			reportError("First literal in lemma :inst must be universally quantified formula.");
 			return;
@@ -1438,7 +1374,7 @@ public class ProofChecker extends NonRecursive {
 
 	/* === Tautologies === */
 
-	Term walkTautology(final ApplicationTerm tautologyApp) {
+	Term[] walkTautology(final ApplicationTerm tautologyApp) {
 		/*
 		 * Tautologies are created to define the meaning of proxy literals like (! (or a b c) :quoted), or of proxy
 		 * terms like (ite cond t1 t2) or (div x 5). They are of the form
@@ -1447,7 +1383,8 @@ public class ProofChecker extends NonRecursive {
 		 *
 		 * The possible types are defined in ProofConstants.AUX_*
 		 */
-		final String tautologyName = getSingleAnnotation(tautologyApp.getParameters()[0]).getKey();
+		final Annotation annot = getSingleAnnotation(tautologyApp.getParameters()[0]);
+		final String tautologyName = annot.getKey();
 		if (tautologyName == null) {
 			reportError("Malformed tautology rule " + tautologyApp);
 			return null;
@@ -1461,11 +1398,29 @@ public class ProofChecker extends NonRecursive {
 			result = (clause.length == 1 && clause[0] == mSkript.term("not",
 					mSkript.term("=", mSkript.term("true"), mSkript.term("false"))));
 			break;
+		case ":false-":
+			result = clause.length == 1 && clause[0] == mSkript.term("not", mSkript.term("false"));
+			break;
+		case ":true+":
+			result = clause.length == 1 && clause[0] == mSkript.term("true");
+			break;
 		case ":or+":
 			result = checkTautOrPos(clause);
 			break;
 		case ":or-":
 			result = checkTautOrNeg(clause);
+			break;
+		case ":and+":
+			result = checkTautAndPos(clause);
+			break;
+		case ":and-":
+			result = checkTautAndNeg(clause);
+			break;
+		case ":=>+":
+			result = checkTautImpPos(clause);
+			break;
+		case ":=>-":
+			result = checkTautImpNeg(clause);
 			break;
 		case ":ite+1":
 		case ":ite+2":
@@ -1474,6 +1429,12 @@ public class ProofChecker extends NonRecursive {
 		case ":ite-2":
 		case ":ite-red":
 			result = checkTautIte(tautologyName, clause);
+			break;
+		case ":=+1":
+		case ":=+2":
+		case ":=-1":
+		case ":=-2":
+			result = checkTautIff(tautologyName, clause);
 			break;
 		case ":xor+1":
 		case ":xor+2":
@@ -1508,6 +1469,18 @@ public class ProofChecker extends NonRecursive {
 			result = true;
 			reportWarning("Unchecked datatype tautology rule " + tautologyApp);
 			break;
+		case ":forall+":
+			result = checkTautForallIntro(clause, (Term[]) annot.getValue());
+			break;
+		case ":forall-":
+			result = checkTautForallElim(clause, (Term[]) annot.getValue());
+			break;
+		case ":exists-":
+			result = checkTautExistsElim(clause, (Term[]) annot.getValue());
+			break;
+		case ":exists+":
+			result = checkTautExistsIntro(clause, (Term[]) annot.getValue());
+			break;
 		default:
 			result = false;
 			break;
@@ -1517,12 +1490,15 @@ public class ProofChecker extends NonRecursive {
 			reportError("Malformed/unknown tautology rule " + tautologyApp);
 		}
 
-		return tautology;
+		return createClause(tautology);
 	}
 
-	private boolean checkTautOrPos(final Term[] clause) {
+	private boolean checkTautOrNeg(final Term[] clause) {
 		// Check for the form: (or (not (! (or p1 ... pn) :quoted)) p1 ... pn)
-		final Term lit = unquote(negate(clause[0]), true);
+		Term lit = negate(clause[0]);
+		if (lit instanceof AnnotatedTerm) {
+			lit = unquote(lit, true);
+		}
 		if (!isApplication("or", lit) || ((ApplicationTerm) lit).getParameters().length != clause.length - 1) {
 			return false;
 		}
@@ -1535,12 +1511,17 @@ public class ProofChecker extends NonRecursive {
 		return true;
 	}
 
-	private boolean checkTautOrNeg(final Term[] clause) {
+	private boolean checkTautOrPos(final Term[] clause) {
 		// Check for the form: (or (! (or p1 ... pn) :quoted) (not pi))
 		if (clause.length != 2) {
 			return false;
 		}
-		final Term lit = unquote(clause[0], true);
+		final Term lit;
+		if (clause[0] instanceof AnnotatedTerm) {
+			lit = unquote(clause[0], true);
+		} else {
+			lit = clause[0];
+		}
 		if (!isApplication("or", lit)) {
 			return false;
 		}
@@ -1564,6 +1545,104 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
+	private boolean checkTautAndNeg(final Term[] clause) {
+		// Check for the form: (or (! (not (and p1 ... pn) :quoted)) pi)
+		if (clause.length != 2) {
+			return false;
+		}
+		Term lit = negate(clause[0]);
+		if (lit instanceof AnnotatedTerm) {
+			lit = unquote(lit, true);
+		}
+		if (!isApplication("and", lit)) {
+			return false;
+		}
+		final Term otherLit = clause[1];
+		for (final Term t : ((ApplicationTerm) lit).getParameters()) {
+			if (t == otherLit) {
+				/* found it; everything okay */
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean checkTautAndPos(final Term[] clause) {
+		// Check for the form: (or (! (and p1 ... pn) :quoted) (not p1) ... (not pn))
+		Term lit = clause[0];
+		if (lit instanceof AnnotatedTerm) {
+			lit = unquote(lit, true);
+		}
+		if (!isApplication("and", lit)) {
+			return false;
+		}
+		final Term[] params = ((ApplicationTerm) lit).getParameters();
+		if (params.length != clause.length - 1) {
+			return false;
+		}
+		for (int i = 0; i < params.length; i++) {
+			if (!isApplication("not", clause[i + 1])
+					|| params[i] != ((ApplicationTerm) clause[i + 1]).getParameters()[0]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean checkTautImpNeg(final Term[] clause) {
+		// Check for the form: (or (not (! (=> p1 ... pn) :quoted)) (not p1) ... (not pn-1) pn)
+		Term lit = negate(clause[0]);
+		if (lit instanceof AnnotatedTerm) {
+			lit = unquote(lit, true);
+		}
+		if (!isApplication("=>", lit)) {
+			return false;
+		}
+		final Term[] params = ((ApplicationTerm) lit).getParameters();
+		if (params.length != clause.length - 1) {
+			return false;
+		}
+		for (int i = 0; i < params.length; i++) {
+			if (i < params.length - 1) {
+				if (!isApplication("not", clause[i + 1])
+						|| params[i] != ((ApplicationTerm) clause[i + 1]).getParameters()[0]) {
+					return false;
+				}
+			} else {
+				if (params[i] != clause[i + 1]) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean checkTautImpPos(final Term[] clause) {
+		// Check for the form: (or (! (=> p1 ... pn) :quoted) pi), resp ... (not pn))
+		if (clause.length != 2) {
+			return false;
+		}
+		final Term lit;
+		if (clause[0] instanceof AnnotatedTerm) {
+			lit = unquote(clause[0], true);
+		} else {
+			lit = clause[0];
+		}
+		if (!isApplication("=>", lit)) {
+			return false;
+		}
+		final Term[] params = ((ApplicationTerm) lit).getParameters();
+		for (int i = 0; i < params.length - 1; i++) {
+			if (params[i] == clause[1]) {
+				return true;
+			}
+		}
+		if (!isApplication("not", clause[1])) {
+			return false;
+		}
+		return (params[params.length - 1] == ((ApplicationTerm) clause[1]).getParameters()[0]);
+	}
+
 	private boolean checkTautIte(final String tautKind, final Term[] clause) {
 		if (clause.length != 3) {
 			return false;
@@ -1573,28 +1652,30 @@ public class ProofChecker extends NonRecursive {
 		if (negated) {
 			lit = negate(lit);
 		}
-		lit = unquote(lit, true);
+		if (lit instanceof AnnotatedTerm) {
+			lit = unquote(lit, true);
+		}
 		if (!isApplication("ite", lit)) {
 			return false;
 		}
 		final Term[] iteParams = ((ApplicationTerm) lit).getParameters();
 		switch (tautKind) {
-		case ":ite+1":
+		case ":ite-1":
 			// (or (not (! (ite cond then else)) :quoted)) (not cond) then)
 			return negated && clause[1] == mSkript.term("not", iteParams[0]) && clause[2] == iteParams[1];
-		case ":ite+2":
+		case ":ite-2":
 			// (or (not (! (ite cond then else)) :quoted)) cond else)
 			return negated && clause[1] == iteParams[0] && clause[2] == iteParams[2];
-		case ":ite+red":
+		case ":ite-red":
 			return negated && clause[1] == iteParams[1] && clause[2] == iteParams[2];
-		case ":ite-1":
+		case ":ite+1":
 			// (or (! (ite cond then else) :quoted) (not cond) (not then))
 			return !negated && clause[1] == mSkript.term("not", iteParams[0])
 					&& clause[2] == mSkript.term("not", iteParams[1]);
-		case ":ite-2":
+		case ":ite+2":
 			// (or (! (ite cond then else) :quoted) cond (not else))
 			return !negated && clause[1] == iteParams[0] && clause[2] == mSkript.term("not", iteParams[2]);
-		case ":ite-red":
+		case ":ite+red":
 			return !negated && clause[1] == mSkript.term("not", iteParams[1])
 					&& clause[2] == mSkript.term("not", iteParams[2]);
 		}
@@ -1610,7 +1691,9 @@ public class ProofChecker extends NonRecursive {
 		if (negated) {
 			lit = negate(lit);
 		}
-		lit = unquote(lit, true);
+		if (lit instanceof AnnotatedTerm) {
+			lit = unquote(lit, true);
+		}
 		if (!isApplication("xor", lit)) {
 			return false;
 		}
@@ -1620,18 +1703,52 @@ public class ProofChecker extends NonRecursive {
 		}
 		switch (tautKind) {
 		case ":xor+1":
+			// (or (not (! (xor t1 t2) :quoted)) t1 (not t2))
+			return !negated && clause[1] == eqParams[0] && clause[2] == mSkript.term("not", eqParams[1]);
+		case ":xor+2":
+			// (or (not (! (xor t1 t2) :quoted)) (not t1) t2)
+			return !negated && clause[1] == mSkript.term("not", eqParams[0]) && clause[2] == eqParams[1];
+		case ":xor-1":
 			// (or (! (xor t1 t2) :quoted) t1 t2)
 			return negated && clause[1] == eqParams[0] && clause[2] == eqParams[1];
-		case ":xor+2":
+		case ":xor-2":
 			// (or (! (xor t1 t2) :quoted) (not t1) (not t2))
 			return negated && clause[1] == mSkript.term("not", eqParams[0])
 					&& clause[2] == mSkript.term("not", eqParams[1]);
-		case ":xor-1":
-			// (or (not (! (xor t1 t2) :quoted)) t1 (not t2))
-			return !negated && clause[1] == eqParams[0] && clause[2] == mSkript.term("not", eqParams[1]);
-		case ":xor-2":
-			// (or (not (! (xor t1 t2) :quoted)) (not t1) t2)
-			return !negated && clause[1] == mSkript.term("not", eqParams[0]) && clause[2] == eqParams[1];
+		}
+		return false;
+	}
+
+	private boolean checkTautIff(final String tautKind, final Term[] clause) {
+		if (clause.length != 3) {
+			return false;
+		}
+		Term lit = clause[0];
+		final boolean negated = isApplication("not", lit);
+		if (negated) {
+			lit = negate(lit);
+		}
+		if (!isApplication("=", lit)) {
+			return false;
+		}
+		final Term[] eqParams = ((ApplicationTerm) lit).getParameters();
+		if (eqParams.length != 2) {
+			return false;
+		}
+		switch (tautKind) {
+		case ":=+1":
+			// (or (= t1 t2) t1 t2)
+			return !negated && clause[1] == eqParams[0] && clause[2] == eqParams[1];
+		case ":=+2":
+			// (or (= t1 t2) (not t1) (not t2))
+			return !negated && clause[1] == mSkript.term("not", eqParams[0])
+					&& clause[2] == mSkript.term("not", eqParams[1]);
+		case ":=-1":
+			// (or (not (= t1 t2) t1 (not t2))
+			return negated && clause[1] == eqParams[0] && clause[2] == mSkript.term("not", eqParams[1]);
+		case ":=-2":
+			// (or (not (= t1 t2) (not t1) t2)
+			return negated && clause[1] == mSkript.term("not", eqParams[0]) && clause[2] == eqParams[1];
 		}
 		return false;
 	}
@@ -1825,10 +1942,167 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
-	 * Check an select over store lemma for correctness. If a problem is found, an error is reported.
+	 * Check the tautology that introduces a forall.
 	 *
-	 * @param clause
-	 *            the clause to check.
+	 * @param clause     the clause to check
+	 * @param skolemFuns the Skolemization used in the tautology.
+	 * @return true iff the clause is well-formed.
+	 */
+	boolean checkTautForallIntro(final Term[] clause, final Term[] skolemFuns) {
+		// clause[0]: (forall ((x...)) F)
+		// clause[1]: (not (let ((x skolem...)) F))
+		if (clause.length != 2) {
+			return false;
+		}
+		if (!(clause[0] instanceof QuantifiedFormula)) {
+			return false;
+		}
+		final QuantifiedFormula qf = (QuantifiedFormula) clause[0];
+		if (qf.getQuantifier() != QuantifiedFormula.FORALL) {
+			return false;
+		}
+
+		final TermVariable[] universalVars = qf.getVariables();
+		final Term subformula = qf.getSubformula();
+		if (universalVars.length != skolemFuns.length) {
+			return false;
+		}
+		for (int i = 0; i < universalVars.length; i++) {
+			final Term sk = skolemFuns[i];
+			if (!(sk instanceof ApplicationTerm)) {
+				return false;
+			}
+			final ApplicationTerm skApp = (ApplicationTerm) sk;
+			if (!compareSkolemDef(skApp, universalVars[i], qf)) {
+				return false;
+			}
+		}
+		final Term expected = mSkript.let(universalVars, skolemFuns, mSkript.term("not", subformula));
+		return clause[1] == new FormulaUnLet().unlet(expected);
+	}
+
+	/**
+	 * Check the tautology that eliminates a forall.
+	 *
+	 * @param clause the clause to check
+	 * @param subst  the substitution used in the tautology; these are currently
+	 *               fresh variables.
+	 * @return true iff the clause is well-formed.
+	 */
+	boolean checkTautForallElim(final Term[] clause, final Term[] subst) {
+		mNumInstancesUsed++;
+		mNumInstancesFromDER++;
+		// clause[0] is (not (forall ((x1...)) F )).
+		// subst is (y1, ..., yn).
+		// clause[1] is F [y1/x1]...[yn/xn].
+		if (clause.length != 2 || !isApplication("not", clause[0])) {
+			return false;
+		}
+		final Term forall = ((ApplicationTerm) clause[0]).getParameters()[0];
+		if (!(forall instanceof QuantifiedFormula)) {
+			return false;
+		}
+		final QuantifiedFormula qf = (QuantifiedFormula) forall;
+		if (qf.getQuantifier() != QuantifiedFormula.FORALL) {
+			return false;
+		}
+		// subst must contain one substitution for each variable
+		final TermVariable[] universalVars = qf.getVariables();
+		if (universalVars.length != subst.length) {
+			return false;
+		}
+		// check result of substitution
+		final Term subformula = qf.getSubformula();
+		final Term expected = mSkript.let(universalVars, subst, subformula);
+		return clause[1] == new FormulaUnLet().unlet(expected);
+	}
+
+	/**
+	 * Check the tautology that introduces an exists.
+	 *
+	 * @param clause the clause to check
+	 * @param subst  the substitution used in the tautology; these are currently
+	 *               fresh variables.
+	 * @return true iff the clause is well-formed.
+	 */
+	boolean checkTautExistsIntro(final Term[] clause, final Term[] subst) {
+		// clause[0] is (exists ((x1...)) F ).
+		// subst is (y1, ..., yn).
+		// clause[1] is (not F [y1/x1]...[yn/xn]).
+		if (clause.length != 2) {
+			return false;
+		}
+		final Term exists = clause[0];
+		if (!(exists instanceof QuantifiedFormula)) {
+			return false;
+		}
+		final QuantifiedFormula qf = (QuantifiedFormula) exists;
+		if (qf.getQuantifier() != QuantifiedFormula.EXISTS) {
+			return false;
+		}
+		// subst must contain as many variables as the lhs has universally quantified
+		// variables
+		for (final Term s : subst) {
+			if (!(s instanceof TermVariable)) {
+				return false;
+			}
+		}
+		final TermVariable[] universalVars = qf.getVariables();
+		if (universalVars.length != subst.length) {
+			return false;
+		}
+		// check result of substitution
+		final Term subformula = qf.getSubformula();
+		final Term expected = mSkript.let(universalVars, subst, mSkript.term("not", subformula));
+		return clause[1] == new FormulaUnLet().unlet(expected);
+	}
+
+	/**
+	 * Check the tautology that eliminates an exists.
+	 *
+	 * @param clause     the clause to check
+	 * @param skolemFuns the Skolemization used in the tautology.
+	 * @return true iff the clause is well-formed.
+	 */
+	boolean checkTautExistsElim(final Term[] clause, final Term[] skolemFuns) {
+		// clause[0]: not (exists ((x...)) F
+		// clause[1]: (let ((x skolem...)) F)
+		if (clause.length != 2 || !isApplication("not", clause[0])) {
+			return false;
+		}
+		final Term existsAtom = ((ApplicationTerm) clause[0]).getParameters()[0];
+		if (!(existsAtom instanceof QuantifiedFormula)) {
+			return false;
+		}
+		final QuantifiedFormula qf = (QuantifiedFormula) existsAtom;
+		if (qf.getQuantifier() != QuantifiedFormula.EXISTS) {
+			return false;
+		}
+
+		final TermVariable[] existentialVars = qf.getVariables();
+		final Term subformula = qf.getSubformula();
+		if (existentialVars.length != skolemFuns.length) {
+			return false;
+		}
+		for (int i = 0; i < existentialVars.length; i++) {
+			final Term sk = skolemFuns[i];
+			if (!(sk instanceof ApplicationTerm)) {
+				return false;
+			}
+			final ApplicationTerm skApp = (ApplicationTerm) sk;
+			if (!compareSkolemDef(skApp, existentialVars[i], qf)) {
+				return false;
+			}
+		}
+		final Term expected = mSkript.let(existentialVars, skolemFuns, subformula);
+		return clause[1] == new FormulaUnLet().unlet(expected);
+	}
+
+	/**
+	 * Check an select over store lemma for correctness. If a problem is found, an
+	 * error is reported.
+	 *
+	 * @param clause the clause to check.
 	 */
 	private boolean checkTautStore(final Term[] clause) {
 		// Store tautology have the form
@@ -1869,7 +2143,7 @@ public class ProofChecker extends NonRecursive {
 					for (int i = 0; i < 2; i++) {
 						final Term[] selectArgs = ((ApplicationTerm) selects[i]).getParameters();
 						if (selectArgs.length != 2 || selectArgs[0] != arrays[i]
-								|| !isApplication("@diff", selectArgs[1])) {
+								|| !isApplication(SMTInterpolConstants.DIFF, selectArgs[1])) {
 							failure = true;
 							break;
 						}
@@ -1886,16 +2160,16 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	Term walkAsserted(final ApplicationTerm assertedApp) {
+	Term[] walkAsserted(final ApplicationTerm assertedApp) {
 		final Term assertedTerm = assertedApp.getParameters()[0];
 		if (!mAssertions.contains(assertedTerm)) {
 			reportError("Could not find asserted term " + assertedTerm);
 		}
 		/* Just return the part without @asserted */
-		return assertedTerm;
+		return createUnitClause(assertedTerm);
 	}
 
-	Term walkReflexivity(final ApplicationTerm reflexivityApp) {
+	Term[] walkReflexivity(final ApplicationTerm reflexivityApp) {
 		// sanity check (caller and typechecker should ensure this
 		assert reflexivityApp.getFunction().getName() == ProofConstants.FN_REFL;
 		assert reflexivityApp.getParameters().length == 1;
@@ -1904,10 +2178,10 @@ public class ProofChecker extends NonRecursive {
 		final Theory theory = reflexivityApp.getTheory();
 		final Term term = reflexivityApp.getParameters()[0];
 		final Term newEquality = theory.term("=", term, term);
-		return newEquality;
+		return new Term[] { newEquality };
 	}
 
-	Term walkTransitivity(final ApplicationTerm transitivityApp, final Term[] implications) {
+	Term[] walkTransitivity(final ApplicationTerm transitivityApp, final Term[][] implications) {
 		// sanity check (caller and typechecker should ensure this
 		assert transitivityApp.getFunction().getName() == ProofConstants.FN_TRANS;
 
@@ -1915,19 +2189,22 @@ public class ProofChecker extends NonRecursive {
 		Term lastTerm = null;
 		boolean containsImplication = false;
 		for (int i = 0; i < implications.length; i++) {
-			if (isApplication("=>", implications[i])) {
-				containsImplication = true;
-			}
-			// Check that subproofs prove equalities
-			if (!isApplication("=", implications[i]) && !isApplication("=>", implications[i])
-					|| ((ApplicationTerm) implications[i]).getParameters().length != 2) {
+			if (implications[i] == null) {
 				// don't report errors if sub proof already failed
-				if (implications[i] != null) {
-					reportError("@trans on a proof of a non-equality or -implication: " + implications[i]);
-				}
 				return null;
 			}
-			final Term[] impParams = ((ApplicationTerm) implications[i]).getParameters();
+			// Check that subproofs prove equalities
+			if (implications[i].length != 1
+					|| (!isApplication("=", implications[i][0]) && !isApplication("=>", implications[i][0]))
+					|| ((ApplicationTerm) implications[i][0]).getParameters().length != 2) {
+				reportError("@trans on a proof of a non-equality or -implication: " + Arrays.toString(implications[i]));
+				return null;
+			}
+			final Term impl = implications[i][0];
+			if (isApplication("=>", impl)) {
+				containsImplication = true;
+			}
+			final Term[] impParams = ((ApplicationTerm) impl).getParameters();
 			/* check that equalities chain correctly */
 			if (i == 0) {
 				firstTerm = impParams[0];
@@ -1936,24 +2213,26 @@ public class ProofChecker extends NonRecursive {
 			}
 			lastTerm = impParams[1];
 		}
-		return transitivityApp.getTheory().term(containsImplication ? "=>" : "=", firstTerm, lastTerm);
+		return new Term[] { transitivityApp.getTheory().term(containsImplication ? "=>" : "=", firstTerm, lastTerm) };
 	}
 
-	Term walkCongruence(final ApplicationTerm congruenceApp, final Term[] subProofs) {
+	Term[] walkCongruence(final ApplicationTerm congruenceApp, final Term[][] subProofs) {
 		// sanity check (caller and typechecker should ensure this
 		assert congruenceApp.getFunction().getName() == ProofConstants.FN_CONG;
 		for (int i = 0; i < subProofs.length; i++) {
 			/* Check that it is an equality */
-			if (!isApplication("=", subProofs[i]) || ((ApplicationTerm) subProofs[i]).getParameters().length != 2) {
+			if (subProofs[i] == null) {
 				// don't report errors if sub proof already failed
-				if (subProofs[i] != null) {
-					reportError("@cong on a proof of a non-equality: " + subProofs[i]);
-				}
+				return null;
+			}
+			if (subProofs[i].length != 1 || !isApplication("=", subProofs[i][0])
+					|| ((ApplicationTerm) subProofs[i][0]).getParameters().length != 2) {
+				reportError("@cong on a proof of a non-equality: " + Arrays.toString(subProofs[i]));
 				return null;
 			}
 		}
 		/* assume that the first equality is of the form (= x (f p1 ... pn)) */
-		final Term funcTerm = ((ApplicationTerm) subProofs[0]).getParameters()[1];
+		final Term funcTerm = ((ApplicationTerm) subProofs[0][0]).getParameters()[1];
 		if (!(funcTerm instanceof ApplicationTerm)) {
 			reportError("@cong applied on a non-function term " + funcTerm);
 			return null;
@@ -1963,7 +2242,7 @@ public class ProofChecker extends NonRecursive {
 		/* check that the rewrites are of the form (= pi qi) where the i's are increasing */
 		int offset = 0;
 		for (int i = 1; i < subProofs.length; i++) {
-			final Term[] argRewrite = ((ApplicationTerm) subProofs[i]).getParameters();
+			final Term[] argRewrite = ((ApplicationTerm) subProofs[i][0]).getParameters();
 			/* search the parameter that is rewritten */
 			while (offset < funcParams.length && funcParams[offset] != argRewrite[0]) {
 				offset++;
@@ -1978,91 +2257,44 @@ public class ProofChecker extends NonRecursive {
 		}
 		/* compute the proven equality (= x (f q1 ... qn)) */
 		final Theory theory = congruenceApp.getTheory();
-		final Term newEquality = theory.term("=", ((ApplicationTerm) subProofs[0]).getParameters()[0],
+		final Term newEquality = theory.term("=", ((ApplicationTerm) subProofs[0][0]).getParameters()[0],
 				theory.term(((ApplicationTerm) funcTerm).getFunction(), newFuncParams));
-		return newEquality;
+		return new Term[] { newEquality };
 	}
 
-	Term walkOrMonotony(final ApplicationTerm orMonotonyApp, final Term[] subProofs) {
+	Term[] walkQuant(final ApplicationTerm quantApp, final Term[] subProof) {
 		// sanity check (caller and typechecker should ensure this
-		assert orMonotonyApp.getFunction().getName() == ProofConstants.FN_ORMONOTONY;
-		boolean containsImplication = false;
-		for (int i = 0; i < subProofs.length; i++) {
-			/* Check that it is an implication */
-			if (!isApplication("=", subProofs[i]) && (i == 0 || !isApplication("=>", subProofs[i]))
-					|| ((ApplicationTerm) subProofs[i]).getParameters().length != 2) {
-				// don't report errors if sub proof already failed
-				if (subProofs[i] != null) {
-					reportError("@orMonotony on a proof that is not an implication: " + subProofs[i]);
-				}
-				return null;
-			}
-		}
-		/* assume that the first equality is of the form (= x (f p1 ... pn)) */
-		final Term orTerm = ((ApplicationTerm) subProofs[0]).getParameters()[1];
-		if (!(orTerm instanceof ApplicationTerm)) {
-			reportError("@orMonotony applied on a term that is not an or application: " + orTerm);
-			return null;
-		}
-
-		final Term[] disjuncts = ((ApplicationTerm) orTerm).getParameters();
-		final Term[] newDisjuncts = disjuncts.clone();
-		/* check that the rewrites are of the form (=> pi qi) or (= pi qi) where the i's are increasing */
-		int offset = 0;
-		for (int i = 1; i < subProofs.length; i++) {
-			if (isApplication("=>", subProofs[i])) {
-				containsImplication = true;
-			}
-			final Term[] argRewrite = ((ApplicationTerm) subProofs[i]).getParameters();
-			/* search the parameter that is rewritten */
-			while (offset < disjuncts.length && disjuncts[offset] != argRewrite[0]) {
-				offset++;
-			}
-			if (offset == disjuncts.length) {
-				reportError("cannot find rewritten parameter in @orMonotony: " + subProofs[i] + " in " + orTerm);
-				offset = 0;
-			} else {
-				newDisjuncts[offset] = argRewrite[1];
-				offset++;
-			}
-		}
-		/* compute the proven implication or equality (=> x (f q1 ... qn)) or (= x (f q1 ... qn)) */
-		final Theory theory = orMonotonyApp.getTheory();
-		final Term newImplication = theory.term(containsImplication ? "=>" : "=",
-				((ApplicationTerm) subProofs[0]).getParameters()[0], theory.term("or", newDisjuncts));
-		return newImplication;
-
-	}
-
-	Term walkExists(final ApplicationTerm existsApp, final Term subProof) {
-		// sanity check (caller and typechecker should ensure this
-		assert existsApp.getFunction().getName() == ProofConstants.FN_EXISTS;
+		assert quantApp.getFunction().getName() == ProofConstants.FN_QUANT;
 		/* Check that subproof is an equality */
-		if (!isApplication("=", subProof) || ((ApplicationTerm) subProof).getParameters().length != 2) {
+		if (subProof == null || subProof.length != 1 || !isApplication("=", subProof[0])
+				|| ((ApplicationTerm) subProof[0]).getParameters().length != 2) {
 			// don't report errors if sub proof already failed
 			if (subProof != null) {
-				reportError("@exists on a proof of a non-equality: " + subProof);
+				reportError("@quant on a proof of a non-equality: " + Arrays.toString(subProof));
 			}
 			return null;
 		}
 
-		final AnnotatedTerm annotatedTerm = (AnnotatedTerm) existsApp.getParameters()[0];
-		final Annotation varAnnot = annotatedTerm.getAnnotations()[0];
-		if (annotatedTerm.getAnnotations().length != 1 || varAnnot.getKey() != ":vars"
-				|| !(varAnnot.getValue() instanceof TermVariable[])) {
-			reportError("@exists with malformed annotation: " + existsApp);
+		final AnnotatedTerm annotatedTerm = (AnnotatedTerm) quantApp.getParameters()[0];
+		final Annotation quantAnnot = annotatedTerm.getAnnotations()[0];
+		if (annotatedTerm.getAnnotations().length != 1
+				|| (!quantAnnot.getKey().equals(":forall") && !quantAnnot.getKey().equals(":exists"))
+				|| !(quantAnnot.getValue() instanceof TermVariable[])) {
+			reportError("@quant with malformed annotation: " + quantApp);
 		}
-		final TermVariable[] vars = (TermVariable[]) varAnnot.getValue();
+		final boolean isForall = quantAnnot.getKey().equals(":forall");
+		final TermVariable[] vars = (TermVariable[]) quantAnnot.getValue();
 
 		/* compute the proven equality (= (exists (...) lhs) (exists (...) rhs)) */
-		final Term lhs = ((ApplicationTerm) subProof).getParameters()[0];
-		final Term rhs = ((ApplicationTerm) subProof).getParameters()[1];
-		final Theory theory = existsApp.getTheory();
-		final Term newEquality = theory.term("=", theory.exists(vars, lhs), theory.exists(vars, rhs));
-		return newEquality;
+		final Term lhs = ((ApplicationTerm) subProof[0]).getParameters()[0];
+		final Term rhs = ((ApplicationTerm) subProof[0]).getParameters()[1];
+		final Theory theory = quantApp.getTheory();
+		final Term newEquality = theory.term("=", isForall ? theory.forall(vars, lhs) : theory.exists(vars, lhs),
+				isForall ? theory.forall(vars, rhs) : theory.exists(vars, rhs));
+		return new Term[] { newEquality };
 	}
 
-	Term walkRewrite(final ApplicationTerm rewriteApp) {
+	Term[] walkRewrite(final ApplicationTerm rewriteApp) {
 		/*
 		 * A rewrite rule has the form (@rewrite (! (= lhs rhs) :rewriteRule)) The rewriteRule gives the name of the
 		 * rewrite axiom. The equality (= lhs rhs) is then a simple rewrite axiom.
@@ -2078,12 +2310,8 @@ public class ProofChecker extends NonRecursive {
 			return null;
 		}
 		final Term rewriteStmt = ((AnnotatedTerm) rewriteApp.getParameters()[0]).getSubterm();
-		if (rewriteRule != ":removeForall" && !isApplication("=", rewriteStmt)) {
+		if (!isApplication("=", rewriteStmt)) {
 			reportError("Equality rewrite rule is not a binary equality: " + rewriteApp);
-			return null;
-		}
-		if (rewriteRule == ":removeForall" && !isApplication("=>", rewriteStmt)) {
-			reportError("Implication rewrite rule is not a binary implication: " + rewriteApp);
 			return null;
 		}
 		final Term[] stmtParams = ((ApplicationTerm) rewriteStmt).getParameters();
@@ -2152,15 +2380,9 @@ public class ProofChecker extends NonRecursive {
 		case ":iteBool6":
 			okay = checkRewriteIte(rewriteRule, stmtParams[0], stmtParams[1]);
 			break;
-		case ":andToOr":
-			okay = checkRewriteAndToOr(stmtParams[0], stmtParams[1]);
-			break;
 		case ":eqToXor":
 		case ":distinctToXor":
 			okay = checkRewriteToXor(rewriteRule, stmtParams[0], stmtParams[1]);
-			break;
-		case ":impToOr":
-			okay = checkRewriteImpToOr(stmtParams[0], stmtParams[1]);
 			break;
 		case ":strip":
 			okay = checkRewriteStrip(stmtParams[0], stmtParams[1]);
@@ -2201,23 +2423,11 @@ public class ProofChecker extends NonRecursive {
 		case ":selectOverStore":
 			okay = checkRewriteSelectOverStore(stmtParams[0], stmtParams[1]);
 			break;
-		case ":flatten":
-			okay = checkRewriteFlatten(stmtParams[0], stmtParams[1]);
-			break;
 		case ":storeRewrite":
 			okay = checkRewriteStore(stmtParams[0], stmtParams[1]);
 			break;
 		case ":intern":
 			okay = checkRewriteIntern(stmtParams[0], stmtParams[1]);
-			break;
-		case ":forallExists":
-			okay = checkRewriteForallExists(stmtParams[0], stmtParams[1]);
-			break;
-		case ":skolem":
-			okay = checkRewriteSkolem(stmtParams[0], stmtParams[1], (Term[]) annot.getValue());
-			break;
-		case ":removeForall":
-			okay = checkRewriteRemoveForall(stmtParams[0], stmtParams[1], (Term[]) annot.getValue());
 			break;
 		default:
 			okay = false;
@@ -2231,47 +2441,7 @@ public class ProofChecker extends NonRecursive {
 		/*
 		 * The result is simply the equality (without annotation).
 		 */
-		return rewriteStmt;
-	}
-
-	boolean checkRewriteAndToOr(final Term lhs, final Term rhs) {
-		// expect lhs: (and ...), rhs: (not (or (not ...)))
-		if (!isApplication("and", lhs) || !isApplication("not", rhs)) {
-			return false;
-		}
-		final Term orTerm = ((ApplicationTerm) rhs).getParameters()[0];
-		if (!isApplication("or", orTerm)) {
-			return false;
-		}
-		final Term[] andParams = ((ApplicationTerm) lhs).getParameters();
-		final Term[] orParams = ((ApplicationTerm) orTerm).getParameters();
-		if (andParams.length != orParams.length) {
-			return false;
-		}
-		for (int i = 0; i < andParams.length; i++) {
-			if (orParams[i] != mSkript.term("not", andParams[i])) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	boolean checkRewriteImpToOr(final Term lhs, final Term rhs) {
-		// expect lhs: (=> p1 ... pn), rhs: (or pn (not p1) .. (not pn-1))))
-		if (!isApplication("=>", lhs) || !isApplication("or", rhs)) {
-			return false;
-		}
-		final Term[] impParams = ((ApplicationTerm) lhs).getParameters();
-		final Term[] orParams = ((ApplicationTerm) rhs).getParameters();
-		if (impParams.length != orParams.length) {
-			return false;
-		}
-		for (int i = 0; i < impParams.length - 1; i++) {
-			if (orParams[i + 1] != mSkript.term("not", impParams[i])) {
-				return false;
-			}
-		}
-		return orParams[0] == impParams[impParams.length - 1];
+		return new Term[] { rewriteStmt };
 	}
 
 	boolean checkRewriteToXor(final String rule, final Term lhs, Term rhs) {
@@ -2736,37 +2906,6 @@ public class ProofChecker extends NonRecursive {
 		return expected.equals(rhsAffine);
 	}
 
-	boolean checkRewriteFlatten(final Term lhs, final Term rhs) {
-		// lhs: (or ... (or ...) ... ), rhs: (or ... ... ...)
-		if (!isApplication("or", lhs) || !isApplication("or", rhs)) {
-			return false;
-		}
-		final Term[] rhsArgs = ((ApplicationTerm) rhs).getParameters();
-		int rhsOffset = 0;
-		final ArrayDeque<Term> lhsArgs = new ArrayDeque<>();
-		for (final Term t : ((ApplicationTerm) lhs).getParameters()) {
-			lhsArgs.add(t);
-		}
-		while (!lhsArgs.isEmpty()) {
-			final Term first = lhsArgs.removeFirst();
-			if (rhsOffset >= rhsArgs.length) {
-				return false;
-			}
-			if (rhsArgs[rhsOffset] == first) {
-				rhsOffset++;
-			} else {
-				if (!isApplication("or", first)) {
-					return false;
-				}
-				final Term[] args = ((ApplicationTerm) first).getParameters();
-				for (int i = args.length - 1; i >= 0; i--) {
-					lhsArgs.addFirst(args[i]);
-				}
-			}
-		}
-		return rhsOffset == rhsArgs.length;
-	}
-
 	boolean checkRewriteDivisible(final Term lhs, final Term rhs) {
 		// ((_ divisible n) x) --> (= x (* n (div x n)))
 		if (!isApplication("divisible", lhs)) {
@@ -2983,34 +3122,6 @@ public class ProofChecker extends NonRecursive {
 		return rhs == new FormulaUnLet().unlet(expected);
 	}
 
-	boolean checkRewriteSkolem(final Term lhs, final Term rhs, final Term[] skolemFuns) {
-		if (!(lhs instanceof QuantifiedFormula)) {
-			return false;
-		}
-		final QuantifiedFormula qf = (QuantifiedFormula) lhs;
-		if (qf.getQuantifier() != QuantifiedFormula.EXISTS) {
-			return false;
-		}
-
-		final TermVariable[] existentialVars = qf.getVariables();
-		final Term subformula = qf.getSubformula();
-		if (existentialVars.length != skolemFuns.length) {
-			return false;
-		}
-		for (int i = 0; i < existentialVars.length; i++) {
-			final Term sk = skolemFuns[i];
-			if (!(sk instanceof ApplicationTerm)) {
-				return false;
-			}
-			final ApplicationTerm skApp = (ApplicationTerm) sk;
-			if (!compareSkolemDef(skApp, existentialVars[i], qf)) {
-				return false;
-			}
-		}
-		final Term expected = mSkript.let(existentialVars, skolemFuns, subformula);
-		return rhs == new FormulaUnLet().unlet(expected);
-	}
-
 	boolean checkRewriteStoreOverStore(final Term lhs, final Term rhs) {
 		// lhs: (store (store a i v) i w)
 		// rhs: (store a i w)
@@ -3161,7 +3272,7 @@ public class ProofChecker extends NonRecursive {
 
 		/* Check for auxiliary literals */
 		if (isApplication("ite", lhs) || isApplication("or", lhs) || isApplication("xor", lhs)
-				|| lhs instanceof MatchTerm) {
+				|| isApplication("=>", lhs) || isApplication("and", lhs) || lhs instanceof MatchTerm) {
 			rhs = unquote(rhs, true);
 			return lhs == rhs;
 		}
@@ -3174,7 +3285,7 @@ public class ProofChecker extends NonRecursive {
 				|| at.getFunction().getName() == "is") {
 			/* boolean literals are not quoted */
 			if (at.getParameters().length == 0) {
-				return rhs == at;
+				return false;
 			}
 			/* second case: boolean functions are created as equalities */
 			rhs = unquote(rhs);
@@ -3284,69 +3395,11 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	boolean checkRewriteForallExists(final Term lhs, final Term rhs) {
-		// lhs: (forall (vs) F)
-		// rhs: (not (exists (vs) (not F)))
-		if (!isApplication("not", rhs)) {
-			return false;
-		}
-		final Term rhsArg = ((ApplicationTerm) rhs).getParameters()[0];
-		if (!(lhs instanceof QuantifiedFormula) || !(rhsArg instanceof QuantifiedFormula)) {
-			return false;
-		}
-		final QuantifiedFormula forall = (QuantifiedFormula) lhs;
-		final QuantifiedFormula exists = (QuantifiedFormula) rhsArg;
-		if (forall.getQuantifier() != QuantifiedFormula.FORALL || exists.getQuantifier() != QuantifiedFormula.EXISTS) {
-			return false;
-		}
-		if (!Arrays.equals(forall.getVariables(), exists.getVariables())) {
-			return false;
-		}
-		final Term forallSubformula = forall.getSubformula();
-		final Term existsSubformula = exists.getSubformula();
-		if (!isApplication("not", existsSubformula)) {
-			return false;
-		}
-		return forallSubformula == ((ApplicationTerm) existsSubformula).getParameters()[0];
-	}
-
-	boolean checkRewriteRemoveForall(final Term lhs, final Term rhs, final Term[] subst) {
-		// lhs is (not (exists ((x1...)) F )).
-		// subst is (y1, ..., yn).
-		// rhs is (not F [y1/x1]...[yn/xn]).
-		if (!isApplication("not", lhs) || !isApplication("not", rhs)) {
-			return false;
-		}
-		final Term exists = ((ApplicationTerm) lhs).getParameters()[0];
-		if (!(exists instanceof QuantifiedFormula)) {
-			return false;
-		}
-		final QuantifiedFormula qf = (QuantifiedFormula) exists;
-		if (qf.getQuantifier() != QuantifiedFormula.EXISTS) {
-			return false;
-		}
-		// subst must contain as many variables as the lhs has universally quantified variables
-		for (final Term s : subst) {
-			if (!(s instanceof TermVariable)) {
-				return false;
-			}
-		}
-		final TermVariable[] universalVars = qf.getVariables();
-		if (universalVars.length != subst.length) {
-			return false;
-		}
-		// check result of substitution
-		final Term subformula = qf.getSubformula();
-		final Term expected = mSkript.let(universalVars, subst, mSkript.term("not", subformula));
-		return rhs == new FormulaUnLet().unlet(expected);
-	}
-
 	/**
-	 * Convert a clause term into an Array of terms, one entry for each disjunct. This also handles singleton and empty
-	 * clause correctly.
+	 * Convert a clause term into an Array of terms, one entry for each disjunct.
+	 * This also handles singleton and empty clause correctly.
 	 *
-	 * @param clauseTerm
-	 *            The term representing a clause.
+	 * @param clauseTerm The term representing a clause.
 	 * @return The disjuncts of the clause.
 	 */
 	private Term[] termToClause(final Term clauseTerm) {
@@ -3362,23 +3415,47 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
-	 * Convert a collection of terms into a clause term. This also handles singleton and empty clause correctly.
+	 * Convert a term to a unit clause. This removes double negations.
 	 *
-	 * @param disjuncts
-	 *            the disjuncts of the clause.
-	 * @return a term representing the clause.
+	 * @param unit
+	 * @return the unit clause.
 	 */
-	private Term clauseToTerm(final Collection<Term> disjuncts) {
-		if (disjuncts.size() <= 1) {
-			if (disjuncts.isEmpty()) {
-				return mSkript.term("false");
-			} else {
-				return disjuncts.iterator().next();
-			}
-		} else {
-			final Term[] args = disjuncts.toArray(new Term[disjuncts.size()]);
-			return mSkript.term("or", args);
+	private Term[] createUnitClause(Term unit) {
+		while (isDoubleNeg(unit)) {
+			unit = removeDoubleNeg(unit);
 		}
+		return new Term[] { unit };
+	}
+
+	/**
+	 * Convert an or-term to a clause. This also removes double negations.
+	 *
+	 * @param clauseAsTerm
+	 * @return the clause.
+	 */
+	private Term[] createClause(final Term clauseAsTerm) {
+		if (isApplication("false", clauseAsTerm)) {
+			return new Term[0];
+		}
+		Term[] args;
+		boolean needsCloning;
+		if (isApplication("or", clauseAsTerm)) {
+			args = ((ApplicationTerm) clauseAsTerm).getParameters();
+			needsCloning = true;
+		} else {
+			args = new Term[] { clauseAsTerm };
+			needsCloning = false;
+		}
+		for (int i = 0; i < args.length; i++) {
+			while (isDoubleNeg(args[i])) {
+				if (needsCloning) {
+					args = args.clone();
+					needsCloning = false;
+				}
+				args[i] = removeDoubleNeg(args[i]);
+			}
+		}
+		return args;
 	}
 
 	/**
@@ -3387,14 +3464,14 @@ public class ProofChecker extends NonRecursive {
 	 * @param resApp
 	 *            The <code>{@literal @}res</code> application from the original proof.
 	 */
-	Term walkResolution(final ApplicationTerm resApp, final Term[] subProofs) {
+	Term[] walkResolution(final ApplicationTerm resApp, final Term[][] subProofs) {
 		/*
 		 * allDisjuncts is the currently computed resolution result.
 		 */
 		final HashSet<Term> allDisjuncts = new HashSet<>();
 
 		/* Now get the disjuncts of the first argument. */
-		allDisjuncts.addAll(Arrays.asList(termToClause(subProofs[0])));
+		allDisjuncts.addAll(Arrays.asList(subProofs[0]));
 
 		/* Resolve the other clauses */
 		for (int i = 1; i < subProofs.length; i++) {
@@ -3416,7 +3493,7 @@ public class ProofChecker extends NonRecursive {
 			/*
 			 * For each clause check for the pivot and add all other literals.
 			 */
-			final Term[] clause = termToClause(subProofs[i]);
+			final Term[] clause = subProofs[i];
 			boolean pivotFound = false;
 			for (final Term t : clause) {
 				if (t == pivot) {
@@ -3431,7 +3508,7 @@ public class ProofChecker extends NonRecursive {
 			}
 		}
 
-		return clauseToTerm(allDisjuncts);
+		return allDisjuncts.toArray(new Term[allDisjuncts.size()]);
 	}
 
 	/**
@@ -3442,7 +3519,7 @@ public class ProofChecker extends NonRecursive {
 	 * @param mpApp
 	 *            The {@literal @}mp application.
 	 */
-	Term walkModusPonens(final ApplicationTerm mpApp, final Term origFormula, final Term rewrite) {
+	Term[] walkModusPonens(final ApplicationTerm mpApp, final Term[] origFormula, final Term[] rewrite) {
 		assert mpApp.getFunction().getName().equals(ProofConstants.FN_MP);
 
 		/*
@@ -3452,41 +3529,39 @@ public class ProofChecker extends NonRecursive {
 		 * The second argument is a proof that g is implied by (or equivalent to) f and the result is a proof for g.
 		 */
 		boolean okay = false;
-		Term result = null;
-		if (isApplication("=", rewrite) || isApplication("=>", rewrite)) {
-			final Term[] mpSides = ((ApplicationTerm) rewrite).getParameters();
+		Term[] result = null;
+		if (rewrite != null && rewrite.length == 1
+				&& (isApplication("=", rewrite[0]) || isApplication("=>", rewrite[0]))) {
+			final Term[] mpSides = ((ApplicationTerm) rewrite[0]).getParameters();
 			if (mpSides.length == 2) {
-				result = mpSides[1];
-				okay = (origFormula == mpSides[0]);
+				result = createUnitClause(mpSides[1]);
+				okay = origFormula != null && origFormula.length == 1 && (origFormula[0] == mpSides[0]);
 			}
 		}
 		if (!okay && rewrite != null && origFormula != null) {
-			reportError("Malformed @eq application: " + origFormula + " and " + rewrite);
+			reportError(
+					"Malformed @mp application: " + Arrays.toString(origFormula) + " and " + Arrays.toString(rewrite));
 		}
 		return result;
 	}
 
-	Term walkClause(final ApplicationTerm clauseApp, final Term provedClause) {
-		/* Check if the parameters of clause are two disjunctions (which they should be) */
-		Term expectedClause = clauseApp.getParameters()[1];
-		if (expectedClause instanceof AnnotatedTerm) {
-			final Annotation[] annot = ((AnnotatedTerm) expectedClause).getAnnotations();
-			if (annot.length == 1 && annot[0].getKey().equals(":input")) {
-				/* newer version of proof producer adds :input annotation to @clause for interpolator */
-				expectedClause = ((AnnotatedTerm) expectedClause).getSubterm();
-			}
+	Term[] walkClause(final ApplicationTerm clauseApp, final Term[] provedLits) {
+		/* The first parameter of clause is a subproof for provedClause. */
+		/*
+		 * Check if the second parameters of clause is a disjunction (which it should
+		 * be)
+		 */
+		final Annotation[] annots = ((AnnotatedTerm) clauseApp.getParameters()[0]).getAnnotations();
+		if (annots.length != 2
+				|| !annots[0].getKey().equals(ProofConstants.ANNOTKEY_PROVES)
+				|| !annots[1].getKey().equals(ProofConstants.ANNOTKEY_INPUT)) {
+			reportError("Clause has unexpected annotation: " + clauseApp);
 		}
+		final Term[] expectedLits = (Term[]) annots[0].getValue();
 
-		// If we had an error, we can silently recover now.
-		if (provedClause == null) {
-			return expectedClause;
-		}
-
-		// The disjuncts of each parameter
-		final Term[] provedLits = termToClause(provedClause);
-		final Term[] expectedLits = termToClause(expectedClause);
 		if (provedLits.length != expectedLits.length) {
-			reportError("Clause has different number of literals: " + provedClause + " versus " + expectedClause);
+			reportError("Clause has different number of literals: " + Arrays.toString(provedLits) + " versus "
+					+ Arrays.toString(expectedLits));
 		} else {
 			final HashSet<Term> param1Disjuncts = new HashSet<>(Arrays.asList(provedLits));
 			final HashSet<Term> param2Disjuncts = new HashSet<>(Arrays.asList(expectedLits));
@@ -3498,217 +3573,39 @@ public class ProofChecker extends NonRecursive {
 				reportError("The clause-operation didn't permute correctly!");
 			}
 		}
-		return expectedClause;
+		return expectedLits;
 	}
 
-	Term walkAllIntro(final ApplicationTerm allApp, final Term origTerm) {
+	Term[] walkAllIntro(final ApplicationTerm allApp, final Term[] origClause) {
 		assert allApp.getFunction().getName() == ProofConstants.FN_ALLINTRO;
-		final AnnotatedTerm annotatedTerm = (AnnotatedTerm) allApp.getParameters()[0];
-		final Annotation varAnnot = annotatedTerm.getAnnotations()[0];
-		if (annotatedTerm.getAnnotations().length != 1 || varAnnot.getKey() != ":vars"
-				|| !(varAnnot.getValue() instanceof TermVariable[])) {
+		final LambdaTerm lambda = (LambdaTerm) allApp.getParameters()[0];
+		final TermVariable[] vars = lambda.getVariables();
+		final AnnotatedTerm annotatedTerm = (AnnotatedTerm) lambda.getSubterm();
+		final Annotation bodyAnnot = annotatedTerm.getAnnotations()[0];
+		if (annotatedTerm.getAnnotations().length != 1 || bodyAnnot.getKey() != ":body"
+				|| !(bodyAnnot.getValue() instanceof Term)) {
 			reportError("@allIntro with malformed annotation: " + allApp);
 		}
-		final TermVariable[] vars = (TermVariable[]) varAnnot.getValue();
-		/* compute the resulting quantified term (! (forall (...) origTerm) :quoted) */
-		final Theory theory = origTerm.getTheory();
-		return theory.annotatedTerm(new Annotation[] { new Annotation(":quoted", null) },
-				theory.forall(vars, origTerm));
-	}
-
-	/* === Split rules === */
-
-	/**
-	 * This function checks whether splitApp is a valid application of a split rule. A split rule proofs a simple clause
-	 * that follows from a more complicated asserted formula.
-	 *
-	 * @param splitApp
-	 *            the subproof annotated with the simple clause that is extracted.
-	 * @param origTerm
-	 *            the term proved by the sub proof.
-	 * @return the term proved by the split application, i.e., the simple clause from the annotation.
-	 */
-	Term walkSplit(final ApplicationTerm splitApp, final Term origTerm) {
-		final Annotation splitAnnot = getSingleAnnotation(splitApp.getParameters()[0]);
-		final String splitRule = splitAnnot.getKey();
-		if (splitRule == null) {
-			reportError("Malformed split rule " + splitApp);
+		final Term bodyTerm = (Term) bodyAnnot.getValue();
+		if (origClause == null) {
 			return null;
 		}
-		final Term splitTerm = splitApp.getParameters()[1];
-
-		// silently recover from previous errors.
-		if (origTerm == null) {
-			return splitTerm;
+		if (origClause.length != 1 || origClause[0] != bodyTerm) {
+			reportError("@allIntro with wrong sub proof: " + allApp);
 		}
-
-		boolean result;
-		switch (splitRule) {
-		case ":notOr":
-			result = checkSplitNotOr(origTerm, splitTerm);
-			break;
-		case ":xor+1":
-		case ":xor+2":
-		case ":xor-1":
-		case ":xor-2":
-			result = checkSplitXor(splitRule, origTerm, splitTerm);
-			break;
-		case ":ite+1":
-		case ":ite+2":
-		case ":ite-1":
-		case ":ite-2":
-			result = checkSplitIte(splitRule, origTerm, splitTerm);
-			break;
-		case ":subst":
-			result = checkSplitSubst((Term[]) splitAnnot.getValue(), origTerm, splitTerm);
-			if (splitTerm.getFreeVars().length == 0) {
-				// Partial instantiated clauses count when they become ground instances in an inst-lemma.
-				mNumInstancesUsed++;
-				mNumInstancesFromDER++;
-			}
-			break;
-		default:
-			result = false;
-		}
-
-		if (!result) {
-			reportError("Malformed/unknown split rule " + splitApp);
-		}
-		return splitTerm;
-	}
-
-	boolean checkSplitNotOr(final Term origTerm, final Term splitTerm) {
-		// origTerm must be of the form not (or arg0 ... argn),
-		// splitTerm is one of the negated arguments.
-		// validity follows from (not (or arg0 ... argn)) ==> not argi
-		final Term orTerm = negate(origTerm);
-		if (!isApplication("or", orTerm)) {
-			return false;
-		}
-		final Term[] lits = ((ApplicationTerm) orTerm).getParameters();
-		if (!isApplication("not", splitTerm)) {
-			return false;
-		}
-		final Term disjunct = negate(splitTerm);
-		for (final Term t : lits) {
-			if (t == disjunct) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	boolean checkSplitXor(final String splitRule, Term origTerm, final Term splitTerm) {
-		// origTerm is (not? (xor arg0 arg1))
-		final boolean positive = !isApplication("not", origTerm);
-		if (!positive) {
-			origTerm = ((ApplicationTerm) origTerm).getParameters()[0];
-		}
-		if (!isApplication("xor", origTerm)) {
-			return false;
-		}
-		final Term[] xorParams = ((ApplicationTerm) origTerm).getParameters();
-		if (xorParams.length != 2) {
-			return false;
-		}
-		if (!isApplication("or", splitTerm)) {
-			return false;
-		}
-		final Term[] clause = ((ApplicationTerm) splitTerm).getParameters();
-		if (clause.length != 2) {
-			return false;
-		}
-		// The validity of the split rules follows from the following implications
-		// xor+1: xor arg0 arg1 ==> or arg0 arg1
-		// xor+2: xor arg0 arg1 ==> or !arg0 !arg1
-		// xor-1: !xor arg0 arg1 ==> or arg0 !arg1
-		// xor-2: !xor arg0 arg1 ==> or !arg0 arg1
-		switch (splitRule) {
-		case ":xor+1":
-			return positive && clause[0] == xorParams[0] && clause[1] == xorParams[1];
-		case ":xor+2":
-			return positive && clause[0] == mSkript.term("not", xorParams[0])
-					&& clause[1] == mSkript.term("not", xorParams[1]);
-		case ":xor-1":
-			return !positive && clause[0] == xorParams[0] && clause[1] == mSkript.term("not", xorParams[1]);
-		case ":xor-2":
-			return !positive && clause[0] == mSkript.term("not", xorParams[0]) && clause[1] == xorParams[1];
-		}
-		return false;
-	}
-
-	boolean checkSplitIte(final String splitRule, Term origTerm, final Term splitTerm) {
-		// origTerm must be of the form (not? (ite c t e))
-		final boolean positive = !isApplication("not", origTerm);
-		if (!positive) {
-			origTerm = ((ApplicationTerm) origTerm).getParameters()[0];
-		}
-		if (!isApplication("ite", origTerm)) {
-			return false;
-		}
-		final Term[] iteParams = ((ApplicationTerm) origTerm).getParameters();
-		if (iteParams.length != 3) {
-			return false;
-		}
-		if (!isApplication("or", splitTerm)) {
-			return false;
-		}
-		final Term[] clause = ((ApplicationTerm) splitTerm).getParameters();
-		if (clause.length != 2) {
-			return false;
-		}
-		// The validity of the split rules follows from the following implications
-		// ite+1: ite c arg1 arg2 ==> or !c arg1
-		// ite+2: ite c arg1 arg1 ==> or c arg2
-		// ite-1: !ite c arg1 arg2 ==> or !c !arg1
-		// ite-2: !ite c arg1 arg1 ==> or c !arg2
-		switch (splitRule) {
-		case ":ite+1":
-			return positive && clause[0] == mSkript.term("not", iteParams[0]) && clause[1] == iteParams[1];
-		case ":ite+2":
-			return positive && clause[0] == iteParams[0] && clause[1] == iteParams[2];
-		case ":ite-1":
-			return !positive && clause[0] == mSkript.term("not", iteParams[0])
-					&& clause[1] == mSkript.term("not", iteParams[1]);
-		case ":ite-2":
-			return !positive && clause[0] == iteParams[0] && clause[1] == mSkript.term("not", iteParams[2]);
-		}
-		return false;
-	}
-
-	boolean checkSplitSubst(final Term[] splitSubst, final Term origTerm, final Term splitTerm) {
-		// origTerm must be a quoted universally quantified formula
-		final Term unquotedOrigTerm = unquote(origTerm);
-		if (!(unquotedOrigTerm instanceof QuantifiedFormula)) {
-			return false;
-		}
-		final QuantifiedFormula qf = (QuantifiedFormula) unquotedOrigTerm;
-		if (qf.getQuantifier() != QuantifiedFormula.FORALL) {
-			return false;
-		}
-		final TermVariable[] vars = qf.getVariables();
-		if (vars.length != 0 && vars.length == splitSubst.length) {
-			final Map<TermVariable, Term> sigma = new HashMap<>();
-			for (int i = 0; i < vars.length; i++) {
-				// TODO The subst annotation has the variable itself if it is not replaced, it cannot have null values.
-				if (splitSubst[i] != null && splitSubst[i] != vars[i]) {
-					sigma.put(vars[i], splitSubst[i]);
-				}
-			}
-			final Term[] subst = substituteInQuantClause(qf.getSubformula(), sigma);
-			return new HashSet<>(Arrays.asList(subst)).equals(new HashSet<>(Arrays.asList(termToClause(splitTerm))));
-		}
-		return false;
+		/* compute the resulting quantified term (forall (...) origTerm) */
+		final Theory theory = bodyTerm.getTheory();
+		return new Term[] { theory.forall(vars, bodyTerm) };
 	}
 
 	/* === Auxiliary functions === */
 
-	void stackPush(final Term pushTerm, final ApplicationTerm keyTerm) {
-		mCacheConv.put(keyTerm, pushTerm);
-		mStackResults.push(pushTerm);
+	void stackPush(final Term[] pushClause, final ApplicationTerm keyTerm) {
+		mCacheConv.put(keyTerm, pushClause);
+		mStackResults.push(pushClause);
 	}
 
-	Term stackPop() {
+	Term[] stackPop() {
 		return mStackResults.pop();
 	}
 
@@ -3771,31 +3668,6 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
-	 * Substitute variables in a given quantified clause. This also removes :quotedQuant annotations.
-	 *
-	 * @param orTerm
-	 * @param sigma
-	 * @return
-	 */
-	private Term[] substituteInQuantClause(final Term orTerm, final Map<TermVariable, Term> sigma) {
-		final FormulaUnLet unletter = new FormulaUnLet();
-		unletter.addSubstitutions(sigma);
-		final Term[] lits = termToClause(orTerm);
-		final Term[] substLits = new Term[lits.length];
-		for (int i = 0; i < lits.length; i++) {
-			if (Collections.disjoint(Arrays.asList(lits[i].getFreeVars()), sigma.keySet())) {
-				substLits[i] = lits[i];
-			} else {
-				final boolean isNeg = isApplication("not", lits[i]);
-				final Term atom = unquote(isNeg ? negate(lits[i]) : lits[i], false);
-				final Term substAtom = unletter.unlet(atom);
-				substLits[i] = isNeg ? negate(substAtom) : substAtom;
-			}
-		}
-		return substLits;
-	}
-
-	/**
 	 * Parses a constant term. It handles Rationals given as ConstantTerm or parsed as div terms.
 	 *
 	 * @param term
@@ -3819,7 +3691,7 @@ public class ProofChecker extends NonRecursive {
 	 *            the term to check.
 	 * @return true if term is an application of funcSym.
 	 */
-	boolean isApplication(final String funcSym, final Term term) {
+	private boolean isApplication(final String funcSym, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol func = appTerm.getFunction();
@@ -3828,6 +3700,27 @@ public class ProofChecker extends NonRecursive {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Checks if a term is a double negated term.
+	 * @param term
+	 *            the term to check.
+	 * @return true if term is an application of not on an application of not.
+	 */
+	private boolean isDoubleNeg(final Term term) {
+		return isApplication("not", term)
+				&& isApplication("not", ((ApplicationTerm) term).getParameters()[0]);
+	}
+
+	/**
+	 * Removes double negation from a term.  This assumes it is a double negated term.
+	 * @param term the double negated term.
+	 * @return the term without double negation.
+	 */
+	private Term removeDoubleNeg(final Term term) {
+		assert isDoubleNeg(term);
+		return ((ApplicationTerm) ((ApplicationTerm) term).getParameters()[0]).getParameters()[0];
 	}
 
 	/**
@@ -3843,8 +3736,8 @@ public class ProofChecker extends NonRecursive {
 			final Annotation[] annots = ((AnnotatedTerm) term).getAnnotations();
 			if (annots.length == 1) {
 				final Annotation singleAnnot = annots[0];
-				if (singleAnnot.getKey() == ":subst" || singleAnnot.getKey() == ":skolem"
-						|| singleAnnot.getKey() == ":removeForall") {
+				if (singleAnnot.getKey() == ":forall+" || singleAnnot.getKey() == ":forall-"
+						|| singleAnnot.getKey() == ":exists+" || singleAnnot.getKey() == ":exists-") {
 					if (singleAnnot.getValue() instanceof Term[]) {
 						return singleAnnot;
 					}

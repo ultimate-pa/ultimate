@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -257,16 +256,11 @@ public class FixResolutionProof extends NonRecursive {
 	 *            The {@literal @}lemma application.
 	 */
 	ProofInfo walkClause(final ApplicationTerm clauseApp) {
-		Term provedClause = clauseApp.getParameters()[1];
-		if (provedClause instanceof AnnotatedTerm) {
-			final Annotation[] annot = ((AnnotatedTerm) provedClause).getAnnotations();
-			if (annot.length == 1 && annot[0].getKey().equals(":input")) {
-				/* newer version of proof producer adds :input annotation to @clause for interpolator */
-				provedClause = ((AnnotatedTerm) provedClause).getSubterm();
-			}
-		}
+		final AnnotatedTerm subproof = (AnnotatedTerm) clauseApp.getParameters()[0];
+		assert subproof.getAnnotations()[0].getKey().equals(ProofConstants.ANNOTKEY_PROVES);
+		final Term[] provedClause = (Term[]) subproof.getAnnotations()[0].getValue();
 
-		final ProofInfo info = new ProofInfo(clauseApp, termToClause(provedClause));
+		final ProofInfo info = new ProofInfo(clauseApp, provedClause);
 		return info;
 	}
 
@@ -283,7 +277,7 @@ public class FixResolutionProof extends NonRecursive {
 		/*
 		 * allDisjuncts is the currently computed resolution result.
 		 */
-		final HashSet<Term> allDisjuncts = new HashSet<Term>();
+		final HashSet<Term> allDisjuncts = new HashSet<>();
 		/*
 		 * newResolutionArgs are the new arguments for this resolution node.
 		 */

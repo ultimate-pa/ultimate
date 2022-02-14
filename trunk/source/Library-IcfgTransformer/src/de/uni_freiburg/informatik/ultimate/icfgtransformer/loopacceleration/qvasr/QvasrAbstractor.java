@@ -1292,7 +1292,7 @@ public class QvasrAbstractor {
 	 */
 	private static Term[][] constructBaseMatrix(final ManagedScript script, final Map<TermVariable, Term> updates,
 			final UnmodifiableTransFormula transitionFormula) {
-		final int columnDimension = transitionFormula.getAssignedVars().size();
+		final int columnDimension = transitionFormula.getOutVars().size();
 
 		final Set<Set<Term>> setToZero = new HashSet<>();
 		final Map<Term, Term> intToReal = new HashMap<>();
@@ -1309,6 +1309,12 @@ public class QvasrAbstractor {
 			powerset = QvasrUtils.joinSet(powerset, inTv);
 		}
 		final Term[][] baseMatrix = new Term[powerset.size() + 1][columnDimension + 1];
+
+		for (int i = 0; i < powerset.size() + 1; i++) {
+			for (int j = 0; j < columnDimension + 1; j++) {
+				baseMatrix[i][j] = script.getScript().decimal("0");
+			}
+		}
 
 		final Deque<Set<Term>> zeroStack = new HashDeque<>();
 		zeroStack.addAll(powerset);
