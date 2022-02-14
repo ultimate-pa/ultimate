@@ -147,7 +147,10 @@ public class VariableAbstraction<L extends IAction>
 					nAuxVars.toArray(TermVariable[]::new), utf.getFormula()));
 		}
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfBuilder.finishConstruction(mMscript);
+		final UnmodifiableTransFormula abstracted = tfBuilder.finishConstruction(mMscript);
+		assert abstracted.getAssignedVars()
+				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
+		return abstracted;
 	}
 
 	// Verband - Lattice
