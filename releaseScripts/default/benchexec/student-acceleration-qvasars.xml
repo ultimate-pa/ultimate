@@ -7,12 +7,14 @@
 
     <tasks name="reach-svcomp-all">
         <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-        
-        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
-        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+
         <!-- 
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-Heap.set</includesfile>
