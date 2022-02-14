@@ -38,7 +38,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ReversedIterator;
@@ -300,8 +299,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 
 	private Set<IProgramVar> getVars(final L letter, final boolean writtenVars) {
 		if (writtenVars) {
-			return TransFormulaUtils.computeAssignedVars(letter.getTransformula().getInVars(),
-					letter.getTransformula().getOutVars());
+			return letter.getTransformula().getAssignedVars();
 		}
 		return letter.getTransformula().getInVars().keySet();
 	}
