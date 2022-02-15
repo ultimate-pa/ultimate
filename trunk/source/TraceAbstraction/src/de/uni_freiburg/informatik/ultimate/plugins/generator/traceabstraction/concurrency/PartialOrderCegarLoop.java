@@ -229,7 +229,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends Basi
 
 		if (mLetterAbstraction != null) {
 			mPOR.reportStatistics();
-			mAbstractionLevel = mLetterAbstraction.refine(mAbstractionLevel, mRefinementResult);
+			final H newLevel = mLetterAbstraction.refine(mAbstractionLevel, mRefinementResult);
+			assert mLetterAbstraction.getHierarchy().compare(newLevel, mAbstractionLevel)
+					.isLessOrEqual() : "Refinement must yield a lower abstraction level";
+			mAbstractionLevel = newLevel;
 			mPOR.setAbstractionLevel(mAbstractionLevel);
 		}
 

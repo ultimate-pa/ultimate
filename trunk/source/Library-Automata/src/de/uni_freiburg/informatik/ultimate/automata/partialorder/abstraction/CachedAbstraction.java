@@ -68,6 +68,9 @@ public class CachedAbstraction<H, L> implements IAbstraction<H, L> {
 	@Override
 	public L abstractLetter(final L input, final H level) {
 		final H restricted = restrict(input, level);
+		assert getHierarchy().compare(restricted, level)
+				.isLessOrEqual() : "restrict must return smaller or equal abstraction level";
+
 		if (mCache.containsKey(input, restricted)) {
 			return mCache.get(input, restricted);
 		}

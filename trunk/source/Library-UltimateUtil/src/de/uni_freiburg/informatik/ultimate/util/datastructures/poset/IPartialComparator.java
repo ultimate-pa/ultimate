@@ -88,6 +88,10 @@ public interface IPartialComparator<T> {
 				throw new AssertionError("unknown value");
 			}
 		}
+
+		public boolean isLessOrEqual() {
+			return this == STRICTLY_SMALLER || this == EQUAL;
+		}
 	}
 
 	/**
