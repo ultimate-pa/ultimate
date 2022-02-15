@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -71,21 +72,21 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.RefinableCachedAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 /**
@@ -98,50 +99,45 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  * @param <L>
  *            The type of statements in the program.
  */
-public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends BasicCegarLoop<L> {
 	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
-	private final DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, IDfsVisitor<L, IPredicate>> mVisitor;
-	private PartialOrderReductionFacade<L> mPOR;
+	private final PartialOrderReductionFacade<L, H> mPOR;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
-	private Set<IProgramVar> mConstrainingVariables;
-	private final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> mLetterAbstraction;
+	private H mAbstractionLevel;
+	private final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> mLetterAbstraction;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final ICopyActionFactory<L> copyFactory,
+			final IPLBECompositionFactory<L> compositionFactory,
+			final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> letterAbstraction,
 			final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
 		mPartialOrderMode = mPref.getPartialOrderMode();
-
-		switch (mPref.getPorAbstraction()) {
-		case VARIABLES_GLOBAL:
-			mLetterAbstraction = new RefinableCachedAbstraction<>(
-					new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), getAllVariables()));
-			break;
-		case NONE:
+		if (letterAbstraction == null) {
 			mLetterAbstraction = null;
-			break;
-		default:
-			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
+		} else {
+			mLetterAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
 		}
+
+		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
+				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
+				constructIndependence(csToolkit));
 
 		if (mLetterAbstraction != null) {
-			mConstrainingVariables = mLetterAbstraction.getInitial();
+			mAbstractionLevel = mLetterAbstraction.getInitial();
+			mPOR.setAbstractionLevel(mAbstractionLevel);
+		} else {
+			mPOR.disableAbstraction();
 		}
-
-		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
-		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
-				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), independenceRelation);
-		mVisitor = mPOR.createDeadEndVisitor(this::createVisitor);
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
@@ -206,8 +202,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		// todo: Diesem Kommentar in eine Methode verwandeln. Menge der benutzen Prädikaten berechnen.
 		final IHoareTripleChecker htc = getHoareTripleChecker();
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
-				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia;
+		if (mPref.getPorAbstraction() == AbstractionType.VARIABLES_LOCAL) {
+			ia = enhanceInterpolantAutomaton(InterpolantAutomatonEnhancement.NONE, predicateUnifier, htc,
+					mInterpolAutomaton);
+		} else {
+			ia = enhanceInterpolantAutomaton(mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc,
+					mInterpolAutomaton);
+		}
 		if (ia instanceof AbstractInterpolantAutomaton<?>) {
 			final AbstractInterpolantAutomaton<L> aia = (AbstractInterpolantAutomaton<L>) ia;
 			aia.switchToReadonlyMode();
@@ -226,11 +228,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
 
 		if (mLetterAbstraction != null) {
-			mConstrainingVariables = mLetterAbstraction.refine(mConstrainingVariables, mRefinementResult);
-			final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(mCsToolkit);
-			mPOR = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, mIcfg, mErrorLocs,
-					mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
-					independenceRelation);
+			mPOR.reportStatistics();
+			final H newLevel = mLetterAbstraction.refine(mAbstractionLevel, mRefinementResult);
+			assert mLetterAbstraction.getHierarchy().compare(newLevel, mAbstractionLevel)
+					.isLessOrEqual() : "Refinement must yield a lower abstraction level";
+			mAbstractionLevel = newLevel;
+			mPOR.setAbstractionLevel(mAbstractionLevel);
 		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
@@ -244,10 +247,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		switchToOnDemandConstructionMode();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		mVisitor.reset();
+		final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 		try {
-			mPOR.apply(abstraction, mVisitor);
-			mCounterexample = getCounterexample();
+			mPOR.apply(abstraction, visitor);
+			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
 			assert mCounterexample == null || accepts(getServices(), abstraction, mCounterexample.getWord(),
@@ -267,8 +270,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		super.finish();
 	}
 
-	private IRun<L, IPredicate> getCounterexample() {
-		IDfsVisitor<L, IPredicate> visitor = mVisitor.getUnderlying();
+	private IRun<L, IPredicate> getCounterexample(IDfsVisitor<L, IPredicate> visitor) {
 		if (visitor instanceof WrapperVisitor<?, ?, ?>) {
 			visitor = ((WrapperVisitor<L, IPredicate, IDfsVisitor<L, IPredicate>>) visitor).getBaseVisitor();
 		}
@@ -283,6 +285,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		IDfsVisitor<L, IPredicate> visitor;
 		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
+			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
 			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
 		} else {
 			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
@@ -297,11 +300,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 							(SleepSetStateFactoryForRefinement<L>) mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
 		}
-		return visitor;
+		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore());
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
-		return IndependenceBuilder
+	private Function<H, IIndependenceRelation<IPredicate, L>> constructIndependence(final CfgSmtToolkit csToolkit) {
+		final var coreBuilder = IndependenceBuilder
 				// Semantic independence forms the base.
 				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
 						mPref.getConditionalPor(), mPref.getSymmetricPor())
@@ -318,10 +321,22 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
 				// We ignore "don't care" conditions stemming from the initial program automaton states.
 				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
-				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
-				// =========================================================================
-				// Apply abstraction to each letter before checking commutativity (if mLetterAbstraction is non-null).
-				.withAbstraction(mLetterAbstraction, mConstrainingVariables)
+				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts);
+
+		// If abstraction is disabled:
+		if (mLetterAbstraction == null) {
+			// Never consider letters of the same thread to be independent.
+			final IIndependenceRelation<IPredicate, L> independence = coreBuilder.threadSeparated().build();
+			// The independence relation remains unchanged across refinement rounds.
+			return x -> independence;
+		}
+
+		// The core relation will remain unchanged. This means we construct only one script and only one cache.
+		final IIndependenceRelation<IPredicate, L> coreIndependence = coreBuilder.build();
+		// The independence relation changes depending on the refinement round's abstraction level.
+		return level -> IndependenceBuilder.fromPredicateActionIndependence(coreIndependence)
+				// // Apply abstraction to each letter before checking commutativity.
+				.withAbstraction(mLetterAbstraction, level)
 				// Never consider letters of the same thread to be independent.
 				.threadSeparated()
 				// Retrieve the constructed relation.
@@ -437,7 +452,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 						.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
 			}
 
-			mVisitor.copyDeadEndInformation(state1, newState);
+			mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
 			return newState;
 		}
 	}

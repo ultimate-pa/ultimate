@@ -31,7 +31,6 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -41,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
@@ -74,14 +73,16 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  *
  * @param <L>
  *            The type of letters occurring in the automata that will be reduced.
+ * @param <H>
+ *            The type of abstraction levels if abstract independence is used. Arbitrary type otherwise.
  */
-public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
+public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 	public enum OrderType {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
 	}
 
 	public enum AbstractionType {
-		NONE, VARIABLES_GLOBAL
+		NONE, VARIABLES_GLOBAL, VARIABLES_LOCAL
 	}
 
 	private final IUltimateServiceProvider mServices;
@@ -89,22 +90,49 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	private final PartialOrderMode mMode;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
-	private final IIndependenceRelation<IPredicate, L> mIndependence;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
-	private final IPersistentSetChoice<L, IPredicate> mPersistent;
+	private final Function<H, IIndependenceRelation<IPredicate, L>> mIndependenceAtLevel;
 	private StateSplitter<IPredicate> mStateSplitter;
+	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
+
+	private final IIcfg<?> mIcfg;
+	private final Collection<? extends IcfgLocation> mErrorLocs;
+
+	private H mAbstractionLevel;
+	private IIndependenceRelation<IPredicate, L> mIndependence;
+	private IPersistentSetChoice<L, IPredicate> mPersistent;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
-			final IIndependenceRelation<IPredicate, L> independence) {
+			final Function<H, IIndependenceRelation<IPredicate, L>> independenceAtLevel) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
+
 		mMode = mode;
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
-		mIndependence = independence;
-		mPersistent = createPersistentSets(icfg, errorLocs);
+		mDeadEndStore = createDeadEndStore();
+
+		mIcfg = icfg;
+		mErrorLocs = errorLocs;
+
+		mIndependenceAtLevel = independenceAtLevel;
+	}
+
+	public void disableAbstraction() {
+		mAbstractionLevel = null;
+		mIndependence = mIndependenceAtLevel.apply(null);
+		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
+	}
+
+	public void setAbstractionLevel(final H level) {
+		if (Objects.equals(level, mAbstractionLevel)) {
+			return;
+		}
+		mAbstractionLevel = level;
+		mIndependence = mIndependenceAtLevel.apply(level);
+		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -231,23 +259,15 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	/**
-	 * Creates a {@link DeadEndOptimizingSearchVisitor} suitable for use with this instance.
-	 *
-	 * @param <V>
-	 *            The type of underlying visitor
-	 * @param createUnderlying
-	 *            A method to create the underlying visitor. See
-	 *            {@link DeadEndOptimizingSearchVisitor#DeadEndOptimizingSearchVisitor(Supplier)} for details.
-	 * @return the new visitor
-	 */
-	public <V extends IDfsVisitor<L, IPredicate>> DeadEndOptimizingSearchVisitor<L, IPredicate, IPredicate, V>
-			createDeadEndVisitor(final Supplier<V> createUnderlying) {
+	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore() {
 		if (mStateSplitter == null) {
-			return new DeadEndOptimizingSearchVisitor<>(createUnderlying);
+			return new IDeadEndStore.SimpleDeadEndStore<>();
 		}
-		return new DeadEndOptimizingSearchVisitor<>(createUnderlying, mStateSplitter::getOriginal,
-				mStateSplitter::getExtraInfo);
+		return new IDeadEndStore.ProductDeadEndStore<>(mStateSplitter::getOriginal, mStateSplitter::getExtraInfo);
+	}
+
+	public IDeadEndStore<IPredicate, IPredicate> getDeadEndStore() {
+		return mDeadEndStore;
 	}
 
 	/**

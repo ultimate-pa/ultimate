@@ -124,6 +124,23 @@ public class VariableAbstractionTest {
 		mScript.exit();
 	}
 
+	public UnmodifiableTransFormula yIsXPlusY() {
+		final TermVariable xIn = mMgdScript.variable("x_in", mScript.sort("Int"));
+		final TermVariable yIn = mMgdScript.variable("y_in", mScript.sort("Int"));
+		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
+
+		final Term formula = parseWithVariables("(= y_out (+ x_in y_in))");
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
+		tfb.addInVar(y, yIn);
+		tfb.addInVar(x, xIn); // x as inVar
+		tfb.addOutVar(y, yOut);
+		tfb.addOutVar(x, xIn); // x as outVar with the same TermVariable
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
+		return utf;
+	}
+
 	public UnmodifiableTransFormula yIsXTimesTwo() {
 		final TermVariable xIn = mMgdScript.variable("x_in", mScript.sort("Int"));
 		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
@@ -154,6 +171,11 @@ public class VariableAbstractionTest {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
 		return utf;
+	}
+
+	@Test
+	public void sharedInOutVar() {
+		runTestAbstraction(yIsXPlusY(), Set.of(y));
 	}
 
 	@Test

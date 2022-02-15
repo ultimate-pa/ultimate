@@ -36,9 +36,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
@@ -61,6 +65,10 @@ public class VariableAbstraction<L extends IAction>
 	private final ManagedScript mMscript;
 	private final Set<IProgramVar> mAllProgramVars;
 	private final ILattice<Set<IProgramVar>> mHierarchy;
+
+	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final CfgSmtToolkit csToolkit) {
+		this(copyFactory, csToolkit.getManagedScript(), IcfgUtils.collectAllProgramVars(csToolkit));
+	}
 
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript,
 			final Set<IProgramVar> allProgramVars) {
@@ -141,7 +149,14 @@ public class VariableAbstraction<L extends IAction>
 					nAuxVars.toArray(TermVariable[]::new), utf.getFormula()));
 		}
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfBuilder.finishConstruction(mMscript);
+		final UnmodifiableTransFormula abstracted = tfBuilder.finishConstruction(mMscript);
+
+		assert abstracted.getAssignedVars()
+				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
+
+		assert TransFormulaUtils.checkImplication(utf, abstracted, mMscript) != LBool.SAT : "not an abstraction";
+
+		return abstracted;
 	}
 
 	// Verband - Lattice
@@ -174,5 +189,16 @@ public class VariableAbstraction<L extends IAction>
 		}
 		constrainingVars.addAll(current);
 		return constrainingVars;
+	}
+
+	public Map<L, Set<IProgramVar>> refineSpecific(final Map<L, Set<IProgramVar>> current,
+			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
+		for (final QualifiedTracePredicates qtp : refinement.getUsedTracePredicates()) {
+			qtp.getTracePredicates().getPostcondition().getVars();
+			qtp.getTracePredicates().getPredicates();
+			// So how exactly are these things stored?
+		}
+
+		return null;
 	}
 }
