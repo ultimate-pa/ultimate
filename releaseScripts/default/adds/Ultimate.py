@@ -221,6 +221,7 @@ def get_java():
         "/usr/bin/java",
         "/opt/oracle-jdk-bin-*/bin/java",
         "/opt/openjdk-*/bin/java",
+        "/opt/java/openjdk/bin/java",
         "/usr/lib/jvm/java-*-openjdk-amd64/bin/java",
     ]
 
