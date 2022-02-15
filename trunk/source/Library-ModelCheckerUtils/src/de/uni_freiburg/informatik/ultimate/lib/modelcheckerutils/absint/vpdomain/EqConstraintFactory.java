@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosureComparator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BenchmarkWithCounters;
 
 /**
  *

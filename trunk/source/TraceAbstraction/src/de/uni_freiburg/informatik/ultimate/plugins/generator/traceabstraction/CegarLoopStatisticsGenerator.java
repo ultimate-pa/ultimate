@@ -26,67 +26,149 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
-
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
-public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwatches
-		implements IStatisticsDataProvider {
+public class CegarLoopStatisticsGenerator extends BaseStatisticsDataProvider {
 
-	private final StatisticsData mReuseStats = new StatisticsData();
-	private final StatisticsAggregator mEcData = new StatisticsAggregator();
-	private final StatisticsData mPredicateUnifierData = new StatisticsData();
-	private final StatisticsData mTcData = new StatisticsData();
-	private final StatisticsData mTiData = new StatisticsData();
-	private final StatisticsData mAmData = new StatisticsData();
-	private final StatisticsData mHoareAnnotationData = new StatisticsData();
-	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
-	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
-	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
-	private int mIterations = 0;
-	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
-	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
+	public static final String OverallTime = "OverallTime";
+	public static final String OverallIterations = "OverallIterations";
+	public static final String TraceHistogramMax = "TraceHistogramMax";
+	public static final String AutomataDifferenceTime = "AutomataDifferenceTime";
+	public static final String HoareTripleCheckerStatistics = "HoareTripleCheckerStatistics";
+	public static final String PredicateUnifierStatistics = "PredicateUnifierStatistics";
+	public static final String BiggestAbstraction = "BiggestAbstraction";
+	public static final String TraceCheckStatistics = "TraceCheckStatistics";
+	public static final String AutomataMinimizationStatistics = "AutomataMinimizationStatistics";
+
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mReuseStatistics;
+
+	@Reflected(prettyName = HoareTripleCheckerStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mEcData;
+
+	@Reflected(prettyName = PredicateUnifierStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mPredicateUnifierData;
+
+	@Reflected(prettyName = TraceCheckStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mTcData;
+
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mTotalInterpolationStatistics;
+
+	@Reflected(prettyName = AutomataMinimizationStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mAmData;
+
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mHoareAnnotationStatistics;
+
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mInterpolantConsolidationStatistics;
+
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mPathInvariantsStatistics;
+
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mRefinementEngineStatistics;
+
+	@Reflected(prettyName = OverallIterations)
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mIterations;
+
+	@Reflected(prettyName = TraceHistogramMax)
+	@Statistics(type = DefaultMeasureDefinitions.INT_MAX)
 	private int mTraceHistogramMaximum = 0;
-	private int mInterpolantAutomatonStates = 0;
-	private int mPathProgramHistogramMaximum = 0;
 
-	@Override
-	public Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mInterpolantAutomatonStates;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_MAX)
+	private int mPathProgramHistogramMaximum;
+
+	@Reflected(prettyName = OverallTime)
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mOverallTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mEmptinessCheckTime = new TimeTracker();
+
+	@Reflected(prettyName = AutomataDifferenceTime)
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mAutomataDifferenceTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mDeadEndRemovalTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mHoareAnnotationTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mBasicInterpolantAutomatonTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mInitialAbstractionConstructionTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mDumpTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mPartialOrderReductionTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.BACKWARD_COVERING_INFORMATION)
+	private final BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
+
+	// manual declaration
+	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
+
+	public CegarLoopStatisticsGenerator(final IToolchainStorage storage) {
+		super(storage);
+
+		mReuseStatistics = new StatisticsAggregator(storage);
+		mEcData = new StatisticsAggregator(storage);
+		mPredicateUnifierData = new StatisticsAggregator(storage);
+		mTcData = new StatisticsAggregator(storage);
+		mTotalInterpolationStatistics = new StatisticsAggregator(storage);
+		mAmData = new StatisticsAggregator(storage);
+		mHoareAnnotationStatistics = new StatisticsAggregator(storage);
+		mInterpolantConsolidationStatistics = new StatisticsAggregator(storage);
+		mPathInvariantsStatistics = new StatisticsAggregator(storage);
+		mRefinementEngineStatistics = new StatisticsAggregator(storage);
+
+		declare(BiggestAbstraction, () -> mBiggestAbstraction, SizeIterationPair.KEY_TYPE);
 	}
 
 	public void addReuseStats(final IStatisticsDataProvider reuseStats) {
-		mReuseStats.aggregateBenchmarkData(reuseStats);
+		mReuseStatistics.aggregateStatisticsData(reuseStats);
 	}
 
 	public void addEdgeCheckerData(final IStatisticsDataProvider ecbd) {
-		mEcData.aggregateBenchmarkData(ecbd);
+		mEcData.aggregateStatisticsData(ecbd);
 	}
 
 	public void addPredicateUnifierData(final IStatisticsDataProvider pubd) {
-		mPredicateUnifierData.aggregateBenchmarkData(pubd);
+		mPredicateUnifierData.aggregateStatisticsData(pubd);
 	}
 
 	public void addTraceCheckData(final IStatisticsDataProvider tcbd) {
-		mTcData.aggregateBenchmarkData(tcbd);
+		mTcData.aggregateStatisticsData(tcbd);
 	}
 
 	public void addRefinementEngineStatistics(final IStatisticsDataProvider res) {
-		mRefinementEngineStatistics.aggregateBenchmarkData(res);
+		mRefinementEngineStatistics.aggregateStatisticsData(res);
 	}
 
 	public void addTotalInterpolationData(final IStatisticsDataProvider tibd) {
-		mTiData.aggregateBenchmarkData(tibd);
-	}
-
-	public void addBackwardCoveringInformation(final BackwardCoveringInformation bci) {
-		mBCI = new BackwardCoveringInformation(mBCI, bci);
+		mTotalInterpolationStatistics.aggregateStatisticsData(tibd);
 	}
 
 	public void announceNextIteration() {
@@ -94,11 +176,11 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	}
 
 	public void addAutomataMinimizationData(final IStatisticsDataProvider tcbd) {
-		mAmData.aggregateBenchmarkData(tcbd);
+		mAmData.aggregateStatisticsData(tcbd);
 	}
 
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
-		mHoareAnnotationData.aggregateBenchmarkData(hasp);
+		mHoareAnnotationStatistics.aggregateStatisticsData(hasp);
 	}
 
 	/**
@@ -128,76 +210,60 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mInterpolantAutomatonStates += count;
 	}
 
-	@Override
-	public Object getValue(final String key) {
-		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case OverallTime:
-		case EmptinessCheckTime:
-		case AutomataDifference:
-		case DeadEndRemovalTime:
-		case HoareAnnotationTime:
-		case BasicInterpolantAutomatonTime:
-		case InitialAbstractionConstructionTime:
-		case DumpTime:
-		case PartialOrderReductionTime:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
-			}
-		case HoareTripleCheckerStatistics:
-			return mEcData;
-		case ReuseStatistics:
-			return mReuseStats;
-		case PredicateUnifierStatistics:
-			return mPredicateUnifierData;
-		case traceCheckStatistics:
-			return mTcData;
-		case InterpolantConsolidationStatistics:
-			return mInterpolantConsolidationBenchmarks;
-		case PathInvariantsStatistics:
-			return mPathInvariantsStatistics;
-		case TotalInterpolationStatistics:
-			return mTiData;
-		case OverallIterations:
-			return mIterations;
-		case TraceHistogramMax:
-			return mTraceHistogramMaximum;
-		case PathProgramHistogramMax:
-			return mPathProgramHistogramMaximum;
-		case BiggestAbstraction:
-			return mBiggestAbstraction;
-		case InterpolantAutomatonStates:
-			return mInterpolantAutomatonStates;
-		case InterpolantCoveringCapability:
-			return mBCI;
-		case AutomataMinimizationStatistics:
-			return mAmData;
-		case HoareAnnotationStatistics:
-			return mHoareAnnotationData;
-		case RefinementEngineStatistics:
-			return mRefinementEngineStatistics;
-		default:
-			throw new AssertionError("unknown data");
-		}
+	public void startDumpTime() {
+		mDumpTime.start();
 	}
 
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return CegarStatisticsType.getInstance();
+	public void stopDumpTime() {
+		mDumpTime.stop();
 	}
 
-	@Override
-	public String[] getStopwatches() {
-		return new String[] { CegarLoopStatisticsDefinitions.OverallTime.toString(),
-				CegarLoopStatisticsDefinitions.EmptinessCheckTime.toString(),
-				CegarLoopStatisticsDefinitions.AutomataDifference.toString(),
-				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
-				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
-				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
-				CegarLoopStatisticsDefinitions.DumpTime.toString(),
-				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(),
-				CegarLoopStatisticsDefinitions.PartialOrderReductionTime.toString(), };
+	public void startInitialAbstractionConstructionTime() {
+		mInitialAbstractionConstructionTime.start();
 	}
+
+	public void stopInitialAbstractionConstructionTime() {
+		mInitialAbstractionConstructionTime.stop();
+	}
+
+	public void startOverallTime() {
+		mOverallTime.start();
+	}
+
+	public void stopOverallTime() {
+		mOverallTime.stop();
+	}
+
+	public void stopAutomataDifferenceTime() {
+		mAutomataDifferenceTime.stop();
+	}
+
+	public void startAutomataDifferenceTime() {
+		mAutomataDifferenceTime.start();
+	}
+
+	public void startPartialOrderReductionTime() {
+		mPartialOrderReductionTime.start();
+	}
+
+	public void stopPartialOrderReductionTime() {
+		mPartialOrderReductionTime.stop();
+	}
+
+	public void startEmptinessCheckTime() {
+		mEmptinessCheckTime.start();
+	}
+
+	public void stopEmptinessCheckTime() {
+		mEmptinessCheckTime.stop();
+	}
+
+	public void startHoareAnnotationTime() {
+		mHoareAnnotationTime.start();
+	}
+
+	public void stopHoareAnnotationTime() {
+		mHoareAnnotationTime.stop();
+	}
+
 }

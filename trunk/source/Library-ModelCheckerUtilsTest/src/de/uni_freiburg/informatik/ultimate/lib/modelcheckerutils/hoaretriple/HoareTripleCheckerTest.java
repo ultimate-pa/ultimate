@@ -116,7 +116,7 @@ public class HoareTripleCheckerTest {
 		// assume x >= 0;x := x - c;
 		// {36#(and (or unseeded (and (>= oldRank0 0) (> oldRank0 (+ (* 2 x) 1)))) (>= (+ (- 1) c) 0))}
 
-		new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier);
+		new SdHoareTripleChecker(mServices.getStorage(), mCsToolkit, mPredicateUnifier);
 	}
 
 }

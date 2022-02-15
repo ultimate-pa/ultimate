@@ -35,11 +35,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Base class for all {@link IpTcStrategyModuleBase} implementations that create an {@link IInterpolatingTraceCheck}
@@ -78,8 +77,8 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
-		stats.addStatistics(RefinementEngineStatisticsDefinitions.TRACE_CHECK, getOrConstruct().getStatistics());
+	public void aggregateStatistics(final StatisticsAggregator stats) {
+		stats.aggregateStatisticsData("TRACE_CHECK", getOrConstruct().getStatistics());
 	}
 
 	protected ManagedScript createExternalManagedScript(final SolverSettings solverSettings) {

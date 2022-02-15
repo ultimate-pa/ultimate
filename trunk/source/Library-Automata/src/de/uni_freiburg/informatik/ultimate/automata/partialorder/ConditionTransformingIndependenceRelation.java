@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -57,18 +58,18 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	 * @param transformer
 	 *            A transformation applied to conditions.
 	 */
-	public ConditionTransformingIndependenceRelation(final IIndependenceRelation<T, L> underlying,
-			final Function<S, T> transformer) {
-		this(underlying, transformer, underlying.isConditional());
+	public ConditionTransformingIndependenceRelation(final IToolchainStorage storage,
+			final IIndependenceRelation<T, L> underlying, final Function<S, T> transformer) {
+		this(storage, underlying, transformer, underlying.isConditional());
 	}
 
-	private ConditionTransformingIndependenceRelation(final IIndependenceRelation<T, L> underlying,
-			final Function<S, T> transformer, final boolean conditional) {
+	private ConditionTransformingIndependenceRelation(final IToolchainStorage storage,
+			final IIndependenceRelation<T, L> underlying, final Function<S, T> transformer, final boolean conditional) {
 		mUnderlying = underlying;
 		mTransformer = transformer;
 		mConditional = conditional;
-		mStatistics =
-				new IndependenceStatisticsDataProvider(ConditionTransformingIndependenceRelation.class, underlying);
+		mStatistics = new IndependenceStatisticsDataProvider(storage, ConditionTransformingIndependenceRelation.class,
+				underlying);
 	}
 
 	@Override
@@ -107,7 +108,8 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	 *            The underlying relations. This is treated as unconditional, even if it is not.
 	 * @return A new independence relation that discards conditions and then calls the underlying relation.
 	 */
-	public static <S, L> IIndependenceRelation<S, L> unconditional(final IIndependenceRelation<?, L> underlying) {
-		return new ConditionTransformingIndependenceRelation<>(underlying, x -> null, false);
+	public static <S, L> IIndependenceRelation<S, L> unconditional(final IToolchainStorage storage,
+			final IIndependenceRelation<?, L> underlying) {
+		return new ConditionTransformingIndependenceRelation<>(storage, underlying, x -> null, false);
 	}
 }

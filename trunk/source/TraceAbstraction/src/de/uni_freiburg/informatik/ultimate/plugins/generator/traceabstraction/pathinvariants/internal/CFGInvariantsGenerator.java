@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator.Approximation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessor.LinearInequalityPatternProcessorStatistics;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Generate invariants for a given control-flow graph (CFG) using a constraint-based approach with on-demand template
@@ -172,9 +172,7 @@ public final class CFGInvariantsGenerator {
 		mIcfg = icfg;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mApplyLargeBlockEncoding = mInvariantSynthesisSettings.useLargeBlockEncoding();
-		mPathInvariantsStatistics = new InvariantSynthesisStatisticsGenerator();
-		// Initialize statistics
-		mPathInvariantsStatistics.initializeStatistics();
+		mPathInvariantsStatistics = new InvariantSynthesisStatisticsGenerator(mServices.getStorage());
 		mRound2InvariantSynthesisStatistics = new HashMap<>();
 	}
 
@@ -198,18 +196,18 @@ public final class CFGInvariantsGenerator {
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
-			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit, final boolean useNonlinerConstraints,
-			final boolean useVarsFromUnsatCore, final SolverSettings solverSettings,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore,
+			final SolverSettings solverSettings, final SimplificationTechnique simplicationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
-			final Map<IcfgLocation, IPredicate> loc2underApprox,
-			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
-			final KindOfInvariant kindOfInvariant) {
+			final Map<IcfgLocation, IPredicate> loc2underApprox, final Map<IcfgLocation, IPredicate> loc2overApprox,
+			final boolean synthesizeEntryPattern, final KindOfInvariant kindOfInvariant) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, predicateUnifier, csToolkit, strategy,
-				useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique,
-				csToolkit.getSmtFunctionsAndAxioms(), loc2underApprox, loc2overApprox, synthesizeEntryPattern,
-				kindOfInvariant);
+				useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
+				xnfConversionTechnique, csToolkit.getSmtFunctionsAndAxioms(), loc2underApprox, loc2overApprox,
+				synthesizeEntryPattern, kindOfInvariant);
 	}
 
 	/**
@@ -247,7 +245,8 @@ public final class CFGInvariantsGenerator {
 			return new VarsInUnsatCoreStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables,
 					locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 					USE_STRICT_INEQUALITIES_ALTERNATINGLY);
-		} else if (useLiveVars) {
+		}
+		if (useLiveVars) {
 			return new LiveVariablesStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables,
 					locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 					USE_STRICT_INEQUALITIES_ALTERNATINGLY);
@@ -334,19 +333,16 @@ public final class CFGInvariantsGenerator {
 		}
 		final boolean synthesizeEntryPattern = mKindOfInvariant == KindOfInvariant.DANGER;
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory =
-				createDefaultFactory(mServices, mPredicateUnifier, csToolkit, invSynthSettings.useNonLinearConstraints(),
-						invSynthSettings.useUnsatCores(), invSynthSettings.getSolverSettings(),
-						simplificationTechnique, xnfConversionTechnique, strategy, loc2underApprox,
-						loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
+				createDefaultFactory(mServices, mPredicateUnifier, csToolkit,
+						invSynthSettings.useNonLinearConstraints(), invSynthSettings.useUnsatCores(),
+						invSynthSettings.getSolverSettings(), simplificationTechnique, xnfConversionTechnique, strategy,
+						loc2underApprox, loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
 
-		final Map<IcfgLocation, IPredicate> invariants =
-				generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPredicateOfInitialLocations,
-						mPredicateOfErrorLocations, startLocation, errorLocations, invPatternProcFactory,
-						invSynthSettings.useUnsatCores(), allProgramVars, pathprogramLocs2LiveVars,
-						convertMapToPredsToMapToUnmodTrans(pathprogramLocs2Predicates, csToolkit.getManagedScript()),
-						invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation());
-
-		return invariants;
+		return generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPredicateOfInitialLocations,
+				mPredicateOfErrorLocations, startLocation, errorLocations, invPatternProcFactory,
+				invSynthSettings.useUnsatCores(), allProgramVars, pathprogramLocs2LiveVars,
+				convertMapToPredsToMapToUnmodTrans(pathprogramLocs2Predicates, csToolkit.getManagedScript()),
+				invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation());
 	}
 
 	private Map<IcfgLocation, UnmodifiableTransFormula> extractAbstractInterpretationPredicates(
@@ -372,8 +368,7 @@ public final class CFGInvariantsGenerator {
 
 		final Map<IcfgLocation, IPredicate> loc2Predicate = new HashMap<>(loc2SetOfPreds.getDomain().size());
 		for (final IcfgLocation loc : loc2SetOfPreds.getDomain()) {
-			final List<IPredicate> preds = new ArrayList<>(loc2SetOfPreds.getImage(loc).size());
-			preds.addAll(loc2SetOfPreds.getImage(loc));
+			final List<IPredicate> preds = new ArrayList<>(loc2SetOfPreds.getImage(loc));
 			// Currently, we use only one predicate
 			loc2Predicate.put(loc, preds.get(0));
 		}
@@ -396,8 +391,7 @@ public final class CFGInvariantsGenerator {
 	private static void extractLocationsTransitionsAndVariablesFromPathProgram(final IIcfg<IcfgLocation> pathProgram,
 			final List<IcfgLocation> locationsOfPP, final List<IcfgInternalTransition> transitionsOfPP,
 			final Set<IProgramVar> allVariablesFromPP) {
-		final LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
-		locs2visit.addAll(pathProgram.getInitialNodes());
+		final LinkedList<IcfgLocation> locs2visit = new LinkedList<>(pathProgram.getInitialNodes());
 		final LinkedHashSet<IcfgLocation> visitedLocs = new LinkedHashSet<>();
 		final LinkedList<IcfgInternalTransition> edges = new LinkedList<>();
 		while (!locs2visit.isEmpty()) {
@@ -435,14 +429,10 @@ public final class CFGInvariantsGenerator {
 					if (at.getParameters().length > maxNumOfConjuncts) {
 						maxNumOfConjuncts = at.getParameters().length;
 					}
-				} else if ("or".equals(at.getFunction().getName())) {
-					if (at.getParameters().length > maxNumOfDisjuncts) {
-						maxNumOfDisjuncts = at.getParameters().length;
-					}
+				} else if ("or".equals(at.getFunction().getName()) && at.getParameters().length > maxNumOfDisjuncts) {
+					maxNumOfDisjuncts = at.getParameters().length;
 				}
-				for (final Term param : at.getParameters()) {
-					termsToCheck.add(param);
-				}
+				Collections.addAll(termsToCheck, at.getParameters());
 
 			}
 		}
@@ -657,7 +647,7 @@ public final class CFGInvariantsGenerator {
 							mLogger.info("Vars in unsat core: " + varsFromUnsatCore);
 						}
 						mLogger.info(varsFromUnsatCore.size() + " out of "
-								+ (new HashSet<>(smtVars2ProgramVars.values())).size()
+								+ new HashSet<>(smtVars2ProgramVars.values()).size()
 								+ " program variables in unsat core");
 						if (mLogger.isInfoEnabled()) {
 							mLogger.info("Locations in unsat core: " + locsInUnsatCore);
@@ -679,8 +669,8 @@ public final class CFGInvariantsGenerator {
 					errorLocations, allProgramVars, varsFromUnsatCore, round, constraintsResult.toString(), stats);
 
 			if (TEMPLATE_STATISTICS_MODE) {
-				final StatisticsData stat = new StatisticsData();
-				stat.aggregateBenchmarkData(mRound2InvariantSynthesisStatistics.get(round));
+				final StatisticsAggregator stat = new StatisticsAggregator(mServices.getStorage());
+				stat.aggregateStatisticsData(mRound2InvariantSynthesisStatistics.get(round));
 				final IResult benchmarkResult =
 						new StatisticsResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
@@ -698,7 +688,8 @@ public final class CFGInvariantsGenerator {
 					result.put(location, processor.applyConfiguration(locs2Patterns.get(location)));
 				}
 				return result;
-			} else if (constraintsResult == LBool.UNKNOWN) {
+			}
+			if (constraintsResult == LBool.UNKNOWN) {
 				mLogger.info("Got \"UNKNOWN\" in round " + round + ", giving up the invariant search.");
 				break;
 			}
@@ -715,19 +706,16 @@ public final class CFGInvariantsGenerator {
 			final Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
 		if (locs2Preds == null) {
 			return null;
-		} else {
-			final Map<IcfgLocation, UnmodifiableTransFormula> result =
-					locs2Preds.keySet().stream().collect(Collectors.toMap(loc -> loc, loc -> TransFormulaBuilder
-							.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
-			return result;
 		}
+		return locs2Preds.keySet().stream().collect(Collectors.toMap(loc -> loc,
+				loc -> TransFormulaBuilder.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
 	}
 
 	public Map<Integer, InvariantSynthesisStatisticsGenerator> getRound2PathInvariantsStatistics() {
 		return mRound2InvariantSynthesisStatistics;
 	}
 
-	public final InvariantSynthesisStatisticsGenerator getInvariantSynthesisStatistics() {
+	public InvariantSynthesisStatisticsGenerator getInvariantSynthesisStatistics() {
 		return mPathInvariantsStatistics;
 	}
 
@@ -739,20 +727,16 @@ public final class CFGInvariantsGenerator {
 		final int sumOfVarsPerLoc = allProgramVars.size() * (locationsAsList.size() - 2);
 		int numOfNonLiveVariables = 0;
 		for (final IcfgLocation loc : locationsAsList) {
-			if (loc != startLoc && !errorLocs.contains(loc)) {
-				if (locs2LiveVariables != null) {
-					if (locs2LiveVariables.containsKey(loc)) {
-						numOfNonLiveVariables += allProgramVars.size() - locs2LiveVariables.get(loc).size();
-					}
-				}
+			if (loc != startLoc && !errorLocs.contains(loc) && locs2LiveVariables != null
+					&& locs2LiveVariables.containsKey(loc)) {
+				numOfNonLiveVariables += allProgramVars.size() - locs2LiveVariables.get(loc).size();
 			}
 		}
 		mPathInvariantsStatistics.addStatisticsDataBeforeCheckSat(numOfTemplateInequalitiesForThisRound,
 				maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound, sumOfVarsPerLoc, numOfNonLiveVariables,
 				round);
 		final InvariantSynthesisStatisticsGenerator pathInvariantsStatisticsForThisRound =
-				new InvariantSynthesisStatisticsGenerator();
-		pathInvariantsStatisticsForThisRound.initializeStatistics();
+				new InvariantSynthesisStatisticsGenerator(mServices.getStorage());
 		final int numLocsBeforeLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocs");
 		final int numLocsAfterLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocsLbe");
 		pathInvariantsStatisticsForThisRound.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
@@ -774,10 +758,8 @@ public final class CFGInvariantsGenerator {
 			numOfNonUnsatCoreLocs = locationsAsList.size() - locationsInUnsatCore.size();
 		}
 		for (final IcfgLocation loc : locationsAsList) {
-			if (loc != startLoc && !errorLocs.contains(loc)) {
-				if (varsFromUnsatCore != null) {
-					numOfNonUnsatCoreVars += allProgramVars.size() - varsFromUnsatCore.size();
-				}
+			if (loc != startLoc && !errorLocs.contains(loc) && varsFromUnsatCore != null) {
+				numOfNonUnsatCoreVars += allProgramVars.size() - varsFromUnsatCore.size();
 			}
 		}
 		// Add statistics data to global path invariants statistics
@@ -897,11 +879,8 @@ public final class CFGInvariantsGenerator {
 				}
 			}
 			if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
-				// mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() -
-				// locsInUnsatCore.size(),
-				// allProgramVars.size() - varsFromUnsatCore.size());
 			}
-			mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size()
+			mLogger.info(varsFromUnsatCore.size() + " out of " + new HashSet<>(smtVars2ProgramVars.values()).size()
 					+ " program variables in unsat core");
 			mLogger.info(locsInUnsatCore.size() + " out of " + locationsAsList.size() + " locations in unsat core");
 		} else {
@@ -912,10 +891,10 @@ public final class CFGInvariantsGenerator {
 		return null;
 	}
 
-	private int getNumOfPPLocations(final IIcfg<IcfgLocation> pathProgram) {
+	private static int getNumOfPPLocations(final IIcfg<IcfgLocation> pathProgram) {
 		int numLocs = 0;
 		for (final String proc : pathProgram.getProgramPoints().keySet()) {
-			numLocs += pathProgram.getProgramPoints().get(proc).keySet().size();
+			numLocs += pathProgram.getProgramPoints().get(proc).size();
 		}
 		return numLocs;
 	}
@@ -936,11 +915,6 @@ public final class CFGInvariantsGenerator {
 		} else {
 			lbePathProgram = mIcfg;
 		}
-		// BranchUnfoldIcfgTransformer buTransformer = null;
-		// if (true) {
-		// buTransformer = new BranchUnfoldIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);
-		// lbePathProgram = buTransformer.transform(lbePathProgram);
-		// }
 
 		final int numLocsAfterLbe = getNumOfPPLocations(lbePathProgram);
 		mPathInvariantsStatistics.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
@@ -950,7 +924,6 @@ public final class CFGInvariantsGenerator {
 				mCsToolKit, mInvariantSynthesisSettings);
 
 		if (invariants != null) {
-			// invariants = buTransformer.transform(invariants);
 			if (mApplyLargeBlockEncoding) {
 				invariants = lbeTransformer.transform(invariants);
 			}

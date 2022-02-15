@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
 
 /**
  * Object that will analyze a trace with respect to a sequence of ProgramPoints and a sequence of interpolants. The
@@ -175,37 +176,5 @@ public class CoverageAnalysis<CL> {
 		final int potentialBackwardCoverings = mUnsat + mSat + mUnknown + mTrivial + mNotchecked;
 		final int successfullBackwardCoverings = mUnsat + mTrivial;
 		return new BackwardCoveringInformation(potentialBackwardCoverings, successfullBackwardCoverings);
-	}
-
-	public static class BackwardCoveringInformation {
-		private final int mPotentialBackwardCoverings;
-		private final int mSuccessfullBackwardCoverings;
-
-		public BackwardCoveringInformation(final int potentialBackwardCoverings,
-				final int successfullBackwardCoverings) {
-			super();
-			mPotentialBackwardCoverings = potentialBackwardCoverings;
-			mSuccessfullBackwardCoverings = successfullBackwardCoverings;
-		}
-
-		public BackwardCoveringInformation(final BackwardCoveringInformation bci1,
-				final BackwardCoveringInformation bci2) {
-			mPotentialBackwardCoverings = bci1.getPotentialBackwardCoverings() + bci2.getPotentialBackwardCoverings();
-			mSuccessfullBackwardCoverings =
-					bci1.getSuccessfullBackwardCoverings() + bci2.getSuccessfullBackwardCoverings();
-		}
-
-		public int getPotentialBackwardCoverings() {
-			return mPotentialBackwardCoverings;
-		}
-
-		public int getSuccessfullBackwardCoverings() {
-			return mSuccessfullBackwardCoverings;
-		}
-
-		@Override
-		public String toString() {
-			return mSuccessfullBackwardCoverings + "/" + mPotentialBackwardCoverings;
-		}
 	}
 }

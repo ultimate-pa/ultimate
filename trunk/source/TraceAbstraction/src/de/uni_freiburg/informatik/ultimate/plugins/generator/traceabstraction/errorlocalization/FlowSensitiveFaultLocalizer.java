@@ -88,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Re
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Relevance information of a trace. Used to compute the relevant statements in an Error trace that are relevant (or
@@ -128,9 +127,9 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		mSymbolTable = symbolTable;
 		mPredicateFactory = predicateFactory;
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
-		mErrorLocalizationStatisticsGenerator = new ErrorLocalizationStatisticsGenerator();
+		mErrorLocalizationStatisticsGenerator = new ErrorLocalizationStatisticsGenerator(services.getStorage());
 
-		mErrorLocalizationStatisticsGenerator.continueErrorLocalizationTime();
+		mErrorLocalizationStatisticsGenerator.startTime();
 		try {
 			if (faultLocalizationMode == RelevanceAnalysisMode.SINGLE_TRACE) {
 				doNonFlowSensitiveAnalysis(counterexample.getWord(), predicateUnifier.getTruePredicate(),
@@ -141,18 +140,16 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 						modifiableGlobalsTable, csToolkit, IIcfg);
 			}
 		} catch (final ToolchainCanceledException tce) {
-			mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
+			mErrorLocalizationStatisticsGenerator.stopTime();
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					"doing error localization for trace of length " + counterexample.getLength());
 			throw new ToolchainCanceledException(tce, rti);
 		}
 		mErrorLocalizationStatisticsGenerator.reportSuccesfullyFinished();
-		mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
+		mErrorLocalizationStatisticsGenerator.stopTime();
 
-		final StatisticsData stat = new StatisticsData();
-		stat.aggregateBenchmarkData(mErrorLocalizationStatisticsGenerator);
-		final IResult benchmarkResult =
-				new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorLocalizationStatistics", stat);
+		final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorLocalizationStatistics",
+				mErrorLocalizationStatisticsGenerator);
 		services.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 	}
 
@@ -218,9 +215,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 			final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg,
 			final NestedRun<L, IPredicate> counterexample) {
 		final Map<Integer, Set<IcfgEdge>> result = new HashMap<>();
-		final Set<IcfgEdge> subgraphEdges = new HashSet<>();
-		// Add the edges of the trace
-		subgraphEdges.addAll(computePathEdges(counterexample, startLocation, endLocation));
+		final Set<IcfgEdge> subgraphEdges = new HashSet<>(computePathEdges(counterexample, startLocation, endLocation));
 		Integer branchOut = startLocation;
 		for (int i = endLocation; i >= startLocation; i--) {
 			final Map<Integer, Set<IcfgEdge>> branchIn = informationFromCfg.get(i);
@@ -504,9 +499,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
-			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
-							mSimplificationTechnique);
+			final QuantifierEliminationPostprocessor qePostproc = new QuantifierEliminationPostprocessor(mServices,
+					csToolkit.getManagedScript(), mPredicateFactory, mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -780,7 +774,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		Term result = pt.weakestPrecondition(successor, tf);
 		if (applyQuantifierElimination) {
 			final Term term = result;
-			result = PartialQuantifierElimination.eliminateCompat(mServices, freshTermVariableConstructor, mSimplificationTechnique, term);
+			result = PartialQuantifierElimination.eliminateCompat(mServices, freshTermVariableConstructor,
+					mSimplificationTechnique, term);
 		}
 		return result;
 	}
@@ -802,7 +797,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		int numberOfBranches = 0;
 		final Collection<Map<Integer, Set<IcfgEdge>>> listOfValues = postProcessedResults.values();
 		for (final Map<Integer, Set<IcfgEdge>> onelist : listOfValues) {
-			numberOfBranches += onelist.values().size();
+			numberOfBranches += onelist.size();
 		}
 		mErrorLocalizationStatisticsGenerator.reportNumberOfBranches(numberOfBranches);
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the
@@ -826,9 +821,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
-			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
-							mSimplificationTechnique);
+			final QuantifierEliminationPostprocessor qePostproc = new QuantifierEliminationPostprocessor(mServices,
+					csToolkit.getManagedScript(), mPredicateFactory, mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -891,7 +885,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		// only error-admitting.
 		// Return false even if a single trace element is error enforcing.
 
-		Boolean angelicStatus = false;
+		boolean angelicStatus = false;
 		for (int i = 0; i < mRelevanceOfTrace.length; i++) {
 			if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC()) {
 				return false;

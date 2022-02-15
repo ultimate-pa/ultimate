@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.benchexec.BenchexecRundefinitionGeneratorPreLog;
@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class DevelTestSuite extends AbstractEvalTestSuite {
 
-	private static final String[] C = new String[] { ".i", ".c" };
-	private static final String[] BPL = new String[] { ".bpl" };
+	private static final String[] C = { ".i", ".c" };
+	private static final String[] BPL = { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 
 	// @formatter:off
@@ -61,7 +61,7 @@ public class DevelTestSuite extends AbstractEvalTestSuite {
 			new Triple<>("AutomizerC.xml", C, "ai/eq-bench/svcomp-DerefFreeMemtrack-32bit-Automizer_RubberTaipan+AI_EQ.epf"),
 	};
 
-	private static final String[] INPUT = new String[] {
+	private static final String[] INPUT = {
 			"examples/svcomp/ldv-memsafety/ArraysOfVariableLength2_true-valid-memsafety.c",
 			"examples/svcomp/ldv-memsafety/memleaks_test18_1_false-valid-memtrack.i",
 			"examples/svcomp/ldv-memsafety/memleaks_test18_2_false-valid-memtrack.i",
@@ -83,9 +83,9 @@ public class DevelTestSuite extends AbstractEvalTestSuite {
 						Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition("Allocated memory end (bytes)", "Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallIterations, "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition("traceCheckStatistics_NumberOfCodeBlocks", null, ConversionContext.BestFitNumber(),
 						Aggregate.Ignore, Aggregate.Average),

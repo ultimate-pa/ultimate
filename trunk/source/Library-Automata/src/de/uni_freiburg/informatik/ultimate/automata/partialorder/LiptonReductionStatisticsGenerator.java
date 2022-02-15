@@ -26,12 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Collection;
-
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  * Collects statistics about a {@link LiptonReduction}.
@@ -39,24 +38,58 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
-public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithStopwatches
-		implements IStatisticsDataProvider {
+public class LiptonReductionStatisticsGenerator extends BaseStatisticsDataProvider {
 
+	public enum LiptonReductionCompositions {
+		TrivialSequentialCompositions, ConcurrentSequentialCompositions, TrivialYvCompositions,
+		ConcurrentYvCompositions, ChoiceCompositions
+	}
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mReductionTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER_ZERO)
 	private int mPlacesBefore = -1;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER_ZERO)
 	private int mTransitionsBefore = -1;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER_ZERO)
 	private int mCoEnabledTransitionPairs = -1;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER_ZERO)
 	private int mPlacesAfterwards = -1;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER_ZERO)
 	private int mTransitionsAfterwards = -1;
 
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mMoverChecksTotal;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER_ZERO)
 	private int mNumberOfFixpointIterations = -1;
 
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mTrivialSequentialCompositions;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mConcurrentSequentialCompositions;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mTrivialYvCompositions;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mConcurrentYvCompositions;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mChoiceCompositions;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mTotalNumberOfCompositions;
+
+	public LiptonReductionStatisticsGenerator(final IToolchainStorage storage) {
+		super(storage);
+	}
 
 	public void reportFixpointIteration() {
 		mNumberOfFixpointIterations++;
@@ -66,7 +99,7 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 		mMoverChecksTotal += numberOfChecks;
 	}
 
-	public void reportComposition(final LiptonReductionStatisticsDefinitions type) {
+	public void reportComposition(final LiptonReductionCompositions type) {
 		switch (type) {
 		case TrivialSequentialCompositions:
 			mTrivialSequentialCompositions++;
@@ -103,64 +136,20 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 		mCoEnabledTransitionPairs = coEnabledTransitionPairs;
 	}
 
-	@Override
-	public Collection<String> getKeys() {
-		return LiptonReductionStatisticsType.getInstance().getKeys();
+	public void startReductionTime() {
+		mReductionTime.start();
 	}
 
-	@Override
-	public Object getValue(final String key) {
-		final LiptonReductionStatisticsDefinitions keyEnum = LiptonReductionStatisticsDefinitions.valueOf(key);
-		return getValue(keyEnum);
+	public void stopReductionTime() {
+		mReductionTime.stop();
 	}
 
-	public Object getValue(final LiptonReductionStatisticsDefinitions key) {
-		switch (key) {
-		case ChoiceCompositions:
-			return mChoiceCompositions;
-		case CoEnabledTransitionPairs:
-			return mCoEnabledTransitionPairs;
-		case ConcurrentSequentialCompositions:
-			return mConcurrentSequentialCompositions;
-		case ConcurrentYvCompositions:
-			return mConcurrentYvCompositions;
-		case FixpointIterations:
-			return mNumberOfFixpointIterations;
-		case MoverChecksTotal:
-			return mMoverChecksTotal;
-		case PlacesAfterwards:
-			return mPlacesAfterwards;
-		case PlacesBefore:
-			return mPlacesBefore;
-		case ReductionTime:
-			try {
-				return getElapsedTime(key.toString());
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
-			}
-		case TotalNumberOfCompositions:
-			return mTotalNumberOfCompositions;
-		case TransitionsAfterwards:
-			return mTransitionsAfterwards;
-		case TransitionsBefore:
-			return mTransitionsBefore;
-		case TrivialSequentialCompositions:
-			return mTrivialSequentialCompositions;
-		case TrivialYvCompositions:
-			return mTrivialYvCompositions;
-		default:
-			throw new AssertionError("unknown data: " + key);
-
-		}
+	public int getMoverChecksTotal() {
+		return mMoverChecksTotal;
 	}
 
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return LiptonReductionStatisticsType.getInstance();
+	public int getTotalNumberOfCompositions() {
+		return mTotalNumberOfCompositions;
 	}
 
-	@Override
-	public String[] getStopwatches() {
-		return new String[] { LiptonReductionStatisticsDefinitions.ReductionTime.toString() };
-	}
 }

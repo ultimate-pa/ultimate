@@ -60,15 +60,15 @@ public class ReUseSupersetCallSummarizer implements ICallSummarizer {
 
 	@Override
 	public IPredicate summarize(final String callee, final IPredicate inputAfterCall) {
-		mStats.start(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
-		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.CALL_SUMMARIZER_OVERALL_TIME);
+		mStats.increment(SifaStats.SifaMeasures.CALL_SUMMARIZER_APPLICATIONS);
 
 		final IPredicate result = mSummaryCache
 				.computeIfAbsent(callee, unused -> new SummaryCache())
 				.reUseOrCompute(inputAfterCall, this::isSubsetEq,
 						() -> mSummarizer.summarize(callee, inputAfterCall), mTools);
 
-		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
+		mStats.stop(SifaStats.SifaMeasures.CALL_SUMMARIZER_OVERALL_TIME);
 		return result;
 	}
 

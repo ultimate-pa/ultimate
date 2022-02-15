@@ -113,11 +113,11 @@ public class SymbolicTools {
 	}
 
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		mStats.start(SifaStats.Key.TOOLS_POST_TIME);
-		mStats.increment(SifaStats.Key.TOOLS_POST_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.TOOLS_POST_TIME);
+		mStats.increment(SifaStats.SifaMeasures.TOOLS_POST_APPLICATIONS);
 		final IPredicate postState =
 				predicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
-		mStats.stop(SifaStats.Key.TOOLS_POST_TIME);
+		mStats.stop(SifaStats.SifaMeasures.TOOLS_POST_TIME);
 		return postState;
 	}
 
@@ -125,15 +125,15 @@ public class SymbolicTools {
 	 * Assigns arguments to parameters of the callee. Also handles globals and old vars.
 	 */
 	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
-		mStats.start(SifaStats.Key.TOOLS_POST_CALL_TIME);
-		mStats.increment(SifaStats.Key.TOOLS_POST_CALL_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.TOOLS_POST_CALL_TIME);
+		mStats.increment(SifaStats.SifaMeasures.TOOLS_POST_CALL_APPLICATIONS);
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String calledProcedure = transition.getSucceedingProcedure();
 		final Term postState = mTransformer.strongestPostconditionCall(input, transition.getLocalVarsAssignment(),
 				toolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure),
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure));
-		mStats.stop(SifaStats.Key.TOOLS_POST_CALL_TIME);
+		mStats.stop(SifaStats.SifaMeasures.TOOLS_POST_CALL_TIME);
 		return predicate(postState);
 	}
 
@@ -142,8 +142,8 @@ public class SymbolicTools {
 	 */
 	public IPredicate postReturn(final IPredicate inputBeforeCall, final IPredicate inputBeforeReturn,
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTransition) {
-		mStats.start(SifaStats.Key.TOOLS_POST_RETURN_TIME);
-		mStats.increment(SifaStats.Key.TOOLS_POST_RETURN_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.TOOLS_POST_RETURN_TIME);
+		mStats.increment(SifaStats.SifaMeasures.TOOLS_POST_RETURN_APPLICATIONS);
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String callee = returnTransition.getPrecedingProcedure();
 		final IPredicate postState =
@@ -151,7 +151,7 @@ public class SymbolicTools {
 						returnTransition.getTransformula(), returnTransition.getCorrespondingCall().getTransformula(),
 						toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee),
 						toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(callee)));
-		mStats.stop(SifaStats.Key.TOOLS_POST_RETURN_TIME);
+		mStats.stop(SifaStats.SifaMeasures.TOOLS_POST_RETURN_TIME);
 		return postState;
 	}
 
@@ -273,9 +273,9 @@ public class SymbolicTools {
 		}
 
 		private Term newQuantifier(final int quantifier, final Set<TermVariable> varsToQuantify, final Term term) {
-			mStats.increment(SifaStats.Key.TOOLS_QUANTIFIERELIM_APPLICATIONS);
-			mStats.startMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
-			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
+			mStats.increment(SifaStats.SifaMeasures.TOOLS_QUANTIFIERELIM_APPLICATIONS);
+			mStats.startMax(SifaStats.SifaMeasures.TOOLS_QUANTIFIERELIM_MAX_TIME);
+			mStats.start(SifaStats.SifaMeasures.TOOLS_QUANTIFIERELIM_TIME);
 			final Term quantifiedFormula =
 					SmtUtils.quantifier(mMngdScript.getScript(), quantifier, varsToQuantify, term);
 			final Term lightResult = QuantifierPushTermWalker.eliminate(mServices, mMngdScript, false,
@@ -287,8 +287,8 @@ public class SymbolicTools {
 			} else {
 				result = lightResult;
 			}
-			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
-			mStats.stopMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
+			mStats.stop(SifaStats.SifaMeasures.TOOLS_QUANTIFIERELIM_TIME);
+			mStats.stopMax(SifaStats.SifaMeasures.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			return result;
 		}
 

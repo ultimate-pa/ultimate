@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * 
@@ -93,6 +94,11 @@ public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyM
 			mResult = new IpAbStrategyModuleResult<>(automaton, usedIpps);
 		}
 		return mResult;
+	}
+
+	@Override
+	public void aggregateStatistics(final StatisticsAggregator statistics) {
+		// StraightLineInterpolantAutomatonBuilder does not have statistics
 	}
 
 }

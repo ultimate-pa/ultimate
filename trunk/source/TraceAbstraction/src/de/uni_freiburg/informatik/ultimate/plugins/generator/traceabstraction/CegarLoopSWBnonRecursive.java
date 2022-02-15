@@ -198,7 +198,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		// automaton
 		mNestedAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 
-		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()),
+		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction).getResult();
 		// (IDoubleDeckerAutomaton<LETTER, IPredicate>) mAbstraction.get;
 
@@ -206,14 +206,14 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		mCounterExamplePath = (NestedRun<L, IPredicate>) mCounterexample;
 
 		// create an new interpolant automaton
-		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(getServices()),
+		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
 				mNestedAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
 
 		// remember some of its properties
 		mAbstractionInitialState = mInterpolantGenerator.getPrecondition();
 		mAbstractionFinalState = mInterpolantGenerator.getPostcondition();
 		mPredicateUnifier = mInterpolantGenerator.getPredicateUnifier();
-		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(getServices()));
+		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
 
 		// // / debugging
 		// {
@@ -328,8 +328,9 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
-		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
+		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false))
+						.getResult() : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;
@@ -435,13 +436,12 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 						continue;
 					}
 					final IPredicate hier = hierPreds.next();
-					if (mAnnotatedStates.contains(hier)) {
-						mLogger.debug("iterate through hier" + hier.toString());
-						iter = mNestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
-						edgeType = 0; // there might still be hierPreds left
-					} else {
+					if (!mAnnotatedStates.contains(hier)) {
 						continue;
 					}
+					mLogger.debug("iterate through hier" + hier.toString());
+					iter = mNestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
+					edgeType = 0; // there might still be hierPreds left
 					/*
 					 * TODO Christian 2016-09-12: This possible fall-through should be documented. If it was not
 					 * intended, it should be fixed.
@@ -583,7 +583,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		}
 		// test if we found a new path which can be added
 		final InterpolatingTraceCheckCraig<L> traceCheck =
-				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, getServices(), mCsToolkit,
+				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, mServices, mCsToolkit,
 						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
 						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
 
@@ -706,7 +706,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final SuperDifference<L, IPredicate, PredicateFactoryRefinement> diff =
-				new SuperDifference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+				new SuperDifference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 						mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
 
 		mAbstraction = diff.getResult();

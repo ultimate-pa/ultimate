@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 public class AutomataLibraryServices {
 	private final ILoggingService mLoggingService;
 	private final IProgressAwareTimer mProgressAwareTimer;
+	private final IToolchainStorage mStorage;
 
 	/**
 	 * @param services
@@ -47,6 +49,7 @@ public class AutomataLibraryServices {
 	public AutomataLibraryServices(final IUltimateServiceProvider services) {
 		mLoggingService = services.getLoggingService();
 		mProgressAwareTimer = services.getProgressMonitorService();
+		mStorage = services.getStorage();
 	}
 
 	/**
@@ -58,6 +61,7 @@ public class AutomataLibraryServices {
 	public AutomataLibraryServices(final IUltimateServiceProvider services, final long timeoutInMilliseconds) {
 		mLoggingService = services.getLoggingService();
 		mProgressAwareTimer = services.getProgressMonitorService().getChildTimer(timeoutInMilliseconds);
+		mStorage = services.getStorage();
 	}
 
 	/**
@@ -68,6 +72,7 @@ public class AutomataLibraryServices {
 	 */
 	public AutomataLibraryServices(final AutomataLibraryServices services, final long timeoutInMilliseconds) {
 		mLoggingService = services.mLoggingService;
+		mStorage = services.mStorage;
 		mProgressAwareTimer = services.mProgressAwareTimer.getChildTimer(timeoutInMilliseconds);
 	}
 
@@ -77,5 +82,9 @@ public class AutomataLibraryServices {
 
 	public IProgressAwareTimer getProgressAwareTimer() {
 		return mProgressAwareTimer;
+	}
+
+	public IToolchainStorage getStorage() {
+		return mStorage;
 	}
 }

@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelat
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -154,18 +153,18 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
 
 		switchToOnDemandConstructionMode();
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+		mCegarLoopBenchmark.startPartialOrderReductionTime();
 		final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 		try {
 			mPOR.apply(abstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
-			assert mCounterexample == null || accepts(getServices(), abstraction, mCounterexample.getWord(),
+			assert mCounterexample == null || accepts(mServices, abstraction, mCounterexample.getWord(),
 					false) : "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+			mCegarLoopBenchmark.stopPartialOrderReductionTime();
 		}
 	}
 
@@ -214,7 +213,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
 		return IndependenceBuilder
 				// Semantic independence forms the base.
-				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
+				.<L> semantic(mServices, constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
 						mPref.getConditionalPor(), mPref.getSymmetricPor())
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
@@ -240,8 +239,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	private ManagedScript constructIndependenceScript() {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, 1000);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(getServices(), settings, "SemanticIndependence");
-		return new ManagedScript(getServices(), solver);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "SemanticIndependence");
+		return new ManagedScript(mServices, solver);
 	}
 
 	private void switchToOnDemandConstructionMode() {

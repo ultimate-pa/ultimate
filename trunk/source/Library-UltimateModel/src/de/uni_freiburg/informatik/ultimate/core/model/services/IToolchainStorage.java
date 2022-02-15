@@ -88,10 +88,23 @@ public interface IToolchainStorage {
 	IStorable putStorable(final String key, final IStorable value);
 
 	/**
+	 * Save a {@link IStorable} under the given key. If there is already an {@link IStorable} saved under the key, it
+	 * will be removed and returned. {@link IStorable} added with this method will never be removed when
+	 * {@link #destroyMarker(Object)} is called.
+	 *
+	 * @param key
+	 *            The key under which you want to store your {@link IStorable}.
+	 * @param value
+	 *            The {@link IStorable}
+	 * @return An {@link IStorable} if there was already one in that place or null
+	 */
+	IStorable putUnmarkedStorable(final String key, final IStorable value);
+
+	/**
 	 * This method clears the {@link IToolchainStorage} and destroys every {@link IStorable} by calling
 	 * {@link IStorable#destroy()} on it. Possible exceptions should be caught, logged, and otherwise ignored.
 	 */
-	void clear();
+	Set<DestroyResult> clear();
 
 	/**
 	 * List all keys currently in storage
@@ -99,8 +112,8 @@ public interface IToolchainStorage {
 	Set<String> keys();
 
 	/**
-	 * Register a marker with the {@link IToolchainStorage} that allows you to destroy all {@link IStorable}s that were
-	 * registered after the marker has been pushed.
+	 * Register a marker with the {@link IToolchainStorage} that allows you to destroy all marked {@link IStorable}s
+	 * that were registered after the marker has been pushed.
 	 *
 	 * @param marker
 	 *            The marker.
@@ -110,13 +123,32 @@ public interface IToolchainStorage {
 	void pushMarker(final Object marker) throws IllegalArgumentException;
 
 	/**
-	 * Remove all {@link IStorable}s and markers registered after and including the supplied marker. The
+	 * Remove all marked {@link IStorable}s and markers registered after and including the supplied marker. The
 	 * {@link IStorable#destroy()} method will be called for the removed {@link IStorable}.
 	 *
 	 * @param marker
 	 *            The name of the marker that should be removed.
 	 * @return A list of keys of {@link IStorable}s that have been removed and destroyed.
 	 */
-	Set<String> destroyMarker(final Object marker);
+	Set<DestroyResult> destroyMarker(final Object marker);
+
+	final class DestroyResult {
+
+		private final String mKey;
+		private final Throwable mException;
+
+		public DestroyResult(final String key, final Throwable exception) {
+			mKey = key;
+			mException = exception;
+		}
+
+		public String getKey() {
+			return mKey;
+		}
+
+		public Throwable getException() {
+			return mException;
+		}
+	}
 
 }

@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.Aggregate;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
 
 /**
  * An independence relation which checks if any condition in a given collection of conditions leads to independence of
@@ -56,10 +56,11 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 	 * @param underlying
 	 *            The underlying relation which is queried for individual conditions. This relation must be conditional.
 	 */
-	public DisjunctiveConditionalIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
+	public DisjunctiveConditionalIndependenceRelation(final IToolchainStorage storage,
+			final IIndependenceRelation<S, L> underlying) {
 		assert underlying.isConditional() : "Only makes sense for conditional independence relations";
 		mUnderlying = underlying;
-		mStatistics = new DisjunctiveStatistics();
+		mStatistics = new DisjunctiveStatistics(storage);
 	}
 
 	@Override
@@ -104,9 +105,9 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 
 		private int mMaxQueriedIndex = -1;
 
-		public DisjunctiveStatistics() {
-			super(DisjunctiveConditionalIndependenceRelation.class, mUnderlying);
-			declare(MAX_QUERIED_INDEX, () -> mMaxQueriedIndex, Aggregate::intMax, PrettyPrint::keyColonData);
+		public DisjunctiveStatistics(final IToolchainStorage storage) {
+			super(storage, DisjunctiveConditionalIndependenceRelation.class, mUnderlying);
+			declare(MAX_QUERIED_INDEX, () -> mMaxQueriedIndex, MeasureDefinition.INT_MAX);
 		}
 
 		private void reportQueriedIndex(final int index) {

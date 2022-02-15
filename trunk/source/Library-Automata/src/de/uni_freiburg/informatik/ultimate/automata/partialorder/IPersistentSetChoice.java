@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * An interface for the computation of persistent sets, used in persistent set reduction.
@@ -59,9 +59,8 @@ public interface IPersistentSetChoice<L, S> {
 	 * @return a statistics provider with implementation-defined data
 	 */
 	default IStatisticsDataProvider getStatistics() {
-		return new AbstractStatisticsDataProvider() {
-			// By default, no statistics are collected.
-		};
+		// by default, no statistics are collected
+		return new StatisticsAggregator(null);
 	}
 
 	default boolean ensuresCompatibility(final IDfsOrder<L, S> order) {

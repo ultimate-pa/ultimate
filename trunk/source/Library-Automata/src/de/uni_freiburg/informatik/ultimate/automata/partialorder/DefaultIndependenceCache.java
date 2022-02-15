@@ -31,11 +31,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
 
 /**
  * Default implementation of {@link IIndependenceCache}.
@@ -49,9 +50,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  */
 public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> {
 
-	private final CacheStatistics mStatistics = new CacheStatistics();
+	private final CacheStatistics mStatistics;
 	private final Map<S, HashRelation<L, L>> mPositiveCache = new HashMap<>();
 	private final Map<S, HashRelation<L, L>> mNegativeCache = new HashMap<>();
+
+	public DefaultIndependenceCache(final IToolchainStorage storage) {
+		mStatistics = new CacheStatistics(storage);
+	}
 
 	@Override
 	public LBool contains(final S condition, final L a, final L b) {
@@ -118,7 +123,7 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		return mStatistics;
 	}
 
-	private final class CacheStatistics extends AbstractStatisticsDataProvider {
+	private final class CacheStatistics extends BaseStatisticsDataProvider {
 		public static final String TOTAL_CACHE_SIZE = "Total cache size (in pairs)";
 		public static final String POSITIVE_CACHE_SIZE = "Positive cache size";
 		public static final String POSITIVE_CONDITIONAL_CACHE_SIZE = "Positive conditional cache size";
@@ -127,14 +132,15 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		public static final String NEGATIVE_CONDITIONAL_CACHE_SIZE = "Negative conditional cache size";
 		public static final String NEGATIVE_UNCONDITIONAL_CACHE_SIZE = "Negative unconditional cache size";
 
-		private CacheStatistics() {
-			declare(TOTAL_CACHE_SIZE, this::getTotalSize, KeyType.COUNTER);
-			declare(POSITIVE_CACHE_SIZE, this::getPositiveCacheSize, KeyType.COUNTER);
-			declare(POSITIVE_CONDITIONAL_CACHE_SIZE, this::getPositiveConditionalCacheSize, KeyType.COUNTER);
-			declare(POSITIVE_UNCONDITIONAL_CACHE_SIZE, this::getPositiveUnconditionalCacheSize, KeyType.COUNTER);
-			declare(NEGATIVE_CACHE_SIZE, this::getNegativeCacheSize, KeyType.COUNTER);
-			declare(NEGATIVE_CONDITIONAL_CACHE_SIZE, this::getNegativeConditionalCacheSize, KeyType.COUNTER);
-			declare(NEGATIVE_UNCONDITIONAL_CACHE_SIZE, this::getNegativeUnconditionalCacheSize, KeyType.COUNTER);
+		private CacheStatistics(final IToolchainStorage storage) {
+			super(storage);
+			declare(TOTAL_CACHE_SIZE, this::getTotalSize, MeasureDefinition.INT_COUNTER);
+			declare(POSITIVE_CACHE_SIZE, this::getPositiveCacheSize, MeasureDefinition.INT_COUNTER);
+			declare(POSITIVE_CONDITIONAL_CACHE_SIZE, this::getPositiveConditionalCacheSize, MeasureDefinition.INT_COUNTER);
+			declare(POSITIVE_UNCONDITIONAL_CACHE_SIZE, this::getPositiveUnconditionalCacheSize, MeasureDefinition.INT_COUNTER);
+			declare(NEGATIVE_CACHE_SIZE, this::getNegativeCacheSize, MeasureDefinition.INT_COUNTER);
+			declare(NEGATIVE_CONDITIONAL_CACHE_SIZE, this::getNegativeConditionalCacheSize, MeasureDefinition.INT_COUNTER);
+			declare(NEGATIVE_UNCONDITIONAL_CACHE_SIZE, this::getNegativeUnconditionalCacheSize, MeasureDefinition.INT_COUNTER);
 		}
 
 		public int getTotalSize() {

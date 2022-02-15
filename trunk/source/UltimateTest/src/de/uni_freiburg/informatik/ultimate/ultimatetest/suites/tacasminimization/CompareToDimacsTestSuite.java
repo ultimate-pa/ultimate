@@ -40,17 +40,17 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -96,9 +96,8 @@ public class CompareToDimacsTestSuite extends UltimateTestSuite {
 	protected ITestSummary[] constructTestSummaries() {
 		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 
-		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
-						ConversionContext.Divide(1_000_000_000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
+		final ColumnDefinition[] columnDef = { new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime,
+				"Avg. runtime", ConversionContext.Divide(1_000_000_000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
 		final Predicate<String> columnPredicate = x -> INTERESTING_COLUMNS_AS_SET.contains(x);
 		final Map<String, Set<Object>> column2allowedValues =
@@ -138,7 +137,7 @@ public class CompareToDimacsTestSuite extends UltimateTestSuite {
 				testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 			}
 		}
-		testCases.sort(null);
+		Collections.sort(testCases);
 		return testCases;
 	}
 

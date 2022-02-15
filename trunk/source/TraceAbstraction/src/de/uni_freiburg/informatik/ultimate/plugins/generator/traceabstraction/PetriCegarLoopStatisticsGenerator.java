@@ -26,70 +26,84 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
+public class PetriCegarLoopStatisticsGenerator extends BaseStatisticsDataProvider {
 
-public class PetriCegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwatches
-		implements IStatisticsDataProvider {
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mFlowIncreaseByBackfolding;
 
-	private int mFlowIncreaseByBackfolding = 0;
+	@Reflected(prettyName = "BasicCegarLoop")
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_CONVERT_AGGREGATE)
 	private final CegarLoopStatisticsGenerator mCegarLoopStatisticsGenerator;
 
-	public PetriCegarLoopStatisticsGenerator(final CegarLoopStatisticsGenerator cegarLoopStatisticsGenerator) {
-		super();
-		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
-	}
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mBackfoldingTime = new TimeTracker();
 
-	@Override
-	public Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mBackfoldingUnfoldingTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mEmptinessCheckTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mRemoveRedundantFlowTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mRemoveRedundantFlowUnfoldingTime = new TimeTracker();
+
+	public PetriCegarLoopStatisticsGenerator(final IToolchainStorage storage,
+			final CegarLoopStatisticsGenerator cegarLoopStatisticsGenerator) {
+		super(storage);
+		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
 	}
 
 	public void reportFlowIncreaseByBackfolding(final int flowIncrease) {
 		mFlowIncreaseByBackfolding += flowIncrease;
 	}
 
-	@Override
-	public Object getValue(final String key) {
-		final PetriCegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(PetriCegarLoopStatisticsDefinitions.class,
-				key);
-		switch (keyEnum) {
-		case BackfoldingTime:
-		case BackfoldingUnfoldingTime:
-		case EmptinessCheckTime:
-		case RemoveRedundantFlowTime:
-		case RemoveRedundantFlowUnfoldingTime:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
-			}
-		case FlowIncreaseByBackfolding:
-			return mFlowIncreaseByBackfolding;
-		case BasicCegarLoop:
-			final StatisticsData result = new StatisticsData();
-			result.aggregateBenchmarkData(mCegarLoopStatisticsGenerator);
-			return result;
-		default:
-			throw new AssertionError("unknown data");
-		}
+	public void startBackfoldingTime() {
+		mBackfoldingTime.start();
 	}
 
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return PetriCegarStatisticsType.getInstance();
+	public void stopBackfoldingTime() {
+		mBackfoldingTime.stop();
 	}
 
-	@Override
-	public String[] getStopwatches() {
-		return new String[] { PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString(),
-				PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString(),
-				PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString(),
-				PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString(),
-				PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowUnfoldingTime.toString(), };
+	public void startBackfoldingUnfoldingTime() {
+		mBackfoldingUnfoldingTime.start();
 	}
+
+	public void stopBackfoldingUnfoldingTime() {
+		mBackfoldingUnfoldingTime.stop();
+	}
+
+	public void startEmptinessCheckTime() {
+		mEmptinessCheckTime.start();
+	}
+
+	public void stopEmptinessCheckTime() {
+		mEmptinessCheckTime.stop();
+	}
+
+	public void startRemoveRedundantFlowTime() {
+		mRemoveRedundantFlowTime.start();
+	}
+
+	public void stopRemoveRedundantFlowTime() {
+		mRemoveRedundantFlowTime.stop();
+	}
+
+	public void startRemoveRedundantFlowUnfoldingTime() {
+		mRemoveRedundantFlowUnfoldingTime.start();
+	}
+
+	public void stopRemoveRedundantFlowUnfoldingTime() {
+		mRemoveRedundantFlowUnfoldingTime.stop();
+	}
+
 }

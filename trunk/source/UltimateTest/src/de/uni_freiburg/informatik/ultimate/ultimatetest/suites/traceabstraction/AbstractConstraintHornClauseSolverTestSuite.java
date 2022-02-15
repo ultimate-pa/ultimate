@@ -28,14 +28,14 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUniferStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncodingBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.TreeAutomizerTestResultDecider;
@@ -55,12 +55,12 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 /**
- * TODO 2020-04-30: A lot here is copy&paste from {@link AbstractTraceAbstractionTestSuite} because
- * I do not yet know what is needed.
+ * TODO 2020-04-30: A lot here is copy&paste from {@link AbstractTraceAbstractionTestSuite} because I do not yet know
+ * what is needed.
  */
 public abstract class AbstractConstraintHornClauseSolverTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -72,24 +72,24 @@ public abstract class AbstractConstraintHornClauseSolverTestSuite extends Abstra
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
-		benchmarks.add(PetriNetLargeBlockEncodingBenchmarks.class);
+		benchmarks.add(PetriNetLargeBlockEncodingStatisticsGenerator.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(Benchmark.class);
 
 		// @formatter:off
-		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
+		final ColumnDefinition[] columnDef = {
 						new ColumnDefinition(
-								CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
+								CegarLoopStatisticsGenerator.OverallTime, "Avg. runtime",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 //						new ColumnDefinition(
 //								"Peak memory consumption (bytes)", "Mem{-}ory",
 //								ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
 						new ColumnDefinition(
-								CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+								CegarLoopStatisticsGenerator.OverallIterations, "Iter{-}ations",
 								ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 						new ColumnDefinition(
-								CegarLoopStatisticsDefinitions.TraceHistogramMax.toString(), "TrHist max",
+								CegarLoopStatisticsGenerator.TraceHistogramMax, "TrHist max",
 								ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 //
 //						new ColumnDefinition("InterpolantConsolidationBenchmark_InterpolantsDropped", "Interpolants dropped", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
@@ -124,30 +124,30 @@ public abstract class AbstractConstraintHornClauseSolverTestSuite extends Abstra
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
 //								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationStatistics.toString() + "_"
-								+ AutomataMinimizationStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.AutomataMinimizationStatistics + "_"
+								+ AutomataMinimizationStatisticsGenerator.AutomataMinimizationTime.toString(), "mnmz time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 //						new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time",
 //								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString() + "_" + HoareTripleCheckerStatisticsDefinitions.Time.toString(), "htc time",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.HoareTripleCheckerStatistics + "_" + HoareTripleCheckerStatisticsGenerator.TIME_HTC, "htc time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.PredicateUnifierStatistics.toString() + "_" + PredicateUniferStatisticsDefinitions.Time.toString(), "pu time",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.PredicateUnifierStatistics + "_" + PredicateUnifierStatisticsGenerator.PREDICATE_UNIFIER_TIME, "pu time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataDifference.toString(), "adiff time",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.AutomataDifferenceTime, "adiff time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.traceCheckStatistics.toString() + "_" + TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString(), "itp time",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.TraceCheckStatistics + "_" + TraceCheckStatisticsGenerator.INTERPOLATION_COMPUTATION_TIME, "itp time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.traceCheckStatistics.toString() + "_" + TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString(), "check-sat time",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.TraceCheckStatistics + "_" + TraceCheckStatisticsGenerator.SATISFIABILITY_ANALYSIS_TIME, "check-sat time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.traceCheckStatistics.toString() + "_" + TraceCheckStatisticsDefinitions.InterpolantComputations.toString(), "itps",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.TraceCheckStatistics + "_" + TraceCheckStatisticsGenerator.INTERPOLANT_COMPUTATIONS, "itps",
 								ConversionContext.Divide(1, 2, " s"), Aggregate.Ignore, Aggregate.Sum),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.traceCheckStatistics.toString() + "_" + TraceCheckStatisticsDefinitions.PerfectInterpolantSequences.toString(), "perf. itps",
+						new ColumnDefinition(CegarLoopStatisticsGenerator.TraceCheckStatistics + "_" + TraceCheckStatisticsGenerator.PERFECT_INTERPOLANT_SEQUENCES, "perf. itps",
 								ConversionContext.Divide(1, 2, " s"), Aggregate.Ignore, Aggregate.Sum),
 					};
 				// @formatter:on
 
 		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), PetriNetLargeBlockEncodingBenchmarks.class),
+				new CsvConcatenator(this.getClass(), PetriNetLargeBlockEncodingStatisticsGenerator.class),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class),
 				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class),
 				// new CsvConcatenator(this.getClass(), StatisticsData.class),
@@ -162,6 +162,6 @@ public abstract class AbstractConstraintHornClauseSolverTestSuite extends Abstra
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()),
 				new IncrementalLogWithVMParameters(this.getClass(), getTimeout()),
-				new IncrementalLogCsv(this.getClass(), StatisticsData.class), };
+				new IncrementalLogCsv(this.getClass(), BaseStatisticsDataProvider.class), };
 	}
 }

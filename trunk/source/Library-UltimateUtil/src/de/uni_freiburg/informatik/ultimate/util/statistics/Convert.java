@@ -27,63 +27,26 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
+ * Functions to convert statistic objects in primitive types for aggregation. E.g., convert TimeTracker to Long.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
-public final class TimeTracker {
+public final class Convert {
 
-	private long mStartTime;
-	private long mElapsedTimeNs;
-	private long mLastDeltaNs;
-
-	public TimeTracker() {
-		reset();
+	private Convert() {
+		// objects of this class have no use ==> forbid construction
 	}
 
-	public <T> T measure(final Supplier<T> fun) {
-		start();
-		final T rtr = fun.get();
-		stop();
-		return rtr;
+	public static Object identity(final Object o) {
+		return o;
 	}
 
-	public void start() {
-		mStartTime = System.nanoTime();
+	public static long timeTrackerNanos(final Object t) {
+		return ((TimeTracker) t).elapsedTime(TimeUnit.NANOSECONDS);
 	}
 
-	public void stop() {
-		mLastDeltaNs = System.nanoTime() - mStartTime;
-		mElapsedTimeNs = mLastDeltaNs + mElapsedTimeNs;
-	}
-
-	public void reset() {
-		mStartTime = -1;
-		mElapsedTimeNs = 0;
-		mLastDeltaNs = -1;
-	}
-
-	@Override
-	public String toString() {
-		if (mStartTime == -1) {
-			return "N/A";
-		}
-		return CoreUtil.humanReadableTime(mElapsedTimeNs, TimeUnit.NANOSECONDS, 2);
-	}
-
-	public long lastDelta(final TimeUnit unit) {
-		if (mLastDeltaNs == -1) {
-			throw new IllegalStateException("Clock was not started");
-		}
-		return unit.convert(mLastDeltaNs, TimeUnit.NANOSECONDS);
-	}
-
-	public long elapsedTime(final TimeUnit unit) {
-		return unit.convert(mElapsedTimeNs, TimeUnit.NANOSECONDS);
-	}
 }

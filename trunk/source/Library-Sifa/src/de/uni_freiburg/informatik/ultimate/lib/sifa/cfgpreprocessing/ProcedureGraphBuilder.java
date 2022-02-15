@@ -99,7 +99,7 @@ public class ProcedureGraphBuilder {
 			final Collection<IcfgLocation> locationsOfInterest,
 			final Collection<String> enterCallsOfInterest) {
 
-		mStats.start(SifaStats.Key.PROCEDURE_GRAPH_BUILDER_TIME);
+		mStats.start(SifaStats.SifaMeasures.PROCEDURE_GRAPH_BUILDER_TIME);
 
 		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
 		// make sure that LOIs exist, even if they don't have any incoming or outgoing edges
@@ -117,7 +117,7 @@ public class ProcedureGraphBuilder {
 		mVisited.clear();
 		mWork.clear();
 
-		mStats.stop(SifaStats.Key.PROCEDURE_GRAPH_BUILDER_TIME);
+		mStats.stop(SifaStats.SifaMeasures.PROCEDURE_GRAPH_BUILDER_TIME);
 
 		return mCurrentProcedureGraph;
 	}

@@ -29,14 +29,14 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -48,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 
 	@SuppressWarnings("unchecked")
-	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] {
-			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-					"examples/svcomp/ldv-challenges/linux-3.14__linux-drivers-clk1__drivers-net-ethernet-cadence-macb_true-unreach-call.cil.c"),
+	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] { new Triple<>(
+			"AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
+			"examples/svcomp/ldv-challenges/linux-3.14__linux-drivers-clk1__drivers-net-ethernet-cadence-macb_true-unreach-call.cil.c"),
 			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 					"examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-sound--core--snd-rawmidi.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"),
 			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
@@ -200,10 +200,9 @@ public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 	};
 
 	@SuppressWarnings("unchecked")
-	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
-			new Triple<>("AutomizerC_WitnessPrinter.xml",
-					"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
-					"examples/svcomp/ldv-linux-3.7.3/linux-3.10-rc1-43_1a-bitvector-drivers--atm--he.ko-ldv_main0_false-unreach-call.cil.out.c"),
+	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] { new Triple<>(
+			"AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+			"examples/svcomp/ldv-linux-3.7.3/linux-3.10-rc1-43_1a-bitvector-drivers--atm--he.ko-ldv_main0_false-unreach-call.cil.out.c"),
 			new Triple<>("AutomizerC_WitnessPrinter.xml",
 					"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
 					"examples/svcomp/ldv-challenges/linux-3.14__linux-drivers-clk1__drivers-net-ethernet-cadence-macb_true-unreach-call.cil.c"),
@@ -278,9 +277,9 @@ public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 						Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition("Allocated memory end (bytes)", "Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallIterations, "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 	}
 }

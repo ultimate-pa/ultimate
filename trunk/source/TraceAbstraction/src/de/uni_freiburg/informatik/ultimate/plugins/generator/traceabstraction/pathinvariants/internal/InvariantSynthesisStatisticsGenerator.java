@@ -1,136 +1,135 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.util.Collection;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator.InvariantSynthesisStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessor.LinearInequalityPatternProcessorStatistics;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.StringCounter;
 
-public class InvariantSynthesisStatisticsGenerator implements IStatisticsDataProvider {
-	private int mNumOfPathProgramLocations;
-	private int mNumOfPathProgramLocationsAfterLbe;
-	private int mMaxNumOfInequalitiesPerRound;
-	private int mNumOfPathProgramVars;
+public class InvariantSynthesisStatisticsGenerator extends BaseStatisticsDataProvider {
 
-	private int mMaxRound;
-
-	private int mTreeSizeSumOfNormalConstraints;
-	private int mTreeSizeSumOfApproxConstraints;
-
-	private int mSumOfVarsPerLoc;
-	private int mNumOfNonLiveVariables;
-	private int mNumOfNonUnsatCoreVars;
-	private int mNumOfNonUnsatCoreLocs;
+	// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
+	// iteration
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mProgramSizeConjuncts;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mProgramSizeDisjuncts;
+
+	// the sum of path program locations for each overall iteration
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mProgramLocs;
+
+	// the sum of path program locations for each overall iteration after Lbe has been applied
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mProgramLocsLbe;
+
+	// the sum of path program variables for each overall iteration
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mProgramVars;
+
+	// the sum of template inequalities per location per round per iteration
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mSumOfTemplateInequalities;
+
+	// the minimum size of all templates occurring in the most recent round
+	@Statistics(type = DefaultMeasureDefinitions.INT_MAX)
 	private int mSizeOfLargestTemplate;
+
+	// the minimum size of all templates occurring in the most recent round
+	@Statistics(type = DefaultMeasureDefinitions.INT_MAX)
 	private int mSizeOfSmallestTemplate;
 
-	private int mMotzkinTransformationsForNormalConstr;
-	private int mMotzkinTransformationsForApproxConstr;
+	// the maximum of the sum of template inequalities per round
+	@Statistics(type = DefaultMeasureDefinitions.INT_MAX)
+	private int mMaxNumOfInequalities;
 
+	// the maximum number of rounds
+	@Statistics(type = DefaultMeasureDefinitions.INT_MAX)
+	private int mMaxRound;
+
+	// the sum of variables per location per round
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mSumVarsPerLoc;
+
+	// the sum of the difference of all variables and the live variables per location per round
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mSumNonLiveVarsPerLoc;
+
+	// the sum of the difference of all variables and the variables from the unsat core per location per round
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mSumNonUnsatCoreLocs;
+
+	// the sum of the difference of all variables and the variables from the unsat core per location per round
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mSumNonUnsatCoreVars;
+
+	// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mTreeSizeNormalConstr;
+
+	// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under-
+	// and/or Overapproximations
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mTreeSizeApproxConstr;
+
+	// Number of Motzkin Transformations for normal constraints
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mMotzkinTransformationsNormalConstr;
+
+	// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mMotzkinTransformationsApproxConstr;
+
+	// Number of Motzkin Coefficients needed for normal constraints
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mMotzkinCoefficientsNormalConstr;
+
+	// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
+	@Reflected(prettyName = "MotzkinCoefficientsApproxConstr")
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mMotzkinCoefficientsApproxConstr;
 
-	private String mSatStatus;
-	private int mSumOfTemplateInequalities;
-	private long mConstraintsConstructionTime;
+	// the sum of the time needed per round to solve the constraints
+	@Statistics(type = DefaultMeasureDefinitions.LONG_TIME)
 	private long mConstraintsSolvingTime;
-	private Integer mProgramSizeDisjuncts;
 
-	public void initializeStatistics() {
-		mNumOfPathProgramLocations = 0;
-		mNumOfPathProgramLocationsAfterLbe = 0;
-		mMaxNumOfInequalitiesPerRound = 0;
-		mNumOfPathProgramVars = 0;
-		mNumOfNonUnsatCoreLocs = 0;
-		mMaxRound = 0;
-		mSumOfVarsPerLoc = 0;
-		mNumOfNonLiveVariables = 0;
-		mNumOfNonUnsatCoreVars = 0;
-		mProgramSizeConjuncts = 0;
-		mProgramSizeDisjuncts = 0;
-		mSizeOfLargestTemplate = 0;
-		mSizeOfSmallestTemplate = 0;
-		mSumOfTemplateInequalities = 0;
-		mTreeSizeSumOfNormalConstraints = 0;
-		mTreeSizeSumOfApproxConstraints = 0;
-		mMotzkinTransformationsForNormalConstr = 0;
-		mMotzkinTransformationsForApproxConstr = 0;
-		mMotzkinCoefficientsNormalConstr = 0;
-		mMotzkinCoefficientsApproxConstr = 0;
+	// the sum of the time needed per round to construct the constraints
+	@Statistics(type = DefaultMeasureDefinitions.LONG_TIME)
+	private long mConstraintsConstructionTime;
 
-		mSatStatus = "";
-		mConstraintsConstructionTime = 0;
-		mConstraintsSolvingTime = 0;
-	}
+	// Sat status
+	@Statistics(type = DefaultMeasureDefinitions.STRING_COUNTER)
+	private final StringCounter mSatStatus = new StringCounter();
 
-
-	@Override
-	public Collection<String> getKeys() {
-		return InvariantSynthesisStatisticsType.getInstance().getKeys();
-	}
-
-	@Override
-	public Object getValue(final String key) {
-		final InvariantSynthesisStatisticsDefinitions keyEnum = Enum.valueOf(InvariantSynthesisStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case ProgramSizeConjuncts: return mProgramSizeConjuncts;
-		case ProgramSizeDisjuncts: return mProgramSizeDisjuncts;
-		case ProgramLocs: return mNumOfPathProgramLocations;
-		case ProgramLocsLbe: return mNumOfPathProgramLocationsAfterLbe;
-		case ProgramVars: return mNumOfPathProgramVars;
-		case SumOfTemplateInequalities : return mSumOfTemplateInequalities;
-		case SizeOfLargestTemplate: return mSizeOfLargestTemplate;
-		case SizeOfSmallestTemplate: return mSizeOfSmallestTemplate;
-		case MaxNumOfInequalities: return mMaxNumOfInequalitiesPerRound;
-		case MaxRound : return mMaxRound;
-		case TreeSizeNormalConstr : return mTreeSizeSumOfNormalConstraints;
-		case TreeSizeApproxConstr : return mTreeSizeSumOfApproxConstraints;
-		case SumVarsPerLoc: return mSumOfVarsPerLoc;
-		case SumNonLiveVarsPerLoc: return mNumOfNonLiveVariables;
-		case SumNonUnsatCoreLocs: return mNumOfNonUnsatCoreLocs;
-		case SumNonUnsatCoreVars: return mNumOfNonUnsatCoreVars;
-		case MotzkinTransformationsNormalConstr: return mMotzkinTransformationsForNormalConstr;
-		case MotzkinTransformationsApproxConstr: return mMotzkinTransformationsForApproxConstr;
-		case MotzkinCoefficientsNormalConstr: return mMotzkinCoefficientsNormalConstr;
-		case MotzkinCoefficientsApproxConstr : return mMotzkinCoefficientsApproxConstr;
-		case ConstraintsSolvingTime: return mConstraintsSolvingTime;
-		case ConstraintsConstructionTime : return mConstraintsConstructionTime;
-		case SatStatus: return mSatStatus;
-		default:
-			throw new AssertionError("unknown key");
-		}
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return InvariantSynthesisStatisticsType.getInstance();
+	protected InvariantSynthesisStatisticsGenerator(final IToolchainStorage storage) {
+		super(storage);
 	}
 
 	public void setNumOfPathProgramLocations(final int numOfLocsBeforeLbe, final int numOfLocsAfterLbe) {
-		mNumOfPathProgramLocations = numOfLocsBeforeLbe;
-		mNumOfPathProgramLocationsAfterLbe = numOfLocsAfterLbe;
+		mProgramLocs = numOfLocsBeforeLbe;
+		mProgramLocsLbe = numOfLocsAfterLbe;
 
 	}
 
 	public void setNumOfVars(final int numOfVars) {
-		mNumOfPathProgramVars = numOfVars;
+		mProgramVars = numOfVars;
 	}
 
-
-	public void addStatisticsDataBeforeCheckSat(final int numOfTemplateInequalitiesForThisRound, final int maximalTemplateSizeOfThisRound,
-			final int minimalTemplateSizeOfThisRound, final int sumOfVarsPerLoc, final int numfOfNonLiveVariables, final int round) {
-		if (numOfTemplateInequalitiesForThisRound > mMaxNumOfInequalitiesPerRound) {
-			mMaxNumOfInequalitiesPerRound = numOfTemplateInequalitiesForThisRound;
+	public void addStatisticsDataBeforeCheckSat(final int numOfTemplateInequalitiesForThisRound,
+			final int maximalTemplateSizeOfThisRound, final int minimalTemplateSizeOfThisRound,
+			final int sumOfVarsPerLoc, final int numfOfNonLiveVariables, final int round) {
+		if (numOfTemplateInequalitiesForThisRound > mMaxNumOfInequalities) {
+			mMaxNumOfInequalities = numOfTemplateInequalitiesForThisRound;
 		}
 		mSumOfTemplateInequalities += numOfTemplateInequalitiesForThisRound;
-		mSumOfVarsPerLoc += sumOfVarsPerLoc;
-		mNumOfNonLiveVariables += numfOfNonLiveVariables;
+		mSumVarsPerLoc += sumOfVarsPerLoc;
+		mSumNonLiveVarsPerLoc += numfOfNonLiveVariables;
 		if (round > mMaxRound) {
-			mMaxRound  = round;
+			mMaxRound = round;
 		}
 		if (maximalTemplateSizeOfThisRound > mSizeOfLargestTemplate) {
 			mSizeOfLargestTemplate = maximalTemplateSizeOfThisRound;
@@ -138,35 +137,36 @@ public class InvariantSynthesisStatisticsGenerator implements IStatisticsDataPro
 		mSizeOfSmallestTemplate = minimalTemplateSizeOfThisRound;
 	}
 
-	public void addStatisticsDataAfterCheckSat(final int numOfNonUnsatCoreLocs, final int numOfNonUnsatCoreVars, final String satResult,
+	public void addStatisticsDataAfterCheckSat(final int numOfNonUnsatCoreLocs, final int numOfNonUnsatCoreVars,
+			final String satResult,
 			final Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStats) {
-		mProgramSizeConjuncts = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSizeConjuncts);
-		mProgramSizeDisjuncts = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSizeDisjuncts);
+		mProgramSizeConjuncts =
+				(Integer) linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSizeConjuncts);
+		mProgramSizeDisjuncts =
+				(Integer) linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSizeDisjuncts);
 
-		mTreeSizeSumOfNormalConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.TreesizeNormalConstraints);
-		mTreeSizeSumOfApproxConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.TreesizeApproxConstraints);
+		mTreeSizeNormalConstr += (Integer) linearInequalityStats
+				.get(LinearInequalityPatternProcessorStatistics.TreesizeNormalConstraints);
+		mTreeSizeApproxConstr += (Integer) linearInequalityStats
+				.get(LinearInequalityPatternProcessorStatistics.TreesizeApproxConstraints);
 
-		mMotzkinTransformationsForNormalConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints);
-		mMotzkinTransformationsForApproxConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsApproxConstraints);
+		mMotzkinTransformationsNormalConstr += (Integer) linearInequalityStats
+				.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints);
+		mMotzkinTransformationsApproxConstr += (Integer) linearInequalityStats
+				.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsApproxConstraints);
 
-		mMotzkinCoefficientsNormalConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsNormalConstraints);
-		mMotzkinCoefficientsApproxConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints);
+		mMotzkinCoefficientsNormalConstr += (Integer) linearInequalityStats
+				.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsNormalConstraints);
+		mMotzkinCoefficientsApproxConstr += (Integer) linearInequalityStats
+				.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints);
 
-		mConstraintsSolvingTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime);
+		mConstraintsSolvingTime +=
+				(Long) linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime);
 
-		mConstraintsConstructionTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime);
-		mNumOfNonUnsatCoreLocs += numOfNonUnsatCoreLocs;
-		mNumOfNonUnsatCoreVars += numOfNonUnsatCoreVars;
-		if (mSatStatus == "") {
-			mSatStatus = satResult;
-		} else {
-			mSatStatus = mSatStatus + ", " + satResult;
-		}
-
-	}
-
-	@Override
-	public String toString() {
-		return StatisticsType.prettyprintBenchmarkData(getKeys(), InvariantSynthesisStatisticsDefinitions.class, this);
+		mConstraintsConstructionTime += (Long) linearInequalityStats
+				.get(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime);
+		mSumNonUnsatCoreLocs += numOfNonUnsatCoreLocs;
+		mSumNonUnsatCoreVars += numOfNonUnsatCoreVars;
+		mSatStatus.count(satResult);
 	}
 }

@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Timer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
 import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 
 /**
@@ -39,6 +41,12 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class TimedIndependenceStatisticsDataProvider extends IndependenceStatisticsDataProvider {
+	private static final MeasureDefinition MY_TIMER =
+			new MeasureDefinition(Timer::new, (x, y) -> Timer.sum((Timer) x, (Timer) y),
+					(k, data) -> PrettyPrint.keyColonData(k + " [ms]",
+							((Timer) data).print(t -> Long.toString(Math.round(t * 1e-6)))),
+					o -> ((Timer) o).getTotal() == 0L);
+
 	public static final String QUERY_TIME = "Query Time";
 
 	private final Timer mTimer = new Timer();
@@ -50,14 +58,13 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 	 *            The type of independence relation for which statistics are collected. This is used as a prefix for key
 	 *            names in order to distinguish data for different, possibly nested relations.
 	 */
-	public TimedIndependenceStatisticsDataProvider(final Class<?> clazz) {
-		super(clazz);
+	public TimedIndependenceStatisticsDataProvider(final IToolchainStorage storage, final Class<?> clazz) {
+		super(storage, clazz);
 		declareTimer(clazz.getSimpleName() + "." + QUERY_TIME, () -> mTimer);
 	}
 
 	protected final void declareTimer(final String key, final Supplier<Timer> getter) {
-		declare(key, getter::get, (x, y) -> Timer.sum((Timer) x, (Timer) y), (k, data) -> PrettyPrint
-				.keyColonData(k + " [ms]", ((Timer) data).print(t -> Long.toString(Math.round(t * 1e-6)))));
+		declare(key, getter::get, MY_TIMER);
 	}
 
 	public void startQuery() {

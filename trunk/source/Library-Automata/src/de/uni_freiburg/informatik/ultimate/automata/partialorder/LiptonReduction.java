@@ -40,6 +40,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator.LiptonReductionCompositions;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -78,7 +79,7 @@ public class LiptonReduction<L, P> {
 	private final Map<L, Set<L>> mChoiceCompositions = new HashMap<>();
 
 	private final BoundedPetriNet<L, P> mResult;
-	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
+	private final LiptonReductionStatisticsGenerator mStatistics;
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -105,7 +106,8 @@ public class LiptonReduction<L, P> {
 		mCompositionFactory = compositionFactory;
 		mMoverCheck = independenceRelation;
 
-		mStatistics.start(LiptonReductionStatisticsDefinitions.ReductionTime);
+		mStatistics = new LiptonReductionStatisticsGenerator(services.getStorage());
+		mStatistics.startReductionTime();
 		mStatistics.collectInitialStatistics(petriNet);
 		mLogger.info("Starting Lipton reduction on Petri net that " + petriNet.sizeInformation());
 
@@ -128,10 +130,8 @@ public class LiptonReduction<L, P> {
 			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size());
 			mResult = resultCurrentIteration;
 
-			mLogger.info("Checked pairs total: "
-					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.MoverChecksTotal));
-			mLogger.info("Total number of compositions: "
-					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.TotalNumberOfCompositions));
+			mLogger.info("Checked pairs total: " + mStatistics.getMoverChecksTotal());
+			mLogger.info("Total number of compositions: " + mStatistics.getTotalNumberOfCompositions());
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
@@ -141,7 +141,7 @@ public class LiptonReduction<L, P> {
 			tce.addRunningTaskInfo(runningTaskInfo);
 			throw tce;
 		} finally {
-			mStatistics.stop(LiptonReductionStatisticsDefinitions.ReductionTime);
+			mStatistics.stopReductionTime();
 		}
 
 		mStatistics.collectFinalStatistics(mResult);
@@ -212,7 +212,7 @@ public class LiptonReduction<L, P> {
 					composedTransitions.add(t1);
 					composedTransitions.add(t2);
 
-					mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
+					mStatistics.reportComposition(LiptonReductionCompositions.ChoiceCompositions);
 				}
 			}
 		}
@@ -289,10 +289,9 @@ public class LiptonReduction<L, P> {
 						composed = true;
 
 						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-							mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.TrivialYvCompositions);
+							mStatistics.reportComposition(LiptonReductionCompositions.TrivialYvCompositions);
 						} else {
-							mStatistics
-									.reportComposition(LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions);
+							mStatistics.reportComposition(LiptonReductionCompositions.ConcurrentYvCompositions);
 						}
 					}
 				}
@@ -321,11 +320,9 @@ public class LiptonReduction<L, P> {
 						composed = true;
 
 						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-							mStatistics.reportComposition(
-									LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions);
+							mStatistics.reportComposition(LiptonReductionCompositions.TrivialSequentialCompositions);
 						} else {
-							mStatistics.reportComposition(
-									LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions);
+							mStatistics.reportComposition(LiptonReductionCompositions.ConcurrentSequentialCompositions);
 						}
 					}
 				}

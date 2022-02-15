@@ -39,7 +39,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @param <T>
  */
-public interface ITraceCheckStrategyModule<L extends IAction, T extends ITraceCheck<L>> {
+public interface ITraceCheckStrategyModule<L extends IAction, T extends ITraceCheck<L>>
+		extends IModuleStatisticProvider {
 
 	/**
 	 * @see ITraceCheck#isCorrect()
@@ -57,8 +58,6 @@ public interface ITraceCheckStrategyModule<L extends IAction, T extends ITraceCh
 	IProgramExecution<L, Term> getRcfgProgramExecution();
 
 	TraceCheckReasonUnknown getTraceCheckReasonUnknown();
-
-	void aggregateStatistics(final RefinementEngineStatisticsGenerator statistics);
 
 	T getOrConstruct();
 

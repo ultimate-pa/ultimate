@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -112,12 +113,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	 *
 	 *            TODO: Return a third {@link ProgramState} in counterexamples to validity of return transitions (will
 	 *            represent state before call)
+	 * @param storage
 	 */
-	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples) {
+	public IncrementalHoareTripleChecker(final IToolchainStorage storage, final CfgSmtToolkit csToolkit,
+			final boolean constructCounterexamples) {
 		mManagedScript = csToolkit.getManagedScript();
 		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
 		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
-		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
+		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator(storage);
 		mConstructCounterexamples = constructCounterexamples;
 	}
 
@@ -203,8 +206,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				}
 				unAssertCodeBlock();
 			}
-			final LBool quickCheck = assertCodeBlock(act);
-			return quickCheck;
+			return assertCodeBlock(act);
 		}
 		return null;
 	}
@@ -220,8 +222,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				}
 				unAssertPrecondition();
 			}
-			final LBool quickCheck = assertPrecondition(precond);
-			return quickCheck;
+			return assertPrecondition(precond);
 		}
 		return null;
 	}
@@ -234,8 +235,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 			if (mAssertedHier != null) {
 				unAssertHierPred();
 			}
-			final LBool quickCheck = assertHierPred(hierpred);
-			return quickCheck;
+			return assertHierPred(hierpred);
 		}
 		return null;
 	}
@@ -245,8 +245,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 			if (mAssertedPostcond != null) {
 				unAssertPostcondition();
 			}
-			final LBool quickCheck = assertPostcond(postcond);
-			return quickCheck;
+			return assertPostcond(postcond);
 		}
 		return null;
 	}
@@ -338,8 +337,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	static private Term oldVarsEquality(final IProgramOldVar oldVar, final ManagedScript mgdScript, final Object lock) {
 		assert oldVar.isOldvar();
 		final IProgramVar nonOldVar = oldVar.getNonOldVar();
-		final Term equality = mgdScript.term(lock, "=", oldVar.getDefaultConstant(), nonOldVar.getDefaultConstant());
-		return equality;
+		return mgdScript.term(lock, "=", oldVar.getDefaultConstant(), nonOldVar.getDefaultConstant());
 	}
 
 	private void unAssertPrecondition() {
@@ -566,8 +564,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final Set<IProgramNonOldVar> modifiableGlobals = mgt.getModifiedBoogieVars(succProc);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(p.getVars(), modifiableGlobals,
 				renamedFormula, mgdScript, lock);
-		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula, mgdScript, lock);
-		return renamedFormula;
+		return renameVarsToDefaultConstants(p.getVars(), renamedFormula, mgdScript, lock);
 	}
 
 	private LBool assertPostcondCall(final IPredicate p) {
@@ -901,19 +898,15 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final ArrayList<Term> replacers = new ArrayList<>();
 		for (final Entry<IProgramVar, TermVariable> entry : boogieVars.entrySet()) {
 			final IProgramVar bv = entry.getKey();
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					assert !modifiableGlobals.contains(bv);
-					// do nothing
-				} else if (modifiableGlobals.contains(bv)) {
-					// do noting
-				} else {
-					// oldVar of global which is not modifiable by called proc
-					replacees.add(entry.getValue());
-					replacers.add(bv.getDefaultConstant());
-				}
-			} else {
+			if (!bv.isGlobal() || bv.isOldvar()) {
 				assert !modifiableGlobals.contains(bv);
+				// do nothing
+			} else if (modifiableGlobals.contains(bv)) {
+				// do noting
+			} else {
+				// oldVar of global which is not modifiable by called proc
+				replacees.add(entry.getValue());
+				replacers.add(bv.getDefaultConstant());
 			}
 		}
 		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);

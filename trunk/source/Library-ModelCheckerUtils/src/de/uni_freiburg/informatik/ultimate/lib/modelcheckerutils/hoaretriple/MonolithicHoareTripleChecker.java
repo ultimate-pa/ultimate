@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -70,6 +71,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	private final int mNontrivialCoverQueries = 0;
 
 	private long mSatCheckTime = 0;
+	private final IToolchainStorage mStorage;
 
 	/**
 	 * Whenever you do an edge check with the old method (not edge checker), test if the dataflow checks deliver a
@@ -78,11 +80,12 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	 */
 	private static final boolean DEBUG_TEST_DATAFLOW = false;
 
-	public MonolithicHoareTripleChecker(final CfgSmtToolkit csToolkit) {
+	public MonolithicHoareTripleChecker(final IToolchainStorage storage, final CfgSmtToolkit csToolkit) {
+		mStorage = storage;
 		mCsToolkit = csToolkit;
 		mManagedScript = csToolkit.getManagedScript();
 		mModifiableGlobals = csToolkit.getModifiableGlobalsTable();
-		mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
+		mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator(storage);
 	}
 
 	@Override
@@ -382,7 +385,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	public LBool assertTerm(final Term term) {
 		final long startTime = System.nanoTime();
-		LBool result = null;
+		LBool result;
 		result = mManagedScript.getScript().assertTerm(term);
 		mSatCheckSolverTime += System.nanoTime() - startTime;
 		return result;
@@ -390,7 +393,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	LBool checkSatisfiable(final Term f) {
 		final long startTime = System.nanoTime();
-		LBool result = null;
+		LBool result;
 		try {
 			assertTerm(f);
 		} catch (final SMTLIBException e) {
@@ -432,13 +435,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mStorage, mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
-		if (testRes != null) {
-			// assert testRes == result : "my return dataflow check failed";
-			if (testRes != IncrementalPlicationChecker.convertLBool2Validity(result)) {
-				sdhtch.sdecReturn(ps1, psk, ta, ps2);
-			}
+		// assert testRes == result : "my return dataflow check failed";
+		if (testRes != null && testRes != IncrementalPlicationChecker.convertLBool2Validity(result)) {
+			sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		}
 	}
 
@@ -448,7 +449,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mStorage, mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IncrementalPlicationChecker
@@ -463,7 +464,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	private void testMyInternalDataflowCheck(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2,
 			final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
+			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mStorage, mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result)
@@ -476,7 +477,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return;
 		}
 		if (ps1 == ps2) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
+			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mStorage, mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IncrementalPlicationChecker
@@ -489,7 +490,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ta.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mStorage, mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecInternal(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IncrementalPlicationChecker

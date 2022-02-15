@@ -29,14 +29,14 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SvcompMemsafetyTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -57,10 +57,10 @@ public class SvcompSoundnessBugsMemsafety extends AbstractEvalTestSuite {
 	};
 
 	@SuppressWarnings("unchecked")
-	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
-			new Triple<>("AutomizerC_WitnessPrinter.xml",
-					"svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf",
-					"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] { new Triple<>(
+			"AutomizerC_WitnessPrinter.xml",
+			"svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf",
+			"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
 			new Triple<>("AutomizerC_WitnessPrinter.xml",
 					"svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf",
 					"examples/svcomp/busybox-1.22.0/dirname_true-no-overflow_true-valid-memsafety.i"), };
@@ -93,9 +93,9 @@ public class SvcompSoundnessBugsMemsafety extends AbstractEvalTestSuite {
 						Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition("Allocated memory end (bytes)", "Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallIterations, "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 	}
 }

@@ -29,14 +29,14 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.TerminationAnalysisTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -79,9 +79,9 @@ public class SvcompSoundnessBugsTermination extends AbstractEvalTestSuite {
 						Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition("Allocated memory end (bytes)", "Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallIterations, "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 	}
 }

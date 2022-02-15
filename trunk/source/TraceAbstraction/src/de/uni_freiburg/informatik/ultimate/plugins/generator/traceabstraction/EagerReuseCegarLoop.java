@@ -134,7 +134,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 				new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
 		final boolean explointSigmaStarConcatOfIA = true;
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
-				new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+				new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 						(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, reuseAut, psd,
 						explointSigmaStarConcatOfIA);
 
@@ -145,9 +145,9 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		}
 
 		// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
-		assert new InductivityCheck<>(getServices(),
-				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), reuseAut).getResult(), false, true,
-				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+		assert new InductivityCheck<>(mServices,
+				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(), false, true,
+				new IncrementalHoareTripleChecker(mServices.getStorage(), super.mCsToolkit, false)).getResult();
 
 		if (mPref.dumpAutomata()) {
 			final String filename = "DiffAfterEagerReuse" + oneBasedi;
@@ -168,7 +168,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		}
 
 		if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
-			final AutomataLibraryServices als = new AutomataLibraryServices(getServices());
+			final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
 			final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
 					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, diff.getResult())
 							.getResult();

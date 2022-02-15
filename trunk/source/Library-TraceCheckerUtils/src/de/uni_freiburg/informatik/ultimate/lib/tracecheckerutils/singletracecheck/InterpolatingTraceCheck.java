@@ -163,7 +163,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	@Override
 	public boolean isPerfectSequence() {
 		final int perfectSequences =
-				(int) getStatistics().getValue(TraceCheckStatisticsDefinitions.PerfectInterpolantSequences.toString());
+				(int) getStatistics().getValue(TraceCheckStatisticsGenerator.PERFECT_INTERPOLANT_SEQUENCES);
 		assert perfectSequences == 0 || perfectSequences == 1 || perfectSequences == 2;
 		return perfectSequences == 1;
 	}

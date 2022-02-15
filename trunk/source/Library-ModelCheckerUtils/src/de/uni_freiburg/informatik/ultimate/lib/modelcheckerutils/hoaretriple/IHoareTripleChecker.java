@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.util.function.Function;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -35,8 +33,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * Object that implement this interface check if Hoare Triples are valid. Hoare triples that we check are of the form {
@@ -68,65 +64,4 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 	Validity checkReturn(IPredicate preLin, IPredicate preHier, IReturnAction act, IPredicate succ);
 
 	IStatisticsDataProvider getStatistics();
-
-	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
-
-		ProPred(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		ProAct(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		/**
-		 * Simple Dataflow analysis To False Satisfiable. See
-		 * {@link SdHoareTripleCheckerHelper#sdecInternalToFalse}.
-		 */
-		SDtfs(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		/**
-		 * Simple Dataflow analysis Self Loop Unsatisfiable. See
-		 * {@link SdHoareTripleCheckerHelper#sdecInternalSelfloop}.
-		 */
-		SDslu(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		/**
-		 * Simple Dataflow Satisfiable. See
-		 * {@link SdHoareTripleCheckerHelper#sdecInteral}.
-		 */
-		SDs(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		/**
-		 * See {@link SdHoareTripleCheckerHelper#sdLazyEcInternal}.
-		 */
-		SdLazy(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		SolverSat(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		SolverUnsat(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		SolverUnknown(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		SolverNotchecked(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-		Time(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),;
-
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		HoareTripleCheckerStatisticsDefinitions(final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(name()).apply(o);
-		}
-
-	}
-
 }

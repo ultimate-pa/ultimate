@@ -42,15 +42,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <T>
  * @param <LETTER>
  */
-public interface IIpgStrategyModule<T extends IInterpolantGenerator<LETTER>, LETTER extends IAction> {
+public interface IIpgStrategyModule<T extends IInterpolantGenerator<LETTER>, LETTER extends IAction>
+		extends IModuleStatisticProvider {
 
 	InterpolantComputationStatus getInterpolantComputationStatus();
 
 	Collection<QualifiedTracePredicates> getPerfectInterpolantSequences();
 
 	Collection<QualifiedTracePredicates> getImperfectInterpolantSequences();
-
-	void aggregateStatistics(final RefinementEngineStatisticsGenerator statistics);
 
 	T getOrConstruct();
 

@@ -27,17 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.Collection;
-
+import java.util.Map;
+import java.util.function.Supplier;
 
 /**
- * Classes that implement this interface define a type of benchmark that is a
- * key-value store. These classes define the following.
+ * Classes that implement this interface define a set of measurements that is represented as a key-value store. These
+ * classes define the following.
  * <ul>
- * <li> the allowed keys
- * <li> how several benchmark objects can be aggregated into one. Therefore
- * classes that implement this interface define how values of several objects
- * have to be aggregated (e.g. taking the sum, or taking the maximum)
- * <li> how benchmark data can be prettyprinted
+ * <li>the allowed keys
+ * <li>the {@link MeasureDefinition} for each key, i.e., how measures of the same key can be aggregated, pretty
+ * printed, etc.
  * </ul>
  *
  * @author Matthias Heizmann
@@ -46,8 +45,35 @@ public interface IStatisticsType {
 
 	Collection<String> getKeys();
 
-	Object aggregate(String key, Object value1, Object value2);
+	Measure getMeasure(String key);
 
-	String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData);
+	Object getValue(String key);
+
+	Map<String, Measure> getMeasures();
+
+	/**
+	 * Wrapper around a {@link MeasureDefinition} that describes how to aggregate, print, check a metric, and a getter
+	 * function that retrieves the metric from somewhere.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	final class Measure {
+		private final MeasureDefinition mKeyType;
+		private final Supplier<Object> mGetter;
+
+		public Measure(final MeasureDefinition keyType, final Supplier<Object> getter) {
+			mKeyType = keyType;
+			mGetter = getter;
+		}
+
+		public MeasureDefinition getMeasureDefinition() {
+			return mKeyType;
+		}
+
+		public Supplier<Object> getGetter() {
+			return mGetter;
+		}
+	}
 
 }

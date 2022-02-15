@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * @author Miriam Herzig
@@ -81,27 +80,24 @@ public class JordanLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		@Override
 		public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 				final UnmodifiableTransFormula tf) {
-			if (oldEdge.getSource() == oldEdge.getTarget()) {
-				// self loop, lets accelerate
-				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
-				final JordanLoopAccelerationResult jlar = JordanLoopAcceleration.accelerateLoop(mServices,
-						mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, !false);
-				mLogger.info("Jordan loop acceleration statistics: " + jlar.getJordanLoopAccelerationStatistics());
-				if (jlar.getAccelerationStatus() == JordanLoopAccelerationResult.AccelerationStatus.SUCCESS) {
-					mLogger.info("Accelerated %s to %s", oldTf, jlar.getTransFormula());
-					final String shortDescrption = "Jordan loop acceleration statistics";
-					final StatisticsData statistics = new StatisticsData();
-					statistics.aggregateBenchmarkData(jlar.getJordanLoopAccelerationStatistics());
-					final String id = "IcfgTransformer";
-					mServices.getResultService().reportResult(id,
-							new StatisticsResult<>(id, shortDescrption, statistics));
-					return new TransformulaTransformationResult(jlar.getTransFormula());
-				} else {
-					throw new IllegalArgumentException(jlar.getAccelerationStatus() + " " + jlar.getErrorMessage());
-					// return super.transform(oldEdge, tf);
-				}
-			} else {
+			if (oldEdge.getSource() != oldEdge.getTarget()) {
 				return super.transform(oldEdge, tf);
+			}
+			// self loop, lets accelerate
+			final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
+			final JordanLoopAccelerationResult jlar = JordanLoopAcceleration.accelerateLoop(mServices,
+					mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, true);
+			mLogger.info("Jordan loop acceleration statistics: " + jlar.getJordanLoopAccelerationStatistics());
+			if (jlar.getAccelerationStatus() == JordanLoopAccelerationResult.AccelerationStatus.SUCCESS) {
+				mLogger.info("Accelerated %s to %s", oldTf, jlar.getTransFormula());
+				final String shortDescrption = "Jordan loop acceleration statistics";
+				final String id = "IcfgTransformer";
+				mServices.getResultService().reportResult(id,
+						new StatisticsResult<>(id, shortDescrption, jlar.getJordanLoopAccelerationStatistics()));
+				return new TransformulaTransformationResult(jlar.getTransFormula());
+			} else {
+				throw new IllegalArgumentException(jlar.getAccelerationStatus() + " " + jlar.getErrorMessage());
+				// return super.transform(oldEdge, tf);
 			}
 		}
 	}

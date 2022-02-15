@@ -32,11 +32,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
 
-	private final StatisticsData mCegarLoopBenchmarkData;
+	private final StatisticsAggregator mCegarLoopBenchmarkData;
 	private final int mProcedures;
 	private final int mLocations;
 	private final int mErrorLocations;
@@ -48,18 +48,12 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 				.flatMap(a -> a.getValue().entrySet().stream()).count();
 		mErrorLocations = (int) rootAnnot.getProcedureErrorNodes().entrySet().stream()
 				.flatMap(a -> a.getValue().stream()).count();
-		mCegarLoopBenchmarkData = new StatisticsData();
+		mCegarLoopBenchmarkData = new StatisticsAggregator();
 	}
 
 	public void aggregateBenchmarkData(final IStatisticsDataProvider dataOfOneCegarLoop) {
-		mCegarLoopBenchmarkData.aggregateBenchmarkData(dataOfOneCegarLoop);
+		mCegarLoopBenchmarkData.aggregateStatisticsData(dataOfOneCegarLoop);
 		mCegarLoopsRun++;
-	}
-
-	public static String prettyprintNanoseconds(final long time) {
-		final long seconds = time / 1000000000;
-		final long tenthDigit = time / 100000000 % 10;
-		return seconds + "." + tenthDigit + "s";
 	}
 
 	@Override

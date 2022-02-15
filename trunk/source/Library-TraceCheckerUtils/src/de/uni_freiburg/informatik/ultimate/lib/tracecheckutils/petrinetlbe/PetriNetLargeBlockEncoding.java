@@ -106,7 +106,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
 
-		final IIndependenceRelation<IPredicate, L> variableCheck = new SyntacticIndependenceRelation<>();
+		final IIndependenceRelation<IPredicate, L> variableCheck =
+				new SyntacticIndependenceRelation<>(mServices.getStorage());
 		final IIndependenceRelation<IPredicate, L> semanticCheck;
 		final CachedIndependenceRelation<IPredicate, L> moverCheck;
 		switch (petriNetLbeSettings) {
@@ -115,14 +116,14 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		case SEMANTIC_BASED_MOVER_CHECK:
 			mLogger.info("Petri net LBE is using semantic-based independence relation.");
 			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, false, false);
-			final IIndependenceRelation<IPredicate, L> unionCheck =
-					new UnionIndependenceRelation<>(Arrays.asList(variableCheck, semanticCheck));
-			moverCheck = new CachedIndependenceRelation<>(unionCheck);
+			final IIndependenceRelation<IPredicate, L> unionCheck = new UnionIndependenceRelation<>(
+					mServices.getStorage(), Arrays.asList(variableCheck, semanticCheck));
+			moverCheck = new CachedIndependenceRelation<>(mServices.getStorage(), unionCheck);
 			break;
 		case VARIABLE_BASED_MOVER_CHECK:
 			semanticCheck = null;
 			mLogger.info("Petri net LBE is using variable-based independence relation.");
-			moverCheck = new CachedIndependenceRelation<>(variableCheck);
+			moverCheck = new CachedIndependenceRelation<>(mServices.getStorage(), variableCheck);
 			break;
 		default:
 			throw new AssertionError("unknown value " + petriNetLbeSettings);
@@ -134,8 +135,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 					petriNet, compositionFactory, moverCheck);
 			mResult = lipton.getResult();
 			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
-			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
-					moverCheck.getStatistics());
+			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(mServices.getStorage(),
+					lipton.getStatistics(), moverCheck.getStatistics());
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
@@ -186,8 +187,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return mBacktranslator;
 	}
 
-	public PetriNetLargeBlockEncodingBenchmarks getStatistics() {
-		return new PetriNetLargeBlockEncodingBenchmarks(mStatistics);
+	public PetriNetLargeBlockEncodingStatisticsGenerator getStatistics() {
+		return mStatistics;
 	}
 
 	/**

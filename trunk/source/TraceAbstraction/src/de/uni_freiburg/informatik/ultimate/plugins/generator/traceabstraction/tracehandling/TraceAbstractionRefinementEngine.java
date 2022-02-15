@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule.IpAbStrategyModuleResult;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.
@@ -72,7 +73,8 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 	private NestedWordAutomaton<L, IPredicate> mInterpolantAutomaton;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
 	private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mAfeResult;
-	private final RefinementEngineStatisticsGenerator mAfeStatistics;
+	private final StatisticsAggregator mAfeStatistics;
+	private IIpAbStrategyModule<L> mInterpolantAutomatonBuilder;
 
 	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final ITARefinementStrategy<L> strategy) {
@@ -82,11 +84,18 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 				new AutomatonFreeRefinementEngine<>(services, logger, strategy);
 		mAfeResult = afEngine.getResult();
 		mAfeStatistics = afEngine.getRefinementEngineStatistics();
-		generateProof();
+		try {
+			generateProof();
+		} finally {
+			if (mInterpolantAutomatonBuilder != null) {
+				mInterpolantAutomatonBuilder.aggregateStatistics(mAfeStatistics);
+			}
+		}
+
 	}
 
 	@Override
-	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
+	public StatisticsAggregator getRefinementEngineStatistics() {
 		return mAfeStatistics;
 	}
 
@@ -98,8 +107,9 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 			return;
 		}
 		final Collection<QualifiedTracePredicates> ipps = mAfeResult.getInfeasibilityProof();
-		final IIpAbStrategyModule<L> interpolantAutomatonBuilder = mStrategy.getInterpolantAutomatonBuilder();
-		logModule("Using interpolant automaton builder", interpolantAutomatonBuilder);
+		mInterpolantAutomatonBuilder = mStrategy.getInterpolantAutomatonBuilder();
+
+		logModule("Using interpolant automaton builder", mInterpolantAutomatonBuilder);
 		try {
 
 			final List<QualifiedTracePredicates> perfectIpps =
@@ -108,12 +118,12 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 					ipps.stream().filter(a -> !a.isPerfect()).collect(Collectors.toList());
 
 			final IpAbStrategyModuleResult<L> result =
-					interpolantAutomatonBuilder.buildInterpolantAutomaton(perfectIpps, imperfectIpps);
+					mInterpolantAutomatonBuilder.buildInterpolantAutomaton(perfectIpps, imperfectIpps);
 			mInterpolantAutomaton = result.getAutomaton();
 			mUsedTracePredicates = result.getUsedTracePredicates();
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(e,
-					new RunningTaskInfo(interpolantAutomatonBuilder.getClass(), "computing interpolant automaton"));
+					new RunningTaskInfo(mInterpolantAutomatonBuilder.getClass(), "computing interpolant automaton"));
 		}
 	}
 

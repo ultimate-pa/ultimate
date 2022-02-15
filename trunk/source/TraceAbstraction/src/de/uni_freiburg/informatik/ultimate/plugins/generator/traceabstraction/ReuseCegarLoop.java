@@ -27,15 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -49,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutg
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -77,16 +75,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  * Subclass of {@link BasicCegarLoop} in which we initially subtract from the abstraction a set of given Floyd-Hoare
@@ -118,7 +115,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mFloydHoareAutomataFromFile = new ArrayList<>();
-		mReuseStats = new ReuseStatisticsGenerator();
+		mReuseStats = new ReuseStatisticsGenerator(services.getStorage());
 	}
 
 	@Override
@@ -154,8 +151,8 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter);
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<L, IPredicate> resAutomaton = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(getServices()), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
+				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
+		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
 				mCsToolkit.getManagedScript(), mPredicateFactory, mCsToolkit.getSymbolTable(),
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
@@ -283,8 +280,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 				explies.addPair(stringSucc, stringState);
 			}
 		}
-		final Pair<HashRelation<String, String>, HashRelation<String, String>> result = new Pair<>(implies, explies);
-		return result;
+		return new Pair<>(implies, explies);
 	}
 
 	@Override
@@ -327,8 +323,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			final Map<String, Set<L>> map) {
 		int removedLetters = 0;
 		int reusedLetters = 0;
-		final Set<String> letters = new HashSet<>();
-		letters.addAll(orgAlphabet.getInternalAlphabet());
+		final Set<String> letters = new HashSet<>(orgAlphabet.getInternalAlphabet());
 		letters.addAll(orgAlphabet.getReturnAlphabet());
 		letters.addAll(orgAlphabet.getCallAlphabet());
 		for (final String strLetter : letters) {
@@ -506,7 +501,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			case AS_USUAL:
 				// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
 				// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
-				return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+				return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
 						mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
 			case ONLY_NEW_LETTERS:
 				return constructEfficientIgnoringHtc(false);
@@ -525,15 +520,15 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			final Set<L> oldAlphabet = constructOldAlphabet();
 			final Predicate<IAction> isOldAction = oldAlphabet::contains;
 
-			ChainingHoareTripleChecker chain =
-					HoareTripleCheckerUtils.constructSdHoareTripleChecker(mLogger, mCsToolkit, getPredicateUnifier());
+			ChainingHoareTripleChecker chain = HoareTripleCheckerUtils
+					.constructSdHoareTripleChecker(mServices.getStorage(), mLogger, mCsToolkit, getPredicateUnifier());
 			if (!allowSdForProtectedActions) {
 				chain = chain.actionsProtectedBy(isOldAction);
 			}
-			chain = chain.andThen(HoareTripleCheckerUtils.constructSmtHoareTripleChecker(mLogger,
-					HoareTripleChecks.INCREMENTAL, mCsToolkit, getPredicateUnifier()));
+			chain = chain.andThen(HoareTripleCheckerUtils.constructSmtHoareTripleChecker(mServices.getStorage(),
+					mLogger, HoareTripleChecks.INCREMENTAL, mCsToolkit, getPredicateUnifier()));
 
-			return new CachingHoareTripleCheckerMap(getServices(), chain, getPredicateUnifier());
+			return new CachingHoareTripleCheckerMap(mServices, chain, getPredicateUnifier());
 		}
 
 		private Set<L> constructOldAlphabet() {
@@ -548,7 +543,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 
 		public IStatisticsDataProvider getEdgeCheckerBenchmark() {
 			if (mHtc == null) {
-				return new HoareTripleCheckerStatisticsGenerator();
+				return new HoareTripleCheckerStatisticsGenerator(mServices.getStorage());
 			}
 			return mHtc.getStatistics();
 		}
@@ -566,133 +561,77 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		}
 	}
 
-	public enum ReuseStatisticsDefinitions implements IStatisticsElement {
+	public static final class ReuseStatisticsGenerator extends BaseStatisticsDataProvider {
+		@Reflected(prettyName = "Reuse Predicate Unifier")
+		@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+		private final StatisticsAggregator mPredicateUnifierStats;
 
-		REUSED_STATES(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		@Reflected(prettyName = "Reuse Htc")
+		@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+		private final StatisticsAggregator mHtcStats;
 
-		TOTAL_STATES(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		@Reflected(prettyName = "Reuse Time")
+		@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+		private final TimeTracker mTime;
 
-		REUSED_LETTERS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		TOTAL_LETTERS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		REUSED_TRANSITIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		TOTAL_TRANSITIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		BEFORE_DIFF_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		AFTER_DIFF_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		BEFORE_ACCEPT_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		AFTER_ACCEPT_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		USELESS_PREDICATES(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		NONREUSE_ITERATIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		AUTOMATA_FROM_FILE(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		AUTOMATA_FROM_PREV_ERROR_LOC(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		REUSE_PREDICATE_UNIFIER(IStatisticsDataProvider.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-				StatisticsType.KEY_BEFORE_DATA),
-
-		REUSE_HTC(IStatisticsDataProvider.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-				StatisticsType.KEY_BEFORE_DATA),
-
-		REUSE_TIME(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
-
-		DROPPED_AUTOMATA(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),;
-
-		private final Class<?> mClazz;
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		ReuseStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mClazz = clazz;
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
-		}
-
-	}
-
-	public static final class ReuseStatisticsType extends StatisticsType<ReuseStatisticsDefinitions> {
-
-		private static final ReuseStatisticsType INSTANCE = new ReuseStatisticsType();
-
-		public ReuseStatisticsType() {
-			super(ReuseStatisticsDefinitions.class);
-		}
-
-		public static ReuseStatisticsType getInstance() {
-			return INSTANCE;
-		}
-	}
-
-	public static final class ReuseStatisticsGenerator implements IStatisticsDataProvider {
-
-		private final StatisticsData mPredicateUnifierStats;
-		private final Benchmark mTime;
-		private final StatisticsData mHtcStats;
-
-		private boolean mRunning = false;
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mAutomataFromFile;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mAutomataFromPreviousErrorLocation;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mReusedStates;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mTotalStates;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mReusedLetters;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mTotalLetters;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mReusedTransitions;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mTotalTransitions;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mNonReuseIterations;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mBeforeDiffTransitions;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mAfterDiffTransitions;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mBeforeAcceptanceTransitions;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mAfterAcceptanceTransitions;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mUselessPredicates;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 		private int mDroppedAutomata;
 
-		public ReuseStatisticsGenerator() {
-			mPredicateUnifierStats = new StatisticsData();
-			mHtcStats = new StatisticsData();
-			mTime = new Benchmark();
-			mTime.register(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME));
-			mAutomataFromFile = 0;
-			mAutomataFromPreviousErrorLocation = 0;
-			mReusedStates = 0;
-			mTotalStates = 0;
-			mReusedLetters = 0;
-			mTotalLetters = 0;
-			mReusedTransitions = 0;
-			mTotalTransitions = 0;
-			mNonReuseIterations = 0;
-			mBeforeDiffTransitions = 0;
-			mAfterDiffTransitions = 0;
-			mBeforeAcceptanceTransitions = 0;
-			mAfterAcceptanceTransitions = 0;
-			mUselessPredicates = 0;
-			mDroppedAutomata = 0;
+		public ReuseStatisticsGenerator(final IToolchainStorage storage) {
+			super(storage);
+			mPredicateUnifierStats = new StatisticsAggregator(storage);
+			mHtcStats = new StatisticsAggregator(storage);
+			mTime = new TimeTracker();
 		}
 
 		public void reportPredicateUnifierStats(final IStatisticsDataProvider stats) {
-			mPredicateUnifierStats.aggregateBenchmarkData(stats);
+			mPredicateUnifierStats.aggregateStatisticsData(stats);
 		}
 
 		public void reportHtcStats(final IStatisticsDataProvider stats) {
-			mHtcStats.aggregateBenchmarkData(stats);
+			mHtcStats.aggregateStatisticsData(stats);
 		}
 
 		public void addAutomataFromFile(final int value) {
@@ -755,76 +694,12 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			mNonReuseIterations++;
 		}
 
-		public long getTime() {
-			return (long) mTime.getElapsedTime(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME),
-					TimeUnit.NANOSECONDS);
-		}
-
 		public void continueTime() {
-			assert !mRunning : "Timing already running";
-			mRunning = true;
-			mTime.unpause(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME));
+			mTime.start();
 		}
 
 		public void stopTime() {
-			assert mRunning : "Timing not running";
-			mRunning = false;
-			mTime.pause(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME));
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			return ReuseStatisticsType.getInstance().getKeys();
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			final ReuseStatisticsDefinitions keyEnum = Enum.valueOf(ReuseStatisticsDefinitions.class, key);
-			switch (keyEnum) {
-			case REUSE_PREDICATE_UNIFIER:
-				return mPredicateUnifierStats;
-			case REUSE_TIME:
-				return getTime();
-			case NONREUSE_ITERATIONS:
-				return mNonReuseIterations;
-			case REUSE_HTC:
-				return mHtcStats;
-			case AUTOMATA_FROM_FILE:
-				return mAutomataFromFile;
-			case AUTOMATA_FROM_PREV_ERROR_LOC:
-				return mAutomataFromPreviousErrorLocation;
-			case REUSED_STATES:
-				return mReusedStates;
-			case TOTAL_STATES:
-				return mTotalStates;
-			case REUSED_LETTERS:
-				return mReusedLetters;
-			case REUSED_TRANSITIONS:
-				return mReusedTransitions;
-			case TOTAL_LETTERS:
-				return mTotalLetters;
-			case TOTAL_TRANSITIONS:
-				return mTotalTransitions;
-			case AFTER_DIFF_TRANS:
-				return mAfterDiffTransitions;
-			case BEFORE_DIFF_TRANS:
-				return mBeforeDiffTransitions;
-			case AFTER_ACCEPT_TRANS:
-				return mAfterAcceptanceTransitions;
-			case BEFORE_ACCEPT_TRANS:
-				return mBeforeAcceptanceTransitions;
-			case USELESS_PREDICATES:
-				return mUselessPredicates;
-			case DROPPED_AUTOMATA:
-				return mDroppedAutomata;
-			default:
-				throw new UnsupportedOperationException("Unknown key: " + keyEnum);
-			}
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return ReuseStatisticsType.getInstance();
+			mTime.stop();
 		}
 	}
 

@@ -42,13 +42,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantconsolidation.InterpolatingTraceCheckWithConsolidation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Creates separate instance of SmtInterpol with {@link InterpolationTechnique#Craig_NestedInterpolation} and without
@@ -109,10 +107,9 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
+	public void aggregateStatistics(final StatisticsAggregator stats) {
 		mIpTcModule.aggregateStatistics(stats);
-		stats.addStatistics(RefinementEngineStatisticsDefinitions.INTERPOLANT_CONSOLIDATION,
-				getOrConstruct().getStatistics());
+		stats.aggregateStatisticsData("INTERPOLANT_CONSOLIDATION", getOrConstruct().getStatistics());
 	}
 
 	@Override

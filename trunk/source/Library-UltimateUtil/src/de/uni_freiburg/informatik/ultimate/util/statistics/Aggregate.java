@@ -28,15 +28,16 @@ package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
- * Functions to aggregate statistics defined by a single {@link IStatisticsElement}.
- * You probably want to use these functions as references (for instance
- * {@code BiFunction<Object, Object, Object> aggr = Aggregate::intAdd})
- * instead of calling them directly.
- *
+ * Functions to aggregate measures defined by a {@link MeasureDefinition}. You probably want to use these functions as
+ * references (for instance {@code BiFunction<Object, Object, Object> aggr = Aggregate::intAdd}) instead of calling them
+ * directly.
+ * 
  * @author schaetzc@tf.uni-freiburg.de
  */
 public final class Aggregate {
@@ -45,18 +46,56 @@ public final class Aggregate {
 		// objects of this class have no use ==> forbid construction
 	}
 
-	public static StatisticsData statisticsDataAggregate(final Object lhsStatsData, final Object rhsStatsData) {
-		((StatisticsData) lhsStatsData).aggregateBenchmarkData((StatisticsData) rhsStatsData);
-		return (StatisticsData) lhsStatsData;
+	public static StatisticsAggregator statisticsConvertAndAggregate(final Object lhs, final Object rhs) {
+		final StatisticsAggregator rtr = createStatisticsAggregator(lhs, rhs);
+		rtr.aggregateStatisticsData((IStatisticsDataProvider) lhs);
+		rtr.aggregateStatisticsData((IStatisticsDataProvider) rhs);
+		return rtr;
 	}
 
-	public static List appendList(final Object lhsList, final Object rhsList) {
-		((List) lhsList).addAll((Collection) rhsList);
-		return (List) lhsList;
+	private static StatisticsAggregator createStatisticsAggregator(final Object o1, final Object o2) {
+		if (o1 instanceof BaseStatisticsDataProvider) {
+			return new StatisticsAggregator((BaseStatisticsDataProvider) o1);
+		}
+		if (o2 instanceof BaseStatisticsDataProvider) {
+			return new StatisticsAggregator((BaseStatisticsDataProvider) o2);
+		}
+		return new StatisticsAggregator();
+	}
+
+	public static StatisticsAggregator statisticsAggregator(final Object lhs, final Object rhs) {
+		final StatisticsAggregator rtr;
+		if (lhs instanceof StatisticsAggregator) {
+			rtr = (StatisticsAggregator) lhs;
+			rtr.aggregateStatisticsData((IStatisticsDataProvider) rhs);
+			return rtr;
+		}
+		rtr = createStatisticsAggregator(lhs, rhs);
+		rtr.aggregateStatisticsData((IStatisticsDataProvider) lhs);
+		rtr.aggregateStatisticsData((IStatisticsDataProvider) rhs);
+		return rtr;
+	}
+
+	public static List<Object> appendList(final Object lhsList, final Object rhsList) {
+		((List<Object>) lhsList).addAll((Collection<Object>) rhsList);
+		return (List<Object>) lhsList;
 	}
 
 	public static Integer intAdd(final Object lhsInt, final Object rhsInt) {
 		return (int) lhsInt + (int) rhsInt;
+	}
+
+	public static int[] intArrayAddElementWise(final Object lhs, final Object rhs) {
+		final int[] lhsA = (int[]) lhs;
+		final int[] rhsA = (int[]) rhs;
+		if (lhsA.length != rhsA.length) {
+			throw new IllegalArgumentException("Arrays have to be the same length");
+		}
+		final int[] rtr = new int[lhsA.length];
+		for (int i = 0; i < rtr.length; ++i) {
+			rtr[i] = lhsA[i] + rhsA[i];
+		}
+		return rtr;
 	}
 
 	public static Integer intMax(final Object lhsInt, final Object rhsInt) {
@@ -78,6 +117,35 @@ public final class Aggregate {
 	public static InCaReCounter inCaReAdd(final Object lhsInCaRe, final Object rhsInCaRe) {
 		((InCaReCounter) lhsInCaRe).add((InCaReCounter) rhsInCaRe);
 		return (InCaReCounter) lhsInCaRe;
+	}
+
+	public static TimeTracker timeTrackerAdd(final Object lhs, final Object rhs) {
+		final TimeTracker tt = new TimeTracker();
+		tt.addElapsedTime(((TimeTracker) lhs).elapsedTime(TimeUnit.NANOSECONDS));
+		tt.addElapsedTime(((TimeTracker) rhs).elapsedTime(TimeUnit.NANOSECONDS));
+		return tt;
+	}
+
+	public static TimeTracker timeTrackerMax(final Object lhs, final Object rhs) {
+		final long lhsEl = ((TimeTracker) lhs).elapsedTime(TimeUnit.NANOSECONDS);
+		final long rhsEl = ((TimeTracker) rhs).elapsedTime(TimeUnit.NANOSECONDS);
+
+		final TimeTracker tt = new TimeTracker();
+		tt.addElapsedTime(Math.max(lhsEl, rhsEl));
+		return tt;
+	}
+
+	public static Boolean flagAnd(final Object lhs, final Object rhs) {
+		final Boolean lhsC = (Boolean) lhs;
+		final Boolean rhsC = (Boolean) rhs;
+
+		if (null == lhsC) {
+			return rhsC;
+		}
+		if (null == rhsC) {
+			return lhsC;
+		}
+		return lhsC && rhsC;
 	}
 
 }

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -71,10 +72,10 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 	Map<IPredicate, Map<IPredicate, Map<IIcfgTransition<?>, Set<IPredicate>>>> mInductiveReturnSuccsCache =
 			new HashMap<>();
 
-	public BestApproximationDeterminizer(final CfgSmtToolkit mCsToolkit, final TAPreferences taPreferences,
-			final NestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa,
+	public BestApproximationDeterminizer(final IToolchainStorage storage, final CfgSmtToolkit mCsToolkit,
+			final TAPreferences taPreferences, final NestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa,
 			final IDeterminizeStateFactory<IPredicate> stateFactory) {
-		mHoareTriplechecker = new MonolithicHoareTripleChecker(mCsToolkit);
+		mHoareTriplechecker = new MonolithicHoareTripleChecker(storage, mCsToolkit);
 		mTaPreferences = taPreferences;
 		mStateFactory = stateFactory;
 		mNwa = nwa;
@@ -240,9 +241,6 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 			return null;
 		}
 		final Set<IPredicate> succs = symbol2succs.get(symbol);
-		if (succs == null) {
-			return null;
-		}
 		return succs;
 	}
 
@@ -289,9 +287,6 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 			return null;
 		}
 		final Set<IPredicate> succs = symbol2succs.get(symbol);
-		if (succs == null) {
-			return null;
-		}
 		return succs;
 	}
 
@@ -405,9 +400,6 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 			return null;
 		}
 		final Set<IPredicate> succs = symbol2succs.get(symbol);
-		if (succs == null) {
-			return null;
-		}
 		return succs;
 	}
 

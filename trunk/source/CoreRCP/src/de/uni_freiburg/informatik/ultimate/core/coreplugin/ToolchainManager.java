@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 /**
  *

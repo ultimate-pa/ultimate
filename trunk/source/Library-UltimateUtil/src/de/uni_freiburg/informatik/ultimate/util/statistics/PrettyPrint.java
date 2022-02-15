@@ -35,9 +35,9 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * Functions to pretty print statistics defined by a single {@link IStatisticsElement}. You probably want to use these
- * functions as references (for instance {@code BiFunction<String, Object, String> pprint = PrettyPrint::dataThenKey})
- * instead of calling them directly.
+ * Functions to pretty print measures defined by a {@link MeasureDefinition}. You probably want to use these functions
+ * as references (for instance {@code BiFunction<String, Object, String> pprint = PrettyPrint::dataThenKey}) instead of
+ * calling them directly.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */

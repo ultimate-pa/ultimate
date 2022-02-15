@@ -33,13 +33,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -76,12 +77,16 @@ public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 			final List<QualifiedTracePredicates> predicates =
 					perfectIpps.stream().filter(a -> a.getOrigin() == runner.getClass()).collect(Collectors.toList());
 			assert !predicates.isEmpty();
-			final NestedWordAutomaton<LETTER, IPredicate> automaton =
-					runner.createInterpolantAutomatonBuilder(mPredicateUnifier,
-							(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCounterexample,
-							mEmptyStackFactory).getResult();
-			mResult = new IpAbStrategyModuleResult<>(automaton, predicates);
+			final IInterpolantAutomatonBuilder<LETTER, IPredicate> builder = runner.createInterpolantAutomatonBuilder(
+					mPredicateUnifier, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCounterexample,
+					mEmptyStackFactory);
+			mResult = new IpAbStrategyModuleResult<>(builder.getResult(), predicates);
 		}
 		return mResult;
+	}
+
+	@Override
+	public void aggregateStatistics(final StatisticsAggregator statistics) {
+		// do nothing, this builder does not provide statistics
 	}
 }

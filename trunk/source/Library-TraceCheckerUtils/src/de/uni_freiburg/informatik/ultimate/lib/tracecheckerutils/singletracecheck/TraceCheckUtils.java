@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
@@ -74,10 +75,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
 
 /**
  * Class that contains static methods that are related to the {@link TraceCheck}.
@@ -203,8 +204,8 @@ public final class TraceCheckUtils {
 	public static boolean checkInterpolantsInductivityForward(final List<IPredicate> interpolants,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
 			final Map<Integer, IPredicate> pendingContexts, final String computation, final CfgSmtToolkit csToolkit,
-			final ILogger logger) {
-		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
+			final ILogger logger, final IToolchainStorage storage) {
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(storage, csToolkit);
 		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		Validity result;
 		for (int i = 0; i <= interpolants.size(); i++) {
@@ -239,13 +240,14 @@ public final class TraceCheckUtils {
 	 *            logger
 	 * @param managedScript
 	 *            managed script
+	 * @param storage
 	 * @return {@code true}
 	 */
 	public static boolean checkInterpolantsInductivityBackward(final List<IPredicate> interpolants,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
 			final Map<Integer, IPredicate> pendingContexts, final String computation, final CfgSmtToolkit csToolkit,
-			final ILogger logger, final ManagedScript managedScript) {
-		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
+			final ILogger logger, final ManagedScript managedScript, final IToolchainStorage storage) {
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(storage, csToolkit);
 		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		for (int i = interpolants.size(); i >= 0; i--) {
 			final Validity result;
@@ -265,7 +267,7 @@ public final class TraceCheckUtils {
 		final IAction cb = trace.getSymbol(pos);
 		final Validity result;
 		final Function<Validity, LogLevel> toLevel =
-				x -> x == Validity.INVALID ? LogLevel.ERROR : (x == Validity.VALID ? LogLevel.INFO : LogLevel.WARN);
+				x -> x == Validity.INVALID ? LogLevel.ERROR : x == Validity.VALID ? LogLevel.INFO : LogLevel.WARN;
 		if (trace.isCallPosition(pos)) {
 			assert cb instanceof ICallAction : "not Call at call position";
 			result = htc.checkCall(predecessor, (ICallAction) cb, successor);
@@ -356,10 +358,8 @@ public final class TraceCheckUtils {
 			final Term equality = SmtUtils.binaryEquality(mgdScript.getScript(), tv, tvOld);
 			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}
-		final String[] procs = new String[0];
-		final TermVarsProc result = new TermVarsProc(term, vars, procs,
-				PredicateUtils.computeClosedFormula(term, vars, mgdScript));
-		return result;
+		final String[] procs = {};
+		return new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars, mgdScript));
 	}
 
 	/**
@@ -367,15 +367,15 @@ public final class TraceCheckUtils {
 	 */
 	public static <L extends IAction> NestedFormulas<L, UnmodifiableTransFormula, IPredicate> decoupleArrayValues(
 			final ManagedScript mgdScript, final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf) {
-		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result = new ModifiableNestedFormulas<>(
-				nf.getTrace(), new TreeMap<>());
+		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result =
+				new ModifiableNestedFormulas<>(nf.getTrace(), new TreeMap<>());
 		result.setPrecondition(nf.getPrecondition());
 		result.setPostcondition(nf.getPostcondition());
 		for (int i = 0; i < nf.getTrace().length(); i++) {
 			if (nf.getTrace().isCallPosition(i)) {
 				{
-					final UnmodifiableTransFormula decoupledLocalVarAssignment = TransFormulaUtils
-							.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
+					final UnmodifiableTransFormula decoupledLocalVarAssignment =
+							TransFormulaUtils.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
 					result.setLocalVarAssignmentAtPos(i, decoupledLocalVarAssignment);
 				}
 				// globalVarAssignment and oldVarAssignment are equalities an cannot be affected
@@ -383,8 +383,8 @@ public final class TraceCheckUtils {
 				result.setGlobalVarAssignmentAtPos(i, nf.getGlobalVarAssignment(i));
 				result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
 			} else {
-				final UnmodifiableTransFormula decoupled = TransFormulaUtils
-						.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
+				final UnmodifiableTransFormula decoupled =
+						TransFormulaUtils.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
 				result.setFormulaAtNonCallPos(i, decoupled);
 				if (nf.getTrace().isPendingReturn(i)) {
 					result.setPendingContext(i, nf.getPendingContext(i));

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndepend
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DisjunctiveConditionalIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
@@ -71,11 +72,13 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 
 	protected final IIndependenceRelation<S, L> mRelation;
 	protected final Function<IIndependenceRelation<S, L>, B> mCreator;
+	protected final IToolchainStorage mStorage;
 
-	private IndependenceBuilder(final IIndependenceRelation<S, L> relation,
+	private IndependenceBuilder(final IToolchainStorage storage, final IIndependenceRelation<S, L> relation,
 			final Function<IIndependenceRelation<S, L>, B> creator) {
 		mRelation = relation;
 		mCreator = creator;
+		mStorage = storage;
 	}
 
 	/**
@@ -121,15 +124,16 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
 			final boolean symmetric, final TermTransferrer transferrer) {
-		return new PredicateActionIndependenceBuilder.Impl<>(
+		return new PredicateActionIndependenceBuilder.Impl<>(services.getStorage(),
 				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, transferrer));
 	}
 
 	/**
 	 * Create a new instance, with a syntactic independence relation as base.
 	 */
-	public static <L extends IAction, S> ActionIndependenceBuilder.Impl<L, S> syntactic() {
-		return new ActionIndependenceBuilder.Impl<>(new SyntacticIndependenceRelation<>());
+	public static <L extends IAction, S> ActionIndependenceBuilder.Impl<L, S>
+			syntactic(final IToolchainStorage storage) {
+		return new ActionIndependenceBuilder.Impl<>(storage, new SyntacticIndependenceRelation<>(storage));
 	}
 
 	/**
@@ -138,8 +142,9 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * @see IndependenceBuilder.ActionIndependenceBuilder#fromActionIndependence(IIndependenceRelation)
 	 * @see IndependenceBuilder.PredicateActionIndependenceBuilder#fromPredicateActionIndependence(IIndependenceRelation)
 	 */
-	public static <L, S> Impl<L, S> fromIndependence(final IIndependenceRelation<S, L> relation) {
-		return new Impl<>(relation);
+	public static <L, S> Impl<L, S> fromIndependence(final IToolchainStorage storage,
+			final IIndependenceRelation<S, L> relation) {
+		return new Impl<>(storage, relation);
 	}
 
 	/**
@@ -149,9 +154,9 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * @see IndependenceBuilder#fromIndependence(IIndependenceRelation)
 	 * @see IndependenceBuilder.ActionIndependenceBuilder#fromActionIndependence(IIndependenceRelation)
 	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L>
-			fromPredicateActionIndependence(final IIndependenceRelation<IPredicate, L> relation) {
-		return new PredicateActionIndependenceBuilder.Impl<>(relation);
+	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> fromPredicateActionIndependence(
+			final IToolchainStorage storage, final IIndependenceRelation<IPredicate, L> relation) {
+		return new PredicateActionIndependenceBuilder.Impl<>(storage, relation);
 	}
 
 	/**
@@ -161,8 +166,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * @see IndependenceBuilder.PredicateActionIndependenceBuilder#fromPredicateActionIndependence(IIndependenceRelation)
 	 */
 	public static <L extends IAction, S> ActionIndependenceBuilder.Impl<L, S>
-			fromActionIndependence(final IIndependenceRelation<S, L> relation) {
-		return new ActionIndependenceBuilder.Impl<>(relation);
+			fromActionIndependence(final IToolchainStorage storage, final IIndependenceRelation<S, L> relation) {
+		return new ActionIndependenceBuilder.Impl<>(storage, relation);
 	}
 
 	/**
@@ -213,7 +218,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		relations.add(mRelation);
 		relations.addAll(right);
 
-		return mCreator.apply(new UnionIndependenceRelation<>(relations));
+		return mCreator.apply(new UnionIndependenceRelation<>(mStorage, relations));
 	}
 
 	/**
@@ -225,7 +230,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 */
 	public B ensureUnconditional() {
 		if (mRelation.isConditional()) {
-			return mCreator.apply(ConditionTransformingIndependenceRelation.<S, L> unconditional(mRelation));
+			return mCreator.apply(ConditionTransformingIndependenceRelation.<S, L> unconditional(mStorage, mRelation));
 		}
 		return mCreator.apply(mRelation);
 	}
@@ -234,14 +239,14 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * Wrap the current relation in a caching layer.
 	 */
 	public B cached() {
-		return cached(new DefaultIndependenceCache<>());
+		return cached(new DefaultIndependenceCache<>(mStorage));
 	}
 
 	/**
 	 * Wrap the current relation in a caching layer that uses the given cache.
 	 */
 	public B cached(final IIndependenceCache<S, L> cache) {
-		return mCreator.apply(new CachedIndependenceRelation<>(mRelation, cache));
+		return mCreator.apply(new CachedIndependenceRelation<>(mStorage, mRelation, cache));
 	}
 
 	/**
@@ -253,8 +258,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 */
 	public B withFilteredConditions(final Predicate<S> filter) {
 		if (mRelation.isConditional()) {
-			return mCreator
-					.apply(new ConditionTransformingIndependenceRelation<>(mRelation, x -> filter.test(x) ? x : null));
+			return mCreator.apply(new ConditionTransformingIndependenceRelation<>(mStorage, mRelation,
+					x -> filter.test(x) ? x : null));
 		}
 		return mCreator.apply(mRelation);
 	}
@@ -264,8 +269,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * methods.
 	 */
 	public static final class Impl<L, S> extends IndependenceBuilder<L, S, Impl<L, S>> {
-		private Impl(final IIndependenceRelation<S, L> relation) {
-			super(relation, Impl::new);
+		private Impl(final IToolchainStorage storage, final IIndependenceRelation<S, L> relation) {
+			super(storage, relation, a -> new Impl<>(storage, a));
 		}
 
 		/**
@@ -277,7 +282,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#unconditional()
 		 */
 		public <T> Impl<L, T> unconditional() {
-			return new Impl<>(ConditionTransformingIndependenceRelation.unconditional(mRelation));
+			return new Impl<>(mStorage, ConditionTransformingIndependenceRelation.unconditional(mStorage, mRelation));
 		}
 
 		/**
@@ -290,7 +295,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 */
 		public <T> Impl<L, T> withTransformedConditions(final Function<T, S> transformer) {
 			assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
-			return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
+			return new Impl<>(mStorage,
+					new ConditionTransformingIndependenceRelation<>(mStorage, mRelation, transformer));
 		}
 	}
 
@@ -300,9 +306,10 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 */
 	public abstract static class ActionIndependenceBuilder<L extends IAction, S, B extends ActionIndependenceBuilder<L, S, B>>
 			extends IndependenceBuilder<L, S, B> {
-		protected ActionIndependenceBuilder(final IIndependenceRelation<S, L> relation,
+
+		protected ActionIndependenceBuilder(final IToolchainStorage storage, final IIndependenceRelation<S, L> relation,
 				final Function<IIndependenceRelation<S, L>, B> creator) {
-			super(relation, creator);
+			super(storage, relation, creator);
 		}
 
 		/**
@@ -311,14 +318,14 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * independence.
 		 */
 		public B withSyntacticCheck() {
-			return unionLeft(new SyntacticIndependenceRelation<>());
+			return unionLeft(new SyntacticIndependenceRelation<>(mStorage));
 		}
 
 		/**
 		 * Ensures only actions of different threads are considered independent.
 		 */
 		public B threadSeparated() {
-			return mCreator.apply(new ThreadSeparatingIndependenceRelation<>(mRelation));
+			return mCreator.apply(new ThreadSeparatingIndependenceRelation<>(mStorage, mRelation));
 		}
 
 		/**
@@ -326,8 +333,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * methods.
 		 */
 		public static final class Impl<L extends IAction, S> extends ActionIndependenceBuilder<L, S, Impl<L, S>> {
-			private Impl(final IIndependenceRelation<S, L> relation) {
-				super(relation, Impl::new);
+			private Impl(final IToolchainStorage storage, final IIndependenceRelation<S, L> relation) {
+				super(storage, relation, a -> new Impl<>(storage, a));
 			}
 
 			/**
@@ -339,7 +346,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#unconditional()
 			 */
 			public <T> Impl<L, T> unconditional() {
-				return new Impl<>(ConditionTransformingIndependenceRelation.unconditional(mRelation));
+				return new Impl<>(mStorage,
+						ConditionTransformingIndependenceRelation.unconditional(mStorage, mRelation));
 			}
 
 			/**
@@ -352,7 +360,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 */
 			public <T> Impl<L, T> withTransformedConditions(final Function<T, S> transformer) {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
-				return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
+				return new Impl<>(mStorage,
+						new ConditionTransformingIndependenceRelation<>(mStorage, mRelation, transformer));
 			}
 		}
 	}
@@ -364,9 +373,10 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	public static abstract class PredicateActionIndependenceBuilder<L extends IAction, B extends PredicateActionIndependenceBuilder<L, B>>
 			extends ActionIndependenceBuilder<L, IPredicate, B> {
 
-		protected PredicateActionIndependenceBuilder(final IIndependenceRelation<IPredicate, L> relation,
+		protected PredicateActionIndependenceBuilder(final IToolchainStorage storage,
+				final IIndependenceRelation<IPredicate, L> relation,
 				final Function<IIndependenceRelation<IPredicate, L>, B> creator) {
-			super(relation, creator);
+			super(storage, relation, creator);
 		}
 
 		/**
@@ -378,7 +388,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 */
 		public B withConditionElimination(final Predicate<IPredicate> isInconsistent) {
 			if (mRelation.isConditional()) {
-				return mCreator.apply(new SemanticConditionEliminator<>(mRelation, isInconsistent));
+				return mCreator.apply(new SemanticConditionEliminator<>(mStorage, mRelation, isInconsistent));
 			}
 			return mCreator.apply(mRelation);
 		}
@@ -388,8 +398,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * methods.
 		 */
 		public static final class Impl<L extends IAction> extends PredicateActionIndependenceBuilder<L, Impl<L>> {
-			private Impl(final IIndependenceRelation<IPredicate, L> relation) {
-				super(relation, Impl::new);
+			private Impl(final IToolchainStorage storage, final IIndependenceRelation<IPredicate, L> relation) {
+				super(storage, relation, a -> new Impl<>(storage, a));
 			}
 
 			/**
@@ -401,8 +411,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#unconditional()
 			 */
 			public <T> ActionIndependenceBuilder.Impl<L, T> unconditional() {
-				return new ActionIndependenceBuilder.Impl<>(
-						ConditionTransformingIndependenceRelation.unconditional(mRelation));
+				return new ActionIndependenceBuilder.Impl<>(mStorage,
+						ConditionTransformingIndependenceRelation.unconditional(mStorage, mRelation));
 			}
 
 			/**
@@ -416,8 +426,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			public <T> ActionIndependenceBuilder.Impl<L, T>
 					withTransformedConditions(final Function<T, IPredicate> transformer) {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
-				return new ActionIndependenceBuilder.Impl<>(
-						new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
+				return new ActionIndependenceBuilder.Impl<>(mStorage,
+						new ConditionTransformingIndependenceRelation<>(mStorage, mRelation, transformer));
 			}
 
 			/**
@@ -430,7 +440,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 */
 			public Impl<L> withTransformedPredicates(final UnaryOperator<IPredicate> transformer) {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
-				return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
+				return new Impl<>(mStorage,
+						new ConditionTransformingIndependenceRelation<>(mStorage, mRelation, transformer));
 			}
 
 			/**
@@ -452,8 +463,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			public <C extends Collection<IPredicate>> Impl<L>
 					withDisjunctivePredicates(final Function<IPredicate, C> getDisjuncts) {
 				if (mRelation.isConditional()) {
-					return new Impl<>(new ConditionTransformingIndependenceRelation<>(
-							new DisjunctiveConditionalIndependenceRelation<>(mRelation), getDisjuncts));
+					return new Impl<>(mStorage, new ConditionTransformingIndependenceRelation<>(mStorage,
+							new DisjunctiveConditionalIndependenceRelation<>(mStorage, mRelation), getDisjuncts));
 				}
 				return this;
 			}

@@ -27,15 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class PetriNetLargeBlockEncodingStatisticsGenerator extends AbstractStatisticsDataProvider {
+public class PetriNetLargeBlockEncodingStatisticsGenerator extends BaseStatisticsDataProvider {
 	public static final String LIPTON_STATISTICS = "Lipton Reduction Statistics";
 	public static final String INDEPENDENCE_STATISTICS = "Independence Relation Statistics";
 
-	public PetriNetLargeBlockEncodingStatisticsGenerator(final LiptonReductionStatisticsGenerator liptonStats,
-			final IStatisticsDataProvider independenceStats) {
+	public PetriNetLargeBlockEncodingStatisticsGenerator(final IToolchainStorage storage,
+			final LiptonReductionStatisticsGenerator liptonStats, final IStatisticsDataProvider independenceStats) {
+		super(storage);
 		forward(LIPTON_STATISTICS, () -> liptonStats);
 		forward(INDEPENDENCE_STATISTICS, () -> independenceStats);
 	}

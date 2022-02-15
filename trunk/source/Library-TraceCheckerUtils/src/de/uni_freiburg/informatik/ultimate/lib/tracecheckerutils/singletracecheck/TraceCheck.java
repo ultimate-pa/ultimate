@@ -202,7 +202,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mPendingContexts = pendingContexts;
 		mNestedFormulas = rv;
 		mAssertCodeBlockOrder = assertCodeBlockOrder;
-		mTraceCheckBenchmarkGenerator = new TraceCheckStatisticsGenerator(collectInterpolatSequenceStatistics);
+		mTraceCheckBenchmarkGenerator =
+				new TraceCheckStatisticsGenerator(mServices.getStorage(), collectInterpolatSequenceStatistics);
 
 		boolean providesIcfgProgramExecution = false;
 		IcfgProgramExecution<L> icfgProgramExecution = null;
@@ -292,12 +293,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 */
 	protected FeasibilityCheckResult checkTrace() {
 		lockAndPrepareSolverForTraceCheck();
-		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
+		mTraceCheckBenchmarkGenerator.startSsaConstructionTime();
 		mNsb = new NestedSsaBuilder<>(mTrace, mTcSmtManager, mCsToolkit, mNestedFormulas, mLogger);
 		final NestedFormulas<L, Term, Term> ssa = mNsb.getSsa();
-		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
+		mTraceCheckBenchmarkGenerator.stopSsaConstructionTime();
 
-		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
+		mTraceCheckBenchmarkGenerator.startSatisfiabilityAnalysisTime();
 		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization<>(mTcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder,
@@ -329,7 +330,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						true);
 			}
 		} finally {
-			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
+			mTraceCheckBenchmarkGenerator.stopSatisfiabilityAnalysisTime();
 		}
 		return result;
 	}
@@ -357,6 +358,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
 					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
+			mTraceCheckBenchmarkGenerator.aggregateTraceCheckStatisticsSkipNotReady(tc.getStatistics());
 
 			switch (tc.isCorrect()) {
 			case SAT:
@@ -484,9 +486,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	public TraceCheckStatisticsGenerator getStatistics() {
 		if (mTraceCheckFinished) {
 			return mTraceCheckBenchmarkGenerator;
-		} else {
-			throw new IllegalStateException("Cannot obtain statistics from unfinished TraceCheck");
 		}
+		throw new IllegalStateException("Cannot obtain statistics from unfinished TraceCheck");
 	}
 
 	private void lockAndPrepareSolverForTraceCheck() {

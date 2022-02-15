@@ -33,9 +33,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SifaRunner;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Creates {@link IInterpolatingTraceCheck} using symbolic interpretation with fluid abstractions (SIFA).
@@ -55,7 +54,6 @@ public class IpTcStrategyModuleSifa<LETTER extends IIcfgTransition<?>>
 
 	public IpTcStrategyModuleSifa(final IUltimateServiceProvider services, final ILogger logger, final IIcfg<?> icfg,
 			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier) {
-		super();
 		mServices = services;
 		mLogger = logger;
 		mIcfg = icfg;
@@ -69,8 +67,8 @@ public class IpTcStrategyModuleSifa<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
-		stats.addStatistics(RefinementEngineStatisticsDefinitions.SIFA, getOrConstruct().getStatistics());
+	public void aggregateStatistics(final StatisticsAggregator stats) {
+		stats.aggregateStatisticsData("SIFA", getOrConstruct().getStatistics());
 	}
 
 }

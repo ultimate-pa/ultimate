@@ -39,17 +39,17 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -128,8 +128,8 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 	protected ITestSummary[] constructTestSummaries() {
 		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 
-		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
+		final ColumnDefinition[] columnDef = {
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Avg. runtime",
 						ConversionContext.Divide(1_000_000_000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
 		final Predicate<String> columnPredicate = INTERESTING_COLUMNS_AS_SET::contains;
@@ -167,12 +167,16 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 		int n = 0;
 		for (final File inputFile : inputFiles) {
 // bugs for antichain
-			if(! inputFile.getName().equals("GCD3_true-termination_true-no-overflow.c_Iteration4.ats")) continue;
+			if(! inputFile.getName().equals("GCD3_true-termination_true-no-overflow.c_Iteration4.ats")) {
+				continue;
+			}
 			// bug for simple
 //			if(! inputFile.getName().equals("b.15_true-termination_true-no-overflow.c_Iteration3.ats")) continue;
 //			if(! inputFile.getName().equals("PastaC1_true-termination.c_Iteration2.ats"))
 //			continue;
-			if(n > 20) break;
+			if(n > 20) {
+				break;
+			}
 			n ++;
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
@@ -180,7 +184,7 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 				testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 			}
 		}
-		testCases.sort(null);
+		Collections.sort(testCases);
 		return testCases;
 	}
 	// PastaC1_true-termination.c_Iteration2.ats antichain counterexample

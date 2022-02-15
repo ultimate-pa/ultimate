@@ -31,7 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.statistics.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals.InterpolationTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 /**
  *
@@ -100,7 +100,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 
 	private static List<Class<? extends ICsvProviderProvider<? extends Object>>> getBenchmarks() {
 		final List<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
-		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
+		benchmarks.add(BuchiCegarLoopBenchmarkGenerator.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);

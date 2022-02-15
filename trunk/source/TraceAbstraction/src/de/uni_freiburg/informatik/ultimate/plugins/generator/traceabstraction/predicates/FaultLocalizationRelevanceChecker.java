@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicCallAction;
@@ -42,50 +43,47 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
- * Checks the relevance of a <code>CodeBlock</code> with respect to a pre- and a
- * postcondition. The check is reduced to a Hoare triple check.
+ * Checks the relevance of a <code>CodeBlock</code> with respect to a pre- and a postcondition. The check is reduced to
+ * a Hoare triple check.
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class FaultLocalizationRelevanceChecker {
-	
+
 	private static final boolean mUseUnsatCores = false;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+
 	/**
 	 * Statement relevance information for fault localization.
 	 * 
 	 * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
 	 */
 	public enum ERelevanceStatus {
-		Sat,
-		InUnsatCore,
-		NotInUnsatCore,
-		unknown
+		Sat, InUnsatCore, NotInUnsatCore, unknown
 	}
-	
+
 	/**
 	 * Used by Fault Localization to compute the relevance of statements.
 	 * 
 	 * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
 	 */
-	private class FaultLocalizationHoareTripleChecker
-			extends IncrementalHoareTripleChecker {
-		
-		public FaultLocalizationHoareTripleChecker(final CfgSmtToolkit csToolkit) {
-			super(csToolkit, false);
+	private class FaultLocalizationHoareTripleChecker extends IncrementalHoareTripleChecker {
+
+		public FaultLocalizationHoareTripleChecker(final IToolchainStorage storage, final CfgSmtToolkit csToolkit) {
+			super(storage, csToolkit, false);
 		}
-		
+
 		@Override
 		public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 			prepareAssertionStackAndAddTransition(act);
@@ -93,7 +91,7 @@ public class FaultLocalizationRelevanceChecker {
 			prepareAssertionStackAndAddPostcond(post);
 			return checkValidity();
 		}
-		
+
 		@Override
 		public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate post) {
 			prepareAssertionStackAndAddTransition(act);
@@ -101,43 +99,41 @@ public class FaultLocalizationRelevanceChecker {
 			prepareAssertionStackAndAddPostcond(post);
 			return checkValidity();
 		}
-		
+
 		@Override
-		public Validity checkReturn(final IPredicate linPre, final IPredicate hierPre,
-				final IReturnAction act, final IPredicate postcond) {
+		public Validity checkReturn(final IPredicate linPre, final IPredicate hierPre, final IReturnAction act,
+				final IPredicate postcond) {
 			prepareAssertionStackAndAddTransition(act);
 			prepareAssertionStackAndAddPrecondition(linPre);
 			prepareAssertionStackAndAddHierpred(hierPre);
 			prepareAssertionStackAndAddPostcond(postcond);
 			return checkValidity();
 		}
-		
+
 		public boolean doesUnsatCoreContainTransition() {
 			final Term[] unsatCore = mManagedScript.getUnsatCore(this);
 			for (final Term term : unsatCore) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (appTerm.getFunction().getApplicationString().equals(
-						IncrementalHoareTripleChecker.ID_TRANSITION_FORMULA)) {
+				if (appTerm.getFunction().getApplicationString()
+						.equals(IncrementalHoareTripleChecker.ID_TRANSITION_FORMULA)) {
 					return true;
 				}
 			}
 			return false;
 		}
 	}
-	
+
 	private final FaultLocalizationHoareTripleChecker mHoareTripleChecker;
 	private final ManagedScript mManagedScript;
-	
-	
+
 	public FaultLocalizationRelevanceChecker(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(csToolkit);
+		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(services.getStorage(), csToolkit);
 		mManagedScript = csToolkit.getManagedScript();
 	}
-	
-	public ERelevanceStatus relevanceInternal(final IPredicate pre,
-			final IInternalAction act, final IPredicate post) {
+
+	public ERelevanceStatus relevanceInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		final ERelevanceStatus result;
 		if (mUseUnsatCores) {
 			final Validity val = mHoareTripleChecker.checkInternal(pre, act, post);
@@ -152,7 +148,8 @@ public class FaultLocalizationRelevanceChecker {
 	private ERelevanceStatus computeRelevancyInternalWithoutUnsatCores(final IPredicate pre, final IInternalAction act,
 			final IPredicate post) {
 		final ERelevanceStatus result;
-		final Validity havocRes = mHoareTripleChecker.checkInternal(pre, constructHavocedInternalAction(mServices, act, mManagedScript), post);
+		final Validity havocRes = mHoareTripleChecker.checkInternal(pre,
+				constructHavocedInternalAction(mServices, act, mManagedScript), post);
 		switch (havocRes) {
 		case INVALID: {
 			final Validity nomalRes = mHoareTripleChecker.checkInternal(pre, act, post);
@@ -184,9 +181,8 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		return result;
 	}
-	
-	public ERelevanceStatus relevanceCall(final IPredicate pre,
-			final ICallAction call, final IPredicate post) {
+
+	public ERelevanceStatus relevanceCall(final IPredicate pre, final ICallAction call, final IPredicate post) {
 		final ERelevanceStatus result;
 		if (mUseUnsatCores) {
 			final Validity val = mHoareTripleChecker.checkCall(pre, call, post);
@@ -197,11 +193,12 @@ public class FaultLocalizationRelevanceChecker {
 		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
-	
+
 	private ERelevanceStatus computeRelevancyCallWithoutUnsatCores(final IPredicate pre, final ICallAction act,
 			final IPredicate post) {
 		final ERelevanceStatus result;
-		final Validity havocRes = mHoareTripleChecker.checkCall(pre, constructHavocedCallAction(mServices, act, mManagedScript), post);
+		final Validity havocRes =
+				mHoareTripleChecker.checkCall(pre, constructHavocedCallAction(mServices, act, mManagedScript), post);
 		switch (havocRes) {
 		case INVALID: {
 			final Validity nomalRes = mHoareTripleChecker.checkCall(pre, act, post);
@@ -233,14 +230,12 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		return result;
 	}
-	
-	public ERelevanceStatus relevanceReturn(final IPredicate returnPre,
-			final IPredicate callPre,
+
+	public ERelevanceStatus relevanceReturn(final IPredicate returnPre, final IPredicate callPre,
 			final IReturnAction ret, final IPredicate post) {
 		final ERelevanceStatus result;
 		if (mUseUnsatCores) {
-			final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
-					callPre, ret, post);
+			final Validity val = mHoareTripleChecker.checkReturn(returnPre, callPre, ret, post);
 			result = getResult(val, mHoareTripleChecker);
 		} else {
 			result = computeRelevancyReturnWithoutUnsatCores(returnPre, callPre, ret, post);
@@ -248,11 +243,12 @@ public class FaultLocalizationRelevanceChecker {
 		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
-	
+
 	private ERelevanceStatus computeRelevancyReturnWithoutUnsatCores(final IPredicate pre, final IPredicate hier,
 			final IReturnAction act, final IPredicate post) {
 		final ERelevanceStatus result;
-		final Validity havocRes = mHoareTripleChecker.checkReturn(pre, hier, constructHavocedReturnAction(mServices, act, mManagedScript), post);
+		final Validity havocRes = mHoareTripleChecker.checkReturn(pre, hier,
+				constructHavocedReturnAction(mServices, act, mManagedScript), post);
 		switch (havocRes) {
 		case INVALID: {
 			final Validity nomalRes = mHoareTripleChecker.checkReturn(pre, hier, act, post);
@@ -285,9 +281,9 @@ public class FaultLocalizationRelevanceChecker {
 		return result;
 	}
 
-	
 	/**
-	 * @param val validity status from Hoare triple check
+	 * @param val
+	 *            validity status from Hoare triple check
 	 * @param hoareTripleChecker
 	 * @return relevance
 	 */
@@ -295,33 +291,30 @@ public class FaultLocalizationRelevanceChecker {
 			final FaultLocalizationHoareTripleChecker hoareTripleChecker) {
 		final ERelevanceStatus result;
 		switch (val) {
-			case INVALID: // satisfiable
-				result = ERelevanceStatus.Sat;
-				break;
-				
-			case VALID: // unsatisfiable, check unsat core
-				final boolean ucContainsTransition = hoareTripleChecker.doesUnsatCoreContainTransition();
-				result = ucContainsTransition
-						? ERelevanceStatus.InUnsatCore
-						: ERelevanceStatus.NotInUnsatCore;
-				break;
-				
-			case UNKNOWN:
-				result = ERelevanceStatus.unknown;
-				break;
-				
-			case NOT_CHECKED:
-			default:
-				throw new IllegalArgumentException(String.format(
-						"Hoare triple check returned status '%s'.", val));
+		case INVALID: // satisfiable
+			result = ERelevanceStatus.Sat;
+			break;
+
+		case VALID: // unsatisfiable, check unsat core
+			final boolean ucContainsTransition = hoareTripleChecker.doesUnsatCoreContainTransition();
+			result = ucContainsTransition ? ERelevanceStatus.InUnsatCore : ERelevanceStatus.NotInUnsatCore;
+			break;
+
+		case UNKNOWN:
+			result = ERelevanceStatus.unknown;
+			break;
+
+		case NOT_CHECKED:
+		default:
+			throw new IllegalArgumentException(String.format("Hoare triple check returned status '%s'.", val));
 		}
 		return result;
 	}
-	
+
 	public HoareTripleCheckerStatisticsGenerator getHoareTripleCheckerStatistics() {
 		return mHoareTripleChecker.getStatistics();
 	}
-	
+
 	public IInternalAction constructHavocedInternalAction(final IUltimateServiceProvider services,
 			final IInternalAction act, final ManagedScript mgdScript) {
 		return new BasicInternalAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
@@ -334,18 +327,18 @@ public class FaultLocalizationRelevanceChecker {
 				constructHavoc(services, act.getLocalVarsAssignment(), mgdScript));
 	}
 
-	public IReturnAction constructHavocedReturnAction(final IUltimateServiceProvider services,
-			final IReturnAction act, final ManagedScript mgdScript) {
+	public IReturnAction constructHavocedReturnAction(final IUltimateServiceProvider services, final IReturnAction act,
+			final ManagedScript mgdScript) {
 		return new BasicReturnAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
 				constructHavoc(services, act.getAssignmentOfReturn(), mgdScript),
 				constructHavoc(services, act.getLocalVarsAssignmentOfCall(), mgdScript));
 	}
-	
+
 	public UnmodifiableTransFormula constructHavoc(final IUltimateServiceProvider services,
 			final UnmodifiableTransFormula tf, final ManagedScript mgdScript) {
 		UnmodifiableTransFormula result;
 		if (containsArraySort(tf.getFormula())) {
-			result = TransFormulaUtils.computeGuardedHavoc(tf, mgdScript, services, true); 
+			result = TransFormulaUtils.computeGuardedHavoc(tf, mgdScript, services, true);
 		} else {
 			result = TransFormulaUtils.constructHavoc(tf, mgdScript);
 		}
@@ -353,7 +346,7 @@ public class FaultLocalizationRelevanceChecker {
 	}
 
 	private static boolean containsArraySort(final Term formula) {
-		final Predicate<Term> hasArraySort = (x -> SmtSortUtils.isArraySort(x.getSort()));
+		final Predicate<Term> hasArraySort = x -> SmtSortUtils.isArraySort(x.getSort());
 		return new SubtermPropertyChecker(hasArraySort).isSatisfiedBySomeSubterm(formula);
 	}
 }

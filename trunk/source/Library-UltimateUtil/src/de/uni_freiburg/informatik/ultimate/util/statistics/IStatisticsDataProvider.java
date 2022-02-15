@@ -28,13 +28,15 @@ package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+
 /**
  * Classes that implement this interface can provide data to our benchmarks. Our benchmarks are key-value stores.
  * 
  * @author Matthias Heizmann
  *
  */
-public interface IStatisticsDataProvider {
+public interface IStatisticsDataProvider extends AutoCloseable, ICsvProviderProvider<Object> {
 
 	/**
 	 * @return all keys under which single metrics are retrievable
@@ -43,8 +45,22 @@ public interface IStatisticsDataProvider {
 		return getBenchmarkType().getKeys();
 	}
 
+	/**
+	 * Return the current value of some metric.
+	 *
+	 * @param key
+	 *            The metric.
+	 * @return The value.
+	 */
 	Object getValue(String key);
 
 	IStatisticsType getBenchmarkType();
+
+	@Override
+	void close();
+
+	default boolean isEmpty() {
+		return getKeys().isEmpty();
+	}
 
 }

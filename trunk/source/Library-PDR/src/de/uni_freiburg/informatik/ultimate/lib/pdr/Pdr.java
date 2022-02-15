@@ -79,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
-import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -214,7 +213,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 
 		mInvarSpot = -1;
 		mLevel = 0;
-		mPdrBenchmark = new PdrBenchmark();
+		mPdrBenchmark = new PdrBenchmark(mServices.getStorage());
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		final Term transferredAxioms = new NonDeclaringTermTransferrer(mScript.getScript())
@@ -230,7 +229,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		mLogger.info("Analyzing path program with PDR");
 
 		try {
-			mPdrBenchmark.start(PdrStatisticsDefinitions.PDR_RUNTIME);
+			mPdrBenchmark.startTime();
 			mIsTraceCorrect = pdrPreprocessing(mPpIcfg);
 			mLogger.info("Finished analyzing path program with PDR");
 			mTraceCheckFinishedNormally = true;
@@ -244,9 +243,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			mTraceCheckFinishedNormally = false;
 			mIsTraceCorrect = LBool.UNKNOWN;
 			mReasonUnknown = TraceCheckReasonUnknown.constructReasonUnknown(e);
-
 		} finally {
-			mPdrBenchmark.stop(PdrStatisticsDefinitions.PDR_RUNTIME);
+			mPdrBenchmark.stopTime();
 		}
 	}
 
@@ -1032,8 +1030,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 
 		assert start != -1;
 		assert end != -1;
-		final List<L> procedureTrace = new ArrayList<>(mTrace.subList(start, end));
-		return procedureTrace;
+		return new ArrayList<>(mTrace.subList(start, end));
 
 	}
 
@@ -1057,8 +1054,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			i++;
 		}
 		assert end != -1;
-		final List<L> subTrace = new ArrayList<>(mTrace.subList(0, end));
-		return subTrace;
+		return new ArrayList<>(mTrace.subList(0, end));
 
 	}
 
@@ -1220,25 +1216,20 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWord, mTruePred, mFalsePred,
 				Collections.emptySortedMap(), oldVarsAssignmentCache, false);
 
-		final IPredicatePostprocessor pdrPostProcessor = new IPredicatePostprocessor() {
-
-			@Override
-			public IPredicate postprocess(final IPredicate pred, final int l) {
-				Term withPdr;
-				if (l == 0 || l == mTrace.size()) {
-					withPdr = pred.getFormula();
-				} else {
-					final Term pdrTerm = interpolants[l - 1].getFormula();
-					withPdr = SmtUtils.and(mScript.getScript(), pred.getFormula(), pdrTerm);
-				}
-				final Term term = withPdr;
-				final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
-						SimplificationTechnique.SIMPLIFY_QUICK, term);
-				final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
-				assert result != null;
-				return result;
+		final IPredicatePostprocessor pdrPostProcessor = (pred, l) -> {
+			Term withPdr;
+			if (l == 0 || l == mTrace.size()) {
+				withPdr = pred.getFormula();
+			} else {
+				final Term pdrTerm = interpolants[l - 1].getFormula();
+				withPdr = SmtUtils.and(mScript.getScript(), pred.getFormula(), pdrTerm);
 			}
-
+			final Term term = withPdr;
+			final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+					SimplificationTechnique.SIMPLIFY_QUICK, term);
+			final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
+			assert result != null;
+			return result;
 		};
 
 		List<IPredicate> actualInterpolants;
@@ -1252,7 +1243,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		}
 
 		assert TraceCheckUtils.checkInterpolantsInductivityBackward(actualInterpolants, nestedWord, mTruePred,
-				mFalsePred, Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript) : "invalid Hoare triple in BP";
+				mFalsePred, Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript,
+				mServices.getStorage()) : "invalid Hoare triple in BP";
 
 		return actualInterpolants.toArray(new IPredicate[actualInterpolants.size()]);
 	}
@@ -1281,8 +1273,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
 		final PureSubstitution priming = new PureSubstitution(script, substitutionMapping);
-		final Term result = priming.transform(pred.getFormula());
-		return result;
+		return priming.transform(pred.getFormula());
 	}
 
 	/**

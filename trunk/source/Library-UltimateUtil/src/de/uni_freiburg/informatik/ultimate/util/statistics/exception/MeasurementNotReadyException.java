@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -24,17 +24,24 @@
  * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util.statistics;
+package de.uni_freiburg.informatik.ultimate.util.statistics.exception;
+
+import java.util.Collection;
+
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
 
 /**
- * TODO consider rewriting this interface as mentioned in {@link KeyType}.
+ * Exception that is thrown whenever a stopwatch is not manually stopped.
  *
- * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public interface IStatisticsElement {
+public class MeasurementNotReadyException extends RuntimeException {
 
-	Object aggregate(Object o1, Object o2);
+	private static final long serialVersionUID = 47519007262609785L;
 
-	String prettyprint(Object o);
-
+	public MeasurementNotReadyException(final BaseStatisticsDataProvider sdp, final String callerSignature,
+			final long id, final Collection<String> measureNames) {
+		super(String.format("%s (id %s): Measurements not ready: %s (created at: %s)", sdp.getClass().getSimpleName(),
+				id, measureNames, callerSignature));
+	}
 }

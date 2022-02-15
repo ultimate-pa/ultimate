@@ -98,8 +98,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 	private final AutomataMinimizationStatisticsGenerator mStatistics;
 	private final static long DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS = 5_000;
 
-	public <SF extends IMinimizationStateFactory<IPredicate> & INwaInclusionStateFactory<IPredicate>>
-		AutomataMinimization(
+	public <SF extends IMinimizationStateFactory<IPredicate> & INwaInclusionStateFactory<IPredicate>> AutomataMinimization(
 			final IUltimateServiceProvider services, final INestedWordAutomaton<LETTER, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
 			final SF predicateFactoryRefinement, final int minimizeEveryKthIteration,
@@ -142,8 +141,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 							.getRawMinimizationOutput().getResult();
 				} else {
 					// compute DoubleDecker information
-					newAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(services),
-							mMinimizationResult.getRawMinimizationOutput().getResult())).getResult();
+					newAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(services),
+							mMinimizationResult.getRawMinimizationOutput().getResult()).getResult();
 				}
 
 				// extract Hoare annotation
@@ -167,7 +166,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			}
 		} catch (final AutomataOperationCanceledException aoce) {
 			final long automataMinimizationTime = System.nanoTime() - startTime;
-			mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, true, false, 0);
+			mStatistics = new AutomataMinimizationStatisticsGenerator(mServices.getStorage(), automataMinimizationTime,
+					true, false, 0);
 			throw new AutomataMinimizationTimeout(aoce, mStatistics);
 		}
 		final long statesRemovedByMinimization;
@@ -177,20 +177,20 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			statesRemovedByMinimization = 0;
 		}
 		final long automataMinimizationTime = System.nanoTime() - startTime;
-		mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime,
+		mStatistics = new AutomataMinimizationStatisticsGenerator(mServices.getStorage(), automataMinimizationTime,
 				mMinimizationResult.wasMinimizationAttempted(), statesRemovedByMinimization > 0,
 				statesRemovedByMinimization);
 	}
 
 	private <SF extends IMinimizationStateFactory<IPredicate> & INwaInclusionStateFactory<IPredicate>>
-		MinimizationResult doMinimizationOperation(final INestedWordAutomaton<LETTER, IPredicate> operand,
-			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
-			final SF predicateFactoryRefinement, final int minimizeEveryKthIteration,
-			final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> storedRawInterpolantAutomata,
-			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
-			final PartitionBackedSetOfPairs<IPredicate> partition, final AutomataLibraryServices autServices,
-			final boolean initialPartitionSeparatesFinalsAndNonfinals)
-			throws AutomataOperationCanceledException, AssertionError {
+			MinimizationResult doMinimizationOperation(final INestedWordAutomaton<LETTER, IPredicate> operand,
+					final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
+					final SF predicateFactoryRefinement, final int minimizeEveryKthIteration,
+					final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> storedRawInterpolantAutomata,
+					final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
+					final PartitionBackedSetOfPairs<IPredicate> partition, final AutomataLibraryServices autServices,
+					final boolean initialPartitionSeparatesFinalsAndNonfinals)
+					throws AutomataOperationCanceledException, AssertionError {
 
 		final MinimizationResult minimizationResult;
 		switch (minimization) {
@@ -245,11 +245,11 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 				minNwa = new MinimizeNwaPmaxSatDirectBi<>(autServices, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 						new MinimizeNwaMaxSat2.Settings<IPredicate>()
-						.setAddMapOldState2NewState(computeOldState2NewStateMapping).setLibraryMode(false));
+								.setAddMapOldState2NewState(computeOldState2NewStateMapping).setLibraryMode(false));
 			} else if (operand.size() <= 13377) {
 				minNwa = new ShrinkNwa<>(autServices, predicateFactoryRefinement, operand, partition,
-						computeOldState2NewStateMapping, false, false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false,
-						0, false, false, true, initialPartitionSeparatesFinalsAndNonfinals);
+						computeOldState2NewStateMapping, false, false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0,
+						false, false, true, initialPartitionSeparatesFinalsAndNonfinals);
 			} else {
 				minNwa = new MinimizeSevpa<>(autServices, predicateFactoryRefinement, operand, partition,
 						computeOldState2NewStateMapping, initialPartitionSeparatesFinalsAndNonfinals);
@@ -273,15 +273,16 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case NWA_MAX_SAT2: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices,
-					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
+			final AutomataLibraryServices autServicesWithTimeout =
+					new AutomataLibraryServices(mServices, DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true,
 						new MinimizeNwaPmaxSatDirectBi<>(autServicesWithTimeout, predicateFactoryRefinement,
 								(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 								new MinimizeNwaMaxSat2.Settings<IPredicate>()
-								.setAddMapOldState2NewState(computeOldState2NewStateMapping).setLibraryMode(false)));
+										.setAddMapOldState2NewState(computeOldState2NewStateMapping)
+										.setLibraryMode(false)));
 			} catch (final AutomataOperationCanceledException aoce) {
 				// just catch and ignore the exception, probably only a local timeout
 				localResult = constructNoopMinimizationResult(true, operand);
@@ -301,8 +302,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DIRECT_SIMULATION: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices,
-					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
+			final AutomataLibraryServices autServicesWithTimeout =
+					new AutomataLibraryServices(mServices, DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true,
@@ -319,8 +320,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			final MinimizeNwaCombinator<LETTER, IPredicate> minNwa = new MinimizeNwaMulti<>(autServices,
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping);
-			final boolean minimizationAttempt =
-					minNwa.getMode() != MinimizationMethods.NONE;
+			final boolean minimizationAttempt = minNwa.getMode() != MinimizationMethods.NONE;
 			minimizationResult = new MinimizationResult(minimizationAttempt, true, minNwa);
 			break;
 		}
@@ -328,8 +328,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			final MinimizeNwaCombinator<LETTER, IPredicate> minNwa = new MinimizeNwaMulti<>(autServices,
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, Strategy.SIMULATION_BASED);
-			final boolean minimizationAttempt =
-					minNwa.getMode() != MinimizationMethods.NONE;
+			final boolean minimizationAttempt = minNwa.getMode() != MinimizationMethods.NONE;
 			minimizationResult = new MinimizationResult(minimizationAttempt, true, minNwa);
 			break;
 		}
@@ -365,8 +364,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DELAYED_SIMULATION: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices,
-					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
+			final AutomataLibraryServices autServicesWithTimeout =
+					new AutomataLibraryServices(mServices, DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true,
@@ -394,9 +393,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 	private MinimizationResult constructNoopMinimizationResult(final boolean minimizationAttempt,
 			final INestedWordAutomaton<LETTER, IPredicate> operand) {
 		final MinimizationResult minimizationResult;
-		minimizationResult = new MinimizationResult(minimizationAttempt, false,
-				new AbstractMinimizeNwa<LETTER, IPredicate>(
-						new AutomataLibraryServices(mServices), null) {
+		return new MinimizationResult(minimizationAttempt, false,
+				new AbstractMinimizeNwa<LETTER, IPredicate>(new AutomataLibraryServices(mServices), null) {
 					@Override
 					public INestedWordAutomaton<LETTER, IPredicate> getResult() {
 						return operand;
@@ -408,13 +406,12 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 					}
 
 					@Override
-					protected Pair<Boolean, String> checkResultHelper(
-							final IMinimizationCheckResultStateFactory<IPredicate> stateFactory)
+					protected Pair<Boolean, String>
+							checkResultHelper(final IMinimizationCheckResultStateFactory<IPredicate> stateFactory)
 									throws AutomataLibraryException {
 						return null;
 					}
 				});
-		return minimizationResult;
 	}
 
 	public IDoubleDeckerAutomaton<LETTER, IPredicate> getMinimizedAutomaton() {

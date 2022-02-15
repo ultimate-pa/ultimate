@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -57,8 +58,9 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 
 	private List<IPredicate> mAssertedPrecond;
 
-	public HoareTripleCheckerWithPreconditionRelevanceAnalysis(final CfgSmtToolkit csToolkit, final ILogger logger) {
-		super(csToolkit, false);
+	public HoareTripleCheckerWithPreconditionRelevanceAnalysis(final IToolchainStorage storage,
+			final CfgSmtToolkit csToolkit, final ILogger logger) {
+		super(storage, csToolkit, false);
 	}
 
 	private LBool assertPrecondition(final List<IPredicate> pres) {
@@ -129,7 +131,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		unAssertPostcondition();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<Validity, List<IPredicate>>(validity, preconditionsInUnsatCore);
+		return new Pair<>(validity, preconditionsInUnsatCore);
 	}
 
 	private List<IPredicate> determinePreconditionsInUnsatCore() {
@@ -163,7 +165,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		unAssertPostcondition();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<Validity, List<IPredicate>>(validity, preconditionsInUnsatCore);
+		return new Pair<>(validity, preconditionsInUnsatCore);
 	}
 
 	public Pair<Validity, List<IPredicate>> checkReturn(final List<IPredicate> linPre, final IPredicate hierPre,
@@ -183,7 +185,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		unAssertHierPred();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<Validity, List<IPredicate>>(validity, preconditionsInUnsatCore);
+		return new Pair<>(validity, preconditionsInUnsatCore);
 	}
 
 }

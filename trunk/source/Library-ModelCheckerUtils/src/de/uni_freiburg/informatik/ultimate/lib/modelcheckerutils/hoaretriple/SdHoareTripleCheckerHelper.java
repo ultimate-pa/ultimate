@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -56,21 +57,21 @@ public class SdHoareTripleCheckerHelper {
 	private final HoareTripleCheckerStatisticsGenerator mHoareTripleCheckerStatistics;
 	private final IPredicateCoverageChecker mPredicateCoverageChecker;
 
-	public SdHoareTripleCheckerHelper(final CfgSmtToolkit csToolkit,
+	public SdHoareTripleCheckerHelper(final IToolchainStorage storage, final CfgSmtToolkit csToolkit,
 			final IPredicateCoverageChecker predicateCoverageChecker,
 			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
 		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
 		mPredicateCoverageChecker = predicateCoverageChecker;
 		if (edgeCheckerBenchmarkGenerator == null) {
-			mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
+			mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator(storage);
 		} else {
 			mHoareTripleCheckerStatistics = edgeCheckerBenchmarkGenerator;
 		}
 	}
 
-	public SdHoareTripleCheckerHelper(final CfgSmtToolkit csToolkit,
+	public SdHoareTripleCheckerHelper(final IToolchainStorage storage, final CfgSmtToolkit csToolkit,
 			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
-		this(csToolkit, null, edgeCheckerBenchmarkGenerator);
+		this(storage, csToolkit, null, edgeCheckerBenchmarkGenerator);
 	}
 
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
@@ -136,11 +137,10 @@ public class SdHoareTripleCheckerHelper {
 	public Validity sdecInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (mPredicateCoverageChecker != null) {
 			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
-			if (sat == Validity.VALID) {
-				if (DataStructureUtils.haveEmptyIntersection(pre.getVars(), act.getTransformula().getAssignedVars())) {
-					mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
-					return Validity.VALID;
-				}
+			if (sat == Validity.VALID && DataStructureUtils.haveEmptyIntersection(pre.getVars(),
+					act.getTransformula().getAssignedVars())) {
+				mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
+				return Validity.VALID;
 			}
 		}
 		for (final IProgramVar bv : pre.getVars()) {
@@ -152,10 +152,8 @@ public class SdHoareTripleCheckerHelper {
 			// if (pre.getVars().contains(bv)) {
 			// return null;
 			// } else
-			if (act.getTransformula().getInVars().containsKey(bv)) {
-				return null;
-			}
-			if (act.getTransformula().getOutVars().containsKey(bv)) {
+			if (act.getTransformula().getInVars().containsKey(bv)
+					|| act.getTransformula().getOutVars().containsKey(bv)) {
 				return null;
 			}
 		}
@@ -167,10 +165,7 @@ public class SdHoareTripleCheckerHelper {
 				mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
 				return Validity.VALID;
 			}
-			if (sat == Validity.UNKNOWN) {
-				return null;
-			}
-			if (sat == Validity.NOT_CHECKED) {
+			if (sat == Validity.UNKNOWN || sat == Validity.NOT_CHECKED) {
 				return null;
 			}
 			if (sat == Validity.INVALID) {
@@ -209,10 +204,9 @@ public class SdHoareTripleCheckerHelper {
 	// }
 
 	/**
-	 * FIXME 20210810 Matthias: Bad name: "incomplete" would be better than "lazy".
-	 * Idea: If succedent of implication does (in NNF) not contain a disjunction and
-	 * contains some variable that does not occur in the antecedent the implication
-	 * does not hold very often.
+	 * FIXME 20210810 Matthias: Bad name: "incomplete" would be better than "lazy". Idea: If succedent of implication
+	 * does (in NNF) not contain a disjunction and contains some variable that does not occur in the antecedent the
+	 * implication does not hold very often.
 	 */
 	public Validity sdLazyEcInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (isOrIteFormula(post)) {
@@ -274,13 +268,8 @@ public class SdHoareTripleCheckerHelper {
 		final UnmodifiableTransFormula locVarAssignTf = cb.getLocalVarsAssignment();
 		final boolean argumentsRestrictedByPre = !varSetDisjoint(locVarAssignTf.getInVars().keySet(), pre.getVars());
 		for (final IProgramVar bv : post.getVars()) {
-			if (bv.isGlobal()) {
+			if (bv.isGlobal() || locVarAssignTf.getAssignedVars().contains(bv) && argumentsRestrictedByPre) {
 				continue;
-			}
-			if (locVarAssignTf.getAssignedVars().contains(bv)) {
-				if (argumentsRestrictedByPre) {
-					continue;
-				}
 			}
 			mHoareTripleCheckerStatistics.getSdLazyCounter().incCa();
 			return Validity.INVALID;
@@ -360,18 +349,10 @@ public class SdHoareTripleCheckerHelper {
 				}
 			} else {
 				if (modifiableGlobals.contains(bv)) {
-					if (pre.getVars().contains(bv)) {
-						return true;
-					}
-				} else {
-					if (hier.getVars().contains(bv)) {
-						return true;
-					}
-					if (pre.getVars().contains(bv)) {
-						return true;
-					}
+				} else if (hier.getVars().contains(bv)) {
+					return true;
 				}
-				if (assignedVars.contains(bv) && assignedVarsRestrictedByPre) {
+				if (pre.getVars().contains(bv) || assignedVars.contains(bv) && assignedVarsRestrictedByPre) {
 					return true;
 				}
 			}
@@ -478,29 +459,23 @@ public class SdHoareTripleCheckerHelper {
 		for (final IProgramVar pv : returnPred.getVars()) {
 			if (pv instanceof IProgramOldVar) {
 				final IProgramNonOldVar nonOld = ((IProgramOldVar) pv).getNonOldVar();
-				if (hier.getVars().contains(nonOld)) {
+				// there is some risk that pv is also not modifiable by
+				// caller and then the oldvar of the caller coincides
+				// with the global var of the caller
+				if (hier.getVars().contains(nonOld) || !returnPredImpliesHier && !modifiableGlobals.contains(nonOld)
+						&& hier.getVars().contains(pv)) {
 					return true;
 				}
-				if (!returnPredImpliesHier && !modifiableGlobals.contains(nonOld)) {
-					// there is some risk that pv is also not modifiable by
-					// caller and then the oldvar of the caller coincides
-					// with the global var of the caller
-					if (hier.getVars().contains(pv)) {
-						return true;
-					}
+			} else if (pv instanceof IProgramNonOldVar && !returnPredImpliesHier && !modifiableGlobals.contains(pv)) {
+				if (hier.getVars().contains(pv)) {
+					return true;
 				}
-			} else if (pv instanceof IProgramNonOldVar) {
-				if (!returnPredImpliesHier && !modifiableGlobals.contains(pv)) {
-					if (hier.getVars().contains(pv)) {
-						return true;
-					}
-					final IProgramOldVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
-					// there is some risk that pv is also not modifiable by
-					// caller and then the oldvar of the caller coincides
-					// with the global var of the caller
-					if (hier.getVars().contains(oldVar)) {
-						return true;
-					}
+				final IProgramOldVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+				// there is some risk that pv is also not modifiable by
+				// caller and then the oldvar of the caller coincides
+				// with the global var of the caller
+				if (hier.getVars().contains(oldVar)) {
+					return true;
 				}
 			}
 		}
@@ -533,10 +508,8 @@ public class SdHoareTripleCheckerHelper {
 			return false;
 		}
 		for (final IProgramVar bv : pre.getVars()) {
-			if (bv.isGlobal() && !bv.isOldvar()) {
-				if (post.getVars().contains(bv)) {
-					return false;
-				}
+			if (bv.isGlobal() && !bv.isOldvar() && post.getVars().contains(bv)) {
+				return false;
 			}
 		}
 		return true;
@@ -549,11 +522,7 @@ public class SdHoareTripleCheckerHelper {
 		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 
 		for (final IProgramVar bv : post.getVars()) {
-			if (modifiableGlobals.contains(bv)) {
-				// do nothing
-				continue;
-			}
-			if (assignedVars.contains(bv)) {
+			if (modifiableGlobals.contains(bv) || assignedVars.contains(bv)) {
 				// do nothing
 				continue;
 			}
@@ -585,10 +554,7 @@ public class SdHoareTripleCheckerHelper {
 	 */
 	public Validity sdecCallSelfloop(final IPredicate p, final ICallAction call) {
 		for (final IProgramVar bv : p.getVars()) {
-			if (!bv.isGlobal()) {
-				return null;
-			}
-			if (bv.isOldvar()) {
+			if (!bv.isGlobal() || bv.isOldvar()) {
 				return null;
 			}
 		}
@@ -599,13 +565,7 @@ public class SdHoareTripleCheckerHelper {
 	public Validity sdecReturnSelfloopPre(final IPredicate p, final IReturnAction ret) {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		for (final IProgramVar bv : p.getVars()) {
-			if (!bv.isGlobal()) {
-				return null;
-			}
-			if (bv.isOldvar()) {
-				return null;
-			}
-			if (assignedVars.contains(bv)) {
+			if (!bv.isGlobal() || bv.isOldvar() || assignedVars.contains(bv)) {
 				return null;
 			}
 		}
@@ -619,10 +579,7 @@ public class SdHoareTripleCheckerHelper {
 		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 
 		for (final IProgramVar bv : p.getVars()) {
-			if (modifiableGlobals.contains(bv)) {
-				return null;
-			}
-			if (assignedVars.contains(bv)) {
+			if (modifiableGlobals.contains(bv) || assignedVars.contains(bv)) {
 				return null;
 			}
 		}

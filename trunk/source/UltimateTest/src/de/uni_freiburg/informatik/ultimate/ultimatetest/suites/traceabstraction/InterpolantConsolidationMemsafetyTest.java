@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 /**
  * 

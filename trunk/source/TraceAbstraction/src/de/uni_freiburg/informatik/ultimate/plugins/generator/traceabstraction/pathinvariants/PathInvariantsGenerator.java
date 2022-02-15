@@ -32,7 +32,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -64,8 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.InvariantSynthesisStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.KindOfInvariant;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
 
 /**
  * Represents a map of invariants to a run that has been generated using a {@link IInvariantPatternProcessor} on the
@@ -227,8 +224,7 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	@Override
 	public boolean isPerfectSequence() {
 		final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices, this, mLogger);
-		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-		return isPerfect;
+		return bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 	}
 
 	@Override
@@ -239,84 +235,6 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mPathInvariantsStats;
-	}
-
-	// Benchmarks Section
-	@SuppressWarnings("squid:S00115")
-	public enum InvariantSynthesisStatisticsDefinitions implements IStatisticsElement {
-		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
-		// iteration
-		ProgramSizeConjuncts(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		ProgramSizeDisjuncts(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of path program locations for each overall iteration
-		ProgramLocs(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of path program locations for each overall iteration after Lbe has been applied
-		ProgramLocsLbe(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of path program variables for each overall iteration
-		ProgramVars(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of template inequalities per location per round per iteration
-		SumOfTemplateInequalities(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the minimum size of all templates occurring in the most recent round
-		SizeOfLargestTemplate(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
-		// the minimum size of all templates occurring in the most recent round
-		SizeOfSmallestTemplate(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
-		// the maximum of the sum of template inequalities per round
-		MaxNumOfInequalities(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
-		// the maximum number of rounds
-		MaxRound(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of variables per location per round
-		SumVarsPerLoc(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of the difference of all variables and the live variables per location per round
-		SumNonLiveVarsPerLoc(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		SumNonUnsatCoreLocs(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		SumNonUnsatCoreVars(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
-		TreeSizeNormalConstr(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
-		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under-
-		// and/or Overapproximations
-		TreeSizeApproxConstr(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
-		// Number of Motzkin Transformations for normal constraints
-		MotzkinTransformationsNormalConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
-				StatisticsType.KEY_BEFORE_DATA),
-		// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
-		MotzkinTransformationsApproxConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
-				StatisticsType.KEY_BEFORE_DATA),
-		// Number of Motzkin Coefficients needed for normal constraints
-		MotzkinCoefficientsNormalConstr(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
-		MotzkinCoefficientsApproxConstr(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of the time needed per round to solve the constraints
-		ConstraintsSolvingTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// the sum of the time needed per round to construct the constraints
-		ConstraintsConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		// Sat status
-		SatStatus(String.class, s1 -> s2 -> new String((String) s1 + "; " + (String) s2),
-				StatisticsType.KEY_BEFORE_DATA);
-
-		private final Class<?> mClazz;
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		InvariantSynthesisStatisticsDefinitions(final Class<?> clazz,
-				final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mClazz = clazz;
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(name()).apply(o);
-		}
-
 	}
 
 }

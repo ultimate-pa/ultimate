@@ -27,9 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Counter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * An independence relation that caches the result of an underlying relation. To be used with computation-intensive
@@ -55,8 +56,8 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 * @param underlying
 	 *            The underlying relation that will be queried and whose results will be cached.
 	 */
-	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
-		this(underlying, new DefaultIndependenceCache<>());
+	public CachedIndependenceRelation(final IToolchainStorage storage, final IIndependenceRelation<S, L> underlying) {
+		this(storage, underlying, new DefaultIndependenceCache<>(storage));
 	}
 
 	/**
@@ -69,11 +70,11 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 *            cached information across instances. Use with care as it allows potentially unsound mixing of
 	 *            different relations through a shared cache.
 	 */
-	public CachedIndependenceRelation(final IIndependenceRelation<S, L> underlying,
+	public CachedIndependenceRelation(final IToolchainStorage storage, final IIndependenceRelation<S, L> underlying,
 			final IIndependenceCache<S, L> cache) {
 		mUnderlying = underlying;
 		mCache = cache;
-		mStatistics = new CachedIndependenceStatisticsProvider();
+		mStatistics = new CachedIndependenceStatisticsProvider(storage);
 	}
 
 	/**
@@ -101,7 +102,8 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		if (cached == LBool.SAT) {
 			mStatistics.reportPositiveCachedQuery(condition != null);
 			return true;
-		} else if (cached == LBool.UNSAT) {
+		}
+		if (cached == LBool.UNSAT) {
 			mStatistics.reportNegativeCachedQuery(condition != null);
 			return false;
 		}
@@ -111,7 +113,8 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 			if (symCached == LBool.SAT) {
 				mStatistics.reportPositiveCachedQuery(condition != null);
 				return true;
-			} else if (symCached == LBool.UNSAT) {
+			}
+			if (symCached == LBool.UNSAT) {
 				mStatistics.reportNegativeCachedQuery(condition != null);
 				return false;
 			}
@@ -144,8 +147,8 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 		private final Counter mCacheQueries = new Counter();
 
-		private CachedIndependenceStatisticsProvider() {
-			super(CachedIndependenceRelation.class, mUnderlying);
+		private CachedIndependenceStatisticsProvider(final IToolchainStorage storage) {
+			super(storage, CachedIndependenceRelation.class, mUnderlying);
 			declareCounter(CACHE_QUERIES, () -> mCacheQueries);
 			forward(CACHE_STATISTICS, mCache::getStatistics);
 		}
@@ -236,9 +239,8 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 * @return implementation-defined statistics
 		 */
 		default IStatisticsDataProvider getStatistics() {
-			return new AbstractStatisticsDataProvider() {
-				// by default, no statistics are collected
-			};
+			// by default, no statistics are collected
+			return new StatisticsAggregator(null);
 		}
 	}
 }

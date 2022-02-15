@@ -83,7 +83,7 @@ public class SifaBuilder {
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
 			final Collection<IcfgLocation> locationsOfInterest) {
-		final SifaStats stats = new SifaStats();
+		final SifaStats stats = new SifaStats(mServices.getStorage());
 		final SymbolicTools tools = constructTools(stats, icfg);
 		final IDomain domain = constructStatsDomain(stats, tools, timer);
 		final IFluid fluid = constructStatsFluid(stats);
@@ -116,9 +116,8 @@ public class SifaBuilder {
 					.collect(Collectors.toList());
 			return new CompoundDomain(tools, subdomains);
 
-		} else {
-			return constructNonCompoundDomain(prefDomain, tools, timer);
 		}
+		return constructNonCompoundDomain(prefDomain, tools, timer);
 	}
 
 	private IDomain constructNonCompoundDomain(final String domainName, final SymbolicTools tools,
@@ -167,9 +166,8 @@ public class SifaBuilder {
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
 			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(stats, mLogger, () -> timer, tools, domain, fluid,
 					dagIpr);
-		} else {
-			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}
+		throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>
@@ -178,15 +176,16 @@ public class SifaBuilder {
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(stats, tools, icfgIpr.procedureResourceCache(),
 					dagIpr);
-		} else if (InterpretCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
+		}
+		if (InterpretCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return constructIprCallSummarizer(stats);
-		} else if (ReUseSupersetCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
-			final SifaStats ignoreNestedStats = new SifaStats();
+		}
+		if (ReUseSupersetCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
+			final SifaStats ignoreNestedStats = new SifaStats(mServices.getStorage());
 			return icfgIpr -> dagIpr -> new ReUseSupersetCallSummarizer(stats, tools, domain,
 					constructIprCallSummarizer(ignoreNestedStats).apply(icfgIpr).apply(dagIpr));
-		} else {
-			throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
 		}
+		throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
 	}
 
 	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>

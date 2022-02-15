@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BenchmarkWithCounters;
 
 /**
  *

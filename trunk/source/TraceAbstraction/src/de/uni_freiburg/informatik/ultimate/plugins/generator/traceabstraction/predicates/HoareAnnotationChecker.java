@@ -69,11 +69,10 @@ public class HoareAnnotationChecker {
 
 	public HoareAnnotationChecker(final IUltimateServiceProvider services, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRootNode = rootNode;
-		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
+		mHoareTripleChecker = new MonolithicHoareTripleChecker(mServices.getStorage(), csToolkit);
 		mIsInductive = cfgInductive(mRootNode);
 	}
 

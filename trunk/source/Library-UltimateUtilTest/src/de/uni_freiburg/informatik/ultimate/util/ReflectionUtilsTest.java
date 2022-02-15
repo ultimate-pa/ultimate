@@ -50,7 +50,7 @@ public class ReflectionUtilsTest {
 
 	@Test
 	public void testGetCallerSignatureFiltered() {
-		final String sig = ReflectionUtil.getCallerSignatureFiltered(Set.of(ReflectionUtilsTest.class));
+		final String sig = ReflectionUtil.getCallerSignatureFiltered(Set.of(ReflectionUtilsTest.class)).orElseThrow();
 		Assert.assertTrue(sig != null);
 		Assert.assertTrue(!sig.contains(ReflectionUtilsTest.class.getName()));
 		Assert.assertTrue(!sig.contains(ReflectionUtil.class.getName()));
@@ -118,7 +118,7 @@ public class ReflectionUtilsTest {
 		String doIt();
 	}
 
-	public class TestInterfaceImplementation implements ITestInterface {
+	public static class TestInterfaceImplementation implements ITestInterface {
 
 		@Override
 		public String doIt() {

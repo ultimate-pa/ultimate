@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -54,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
 
 /**
  * A choice of persistent sets for pthread-like concurrent programs. By analysing the CFG, we compute persistent sets
@@ -148,7 +149,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		mIndependence = independence;
 		mOrder = order;
 		mErrorLocs = errorLocs == null ? IcfgUtils.getErrorLocations(icfg) : errorLocs;
-		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
+		mStatistics = new ThreadBasedPersistentSetStatistics(services.getStorage(), independence);
 	}
 
 	@Override
@@ -410,7 +411,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 				(l, r) -> mForkCache.set(l, forkedThread, r));
 	}
 
-	private static final class ThreadBasedPersistentSetStatistics extends AbstractStatisticsDataProvider {
+	private static final class ThreadBasedPersistentSetStatistics extends BaseStatisticsDataProvider {
 		public static final String COMPUTATION_TIME = "Persistent set computation time";
 		public static final String PERSISTENT_SET_COMPUTATIONS = "Number of persistent set computation";
 		public static final String TRIVIAL_SETS = "Number of trivial persistent sets";
@@ -422,10 +423,12 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 		private long mComputationStart = -1;
 
-		private ThreadBasedPersistentSetStatistics(final IIndependenceRelation<?, IcfgEdge> independence) {
-			declare(COMPUTATION_TIME, () -> mComputationTime, KeyType.TIMER);
-			declare(PERSISTENT_SET_COMPUTATIONS, () -> mQueries, KeyType.COUNTER);
-			declare(TRIVIAL_SETS, () -> mTrivialSets, KeyType.COUNTER);
+		private ThreadBasedPersistentSetStatistics(final IToolchainStorage storage,
+				final IIndependenceRelation<?, IcfgEdge> independence) {
+			super(storage);
+			declare(COMPUTATION_TIME, () -> mComputationTime, MeasureDefinition.LONG_TIME);
+			declare(PERSISTENT_SET_COMPUTATIONS, () -> mQueries, MeasureDefinition.INT_COUNTER);
+			declare(TRIVIAL_SETS, () -> mTrivialSets, MeasureDefinition.INT_COUNTER);
 			forward(UNDERLYING_INDEPENDENCE, independence::getStatistics);
 		}
 

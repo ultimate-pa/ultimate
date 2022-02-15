@@ -30,10 +30,11 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.automatascript;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
@@ -82,8 +83,8 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	protected ITestSummary[] constructTestSummaries() {
 		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 
-		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
+		final ColumnDefinition[] columnDef = {
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Avg. runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
 		return new ITestSummary[] { new AutomataScriptTestSummary(this.getClass()),
@@ -110,7 +111,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile,mTimeout);
 			testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 		}
-		testCases.sort(null);
+		Collections.sort(testCases);
 		return testCases;
 	}
 

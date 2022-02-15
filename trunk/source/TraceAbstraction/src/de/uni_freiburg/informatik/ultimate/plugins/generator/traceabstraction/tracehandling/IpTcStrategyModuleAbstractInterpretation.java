@@ -33,11 +33,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Creates {@link IInterpolatingTraceCheck} using fixpoint computation based on abstract interpretation plugin.
@@ -60,7 +59,6 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	public IpTcStrategyModuleAbstractInterpretation(final IRun<LETTER, ?> counterexample,
 			final IPredicateUnifier predicateUnifier, final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs) {
-		super();
 		mServices = services;
 		mIcfg = icfg;
 		mPathProgramCache = pathProgramCache;
@@ -83,9 +81,8 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
-		stats.addStatistics(RefinementEngineStatisticsDefinitions.ABSTRACT_INTERPRETATION,
-				getOrConstructRunner().getStatistics());
+	public void aggregateStatistics(final StatisticsAggregator stats) {
+		stats.aggregateStatisticsData("ABSTRACT_INTERPRETATION", getOrConstructRunner().getStatistics());
 	}
 
 	@Override

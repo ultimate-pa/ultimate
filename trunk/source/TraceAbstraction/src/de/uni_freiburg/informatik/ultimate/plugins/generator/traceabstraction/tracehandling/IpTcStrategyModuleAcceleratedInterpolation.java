@@ -36,9 +36,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Creates {@link IInterpolatingTraceCheck} using accelerated interpolation.
@@ -83,9 +82,8 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
-		stats.addStatistics(RefinementEngineStatisticsDefinitions.ACCELERATED_INTERPOLATION,
-				getOrConstruct().getStatistics());
+	public void aggregateStatistics(final StatisticsAggregator stats) {
+		stats.aggregateStatisticsData("ACCELERATED_INTERPOLATION", getOrConstruct().getStatistics());
 	}
 
 	@Override

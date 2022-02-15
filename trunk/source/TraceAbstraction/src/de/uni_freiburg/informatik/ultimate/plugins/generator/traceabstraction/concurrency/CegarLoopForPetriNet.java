@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -91,8 +90,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.Petri
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsGenerator;
@@ -153,7 +150,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
 				compositionFactory, transitionClazz);
-		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
+		mPetriClStatisticsGenerator =
+				new PetriCegarLoopStatisticsGenerator(mServices.getStorage(), mCegarLoopBenchmark);
 		mCounterexampleCache = new CounterexampleCache<>();
 	}
 
@@ -171,18 +169,18 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			final long start_time = System.currentTimeMillis();
 			final PetriNetLargeBlockEncoding<L> lbe =
-					new PetriNetLargeBlockEncoding<>(getServices(), mIcfg.getCfgSmtToolkit(), cfg,
+					new PetriNetLargeBlockEncoding<>(mServices, mIcfg.getCfgSmtToolkit(), cfg,
 							mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
 			final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
-			getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
+			mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
 
 			mAbstraction = lbecfg;
 			final long end_time = System.currentTimeMillis();
 			final long difference = end_time - start_time;
 			mLogger.info("Time needed for LBE in milliseconds: " + difference);
 
-			getServices().getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(
-					Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+					"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 		} else {
 			mAbstraction = cfg;
 		}
@@ -197,12 +195,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private BoundedPetriNet<L, IPredicate> constructPetriNetWithoutDeadTransitions()
 			throws AutomataOperationCanceledException {
 		final boolean addThreadUsageMonitors = true;
-		final BoundedPetriNet<L, IPredicate> cfg = Cfg2Automaton.constructPetriNetWithSPredicates(getServices(), mIcfg,
-				mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
+		final BoundedPetriNet<L, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices,
+				mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 		try {
-			final BoundedPetriNet<L, IPredicate> vitalCfg =
-					new RemoveDead<>(new AutomataLibraryServices(getServices()), cfg, null, true).getResult();
-			return vitalCfg;
+			return new RemoveDead<>(new AutomataLibraryServices(mServices), cfg, null, true).getResult();
 		} catch (final AutomataOperationCanceledException aoce) {
 			final String taskDescription = "removing dead transitions from Petri net that has " + cfg.sizeInformation();
 			aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
@@ -221,15 +217,15 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 			final EventOrderEnum eventOrder = mPref.eventOrder();
 
-			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
+			mPetriClStatisticsGenerator.startEmptinessCheckTime();
 			PetriNetUnfolder<L, IPredicate> unf;
 			try {
-				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(getServices()), abstraction, eventOrder,
+				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, eventOrder,
 						cutOffSameTrans, true);
 			} catch (final PetriNetNot1SafeException e) {
 				throw new UnsupportedOperationException(e.getMessage());
 			} finally {
-				mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
+				mPetriClStatisticsGenerator.stopEmptinessCheckTime();
 			}
 			final BranchingProcess<L, IPredicate> finPrefix = unf.getFinitePrefix();
 			mCoRelationQueries +=
@@ -240,9 +236,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			return true;
 		}
 		if (mPref.dumpAutomata()) {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
+			mCegarLoopBenchmark.startDumpTime();
 			mDumper.dumpNestedRun(mCounterexample);
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
+			mCegarLoopBenchmark.stopDumpTime();
 		}
 		mLogger.info("Found error trace");
 
@@ -270,10 +266,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		if (mRefinementResult.getHoareTripleChecker() != null) {
 			htc = mRefinementResult.getHoareTripleChecker();
 		} else {
-			htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+			htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
 					mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier());
 		}
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mCegarLoopBenchmark.startAutomataDifferenceTime();
 		try {
 			// Determinize the interpolant automaton
 			final INestedWordAutomaton<L, IPredicate> dia;
@@ -295,7 +291,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 			// Complement the interpolant automaton
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nia =
-					new ComplementDD<>(new AutomataLibraryServices(getServices()), mPredicateFactoryInterpolantAutomata,
+					new ComplementDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
 							dia).getResult();
 			// TODO 2018-08-11 Matthias: Complement not needed since we compute difference.
 			// Furthermore there is a problem because we would have to concatenate operand
@@ -312,9 +308,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			if (USE_ON_DEMAND_RESULT) {
 				mAbstraction = enhancementResult.getSecond().getResult();
 			} else {
-				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
-						mPredicateFactoryInterpolantAutomata, abstraction, dia, LoopSyncMethod.HEURISTIC,
-						enhancementResult.getSecond(), true);
+				final Difference<L, IPredicate, ?> diff =
+						new Difference<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
+								abstraction, dia, LoopSyncMethod.HEURISTIC, enhancementResult.getSecond(), true);
 				mLogger.info(diff.getAutomataOperationStatistics());
 				mAbstraction = diff.getResult();
 			}
@@ -323,7 +319,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
 			mCegarLoopBenchmark
 					.addPredicateUnifierData(mRefinementResult.getPredicateUnifier().getPredicateUnifierBenchmark());
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+			mCegarLoopBenchmark.stopAutomataDifferenceTime();
 		}
 
 		if (mPref.dumpAutomata()) {
@@ -366,31 +362,29 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
 					+ (((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 					+ " predicate places.");
-			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
+			mPetriClStatisticsGenerator.startBackfoldingUnfoldingTime();
 			PetriNetUnfolder<L, IPredicate> unf;
 			try {
 				final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 				final EventOrderEnum eventOrder = mPref.eventOrder();
-				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(getServices()),
+				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices),
 						(BoundedPetriNet<L, IPredicate>) mAbstraction, eventOrder, cutOffSameTrans, false);
 			} catch (final PetriNetNot1SafeException e) {
 				throw new UnsupportedOperationException(e.getMessage());
 			} catch (final AutomataOperationCanceledException aoce) {
 				throw aoce;
 			} finally {
-				mPetriClStatisticsGenerator
-						.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
+				mPetriClStatisticsGenerator.stopBackfoldingUnfoldingTime();
 			}
-			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
-			final FinitePrefix2PetriNet<L, IPredicate> fp2pn =
-					new FinitePrefix2PetriNet<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
-							unf.getFinitePrefix(), true);
+			mPetriClStatisticsGenerator.startBackfoldingTime();
+			final FinitePrefix2PetriNet<L, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, unf.getFinitePrefix(), true);
 			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
 			mAbstraction = fp2pn.getResult();
 			mProgramPointPlaces = fp2pn.getOldToNewPlaces().projectToRange(mProgramPointPlaces);
 			final int flowAfterwards = mAbstraction.size();
 			mPetriClStatisticsGenerator.reportFlowIncreaseByBackfolding(flowAfterwards - flowBefore);
-			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
+			mPetriClStatisticsGenerator.stopBackfoldingTime();
 			mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
 					+ (((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 					+ " predicate places.");
@@ -404,7 +398,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		// mBiggestAbstractionIteration = mIteration;
 		// }
 
-		assert !acceptsPetriViaFA(getServices(), mAbstraction, mCounterexample.getWord()) : "Intersection broken!";
+		assert !acceptsPetriViaFA(mServices, mAbstraction, mCounterexample.getWord()) : "Intersection broken!";
 
 		// int[] statistic = mAbstraction.transitions();
 		// s_Logger.debug("Abstraction has " +
@@ -428,53 +422,34 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 					throws AutomataOperationCanceledException, PetriNetNot1SafeException, AssertionError {
 		final long automataMinimizationTime;
 		final long start = System.nanoTime();
-		long statesRemovedByMinimization = 0;
-		long transitionsRemovedByMinimization = 0;
 		long flowRemovedByMinimization = 0;
 		boolean nontrivialMinimizaton = false;
-		mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString());
+		mPetriClStatisticsGenerator.startRemoveRedundantFlowTime();
 		final AutomataMinimizationStatisticsGenerator amsg;
 		final BoundedPetriNet<L, IPredicate> reducedNet;
 		try {
-			final int placesBefore = input.getPlaces().size();
-			final int transitionsBefore = input.getTransitions().size();
-			final int flowBefore = input.size();
+
 			switch (method) {
 			case REMOVE_DEAD:
 				reducedNet = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
-						new AutomataLibraryServices(getServices()), input, null, true).getResult();
+						new AutomataLibraryServices(mServices), input, null, true).getResult();
 				break;
 			case REMOVE_REDUNDANT_FLOW:
-				final Set<IPredicate> redundancyCandidates = input.getPlaces().stream()
-						.filter(x -> !mProgramPointPlaces.contains(x)).collect(Collectors.toSet());
-				reducedNet =
-						new RemoveRedundantFlow<>(new AutomataLibraryServices(getServices()), input, null, null, null)
+				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null, null, null)
 								.getResult();
 				break;
 			default:
 				throw new AssertionError("unknown value " + method);
 			}
-			final int placesAfterwards = reducedNet.getPlaces().size();
-			final int transitionsAfterwards = reducedNet.getTransitions().size();
-			final int flowAfterwards = reducedNet.size();
-			statesRemovedByMinimization = placesBefore - placesAfterwards;
-			transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
-			flowRemovedByMinimization = flowBefore - flowAfterwards;
-			// if (transitionsAfterwards != transitionsBefore) {
-			// throw new AssertionError("removed transitions: " +
-			// transitionsRemovedByMinimization + " Iteration "
-			// + mIteration + " Abstraction has " + mAbstraction.sizeInformation());
-			// }
+			flowRemovedByMinimization = input.size() - reducedNet.size();
 			nontrivialMinimizaton = true;
 		} finally {
 			automataMinimizationTime = System.nanoTime() - start;
-			amsg = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, true, nontrivialMinimizaton,
-					flowRemovedByMinimization);
-			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString());
+			amsg = new AutomataMinimizationStatisticsGenerator(mServices.getStorage(), automataMinimizationTime, true,
+					nontrivialMinimizaton, flowRemovedByMinimization);
+			mPetriClStatisticsGenerator.stopRemoveRedundantFlowTime();
 		}
-		final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
-				new Triple<>(reducedNet, amsg, automataMinimizationTime);
-		return minimizationResult;
+		return new Triple<>(reducedNet, amsg, automataMinimizationTime);
 	}
 
 	protected Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>>
@@ -488,13 +463,13 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		case NONE:
 			final PowersetDeterminizer<L, IPredicate> psd =
 					new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<L, IPredicate> dabps = new DeterminizeDD<>(new AutomataLibraryServices(getServices()),
+			final DeterminizeDD<L, IPredicate> dabps = new DeterminizeDD<>(new AutomataLibraryServices(mServices),
 					mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
 			dia = dabps.getResult();
 			dpod = null;
 			break;
 		case PREDICATE_ABSTRACTION:
-			final DeterministicInterpolantAutomaton<L> raw = new DeterministicInterpolantAutomaton<>(getServices(),
+			final DeterministicInterpolantAutomaton<L> raw = new DeterministicInterpolantAutomaton<>(mServices,
 					mCsToolkit, htc, interpolAutomaton, mRefinementResult.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
 				final Set<L> universalSubtrahendLoopers = determineUniversalSubtrahendLoopers(
@@ -509,7 +484,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 				}
 				final long start = System.nanoTime();
 				try {
-					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(getServices()),
+					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(mServices),
 							(IPetriNet<L, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
@@ -520,8 +495,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 					raw.switchToReadonlyMode();
 				}
 				final AutomatonWithImplicitSelfloops<L, IPredicate> awis = new AutomatonWithImplicitSelfloops<>(
-						new AutomataLibraryServices(getServices()), raw, universalSubtrahendLoopers);
-				dia = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), awis).getResult();
+						new AutomataLibraryServices(mServices), raw, universalSubtrahendLoopers);
+				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), awis).getResult();
 				final long end = System.nanoTime();
 				if (end - start > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
 					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
@@ -534,7 +509,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			} else {
 				dpod = null;
 				try {
-					dia = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), raw).getResult();
+					dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), raw).getResult();
 				} catch (final AutomataOperationCanceledException aoce) {
 					final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 							"enhancing interpolant automaton that has " + interpolAutomaton.getStates().size()
@@ -542,7 +517,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 					throw new ToolchainCanceledException(aoce, rti);
 				}
 			}
-			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(getServices()), dia, false)
+			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(mServices), dia, false)
 					.getTransitionDensity(SymbolType.INTERNAL);
 			mLogger.info("DFA transition density " + dfaTransitionDensity);
 			if (mPref.dumpAutomata()) {
@@ -556,8 +531,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		if (mComputeHoareAnnotation) {
-			assert new InductivityCheck<>(getServices(), dia, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult() : "Not inductive";
+			assert new InductivityCheck<>(mServices, dia, false, true,
+					new IncrementalHoareTripleChecker(mServices.getStorage(), super.mCsToolkit, false))
+							.getResult() : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;

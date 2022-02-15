@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -189,9 +188,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 					// + alternatingAutomatonUnion + "\n"
 					// + "################### 2nd AFA: ###################\n"
 					// + alternatingAutomaton + "\n");
-					final AA_MergedUnion<L, IPredicate> mergedUnion =
-							new AA_MergedUnion<>(new AutomataLibraryServices(getServices()), alternatingAutomatonUnion,
-									alternatingAutomaton);
+					final AA_MergedUnion<L, IPredicate> mergedUnion = new AA_MergedUnion<>(
+							new AutomataLibraryServices(mServices), alternatingAutomatonUnion, alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
@@ -202,11 +200,11 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
-		final RAFA_Determination<L> determination = new RAFA_Determination<>(new AutomataLibraryServices(getServices()),
+		final RAFA_Determination<L> determination = new RAFA_Determination<>(new AutomataLibraryServices(mServices),
 				alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier, mPredicateFactoryInterpolantAutomata);
 		mInterpolAutomaton = determination.getResult();
 		try {
-			assert new Accepts<>(new AutomataLibraryServices(getServices()), mInterpolAutomaton, (NestedWord<L>) trace)
+			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<L>) trace)
 					.getResult() : "interpolant automaton does not accept the trace!";
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
@@ -222,9 +220,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 				sb.append("[").append(letter).append("] ");
 			}
 			mLogger.debug("Calculating RD DAGs for " + sb);
-			final List<DataflowDAG<TraceCodeBlock>> dags =
-					ReachingDefinitions.computeRDForTrace((List<CodeBlock>) word, mLogger, mIcfg);
-			return dags;
+			return ReachingDefinitions.computeRDForTrace((List<CodeBlock>) word, mLogger, mIcfg);
 		} catch (final Throwable e) {
 			mLogger.fatal("DataflowDAG generation threw an exception.", e);
 			throw new AssertionError();
@@ -243,8 +239,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 
 		final HashMap<IProgramVar, Term> varToSsaVarNew = new HashMap<>(varToSsaVar);// copy (nice would be immutable
 																						// maps)
-		IProgramVar writtenVar = null;
-		Term writtenVarSsa = null;
+		IProgramVar writtenVar;
+		Term writtenVarSsa;
 
 		/*
 		 * only the ssa-version of the variable that is on the write-edge of this node is used in this node's ssa. All
@@ -318,9 +314,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			}
 		}
 
-		final Term substitutedTerm = Substitution.apply(mCsToolkit.getManagedScript(), substitutionMapping,
+		return Substitution.apply(mCsToolkit.getManagedScript(), substitutionMapping,
 				nodeLabel.getBlock().getTransformula().getFormula());
-		return substitutedTerm;
 	}
 
 	/**
@@ -328,9 +323,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 	 */
 	private Term buildVersion(final IProgramVar bv) {
 		final int index = mSsaIndex++;
-		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants,
+		return PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants,
 				mCsToolkit.getManagedScript().getScript());
-		return constant;
 	}
 
 	/**
@@ -409,8 +403,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		alternatingAutomaton.addAcceptingConjunction(
 				alternatingAutomaton.generateCube(new IPredicate[] { initialState }, new IPredicate[0]));
 
-		final IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(mCsToolkit);// TODO: switch to efficient htc
-																						// later, perhaps
+		// TODO: switch to efficient htc later, perhaps
+		final IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(mServices.getStorage(), mCsToolkit);
 
 		// Build the automaton according to the structure of the DAG
 		final Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
@@ -428,19 +422,14 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 				alternatingAutomaton.addTransition((L) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant(), alternatingAutomaton.generateCube(
 								targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0]));
-				assert mhtc.checkInternal(
-						mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()])),
-						(IInternalAction) currentDag.getNodeLabel().getBlock(),
-						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			} else {
 				alternatingAutomaton.addTransition((L) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant(),
 						alternatingAutomaton.generateCube(new IPredicate[] { finalState }, new IPredicate[0]));
-				assert mhtc.checkInternal(
-						mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()])),
-						(IInternalAction) currentDag.getNodeLabel().getBlock(),
-						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
+			assert mhtc.checkInternal(mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()])),
+					(IInternalAction) currentDag.getNodeLabel().getBlock(),
+					currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 		}
 
 		final boolean onlySelfLoops = true;
@@ -469,7 +458,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 	protected boolean refineAbstraction() throws AutomataLibraryException { // copied
 		mStateFactoryForRefinement.setIteration(super.mIteration);
 
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mCegarLoopBenchmark.startAutomataDifferenceTime();
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
@@ -479,7 +468,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 
 		IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 
-		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(getServices(),
+		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
 				mCsToolkit, htc, mInterpolAutomaton, mPredicateUnifier, false, false);// change to
 																						// CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<LETTER, IPredicate>
@@ -488,15 +477,15 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 				new PowersetDeterminizer<>(determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					oldAbstraction, determinized, psd2, false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
-					oldAbstraction, determinized, psd2, explointSigmaStarConcatOfIA);
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, oldAbstraction,
+					determinized, psd2, explointSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
-		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
+		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -518,7 +507,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			super.writeAutomatonToFile(mInterpolAutomaton, filename);
 		}
 
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mCegarLoopBenchmark.stopAutomataDifferenceTime();
 
 		final Minimization minimization = mPref.getMinimization();
 		switch (minimization) {
@@ -532,7 +521,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			throw new AssertionError();
 		}
 
-		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(getServices()),
+		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		assert !stillAccepted : "stillAccepted --> no progress";
@@ -550,7 +539,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 	 * hoare triple of each transition is valid
 	 */
 	private boolean checkRAFA(final AlternatingAutomaton<L, IPredicate> afa) {
-		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
+		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mServices.getStorage(), mCsToolkit);
 		boolean result = true;
 		for (final Entry<L, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
 			for (int i = 0; i < afa.getStates().size(); i++) {

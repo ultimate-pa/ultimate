@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BenchmarkWithCounters;
 
 /**
  * Domain of variable partition.

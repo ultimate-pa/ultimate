@@ -165,17 +165,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 			final IPredicate target;
 			if (nextStates == null) {
 				target = falsePredicate;
-
-				if (mLogger.isDebugEnabled()) {
-					writeTransitionAddLog(i, symbol, nextStates, previous, target);
-				}
 			} else {
-				// target = predicateUnifier
-				// .getOrConstructPredicateForDisjunction(
-				// nextStates.stream()
-				// .map(state -> predicateFactory.newAbstractStatePredicate(state,
-				// aiResult.getUsedDomain().getPostOperator()))
-				// .collect(Collectors.toSet()));
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
 						nextStates.stream().map(s -> s.getTerm(mCsToolkit.getManagedScript().getScript()))
 								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
@@ -187,10 +177,9 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 				} else {
 					predicateToStates.get(target).addAll(nextStates.stream().collect(Collectors.toSet()));
 				}
-
-				if (mLogger.isDebugEnabled()) {
-					writeTransitionAddLog(i, symbol, nextStates, previous, target);
-				}
+			}
+			if (mLogger.isDebugEnabled()) {
+				writeTransitionAddLog(i, symbol, nextStates, previous, target);
 			}
 
 			if (alreadyThereAsState.add(target)) {
@@ -260,8 +249,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 
 		final Set<IPredicate> allPredicates = predicateToStates.keySet();
 		final IAbstractPostOperator<?, LETTER> postOperator = aiResult.getUsedDomain().getPostOperator();
-		final IHoareTripleChecker sdChecker =
-				HoareTripleCheckerUtils.constructSdHoareTripleChecker(mLogger, mCsToolkit, predicateUnifier);
+		final IHoareTripleChecker sdChecker = HoareTripleCheckerUtils
+				.constructSdHoareTripleChecker(mServices.getStorage(), mLogger, mCsToolkit, predicateUnifier);
 
 		// Iterate over all letters in the alphabet to find matching inductive transitions.
 		for (final LETTER currentLetter : oldAbstraction.getAlphabet()) {
@@ -284,20 +273,18 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 				final Set<IAbstractState<?>> currentGenerators = predicateToStates.get(currentPredicate);
 
 				for (final IPredicate otherPredicate : allPredicates) {
-					if (SIMPLE_HOARE_CHECK) {
-						if (internalAction != null) {
-							final Validity simpleHoareCheckResult =
-									sdChecker.checkInternal(currentPredicate, internalAction, otherPredicate);
-							if (simpleHoareCheckResult != Validity.UNKNOWN) {
-								if (simpleHoareCheckResult == Validity.VALID) {
-									result.addInternalTransition(currentPredicate, currentLetter, otherPredicate);
-								}
-								if (simpleHoareCheckResult == Validity.NOT_CHECKED) {
-									throw new UnsupportedOperationException(
-											"Validity result is NOT_CHECKED which should not happen.");
-								}
-								continue;
+					if (SIMPLE_HOARE_CHECK && internalAction != null) {
+						final Validity simpleHoareCheckResult =
+								sdChecker.checkInternal(currentPredicate, internalAction, otherPredicate);
+						if (simpleHoareCheckResult != Validity.UNKNOWN) {
+							if (simpleHoareCheckResult == Validity.VALID) {
+								result.addInternalTransition(currentPredicate, currentLetter, otherPredicate);
 							}
+							if (simpleHoareCheckResult == Validity.NOT_CHECKED) {
+								throw new UnsupportedOperationException(
+										"Validity result is NOT_CHECKED which should not happen.");
+							}
+							continue;
 						}
 					}
 
@@ -382,11 +369,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	}
 
 	private static boolean isSubsetInternally(final IAbstractState firstState, final IAbstractState secondState) {
-		if (firstState.getVariables().size() != secondState.getVariables().size()) {
-			return false;
-		}
-
-		if (!firstState.getVariables().stream().allMatch(secondState.getVariables()::contains)) {
+		if (firstState.getVariables().size() != secondState.getVariables().size()
+				|| !firstState.getVariables().stream().allMatch(secondState.getVariables()::contains)) {
 			return false;
 		}
 

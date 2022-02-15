@@ -46,11 +46,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IModuleStatisticProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.
@@ -65,13 +71,14 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private final ILogger mLogger;
 	private final IRefinementStrategy<L> mStrategy;
-	private final RefinementEngineStatisticsGenerator mRefinementEngineStatistics;
+	private final StatisticsAggregator mRefinementEngineStatistics;
 
 	private final LBool mFeasibility;
 	private IProgramExecution<L, Term> mIcfgProgramExecution;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
 	private boolean mSomePerfectSequenceFound;
 	private List<QualifiedTracePredicates> mQualifiedTracePredicates;
+	private final Set<IModuleStatisticProvider> mModuleStatisticProviders;
 
 	private String mUsedTraceCheckFingerprint;
 	private final IUltimateServiceProvider mServices;
@@ -81,9 +88,15 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		mServices = services;
 		mLogger = logger;
 		mStrategy = strategy;
-		mRefinementEngineStatistics = new RefinementEngineStatisticsGenerator();
-		mFeasibility = executeStrategy();
-		mRefinementEngineStatistics.finishRefinementEngineRun();
+		mRefinementEngineStatistics = new StatisticsAggregator(services.getStorage());
+		mModuleStatisticProviders = new HashSet<>();
+		try {
+			mFeasibility = executeStrategy();
+		} finally {
+			for (final IModuleStatisticProvider module : mModuleStatisticProviders) {
+				module.aggregateStatistics(mRefinementEngineStatistics);
+			}
+		}
 	}
 
 	private IHoareTripleChecker getHoareTripleChecker() {
@@ -103,7 +116,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
+	public StatisticsAggregator getRefinementEngineStatistics() {
 		return mRefinementEngineStatistics;
 	}
 
@@ -156,7 +169,6 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			imperfectIpps.addAll(newImIpSeq);
 			mLogger.info("%s provided %s perfect and %s imperfect interpolant sequences",
 					getModuleFingerprintString(interpolantGenerator), newPeIpSeq.size(), newImIpSeq.size());
-			interpolantGenerator.aggregateStatistics(mRefinementEngineStatistics);
 		}
 
 		// strategy has finished providing interpolants, use them to construct the
@@ -201,25 +213,24 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 	private LBool checkFeasibility() {
 		while (mStrategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<L, ?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
+			mModuleStatisticProviders.add(currentTraceCheck);
 			abortIfTimeout("Timeout during feasibility check between " + mUsedTraceCheckFingerprint + " and "
 					+ getModuleFingerprintString(currentTraceCheck));
 			mUsedTraceCheckFingerprint = getModuleFingerprintString(currentTraceCheck);
 
 			logModule("Using trace check", currentTraceCheck);
 			final LBool feasibilityResult = currentTraceCheck.isCorrect();
+
 			if (feasibilityResult == LBool.SAT) {
 				if (currentTraceCheck.providesRcfgProgramExecution()) {
 					mIcfgProgramExecution = currentTraceCheck.getRcfgProgramExecution();
 				}
-				currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
 				return feasibilityResult;
 			}
 			if (feasibilityResult == LBool.UNSAT) {
-				currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
 				return feasibilityResult;
 			}
 			abortIfNecessaryOnUnknown(currentTraceCheck.getTraceCheckReasonUnknown());
-			currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
 		}
 		// no trace checker could determine the feasibility of the trace, need to abort
 		return LBool.UNKNOWN;
@@ -258,6 +269,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private IIpgStrategyModule<?, L> tryExecuteInterpolantGenerator() {
 		final IIpgStrategyModule<?, L> interpolantGenerator = mStrategy.nextInterpolantGenerator();
+		mModuleStatisticProviders.add(interpolantGenerator);
 		abortIfTimeout(
 				"Timeout during proof generation before using " + getModuleFingerprintString(interpolantGenerator));
 		final InterpolantComputationStatus status;

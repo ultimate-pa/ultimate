@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 public class TraceAbstractionTestSummary extends BaseTestSummary {
 

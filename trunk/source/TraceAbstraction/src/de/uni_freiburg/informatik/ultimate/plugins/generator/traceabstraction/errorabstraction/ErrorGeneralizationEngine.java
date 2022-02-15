@@ -74,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Constructs an error automaton for a given error trace.
@@ -102,7 +102,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	public ErrorGeneralizationEngine(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
+		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator(services.getStorage());
 		mErrorTraces = new ErrorTraceContainer<>();
 		mRelevantStatements = new ArrayList<>();
 		mFaultLocalizerStatistics = new ArrayList<>();
@@ -261,10 +261,10 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	 * Reports final error statistics.
 	 */
 	public void reportErrorGeneralizationBenchmarks() {
-		final StatisticsData stat = new StatisticsData();
 		mErrorAutomatonStatisticsGenerator.reportRelevantStatements(mRelevantStatements);
 		mErrorAutomatonStatisticsGenerator.reportFaultLocalizationStatistics(mFaultLocalizerStatistics);
-		stat.aggregateBenchmarkData(mErrorAutomatonStatisticsGenerator);
+		final StatisticsAggregator stat = new StatisticsAggregator(mServices.getStorage());
+		stat.aggregateStatisticsData(mErrorAutomatonStatisticsGenerator);
 		final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 	}
@@ -445,13 +445,13 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 				builder.append('\n');
 			}
 
-			long totalFaultLocalizationTimeNano = 0l;
+			long totalFaultLocalizationTimeNano = 0L;
 			for (final ErrorLocalizationStatisticsGenerator stats : faultLocalizerStatistics) {
 				totalFaultLocalizationTimeNano += stats.getErrorLocalizationTime();
 			}
 			builder.append("Fault localization was applied ").append(faultLocalizerStatistics.size())
 					.append(" times and altogether took ")
-					.append(StatisticsType.prettyprintNanoseconds(totalFaultLocalizationTimeNano)).append(" seconds.");
+					.append(CoreUtil.prettyprintNanoseconds(totalFaultLocalizationTimeNano));
 
 			mLogger.warn(builder);
 		}

@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 
-	private static final String[] C = new String[] { ".i", ".c" };
-	private static final String[] BPL = new String[] { ".bpl" };
+	private static final String[] C = { ".i", ".c" };
+	private static final String[] BPL = { ".bpl" };
 	private static final int DEFAULT_LIMIT = 5;
 
 	// @formatter:off
@@ -60,7 +60,7 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 			new Triple<>("LassoRankerCBEv2.xml", C, "LassoRankerBEv2.epf"),
 	};
 
-	private static final String[] INPUT = new String[] {
+	private static final String[] INPUT = {
 //			"examples/programs/abstractInterpretation/regression",
 //			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
 //			"examples/svcomp/",
@@ -86,16 +86,16 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 						Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition("Allocated memory end (bytes)", "Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallIterations, "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition("traceCheckStatistics_NumberOfCodeBlocks", null,
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesFP", null,
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesBP", null,
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("traceCheckStatistics_NumberOfCodeBlocks", null, ConversionContext.BestFitNumber(),
+						Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesFP", null, ConversionContext.BestFitNumber(),
+						Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesBP", null, ConversionContext.BestFitNumber(),
+						Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
 						Aggregate.Ignore, Aggregate.Average), };
 	}

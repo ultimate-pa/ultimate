@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerela
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -45,8 +46,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters whose independence is tracked
  */
 public class SyntacticIndependenceRelation<STATE, L extends IAction> implements IIndependenceRelation<STATE, L> {
-	private final IndependenceStatisticsDataProvider mStatistics =
-			new IndependenceStatisticsDataProvider(SyntacticIndependenceRelation.class);
+	private final IndependenceStatisticsDataProvider mStatistics;
+
+	public SyntacticIndependenceRelation(final IToolchainStorage storage) {
+		mStatistics = new IndependenceStatisticsDataProvider(storage, SyntacticIndependenceRelation.class);
+	}
 
 	@Override
 	public boolean isSymmetric() {

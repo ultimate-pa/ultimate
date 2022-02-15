@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantconsolidation;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -54,30 +52,31 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  * Interpolant Consolidation is a way of either improving a sequence of interpolants or merging several sequences of
@@ -117,7 +116,8 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		mPredicateFactory = predicateFactory;
 
 		mConsolidatedInterpolants = new IPredicate[mTrace.length() - 1];
-		mInterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
+		mInterpolantConsolidationBenchmarkGenerator =
+				new InterpolantConsolidationBenchmarkGenerator(mServices.getStorage());
 
 		final InterpolantComputationStatus status = mIpTc.getInterpolantComputationStatus();
 		if (status.wasComputationSuccesful()) {
@@ -132,7 +132,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 	private final boolean computeInterpolants(final Set<Integer> interpolatedPositions)
 			throws AutomataOperationCanceledException {
 		// Start the stopwatch to measure the time we need for interpolant consolidation
-		mInterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
+		mInterpolantConsolidationBenchmarkGenerator.startTimeOfConsolidation();
 
 		// 1. Build the path automaton for the given trace mTrace
 		final PathProgramAutomatonConstructor<LETTER> ppc = new PathProgramAutomatonConstructor<>();
@@ -197,8 +197,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 					}
 
 					// Stop the time for interpolant consolidation
-					mInterpolantConsolidationBenchmarkGenerator
-							.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
+					mInterpolantConsolidationBenchmarkGenerator.stopTimeOfConsolidation();
 					// TODO: DD 20190923: What should the status be in this case? Before the refactoring, it was false
 					return false;
 				}
@@ -253,16 +252,17 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		final Set<IPredicate> interpolantsBeforeConsolidation = interpolantAutomaton.getStates();
 		final Set<IPredicate> interpolantsAfterConsolidation = new HashSet<>();
 
-		mInterpolantConsolidationBenchmarkGenerator.incrementDiffAutomatonEmpty_Counter();
+		mInterpolantConsolidationBenchmarkGenerator.incrementDiffAutomatonEmptyCounter();
 
 		mConsolidatedInterpolants = computeConsolidatedInterpolants(pathProgramLocations, locationsToSetOfPredicates,
 				interpolantsBeforeConsolidation, interpolantsAfterConsolidation, cachingHtc);
 
 		assert TraceCheckUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants), mTrace,
 				mIpTc.getPrecondition(), mIpTc.getPostcondition(), mIpTc.getPendingContexts(), "CP", mCsToolkit,
-				mLogger, mCsToolkit.getManagedScript()) : "invalid Hoare triple in consolidated interpolants";
-		final int numOfDisjunctionsGreaterOne = (int) mInterpolantConsolidationBenchmarkGenerator
-				.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
+				mLogger, mCsToolkit.getManagedScript(),
+				mServices.getStorage()) : "invalid Hoare triple in consolidated interpolants";
+		final int numOfDisjunctionsGreaterOne =
+				mInterpolantConsolidationBenchmarkGenerator.getDisjunctionsGreaterOneCounter();
 
 		if (PRINT_DEBUG_INFORMATION) {
 			mLogger.debug("Interpolants before consolidation:");
@@ -441,7 +441,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 				newlyCreatedInterpolants, interpolantsDropped, differenceOfInterpolantsBeforeAfter,
 				htc.getStatistics());
 		// Stop the time for interpolant consolidation
-		mInterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
+		mInterpolantConsolidationBenchmarkGenerator.stopTimeOfConsolidation();
 		return consolidatedInterpolants;
 	}
 
@@ -608,171 +608,65 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		return bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 	}
 
-	// Benchmarks Section
-	public static class InterpolantConsolidationBenchmarkType implements IStatisticsType {
-		private static InterpolantConsolidationBenchmarkType s_Instance = new InterpolantConsolidationBenchmarkType();
+	public static class InterpolantConsolidationBenchmarkGenerator extends BaseStatisticsDataProvider {
 
-		/* Keys */
-		// Counts how often the difference automaton has been empty
-		protected final static String s_DifferenceAutomatonEmptyCounter = "DifferenceAutomatonEmptyCounter";
-		// protected final static String s_SumOfPredicatesConsolidated = "SumOfPredicatesConsolidated";
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mDisjunctionsGreaterOneCounter;
 
-		protected final static String s_DisjunctionsGreaterOneCounter = "DisjunctionsGreaterOneCounter";
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mDifferenceBeforeAfter;
 
-		// protected final static String s_SumOfInterpolantsBefore = "SumOfInterpolantsBefore";
-		// protected final static String s_SumOfInterpolantsAfterConsoli = "SumOfInterpolantsAfterConsoli";
-		protected final static String s_NewlyCreatedInterpolants = "NewlyCreatedInterpolants";
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mNewlyCreatedInterpolants;
 
-		protected final static String s_InterpolantsDropped = "InterpolantsDropped";
-
-		protected final static String s_DifferenceBeforeAfter = "DifferenceOfInterpolantsBeforeAfter";
-
-		protected final static String s_NumberOfHoareTripleChecks = "NumOfHoareTripleChecks";
-
-		protected final static String s_TimeOfConsolidation = "TimeOfConsolidation";
-
-		public static InterpolantConsolidationBenchmarkType getInstance() {
-			return s_Instance;
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			final ArrayList<String> result = new ArrayList<>();
-			result.add(s_DisjunctionsGreaterOneCounter);
-			result.add(s_DifferenceBeforeAfter);
-			result.add(s_NumberOfHoareTripleChecks);
-			result.add(s_TimeOfConsolidation);
-			result.add(s_NewlyCreatedInterpolants);
-			result.add(s_InterpolantsDropped);
-			result.add(s_DifferenceAutomatonEmptyCounter);
-			return result;
-		}
-
-		@Override
-		public Object aggregate(final String key, final Object value1, final Object value2) {
-			switch (key) {
-			case s_NewlyCreatedInterpolants:
-			case s_InterpolantsDropped:
-			case s_DifferenceBeforeAfter:
-			case s_DifferenceAutomatonEmptyCounter:
-			case s_DisjunctionsGreaterOneCounter: {
-				final int result = (int) value1 + (int) value2;
-				return result;
-			}
-			case s_TimeOfConsolidation: {
-				final long result = (long) value1 + (long) value2;
-				return result;
-			}
-			case s_NumberOfHoareTripleChecks:
-				final InCaReCounter counter1 = (InCaReCounter) value1;
-				counter1.add((InCaReCounter) value2);
-				return counter1;
-			default:
-				throw new AssertionError("unknown key");
-			}
-		}
-
-		@Override
-		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-			final StringBuilder sb = new StringBuilder();
-
-			sb.append("\t").append(s_DifferenceAutomatonEmptyCounter).append(": ");
-			sb.append((int) benchmarkData.getValue(s_DifferenceAutomatonEmptyCounter));
-
-			sb.append("\t").append(s_DisjunctionsGreaterOneCounter).append(": ");
-			sb.append((int) benchmarkData.getValue(s_DisjunctionsGreaterOneCounter));
-
-			sb.append("\t").append(s_NumberOfHoareTripleChecks).append(": ");
-			sb.append(benchmarkData.getValue(s_NumberOfHoareTripleChecks));
-
-			sb.append("\t").append(s_InterpolantsDropped).append(": ");
-			sb.append((int) benchmarkData.getValue(s_InterpolantsDropped));
-
-			sb.append("\t").append(s_NewlyCreatedInterpolants).append(": ");
-			sb.append((int) benchmarkData.getValue(s_NewlyCreatedInterpolants));
-
-			sb.append("\t").append(s_DifferenceBeforeAfter).append(": ");
-			sb.append((int) benchmarkData.getValue(s_DifferenceBeforeAfter));
-
-			sb.append("\t").append(s_TimeOfConsolidation).append(": ");
-			final Long timeOfInterpolantConsolidation = (Long) benchmarkData.getValue(s_TimeOfConsolidation);
-
-			sb.append(CoreUtil.humanReadableTime(timeOfInterpolantConsolidation, TimeUnit.NANOSECONDS, 3));
-			return sb.toString();
-		}
-
-	}
-
-	public static class InterpolantConsolidationBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
-			implements IStatisticsDataProvider {
-		private int mDisjunctionsGreaterOneCounter = 0;
-		private int mDifferenceBeforeAfter = 0;
-		private int mNewlyCreatedInterpolants = 0;
-		private int mInterpolantsDropped = 0;
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mInterpolantsDropped;
 
 		// Contains the number of hoare triple checks (i.e. num of sats + num of unsats + num of unknowns)
 		// that are made by the interpolant consolidation
+		@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 		private final InCaReCounter mNumOfHoareTripleChecks = new InCaReCounter();
-		private int mDiffAutomatonEmpty_Counter = 0;
+
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mDiffAutomatonEmptyCounter;
+
+		@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+		private final TimeTracker mTimeOfConsolidation = new TimeTracker();
+
+		public InterpolantConsolidationBenchmarkGenerator(final IToolchainStorage storage) {
+			super(storage);
+		}
+
+		public int getDisjunctionsGreaterOneCounter() {
+			return mDisjunctionsGreaterOneCounter;
+		}
+
+		public void startTimeOfConsolidation() {
+			mTimeOfConsolidation.start();
+		}
+
+		public void stopTimeOfConsolidation() {
+			mTimeOfConsolidation.stop();
+		}
 
 		public void setInterpolantConsolidationData(final int disjunctionsGreaterOneCounter,
 				final int newlyCreatedInterpolants, final int interpolantsDropped,
-				final int differenceOfNumOfInterpolantsBeforeAfter, final IStatisticsDataProvider htcStats) {
+				final int differenceOfNumOfInterpolantsBeforeAfter, final IStatisticsDataProvider stats) {
+
 			mDisjunctionsGreaterOneCounter = disjunctionsGreaterOneCounter;
 			mDifferenceBeforeAfter = differenceOfNumOfInterpolantsBeforeAfter;
 			mNumOfHoareTripleChecks
-					.add((InCaReCounter) htcStats.getValue(HoareTripleCheckerStatisticsDefinitions.SolverSat.name()));
+					.add((InCaReCounter) stats.getValue(HoareTripleCheckerStatisticsGenerator.SOLVER_COUNTER_SAT));
 			mNumOfHoareTripleChecks
-					.add((InCaReCounter) htcStats.getValue(HoareTripleCheckerStatisticsDefinitions.SolverUnsat.name()));
-			mNumOfHoareTripleChecks.add(
-					(InCaReCounter) htcStats.getValue(HoareTripleCheckerStatisticsDefinitions.SolverUnknown.name()));
+					.add((InCaReCounter) stats.getValue(HoareTripleCheckerStatisticsGenerator.SOLVER_COUNTER_UNSAT));
+			mNumOfHoareTripleChecks
+					.add((InCaReCounter) stats.getValue(HoareTripleCheckerStatisticsGenerator.SOLVER_COUNTER_UNKNOWN));
 			mNewlyCreatedInterpolants = newlyCreatedInterpolants;
 			mInterpolantsDropped = interpolantsDropped;
 		}
 
-		public void incrementDiffAutomatonEmpty_Counter() {
-			mDiffAutomatonEmpty_Counter++;
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			return InterpolantConsolidationBenchmarkType.getInstance().getKeys();
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			switch (key) {
-			case InterpolantConsolidationBenchmarkType.s_NewlyCreatedInterpolants:
-				return mNewlyCreatedInterpolants;
-			case InterpolantConsolidationBenchmarkType.s_InterpolantsDropped:
-				return mInterpolantsDropped;
-			case InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter:
-				return mDisjunctionsGreaterOneCounter;
-			case InterpolantConsolidationBenchmarkType.s_DifferenceBeforeAfter:
-				return mDifferenceBeforeAfter;
-			case InterpolantConsolidationBenchmarkType.s_NumberOfHoareTripleChecks:
-				return mNumOfHoareTripleChecks;
-			case InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation:
-				try {
-					return getElapsedTime(key);
-				} catch (final StopwatchStillRunningException e) {
-					throw new AssertionError("clock still running: " + key);
-				}
-			case InterpolantConsolidationBenchmarkType.s_DifferenceAutomatonEmptyCounter:
-				return mDiffAutomatonEmpty_Counter;
-			default:
-				throw new AssertionError("unknown data");
-			}
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return InterpolantConsolidationBenchmarkType.getInstance();
-		}
-
-		@Override
-		public String[] getStopwatches() {
-			return new String[] { InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation };
+		public void incrementDiffAutomatonEmptyCounter() {
+			mDiffAutomatonEmptyCounter++;
 		}
 	}
 }

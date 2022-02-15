@@ -53,9 +53,9 @@ public final class RegexStatUtils {
 	public static <N, L> PathExpressionComputer<N, L> createPEComputer(final SifaStats stats,
 			final ILabeledGraph<N, L> graph) {
 
-		stats.start(SifaStats.Key.PATH_EXPR_TIME);
+		stats.start(SifaStats.SifaMeasures.PATH_EXPR_TIME);
 		final PathExpressionComputer<N, L> result = new PathExpressionComputer<>(graph);
-		stats.stop(SifaStats.Key.PATH_EXPR_TIME);
+		stats.stop(SifaStats.SifaMeasures.PATH_EXPR_TIME);
 		return result;
 	}
 
@@ -63,18 +63,18 @@ public final class RegexStatUtils {
 	public static <N, L> IRegex<L> exprBetween(final SifaStats stats,
 			final PathExpressionComputer<N, L> peComputer, final N source, final N target) {
 
-		stats.start(SifaStats.Key.PATH_EXPR_TIME);
+		stats.start(SifaStats.SifaMeasures.PATH_EXPR_TIME);
 		final IRegex<L> result = peComputer.exprBetween(source, target);
-		stats.stop(SifaStats.Key.PATH_EXPR_TIME);
+		stats.stop(SifaStats.SifaMeasures.PATH_EXPR_TIME);
 		return result;
 	}
 
 	/** @see RegexToDag#RegexToDag() */
 	public static <L> RegexToDag<L> createRegexToDag(final SifaStats stats) {
 
-		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.start(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		final RegexToDag<L> result = new RegexToDag<>();
-		stats.stop(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.stop(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		return result;
 	}
 
@@ -82,9 +82,9 @@ public final class RegexStatUtils {
 	public static <L> RegexDagNode<L> addToDag(final SifaStats stats,
 			final RegexToDag<L> regexToDag, final IRegex<L> regex) {
 
-		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.start(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		final RegexDagNode<L> result = regexToDag.add(regex);
-		stats.stop(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.stop(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		return result;
 	}
 
@@ -92,9 +92,9 @@ public final class RegexStatUtils {
 	public static <L> RegexDag<L> getDagAndReset(final SifaStats stats,
 			final RegexToDag<L> regexToDag) {
 
-		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.start(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		final RegexDag<L> result = regexToDag.getDagAndReset();
-		stats.stop(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.stop(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		return result;
 	}
 
@@ -105,11 +105,11 @@ public final class RegexStatUtils {
 	public static <L> RegexDag<L> regexToDag(final SifaStats stats,
 			final IRegex<L> regex) {
 
-		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.start(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		final RegexToDag<L> regexToDag = new RegexToDag<>();
 		regexToDag.add(regex);
 		final RegexDag<L> result = regexToDag.getDagAndReset();
-		stats.stop(SifaStats.Key.REGEX_TO_DAG_TIME);
+		stats.stop(SifaStats.SifaMeasures.REGEX_TO_DAG_TIME);
 		return result;
 	}
 
@@ -117,11 +117,11 @@ public final class RegexStatUtils {
 	public static <L> RegexDag<L> compress(final SifaStats stats,
 			final RegexDag<L> dag) {
 
-		stats.add(SifaStats.Key.DAG_COMPRESSION_PROCESSED_NODES, dag.collectNodes().size());
-		stats.start(SifaStats.Key.DAG_COMPRESSION_TIME);
+		stats.add(SifaStats.SifaMeasures.DAG_COMPRESSION_PROCESSED_NODES, dag.collectNodes().size());
+		stats.start(SifaStats.SifaMeasures.DAG_COMPRESSION_TIME);
 		final RegexDag<L> result = new RegexDagCompressor<L>().compress(dag);
-		stats.stop(SifaStats.Key.DAG_COMPRESSION_TIME);
-		stats.add(SifaStats.Key.DAG_COMPRESSION_RETAINED_NODES, result.collectNodes().size());
+		stats.stop(SifaStats.SifaMeasures.DAG_COMPRESSION_TIME);
+		stats.add(SifaStats.SifaMeasures.DAG_COMPRESSION_RETAINED_NODES, result.collectNodes().size());
 		return result;
 	}
 }

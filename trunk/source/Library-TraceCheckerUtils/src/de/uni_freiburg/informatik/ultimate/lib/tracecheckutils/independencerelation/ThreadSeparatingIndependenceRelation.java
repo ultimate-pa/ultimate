@@ -30,9 +30,10 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
 
 /**
  * A wrapper independence relation that forwards queries to an underlying relation, unless the two actions are from the
@@ -50,9 +51,10 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 	private final IIndependenceRelation<S, L> mUnderlying;
 	private final SeparatingStatistics mStatistics;
 
-	public ThreadSeparatingIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
+	public ThreadSeparatingIndependenceRelation(final IToolchainStorage storage,
+			final IIndependenceRelation<S, L> underlying) {
 		mUnderlying = underlying;
-		mStatistics = new SeparatingStatistics();
+		mStatistics = new SeparatingStatistics(storage);
 	}
 
 	@Override
@@ -90,9 +92,9 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 
 		private int mSameThreadQueries;
 
-		public SeparatingStatistics() {
-			super(ThreadSeparatingIndependenceRelation.class, mUnderlying);
-			declare(SAME_THREAD_QUERIES, () -> mSameThreadQueries, KeyType.COUNTER);
+		public SeparatingStatistics(final IToolchainStorage storage) {
+			super(storage, ThreadSeparatingIndependenceRelation.class, mUnderlying);
+			declare(SAME_THREAD_QUERIES, () -> mSameThreadQueries, MeasureDefinition.INT_COUNTER);
 		}
 
 		private void reportSameThreadQuery(final boolean conditional) {

@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+
 /**
  * Encapsulates three stopwatches, one for internal, one for call, and one for return transitions. Only one stopwatch
  * may run at the same time.
@@ -79,7 +81,7 @@ public class InCaReTimer {
 	 * Stops internal stopwatch.
 	 */
 	public void stopIn() {
-		mInternal += (System.nanoTime() - mStartTime);
+		mInternal += System.nanoTime() - mStartTime;
 		mStartTime = 0;
 	}
 
@@ -87,7 +89,7 @@ public class InCaReTimer {
 	 * Stops call stopwatch.
 	 */
 	public void stopCa() {
-		mCall += (System.nanoTime() - mStartTime);
+		mCall += System.nanoTime() - mStartTime;
 		mStartTime = 0;
 	}
 
@@ -95,7 +97,7 @@ public class InCaReTimer {
 	 * Stops return stopwatch.
 	 */
 	public void stopRe() {
-		mReturn += (System.nanoTime() - mStartTime);
+		mReturn += System.nanoTime() - mStartTime;
 		mStartTime = 0;
 	}
 
@@ -111,30 +113,12 @@ public class InCaReTimer {
 		return mReturn;
 	}
 
-	/**
-	 * Pretty-prints nano seconds in seconds.
-	 * 
-	 * @param time
-	 *            time in nano seconds
-	 * @return pretty-printed time
-	 */
-	public static String prettyprintNanoseconds(final long time) {
-		final long seconds = time / 1_000_000_000;
-		final long tenthDigit = (time / 100_000_000) % 10;
-		return Long.toString(seconds) + '.' + Long.toString(tenthDigit) + 's';
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		// @formatter:off
-		builder.append(prettyprintNanoseconds(mInternal))
-				.append("In")
-				.append(prettyprintNanoseconds(mCall))
-				.append("Ca")
-				.append(prettyprintNanoseconds(mReturn))
-				.append("Re");
-		// @formatter:on
+		builder.append(CoreUtil.prettyprintNanoseconds(mInternal)).append("In")
+				.append(CoreUtil.prettyprintNanoseconds(mCall)).append("Ca")
+				.append(CoreUtil.prettyprintNanoseconds(mReturn)).append("Re");
 		return builder.toString();
 	}
 }

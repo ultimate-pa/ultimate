@@ -83,7 +83,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
 		mStats = stats;
-		mStats.start(SifaStats.Key.OVERALL_TIME);
+		mStats.start(SifaStats.SifaMeasures.OVERALL_TIME);
 		mLogger = logger;
 		mTools = tools;
 		mLocsOfInterest = locationsOfInterest;
@@ -97,7 +97,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		enqueInitial();
 		mDagInterpreter = new DagInterpreter(logger, stats, timer, tools, domain, fluid,
 				loopSumFactory.apply(this), callSumFactory.apply(this));
-		mStats.stop(SifaStats.Key.OVERALL_TIME);
+		mStats.stop(SifaStats.SifaMeasures.OVERALL_TIME);
 	}
 
 	public static Collection<IcfgLocation> allErrorLocations(final IIcfg<IcfgLocation> icfg) {
@@ -117,17 +117,17 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	 *         to invariants (predicates over-approximating the program states at these locations)
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
-		mStats.start(SifaStats.Key.OVERALL_TIME);
+		mStats.start(SifaStats.SifaMeasures.OVERALL_TIME);
 		logStartingInterpretation();
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();
 			logEnterProcedure(procedure, input);
-			mStats.increment(SifaStats.Key.ICFG_INTERPRETER_ENTERED_PROCEDURES);
+			mStats.increment(SifaStats.SifaMeasures.ICFG_INTERPRETER_ENTERED_PROCEDURES);
 			interpretLoisInProcedure(procedure, input);
 		}
 		logFinalResults();
-		mStats.stop(SifaStats.Key.OVERALL_TIME);
+		mStats.stop(SifaStats.SifaMeasures.OVERALL_TIME);
 		return mLoiPredStorage.addDefaultsAndGetMap(mLocsOfInterest, mTools.bottom());
 	}
 

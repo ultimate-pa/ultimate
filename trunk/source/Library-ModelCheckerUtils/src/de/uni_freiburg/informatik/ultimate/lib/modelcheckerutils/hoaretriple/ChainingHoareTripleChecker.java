@@ -26,17 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -47,18 +47,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
-import de.uni_freiburg.informatik.ultimate.util.Lazy;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator.Statistics;
-import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  *
@@ -76,18 +72,22 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 	private static final int LONG_CHECK_THRESHOLD_MS = 1000;
+	private final IToolchainStorage mStorage;
 	private final List<IWrappedHoareTripleChecker> mHtcs;
 	private final ILogger mLogger;
 	private static final Predicate<IPredicate> SKIP_PRED = a -> false;
 	private static final Predicate<IAction> SKIP_ACT = a -> false;
+	private StatisticsAggregator mStatistics;
 
-	private ChainingHoareTripleChecker(final ILogger logger) {
-		this(logger, Collections.emptyList());
+	private ChainingHoareTripleChecker(final IToolchainStorage storage, final ILogger logger) {
+		this(storage, logger, Collections.emptyList());
 	}
 
-	private ChainingHoareTripleChecker(final ILogger logger, final List<IWrappedHoareTripleChecker> list) {
+	private ChainingHoareTripleChecker(final IToolchainStorage storage, final ILogger logger,
+			final List<IWrappedHoareTripleChecker> list) {
 		mLogger = logger;
 		mHtcs = list;
+		mStorage = storage;
 		DataStructureUtils.filteredCast(mHtcs.stream(), ReviewedProtectedHtc.class)
 				.forEach(a -> a.setLockRelease(this::releaseLock));
 	}
@@ -136,14 +136,16 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		final StatisticsAggregator aggr = new StatisticsAggregator();
-		for (final IWrappedHoareTripleChecker htc : mHtcs) {
-			aggr.aggregateBenchmarkData(htc.getStatistics());
-			final ProtectedHtc under = htc.getUnderlying();
-			final String prefix = under.mHtc.getClass().getSimpleName();
-			aggr.aggregateBenchmarkData(prefix, under.mStats);
+		if (mStatistics == null) {
+			mStatistics = new StatisticsAggregator(mStorage);
+			for (final IWrappedHoareTripleChecker htc : mHtcs) {
+				mStatistics.aggregateStatisticsData(htc.getStatistics());
+				final ProtectedHtc under = htc.getUnderlying();
+				final String prefix = under.mHtc.getClass().getSimpleName();
+				mStatistics.aggregateStatisticsData(prefix, under.mStats);
+			}
 		}
-		return aggr;
+		return mStatistics;
 	}
 
 	@Override
@@ -158,8 +160,9 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	 *            The underlying {@link IHoareTripleChecker}.
 	 * @return A new {@link ChainingHoareTripleChecker}.
 	 */
-	public static ChainingHoareTripleChecker with(final ILogger logger, final IHoareTripleChecker htc) {
-		return new ChainingHoareTripleChecker(logger).andThen(htc);
+	public static ChainingHoareTripleChecker with(final IToolchainStorage storage, final ILogger logger,
+			final IHoareTripleChecker htc) {
+		return new ChainingHoareTripleChecker(storage, logger).andThen(htc);
 	}
 
 	/**
@@ -180,7 +183,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 			}
 			return rtr;
 		}
-		return add(new ProtectedHtc(mLogger, htc, SKIP_ACT, SKIP_PRED));
+		return add(new ProtectedHtc(mStorage, mLogger, htc, SKIP_ACT, SKIP_PRED));
 	}
 
 	/**
@@ -195,7 +198,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	 * @return A new {@link ChainingHoareTripleChecker} where the last {@link IHoareTripleChecker} is protected.
 	 */
 	public ChainingHoareTripleChecker predicatesProtectedBy(final Predicate<IPredicate> pred) {
-		return replaceLast(createFromLastProtected(last -> new ProtectedHtc(last.mLogger, last.mHtc,
+		return replaceLast(createFromLastProtected(last -> new ProtectedHtc(mStorage, last.mLogger, last.mHtc,
 				last.mPredActionProtection, last.mPredPredicateProtection.or(pred))));
 	}
 
@@ -211,7 +214,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	 * @return A new {@link ChainingHoareTripleChecker} where the last {@link IHoareTripleChecker} is protected.
 	 */
 	public ChainingHoareTripleChecker actionsProtectedBy(final Predicate<IAction> pred) {
-		return replaceLast(createFromLastProtected(last -> new ProtectedHtc(last.mLogger, last.mHtc,
+		return replaceLast(createFromLastProtected(last -> new ProtectedHtc(mStorage, last.mLogger, last.mHtc,
 				last.mPredActionProtection.or(pred), last.mPredPredicateProtection)));
 	}
 
@@ -231,17 +234,16 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private ChainingHoareTripleChecker replaceLast(final IWrappedHoareTripleChecker replacement) {
-		final List<IWrappedHoareTripleChecker> list = new ArrayList<>(mHtcs.size());
-		list.addAll(mHtcs);
+		final List<IWrappedHoareTripleChecker> list = new ArrayList<>(mHtcs);
 		list.set(list.size() - 1, replacement);
-		return new ChainingHoareTripleChecker(mLogger, list);
+		return new ChainingHoareTripleChecker(mStorage, mLogger, list);
 	}
 
 	private ChainingHoareTripleChecker add(final IWrappedHoareTripleChecker add) {
 		final List<IWrappedHoareTripleChecker> list = new ArrayList<>(mHtcs.size() + 1);
 		list.addAll(mHtcs);
 		list.add(add);
-		return new ChainingHoareTripleChecker(mLogger, list);
+		return new ChainingHoareTripleChecker(mStorage, mLogger, list);
 	}
 
 	private IWrappedHoareTripleChecker getLast() {
@@ -250,11 +252,11 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 	private IWrappedHoareTripleChecker createFromLastReview(final IHoareTripleChecker reviewHtc) {
 		final ProtectedHtc pHtc = getLast().getUnderlying();
-		return new ReviewedProtectedHtc(reviewHtc,
-				new ProtectedHtc(pHtc.mLogger, pHtc.mHtc, pHtc.mPredActionProtection, pHtc.mPredPredicateProtection));
+		return new ReviewedProtectedHtc(reviewHtc, new ProtectedHtc(mStorage, pHtc.mLogger, pHtc.mHtc,
+				pHtc.mPredActionProtection, pHtc.mPredPredicateProtection));
 	}
 
-	private IWrappedHoareTripleChecker createFromLastProtected(final Function<ProtectedHtc, ProtectedHtc> replace) {
+	private IWrappedHoareTripleChecker createFromLastProtected(final UnaryOperator<ProtectedHtc> replace) {
 		final IWrappedHoareTripleChecker last = getLast();
 		return last.replaceUnderlying(replace.apply(last.getUnderlying()));
 	}
@@ -425,18 +427,20 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		private final Predicate<IAction> mPredActionProtection;
 		private final ValidityInCaReCounter mStats;
 		private final ILogger mLogger;
+		private final IToolchainStorage mStorage;
 
-		public ProtectedHtc(final ILogger logger, final IHoareTripleChecker htc,
+		public ProtectedHtc(final IToolchainStorage storage, final ILogger logger, final IHoareTripleChecker htc,
 				final Predicate<IAction> predActionProtection, final Predicate<IPredicate> predPredicateProtection) {
 			mLogger = Objects.requireNonNull(logger);
 			mHtc = Objects.requireNonNull(htc);
 			mPredPredicateProtection = Objects.requireNonNull(predPredicateProtection);
 			mPredActionProtection = Objects.requireNonNull(predActionProtection);
-			mStats = new ValidityInCaReCounter();
+			mStorage = storage;
+			mStats = new ValidityInCaReCounter(mStorage);
 		}
 
 		public ProtectedHtc(final ProtectedHtc old) {
-			this(old.mLogger, old.mHtc, old.mPredActionProtection, old.mPredPredicateProtection);
+			this(old.mStorage, old.mLogger, old.mHtc, old.mPredActionProtection, old.mPredPredicateProtection);
 		}
 
 		@Override
@@ -541,44 +545,31 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 		@Override
 		public IWrappedHoareTripleChecker copy() {
+			mStats.close();
 			return new ProtectedHtc(this);
 		}
 
 	}
 
-	private static final class ValidityInCaReCounter extends AbstractStatisticsDataProvider {
+	private static final class ValidityInCaReCounter extends BaseStatisticsDataProvider {
 
-		@Reflected(prettyName = "Valid")
-		@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+		@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 		private final InCaReCounter mValid = new InCaReCounter();
 
-		@Reflected(prettyName = "Invalid")
-		@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+		@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 		private final InCaReCounter mInvalid = new InCaReCounter();
 
-		@Reflected(prettyName = "Unknown")
-		@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+		@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 		private final InCaReCounter mUnknown = new InCaReCounter();
 
-		@Reflected(prettyName = "Unchecked")
-		@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+		@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 		private final InCaReCounter mUnchecked = new InCaReCounter();
 
-		@Reflected(prettyName = "Time")
-		@Statistics(type = KeyType.TT_TIMER)
+		@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
 		private final TimeTracker mTime = new TimeTracker();
 
-		@Reflected(excluded = true)
-		private static final Lazy<List<Field>> FIELDS =
-				new Lazy<>(() -> ReflectionUtil.instanceFields(ValidityInCaReCounter.class).stream()
-						.filter(f -> f.getAnnotation(Statistics.class) != null).collect(Collectors.toList()));
-
-		public ValidityInCaReCounter() {
-			for (final Field f : FIELDS.get()) {
-				final Statistics annot = f.getAnnotation(Statistics.class);
-				declare(ReflectionUtil.fieldPrettyName(f), () -> annot.type().convert(ReflectionUtil.access(this, f)),
-						annot.type());
-			}
+		public ValidityInCaReCounter(final IToolchainStorage storage) {
+			super(storage);
 		}
 
 		public void start() {
@@ -608,7 +599,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 			}
 		}
 
-		private void inc(final IAction act, final InCaReCounter cnt) {
+		private static void inc(final IAction act, final InCaReCounter cnt) {
 			if (act instanceof IInternalAction) {
 				cnt.incIn();
 			} else if (act instanceof ICallAction) {
@@ -619,12 +610,5 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 				throw new UnsupportedOperationException("Unknown action " + act.getClass());
 			}
 		}
-
-		@Override
-		public String toString() {
-			return getBenchmarkType().prettyprintBenchmarkData(this);
-		}
-
 	}
-
 }

@@ -26,66 +26,46 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
-import java.util.Collection;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 
-public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDataProvider {
+public class JordanLoopAccelerationStatisticsGenerator extends BaseStatisticsDataProvider {
 
-	private final int mNumberOfAssignedVariables;
-	private final int mNumberOfHavocedVariables;
-	private final int mNumberOfReadonlyVariables;
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private final int mHavocedVariables;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private final int mAssignedVariables;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private final int mReadonlyVariables;
+
+	// TODO: This was already a nested map with type int_counter before, how did this work?
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private final NestedMap2<Integer, Integer, Integer> mEigenvalues;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mSequentialAcceleration;
-	private int mQuantifierFreeResult;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mAlternatingAcceleration;
 
-	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables,
-			final int numberOfHavocedVariables, final int numberOfReadonlyVariables,
-			final NestedMap2<Integer, Integer, Integer> eigenvalues) {
-		super();
-		mNumberOfAssignedVariables = numberOfAssignedVariables;
-		mNumberOfHavocedVariables = numberOfHavocedVariables;
-		mNumberOfReadonlyVariables = numberOfReadonlyVariables;
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mQuantifierFreeResult;
+
+	public JordanLoopAccelerationStatisticsGenerator(final IToolchainStorage storage,
+			final int numberOfAssignedVariables, final int numberOfHavocedVariables,
+			final int numberOfReadonlyVariables, final NestedMap2<Integer, Integer, Integer> eigenvalues) {
+		super(storage);
+		mAssignedVariables = numberOfAssignedVariables;
+		mHavocedVariables = numberOfHavocedVariables;
+		mReadonlyVariables = numberOfReadonlyVariables;
 		mEigenvalues = eigenvalues;
 		mSequentialAcceleration = 0;
 		mQuantifierFreeResult = 0;
 		mAlternatingAcceleration = 0;
-	}
-
-	@Override
-	public Object getValue(final String key) {
-		final JordanLoopAccelerationDefinitions keyEnum = Enum.valueOf(JordanLoopAccelerationDefinitions.class, key);
-		switch (keyEnum) {
-		case AssignedVariables:
-			return mNumberOfAssignedVariables;
-		case HavocedVariables:
-			return mNumberOfHavocedVariables;
-		case ReadonlyVariables:
-			return mNumberOfReadonlyVariables;
-		case Eigenvalues:
-			return mEigenvalues;
-		case SequentialAcceleration:
-			return mSequentialAcceleration;
-		case QuantifierFreeResult:
-			return mQuantifierFreeResult;
-		case AlternatingAcceleration:
-			return mAlternatingAcceleration;
-		default:
-			throw new AssertionError("unknown data");
-		}
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return JordanLoopAccelerationStatisticsType.getInstance();
-	}
-
-	@Override
-	public Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
 	}
 
 	public void reportSequentialAcceleration() {
@@ -99,10 +79,4 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 	public void reportQuantifierFreeResult() {
 		mQuantifierFreeResult++;
 	}
-
-	@Override
-	public String toString() {
-		return getBenchmarkType().prettyprintBenchmarkData(this);
-	}
-
 }

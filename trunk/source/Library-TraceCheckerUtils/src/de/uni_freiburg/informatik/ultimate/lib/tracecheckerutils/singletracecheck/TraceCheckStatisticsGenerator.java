@@ -26,47 +26,89 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
-import java.util.Collection;
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils.FormulaSize;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
-public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwatches
-		implements IStatisticsDataProvider {
+public class TraceCheckStatisticsGenerator extends BaseStatisticsDataProvider {
 
 	public enum InterpolantType {
 		Craig, Forward, Backward
 	}
 
-	private int mNumberOfCodeBlocks = 0;
-	private int mNumberOfCodeBlocksAsserted = 0;
-	private int mNumberOfCheckSat = 0;
-	private int mConstructedInterpolants = 0;
-	private int mQuantifiedInterpolants = 0;
-	private long mSizeOfPredicates = 0;
-	private int mNumberOfNonLiveVariables = 0;
-	private int mConjunctsInSsa = 0;
-	private int mConjunctsInUnsatCore = 0;
-	private int mInterpolantComputations = 0;
-	private int mPerfectInterpolantSequences = 0;
+	public static final String INTERPOLATION_COMPUTATION_TIME = "InterpolantComputationTime";
+	public static final String SATISFIABILITY_ANALYSIS_TIME = "SatisfiabilityAnalysisTime";
+	public static final String INTERPOLANT_COMPUTATIONS = "InterpolantComputations";
+	public static final String PERFECT_INTERPOLANT_SEQUENCES = "PerfectInterpolantSequences";
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mSsaConstructionTime = new TimeTracker();
+
+	@Reflected(prettyName = SATISFIABILITY_ANALYSIS_TIME)
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mSatisfiabilityAnalysisTime = new TimeTracker();
+
+	@Reflected(prettyName = INTERPOLATION_COMPUTATION_TIME)
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mInterpolantComputationTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mNumberOfCodeBlocks;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mNumberOfCodeBlocksAsserted;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mNumberOfCheckSat;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mConstructedInterpolants;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mQuantifiedInterpolants;
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_COUNTER)
+	private long mSizeOfPredicates;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mNumberOfNonLiveVariables;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mConjunctsInSsa;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mConjunctsInUnsatCore;
+
+	@Reflected(prettyName = INTERPOLANT_COMPUTATIONS)
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mInterpolantComputations;
+
+	@Reflected(prettyName = PERFECT_INTERPOLANT_SEQUENCES)
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mPerfectInterpolantSequences;
+
+	@Statistics(type = DefaultMeasureDefinitions.BACKWARD_COVERING_INFORMATION)
 	private BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
 
 	private final boolean mCollectInterpolatSequenceStatistics;
 
-	public TraceCheckStatisticsGenerator(final boolean collectInterpolatSequenceStatistics) {
+	public TraceCheckStatisticsGenerator(final IToolchainStorage storage,
+			final boolean collectInterpolatSequenceStatistics) {
+		super(storage);
 		mCollectInterpolatSequenceStatistics = collectInterpolatSequenceStatistics;
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return TraceCheckStatisticsType.getInstance();
 	}
 
 	/**
@@ -104,7 +146,8 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 		}
 		for (final IPredicate pred : interpolants) {
 			mConstructedInterpolants++;
-			final boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
+
+			final boolean isQuantified = !QuantifierUtils.isQuantifierFree(pred.getFormula());
 			if (isQuantified) {
 				mQuantifiedInterpolants++;
 			}
@@ -138,61 +181,50 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 		mInterpolantCoveringCapability = new BackwardCoveringInformation(mInterpolantCoveringCapability, bci);
 	}
 
-	@Override
-	public Object getValue(final String key) {
-		final TraceCheckStatisticsDefinitions keyEnum = Enum.valueOf(TraceCheckStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case SsaConstructionTime:
-		case SatisfiabilityAnalysisTime:
-		case InterpolantComputationTime:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
-			}
-		case NumberOfCodeBlocks:
-			return mNumberOfCodeBlocks;
-		case NumberOfCodeBlocksAsserted:
-			return mNumberOfCodeBlocksAsserted;
-		case NumberOfCheckSat:
-			return mNumberOfCheckSat;
-		case ConstructedInterpolants:
-			return mConstructedInterpolants;
-		case QuantifiedInterpolants:
-			return mQuantifiedInterpolants;
-		case SizeOfPredicates:
-			return mSizeOfPredicates;
-		case NumberOfNonLiveVariables:
-			return mNumberOfNonLiveVariables;
-		case ConjunctsInSsa:
-			return mConjunctsInSsa;
-		case ConjunctsInUnsatCore:
-			return mConjunctsInUnsatCore;
-		case InterpolantComputations:
-			return mInterpolantComputations;
-		case PerfectInterpolantSequences:
-			return mPerfectInterpolantSequences;
-		case InterpolantCoveringCapability:
-			return mInterpolantCoveringCapability;
-		default:
-			throw new AssertionError("unknown data");
-		}
-	}
-
-	@Override
-	public String[] getStopwatches() {
-		return new String[] { TraceCheckStatisticsDefinitions.SsaConstructionTime.toString(),
-				TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString(),
-				TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString() };
-	}
-
-	@Override
-	public Collection<String> getKeys() {
-		return TraceCheckStatisticsType.getInstance().getKeys();
-	}
-
 	public boolean isCollectingInterpolantSequenceStatistics() {
 		return mCollectInterpolatSequenceStatistics;
+	}
+
+	public void startSsaConstructionTime() {
+		mSsaConstructionTime.start();
+	}
+
+	public void stopSsaConstructionTime() {
+		mSsaConstructionTime.stop();
+	}
+
+	public void startSatisfiabilityAnalysisTime() {
+		mSatisfiabilityAnalysisTime.start();
+	}
+
+	public void stopSatisfiabilityAnalysisTime() {
+		mSatisfiabilityAnalysisTime.stop();
+	}
+
+	public void startInterpolantComputationTime() {
+		mInterpolantComputationTime.start();
+	}
+
+	public void stopInterpolantComputationTime() {
+		mInterpolantComputationTime.stop();
+	}
+
+	public void aggregateTraceCheckStatisticsSkipNotReady(final TraceCheckStatisticsGenerator other) {
+		final Map<String, Field> fields = getStatisticFields();
+		for (final String key : other.getKeys()) {
+			final MeasureDefinition measureDef = getBenchmarkType().getMeasure(key).getMeasureDefinition();
+			final Object localValue = getValue(key);
+			if (!measureDef.isReady(localValue)) {
+				// skip aggregation with local measures that are not ready like running clocks etc.
+				// read other value anyway to avoid triggering not-read check
+				other.getValue(key);
+				continue;
+			}
+			final Object value = measureDef.aggregate(getValue(key), other.getValue(key));
+			final Field field = fields.get(key);
+			ReflectionUtil.write(this, field, value);
+		}
+		other.close();
 	}
 
 }

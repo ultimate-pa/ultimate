@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -48,11 +49,12 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 	private final boolean mConditional;
 	private final IndependenceStatisticsDataProvider mStatistics;
 
-	public UnionIndependenceRelation(final Collection<IIndependenceRelation<STATE, L>> relations) {
+	public UnionIndependenceRelation(final IToolchainStorage storage,
+			final Collection<IIndependenceRelation<STATE, L>> relations) {
 		mRelations = relations;
 		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
 		mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
-		mStatistics = new IndependenceStatisticsDataProvider(UnionIndependenceRelation.class, mRelations);
+		mStatistics = new IndependenceStatisticsDataProvider(storage, UnionIndependenceRelation.class, mRelations);
 	}
 
 	@Override

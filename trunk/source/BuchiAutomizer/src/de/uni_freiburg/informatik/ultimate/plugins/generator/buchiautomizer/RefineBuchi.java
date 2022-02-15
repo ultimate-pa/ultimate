@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -93,10 +92,12 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.statistics.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
 
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
@@ -212,7 +213,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 		loopInterpolants = traceCheck.getInterpolants();
 		mBci = TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
-
+		// TODO: Aggregate stats (trace checker)
 		NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton =
 				constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem, stemInterpolants,
 						bspm.getHondaPredicate(), loop, loopInterpolants, abstraction);
@@ -732,9 +733,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 		if (pos >= predicates.length) {
 			return after;
-		} else {
-			return predicates[pos];
 		}
+		return predicates[pos];
 	}
 
 }

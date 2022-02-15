@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.ToLongFunction;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -71,9 +72,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.ErrorLocalizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  * Statistics provider for error automaton construction.
@@ -82,7 +86,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  *
  */
-public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvider {
+public class ErrorAutomatonStatisticsGenerator extends BaseStatisticsDataProvider {
 
 	/**
 	 * Type of enhancement over the {@code StraightLineInterpolantAutomatonBuilder} result.
@@ -108,46 +112,64 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		UNKNOWN
 	}
 
-	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
-	private static final String ERROR_AUTOMATON_DIFFERENCE_TIME = "ErrorAutomatonDifferenceTime";
-	private final Benchmark mBenchmark;
-	private boolean mRunningConstruction = false;
-	private boolean mRunningDifference = false;
-	private int mTraceLength = -1;
+	@Reflected(prettyName = "NumberStatementsFirstTrace")
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER_ZERO)
+	private int mLettersFirstTrace = -1;
+
+	@Reflected(prettyName = "NumberRelevantStatements")
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mRelevantStatements;
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_TIME)
+	private long mFaultLocalizationTime;
+
+	// custom measure
+	private final Set<Integer> mLetters = new HashSet<>();
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
 	private EnhancementType mEnhancement = EnhancementType.UNKNOWN;
-	private final Set<Integer> mLetters = new HashSet<>();
-	private int mLettersFirstTrace = -1;
-	private int mRelevantStatements;
-	private long mFaultLocalizationTime = 0l;
+	private int mTraceLength = -1;
+	private final TimeTracker mErrorAutomatonConstructionTime = new TimeTracker();
+	private final TimeTracker mErrorAutomatonDifferenceTime = new TimeTracker();
 
-	public ErrorAutomatonStatisticsGenerator() {
-		mBenchmark = new Benchmark();
-		mBenchmark.register(ERROR_AUTOMATON_CONSTRUCTION_TIME);
+	public ErrorAutomatonStatisticsGenerator(final IToolchainStorage storage) {
+		super(storage);
+		declare("NumberStatementsAllTraces", mLetters::size, MeasureDefinition.INT_COUNTER);
+		declare("NumberErrorTraces", this::getTotalNumber, MeasureDefinition.INT_COUNTER);
+		declare("TraceLengthAvg", this::getAverageTraceLength, MeasureDefinition.INT_MAX);
+		declare("ErrorAutomatonConstructionTimeAvg",
+				() -> getAverageErrorAutomatonConstructionTime(stats -> stats.mConstructionTime),
+				MeasureDefinition.LONG_TIME_MAX);
+		declare("ErrorAutomatonConstructionTimeTotal",
+				() -> getTotalErrorAutomatonConstructionTime(stats -> stats.mConstructionTime),
+				MeasureDefinition.LONG_TIME);
+		declare("ErrorAutomatonDifferenceTimeAvg",
+				() -> getAverageErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime),
+				MeasureDefinition.LONG_TIME_MAX);
+		declare("ErrorAutomatonDifferenceTimeTotal",
+				() -> getTotalErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime),
+				MeasureDefinition.LONG_TIME);
+		declare("NumberOfNoEnhancement", () -> getNumberOfGivenEnhancementType(EnhancementType.NONE),
+				MeasureDefinition.INT_COUNTER);
+		declare("NumberOfFiniteEnhancement", () -> getNumberOfGivenEnhancementType(EnhancementType.FINITE),
+				MeasureDefinition.INT_COUNTER);
+		declare("NumberOfInfiniteEnhancement", () -> getNumberOfGivenEnhancementType(EnhancementType.INFINITE),
+				MeasureDefinition.INT_COUNTER);
 	}
 
 	public void startErrorAutomatonConstructionTime() {
-		assert !mRunningConstruction : "Timing already running";
-		mRunningConstruction = true;
-		mBenchmark.start(ERROR_AUTOMATON_CONSTRUCTION_TIME);
+		mErrorAutomatonConstructionTime.start();
 	}
 
 	public void stopErrorAutomatonConstructionTime() {
-		assert mRunningConstruction : "Timing not running";
-		mRunningConstruction = false;
-		mBenchmark.pause(ERROR_AUTOMATON_CONSTRUCTION_TIME);
+		mErrorAutomatonConstructionTime.stop();
 	}
 
 	public void startErrorAutomatonDifferenceTime() {
-		assert !mRunningDifference : "Timing already running";
-		mRunningDifference = true;
-		mBenchmark.start(ERROR_AUTOMATON_DIFFERENCE_TIME);
+		mErrorAutomatonDifferenceTime.start();
 	}
 
 	public void stopErrorAutomatonDifferenceTime() {
-		assert mRunningDifference : "Timing not running";
-		mRunningDifference = false;
-		mBenchmark.pause(ERROR_AUTOMATON_DIFFERENCE_TIME);
+		mErrorAutomatonDifferenceTime.stop();
 	}
 
 	public void reportTrace(final NestedWord<?> trace) {
@@ -239,10 +261,6 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public void finishAutomatonInstance() {
-		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
-			throw new IllegalAccessError("Not all statistics data were provided.");
-		}
-
 		final long constructionTime = getLastConstructionTime();
 		final long differenceTime = getLastDifferenceTime();
 		final int traceLength = mTraceLength;
@@ -256,71 +274,25 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	 * @return Construction time of previous error automaton (in nanoseconds).
 	 */
 	public long getLastConstructionTime() {
-		return (long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
+		return mErrorAutomatonConstructionTime.elapsedTime(TimeUnit.NANOSECONDS);
 	}
 
 	/**
 	 * @return Difference time of previous error automaton (in nanoseconds).
 	 */
 	public long getLastDifferenceTime() {
-		return (long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_DIFFERENCE_TIME, TimeUnit.NANOSECONDS);
+		return mErrorAutomatonDifferenceTime.elapsedTime(TimeUnit.NANOSECONDS);
 	}
 
 	/**
 	 * @return Total number of error automata/traces.
 	 */
-	public Object getTotalNumber() {
+	public int getTotalNumber() {
 		return mAutomatonStatistics.size();
 	}
 
 	public EnhancementType getEnhancement() {
 		return mEnhancement;
-	}
-
-	@Override
-	public Collection<String> getKeys() {
-		return ErrorAutomatonStatisticsType.getInstance().getKeys();
-	}
-
-	@Override
-	public Object getValue(final String key) {
-		final ErrorAutomatonStatisticsDefinitions keyEnum =
-				Enum.valueOf(ErrorAutomatonStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case NumberErrorTraces:
-			return getTotalNumber();
-		case NumberStatementsAllTraces:
-			return mLetters.size();
-		case NumberStatementsFirstTrace:
-			return mLettersFirstTrace;
-		case NumberRelevantStatements:
-			return mRelevantStatements;
-		case FaulLocalizationTime:
-			return mFaultLocalizationTime;
-		case TraceLengthAvg:
-			return getAverageTraceLength();
-		case ErrorAutomatonConstructionTimeAvg:
-			return getAverageErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
-		case ErrorAutomatonConstructionTimeTotal:
-			return getTotalErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
-		case ErrorAutomatonDifferenceTimeAvg:
-			return getAverageErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
-		case ErrorAutomatonDifferenceTimeTotal:
-			return getTotalErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
-		case NumberOfNoEnhancement:
-			return getNumberOfGivenEnhancementType(EnhancementType.NONE);
-		case NumberOfFiniteEnhancement:
-			return getNumberOfGivenEnhancementType(EnhancementType.FINITE);
-		case NumberOfInfiniteEnhancement:
-			return getNumberOfGivenEnhancementType(EnhancementType.INFINITE);
-		default:
-			throw new AssertionError("Unknown key: " + key);
-		}
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return ErrorAutomatonStatisticsType.getInstance();
 	}
 
 	private int getAverageTraceLength() {
@@ -345,7 +317,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return result;
 	}
 
-	private long getAverageErrorAutomatonConstructionTime(final Function<AutomatonStatisticsEntry, Long> stats2long) {
+	private long getAverageErrorAutomatonConstructionTime(final ToLongFunction<AutomatonStatisticsEntry> stats2long) {
 		final int total = mAutomatonStatistics.size();
 		if (total == 0) {
 			return 0L;
@@ -354,10 +326,10 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return time / total;
 	}
 
-	private long getTotalErrorAutomatonConstructionTime(final Function<AutomatonStatisticsEntry, Long> stats2long) {
+	private long getTotalErrorAutomatonConstructionTime(final ToLongFunction<AutomatonStatisticsEntry> stats2long) {
 		long time = 0L;
 		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
-			time += stats2long.apply(stats);
+			time += stats2long.applyAsLong(stats);
 		}
 		return time;
 	}

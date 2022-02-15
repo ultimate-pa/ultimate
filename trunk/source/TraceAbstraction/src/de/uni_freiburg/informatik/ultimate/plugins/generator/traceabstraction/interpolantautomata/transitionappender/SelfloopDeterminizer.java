@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -71,21 +72,20 @@ public class SelfloopDeterminizer implements IStateDeterminizer<IIcfgTransition<
 	public int mReturnSelfloop = 0;
 	public int mReturnNonSelfloop = 0;
 
-	public SelfloopDeterminizer(final CfgSmtToolkit mCsToolkit, final TAPreferences taPreferences,
+	public SelfloopDeterminizer(final IToolchainStorage storage, final CfgSmtToolkit mCsToolkit,
+			final TAPreferences taPreferences,
 			final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> interpolantAutom,
 			final IDeterminizeStateFactory<IPredicate> stateFactory) {
-		super();
-		mHoareTriplechecker = new MonolithicHoareTripleChecker(mCsToolkit);
+		mHoareTriplechecker = new MonolithicHoareTripleChecker(storage, mCsToolkit);
 		mInterpolantAutomaton = interpolantAutom;
 		mStateFactory = stateFactory;
 		mPowersetDeterminizer = new PowersetDeterminizer<>(mInterpolantAutomaton, true, mStateFactory);
 		for (final IPredicate state : mInterpolantAutomaton.getStates()) {
-			if (mInterpolantAutomatonFinalState == null) {
-				if (mInterpolantAutomaton.isFinal(state)) {
-					mInterpolantAutomatonFinalState = state;
-				}
-			} else {
+			if (mInterpolantAutomatonFinalState != null) {
 				throw new IllegalArgumentException("Interpolant Automaton" + " must have one final state");
+			}
+			if (mInterpolantAutomaton.isFinal(state)) {
+				mInterpolantAutomatonFinalState = state;
 			}
 		}
 		mResultFinalState = new DeterminizedState<>(mInterpolantAutomaton);

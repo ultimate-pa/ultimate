@@ -83,8 +83,8 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	@Override
 	public IPredicate summarize(final Star<IIcfgTransition<IcfgLocation>> regex, final IPredicate input) {
-		mStats.start(SifaStats.Key.LOOP_SUMMARIZER_OVERALL_TIME);
-		mStats.increment(SifaStats.Key.LOOP_SUMMARIZER_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.LOOP_SUMMARIZER_OVERALL_TIME);
+		mStats.increment(SifaStats.SifaMeasures.LOOP_SUMMARIZER_APPLICATIONS);
 
 		final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> key = new Pair<>(regex, input);
 		// TODO consider using cache more, for instance if loop is the same but
@@ -100,13 +100,13 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			assert intermediateResult == null || result == intermediateResult;
 		}
 
-		mStats.stop(SifaStats.Key.LOOP_SUMMARIZER_OVERALL_TIME);
+		mStats.stop(SifaStats.SifaMeasures.LOOP_SUMMARIZER_OVERALL_TIME);
 		return result;
 	}
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
-		mStats.start(SifaStats.Key.LOOP_SUMMARIZER_NEW_COMPUTATION_TIME);
-		mStats.increment(SifaStats.Key.LOOP_SUMMARIZER_CACHE_MISSES);
+		mStats.start(SifaStats.SifaMeasures.LOOP_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.increment(SifaStats.SifaMeasures.LOOP_SUMMARIZER_CACHE_MISSES);
 
 		final IProgressAwareTimer timer = mFixpointIterationTimeout.get();
 
@@ -121,7 +121,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 				mLogger.warn("Timeout while computing loop summary. Using TOP as summary.");
 				return mTools.top();
 			}
-			mStats.increment(SifaStats.Key.LOOP_SUMMARIZER_FIXPOINT_ITERATIONS);
+			mStats.increment(SifaStats.SifaMeasures.LOOP_SUMMARIZER_FIXPOINT_ITERATIONS);
 			postState = mDagIpr.interpretForSingleMarker(dag, fullOverlay, preState);
 			if (mFluid.shallBeAbstracted(postState)) {
 				postState = mDomain.alpha(postState);
@@ -135,7 +135,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			preState = mDomain.widen(preState, postState);
 		}
 
-		mStats.stop(SifaStats.Key.LOOP_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.stop(SifaStats.SifaMeasures.LOOP_SUMMARIZER_NEW_COMPUTATION_TIME);
 
 		// not postState because postState ⊆ preState
 		return preState;

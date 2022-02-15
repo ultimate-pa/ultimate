@@ -93,7 +93,7 @@ public class HoareAnnotationComposer {
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mHoareAnnotationFragments = hoareAnnotationFragments;
-		mHoareAnnotationStatisticsGenerator = new HoareAnnotationStatisticsGenerator();
+		mHoareAnnotationStatisticsGenerator = new HoareAnnotationStatisticsGenerator(services.getStorage());
 		mSurrogateForEmptyCallPred =
 				mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
 		final HashRelation3<IcfgLocation, IPredicate, Term> loc2callPred2disjuncts =
@@ -142,8 +142,9 @@ public class HoareAnnotationComposer {
 			}
 			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
 
-			final Set<IProgramVar> vars = TermVarsProc.computeTermVarsProc(conjunction,
-					mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable()).getVars();
+			final Set<IProgramVar> vars = TermVarsProc
+					.computeTermVarsProc(conjunction, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable())
+					.getVars();
 			conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
 					conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript());
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(

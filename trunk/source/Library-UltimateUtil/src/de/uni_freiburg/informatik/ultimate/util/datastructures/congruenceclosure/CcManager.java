@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BenchmarkWithCounters;
 
 public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 

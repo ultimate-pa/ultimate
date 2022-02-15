@@ -71,8 +71,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.InCaReCounter;
 
 /**
  * {@link IHoareTripleChecker} that performs hoare triple checks using an abstract post operator.
@@ -156,13 +156,14 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		mCsToolkit = Objects.requireNonNull(csToolkit);
 		mManagedScript = Objects.requireNonNull(mCsToolkit.getManagedScript());
 
-		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
+		mBenchmark = new HoareTripleCheckerStatisticsGenerator(mServices.getStorage());
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
 		mTopState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createTopState());
 		mBottomState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createBottomState());
-		mHtcSmt = new IncrementalHoareTripleChecker(mCsToolkit, false);
-		mHtcSd = HoareTripleCheckerUtils.constructSdHoareTripleChecker(mLogger, mCsToolkit, mPredicateUnifier);
+		mHtcSmt = new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false);
+		mHtcSd = HoareTripleCheckerUtils.constructSdHoareTripleChecker(mServices.getStorage(), mLogger, mCsToolkit,
+				mPredicateUnifier);
 		mOnlyAbsInt = onlyAbsInt;
 
 	}
@@ -361,11 +362,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			final DisjunctiveAbstractState<STATE> stateAfterLeaving, final ACTION act,
 			final DisjunctiveAbstractState<STATE> postState) {
 
-		if (stateBeforeLeaving.isBottom()) {
-			return Validity.VALID;
-		}
-
-		if (stateAfterLeaving.isBottom()) {
+		if (stateBeforeLeaving.isBottom() || stateAfterLeaving.isBottom()) {
 			return Validity.VALID;
 		}
 
@@ -511,8 +508,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		if (!REDUCE_STATES) {
 			return validPreState;
 		}
-		final Set<IProgramVarOrConst> requiredVars = new HashSet<>();
-		requiredVars.addAll(getVars(action));
+		final Set<IProgramVarOrConst> requiredVars = new HashSet<>(getVars(action));
 		requiredVars.addAll(succ.getVariables());
 		requiredVars.addAll(getMissingOldVars(requiredVars));
 
@@ -673,11 +669,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		}
 		result = SmtUtils.checkSatTerm(script, checkedTerm);
 
-		if (result == LBool.UNKNOWN || result == expected) {
-			script.echo(buildQuoteEndIsSubsetOf());
-			return true;
-		}
-		if (subResult == SubsetResult.NONE) {
+		if (result == LBool.UNKNOWN || result == expected || subResult == SubsetResult.NONE) {
 			script.echo(buildQuoteEndIsSubsetOf());
 			return true;
 		}

@@ -8,7 +8,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.statistics.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -26,8 +26,8 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractModelCheckerTestSuiteWithIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 public class AutomizerChcTest extends AbstractModelCheckerTestSuiteWithIncrementalLog {
 
@@ -38,7 +38,7 @@ public class AutomizerChcTest extends AbstractModelCheckerTestSuiteWithIncrement
 
 	private static final String TOOLCHAIN = "examples/toolchains/AutomizerCHC.xml";
 	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_Goto.epf";
-//	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_No_Goto.epf";
+	// private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_No_Goto.epf";
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -55,7 +55,7 @@ public class AutomizerChcTest extends AbstractModelCheckerTestSuiteWithIncrement
 
 	private static List<Class<? extends ICsvProviderProvider<? extends Object>>> getBenchmarks() {
 		final List<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
-		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
+		benchmarks.add(BuchiCegarLoopBenchmarkGenerator.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
@@ -94,7 +94,7 @@ public class AutomizerChcTest extends AbstractModelCheckerTestSuiteWithIncrement
 	}
 
 	public Collection<File> getInputFiles() {
-		return TestUtil.getFiles(new File(TEST_FILES_DIR), new String[] { ".smt2" });
+		return TestUtil.getFiles(new File(TEST_FILES_DIR), ".smt2");
 	}
 
 	@Override

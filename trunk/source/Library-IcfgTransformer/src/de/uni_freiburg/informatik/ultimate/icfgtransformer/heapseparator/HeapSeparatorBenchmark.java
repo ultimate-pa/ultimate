@@ -32,7 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BenchmarkWithCounters;
 
 public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
 	private final Set<ArrayGroup> mHeapArrayGroups = new HashSet<>();

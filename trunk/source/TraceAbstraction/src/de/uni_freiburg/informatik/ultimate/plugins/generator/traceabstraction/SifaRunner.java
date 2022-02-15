@@ -119,7 +119,7 @@ public final class SifaRunner<L extends IIcfgTransition<?>> implements IInterpol
 
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants),
 				NestedWord.nestedWord(currentCex.getWord()), mPrecondition, mPostcondition, Collections.emptyMap(),
-				getClass().getSimpleName(), icfg.getCfgSmtToolkit(), logger);
+				getClass().getSimpleName(), icfg.getCfgSmtToolkit(), logger, null);
 		mStats = sifaComponents.getStats();
 		if (unifier.getFalsePredicate() == mPostcondition) {
 			mIsCorrect = LBool.UNSAT;

@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IModuleStatisticProvider;
 
 /**
  * 
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @param <L>
  */
-public interface IIpAbStrategyModule<L> {
+public interface IIpAbStrategyModule<L> extends IModuleStatisticProvider {
 
 	IpAbStrategyModuleResult<L> buildInterpolantAutomaton(List<QualifiedTracePredicates> perfectIpps,
 			List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException;

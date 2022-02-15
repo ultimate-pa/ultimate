@@ -26,54 +26,42 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization;
 
-import java.util.Collection;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+public class AutomataMinimizationStatisticsGenerator extends BaseStatisticsDataProvider {
 
-public class AutomataMinimizationStatisticsGenerator implements IStatisticsDataProvider {
-	
+	public static final String AutomataMinimizationTime = "AutomataMinimizationTime";
+	public static final String MinimizatonAttempts = "MinimizatonAttempts";
+	public static final String NontrivialMinimizations = "NontrivialMinimizations";
+	public static final String StatesRemovedByMinimization = "StatesRemovedByMinimization";
+
+	@Reflected(prettyName = AutomataMinimizationTime)
+	@Statistics(type = DefaultMeasureDefinitions.LONG_TIME)
 	private final long mAutomataMinimizationTime;
-	private final boolean mMinimizatonAttempt;
-	private final boolean mNontrivialMinimizaton;
+
+	@Reflected(prettyName = MinimizatonAttempts)
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private final int mMinimizatonAttempt;
+
+	@Reflected(prettyName = NontrivialMinimizations)
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private final int mNontrivialMinimizaton;
+
+	@Reflected(prettyName = StatesRemovedByMinimization)
+	@Statistics(type = DefaultMeasureDefinitions.LONG_COUNTER)
 	private final long mStatesRemovedByMinimization;
 
-
-
-	public AutomataMinimizationStatisticsGenerator(final long automataMinimizationTime, final boolean minimizatonAttempt,
-			final boolean nontrivialMinimizaton, final long statesRemovedByMinimization) {
-		super();
+	public AutomataMinimizationStatisticsGenerator(final IToolchainStorage storage, final long automataMinimizationTime,
+			final boolean minimizatonAttempt, final boolean nontrivialMinimizaton,
+			final long statesRemovedByMinimization) {
+		super(storage);
 		mAutomataMinimizationTime = automataMinimizationTime;
-		mMinimizatonAttempt = minimizatonAttempt;
-		mNontrivialMinimizaton = nontrivialMinimizaton;
+		mMinimizatonAttempt = minimizatonAttempt ? 1 : 0;
+		mNontrivialMinimizaton = nontrivialMinimizaton ? 1 : 0;
 		mStatesRemovedByMinimization = statesRemovedByMinimization;
-	}
-
-	@Override
-	public Object getValue(final String key) {
-		final AutomataMinimizationStatisticsDefinitions keyEnum = Enum.valueOf(AutomataMinimizationStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case AutomataMinimizationTime:
-			return mAutomataMinimizationTime;
-		case MinimizatonAttempts:
-			return mMinimizatonAttempt ? 1 : 0;
-		case NontrivialMinimizations:
-			return mNontrivialMinimizaton ? 1 : 0;
-		case StatesRemovedByMinimization:
-			return mStatesRemovedByMinimization;
-		default:
-			throw new AssertionError("unknown data");
-		}
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return AutomataMinimizationStatisticsType.getInstance();
-	}
-
-	@Override
-	public Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
 	}
 
 }

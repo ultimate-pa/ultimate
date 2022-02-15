@@ -66,7 +66,6 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
 	// private final IPredicateUnifier mPredUnifier;
-	private final PredicateHelper<L> mPredHelper;
 	private final IUltimateServiceProvider mServices;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final CfgSmtToolkit mCsToolkit;
@@ -84,8 +83,6 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 			final List<String> preProcessOptions) {
 		mLogger = logger;
 		mScript = script;
-		// mPredUnifier = predUnifier;
-		mPredHelper = predHelper;
 		mServices = services;
 		mCsToolkit = toolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(mCsToolkit, false);
@@ -213,7 +210,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 	}
 
 	private List<UnmodifiableTransFormula> convertActionToFormula(final List<L> actions) {
-		final List<UnmodifiableTransFormula> tfs = new ArrayList<UnmodifiableTransFormula>();
+		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 		for (final L action : actions) {
 			tfs.add(action.getTransformula());
 		}

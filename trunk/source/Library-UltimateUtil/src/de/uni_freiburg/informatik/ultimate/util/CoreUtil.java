@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.FileSystems;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -70,7 +71,7 @@ import java.util.function.Predicate;
  */
 public class CoreUtil {
 
-	private static final String PLATFORM_LINE_SEPARATOR = System.getProperty("line.separator");
+	private static final String PLATFORM_LINE_SEPARATOR = System.lineSeparator();
 	public static final String OS = System.getProperty("os.name");
 	public static final boolean OS_IS_WINDOWS = OS.toLowerCase().indexOf("win") >= 0;
 	public static final String WORKING_DIRECTORY = System.getProperty("user.dir");
@@ -101,10 +102,7 @@ public class CoreUtil {
 	 * @return The name in Camel Case.
 	 */
 	public static String getUpperToCamelCase(final String value) {
-		if (value == null) {
-			return value;
-		}
-		if (!value.toUpperCase().equals(value)) {
+		if (value == null || !value.toUpperCase().equals(value)) {
 			// string has lower-case, ignore
 			return value;
 		}
@@ -452,7 +450,7 @@ public class CoreUtil {
 	public static StringBuilder indentMultilineString(final String original, final String indentPrefix,
 			final boolean forceRemoveLastLinebreak) {
 		final StringBuilder sb = new StringBuilder();
-		final String lineSeparator = System.getProperty("line.separator");
+		final String lineSeparator = System.lineSeparator();
 		final String[] splitted = original.split("\\r?\\n");
 
 		for (final String s : splitted) {
@@ -479,10 +477,10 @@ public class CoreUtil {
 	 * Add file separator if last symbol is not already file separator.
 	 */
 	public static String addFileSeparator(final String string) {
-		if (string.endsWith(System.getProperty("file.separator"))) {
+		if (string.endsWith(FileSystems.getDefault().getSeparator())) {
 			return string;
 		}
-		return string + System.getProperty("file.separator");
+		return string + FileSystems.getDefault().getSeparator();
 	}
 
 	public static String getCurrentDateTimeAsString() {
@@ -757,7 +755,8 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Convert time durations represented as double to different units.
+	 * Convert time durations represented as double to different units. Use {@link TimeUnit} directly if you want to
+	 * convert from long.
 	 */
 	public static double convertTimeUnit(final double amount, final TimeUnit from, final TimeUnit to) {
 		if (from == to) {
@@ -767,6 +766,19 @@ public class CoreUtil {
 			return amount / from.convert(1, to);
 		}
 		return amount * to.convert(1, from);
+	}
+
+	/**
+	 * Pretty-prints nano seconds in seconds.
+	 * 
+	 * @param time
+	 *            time in nano seconds
+	 * @return pretty-printed time
+	 */
+	public static String prettyprintNanoseconds(final long time) {
+		final long seconds = time / 1_000_000_000;
+		final long tenthDigit = time / 100_000_000 % 10;
+		return seconds + "." + tenthDigit + "s";
 	}
 
 	public static TimeUnit findLargestTargetUnit(final double amount, final TimeUnit unit) {
@@ -800,7 +812,7 @@ public class CoreUtil {
 			return TimeUnit.MICROSECONDS;
 		case NANOSECONDS:
 			if (amount >= 1000) {
-				return findLargestTargetUnit(amount / 1000.0, TimeUnit.NANOSECONDS);
+				return findLargestTargetUnit(amount / 1000.0, TimeUnit.MICROSECONDS);
 			}
 			return TimeUnit.NANOSECONDS;
 		default:

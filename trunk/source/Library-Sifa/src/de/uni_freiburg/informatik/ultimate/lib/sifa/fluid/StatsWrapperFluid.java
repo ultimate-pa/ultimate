@@ -46,12 +46,12 @@ public class StatsWrapperFluid implements IFluid {
 
 	@Override
 	public boolean shallBeAbstracted(final IPredicate predicate) {
-		mStats.increment(SifaStats.Key.FLUID_QUERIES);
-		mStats.start(SifaStats.Key.FLUID_QUERY_TIME);
+		mStats.increment(SifaStats.SifaMeasures.FLUID_QUERIES);
+		mStats.start(SifaStats.SifaMeasures.FLUID_QUERY_TIME);
 		final boolean result = mFluid.shallBeAbstracted(predicate);
-		mStats.stop(SifaStats.Key.FLUID_QUERY_TIME);
+		mStats.stop(SifaStats.SifaMeasures.FLUID_QUERY_TIME);
 		if (result) {
-			mStats.increment(SifaStats.Key.FLUID_YES_ANSWERS);
+			mStats.increment(SifaStats.SifaMeasures.FLUID_YES_ANSWERS);
 		}
 		return result;
 	}

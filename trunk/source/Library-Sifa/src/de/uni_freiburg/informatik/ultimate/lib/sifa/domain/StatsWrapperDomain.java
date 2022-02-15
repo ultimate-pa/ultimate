@@ -46,46 +46,46 @@ public class StatsWrapperDomain implements IDomain {
 
 	@Override
 	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
-		mStats.start(SifaStats.Key.DOMAIN_JOIN_TIME);
-		mStats.increment(SifaStats.Key.DOMAIN_JOIN_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.DOMAIN_JOIN_TIME);
+		mStats.increment(SifaStats.SifaMeasures.DOMAIN_JOIN_APPLICATIONS);
 		final IPredicate result = mInternDomain.join(lhs, rhs);
-		mStats.stop(SifaStats.Key.DOMAIN_JOIN_TIME);
+		mStats.stop(SifaStats.SifaMeasures.DOMAIN_JOIN_TIME);
 		return result;
 	}
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		mStats.start(SifaStats.Key.DOMAIN_WIDEN_TIME);
-		mStats.increment(SifaStats.Key.DOMAIN_WIDEN_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.DOMAIN_WIDEN_TIME);
+		mStats.increment(SifaStats.SifaMeasures.DOMAIN_WIDEN_APPLICATIONS);
 		final IPredicate result = mInternDomain.widen(old, widenWith);
-		mStats.stop(SifaStats.Key.DOMAIN_WIDEN_TIME);
+		mStats.stop(SifaStats.SifaMeasures.DOMAIN_WIDEN_TIME);
 		return result;
 	}
 
 	@Override
 	public ResultForAlteredInputs isEqBottom(final IPredicate pred) {
-		mStats.start(SifaStats.Key.DOMAIN_ISBOTTOM_TIME);
-		mStats.increment(SifaStats.Key.DOMAIN_ISBOTTOM_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.DOMAIN_ISBOTTOM_TIME);
+		mStats.increment(SifaStats.SifaMeasures.DOMAIN_ISBOTTOM_APPLICATIONS);
 		final ResultForAlteredInputs result = mInternDomain.isEqBottom(pred);
-		mStats.stop(SifaStats.Key.DOMAIN_ISBOTTOM_TIME);
+		mStats.stop(SifaStats.SifaMeasures.DOMAIN_ISBOTTOM_TIME);
 		return result;
 	}
 
 	@Override
 	public ResultForAlteredInputs isSubsetEq(final IPredicate subset, final IPredicate superset) {
-		mStats.start(SifaStats.Key.DOMAIN_ISSUBSETEQ_TIME);
-		mStats.increment(SifaStats.Key.DOMAIN_ISSUBSETEQ_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.DOMAIN_ISSUBSETEQ_TIME);
+		mStats.increment(SifaStats.SifaMeasures.DOMAIN_ISSUBSETEQ_APPLICATIONS);
 		final ResultForAlteredInputs result = mInternDomain.isSubsetEq(subset, superset);
-		mStats.stop(SifaStats.Key.DOMAIN_ISSUBSETEQ_TIME);
+		mStats.stop(SifaStats.SifaMeasures.DOMAIN_ISSUBSETEQ_TIME);
 		return result;
 	}
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		mStats.start(SifaStats.Key.DOMAIN_ALPHA_TIME);
-		mStats.increment(SifaStats.Key.DOMAIN_ALPHA_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.DOMAIN_ALPHA_TIME);
+		mStats.increment(SifaStats.SifaMeasures.DOMAIN_ALPHA_APPLICATIONS);
 		final IPredicate result = mInternDomain.alpha(pred);
-		mStats.stop(SifaStats.Key.DOMAIN_ALPHA_TIME);
+		mStats.stop(SifaStats.SifaMeasures.DOMAIN_ALPHA_TIME);
 		return result;
 	}
 

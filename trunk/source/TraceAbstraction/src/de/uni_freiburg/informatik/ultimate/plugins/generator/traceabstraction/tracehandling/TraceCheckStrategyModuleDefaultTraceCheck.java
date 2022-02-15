@@ -36,13 +36,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition<?>>
 		implements ITraceCheckStrategyModule<L, TraceCheck<L>> {
@@ -88,8 +87,8 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
-		stats.addStatistics(RefinementEngineStatisticsDefinitions.TRACE_CHECK, getOrConstruct().getStatistics());
+	public void aggregateStatistics(final StatisticsAggregator stats) {
+		stats.aggregateStatisticsData("TRACE_CHECK", getOrConstruct().getStatistics());
 	}
 
 	@Override

@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder.SifaComponents;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Starts Sifa (symbolic interpretation with fluid abstractions) on an icfg.
@@ -84,11 +83,9 @@ public class SifaObserver extends BaseObserver {
 	}
 
 	private void reportStats(final SifaStats stats) {
-		final StatisticsData csvProvider = new StatisticsData();
 		final String shortDescription = "Symbolic Interpretation with Fluid Abstractions";
-		csvProvider.aggregateBenchmarkData(stats);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, shortDescription, csvProvider));
+				new StatisticsResult<>(Activator.PLUGIN_ID, shortDescription, stats));
 	}
 
 	private void reportResults(final Map<IcfgLocation, IPredicate> predicates) {
@@ -114,12 +111,13 @@ public class SifaObserver extends BaseObserver {
 		if (predEqBottom.isTrueForAbstraction()) {
 			result = new PositiveResult<>(Activator.PLUGIN_ID, loiPred.getKey(), mServices.getBacktranslationService());
 		} else {
-			String msg = "Over-approximation of reachable states at this location is " + loiPred.getValue();
+			StringBuilder msg = new StringBuilder("Over-approximation of reachable states at this location is ")
+					.append(loiPred.getValue());
 			if (predEqBottom.wasAbstracted()) {
-				msg += "\nFinal emptiness check over-approximated again to " + predEqBottom.getLhs();
+				msg.append("\nFinal emptiness check over-approximated again to ").append(predEqBottom.getLhs());
 			}
 			result = new UnprovableResult<>(Activator.PLUGIN_ID, loiPred.getKey(),
-					mServices.getBacktranslationService(), IcfgProgramExecution.create(IcfgEdge.class), msg);
+					mServices.getBacktranslationService(), IcfgProgramExecution.create(IcfgEdge.class), msg.toString());
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return predEqBottom.isTrueForAbstraction();

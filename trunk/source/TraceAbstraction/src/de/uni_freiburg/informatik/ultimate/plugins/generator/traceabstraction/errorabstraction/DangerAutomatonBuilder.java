@@ -165,15 +165,16 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 		mLogger.info("Constructing danger automaton with " + mPredicates.size() + " predicates.");
 		mPt = new PredicateTransformer<>(csToolkit.getManagedScript(),
 				new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
-		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mCsTookit, false);
+		final IncrementalHoareTripleChecker htc =
+				new IncrementalHoareTripleChecker(mServices.getStorage(), mCsTookit, false);
 
 		{
 			final IValueConstruction<Pair<IPredicate, L>, Term> valueConstruction = key -> {
 				final Term wp = mPt.weakestPrecondition(predicateFactory.not(key.getFirst()),
 						key.getSecond().getTransformula());
-				final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
-				final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
-				return pre;
+				final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices,
+						csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
+				return SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
 			};
 			mPreInternalCc = new ConstructionCache<>(valueConstruction);
 		}
@@ -484,8 +485,8 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 						csToolkit.getModifiableGlobalsTable(), mServices, trace, null, pum.getTruePredicate(), null,
 						pum.getTruePredicate(), simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final List<IPredicatePostprocessor> postprocessors = new ArrayList<>();
-		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(),
-				predicateFactory, simplificationTechnique);
+		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices,
+				csToolkit.getManagedScript(), predicateFactory, simplificationTechnique);
 		postprocessors.add(qepp);
 		postprocessors.add(new UnifyPostprocessor(predicateUnifier));
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, null, null, Collections.emptySortedMap(),

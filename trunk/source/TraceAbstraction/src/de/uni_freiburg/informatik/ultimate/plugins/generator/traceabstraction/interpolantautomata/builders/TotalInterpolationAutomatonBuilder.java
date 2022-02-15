@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -78,9 +78,10 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
@@ -100,7 +101,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 	private final IHoareTripleChecker mHtc;
 	private final InterpolationTechnique mInterpolation;
 
-	private final TotalInterpolationBenchmarkGenerator mBenchmarkGenerator = new TotalInterpolationBenchmarkGenerator();
+	private final TotalInterpolationBenchmarkGenerator mBenchmarkGenerator;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
@@ -114,6 +115,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final IPredicateUnifier predicateUnifier, final TracePredicates ipp)
 			throws AutomataOperationCanceledException {
 		mServices = services;
+		mBenchmarkGenerator = new TotalInterpolationBenchmarkGenerator(mServices.getStorage());
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCollectInterpolantStatistics = collectInterpolantStatistics;
@@ -218,15 +220,15 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final IPredicate hierPredItp = mEpimorphism.getMapping(returnTrans.getHierPred());
 			final Set<IPredicate> succs = mIA.succReturn(predItp, hierPredItp, returnTrans.getLetter());
 			return succs.contains(succItp);
-		} else if (transition instanceof SummaryReturnTransition) {
+		}
+		if (transition instanceof SummaryReturnTransition) {
 			final SummaryReturnTransition<LETTER, IPredicate> summaryTrans =
 					(SummaryReturnTransition<LETTER, IPredicate>) transition;
 			final IPredicate linPredItp = mEpimorphism.getMapping(summaryTrans.getLinPred());
 			final Set<IPredicate> succs = mIA.succReturn(linPredItp, predItp, summaryTrans.getLetter());
 			return succs != null && succs.contains(succItp);
-		} else {
-			throw new AssertionError("unsupported" + transition.getClass());
 		}
+		throw new AssertionError("unsupported" + transition.getClass());
 	}
 
 	private NestedRun<LETTER, IPredicate> constructRunOfLengthOne(final IPredicate p,
@@ -245,14 +247,14 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final OutgoingReturnTransition<LETTER, IPredicate> returnTrans =
 					(OutgoingReturnTransition<LETTER, IPredicate>) transition;
 			return new NestedRun<>(p, returnTrans.getLetter(), NestedWord.MINUS_INFINITY, returnTrans.getSucc());
-		} else if (transition instanceof SummaryReturnTransition) {
+		}
+		if (transition instanceof SummaryReturnTransition) {
 			final SummaryReturnTransition<LETTER, IPredicate> summaryTrans =
 					(SummaryReturnTransition<LETTER, IPredicate>) transition;
 			return new NestedRun<>(summaryTrans.getLinPred(), summaryTrans.getLetter(), NestedWord.MINUS_INFINITY,
 					summaryTrans.getSucc());
-		} else {
-			throw new AssertionError("unsupported" + transition.getClass());
 		}
+		throw new AssertionError("unsupported" + transition.getClass());
 
 	}
 
@@ -301,7 +303,6 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		final IPredicate precondition = mEpimorphism.getMapping(first);
 		final IPredicate postcondition = mEpimorphism.getMapping(last);
 		final SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
-		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 
 		InterpolatingTraceCheck<LETTER> tc;
 		switch (mInterpolation) {
@@ -422,247 +423,37 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		return mIA;
 	}
 
-	// private void startDfs(IPredicate state,
-	// OutgoingInternalTransition<CodeBlock, IPredicate> transition) {
-	// new GraphDfs(null, state, transition);
-	// }
-	//
-	//
-	// private class GraphDfs {
-	// private final Set<IPredicate> mGoal;
-	// private final Set<IPredicate> mVisited = new HashSet<IPredicate>();
-	// private final Stack<Iterator<?>> mIteratorStack = new
-	// Stack<Iterator<?>>();
-	// private final Stack<Transitionlet<CodeBlock, IPredicate>>
-	// mTransitionStack = new Stack<Transitionlet<CodeBlock, IPredicate>>();
-	// private final Stack<IPredicate> mStateStack = new Stack<IPredicate>();
-	// private final Stack<IPredicate> mCallPredecessors = new
-	// Stack<IPredicate>();
-	//
-	// IPredicate mCurrentPred;
-	// IPredicate mCurrentSucc;
-	// Iterator<Transitionlet<CodeBlock, IPredicate>> mCurrentIterator;
-	// Transitionlet<CodeBlock, IPredicate> mCurrentTransition;
-	//
-	//
-	//
-	// public GraphDfs(Set<IPredicate> goal, IPredicate currentPred,
-	// Transitionlet<CodeBlock, IPredicate> initialTransition) {
-	// super();
-	// mGoal = goal;
-	// mCurrentPred = currentPred;
-	// mCurrentTransition = initialTransition;
-	// mCurrentIterator = null;
-	// mCurrentSucc = getSuccessor(initialTransition);
-	// }
-	//
-	// private IPredicate getSuccessor(Transitionlet<CodeBlock, IPredicate>
-	// transition) {
-	// IPredicate result;
-	// if (transition instanceof OutgoingInternalTransition) {
-	// result = ((OutgoingInternalTransition<CodeBlock, IPredicate>)
-	// transition).getSucc();
-	// } else if (transition instanceof OutgoingCallTransition) {
-	// result = ((OutgoingCallTransition<CodeBlock, IPredicate>)
-	// transition).getSucc();
-	// } else if (transition instanceof OutgoingReturnTransition) {
-	// result = ((OutgoingReturnTransition<CodeBlock, IPredicate>)
-	// transition).getSucc();
-	// } else {
-	// throw new AssertionError("unsupported" + transition.getClass());
-	// }
-	// return result;
-	// }
-	//
-	// public void searchGoal() {
-	// while (!mGoal.contains(mCurrentSucc)) {
-	// mVisited.add(mCurrentSucc);
-	// push();
-	// getNextTransition();
-	// while(mCurrentTransition == null) {
-	// if (getStackHeight() == 1) {
-	// // we never iterate over the initial Iterator.
-	// return;
-	// }
-	// pop();
-	// getNextTransition();
-	// }
-	// mCurrentSucc = getSuccessor(mCurrentTransition);
-	// }
-	// }
-	//
-	// private int getStackHeight() {
-	// assert allStacksHaveSameHeight();
-	// return mStateStack.size();
-	// }
-	//
-	// private boolean allStacksHaveSameHeight() {
-	// boolean result = (mStateStack.size() == mIteratorStack.size());
-	// result &= (mStateStack.size() == mTransitionStack.size());
-	// return result;
-	// }
-	//
-	// private void push() {
-	// assert allStacksHaveSameHeight();
-	// mTransitionStack.push(mCurrentTransition);
-	// mIteratorStack.push(mCurrentIterator);
-	// mStateStack.push(mCurrentPred);
-	// if (mCurrentTransition instanceof OutgoingCallTransition) {
-	// mCallPredecessors.add(mCurrentPred);
-	// }
-	// mCurrentPred = mCurrentSucc;
-	// mCurrentTransition = null;
-	// mCurrentIterator = null;
-	// mCurrentSucc = null;
-	// }
-	//
-	// private void pop() {
-	// assert allStacksHaveSameHeight();
-	// mCurrentSucc = mCurrentPred;
-	// mCurrentPred = mStateStack.pop();
-	// if (mCurrentTransition instanceof OutgoingCallTransition) {
-	// IPredicate callPred = mCallPredecessors.pop();
-	// assert callPred == mCurrentPred;
-	// }
-	// mCurrentIterator = (Iterator<Transitionlet<CodeBlock, IPredicate>>)
-	// mIteratorStack.pop();
-	// mCurrentTransition = mTransitionStack.pop();
-	// }
-	//
-	// public void getNextTransition() {
-	// if (mCurrentIterator.hasNext()) {
-	// mCurrentTransition = mCurrentIterator.next();
-	// } else {
-	// if (mCurrentTransition instanceof OutgoingInternalTransition) {
-	// switchIteratorInternalToCall();
-	// //TODO: implement
-	// }
-	// }
-	// if (mCurrentTransition instanceof OutgoingInternalTransition) {
-	// mCurrentTransition = getNextInternalTransition();
-	// if (mCurrentTransition == null) {
-	//
-	// }
-	// }
-	//
-	// }
-	//
-	// public void switchIteratorInternalToCall() {
-	// assert !mIteratorStack.peek().hasNext();
-	// mIteratorStack.pop();
-	// IPredicate top = mStateStack.peek();
-	// Iterator<OutgoingCallTransition<CodeBlock, IPredicate>> it =
-	// mAbstraction.callSuccessors(top).iterator();
-	// mIteratorStack.push(it);
-	// }
-	//
-	// public void switchIteratorCallToReturn() {
-	// assert !mIteratorStack.peek().hasNext();
-	// mIteratorStack.pop();
-	// IPredicate top = mStateStack.peek();
-	// Iterator<OutgoingReturnTransition<CodeBlock, IPredicate>> it =
-	// mAbstraction.returnSuccessors(top).iterator();
-	// mIteratorStack.push(it);
-	// }
-	//
-	// public OutgoingInternalTransition<CodeBlock, IPredicate>
-	// getNextInternalTransition() {
-	// if (mIteratorStack.peek().hasNext()) {
-	// return (OutgoingInternalTransition<CodeBlock, IPredicate>)
-	// mIteratorStack.peek().next();
-	// } else {
-	// return null;
-	// }
-	// }
-	// }
-	//
-
 	public TotalInterpolationBenchmarkGenerator getTotalInterpolationBenchmark() {
 		return mBenchmarkGenerator;
 	}
 
-	public static class TotalInterpolationBenchmarkType implements IStatisticsType {
+	public static class TotalInterpolationBenchmarkGenerator extends BaseStatisticsDataProvider {
 
-		private static TotalInterpolationBenchmarkType s_Instance = new TotalInterpolationBenchmarkType();
-		public final static String s_AdditionalInterpolants = "AdditionalInterpolants";
-		public final static String s_PathLenght1 = "RunLenght1";
-		public final static String s_RunSearches = "RunSearches";
-		public final static String s_UsefullRunGeq2 = "UsefullRunGeq2";
-		public final static String s_UselessRunGeq2 = "UselessRunGeq2";
-		public final static String s_TraceCheckBenchmarks = "traceCheckBenchmarks";
-		public final static String s_EdgeCheckerBenchmarks = "EdgeCheckerBenchmarks";
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mAdditionalInterpolants;
 
-		public static TotalInterpolationBenchmarkType getInstance() {
-			return s_Instance;
-		}
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mPathLenght1;
 
-		@Override
-		public Collection<String> getKeys() {
-			return Arrays.asList(s_AdditionalInterpolants, s_PathLenght1, s_RunSearches, s_UsefullRunGeq2,
-					s_UselessRunGeq2, s_TraceCheckBenchmarks, s_EdgeCheckerBenchmarks);
-		}
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mRunSearches;
 
-		@Override
-		public Object aggregate(final String key, final Object value1, final Object value2) {
-			switch (key) {
-			case s_AdditionalInterpolants:
-			case s_PathLenght1:
-			case s_RunSearches:
-			case s_UsefullRunGeq2:
-			case s_UselessRunGeq2:
-				return (int) value1 + (int) value2;
-			case s_TraceCheckBenchmarks:
-			case s_EdgeCheckerBenchmarks:
-				final StatisticsData bmData1 = (StatisticsData) value1;
-				final StatisticsData bmData2 = (StatisticsData) value2;
-				bmData1.aggregateBenchmarkData(bmData2);
-				return bmData1;
-			default:
-				throw new AssertionError("unknown key");
-			}
-		}
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mUsefullRunGeq2;
 
-		@Override
-		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-			final StringBuilder sb = new StringBuilder();
+		@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+		private int mUselessRunGeq2;
 
-			for (final String id : new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches,
-					s_UsefullRunGeq2, s_UselessRunGeq2 }) {
-				final int value = (int) benchmarkData.getValue(id);
-				sb.append(id);
-				sb.append(": ");
-				sb.append(value);
-				sb.append("  ");
-			}
+		@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+		private final StatisticsAggregator mEcData;
 
-			sb.append(s_TraceCheckBenchmarks);
-			sb.append(": ");
-			final StatisticsData ecData = (StatisticsData) benchmarkData.getValue(s_TraceCheckBenchmarks);
-			sb.append(ecData);
-			sb.append("  ");
+		@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+		private final StatisticsAggregator mTcData;
 
-			sb.append(s_EdgeCheckerBenchmarks);
-			sb.append(": ");
-			final StatisticsData tcData = (StatisticsData) benchmarkData.getValue(s_EdgeCheckerBenchmarks);
-			sb.append(tcData);
-			return sb.toString();
-		}
-
-	}
-
-	public static class TotalInterpolationBenchmarkGenerator implements IStatisticsDataProvider {
-
-		private int mAdditionalInterpolants = 0;
-		private int mPathLenght1 = 0;
-		private int mRunSearches = 0;
-		private int mUsefullRunGeq2 = 0;
-		private int mUselessRunGeq2 = 0;
-		private final StatisticsData mEcData = new StatisticsData();
-		private final StatisticsData mTcData = new StatisticsData();
-
-		@Override
-		public Collection<String> getKeys() {
-			return TotalInterpolationBenchmarkType.getInstance().getKeys();
+		public TotalInterpolationBenchmarkGenerator(final IToolchainStorage storage) {
+			super(storage);
+			mEcData = new StatisticsAggregator(storage);
+			mTcData = new StatisticsAggregator(storage);
 		}
 
 		public void reportAdditionalInterpolants(final int additionalInterpolants) {
@@ -686,38 +477,11 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		}
 
 		public void addEdgeCheckerData(final IStatisticsDataProvider ecbd) {
-			mEcData.aggregateBenchmarkData(ecbd);
+			mEcData.aggregateStatisticsData(ecbd);
 		}
 
 		public void addTraceCheckData(final IStatisticsDataProvider tcbd) {
-			mTcData.aggregateBenchmarkData(tcbd);
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			switch (key) {
-			case TotalInterpolationBenchmarkType.s_AdditionalInterpolants:
-				return mAdditionalInterpolants;
-			case TotalInterpolationBenchmarkType.s_PathLenght1:
-				return mPathLenght1;
-			case TotalInterpolationBenchmarkType.s_RunSearches:
-				return mRunSearches;
-			case TotalInterpolationBenchmarkType.s_UsefullRunGeq2:
-				return mUsefullRunGeq2;
-			case TotalInterpolationBenchmarkType.s_UselessRunGeq2:
-				return mUselessRunGeq2;
-			case TotalInterpolationBenchmarkType.s_TraceCheckBenchmarks:
-				return mTcData;
-			case TotalInterpolationBenchmarkType.s_EdgeCheckerBenchmarks:
-				return mEcData;
-			default:
-				throw new AssertionError("unknown key");
-			}
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return TotalInterpolationBenchmarkType.getInstance();
+			mTcData.aggregateStatisticsData(tcbd);
 		}
 
 	}

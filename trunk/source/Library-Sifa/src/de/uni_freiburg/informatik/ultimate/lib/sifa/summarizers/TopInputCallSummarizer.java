@@ -61,8 +61,8 @@ public class TopInputCallSummarizer implements ICallSummarizer {
 
 	@Override
 	public IPredicate summarize(final String callee, final IPredicate unusedInput) {
-		mStats.start(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
-		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_APPLICATIONS);
+		mStats.start(SifaStats.SifaMeasures.CALL_SUMMARIZER_OVERALL_TIME);
+		mStats.increment(SifaStats.SifaMeasures.CALL_SUMMARIZER_APPLICATIONS);
 
 		IPredicate result = mProcToSummary.get(callee);
 		if (result == null) {
@@ -72,19 +72,19 @@ public class TopInputCallSummarizer implements ICallSummarizer {
 			final IPredicate intermediateResult = mProcToSummary.put(callee, result);
 			assert intermediateResult == null || result == intermediateResult;
 		}
-		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
+		mStats.stop(SifaStats.SifaMeasures.CALL_SUMMARIZER_OVERALL_TIME);
 		return result;
 	}
 
 	private IPredicate computeTopSummary(final String procedure) {
-		mStats.start(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
-		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
+		mStats.start(SifaStats.SifaMeasures.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.increment(SifaStats.SifaMeasures.CALL_SUMMARIZER_CACHE_MISSES);
 
 		final ProcedureResources res = mProcResCache.resourcesOf(procedure);
 		final IPredicate result =
 				mDagIpreter.interpretForSingleMarker(res.getRegexDag(), res.getDagOverlayPathToReturn(), mTools.top());
 
-		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.stop(SifaStats.SifaMeasures.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
 		return result;
 	}
 }

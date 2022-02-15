@@ -12,6 +12,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.datastructures.poset,
  de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
  de.uni_freiburg.informatik.ultimate.util.scc,
+ de.uni_freiburg.informatik.ultimate.util.simplifier,
  de.uni_freiburg.informatik.ultimate.util.statistics,
- de.uni_freiburg.informatik.ultimate.util.simplifier
+ de.uni_freiburg.informatik.ultimate.util.statistics.exception,
+ de.uni_freiburg.informatik.ultimate.util.statistics.measures
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.util

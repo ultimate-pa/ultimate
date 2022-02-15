@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 public class AutomataScriptTestSummary extends BaseTestLogfile implements ITestSummary {
 

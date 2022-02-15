@@ -29,8 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Counter;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
 import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 
 /**
@@ -39,11 +40,15 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
  *
  * This class collects data on how many queries were made, with what result, and whether or not they were conditional.
  * If more data should be collected, derive a subclass and add the additional fields using the mechanism described in
- * {@link AbstractStatisticsDataProvider#declare(String, java.util.function.Supplier, KeyType)}.
+ * {@link BaseStatisticsDataProvider#declare(String, java.util.function.Supplier, MeasureDefinition)}.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataProvider {
+public class IndependenceStatisticsDataProvider extends BaseStatisticsDataProvider {
+
+	private static final MeasureDefinition MY_COUNTER = new MeasureDefinition(Counter::new, (x, y) -> Counter.sum((Counter) x, (Counter) y),
+			(k, data) -> PrettyPrint.keyColonData(k, ((Counter) data).print(Object::toString)),
+			c -> ((Counter) c).getTotal() == 0);
 
 	public static final String INDEPENDENCE_QUERIES = "Independence Queries";
 	public static final String UNDERLYING_RELATION = "Statistics on underlying relation";
@@ -58,7 +63,8 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 	 *            The type of independence relation for which statistics are collected. This is used as a prefix for key
 	 *            names in order to distinguish data for different, possibly nested relations.
 	 */
-	public IndependenceStatisticsDataProvider(final Class<?> clazz) {
+	public IndependenceStatisticsDataProvider(final IToolchainStorage storage, final Class<?> clazz) {
+		super(storage);
 		declareCounter(clazz.getSimpleName() + "." + INDEPENDENCE_QUERIES, () -> mQueryCounter);
 	}
 
@@ -71,8 +77,9 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 	 * @param underlying
 	 *            The underlying relation whose statistics shall be forwarded.
 	 */
-	public IndependenceStatisticsDataProvider(final Class<?> clazz, final IIndependenceRelation<?, ?> underlying) {
-		this(clazz);
+	public IndependenceStatisticsDataProvider(final IToolchainStorage storage, final Class<?> clazz,
+			final IIndependenceRelation<?, ?> underlying) {
+		this(storage, clazz);
 		forward(clazz.getSimpleName() + "." + UNDERLYING_RELATION, underlying::getStatistics);
 	}
 
@@ -90,16 +97,15 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 	 *            The underlying relations whose statistics shall be forwarded. The collection will only be traversed
 	 *            when statistics are retrieved, so it is possible to pass a reference to a modifiable collections.
 	 */
-	public <S, L> IndependenceStatisticsDataProvider(final Class<?> clazz,
+	public <S, L> IndependenceStatisticsDataProvider(final IToolchainStorage storage, final Class<?> clazz,
 			final Iterable<IIndependenceRelation<S, L>> underlying) {
-		this(clazz);
+		this(storage, clazz);
 		forwardAll(clazz.getSimpleName() + "." + UNDERLYING_RELATIONS, underlying,
 				IIndependenceRelation::getStatistics);
 	}
 
 	protected final void declareCounter(final String key, final Supplier<Counter> getter) {
-		declare(key, getter::get, (x, y) -> Counter.sum((Counter) x, (Counter) y),
-				(k, data) -> PrettyPrint.keyColonData(k, ((Counter) data).print(Object::toString)));
+		declare(key, getter::get, MY_COUNTER);
 	}
 
 	public Counter getQueries() {

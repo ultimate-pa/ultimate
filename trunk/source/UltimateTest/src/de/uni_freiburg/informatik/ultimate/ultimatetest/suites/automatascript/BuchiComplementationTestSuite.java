@@ -39,7 +39,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
@@ -128,8 +128,8 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 	protected ITestSummary[] constructTestSummaries() {
 		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 
-		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
+		final ColumnDefinition[] columnDef = {
+				new ColumnDefinition(CegarLoopStatisticsGenerator.OverallTime, "Avg. runtime",
 						ConversionContext.Divide(1_000_000_000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
 		final Predicate<String> columnPredicate = INTERESTING_COLUMNS_AS_SET::contains;
@@ -172,7 +172,7 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 				testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 			}
 		}
-		testCases.sort(null);
+		Collections.sort(testCases);
 		return testCases;
 	}
 

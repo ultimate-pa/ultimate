@@ -122,7 +122,7 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 					mReuseStats.addBeforeAcceptanceTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 				}
 
-				cexAccepted = new Accepts<>(new AutomataLibraryServices(getServices()), reuseAut,
+				cexAccepted = new Accepts<>(new AutomataLibraryServices(mServices), reuseAut,
 						(NestedWord<L>) mCounterexample.getWord(), true, true).getResult();
 				if (reuseAut instanceof AbstractInterpolantAutomaton) {
 					final AbstractInterpolantAutomaton<L> aiReuseAut = (AbstractInterpolantAutomaton<L>) reuseAut;
@@ -170,7 +170,7 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 					new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
 			final boolean explointSigmaStarConcatOfIA = true;
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
-			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, reuseAut, psd,
 					explointSigmaStarConcatOfIA);
 
@@ -181,9 +181,9 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 			}
 
 			// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
-			assert new InductivityCheck<>(getServices(),
-					new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), reuseAut).getResult(), false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+			assert new InductivityCheck<>(mServices,
+					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(), false, true,
+					new IncrementalHoareTripleChecker(mServices.getStorage(), super.mCsToolkit, false)).getResult();
 
 			dumpOrAppendAutomatonForReuseIfEnabled(reuseAut, reuseAutPair.getSecond());
 
@@ -201,7 +201,7 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 			mAbstraction = diff.getResult();
 			minimizeAbstractionIfEnabled();
 
-			final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(getServices()),
+			final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 					(NestedWord<L>) mCounterexample.getWord()).getResult();
 			mReuseStats.stopTime();

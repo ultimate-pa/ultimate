@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2020 Jonas Werner (wernerj@informatik.uni-freiburg.de)
  * Copyright (C) 2020 University of Freiburg
@@ -25,134 +24,48 @@
  * licensors of the ULTIMATE accelerated interpolation library library grant you additional permission
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark;
 
-import java.util.Collection;
-import java.util.function.Function;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  * Benchmark for evaluating the performance of the {@link AcceleratedInterpolation} paradigm.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class AcceleratedInterpolationBenchmark extends StatisticsGeneratorWithStopwatches
-		implements IStatisticsDataProvider {
+public final class AcceleratedInterpolationBenchmark extends BaseStatisticsDataProvider {
 
-	private static final String[] STOPWATCHES =
-			new String[] { AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE.toString(),
-					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL.toString(),
-					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR.toString(),
-					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR.toString() };
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mAcceleratedInterpolationCoreTime = new TimeTracker();
 
-	@Override
-	public Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mAcceleratedInterpolationOverallTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mAcceleratedInterpolationLoopDetectorTime = new TimeTracker();
+
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mAcceleratedInterpolationLoopAcceleratorTime = new TimeTracker();
+
+	public AcceleratedInterpolationBenchmark(final IToolchainStorage storage) {
+		super(storage);
 	}
 
-	@Override
-	public Object getValue(final String key) {
-		final AcceleratedInterpolationStatisticsDefinitions keyEnum =
-				Enum.valueOf(AcceleratedInterpolationStatisticsDefinitions.class, key);
-		final String errorMsg = "clock still running: ";
-		switch (keyEnum) {
-		case ACCELINTERPOL_CORE:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		case ACCELINTERPOL_OVERALL:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		case ACCELINTERPOL_LOOPDETECTOR:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		case ACCELINTERPOL_LOOPACCELERATOR:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		default:
-			throw new AssertionError("unknown data: " + keyEnum);
-		}
+	public void startOverall() {
+		mAcceleratedInterpolationOverallTime.start();
 	}
 
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return AccelInterpolStatisticsType.getInstance();
+	public void startCore() {
+		mAcceleratedInterpolationCoreTime.start();
 	}
 
-	@Override
-	public String[] getStopwatches() {
-		return STOPWATCHES;
+	public void stopAllStopwatches() {
+		mAcceleratedInterpolationOverallTime.stop();
+		mAcceleratedInterpolationCoreTime.stop();
 	}
-
-	/**
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	public enum AcceleratedInterpolationStatisticsDefinitions implements IStatisticsElement {
-		ACCELINTERPOL_CORE(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_OVERALL(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_LOOPDETECTOR(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-		ACCELINTERPOL_LOOPACCELERATOR(StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
-
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		AcceleratedInterpolationStatisticsDefinitions(final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
-		}
-	}
-
-	/**
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	private static final class AccelInterpolStatisticsType
-			extends StatisticsType<AcceleratedInterpolationStatisticsDefinitions> {
-
-		private static final AccelInterpolStatisticsType INSTANCE = new AccelInterpolStatisticsType();
-
-		AccelInterpolStatisticsType() {
-			super(AcceleratedInterpolationStatisticsDefinitions.class);
-		}
-
-		public static AccelInterpolStatisticsType getInstance() {
-			return INSTANCE;
-		}
-	}
-
 }

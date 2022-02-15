@@ -48,8 +48,10 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -80,6 +82,25 @@ public class ReflectionUtil {
 	}
 
 	/**
+	 * Return the first class in the stack trace that is accepted by the supplied predicate.
+	 *
+	 * @param A
+	 *            predicate that tests classes.
+	 * @return The first {@link Class} in the stack trace that is accepted by <tt>pred</tt>.
+	 */
+	public static Optional<Class<?>> getFirstCallerClass(final Predicate<Class<?>> pred) {
+		final Predicate<Class<?>> actualPred = pred.and(a -> a != ReflectionUtil.class);
+		final int maxDepth = Thread.currentThread().getStackTrace().length;
+		for (int i = 1; i < maxDepth; ++i) {
+			final Class<?> current = EXPOSED_SECURITY_MANAGER.getCallerClass(i);
+			if (actualPred.test(current)) {
+				return Optional.of(current);
+			}
+		}
+		return Optional.empty();
+	}
+
+	/**
 	 * Return the name of the calling method up to the specified stack depth.
 	 */
 	public static String getCallerMethodName(final int callStackDepth) {
@@ -96,27 +117,48 @@ public class ReflectionUtil {
 	 */
 	public static String getCallerSignature(final int callStackDepth) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
-		final StackTraceElement theFrame;
+		final StackTraceElement frame;
 		if (callStack.length < callStackDepth) {
-			theFrame = callStack[callStack.length - 1];
+			frame = callStack[callStack.length - 1];
 		} else {
-			theFrame = callStack[callStackDepth];
+			frame = callStack[callStackDepth];
 		}
-		return String.format("[L%4s] %s.%s", theFrame.getLineNumber(), getCallerClass(callStackDepth).getName(),
-				theFrame.getMethodName());
+		return callerSignatureToString(frame.getLineNumber(), getCallerClass(callStackDepth).getName(),
+				frame.getMethodName(), frame.getFileName());
 	}
 
-	public static String getCallerSignatureFiltered(final Set<Class<?>> skippedClasses) {
+	public static Optional<String> getCallerSignatureFiltered(final Set<Class<?>> skippedClasses) {
+		return getFirstCallerSignature(a -> !skippedClasses.contains(a));
+	}
+
+	public static Optional<String> getFirstCallerSignature(final Predicate<Class<?>> pred) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
 		for (int i = 2; i < callStack.length; ++i) {
 			final StackTraceElement frame = callStack[i];
 			final Class<?> callingClass = getCallerClass(i);
-			if (skippedClasses.contains(callingClass)) {
-				continue;
+			if (pred.test(callingClass)) {
+				return Optional.of(callerSignatureToString(frame.getLineNumber(), frame.getClassName(),
+						frame.getMethodName(), frame.getFileName()));
 			}
-			return String.format("[L%4s] %s.%s", frame.getLineNumber(), frame.getClassName(), frame.getMethodName());
 		}
-		return null;
+		return Optional.empty();
+	}
+
+	private static String callerSignatureToString(final int linenumber, final String className, final String methodName,
+			final String fileName) {
+		return String.format("%s.%s (%s:%s)", className, methodName, fileName, linenumber);
+	}
+
+	public static String getCurrentCallStack() {
+		final StringBuilder sb = new StringBuilder();
+		supplyCallStackStrings(a -> sb.append(a).append(CoreUtil.getPlatformLineSeparator()));
+		return sb.toString();
+	}
+
+	public static String getCurrentCallStackOneLine() {
+		final StringBuilder sb = new StringBuilder();
+		supplyCallStackStrings(a -> sb.append(a).append(" -> "));
+		return sb.toString();
 	}
 
 	/**
@@ -125,9 +167,15 @@ public class ReflectionUtil {
 	public static void supplyCallStackStrings(final Consumer<String> consumer) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
 		for (int i = 0; i < callStack.length; ++i) {
-			final StackTraceElement theFrame = callStack[i];
-			consumer.accept(String.format("[L%-4s] %30.30s %s", theFrame.getLineNumber(),
-					truncateFromLeft(theFrame.getClassName(), 30), theFrame.getMethodName()));
+			final StackTraceElement frame = callStack[i];
+			final String className = frame.getClassName();
+			final String methodName = frame.getMethodName();
+
+			if (ReflectionUtil.class.getName().equals(className)
+					|| "getStackTrace".equals(methodName) && Thread.class.getName().equals(className)) {
+				continue;
+			}
+			consumer.accept(callerSignatureToString(frame.getLineNumber(), className, methodName, frame.getFileName()));
 		}
 	}
 
@@ -306,12 +354,28 @@ public class ReflectionUtil {
 		return !isExcluded(f);
 	}
 
+	/**
+	 * Returns the name of the field without the Ultimate coding convention prefix (s or m) or the string returned by
+	 * {@link Reflected#prettyName()} if it is non-empty.
+	 */
 	public static String fieldPrettyName(final Field f) {
 		final Reflected annot = f.getAnnotation(Reflected.class);
 		if (annot != null && !"".equals(annot.prettyName())) {
 			return annot.prettyName();
 		}
-		return f.getName();
+
+		final String name = f.getName();
+		if (name.length() == 1) {
+			return name;
+		}
+		final char firstChar = name.charAt(0);
+		if (firstChar == 'm' || firstChar == 's') {
+			final char secondChar = name.charAt(1);
+			if (Character.isUpperCase(secondChar)) {
+				return name.substring(1);
+			}
+		}
+		return name;
 	}
 
 	public static String fieldToString(final Object obj, final Field f) {
@@ -327,13 +391,20 @@ public class ReflectionUtil {
 		return String.format("%s=%s", fieldPrettyName(f), val);
 	}
 
-	public static Object access(final Object obj, final Field f) {
+	public static Object read(final Object instance, final Field f) {
 		try {
 			f.setAccessible(true);
-			return f.get(obj);
-		} catch (final IllegalArgumentException e) {
+			return f.get(instance);
+		} catch (final IllegalArgumentException | IllegalAccessException e) {
 			throw new UnsupportedOperationException(e);
-		} catch (final IllegalAccessException e) {
+		}
+	}
+
+	public static void write(final Object instance, final Field f, final Object value) {
+		try {
+			f.setAccessible(true);
+			f.set(instance, value);
+		} catch (final IllegalArgumentException | IllegalAccessException e) {
 			throw new UnsupportedOperationException(e);
 		}
 	}
@@ -724,7 +795,7 @@ public class ReflectionUtil {
 	}
 
 	/**
-	 * Annotation that prevents a field from being listed in {@link ReflectionUtil#instanceFields(Object)},
+	 * Annotation that configures how a field is being listed in {@link ReflectionUtil#instanceFields(Object)},
 	 * {@link ReflectionUtil#instanceName2Fields(Object)}, and {@link ReflectionUtil#instanceFieldsToString(Object)}.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -733,8 +804,18 @@ public class ReflectionUtil {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.FIELD)
 	public @interface Reflected {
+		/**
+		 * Exclude or include a field from being listed.
+		 *
+		 * @return true if it is excluded, false otherwise.
+		 */
 		boolean excluded() default false;
 
+		/**
+		 * A human-readable name that determines the name of the field in {@link ReflectionUtil#fieldPrettyName(Field)}.
+		 *
+		 * @return A human-readable name or null or empty. If null or empty, the actual field name is used.
+		 */
 		String prettyName() default "";
 	}
 

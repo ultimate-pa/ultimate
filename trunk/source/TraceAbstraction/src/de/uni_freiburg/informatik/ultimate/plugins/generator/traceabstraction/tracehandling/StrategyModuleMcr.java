@@ -26,12 +26,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.Mcr.IMcrResultProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 		implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultProvider<L> {
@@ -101,7 +100,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
+	public void aggregateStatistics(final StatisticsAggregator stats) {
 		// TODO: Handle statistics of nested refinement engines
 	}
 
@@ -162,7 +161,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(), refinementStrategy);
 		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final List<L> trace = counterexample.getWord().asList();
-		final RefinementEngineStatisticsGenerator statistics = afe.getRefinementEngineStatistics();
+		final StatisticsAggregator statistics = afe.getRefinementEngineStatistics();
 		mAfeResult = afe.getResult();
 		final LBool feasibility = mAfeResult.getCounterexampleFeasibility();
 		// We found a feasible counterexample

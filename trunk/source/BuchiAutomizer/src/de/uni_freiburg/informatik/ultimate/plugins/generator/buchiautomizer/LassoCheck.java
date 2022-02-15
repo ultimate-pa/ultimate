@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.statistics.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
@@ -104,19 +105,19 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<L extends IIcfgTransition<?>> {
 
-	enum ContinueDirective {
+	public enum ContinueDirective {
 		REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN, REFINE_BOTH
 	}
 
-	enum TraceCheckResult {
+	public enum TraceCheckResult {
 		FEASIBLE, INFEASIBLE, UNKNOWN, UNCHECKED
 	}
 
-	enum SynthesisResult {
+	public enum SynthesisResult {
 		TERMINATING, NONTERMINATING, UNKNOWN, UNCHECKED
 	}
 
-	enum LassoPart {
+	public enum LassoPart {
 		STEM, LOOP, CONCAT
 	}
 
@@ -544,15 +545,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (!withStem) {
 			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
 		}
-		// TODO: present this somewhere else
-		// int loopVars = loopTF.getFormula().getFreeVars().length;
-		// if (stemTF == null) {
-		// s_Logger.info("Statistics: no stem, loopVars: " + loopVars);
-		// } else {
-		// int stemVars = stemTF.getFormula().getFreeVars().length;
-		// s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " +
-		// loopVars);
-		// }
 
 		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
 				modifiableGlobalsAtHonda, stemTF, loopTF);
@@ -563,8 +555,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			return SynthesisResult.NONTERMINATING;
 		}
 
-		final boolean doNonterminationAnalysis =
-				(!AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED || !containsArrays);
+		final boolean doNonterminationAnalysis = !AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED || !containsArrays;
 
 		NonTerminationArgument nonTermArgument = null;
 		if (doNonterminationAnalysis) {
@@ -616,7 +607,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final List<RankingTemplate> rankingFunctionTemplates = new ArrayList<>();
 		rankingFunctionTemplates.add(new AffineTemplate());
 
-		// if (mAllowNonLinearConstraints) {
 		// rankingFunctionTemplates.add(new NestedTemplate(1));
 		rankingFunctionTemplates.add(new NestedTemplate(2));
 		rankingFunctionTemplates.add(new NestedTemplate(3));
@@ -649,7 +639,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			rankingFunctionTemplates.add(new PiecewiseTemplate(3));
 			rankingFunctionTemplates.add(new PiecewiseTemplate(4));
 		}
-		// }
 
 		final TerminationArgument termArg =
 				tryTemplatesAndComputePredicates(withStem, laT, rankingFunctionTemplates, stemTF, loopTF);
@@ -738,39 +727,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				+ new DagSizePrinter(stemTF.getFormula()) + ", loop dagsize " + new DagSizePrinter(loopTF.getFormula());
 	}
 
-	// private List<LassoRankerParam> getLassoRankerParameters() {
-	// List<LassoRankerParam> lassoRankerParams = new
-	// ArrayList<LassoRankerParam>();
-	// Preferences pref = new Preferences();
-	// pref.numnon_strict_invariants = 2;
-	// pref.numstrict_invariants = 0;
-	// pref.only_nondecreasing_invariants = false;
-	// lassoRankerParams.add(new LassoRankerParam(new AffineTemplate(), pref));
-	// return lassoRankerParams;
-	// }
-
-	// private class LassoRankerParam {
-	// private final RankingFunctionTemplate mRankingFunctionTemplate;
-	// private final Preferences mPreferences;
-	// public LassoRankerParam(RankingFunctionTemplate rankingFunctionTemplate,
-	// Preferences preferences) {
-	// super();
-	// this.mRankingFunctionTemplate = rankingFunctionTemplate;
-	// this.mPreferences = preferences;
-	// }
-	// public RankingFunctionTemplate getRankingFunctionTemplate() {
-	// return mRankingFunctionTemplate;
-	// }
-	// public Preferences getPreferences() {
-	// return mPreferences;
-	// }
-	// }
-
 	/**
 	 * Object for that does computation of lasso check and stores the result. Note that the methods used for the
 	 * computation also modify member variables of the superclass.
 	 */
-	class LassoCheckResult {
+	public class LassoCheckResult {
 
 		private final TraceCheckResult mStemFeasibility;
 		private final TraceCheckResult mLoopFeasibility;

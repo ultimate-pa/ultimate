@@ -31,11 +31,12 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
 
 /**
  * An independence relation that can be used as a wrapper around conditional instances of
@@ -69,12 +70,12 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 	 *            used on, in order to ensure soundness. It may over-approximate inconsistency, i.e., also return true
 	 *            for some consistent predicates -- this affects efficiency but not soundness.
 	 */
-	public SemanticConditionEliminator(final IIndependenceRelation<IPredicate, L> underlying,
-			final Predicate<IPredicate> isInconsistent) {
+	public SemanticConditionEliminator(final IToolchainStorage storage,
+			final IIndependenceRelation<IPredicate, L> underlying, final Predicate<IPredicate> isInconsistent) {
 		assert underlying.isConditional() : "Condition elimination for non-conditional relations is useless";
 		mUnderlying = underlying;
 		mIsInconsistent = isInconsistent;
-		mStatistics = new EliminatorStatistics();
+		mStatistics = new EliminatorStatistics(storage);
 	}
 
 	@Override
@@ -121,9 +122,9 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 
 		private int mEliminatedConditions;
 
-		public EliminatorStatistics() {
-			super(SemanticConditionEliminator.class, mUnderlying);
-			declare(ELIMINATED_CONDITIONS, () -> mEliminatedConditions, KeyType.COUNTER);
+		public EliminatorStatistics(final IToolchainStorage storage) {
+			super(storage, SemanticConditionEliminator.class, mUnderlying);
+			declare(ELIMINATED_CONDITIONS, () -> mEliminatedConditions, MeasureDefinition.INT_COUNTER);
 		}
 
 		private void reportEliminatedCondition() {

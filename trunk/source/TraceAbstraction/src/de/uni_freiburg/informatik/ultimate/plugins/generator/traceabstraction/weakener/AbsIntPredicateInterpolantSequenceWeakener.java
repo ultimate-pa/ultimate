@@ -197,12 +197,12 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		final int numStateVars = preState.getAbstractStates().stream().findFirst()
 				.orElseThrow(() -> new UnsupportedOperationException("No states in preState.")).getVariables().size();
 		final int numRemovedVars = removableOutVars.size();
-		reportWeakeningVarsNumRemoved(numRemovedVars);
+		mStats.addAvgVarsRemovedDuringWeakening(numRemovedVars);
 		final int leftVars = numStateVars - numRemovedVars;
 		if (numStateVars == 0 || leftVars == numStateVars) {
-			reportWeakeningRatio(1);
+			mStats.addWeakeningRatio((double) 1);
 		} else {
-			reportWeakeningRatio((double) leftVars / (double) numStateVars);
+			mStats.addWeakeningRatio((double) leftVars / (double) numStateVars);
 		}
 
 		for (final STATE s : preState.getAbstractStates()) {
@@ -251,7 +251,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 
 		final int conjunctReduction = numberOfConjunctsBeforeWeakening - numberOfConjunctsAfterWeakening;
 
-		reportConjunctReduction(conjunctReduction);
+		mStats.addAvgWeakenedConjuncts(conjunctReduction);
 
 		final AbsIntPredicate<STATE> newPreState = new AbsIntPredicate<>(disjunction, newMultiState);
 		return newPreState;

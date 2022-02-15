@@ -26,17 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.statistics;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.IKeyedStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MeasureDefinition;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  * Statistics for Sifa.
@@ -52,215 +50,208 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class SifaStats extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
+public class SifaStats extends BaseStatisticsDataProvider {
 
-	private static final StatisticsType<Key> TYPE = new StatisticsType<>(Key.class);
+	private final Map<SifaMeasures, Integer> mStopwatchNestingLevels = new EnumMap<>(SifaMeasures.class);
+	private final Map<SifaMeasures, Integer> mIntCounters = new EnumMap<>(SifaMeasures.class);
+	private final Map<SifaMeasures, MaxTimerData> mMaxTimerData = new EnumMap<>(SifaMeasures.class);
+	private final Map<SifaMeasures, TimeTracker> mStopWatches = new EnumMap<>(SifaMeasures.class);
 
-	private final Map<Key, Integer> mStopwatchNestingLevels = new EnumMap<>(Key.class);
-	private final Map<Key, Integer> mIntCounters = new EnumMap<>(Key.class);
-	private final Map<Key, MaxTimerData> mMaxTimerData = new EnumMap<>(Key.class);
+	public SifaStats(final IToolchainStorage storage) {
+		super(storage);
 
-	@Override
-	public void start(final String stopwatchName) {
-		start(Key.valueOf(stopwatchName));
+		for (final SifaMeasures k : SifaMeasures.values()) {
+			final Supplier<Object> getter;
+			if (k.isStopwatch()) {
+				getter = () -> valueOfStopwatch(k);
+			} else if (k.isMaxTimer()) {
+				getter = () -> mMaxTimerData.computeIfAbsent(k, key -> new MaxTimerData()).mMaxTime;
+			} else {
+				getter = () -> valueOfIntCounter(k);
+			}
+			declare(k.name(), getter, k.getType());
+		}
+
 	}
 
-	public void start(final Key stopwatchId) {
+	public void start(final SifaMeasures stopwatchId) {
 		final int nestingLevel = mStopwatchNestingLevels.getOrDefault(stopwatchId, 0);
 		if (nestingLevel == 0) {
 			// without .name() we recurse endlessly
-			super.start(stopwatchId.name());
+			getTimeTracker(stopwatchId).start();
 		} else if (nestingLevel < 0) {
 			throw new IllegalStateException("Negative nesting level for stopwatch " + stopwatchId);
 		}
 		mStopwatchNestingLevels.put(stopwatchId, nestingLevel + 1);
 	}
 
-	@Override
-	public void stop(final String stopwatchName) {
-		stop(Key.valueOf(stopwatchName));
-	}
-
-	public void stop(final Key stopwatchId) {
+	public void stop(final SifaMeasures stopwatchId) {
 		final int nestingLevel = mStopwatchNestingLevels.getOrDefault(stopwatchId, 0);
 		if (nestingLevel == 1) {
 			// without .name() we recurse endlessly
-			super.stop(stopwatchId.name());
+			getTimeTracker(stopwatchId).stop();
 		} else if (nestingLevel < 1) {
 			throw new IllegalStateException("Called stop() without start() for stopwatch " + stopwatchId);
 		}
 		mStopwatchNestingLevels.put(stopwatchId, nestingLevel - 1);
 	}
 
-	public void startMax(final Key stopwatchId) {
+	public void startMax(final SifaMeasures stopwatchId) {
 		start(stopwatchId);
 	}
 
-	public void stopMax(final Key stopwatchId) {
+	public void stopMax(final SifaMeasures stopwatchId) {
 		stop(stopwatchId);
-		final long totalTime;
-		try {
-			totalTime = getElapsedTime(stopwatchId.name());
-		} catch (final StopwatchStillRunningException e) {
-			// support nesting only when needed -- at the moment we don't need it
-			throw new AssertionError("Clock still runing after it was stopped. Nesting MaxTimers not supported yet.");
-		}
+		final long totalTime = valueOfStopwatch(stopwatchId);
 		final MaxTimerData old = mMaxTimerData.computeIfAbsent(stopwatchId, key -> new MaxTimerData());
 		old.mMaxTime = Math.max(old.mMaxTime, totalTime - old.mTotalTime);
 		old.mTotalTime = totalTime;
 	}
 
-	@Override
-	public Object getValue(final String keyName) {
-		return getValue(Key.valueOf(keyName));
+	private TimeTracker getTimeTracker(final SifaMeasures id) {
+		return mStopWatches.computeIfAbsent(id, this::createTimeTracker);
 	}
 
-	public Object getValue(final Key keyId) {
+	private TimeTracker createTimeTracker(final SifaMeasures id) {
+		return new TimeTracker();
+	}
+
+	public Object getValue(final SifaMeasures keyId) {
 		if (keyId.isMaxTimer()) {
 			return mMaxTimerData.computeIfAbsent(keyId, key -> new MaxTimerData()).mMaxTime;
-		} else if (keyId.isStopwatch()) {
+		}
+		if (keyId.isStopwatch()) {
 			return valueOfStopwatch(keyId);
-		} else {
-			return valueOfIntCounter(keyId);
 		}
+		return valueOfIntCounter(keyId);
 	}
 
-	private Long valueOfStopwatch(final Key stopwatchId) {
-		try {
-			return getElapsedTime(stopwatchId.name());
-		} catch (final StopwatchStillRunningException stillRunning) {
-			throw new AssertionError(stillRunning);
-		}
+	private Long valueOfStopwatch(final SifaMeasures stopwatchId) {
+		return getTimeTracker(stopwatchId).elapsedTime(TimeUnit.NANOSECONDS);
 	}
 
-	private Integer valueOfIntCounter(final Key intCounterId) {
+	private Integer valueOfIntCounter(final SifaMeasures intCounterId) {
 		return mIntCounters.getOrDefault(intCounterId, 0);
 	}
 
-	public void increment(final Key intCounterId) {
+	public void increment(final SifaMeasures intCounterId) {
 		add(intCounterId, 1);
 	}
 
-	public void add(final Key intCounterId, final int summand) {
+	public void add(final SifaMeasures intCounterId, final int summand) {
 		mIntCounters.put(intCounterId, mIntCounters.getOrDefault(intCounterId, 0) + summand);
 	}
 
-	@Override
-	public Collection<String> getKeys() {
-		return TYPE.getKeys();
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return TYPE;
-	}
-
-	@Override
-	public String[] getStopwatches() {
-		// TODO add max timers
-		return Arrays.stream(Key.values()).filter(Key::isStopwatch).map(Enum::name).toArray(String[]::new);
-	}
-
-	public enum Key implements IKeyedStatisticsElement {
-		OVERALL_TIME(KeyType.TIMER),
+	public enum SifaMeasures {
+		OVERALL_TIME(MeasureDefinition.LONG_TIME),
 
 		/** Number of procedures entered (excluding CallReturnSummaries) during interpretation of the icfg. */
-		ICFG_INTERPRETER_ENTERED_PROCEDURES(KeyType.COUNTER),
+		ICFG_INTERPRETER_ENTERED_PROCEDURES(MeasureDefinition.INT_COUNTER),
 
-		DAG_INTERPRETER_EARLY_EXIT_QUERIES_NONTRIVIAL(KeyType.COUNTER),
+		DAG_INTERPRETER_EARLY_EXIT_QUERIES_NONTRIVIAL(MeasureDefinition.INT_COUNTER),
 
-		DAG_INTERPRETER_EARLY_EXITS(KeyType.COUNTER),
+		DAG_INTERPRETER_EARLY_EXITS(MeasureDefinition.INT_COUNTER),
 
-		TOOLS_POST_APPLICATIONS(KeyType.COUNTER),
+		TOOLS_POST_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		TOOLS_POST_TIME(KeyType.TIMER),
+		TOOLS_POST_TIME(MeasureDefinition.LONG_TIME),
 
-		TOOLS_POST_CALL_APPLICATIONS(KeyType.COUNTER),
+		TOOLS_POST_CALL_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		TOOLS_POST_CALL_TIME(KeyType.TIMER),
+		TOOLS_POST_CALL_TIME(MeasureDefinition.LONG_TIME),
 
-		TOOLS_POST_RETURN_APPLICATIONS(KeyType.COUNTER),
+		TOOLS_POST_RETURN_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		TOOLS_POST_RETURN_TIME(KeyType.TIMER),
+		TOOLS_POST_RETURN_TIME(MeasureDefinition.LONG_TIME),
 
-		TOOLS_QUANTIFIERELIM_APPLICATIONS(KeyType.COUNTER),
+		TOOLS_QUANTIFIERELIM_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		TOOLS_QUANTIFIERELIM_TIME(KeyType.TIMER),
+		TOOLS_QUANTIFIERELIM_TIME(MeasureDefinition.LONG_TIME),
 
-		TOOLS_QUANTIFIERELIM_MAX_TIME(KeyType.MAX_TIMER),
+		TOOLS_QUANTIFIERELIM_MAX_TIME(MeasureDefinition.LONG_TIME_MAX),
 
 		/** Overall time spent answering queries. */
-		FLUID_QUERY_TIME(KeyType.TIMER),
+		FLUID_QUERY_TIME(MeasureDefinition.LONG_TIME),
 		/** Number of queries to fluid. */
-		FLUID_QUERIES(KeyType.COUNTER),
+		FLUID_QUERIES(MeasureDefinition.INT_COUNTER),
 		/** Number of queries to fluid answered with "yes, abstract the state". */
-		FLUID_YES_ANSWERS(KeyType.COUNTER),
+		FLUID_YES_ANSWERS(MeasureDefinition.INT_COUNTER),
 
-		DOMAIN_JOIN_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_JOIN_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		DOMAIN_JOIN_TIME(KeyType.TIMER), DOMAIN_ALPHA_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_JOIN_TIME(MeasureDefinition.LONG_TIME),
 
-		DOMAIN_ALPHA_TIME(KeyType.TIMER), DOMAIN_WIDEN_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_ALPHA_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		DOMAIN_WIDEN_TIME(KeyType.TIMER), DOMAIN_ISSUBSETEQ_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_ALPHA_TIME(MeasureDefinition.LONG_TIME),
 
-		DOMAIN_ISSUBSETEQ_TIME(KeyType.TIMER), DOMAIN_ISBOTTOM_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_WIDEN_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		DOMAIN_ISBOTTOM_TIME(KeyType.TIMER),
+		DOMAIN_WIDEN_TIME(MeasureDefinition.LONG_TIME),
 
-		LOOP_SUMMARIZER_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_ISSUBSETEQ_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		LOOP_SUMMARIZER_CACHE_MISSES(KeyType.COUNTER),
+		DOMAIN_ISSUBSETEQ_TIME(MeasureDefinition.LONG_TIME),
+
+		DOMAIN_ISBOTTOM_APPLICATIONS(MeasureDefinition.INT_COUNTER),
+
+		DOMAIN_ISBOTTOM_TIME(MeasureDefinition.LONG_TIME),
+
+		LOOP_SUMMARIZER_APPLICATIONS(MeasureDefinition.INT_COUNTER),
+
+		LOOP_SUMMARIZER_CACHE_MISSES(MeasureDefinition.INT_COUNTER),
 		/**
 		 * Time spent to obtain loop summaries, including the time to look search the cache and re-use existing
 		 * summaries.
 		 */
-		LOOP_SUMMARIZER_OVERALL_TIME(KeyType.TIMER),
+		LOOP_SUMMARIZER_OVERALL_TIME(MeasureDefinition.LONG_TIME),
 		/** Time spent to compute completely new loop summaries in case of cache misses. */
-		LOOP_SUMMARIZER_NEW_COMPUTATION_TIME(KeyType.TIMER),
+		LOOP_SUMMARIZER_NEW_COMPUTATION_TIME(MeasureDefinition.LONG_TIME),
 		/** Overall number of iterations. This statistic is specific to FixpointLoopSummerizer. */
-		LOOP_SUMMARIZER_FIXPOINT_ITERATIONS(KeyType.COUNTER),
+		LOOP_SUMMARIZER_FIXPOINT_ITERATIONS(MeasureDefinition.INT_COUNTER),
 
-		CALL_SUMMARIZER_APPLICATIONS(KeyType.COUNTER),
+		CALL_SUMMARIZER_APPLICATIONS(MeasureDefinition.INT_COUNTER),
 
-		CALL_SUMMARIZER_CACHE_MISSES(KeyType.COUNTER),
+		CALL_SUMMARIZER_CACHE_MISSES(MeasureDefinition.INT_COUNTER),
 		/**
 		 * Time spent to obtain call summaries, including the time to look search the cache and re-use existing
 		 * summaries.
 		 */
-		CALL_SUMMARIZER_OVERALL_TIME(KeyType.TIMER),
+		CALL_SUMMARIZER_OVERALL_TIME(MeasureDefinition.LONG_TIME),
 		/** Time spent to compute completely new call summaries in case of cache misses. */
-		CALL_SUMMARIZER_NEW_COMPUTATION_TIME(KeyType.TIMER),
+		CALL_SUMMARIZER_NEW_COMPUTATION_TIME(MeasureDefinition.LONG_TIME),
 
-		PROCEDURE_GRAPH_BUILDER_TIME(KeyType.TIMER),
+		PROCEDURE_GRAPH_BUILDER_TIME(MeasureDefinition.LONG_TIME),
 
 		/** Time spent computing path expressions (= regexes) from graphs. */
-		PATH_EXPR_TIME(KeyType.TIMER),
+		PATH_EXPR_TIME(MeasureDefinition.LONG_TIME),
 
 		/** Time spent converting regexes into dags. */
-		REGEX_TO_DAG_TIME(KeyType.TIMER),
+		REGEX_TO_DAG_TIME(MeasureDefinition.LONG_TIME),
 
 		/** Time spent compressing RegexDags. This can include multiple compression runs on different dags. */
-		DAG_COMPRESSION_TIME(KeyType.TIMER),
+		DAG_COMPRESSION_TIME(MeasureDefinition.LONG_TIME),
 		/** Sum of number of nodes in processed RegexDags before compression. */
-		DAG_COMPRESSION_PROCESSED_NODES(KeyType.COUNTER),
+		DAG_COMPRESSION_PROCESSED_NODES(MeasureDefinition.INT_COUNTER),
 		/** Sum of number of nodes in processed RegexDags after compression. */
-		DAG_COMPRESSION_RETAINED_NODES(KeyType.COUNTER),;
+		DAG_COMPRESSION_RETAINED_NODES(MeasureDefinition.INT_COUNTER),;
 
-		private final KeyType mType;
+		private final MeasureDefinition mType;
 
-		Key(final KeyType type) {
+		SifaMeasures(final MeasureDefinition type) {
 			mType = type;
 		}
 
-		@Override
-		public KeyType getType() {
+		public MeasureDefinition getType() {
 			return mType;
 		}
 
-		@Override
-		public String getName() {
-			return name();
+		public boolean isMaxTimer() {
+			return getType() == MeasureDefinition.LONG_TIME_MAX;
+		}
+
+		public boolean isStopwatch() {
+			return getType() == MeasureDefinition.LONG_TIME || getType() == MeasureDefinition.LONG_TIME_MAX;
 		}
 	}
 

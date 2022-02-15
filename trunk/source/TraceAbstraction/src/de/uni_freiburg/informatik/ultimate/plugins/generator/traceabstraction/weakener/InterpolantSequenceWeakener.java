@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.AbsIntStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.AbsIntStats;
 
 /**
  * {@link InterpolantSequenceWeakener} tries to weaken each predicate in a sequence of predicates s.t. it is still
@@ -73,7 +72,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 
 	private int mSuccessfulWeakenings;
 	private final List<Rational> mSizeDifferential;
-	private final AbsIntStatisticsGenerator mStats;
+	protected final AbsIntStatisticsGenerator mStats;
 
 	/**
 	 * Default constructor. Generates result directly.
@@ -178,11 +177,10 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			returnList.add(refinedState);
 			currentPostState = refinedState;
 
-			if (it.hasNext()) {
-				currentStateTriple = it.next();
-			} else {
+			if (!it.hasNext()) {
 				break;
 			}
+			currentStateTriple = it.next();
 
 			tracePosition--;
 		}
@@ -190,9 +188,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		Collections.reverse(returnList);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Predicate list before weakening   : "
-					+ predicates.stream().map(pred -> pred.getFormula()).collect(Collectors.toList()));
+					+ predicates.stream().map(IPredicate::getFormula).collect(Collectors.toList()));
 			mLogger.debug("New predicate list after weakening: "
-					+ returnList.stream().map(pred -> pred.getFormula()).collect(Collectors.toList()));
+					+ returnList.stream().map(IPredicate::getFormula).collect(Collectors.toList()));
 		}
 		return returnList;
 
@@ -218,7 +216,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		if (mSuccessfulWeakenings == 0) {
 			mLogger.info("Could never weaken!");
 		} else {
-			final Rational sum = mSizeDifferential.stream().reduce(Rational.ZERO, (a, b) -> a.add(b));
+			final Rational sum = mSizeDifferential.stream().reduce(Rational.ZERO, Rational::add);
 			final Rational result = sum.div(Rational.valueOf(mSuccessfulWeakenings, 1));
 			final double rounded =
 					100.0 - result.numerator().doubleValue() / result.denominator().doubleValue() * 100.0;
@@ -243,30 +241,6 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 */
 	protected abstract P refinePreState(final P preState, final LETTER transition, final P postState,
 			final int tracePosition);
-
-	/**
-	 * Stores the ratio of weakening for one pre-state weakening operation.
-	 *
-	 * @param ratio
-	 *            The ratio of the number weakened predicates to the total number of predicates.
-	 */
-	protected void reportWeakeningRatio(final double ratio) {
-		mStats.addRatio(AbsIntStats.WEAKENING_RATIO, ratio);
-	}
-
-	/**
-	 * Stores the number of currently removed variables for one pre-state weakening operation.
-	 *
-	 * @param numRemovedVars
-	 *            The number of removed variables.
-	 */
-	protected void reportWeakeningVarsNumRemoved(final int numRemovedVars) {
-		mStats.addRatio(AbsIntStats.AVG_VARS_REMOVED_DURING_WEAKENING, numRemovedVars);
-	}
-
-	protected void reportConjunctReduction(final int differenceConjuncts) {
-		mStats.addRatio(AbsIntStats.AVG_WEAKENED_CONJUNCTS, differenceConjuncts);
-	}
 
 	/**
 	 * @return the (hopefully) weakened sequence of predicates that is still inductive.
@@ -346,7 +320,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			return new TripleListIterator<>(mPredicates, mTrace, mPrecondition, mPostcondition);
 		}
 
-		private final TripleListReverseIterator<P, LETTER> getReverseIterator() {
+		private TripleListReverseIterator<P, LETTER> getReverseIterator() {
 			return new TripleListReverseIterator<>(mPredicates, mTrace, mPrecondition, mPostcondition);
 		}
 

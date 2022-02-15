@@ -161,7 +161,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		int numberSpInvariants = 0;
 		final ArrayDeque<IcfgLocation> inputIcfgLocationsWithoutInvariants = new ArrayDeque<>();
 		for (final IcfgLocation loc : inputIcfgLocations) {
-			if (!resultInvariantMapping.keySet().contains(loc)) {
+			if (!resultInvariantMapping.containsKey(loc)) {
 				inputIcfgLocationsWithoutInvariants.add(loc);
 			}
 		}
@@ -234,8 +234,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 			disjuncts.add(post);
 		}
 		final Term disjunction = SmtUtils.or(mgdScript.getScript(), disjuncts);
-		final IPredicate invar = predicateUnifier.getOrConstructPredicate(disjunction);
-		return invar;
+		return predicateUnifier.getOrConstructPredicate(disjunction);
 	}
 
 	/**
@@ -267,6 +266,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 				run.getWord(), csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, unsatCores, useLiveVariables,
 				mServices, computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
 				xnfConversionTechnique, simplificationTechnique, run.getStateSequence(), false);
+		// TODO: Aggregate stats
 		return tc.getInterpolants();
 	}
 
@@ -282,7 +282,8 @@ public final class LargeBlockEncodingIcfgTransformer {
 		while (true) {
 			if (currentLoc.getOutgoingEdges().isEmpty()) {
 				throw new AssertionError("no outgoing edge");
-			} else if (currentLoc.getOutgoingEdges().size() == 1) {
+			}
+			if (currentLoc.getOutgoingEdges().size() == 1) {
 				final IcfgEdge edge = currentLoc.getOutgoingEdges().get(0);
 				@SuppressWarnings("unchecked")
 				final NestedRun<T, IcfgLocation> suffix =

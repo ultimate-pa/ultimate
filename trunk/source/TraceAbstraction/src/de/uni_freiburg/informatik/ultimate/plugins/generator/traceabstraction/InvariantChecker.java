@@ -160,16 +160,14 @@ public class InvariantChecker {
 		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(unknownTpsds);
 		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments =
 				twoPointSubgraphsToSegments(invalidTpsds);
-		mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID,
-				mServices.getBacktranslationService(), validSegments, unknownSegments, invalidSegments);
+		mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+				validSegments, unknownSegments, invalidSegments);
 	}
 
 	private String icfgLocationsToListOfLineNumbers(final List<IcfgLocation> loopLocWithoutInvariant) {
 		final TreeSet<Integer> lineNumbersSorted = loopLocWithoutInvariant.stream()
 				.map(x -> guessLocation(x).getStartLine()).collect(Collectors.toCollection(TreeSet::new));
-		final String result =
-				lineNumbersSorted.stream().map(x -> "line " + x.toString()).collect(Collectors.joining(", "));
-		return result;
+		return lineNumbersSorted.stream().map(x -> "line " + x.toString()).collect(Collectors.joining(", "));
 	}
 
 	private List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>>
@@ -185,9 +183,7 @@ public class InvariantChecker {
 			twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd, final EdgeCheckResult value) {
 		final CategorizedProgramPoint cppBefore = constructCategorizedProgramPoint(tpsd.getStartLocation());
 		final CategorizedProgramPoint cppAfter = constructCategorizedProgramPoint(tpsd.getEndLocation());
-		final LoopFreeSegmentWithStatePair<IcfgEdge, Term> result =
-				new LoopFreeSegmentWithStatePair<>(cppBefore, cppAfter, value.getCtxPre(), value.getCtxPost());
-		return result;
+		return new LoopFreeSegmentWithStatePair<>(cppBefore, cppAfter, value.getCtxPre(), value.getCtxPost());
 	}
 
 	private CategorizedProgramPoint constructCategorizedProgramPoint(final IcfgLocation programPoint) {
@@ -234,8 +230,7 @@ public class InvariantChecker {
 	private LoopFreeSegment<IcfgEdge> twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd) {
 		final CategorizedProgramPoint cppBefore = constructCategorizedProgramPoint(tpsd.getStartLocation());
 		final CategorizedProgramPoint cppAfter = constructCategorizedProgramPoint(tpsd.getEndLocation());
-		final LoopFreeSegment<IcfgEdge> result = new LoopFreeSegment<>(cppBefore, cppAfter);
-		return result;
+		return new LoopFreeSegment<>(cppBefore, cppAfter);
 	}
 
 	private ILocation guessLocation(final IcfgLocation programPoint) {
@@ -349,10 +344,8 @@ public class InvariantChecker {
 				if (tpsd.getEndLocation() != errorLoc) {
 					throw new AssertionError("wrong error loc");
 				}
-			} else {
-				if (tpsd.getEndLocation() != backwardStartLoc) {
-					throw new AssertionError("wrong error loc");
-				}
+			} else if (tpsd.getEndLocation() != backwardStartLoc) {
+				throw new AssertionError("wrong error loc");
 			}
 			mLogger.info(message23(tpsd));
 			tpsds.add(tpsd);
@@ -424,23 +417,24 @@ public class InvariantChecker {
 	ProgramPointType classify(final IcfgLocation loc) {
 		if (mIcfg.getLoopLocations().contains(loc)) {
 			return ProgramPointType.LOOP_HEAD;
-		} else if (mLoopLocations.getLoopErrorLoc2errorEdge().containsKey(loc)) {
-			return ProgramPointType.LOOP_INVARIANT_ERROR_LOC;
-		} else {
-			final String proc = loc.getProcedure();
-			if (mIcfg.getProcedureEntryNodes().get(proc).equals(loc)) {
-				return ProgramPointType.ENTRY;
-			} else if (mIcfg.getProcedureErrorNodes().get(proc).contains(loc)) {
-				return ProgramPointType.ERROR_LOC;
-			} else {
-				return ProgramPointType.UNKNOWN;
-			}
 		}
+		if (mLoopLocations.getLoopErrorLoc2errorEdge().containsKey(loc)) {
+			return ProgramPointType.LOOP_INVARIANT_ERROR_LOC;
+		}
+		final String proc = loc.getProcedure();
+		if (mIcfg.getProcedureEntryNodes().get(proc).equals(loc)) {
+			return ProgramPointType.ENTRY;
+		}
+		if (mIcfg.getProcedureErrorNodes().get(proc).contains(loc)) {
+			return ProgramPointType.ERROR_LOC;
+		}
+		return ProgramPointType.UNKNOWN;
 	}
 
 	private EdgeCheckResult doCheck(final IcfgLocation startLoc, final UnmodifiableTransFormula tf,
 			final IcfgLocation errorLoc) {
-		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
+		final IncrementalHoareTripleChecker htc =
+				new IncrementalHoareTripleChecker(mServices.getStorage(), mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
 		final IPredicate truePredicate =
@@ -494,13 +488,14 @@ public class InvariantChecker {
 	private static String getType(final IcfgLocation startLoc) {
 		if (isInvariant(startLoc)) {
 			return "loop head";
-		} else if (isErrorLoc(startLoc)) {
-			return "error location";
-		} else if (isLoopLoc(startLoc)) {
-			return "loop head";
-		} else {
-			return "entry";
 		}
+		if (isErrorLoc(startLoc)) {
+			return "error location";
+		}
+		if (isLoopLoc(startLoc)) {
+			return "loop head";
+		}
+		return "entry";
 	}
 
 	public static <E extends IIcfgTransition<IcfgLocation>> Set<E> collectAdjacentEdges(final IIcfg<IcfgLocation> icfg,
@@ -543,11 +538,10 @@ public class InvariantChecker {
 		for (final IcfgEdge succEdge : loopLoc.getOutgoingEdges()) {
 			final IcfgLocation succLoc = succEdge.getTarget();
 			if (isInvariant(succLoc)) {
-				if (result == null) {
-					result = succEdge;
-				} else {
+				if (result != null) {
 					throw new UnsupportedOperationException("several invariants");
 				}
+				result = succEdge;
 			}
 		}
 		return result;
@@ -604,7 +598,6 @@ public class InvariantChecker {
 
 		public TwoPointSubgraphDefinition(final IcfgLocation startLocation, final Set<IcfgEdge> subgraphEdges,
 				final IcfgLocation endLocation) {
-			super();
 			mStartLocation = startLocation;
 			mSubgraphEdges = subgraphEdges;
 			mEndLocation = endLocation;

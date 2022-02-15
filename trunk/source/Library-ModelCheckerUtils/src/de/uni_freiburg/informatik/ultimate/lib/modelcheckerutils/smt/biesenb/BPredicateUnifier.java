@@ -42,11 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -95,7 +94,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mFalsePredicate = factory.newPredicate(mScript.term("false"));
 		mPredicates = new HashSet<>();
 		mIntricatePredicate = new HashSet<>();
-		mStatisticsTracker = new PredicateUnifierStatisticsGenerator();
+		mStatisticsTracker = new PredicateUnifierStatisticsGenerator(services.getStorage());
 		mPredicateTrie = new PredicateTrie<>(logger, services, mMgdScript, mTruePredicate, mFalsePredicate, factory,
 				mSymbolTable);
 		if (USE_MAP) {
@@ -125,8 +124,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 				return p;
 			}
 		}
-		final IPredicate result = getOrConstructPredicate(pred);
-		return result;
+		return getOrConstructPredicate(pred);
 	}
 
 	@Override
@@ -144,15 +142,14 @@ public class BPredicateUnifier implements IPredicateUnifier {
 				return p;
 			}
 		}
-		final IPredicate result = getOrConstructPredicate(pred);
-		return result;
+		return getOrConstructPredicate(pred);
 	}
 
 	@Override
 	public String collectPredicateUnifierStatistics() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append(PredicateUnifierStatisticsType.getInstance().prettyprintBenchmarkData(mStatisticsTracker));
-		builder.append(" " + (mImplicationTime / 100) / 10d + "s impTime " + mPredicateTrie.getDepth());
+		builder.append(mStatisticsTracker);
+		builder.append(" " + mImplicationTime / 100 / 10d + "s impTime " + mPredicateTrie.getDepth());
 		return builder.toString();
 	}
 
@@ -180,8 +177,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		mMgdScript.push(this, 1);
 		try {
 			mMgdScript.assertTerm(this, isDistinct);
-			final LBool result = mMgdScript.checkSat(this);
-			return result;
+			return mMgdScript.checkSat(this);
 		} finally {
 			mMgdScript.pop(this, 1);
 			mMgdScript.unlock(this);
@@ -235,18 +231,16 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			mImplicationGraph.unifyPredicate(unifiedPredicate);
 			mImplicationTime += System.currentTimeMillis() - start;
 			mStatisticsTracker.incrementConstructedPredicates();
+		} else // Check syntactic or semantic match
+		if (unifiedPredicate.getFormula().toString().equals(predicate.getFormula().toString())) {
+			mStatisticsTracker.incrementSyntacticMatches();
 		} else {
-			// Check syntactic or semantic match
-			if (unifiedPredicate.getFormula().toString().equals(predicate.getFormula().toString())) {
-				mStatisticsTracker.incrementSyntacticMatches();
-			} else {
-				mStatisticsTracker.incrementSemanticMatches();
-			}
+			mStatisticsTracker.incrementSemanticMatches();
 		}
 
 		if (false && USE_RESTRUCTURE) {
 			final int oldDepth = mPredicateTrie.getDepth();
-			if (oldDepth > (minDepth(mPredicates.size())) * 3 + mDepthOffset) {
+			if (oldDepth > minDepth(mPredicates.size()) * 3 + mDepthOffset) {
 				restructurePredicateTrie();
 				final int newDepth = mPredicateTrie.getDepth();
 				mDepthOffset = newDepth - minDepth(mPredicates.size());
@@ -274,7 +268,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			mStatisticsTracker.incrementSemanticMatches();
 			mStatisticsTracker.stopTime();
 			return mTruePredicate;
-		} else if (equalsTrue == LBool.UNKNOWN) {
+		}
+		if (equalsTrue == LBool.UNKNOWN) {
 			mIntricatePredicate.add(pred);
 			return pred;
 		}
@@ -283,7 +278,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			mStatisticsTracker.incrementSemanticMatches();
 			mStatisticsTracker.stopTime();
 			return mFalsePredicate;
-		} else if (equalsFalse == LBool.UNKNOWN) {
+		}
+		if (equalsFalse == LBool.UNKNOWN) {
 			mIntricatePredicate.add(pred);
 			return pred;
 		}
@@ -347,11 +343,10 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			return false;
 		}
 		ImplicationMap<IPredicate> map;
-		if (mImplicationGraph instanceof ImplicationMap) {
-			map = (ImplicationMap<IPredicate>) mImplicationGraph;
-		} else {
+		if (!(mImplicationGraph instanceof ImplicationMap)) {
 			throw new UnsupportedOperationException("restructure only possible with ImplicationMap");
 		}
+		map = (ImplicationMap<IPredicate>) mImplicationGraph;
 
 		// restructure
 		// remove true and false, as they are not included in the predicate trie
@@ -412,7 +407,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 		} else {
 			falseWitness = getWitnessInductive(falseSide.getFirst(), falseSide.getSecond(), witnessMap);
 		}
-		witnessMap.put((witness), new Pair<>(trueWitness, falseWitness));
+		witnessMap.put(witness, new Pair<>(trueWitness, falseWitness));
 		return witness;
 	}
 
@@ -471,8 +466,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	private Pair<IPredicate, IPredicate> getPivot(final Map<IPredicate, Set<IPredicate>> descendantsMap,
 			final Map<IPredicate, Set<IPredicate>> ancestorsMap) {
-		assert (!descendantsMap.isEmpty() && !ancestorsMap.isEmpty());
-		final float optimum = ((float) descendantsMap.keySet().size()) / 2;
+		assert !descendantsMap.isEmpty() && !ancestorsMap.isEmpty();
+		final float optimum = (float) descendantsMap.size() / 2;
 		float minDif = optimum;
 		IPredicate pivotIn = null;
 		// find pivotIn
@@ -481,7 +476,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			if (vCount == optimum) {
 				pivotIn = pred;
 				break;
-			} else if (Math.abs(optimum - vCount) < minDif) {
+			}
+			if (Math.abs(optimum - vCount) < minDif) {
 				minDif = Math.abs(optimum - vCount);
 				pivotIn = pred;
 			}
@@ -508,7 +504,8 @@ public class BPredicateUnifier implements IPredicateUnifier {
 			if (vCount == optimum) {
 				pivotOut = pred.getKey();
 				break;
-			} else if (Math.abs(optimum - vCount) < minDif) {
+			}
+			if (Math.abs(optimum - vCount) < minDif) {
 				minDif = Math.abs(optimum - vCount);
 				pivotOut = pred.getKey();
 			}

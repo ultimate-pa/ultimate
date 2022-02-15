@@ -54,10 +54,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.BackwardCoveringInformation;
 
 /**
  * Uses Craig interpolation for computation of nested interpolants. Supports two algorithms. 1. Matthias' recursive
@@ -216,7 +216,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	@Override
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
-		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
+		mTraceCheckBenchmarkGenerator.startInterpolantComputationTime();
 		assert mPredicateUnifier != null;
 		assert mPredicateUnifier.isRepresentative(mPrecondition);
 		assert mPredicateUnifier.isRepresentative(mPostcondition);
@@ -240,7 +240,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw tce;
 		} finally {
-			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
+			mTraceCheckBenchmarkGenerator.stopInterpolantComputationTime();
 		}
 		// TODO: remove this if relevant variables are definitely correct.
 		// assert testRelevantVars() : "bug in relevant variables";
@@ -299,8 +299,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
-				mLogger) : "invalid Hoare triple in tree interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
+				null) : "invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
 	}
 
@@ -367,11 +367,10 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 				// (which is stored in oldPostcondition, since mPostcondition
 				// is already set to null.
 				interpolantAtReturnPosition = oldPostcondition;
-				assert interpolantAtReturnPosition != null;
 			} else {
 				interpolantAtReturnPosition = mInterpolants[returnPosition];
-				assert interpolantAtReturnPosition != null;
 			}
+			assert interpolantAtReturnPosition != null;
 
 			mLogger.info("Compute interpolants for subsequence at non-pending call position " + nonPendingCall);
 			// Compute interpolants for subsequence and add them to interpolants
@@ -383,6 +382,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 					InterpolationTechnique.Craig_NestedInterpolation, mInstantiateArrayExt, mXnfConversionTechnique,
 					mSimplificationTechnique, true);
 			final LBool isSafe = tc.isCorrect();
+			mTraceCheckBenchmarkGenerator.aggregateTraceCheckStatisticsSkipNotReady(tc.getStatistics());
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError(
 						"has to be unsat by construction, we do check only for interpolant computation");
@@ -408,8 +408,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		}
 
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
-				mLogger) : "invalid Hoare triple in nested interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
+				null) : "invalid Hoare triple in nested interpolants";
 	}
 
 	/**

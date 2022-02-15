@@ -76,8 +76,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
-	private final TimedIndependenceStatisticsDataProvider mStatistics =
-			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
+	private final TimedIndependenceStatisticsDataProvider mStatistics;
 
 	private final Map<IProgramVarOrConst, IProgramVarOrConst> mTransferCache = new HashMap<>();
 	private final TermTransferrer mTransferrer;
@@ -100,6 +99,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric, final TermTransferrer transferrer) {
 		mServices = services;
+		mStatistics =
+				new TimedIndependenceStatisticsDataProvider(mServices.getStorage(), SemanticIndependenceRelation.class);
 		mManagedScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mTransferrer = transferrer;

@@ -27,15 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
-import java.util.Collection;
-import java.util.function.Function;
-
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
 /**
  *
@@ -43,86 +38,20 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
-public final class PdrBenchmark extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
+public final class PdrBenchmark extends BaseStatisticsDataProvider {
 
-	private static final String[] STOPWATCHES = new String[] { PdrStatisticsDefinitions.PDR_RUNTIME.toString() };
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mPdrTime = new TimeTracker();
 
-	@Override
-	public Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
+	public PdrBenchmark(final IToolchainStorage storage) {
+		super(storage);
 	}
 
-	@Override
-	public Object getValue(final String key) {
-		final PdrStatisticsDefinitions keyEnum = Enum.valueOf(PdrStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case PDR_RUNTIME:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
-			}
-		default:
-			throw new AssertionError("unknown data: " + keyEnum);
-		}
+	public void startTime() {
+		mPdrTime.start();
 	}
 
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return PdrStatisticsType.getInstance();
+	public void stopTime() {
+		mPdrTime.stop();
 	}
-
-	@Override
-	public String[] getStopwatches() {
-		return STOPWATCHES;
-	}
-
-	/**
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	public enum PdrStatisticsDefinitions implements IStatisticsElement {
-		PDR_RUNTIME(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
-
-		private final Class<?> mClazz;
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		PdrStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mClazz = clazz;
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
-		}
-	}
-
-	/**
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	private static final class PdrStatisticsType extends StatisticsType<PdrStatisticsDefinitions> {
-
-		private static final PdrStatisticsType INSTANCE = new PdrStatisticsType();
-
-		public PdrStatisticsType() {
-			super(PdrStatisticsDefinitions.class);
-		}
-
-		public static PdrStatisticsType getInstance() {
-			return INSTANCE;
-		}
-	}
-
 }

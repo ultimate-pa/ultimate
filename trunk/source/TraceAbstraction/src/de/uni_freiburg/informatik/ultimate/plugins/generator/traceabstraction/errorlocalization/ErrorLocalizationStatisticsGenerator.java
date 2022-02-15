@@ -26,121 +26,98 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
-public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProvider {
-	
-	private final Benchmark mBenchmark;
-	private boolean mRunning = false;
+public class ErrorLocalizationStatisticsGenerator extends BaseStatisticsDataProvider {
 
-	private boolean mSuccesfullyFinished;
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mSuccesfullyFinished;
+
+	@Reflected(prettyName = "Error Localization Time")
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mTime;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mIcfgEdges;
-	private int mErrorEnforcingIcfgEdges;
-	private int mErrorAdmittingIcfgEdges;
-	private int mErrorIrrelevantIcfgEdges;
-	private int mNumberOfBranches;
-	private double mAngelicScore;
-	private final StatisticsData mHoareTripleCheckerStatistics;
 
-	public ErrorLocalizationStatisticsGenerator() {
-		mBenchmark = new Benchmark();
-		mBenchmark.register(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime));
-		mHoareTripleCheckerStatistics = new StatisticsData();
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mErrorEnforcingIcfgEdges;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mErrorAdmittingIcfgEdges;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mErrorIrrelevantIcfgEdges;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
+	private int mNumberOfBranches;
+
+	@Statistics(type = DefaultMeasureDefinitions.DOUBLE_COUNTER)
+	private double mAngelicScore;
+
+	@Reflected(prettyName = "Error Localization Htc")
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mHoareTripleCheckerStatistics;
+
+	public ErrorLocalizationStatisticsGenerator(final IToolchainStorage storage) {
+		super(storage);
+		mTime = new TimeTracker();
+		mHoareTripleCheckerStatistics = new StatisticsAggregator(storage);
 	}
 
 	public long getErrorLocalizationTime() {
-		return (long) mBenchmark.getElapsedTime(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime), TimeUnit.NANOSECONDS);
+		return mTime.elapsedTime(TimeUnit.NANOSECONDS);
 	}
-	public void continueErrorLocalizationTime() {
-		assert !mRunning : "Timing already running";
-		mRunning = true;
-		mBenchmark.unpause(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime));
+
+	public void startTime() {
+		mTime.start();
 	}
-	public void stopErrorLocalizationTime() {
-		assert mRunning : "Timing not running";
-		mRunning = false;
-		mBenchmark.pause(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime));
+
+	public void stopTime() {
+		mTime.stop();
 	}
-	
+
 	public void reportSuccesfullyFinished() {
-		if (mSuccesfullyFinished) {
+		if (mSuccesfullyFinished > 0) {
 			throw new IllegalStateException("already finished before");
 		}
-		mSuccesfullyFinished = true;
+		mSuccesfullyFinished++;
 	}
-	
+
 	public void reportIcfgEdge() {
 		mIcfgEdges++;
 	}
-	
+
 	public void reportErrorEnforcingIcfgEdge() {
 		mErrorEnforcingIcfgEdges++;
 	}
-	
+
 	public void reportErrorAdmittingIcfgEdge() {
 		mErrorAdmittingIcfgEdges++;
 	}
-	
+
 	public void reportErrorIrrelevantIcfgEdge() {
 		mErrorIrrelevantIcfgEdges++;
 	}
-	
-	public void reportNumberOfBranches(int numberOfBranches) {
+
+	public void reportNumberOfBranches(final int numberOfBranches) {
 		mNumberOfBranches = numberOfBranches;
 	}
-	
-	public void reportAngelicScore(double angelicScore) {
+
+	public void reportAngelicScore(final double angelicScore) {
 		mAngelicScore = angelicScore;
 	}
-	
-	public void addHoareTripleCheckerStatistics(final HoareTripleCheckerStatisticsGenerator hoareTripleCheckerStatistics) {
-		mHoareTripleCheckerStatistics.aggregateBenchmarkData(hoareTripleCheckerStatistics);
+
+	public void
+			addHoareTripleCheckerStatistics(final HoareTripleCheckerStatisticsGenerator hoareTripleCheckerStatistics) {
+		mHoareTripleCheckerStatistics.aggregateStatisticsData(hoareTripleCheckerStatistics);
 	}
-
-	
-	@Override
-	public Collection<String> getKeys() {
-		return ErrorLocalizationStatisticsType.getInstance().getKeys();
-	}
-	@Override
-	public Object getValue(final String key) {
-		final ErrorLocalizationStatisticsDefinitions keyEnum = Enum.valueOf(ErrorLocalizationStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case ErrorAdmittingIcfgEdges:
-			return mErrorAdmittingIcfgEdges;
-		case ErrorEnforcingIcfgEdges:
-			return mErrorEnforcingIcfgEdges;
-		case ErrorIrrelevantIcfgEdges:
-			return mErrorIrrelevantIcfgEdges;
-		case NumberOfBranches:
-			return mNumberOfBranches;
-		case AngelicScore:
-			return mAngelicScore;
-		case ErrorLocalizationTime:
-			return getErrorLocalizationTime();
-		case HoareTripleCheckerStatistics:
-			return mHoareTripleCheckerStatistics;
-		case IcfgEdges:
-			return mIcfgEdges;
-		case SuccesfullyFinished:
-			return mSuccesfullyFinished ? 1 : 0;
-		default:
-			throw new AssertionError("unknown key");
-		}
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return ErrorLocalizationStatisticsType.getInstance();
-	}
-
-
-
 }

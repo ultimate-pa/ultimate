@@ -79,8 +79,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.statistics.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
@@ -141,7 +141,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				mServices, witnessAutomaton, IcfgEdge.class);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
-		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+		benchGen.stopOverallTime();
 
 		final IResult benchDecomp = new StatisticsResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",
 				bcl.getMDBenchmark());
@@ -155,8 +155,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(termcompProof);
 		}
 
-		final BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
-		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
+		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", benchGen);
 		reportResult(benchTiming);
 
 		interpretAndReportResult(bcl, result, icfg);
@@ -316,8 +315,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (isFinite) {
 			// TODO: Make some attempt at getting the values
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
-			final List<IIcfgTransition<?>> combined = new ArrayList<>();
-			combined.addAll(stem);
+			final List<IIcfgTransition<?>> combined = new ArrayList<>(stem);
 
 			// TODO: It seems that the loop is not necessary if the trace is
 			// finite, but only contains things that have been inserted by

@@ -26,71 +26,47 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+public class HoareAnnotationStatisticsGenerator extends BaseStatisticsDataProvider {
 
-public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
-	
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mFomulaSimplifications;
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_COUNTER)
 	private long mFormulaSimplificationTreeSizeReduction;
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_TIME)
 	private long mHoareSimplificationTime;
-	
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mFomulaSimplificationsInter;
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_COUNTER)
 	private long mFormulaSimplificationTreeSizeReductionInter;
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_TIME)
 	private long mHoareSimplificationTimeInter;
-	
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_TIME)
 	private long mHoareAnnotationTime;
+
+	@Statistics(type = DefaultMeasureDefinitions.LONG_COUNTER)
 	private long mHoareAnnotationTreeSize;
-	
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mLocationsWithAnnotation;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mPreInvPairs;
+
+	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
 	private int mNumberOfFragments;
 
-	public HoareAnnotationStatisticsGenerator() {
-		super();
-	}
-
-	@Override
-	public Object getValue(final String key) {
-		final HoareAnnotationStatisticsDefinitions keyEnum = Enum.valueOf(HoareAnnotationStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case FomulaSimplifications:
-			return mFomulaSimplifications;
-		case FormulaSimplificationTreeSizeReduction:
-			return mFormulaSimplificationTreeSizeReduction;
-		case HoareSimplificationTime:
-			return mHoareSimplificationTime;
-		case FomulaSimplificationsInter:
-			return mFomulaSimplificationsInter;
-		case FormulaSimplificationTreeSizeReductionInter:
-			return mFormulaSimplificationTreeSizeReductionInter;
-		case HoareSimplificationTimeInter:
-			return mHoareSimplificationTimeInter;
-		case HoareAnnotationTime:
-			return mHoareAnnotationTime;
-		case HoareAnnotationTreeSize:
-			return mHoareAnnotationTreeSize;
-		case LocationsWithAnnotation:
-			return mLocationsWithAnnotation;
-		case PreInvPairs:
-			return mPreInvPairs;
-		case NumberOfFragments:
-			return mNumberOfFragments;
-		default:
-			throw new AssertionError("unknown data");
-		}
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return HoareAnnotationStatisticsType.getInstance();
-	}
-
-	@Override
-	public Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
+	public HoareAnnotationStatisticsGenerator(final IToolchainStorage storage) {
+		super(storage);
 	}
 
 	public void reportSimplification() {
@@ -104,7 +80,7 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 	public void reportSimplificationTime(final long simplificationTimeNano) {
 		mHoareSimplificationTime += simplificationTimeNano;
 	}
-	
+
 	public void reportSimplificationInter() {
 		mFomulaSimplificationsInter++;
 	}
@@ -116,8 +92,6 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 	public void reportSimplificationTimeInter(final long simplificationTimeNano) {
 		mHoareSimplificationTimeInter += simplificationTimeNano;
 	}
-	
-	
 
 	public void setLocationsWithHoareAnnotation(final int size) {
 		if (mLocationsWithAnnotation != 0) {
@@ -125,7 +99,7 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 		}
 		mLocationsWithAnnotation = size;
 	}
-	
+
 	public void setPreInvPairs(final int size) {
 		if (mPreInvPairs != 0) {
 			throw new AssertionError("already set");

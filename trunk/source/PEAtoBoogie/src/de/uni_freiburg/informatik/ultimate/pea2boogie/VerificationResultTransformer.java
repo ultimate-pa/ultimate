@@ -352,6 +352,7 @@ public class VerificationResultTransformer {
 				mLogger.info("Computing branch encoders");
 				final TraceCheck<IAction> tcl =
 						TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
+				tcl.getStatistics().close();
 				if (!tcl.providesRcfgProgramExecution()) {
 					mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
 							+ tcl.isCorrect());

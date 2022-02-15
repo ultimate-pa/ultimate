@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * A facade to simplify interaction with Partial Order Reduction, specifically in the context of verification.
@@ -153,8 +152,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return null;
 		}
 
-		final IIndependenceRelation<IPredicate, L> independence =
-				IndependenceBuilder.fromIndependence(mIndependence).ensureUnconditional().build();
+		final IIndependenceRelation<IPredicate, L> independence = IndependenceBuilder
+				.fromIndependence(mServices.getStorage(), mIndependence).ensureUnconditional().build();
 		final IDfsOrder<IcfgEdge, IPredicate> relevantOrder =
 				mMode.hasFixedOrder() ? (IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder : null;
 
@@ -266,16 +265,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	public void reportStatistics() {
-		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(mIndependence.getStatistics());
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+				"Independence relation benchmarks", mIndependence.getStatistics()));
 
 		if (mPersistent != null) {
-			final StatisticsData persistentData = new StatisticsData();
-			persistentData.aggregateBenchmarkData(mPersistent.getStatistics());
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new StatisticsResult<>(Activator.PLUGIN_NAME, "Persistent set benchmarks", persistentData));
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+					"Persistent set benchmarks", mPersistent.getStatistics()));
 		}
 	}
 

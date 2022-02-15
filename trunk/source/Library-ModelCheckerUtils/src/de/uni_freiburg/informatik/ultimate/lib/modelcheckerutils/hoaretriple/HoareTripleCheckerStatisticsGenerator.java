@@ -26,112 +26,97 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator.Statistics;
-import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.DefaultMeasureDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.TimeTracker;
 
-public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataProvider {
+public class HoareTripleCheckerStatisticsGenerator extends BaseStatisticsDataProvider {
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
-	private final InCaReCounter mSDtfsCounter;
+	public static final String SOLVER_COUNTER_SAT = "Sat";
+	public static final String SOLVER_COUNTER_UNSAT = "Unsat";
+	public static final String SOLVER_COUNTER_UNKNOWN = "Unknown";
+	public static final String TIME_HTC = "HtcTime";
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
-	private final InCaReCounter mSDsluCounter;
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
+	private final InCaReCounter mSDtfs;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
-	private final InCaReCounter mSDsCounter;
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
+	private final InCaReCounter mSDslu;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
-	private final InCaReCounter mSdLazyCounter;
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
+	private final InCaReCounter mSDs;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
+	private final InCaReCounter mSDLazy;
+
+	@Reflected(prettyName = SOLVER_COUNTER_SAT)
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 	private final InCaReCounter mSolverCounterSat;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+	@Reflected(prettyName = SOLVER_COUNTER_UNSAT)
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 	private final InCaReCounter mSolverCounterUnsat;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+	@Reflected(prettyName = SOLVER_COUNTER_UNKNOWN)
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 	private final InCaReCounter mSolverCounterUnknown;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
+	@Reflected(prettyName = "NotChecked")
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
 	private final InCaReCounter mSolverCounterNotChecked;
 
-	@Reflected(prettyName = "Time")
-	@Statistics(type = KeyType.TT_TIMER)
-	private final TimeTracker mTimer;
+	@Reflected(prettyName = TIME_HTC)
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mHtcTime;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
-	private final InCaReCounter mProtectedPredicate;
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
+	private final InCaReCounter mProtectedPredicates;
 
-	@Statistics(type = KeyType.IN_CA_RE_COUNTER)
-	private final InCaReCounter mProtectedAction;
+	@Statistics(type = DefaultMeasureDefinitions.IN_CA_RE_COUNTER)
+	private final InCaReCounter mProtectedActions;
 
-	private boolean mRunning;
-
-	private final Map<String, Supplier<Object>> mStats;
-
-	public HoareTripleCheckerStatisticsGenerator() {
-		mProtectedPredicate = new InCaReCounter();
-		mProtectedAction = new InCaReCounter();
-		mSDtfsCounter = new InCaReCounter();
-		mSDsluCounter = new InCaReCounter();
-		mSDsCounter = new InCaReCounter();
-		mSdLazyCounter = new InCaReCounter();
+	public HoareTripleCheckerStatisticsGenerator(final IToolchainStorage storage) {
+		super(storage);
+		mProtectedPredicates = new InCaReCounter();
+		mProtectedActions = new InCaReCounter();
+		mSDtfs = new InCaReCounter();
+		mSDslu = new InCaReCounter();
+		mSDs = new InCaReCounter();
+		mSDLazy = new InCaReCounter();
 		mSolverCounterSat = new InCaReCounter();
 		mSolverCounterUnsat = new InCaReCounter();
 		mSolverCounterUnknown = new InCaReCounter();
 		mSolverCounterNotChecked = new InCaReCounter();
-
-		mTimer = new TimeTracker();
-		mRunning = false;
-
-		mStats = new LinkedHashMap<>();
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.ProAct.name(), this::getProtectedActionCounter);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.ProPred.name(), this::getProtectedPredicateCounter);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SDtfs.name(), this::getSDtfsCounter);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SDslu.name(), this::getSDsluCounter);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SDs.name(), this::getSDsCounter);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SdLazy.name(), this::getSdLazyCounter);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SolverSat.name(), this::getSolverCounterSat);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SolverUnsat.name(), this::getSolverCounterUnsat);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SolverUnknown.name(), this::getSolverCounterUnknown);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.SolverNotchecked.name(), this::getSolverCounterNotChecked);
-		mStats.put(HoareTripleCheckerStatisticsDefinitions.Time.name(), this::getEdgeCheckerTime);
+		mHtcTime = new TimeTracker();
 	}
 
 	public InCaReCounter getProtectedPredicateCounter() {
-		return mProtectedPredicate;
+		return mProtectedPredicates;
 	}
 
 	public InCaReCounter getProtectedActionCounter() {
-		return mProtectedAction;
+		return mProtectedActions;
 	}
 
 	public InCaReCounter getSDtfsCounter() {
-		return mSDtfsCounter;
+		return mSDtfs;
 	}
 
 	public InCaReCounter getSDsluCounter() {
-		return mSDsluCounter;
+		return mSDslu;
 	}
 
 	public InCaReCounter getSDsCounter() {
-		return mSDsCounter;
+		return mSDs;
 	}
 
 	public InCaReCounter getSdLazyCounter() {
-		return mSdLazyCounter;
+		return mSDLazy;
 	}
 
 	public InCaReCounter getSolverCounterSat() {
@@ -151,58 +136,17 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 	}
 
 	public long getEdgeCheckerTime() {
-		return mTimer.elapsedTime(TimeUnit.NANOSECONDS);
+		return mHtcTime.elapsedTime(TimeUnit.NANOSECONDS);
 	}
 
 	public void continueEdgeCheckerTime() {
-		assert !mRunning : "Timing already running";
-		mRunning = true;
-		mTimer.start();
+		assert !mHtcTime.isRunning() : "Timing already running";
+		mHtcTime.start();
 	}
 
 	public void stopEdgeCheckerTime() {
-		assert mRunning : "Timing not running";
-		mRunning = false;
-		mTimer.stop();
-	}
-
-	@Override
-	public Collection<String> getKeys() {
-		return HoareTripleCheckerStatisticsType.getInstance().getKeys();
-	}
-
-	@Override
-	public Object getValue(final String key) {
-		final Supplier<Object> rtr = mStats.get(key);
-		if (rtr == null) {
-			throw new AssertionError("unknown key");
-		}
-		return rtr.get();
-	}
-
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return HoareTripleCheckerStatisticsType.getInstance();
-	}
-
-	@Override
-	public String toString() {
-		return getBenchmarkType().prettyprintBenchmarkData(this);
-		// final StringBuilder builder = new StringBuilder();
-		// builder.append(getClass().getSimpleName());
-		// builder.append(" [");
-		// final Iterator<Entry<String, Supplier<Object>>> iter = mStats.entrySet().iterator();
-		// while (iter.hasNext()) {
-		// final Entry<String, Supplier<Object>> entry = iter.next();
-		// builder.append(entry.getKey());
-		// builder.append('=');
-		// builder.append(entry.getValue().get());
-		// if (iter.hasNext()) {
-		// builder.append(", ");
-		// }
-		// }
-		// builder.append(']');
-		// return builder.toString();
+		assert mHtcTime.isRunning() : "Timing not running";
+		mHtcTime.stop();
 	}
 
 }

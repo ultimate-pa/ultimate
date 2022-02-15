@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -66,37 +67,40 @@ public final class HoareTripleCheckerUtils {
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
 		final ILogger logger = services.getLoggingService().getLogger(HoareTripleCheckerUtils.class);
-		final ChainingHoareTripleChecker sdHtc = constructSdHoareTripleChecker(logger, csToolkit, unifier);
+		final ChainingHoareTripleChecker sdHtc =
+				constructSdHoareTripleChecker(services.getStorage(), logger, csToolkit, unifier);
 		final ChainingHoareTripleChecker solverHtc =
-				constructSmtHoareTripleChecker(logger, hoareTripleChecks, csToolkit, unifier);
+				constructSmtHoareTripleChecker(services.getStorage(), logger, hoareTripleChecks, csToolkit, unifier);
 		return sdHtc.andThen(solverHtc);
 	}
 
-	public static ChainingHoareTripleChecker constructSdHoareTripleChecker(final ILogger logger,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
+	public static ChainingHoareTripleChecker constructSdHoareTripleChecker(final IToolchainStorage storage,
+			final ILogger logger, final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
 		ChainingHoareTripleChecker chain =
-				ChainingHoareTripleChecker.with(logger, new SdHoareTripleChecker(csToolkit, unifier));
+				ChainingHoareTripleChecker.with(storage, logger, new SdHoareTripleChecker(storage, csToolkit, unifier));
 		if (REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED) {
-			chain = chain.reviewWith(new MonolithicHoareTripleChecker(csToolkit));
+			// do not collect statistics for review HTCs
+			chain = chain.reviewWith(new MonolithicHoareTripleChecker(null, csToolkit));
 		}
 		return chain;
 	}
 
-	public static ChainingHoareTripleChecker constructSmtHoareTripleChecker(final ILogger logger,
-			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
+	public static ChainingHoareTripleChecker constructSmtHoareTripleChecker(final IToolchainStorage storage,
+			final ILogger logger, final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
+			final IPredicateUnifier unifier) {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
+			solverHtc = new MonolithicHoareTripleChecker(storage, csToolkit);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false);
+			solverHtc = new IncrementalHoareTripleChecker(storage, csToolkit, false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown value " + hoareTripleChecks);
 		}
 
-		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(logger, solverHtc);
+		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(storage, logger, solverHtc);
 		// protect against quantified transition formulas and intricate predicates
 		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
 		final Predicate<IPredicate> noIntricateNoQuantifier =
@@ -105,7 +109,8 @@ public final class HoareTripleCheckerUtils {
 				a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula());
 		chain = chain.predicatesProtectedBy(noIntricateNoQuantifier).actionsProtectedBy(noQuantifier);
 		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
-			chain = chain.reviewWith(new MonolithicHoareTripleChecker(csToolkit));
+			// do not collect statistics for review htcs
+			chain = chain.reviewWith(new MonolithicHoareTripleChecker(null, csToolkit));
 		}
 		return chain;
 	}

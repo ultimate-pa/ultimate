@@ -135,11 +135,11 @@ public class DagInterpreter {
 		// frequent non-trivial check would probably be more expensive than continued interpretation
 		// ==> check only before branches
 		if (!earlyExit && overlay.successorsOf(curNode).size() > 1) {
-			mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXIT_QUERIES_NONTRIVIAL);
+			mStats.increment(SifaStats.SifaMeasures.DAG_INTERPRETER_EARLY_EXIT_QUERIES_NONTRIVIAL);
 			earlyExit = mDomain.isEqBottom(curOutput).isTrueForAbstraction();
 		}
 		if (earlyExit) {
-			mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXITS);
+			mStats.increment(SifaStats.SifaMeasures.DAG_INTERPRETER_EARLY_EXITS);
 			logEarlyExitAfterStep();
 		}
 		return earlyExit;

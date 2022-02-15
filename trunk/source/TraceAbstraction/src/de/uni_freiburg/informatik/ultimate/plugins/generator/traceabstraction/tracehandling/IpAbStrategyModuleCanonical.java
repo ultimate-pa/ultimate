@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.CanonicalInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -89,10 +90,16 @@ public class IpAbStrategyModuleCanonical<LETTER> implements IIpAbStrategyModule<
 							mEmptyStackFactory, mLogger, mPredicateUnifier,
 							NestedWord.nestedWord(mCounterexample.getWord()));
 			iab.analyze();
+
 			final NestedWordAutomaton<LETTER, IPredicate> automaton = iab.getResult();
 			mResult = new IpAbStrategyModuleResult<>(automaton, Collections.singletonList(ipp));
 		}
 		return mResult;
+	}
+
+	@Override
+	public void aggregateStatistics(final StatisticsAggregator statistics) {
+		// TODO: Is iab.getBackwardCoveringInformation() interesting?
 	}
 
 }

@@ -94,7 +94,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.MediumTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 
@@ -217,10 +216,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			createInvariantResults(icfg, icfg.getCfgSmtToolkit(), backTranslatorService);
 			createProcedureContractResults(icfg, backTranslatorService);
 		}
-		final StatisticsData stat = new StatisticsData();
-		stat.aggregateBenchmarkData(statistics);
 		final IResult benchmarkResult =
-				new StatisticsResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
+				new StatisticsResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", statistics);
 		reportResult(benchmarkResult);
 		switch (mOverallResult) {
 		case SAFE:
@@ -319,9 +316,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 
 		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
 
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
+		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 		locsForLoopLocations.addAll(icfg.getLoopLocations());
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 

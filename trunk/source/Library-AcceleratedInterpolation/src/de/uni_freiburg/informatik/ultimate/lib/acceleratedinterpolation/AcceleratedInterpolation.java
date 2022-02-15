@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolationCore.IStrategySupplier;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark;
-import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorFastUPR;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorJordan;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.AcceleratorQvasr;
@@ -128,8 +127,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		mCounterexampleTrace = counterexample;
 		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPrefs = prefs;
-		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
-		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL);
+		mAccelInterpolBench = new AcceleratedInterpolationBenchmark(services.getStorage());
+		mAccelInterpolBench.startOverall();
 
 		mIcfg = mPrefs.getIcfgContainer();
 		mPredUnifier = predicateUnifier;
@@ -186,7 +185,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 				loopAccelerator, strategySupplier);
 
 		try {
-			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);
+			mAccelInterpolBench.startCore();
 			mIsTraceCorrect = accelInterpolCore.acceleratedInterpolationCoreIsCorrect();
 			if (mIsTraceCorrect == LBool.UNSAT) {
 				mInterpolants = accelInterpolCore.getInterpolants();

@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -105,6 +106,16 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
+	public IStorable putUnmarkedStorable(final String key, final IStorable value) {
+		if (value == null || key == null) {
+			throw new IllegalArgumentException("Cannot store nothing");
+		}
+		synchronized (mLock) {
+			return mToolchainStorage.put(key, value);
+		}
+	}
+
+	@Override
 	public IStorable removeStorable(final String key) {
 		synchronized (mLock) {
 			return mToolchainStorage.remove(key);
@@ -112,16 +123,16 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public void clear() {
+	public Set<DestroyResult> clear() {
 		synchronized (mLock) {
-			final Collection<IStorable> values = mToolchainStorage.values();
+			final Collection<Entry<String, IStorable>> values = mToolchainStorage.entrySet();
 			if (values.isEmpty()) {
-				return;
+				return Collections.emptySet();
 			}
-			final List<IStorable> current = new ArrayList<>(values);
+			final List<Entry<String, IStorable>> current = new ArrayList<>(values);
 
 			if (current.isEmpty()) {
-				return;
+				return Collections.emptySet();
 			}
 
 			// destroy storables in reverse order s.t., e.g., scripts are destroyed
@@ -134,24 +145,25 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			if (coreLogger.isDebugEnabled()) {
 				coreLogger.debug("Clearing " + current.size() + " storables from " + getClass().getSimpleName());
 			}
-			for (final IStorable storable : current) {
-				if (storable == null) {
-					coreLogger.warn("Found NULL storable, ignoring");
+			final Set<DestroyResult> rtr = new LinkedHashSet<>();
+			for (final Entry<String, IStorable> storable : current) {
+				if (storable.getValue() == null) {
+					coreLogger.warn("Storable for %s is null, ignoring", storable.getKey());
 					continue;
 				}
 				try {
-					storable.destroy();
+					storable.getValue().destroy();
+					rtr.add(new DestroyResult(storable.getKey(), null));
 				} catch (final Throwable t) {
-					if (coreLogger == null) {
-						continue;
-					}
-					coreLogger.fatal("There was an exception during clearing of toolchain storage while destroying "
-							+ storable.getClass().toString() + ": " + t.getMessage());
+					coreLogger.fatal("Exception while destroying storable %s: %s", storable.getClass().getSimpleName(),
+							t.getMessage());
+					rtr.add(new DestroyResult(storable.getKey(), t));
 				}
 			}
 			mToolchainStorage.clear();
 			mMarker.clear();
 			pushMarker(this);
+			return rtr;
 		}
 	}
 
@@ -207,11 +219,10 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	@Override
 	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
 		synchronized (mLock) {
-
-			final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
 			if (pluginIds == null || pluginIds.length == 0) {
 				return this;
 			}
+			final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
 			for (final String pluginId : pluginIds) {
 				final PreferenceLayer existingLayer = newLayers.get(pluginId);
 				final PreferenceLayer newLayer;
@@ -262,19 +273,28 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public Set<String> destroyMarker(final Object marker) {
+	public Set<DestroyResult> destroyMarker(final Object marker) {
 		if (mMarker.isEmpty() || !hasMarker(marker)) {
 			return Collections.emptySet();
 		}
 		synchronized (mLock) {
-			final Set<String> rtr = new HashSet<>();
+			final Set<DestroyResult> rtr = new HashSet<>();
 			final Iterator<Pair<Object, Set<String>>> iter = mMarker.iterator();
+			final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
 			while (iter.hasNext()) {
 				final Pair<Object, Set<String>> markerPair = iter.next();
 				iter.remove();
 				for (final String key : markerPair.getSecond()) {
-					if (destroyStorable(key)) {
-						rtr.add(key);
+					final IStorable storable = removeStorable(key);
+					if (storable != null) {
+						try {
+							storable.destroy();
+							rtr.add(new DestroyResult(key, null));
+						} catch (final Throwable t) {
+							coreLogger.fatal("Exception while destroying storable %s: %s",
+									storable.getClass().getSimpleName(), t.getMessage());
+							rtr.add(new DestroyResult(key, t));
+						}
 					}
 				}
 				if (markerPair.getFirst() == marker) {

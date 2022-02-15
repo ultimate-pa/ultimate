@@ -53,14 +53,14 @@ public class InterpretCallSummarizer implements ICallSummarizer {
 
 	@Override
 	public IPredicate summarize(final String callee, final IPredicate inputAfterCall) {
-		mStats.start(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
-		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
+		mStats.start(SifaStats.SifaMeasures.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.increment(SifaStats.SifaMeasures.CALL_SUMMARIZER_CACHE_MISSES);
 
 		final ProcedureResources res = mProcResCache.resourcesOf(callee);
 		final IPredicate result = mDagIpreter.interpretForSingleMarker(
 				res.getRegexDag(), res.getDagOverlayPathToReturn(), inputAfterCall);
 
-		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.stop(SifaStats.SifaMeasures.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
 		return result;
 	}
 }

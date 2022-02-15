@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2022 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -24,33 +24,49 @@
  * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util.statistics;
+package de.uni_freiburg.informatik.ultimate.util.statistics.measures;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public interface IKeyedStatisticsElement extends IStatisticsElement {
+public class StringCounter {
 
-	KeyType getType();
+	private final Map<String, Integer> mCounts = new LinkedHashMap<>();
 
-	String getName();
+	public void count(final Object obj) {
+		count(obj.toString());
+	}
 
-	@Override
-	default Object aggregate(final Object lhs, final Object rhs) {
-		return getType().aggregate(lhs, rhs);
+	public void count(final String str) {
+		mCounts.compute(str, (k, v) -> v == null ? 1 : v + 1);
+	}
+
+	public Map<String, Integer> getCounts() {
+		return Collections.unmodifiableMap(mCounts);
 	}
 
 	@Override
-	default String prettyprint(final Object data) {
-		return getType().prettyPrint(getName(), data);
+	public String toString() {
+		return mCounts.toString();
 	}
 
-	default boolean isMaxTimer() {
-		return getType() == KeyType.MAX_TIMER;
+	public static StringCounter aggregate(final Object o1, final Object o2) {
+		final StringCounter c1 = (StringCounter) o1;
+		final StringCounter c2 = (StringCounter) o2;
+		final StringCounter rtr = new StringCounter();
+		rtr.mCounts.putAll(c1.mCounts);
+		c2.mCounts.entrySet()
+				.forEach(a -> rtr.mCounts.compute(a.getKey(), (k, v) -> v == null ? a.getValue() : v + a.getValue()));
+		return rtr;
 	}
 
-	default boolean isStopwatch() {
-		return getType() == KeyType.TIMER || getType() == KeyType.MAX_TIMER;
+	public static boolean isEmpty(final Object o1) {
+		final StringCounter c1 = (StringCounter) o1;
+		return c1.mCounts.isEmpty();
 	}
 
 }

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util;
+package de.uni_freiburg.informatik.ultimate.util.statistics.measures;
 
 /**
  * Three counters, one for internal, one for call, one for return.

@@ -8,7 +8,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.statistics.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -26,8 +26,8 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractModelCheckerTestSuiteWithIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncrementalLog {
 
@@ -37,8 +37,10 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 	private static final long TIMEOUT = 90 * 1000;
 
 	private static final String TOOLCHAIN = "examples/toolchains/TreeAutomizer.xml";
-//	private static final String SETTINGS_FILE = "examples/settings/chc/TreeAutomizer/TreeAutomizerHopcroftMinimization.epf";
-	private static final String SETTINGS_FILE = "examples/settings/chc/TreeAutomizer/TreeAutomizerNaiveMinimization.epf";
+	// private static final String SETTINGS_FILE =
+	// "examples/settings/chc/TreeAutomizer/TreeAutomizerHopcroftMinimization.epf";
+	private static final String SETTINGS_FILE =
+			"examples/settings/chc/TreeAutomizer/TreeAutomizerNaiveMinimization.epf";
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -55,7 +57,7 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 
 	private static List<Class<? extends ICsvProviderProvider<? extends Object>>> getBenchmarks() {
 		final List<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
-		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
+		benchmarks.add(BuchiCegarLoopBenchmarkGenerator.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
@@ -94,7 +96,7 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 	}
 
 	public Collection<File> getInputFiles() {
-		return TestUtil.getFiles(new File(TEST_FILES_DIR), new String[] { ".smt2" });
+		return TestUtil.getFiles(new File(TEST_FILES_DIR), ".smt2");
 	}
 
 	@Override

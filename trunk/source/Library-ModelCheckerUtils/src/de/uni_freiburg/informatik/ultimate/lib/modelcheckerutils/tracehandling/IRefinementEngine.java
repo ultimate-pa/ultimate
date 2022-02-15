@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
@@ -48,5 +49,5 @@ public interface IRefinementEngine<L extends IAction, T> {
 	 * @return An {@link RefinementEngineStatisticsGenerator} instance that contains all statistics collected during the
 	 *         execution of this {@link IRefinementEngine} instance.
 	 */
-	RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
+	StatisticsAggregator getRefinementEngineStatistics();
 }

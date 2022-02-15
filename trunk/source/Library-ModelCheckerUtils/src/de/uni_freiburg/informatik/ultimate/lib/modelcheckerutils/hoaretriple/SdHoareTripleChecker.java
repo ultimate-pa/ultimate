@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -54,12 +55,13 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	private final CallCheckHelper mCallCheckHelper = new CallCheckHelper();
 	private final ReturnCheckHelper mReturnCheckHelper = new ReturnCheckHelper();
 
-	public SdHoareTripleChecker(final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
+	public SdHoareTripleChecker(final IToolchainStorage storage, final CfgSmtToolkit csToolkit,
+			final IPredicateUnifier predicateUnifier) {
 		mPredicateCoverageChecker = predicateUnifier.getCoverageRelation();
 		mTruePredicate = predicateUnifier.getTruePredicate();
 		mFalsePredicate = predicateUnifier.getFalsePredicate();
-		mSdHoareTripleChecker = new SdHoareTripleCheckerHelper(csToolkit, mPredicateCoverageChecker,
-				new HoareTripleCheckerStatisticsGenerator());
+		mSdHoareTripleChecker = new SdHoareTripleCheckerHelper(storage, csToolkit, mPredicateCoverageChecker,
+				new HoareTripleCheckerStatisticsGenerator(storage));
 	}
 
 	@Override
@@ -107,10 +109,9 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	public abstract class CheckHelper {
 		public Validity check(final IPredicate preLin, final IPredicate preHier, final IAction act,
 				final IPredicate succ) {
-			if (act instanceof IInternalAction) {
-				if (((IInternalAction) act).getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
-					return Validity.VALID;
-				}
+			if (act instanceof IInternalAction
+					&& ((IInternalAction) act).getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
+				return Validity.VALID;
 			}
 
 			boolean unknownCoverage = false;

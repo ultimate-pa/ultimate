@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * An independence relation that is used in Partial Order or Lipton reductions.
@@ -72,8 +72,7 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	 * @return a statistics provider with implementation-defined data
 	 */
 	default IStatisticsDataProvider getStatistics() {
-		return new AbstractStatisticsDataProvider() {
-			// By default, no statistics are collected.
-		};
+		// by default, no statistics are collected
+		return new StatisticsAggregator(null);
 	}
 }

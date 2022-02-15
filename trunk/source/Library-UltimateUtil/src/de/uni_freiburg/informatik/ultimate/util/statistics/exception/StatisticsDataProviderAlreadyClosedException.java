@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2022 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -24,27 +24,22 @@
  * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util.statistics;
+package de.uni_freiburg.informatik.ultimate.util.statistics.exception;
 
-import java.util.concurrent.TimeUnit;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BaseStatisticsDataProvider;
 
 /**
- * Functions to convert statistic objects in primitive types for aggregation. E.g., convert TimeTracker to Long.
+ * Exception that is thrown whenever an {@link BaseStatisticsDataProvider} is closed more than once.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public final class Converter {
+public class StatisticsDataProviderAlreadyClosedException extends RuntimeException {
 
-	private Converter() {
-		// objects of this class have no use ==> forbid construction
+	private static final long serialVersionUID = 47519007262609785L;
+
+	public StatisticsDataProviderAlreadyClosedException(final BaseStatisticsDataProvider sdp,
+			final String callerSignature, final long id) {
+		super(String.format("%s (id %s) is already closed (was created at: %s)", sdp.getClass().getSimpleName(), id,
+				callerSignature));
 	}
-
-	public static Object identity(final Object o) {
-		return o;
-	}
-
-	public static Object nanos(final Object t) {
-		return ((TimeTracker) t).elapsedTime(TimeUnit.NANOSECONDS);
-	}
-
 }
