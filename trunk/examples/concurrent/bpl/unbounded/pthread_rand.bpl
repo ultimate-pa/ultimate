@@ -28,7 +28,7 @@ modifies state, m, seed;
     //assert nexts != seed;
     seed := nexts;
     atomic { assume m == 1; m := 0; }
-    my_rand = nexts % 10;
+    myrand := nexts % 10;
     assert myrand <= 10;
   }
 }
