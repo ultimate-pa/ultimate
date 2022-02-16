@@ -206,13 +206,14 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		final ManagedScript ipScript = constructManagedScriptForInterpolation();
 		final Interpolator<L> interpolator =
 				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
-		if (mLoops.isEmpty() || mAccelerations.isEmpty() || (!mLoops.isEmpty() && mIcfg.getLoopLocations().isEmpty())) {
+		if (mLoops.isEmpty() || mIcfg.getLoopLocations().isEmpty()) {
 			/*
 			 * No loops
 			 */
 			mLogger.info("No loops in this trace, falling back to nested interpolation");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 			mInterpolants = interpolator.getInterpolants();
+			return interpolator.getTraceCheckResult();
 		}
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
