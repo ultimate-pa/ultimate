@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,8 +43,13 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvas
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractionJoin;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -59,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
- * A summarizer for an ({@link UnmodifiableTransFormula}).
+ * A summarizer for {@link QvasrsAbstraction} UnmodifiableTransFormula}.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
@@ -94,7 +100,10 @@ public class QvasrsSummarizer {
 	 *            A {@link UnmodifiableTransFormula} representing changes to variables.
 	 * @return A summary of these changes in form of a {@link UnmodifiableTransFormula}
 	 */
-	public UnmodifiableTransFormula summarizeLoop(final UnmodifiableTransFormula transitionFormula) {
+	public QvasrsAbstraction computeQvasrsAbstraction(final UnmodifiableTransFormula transitionFormula,
+			final boolean usedInIcfgTransformation) {
+		final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer =
+				new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 		final Collection<TermVariable> quantOutVars = transitionFormula.getOutVars().values();
 		final Term quantifiedTransitionFormula = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.EXISTS,
 				quantOutVars, transitionFormula.getFormula());
@@ -106,7 +115,22 @@ public class QvasrsSummarizer {
 
 		topologicClosure = SmtUtils.toDnf(mServices, mScript, topologicClosure,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final Set<Term> disjuncts = QvasrUtils.splitDisjunction(topologicClosure);
+		Set<Term> disjuncts = QvasrUtils.splitDisjunction(topologicClosure);
+
+		/*
+		 * Get pre and post states when used in IcfgTransformation.
+		 */
+		if (usedInIcfgTransformation) {
+			final IPredicate truePred = new BasicPredicate(0, new String[0], mScript.getScript().term("true"),
+					Collections.emptySet(), mScript.getScript().term("true"));
+			final Term preLoop = predTransformer.pre(truePred, transitionFormula);
+			final Term postLoop = predTransformer.strongestPostcondition(truePred, transitionFormula);
+			disjuncts.add(preLoop);
+			disjuncts.add(postLoop);
+		}
+
+		disjuncts = QvasrUtils.checkDisjoint(disjuncts, mScript, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
 		final Map<Term, Term> outToInMap = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> outVar : transitionFormula.getOutVars().entrySet()) {
 			if (transitionFormula.getInVars().containsKey(outVar.getKey())) {
@@ -121,6 +145,9 @@ public class QvasrsSummarizer {
 		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
 		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
 
+		/*
+		 * Construct formulas of the for p(x) /\ tf /\ q(x') for predicates p and q.
+		 */
 		for (final Term pre : disjuncts) {
 			final Term preInvar = Substitution.apply(mScript, outToInMap, pre);
 			for (final Term post : disjuncts) {
@@ -150,6 +177,7 @@ public class QvasrsSummarizer {
 				qvasrsAbstraction.addTransition(new Triple<>(pre, translatedTransformer, post));
 			}
 		}
-		return QvasrsReach.reach(qvasrsAbstraction, mScript);
+		qvasrsAbstraction.setPrePostStates();
+		return qvasrsAbstraction;
 	}
 }

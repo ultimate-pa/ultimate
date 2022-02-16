@@ -46,6 +46,8 @@ public class QvasrsAbstraction {
 	private final Rational[][] mSimulationMatrix;
 	private final Set<Term> mStates;
 	private final Set<Triple<Term, Pair<Rational[], Rational[]>, Term>> mTransitions;
+	private Term mPreCon;
+	private Term mPostCon;
 
 	/**
 	 * Create a new Qvasrs-abstraction.
@@ -59,6 +61,8 @@ public class QvasrsAbstraction {
 		mSimulationMatrix = simulationMatrix;
 		mStates = states;
 		mTransitions = new HashSet<>();
+		mPreCon = null;
+		mPostCon = null;
 	}
 
 	/**
@@ -83,5 +87,26 @@ public class QvasrsAbstraction {
 
 	public Rational[][] getSimulationMatrix() {
 		return mSimulationMatrix;
+	}
+
+	public Term getPreState() {
+		return mPreCon;
+	}
+
+	public Term getPostState() {
+		return mPostCon;
+	}
+
+	public void setPrePostStates() {
+		final Set<Term> possiblePreStates = new HashSet<>(mStates);
+		final Set<Term> possiblePostStates = new HashSet<Term>(mStates);
+		for (final Triple<Term, Pair<Rational[], Rational[]>, Term> transition : mTransitions) {
+			if (transition.getFirst() != transition.getThird()) {
+				possiblePreStates.remove(transition.getFirst());
+				possiblePostStates.remove(transition.getThird());
+			}
+		}
+		mPreCon = possiblePreStates.toArray(new Term[1])[0];
+		mPostCon = possiblePostStates.toArray(new Term[1])[0];
 	}
 }

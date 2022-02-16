@@ -29,18 +29,23 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -70,6 +75,30 @@ public final class QvasrUtils {
 			result.addAll(Arrays.asList(dnfAppTerm.getParameters()));
 		}
 		return result;
+	}
+
+	public static Set<Term> checkDisjoint(final Set<Term> disjuncts, final ManagedScript script,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		final Deque<Term> checkStack = new HashDeque<>();
+		final Set<Term> disjointSet = new HashSet<>();
+		checkStack.addAll(disjuncts);
+		while (!checkStack.isEmpty()) {
+			final Term toBeChecked = checkStack.pop();
+			boolean isSat = false;
+			for (final Term conjunct : checkStack) {
+				if (SmtUtils.checkSatTerm(script.getScript(),
+						SmtUtils.and(script.getScript(), toBeChecked, conjunct)) == LBool.SAT) {
+					checkStack.add(SmtUtils.simplify(script, SmtUtils.or(script.getScript(), toBeChecked, conjunct),
+							services, simplificationTechnique));
+					isSat = true;
+					break;
+				}
+			}
+			if (!isSat) {
+				disjointSet.add(toBeChecked);
+			}
+		}
+		return disjointSet;
 	}
 
 	/**

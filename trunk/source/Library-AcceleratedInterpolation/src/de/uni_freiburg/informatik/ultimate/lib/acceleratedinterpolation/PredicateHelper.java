@@ -219,7 +219,7 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 			final IProgramVar var = invar.getKey();
 			final TermVariable invarTV = invar.getValue();
 			final TermVariable outvarTV = outvars.get(var);
-			final Term equality = SmtUtils.binaryEquality(mScript.getScript(), invarTV, outvarTV);
+			final Term equality = mScript.getScript().term("=", invarTV, outvarTV);
 			equalities.add(equality);
 		}
 		final Term conjunct = SmtUtils.and(mScript.getScript(), equalities);
