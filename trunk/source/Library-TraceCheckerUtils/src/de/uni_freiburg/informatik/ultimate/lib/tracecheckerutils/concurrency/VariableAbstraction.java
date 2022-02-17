@@ -90,8 +90,14 @@ public class VariableAbstraction<L extends IAction>
 	 */
 	@Override
 	public L abstractLetter(final L inLetter, final Set<IProgramVar> constrainingVariables) {
+		if (inLetter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
+				|| nothingWillChange(inLetter.getTransformula(), constrainingVariables)) {
+			return inLetter;
+		}
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), constrainingVariables);
+		// Ist relativ leicht zu sehen, dass die Abstraktion die TF nicht ändern wird (weil z.B. alle benutzten
+		// Variablen constraining sind)
 
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
@@ -100,6 +106,17 @@ public class VariableAbstraction<L extends IAction>
 			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 		}
 		return mCopyFactory.copy(inLetter, newFormula, null);
+	}
+
+	private boolean nothingWillChange(final UnmodifiableTransFormula utf,
+			final Set<IProgramVar> constrainingVariables) {
+		final Set<IProgramVar> relevantVariables = new HashSet<>(utf.getInVars().keySet());
+		relevantVariables.addAll(utf.getOutVars().keySet());
+		if (constrainingVariables.containsAll(relevantVariables)) {
+			return true;
+		}
+		return false;
+
 	}
 
 	/**
@@ -192,7 +209,9 @@ public class VariableAbstraction<L extends IAction>
 		for (final QualifiedTracePredicates qtp : refinement.getUsedTracePredicates()) {
 			qtp.getTracePredicates().getPostcondition().getVars();
 			qtp.getTracePredicates().getPredicates();
-			refinement.getIcfgProgramExecution();
+			refinement.getInfeasibilityProof().getAlphabet();
+			refinement.getInfeasibilityProof().getStates();
+			// refinement.getInfeasibilityProof().returnSuccessors();
 			// So how exactly are these things stored?
 		}
 
