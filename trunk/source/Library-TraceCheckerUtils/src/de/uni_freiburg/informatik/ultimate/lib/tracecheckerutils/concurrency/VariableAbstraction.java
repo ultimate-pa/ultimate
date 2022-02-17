@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -204,15 +207,53 @@ public class VariableAbstraction<L extends IAction>
 		return constrainingVars;
 	}
 
-	public Set<VarAbsConstraints<L>> refineSpecific(final Set<VarAbsConstraints<L>> current,
+	public Map<L, VarAbsConstraints<L>> refineSpecific(final Map<L, VarAbsConstraints<L>> current,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-		for (final QualifiedTracePredicates qtp : refinement.getUsedTracePredicates()) {
-			qtp.getTracePredicates().getPostcondition().getVars();
-			qtp.getTracePredicates().getPredicates();
-			refinement.getInfeasibilityProof().getAlphabet();
-			refinement.getInfeasibilityProof().getStates();
-			// refinement.getInfeasibilityProof().returnSuccessors();
-			// So how exactly are these things stored?
+		Set<TermVariable> in = Collections.emptySet();
+		Set<TermVariable> out = Collections.emptySet();
+		Set<IProgramVar> l;
+		// Set<L> letters = refinement.getInfeasibilityProof().getAlphabet();
+		// Set<IPredicate> states = refinement.getInfeasibilityProof().getStates();
+
+		/*
+		 * What is an OutgoingCallTransititon? CallTransisitons?
+		 *
+		 * TODO: If this appraoch makes any sense: Add the states of outgoingTransisiton again to the set to iterate
+		 * over. Sort the the things; which in incoming, which is outgoing;
+		 *
+		 * It doesnt make any sense. How do i get the States after the inital ones? I can iterate over all states. But
+		 * would this really make sense?
+		 *
+		 * Maybe I should just look at the Letters and their formulas...
+		 *
+		 *
+		 */
+
+		final Set<IPredicate> initials = refinement.getInfeasibilityProof().getInitialStates();
+		for (final IPredicate s : initials) {
+			for (final IncomingCallTransition<L, IPredicate> ict : refinement.getInfeasibilityProof()
+					.callPredecessors(s)) {
+				l = ict.getPred().getVars();
+				in = Collections.emptySet();
+				for (final IProgramVar m : l) {
+					in.add(m.getTermVariable());
+				}
+			}
+
+			for (final OutgoingCallTransition<L, IPredicate> oct : refinement.getInfeasibilityProof()
+					.callSuccessors(s)) {
+				l = oct.getSucc().getVars();
+				out = Collections.emptySet();
+				for (final IProgramVar m : l) {
+					out.add(m.getTermVariable());
+				}
+				// oct.getLetter().getTransformula().getInVars().values();
+			}
+			/*
+			 * if (!current.containsKey(oct.getLetter())) { current.put(oct.getLetter(), new
+			 * VarAbsConstraints<L>(oct.getLetter(), in, out)); }
+			 */
+
 		}
 
 		return null;
