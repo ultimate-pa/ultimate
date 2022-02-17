@@ -137,11 +137,7 @@ public class VariableAbstraction<L extends IAction>
 			final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
 			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
 		}
-		/*
-		 * for (final TermVariable auxVar : nAuxVars) { tfBuilder.addAuxVar(auxVar);
-		 *
-		 * }
-		 */
+
 		if (nAuxVars.isEmpty()) {
 			tfBuilder.setFormula(utf.getFormula());
 		} else {
@@ -191,11 +187,12 @@ public class VariableAbstraction<L extends IAction>
 		return constrainingVars;
 	}
 
-	public Map<L, Set<IProgramVar>> refineSpecific(final Map<L, Set<IProgramVar>> current,
+	public Set<VarAbsConstraints<L>> refineSpecific(final Set<VarAbsConstraints<L>> current,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
 		for (final QualifiedTracePredicates qtp : refinement.getUsedTracePredicates()) {
 			qtp.getTracePredicates().getPostcondition().getVars();
 			qtp.getTracePredicates().getPredicates();
+			refinement.getIcfgProgramExecution();
 			// So how exactly are these things stored?
 		}
 
