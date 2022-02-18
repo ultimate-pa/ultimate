@@ -280,6 +280,9 @@ public class Elim1Store {
 			}
 			newArrayMapping.put(store, newArray);
 		}
+		final Term hiddenWeakArrayEqualities = computeHiddenWeakArrayEqualities(mScript, quantifier, newArrayMapping);
+		assert !Arrays.asList(hiddenWeakArrayEqualities.getFreeVars()).contains(eliminatee) : "var is still there: "
+				+ eliminatee;
 
 		final Map<ArrayIndex, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives,
 				newArrayMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee, quantifier,
@@ -339,7 +342,7 @@ public class Elim1Store {
 			throw new ElimStorePlain.ElimStorePlainException(ElimStorePlainException.CAPTURED_INDEX);
 		}
 		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, transformedTerm,
-				singleCaseTerm);
+				singleCaseTerm, hiddenWeakArrayEqualities);
 		if (!doubleCaseJuncts.isEmpty()) {
 			final Term doubleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 					doubleCaseJuncts);
@@ -424,6 +427,43 @@ public class Elim1Store {
 
 	}
 
+
+	private Term computeHiddenWeakArrayEqualities(final Script script,
+			final int quantifier, final Map<MultiDimensionalNestedStore, Term> newArrayMapping) {
+		final List<Term> dualJuncts = new ArrayList<>();
+		final ArrayList<Entry<MultiDimensionalNestedStore, Term>> updates = new ArrayList<>(newArrayMapping.entrySet());
+		for (int i=0; i<updates.size(); i++) {
+			for (int j=i+1; j<updates.size(); j++) {
+				final Term hwae = computeHiddenWeakArrayEquality(script, quantifier, updates.get(i).getKey(),
+						updates.get(i).getValue(), updates.get(j).getKey(), updates.get(j).getValue());
+				dualJuncts.add(hwae);
+
+			}
+		}
+		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
+	}
+
+	private Term computeHiddenWeakArrayEquality(final Script script, final int quantifier, final MultiDimensionalNestedStore store1,
+			final Term array1, final MultiDimensionalNestedStore store2, final Term array2) {
+		final List<Term> indicesOnWhichArraysMayDiffer = new ArrayList<>();
+		for (final ArrayIndex entry : store1.getIndices()) {
+			indicesOnWhichArraysMayDiffer.add(entry.get(0));
+		}
+		for (final ArrayIndex entry : store2.getIndices()) {
+			indicesOnWhichArraysMayDiffer.add(entry.get(0));
+		}
+		return computeHiddenWeakArrayEqualities(script, quantifier, indicesOnWhichArraysMayDiffer, array1, array2);
+	}
+
+	private Term computeHiddenWeakArrayEqualities(final Script script, final int quantifier,
+			final List<Term> indicesOnWhichArraysMayDiffer, final Term array1, final Term array2) {
+		Term lhs = array1;
+		for (final Term index : indicesOnWhichArraysMayDiffer) {
+			final Term select = SmtUtils.select(script, array2, index);
+			lhs = SmtUtils.store(script, lhs, index, select);
+		}
+		return QuantifierUtils.applyDerOperator(script, quantifier, lhs, array2);
+	}
 
 	/**
 	 * Add for each pair of equivalent indices i1, i2, the equality

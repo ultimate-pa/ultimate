@@ -510,6 +510,77 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+
+
+	@Test
+	public void hiddenWeakArrayEquality01Simple() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= b1 (store a k1 23)) (= (store a k2 42) b2)))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	/**
+	 * Input is equivalent to false.
+	 */
+	@Test
+	public void hiddenWeakArrayEquality02ObservableEffect() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k", "i"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= b1 (store a k 23)) (= (store a k 42) b2) (not (= (select b1 i) (select b2 i))) (not (= i k))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void hiddenWeakArrayEquality03ThreeArrays() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2", "b3"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= b1 (store a k1 23)) (= (store a k2 42) b2) (= (store a k3 1048) b3)))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void hiddenWeakArrayEquality04NestedStore() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= b1 (store (store a k1 23) k3 1048)) (= (store a k2 42) b2)))";
+		final String expectedResultAsString = "(let ((.cse1 (select b1 k3)) (.cse0 (select b1 k1))) (and (= (select b2 k2) 42) (= (store (store (store b2 k2 (select b1 k2)) k1 .cse0) k3 .cse1) b1) (= .cse1 1048) (or (= k1 k3) (= 23 .cse0))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void hiddenWeakArrayEquality05Multidimensional() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "base1", "base2", "offset1", "offset2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "b1", "b2"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int (Array Int Int)))) (and (= b1 (store a base1 (store (select a base1) offset1 23))) (= b2 (store a base2 (store (select a base2) offset2 42)))))";
+		final String expectedResultAsString = "(let ((.cse0 (select b1 base1))) (and (= 23 (select .cse0 offset1)) (= 42 (select (select b2 base2) offset2)) (= b1 (store (store b2 base2 (select b1 base2)) base1 .cse0))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void hiddenWeakArrayEquality_06Tilia() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "valid", "oldValid"),
+			};
+		final String formulaAsString = "(forall ((a (Array Int Int))) (or (distinct oldValid (store a 1000 1001)) (distinct (store (store a 1000 1001) 23 42) valid) (distinct (select a 23) 42)))";
+		final String expectedResultAsString = "(or (distinct oldValid valid) (distinct (select valid 1000) 1001) (distinct (select valid 23) 42))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, formulaAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	/**
 	 * TODO: Bug. Some array variable is not eliminated.
 	 */

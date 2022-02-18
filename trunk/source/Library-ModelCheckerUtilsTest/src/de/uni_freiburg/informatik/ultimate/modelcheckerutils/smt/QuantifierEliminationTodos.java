@@ -314,15 +314,6 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	@Test
-	public void hiddenArrayEquality_tilia() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "valid", "oldValid"),
-			};
-		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= oldValid (store a 1000 1001)) (= (store (store a 1000 1001) 23 42) valid) (= (select a 23) 42)))";
-		final String expectedResultAsString = "(and (= oldValid valid) (= (select valid 1000) 1001) (= (select valid 23) 42))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
 
 	@Test
 	public void endless2() {
