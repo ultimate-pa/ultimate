@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -229,8 +231,21 @@ public class VariableAbstraction<L extends IAction>
 		 *
 		 */
 
-		final Set<IPredicate> initials = refinement.getInfeasibilityProof().getInitialStates();
-		for (final IPredicate s : initials) {
+		final List<IPredicate> li = new ArrayList<>(refinement.getInfeasibilityProof().getInitialStates());
+		for (final IPredicate s : li) {
+
+			for (final OutgoingInternalTransition<L, IPredicate> m : refinement.getInfeasibilityProof()
+					.internalSuccessors(s)) {
+				in = (Set<TermVariable>) m.getLetter().getTransformula().getInVars().values();
+				out = (Set<TermVariable>) m.getLetter().getTransformula().getOutVars().values();
+				if (!current.containsKey(m.getLetter())) {
+					current.put(m.getLetter(), new VarAbsConstraints<L>(m.getLetter(), in, out));
+				} else {
+					// add
+				}
+
+			}
+
 			for (final IncomingCallTransition<L, IPredicate> ict : refinement.getInfeasibilityProof()
 					.callPredecessors(s)) {
 				l = ict.getPred().getVars();
