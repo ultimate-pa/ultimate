@@ -211,9 +211,9 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 	 *            A {@link UnmodifiableTransFormula} representing a loopacceleration.
 	 * @return A reflexive loopacceleration.
 	 */
-	public Term makeReflexive(final Term t, final UnmodifiableTransFormula acceleration) {
-		final Map<IProgramVar, TermVariable> invars = acceleration.getInVars();
-		final Map<IProgramVar, TermVariable> outvars = acceleration.getOutVars();
+	public Term makeReflexive(final Term t, final UnmodifiableTransFormula transitionFormula) {
+		final Map<IProgramVar, TermVariable> invars = transitionFormula.getInVars();
+		final Map<IProgramVar, TermVariable> outvars = transitionFormula.getOutVars();
 		final List<Term> equalities = new ArrayList<>();
 		for (final Entry<IProgramVar, TermVariable> invar : invars.entrySet()) {
 			final IProgramVar var = invar.getKey();
@@ -222,6 +222,9 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 			final Term equality = mScript.getScript().term("=", invarTV, outvarTV);
 			equalities.add(equality);
 		}
+		/*
+		 * TODO: empty conjunction = true!
+		 */
 		final Term conjunct = SmtUtils.and(mScript.getScript(), equalities);
 		return SmtUtils.or(mScript.getScript(), t, conjunct);
 	}
