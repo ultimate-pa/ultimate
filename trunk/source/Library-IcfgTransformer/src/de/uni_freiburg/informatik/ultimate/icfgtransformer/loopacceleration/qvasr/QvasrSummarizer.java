@@ -243,9 +243,6 @@ public class QvasrSummarizer {
 		Term loopSummary = SmtUtils.and(script.getScript(), qvasrDimensionConjunction);
 		loopSummary = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS, kToTransformer.values(),
 				SmtUtils.and(script.getScript(), loopSummary));
-		/*
-		 * TODO: Used to work pre SmtInterpol-Update with quantifiers, now not anymore.
-		 */
 		loopSummary =
 				PartialQuantifierElimination.eliminate(services, script, loopSummary, SimplificationTechnique.POLY_PAC);
 		final TransFormulaBuilder tfb =

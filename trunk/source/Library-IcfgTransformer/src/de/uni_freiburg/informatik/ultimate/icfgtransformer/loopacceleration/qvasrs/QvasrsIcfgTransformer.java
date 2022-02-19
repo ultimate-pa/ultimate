@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,18 +43,27 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransfor
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRDetection;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -69,6 +79,8 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<OUTLOC> mResult;
+
+	private final IcfgTransformationBacktranslator mBackTranslationTracker;
 
 	/**
 	 * Construct a new qvasr loop icfgtransformer.
@@ -95,6 +107,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 		mLogger = logger;
 		mServices = services;
 		mScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
+		mBackTranslationTracker = backtranslationTracker;
 		mResult = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
 				transformer);
 	}
@@ -121,13 +134,13 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 		final FastUPRDetection<INLOC> loopDetector = new FastUPRDetection<>(mLogger, originalIcfg);
 		final Map<INLOC, Deque<IcfgEdge>> loopsWithLoopHead = loopDetector.getLoopEdgePathsWithLoopHead();
 		final List<INLOC> loopHeads = loopDetector.getLoopHeads();
-		final Map<INLOC, QvasrsAbstraction> qvasrsAbstractions = new HashMap<>();
+		final Map<INLOC, IntVasrsAbstraction> qvasrsAbstractions = new HashMap<>();
 
 		final QvasrsSummarizer qvasrsSummarizer = new QvasrsSummarizer(mLogger, mServices, mScript);
 		for (final Entry<INLOC, Deque<IcfgEdge>> loopMap : loopsWithLoopHead.entrySet()) {
 			final Map<INLOC, QvasrsAbstraction> mapping = new HashMap<>();
-			qvasrsAbstractions.put(loopMap.getKey(),
-					qvasrsSummarizer.computeQvasrsAbstraction(edgesToFormula(loopMap.getValue()), true));
+			qvasrsAbstractions.put(loopMap.getKey(), QvasrUtils.qvasrsAbstactionToIntVasrsAbstraction(mScript,
+					qvasrsSummarizer.computeQvasrsAbstraction(edgesToFormula(loopMap.getValue()), true)));
 		}
 
 		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(init);
@@ -139,15 +152,91 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 			final INLOC oldSource = iter.next();
 			OUTLOC newSource;
 			if (loopHeads.contains(oldSource)) {
-				final QvasrsAbstraction abstraction = qvasrsAbstractions.get(oldSource);
+				final int i = 0;
+				final IntVasrsAbstraction abstraction = qvasrsAbstractions.get(oldSource);
 				final Map<Term, OUTLOC> qvasrsStateToLoc = new HashMap<>();
 				for (final Term state : abstraction.getStates()) {
-					qvasrsStateToLoc.put(state, funLocFac.createLocation(oldSource, oldSource.getDebugIdentifier(),
-							oldSource.getProcedure()));
+					final StringDebugIdentifier id = new StringDebugIdentifier("QVASRSnode " + Integer.toString(i));
+					@SuppressWarnings("unchecked")
+					final OUTLOC newLoc = (OUTLOC) new IcfgLocation(id, oldSource.getProcedure());
+					qvasrsStateToLoc.put(state, newLoc);
 				}
+				final Term[] inVarsReal =
+						abstraction.getInVars().values().toArray(new Term[abstraction.getInVars().size()]);
+				final Term[] outVarsReal =
+						abstraction.getOutVars().values().toArray(new Term[abstraction.getOutVars().size()]);
+
+				final Term[][] variableRelationsIn = QvasrUtils.matrixVectorMultiplicationWithVariables(mScript,
+						abstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(inVarsReal));
+				final Term[][] variableRelationsOut = QvasrUtils.matrixVectorMultiplicationWithVariables(mScript,
+						abstraction.getSimulationMatrix(), QvasrUtils.transposeRowToColumnTermVector(outVarsReal));
+
+				for (final Triple<Term, Pair<Integer[], Integer[]>, Term> transformer : abstraction.getTransitions()) {
+					final OUTLOC newStart = qvasrsStateToLoc.get(transformer.getFirst());
+					final OUTLOC newTarget = qvasrsStateToLoc.get(transformer.getThird());
+					for (int dimension = 0; dimension < transformer.getSecond().getFirst().length; dimension++) {
+						final Set<Term> dimensionConjunction = new HashSet<>();
+						final Integer dimensionReset = transformer.getSecond().getFirst()[dimension];
+						final Integer dimensionAddition = transformer.getSecond().getSecond()[dimension];
+						if (dimensionReset == 0) {
+							final Term equality =
+									SmtUtils.binaryEquality(mScript.getScript(), variableRelationsOut[dimension][0],
+											mScript.getScript().numeral(dimensionAddition.toString()));
+							dimensionConjunction.add(equality);
+						} else {
+							final Term addition =
+									SmtUtils.sum(mScript.getScript(), "+", variableRelationsIn[dimension][0],
+											mScript.getScript().decimal(dimensionAddition.toString()));
+							final Term equality = SmtUtils.binaryEquality(mScript.getScript(),
+									variableRelationsOut[dimension][0], addition);
+							dimensionConjunction.add(equality);
+						}
+						final Term transitionConjunction = SmtUtils.and(mScript.getScript(), dimensionConjunction);
+						final Map<IProgramVar, TermVariable> freshInvars = new HashMap<>();
+						final Map<IProgramVar, TermVariable> freshOutvars = new HashMap<>();
+						final Map<Term, Term> freshVars = new HashMap<>();
+						for (final Entry<IProgramVar, TermVariable> oldInvars : abstraction.getInVars().entrySet()) {
+							final TermVariable freshVar = mScript.constructFreshCopy(oldInvars.getValue());
+							freshInvars.put(oldInvars.getKey(), freshVar);
+							freshVars.put(oldInvars.getValue(), freshVar);
+						}
+						for (final Entry<IProgramVar, TermVariable> oldOutvars : abstraction.getOutVars().entrySet()) {
+							final TermVariable freshVar = mScript.constructFreshCopy(oldOutvars.getValue());
+							freshOutvars.put(oldOutvars.getKey(), freshVar);
+							freshVars.put(oldOutvars.getValue(), freshVar);
+						}
+						final TransFormulaBuilder tfb =
+								new TransFormulaBuilder(freshInvars, freshOutvars, true, null, true, null, true);
+						tfb.setFormula(Substitution.apply(mScript, freshVars, transitionConjunction));
+						tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+						final UnmodifiableTransFormula transtition = tfb.finishConstruction(mScript);
+
+						lst.createNewInternalTransition(newStart, newTarget, transtition, false);
+					}
+				}
+				newSource = lst.createNewLocation(oldSource);
+
+				final OUTLOC newLoopHead = qvasrsStateToLoc.get(abstraction.getPreState());
+				final UnmodifiableTransFormula transtition = QvasrUtils.buildFormula(mScript, abstraction.getPreState(),
+						abstraction.getInVars(), abstraction.getInVars());
+				lst.createNewInternalTransition(newSource, newLoopHead, transtition, false);
+
+				final List<IcfgEdge> possibleExits = new ArrayList<>(oldSource.getOutgoingEdges());
 				/*
-				 * TODO insert new paths.
+				 * Find loop exit.
 				 */
+				for (final IcfgEdge possibleExit : oldSource.getOutgoingEdges()) {
+					for (final IcfgEdge loopEntry : loopsWithLoopHead.get(oldSource)) {
+						if (possibleExit == loopEntry) {
+							possibleExits.remove(possibleExit);
+						}
+					}
+				}
+				final IcfgLocation loopExit = possibleExits.get(0).getTarget();
+				final OUTLOC newTarget = lst.createNewLocation((INLOC) loopExit);
+				final UnmodifiableTransFormula exitTranstition = QvasrUtils.buildFormula(mScript,
+						abstraction.getPostState(), abstraction.getOutVars(), abstraction.getOutVars());
+				lst.createNewInternalTransition(newLoopHead, newTarget, exitTranstition, false);
 				mLogger.debug("H");
 			} else {
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {

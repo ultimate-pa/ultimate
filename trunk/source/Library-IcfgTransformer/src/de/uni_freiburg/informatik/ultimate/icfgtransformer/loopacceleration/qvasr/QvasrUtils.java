@@ -30,23 +30,32 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs.IntVasrsAbstraction;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs.QvasrsAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -272,6 +281,26 @@ public final class QvasrUtils {
 	}
 
 	/**
+	 * Construct a new {@link UnmodifiableTransFormula} from a term. This term is part of the DNF of the original
+	 * formula. There eligible.
+	 *
+	 * @param origin
+	 *            Original {@link UnmodifiableTransFormula}
+	 * @param term
+	 *            Disjunct term of the new formula.
+	 * @param managedScript
+	 *            A {@link ManagedScript}
+	 * @return A new {@link UnmodifiableTransFormula}
+	 */
+	public static UnmodifiableTransFormula buildFormula(final ManagedScript managedScript, final Term term,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(managedScript);
+	}
+
+	/**
 	 * Standard vector matrix multiplication of a {@link Rational} matrix and a {@link Rational} vector. They are not
 	 * associative.
 	 *
@@ -427,16 +456,7 @@ public final class QvasrUtils {
 		return joinedSet;
 	}
 
-	/**
-	 * Convert a given {@link QvasrAbstraction} consisting of {@link Rational} to an {@link IntvasrAbstraction} by
-	 * computing the least common multiple of the simulation matrix and addition vectors, then multiplying the entries
-	 * with it. Resulting in an integral vector addition system.
-	 *
-	 * @param qvasrAbstraction
-	 *            The {@link QvasrAbstraction} that will be converted to an {@link IntvasrAbstraction}
-	 * @return The converted {@link IntvasrAbstraction}
-	 */
-	public static IntvasrAbstraction qvasrAbstractionToInt(final QvasrAbstraction qvasrAbstraction) {
+	public static BigInteger getLeastCommonMultiple(final QvasrAbstraction qvasrAbstraction) {
 		BigInteger gcd = BigInteger.ZERO;
 		BigInteger mult = BigInteger.ONE;
 		for (int i = 0; i < qvasrAbstraction.getSimulationMatrix().length; i++) {
@@ -464,6 +484,20 @@ public final class QvasrUtils {
 		if (lcm.equals(BigInteger.ONE)) {
 			lcm = gcd;
 		}
+		return lcm;
+	}
+
+	/**
+	 * Convert a given {@link QvasrAbstraction} consisting of {@link Rational} to an {@link IntvasrAbstraction} by
+	 * computing the least common multiple of the simulation matrix and addition vectors, then multiplying the entries
+	 * with it. Resulting in an integral vector addition system.
+	 *
+	 * @param qvasrAbstraction
+	 *            The {@link QvasrAbstraction} that will be converted to an {@link IntvasrAbstraction}
+	 * @return The converted {@link IntvasrAbstraction}
+	 */
+	public static IntvasrAbstraction qvasrAbstractionToInt(final QvasrAbstraction qvasrAbstraction) {
+		final BigInteger lcm = getLeastCommonMultiple(qvasrAbstraction);
 		final Integer[][] integerSimulationMatrix = new Integer[qvasrAbstraction
 				.getSimulationMatrix().length][qvasrAbstraction.getSimulationMatrix()[0].length];
 		for (int i = 0; i < integerSimulationMatrix.length; i++) {
@@ -487,5 +521,57 @@ public final class QvasrUtils {
 			intVasr.addTransformer(new Pair<>(resetVectorInt, additionVectorInt));
 		}
 		return new IntvasrAbstraction(integerSimulationMatrix, intVasr);
+	}
+
+	public static IntVasrsAbstraction qvasrsAbstactionToIntVasrsAbstraction(final ManagedScript script,
+			final QvasrsAbstraction qvasrsAbstraction) {
+		final BigInteger lcm = getLeastCommonMultiple(qvasrsAbstraction.getAbstraction());
+		final IntvasrAbstraction intVasrAbstraction = qvasrAbstractionToInt(qvasrsAbstraction.getAbstraction());
+		final Map<IProgramVar, TermVariable> intInVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> intOutVars = new HashMap<>();
+
+		final Map<Term, Term> inVarSub = new HashMap<>();
+
+		for (final Entry<IProgramVar, TermVariable> inVar : qvasrsAbstraction.getInVars().entrySet()) {
+			final TermVariable intVar =
+					script.constructFreshTermVariable(inVar.getValue().getName(), SmtSortUtils.getIntSort(script));
+			intInVars.put(inVar.getKey(), intVar);
+			inVarSub.put(inVar.getValue(), intVar);
+		}
+
+		for (final Entry<IProgramVar, TermVariable> outVar : qvasrsAbstraction.getOutVars().entrySet()) {
+			final TermVariable intVar =
+					script.constructFreshTermVariable(outVar.getValue().getName(), SmtSortUtils.getIntSort(script));
+			intOutVars.put(outVar.getKey(), intVar);
+			inVarSub.put(outVar.getValue(), intVar);
+		}
+
+		final IntVasrsAbstraction intVasrsAbstraction =
+				new IntVasrsAbstraction(intVasrAbstraction, qvasrsAbstraction.getStates(), intInVars, intOutVars,
+						qvasrsAbstraction.getPreState(), qvasrsAbstraction.getPostState());
+		final Set<Term> intStates = new HashSet<>();
+		for (final Triple<Term, Pair<Rational[], Rational[]>, Term> transition : qvasrsAbstraction.getTransitions()) {
+			final Term intSource = Substitution.apply(script, inVarSub, transition.getFirst());
+			final Term intTarget = Substitution.apply(script, inVarSub, transition.getThird());
+			intStates.add(intTarget);
+			intStates.add(intSource);
+			final Integer[] resetVectorInt = new Integer[transition.getSecond().getFirst().length];
+			final Integer[] additionVectorInt = new Integer[transition.getSecond().getFirst().length];
+			for (int i = 0; i < transition.getSecond().getFirst().length; i++) {
+				resetVectorInt[i] = transition.getSecond().getFirst()[i].numerator().intValue();
+				final Rational oldRationalEntry = transition.getSecond().getSecond()[i].mul(lcm);
+				assert oldRationalEntry.isIntegral();
+				additionVectorInt[i] = oldRationalEntry.numerator().intValue();
+			}
+			final Triple<Term, Pair<Integer[], Integer[]>, Term> intTranstion =
+					new Triple<>(intSource, new Pair<>(resetVectorInt, additionVectorInt), intTarget);
+			intVasrsAbstraction.addTransition(intTranstion);
+		}
+		intVasrsAbstraction.setStates(intStates);
+		final Term newPre = Substitution.apply(script, inVarSub, qvasrsAbstraction.getPreState());
+		final Term newPost = Substitution.apply(script, inVarSub, qvasrsAbstraction.getPostState());
+		intVasrsAbstraction.setPreState(newPre);
+		intVasrsAbstraction.setPostState(newPost);
+		return intVasrsAbstraction;
 	}
 }

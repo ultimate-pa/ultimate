@@ -31,26 +31,25 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstraction;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.IntvasrAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * A class representing a rational addition vector with resets and states (Qvasrs). Consisting of a set of transitions
+ * A class representing a Integer addition vector with resets and states (Qvasrs). Consisting of a set of transitions
  * between predicates that represent program states.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
-public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
-	private final QvasrAbstraction mQvasrAbstraction;
-	private final Rational[][] mSimulationMatrix;
-	private final Set<Term> mStates;
-	private final Set<Triple<Term, Pair<Rational[], Rational[]>, Term>> mTransitions;
+public class IntVasrsAbstraction implements IVasrsAbstraction<Integer> {
+	private final IntvasrAbstraction mIntVasrAbstraction;
+	private final Integer[][] mSimulationMatrix;
+	private Set<Term> mStates;
+	private final Set<Triple<Term, Pair<Integer[], Integer[]>, Term>> mTransitions;
 	private Term mPreCon;
 	private Term mPostCon;
 	private final Map<IProgramVar, TermVariable> mInVars;
@@ -64,9 +63,9 @@ public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
 	 * @param states
 	 *            The set of states.
 	 */
-	public QvasrsAbstraction(final QvasrAbstraction abstraction, final Set<Term> states,
+	public IntVasrsAbstraction(final IntvasrAbstraction abstraction, final Set<Term> states,
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
-		mQvasrAbstraction = abstraction;
+		mIntVasrAbstraction = abstraction;
 		mSimulationMatrix = abstraction.getSimulationMatrix();
 		mStates = states;
 		mTransitions = new HashSet<>();
@@ -77,21 +76,37 @@ public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
 	}
 
 	/**
+	 * Create a new Qvasrs-abstraction.
+	 *
+	 * @param simulationMatrix
+	 *            The abstractions simulation matrix
+	 * @param states
+	 *            The set of states.
+	 */
+	public IntVasrsAbstraction(final IntvasrAbstraction abstraction, final Set<Term> states,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
+			final Term preCondition, final Term postCondition) {
+		mIntVasrAbstraction = abstraction;
+		mSimulationMatrix = abstraction.getSimulationMatrix();
+		mStates = states;
+		mTransitions = new HashSet<>();
+		mPreCon = preCondition;
+		mPostCon = postCondition;
+		mInVars = inVars;
+		mOutVars = outVars;
+	}
+
+	/**
 	 * Add a new transition between two states. This transition is modeled as a reset and addition vector pair.
 	 * Representing changes to program variables and relations between program variables.
 	 *
 	 * @param transition
-	 *            A new transition (p, [r, a], q). p, q being predicates and [r, a] is a pair of rational reset and
+	 *            A new transition (p, [r, a], q). p, q being predicates and [r, a] is a pair of Integer reset and
 	 *            addition vectors.
 	 */
 	@Override
-	public void addTransition(final Triple<Term, Pair<Rational[], Rational[]>, Term> transition) {
+	public void addTransition(final Triple<Term, Pair<Integer[], Integer[]>, Term> transition) {
 		mTransitions.add(transition);
-	}
-
-	@Override
-	public QvasrAbstraction getAbstraction() {
-		return mQvasrAbstraction;
 	}
 
 	@Override
@@ -100,23 +115,22 @@ public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
 	}
 
 	@Override
-	public Set<Triple<Term, Pair<Rational[], Rational[]>, Term>> getTransitions() {
+	public IntvasrAbstraction getAbstraction() {
+		return mIntVasrAbstraction;
+	}
+
+	@Override
+	public Set<Triple<Term, Pair<Integer[], Integer[]>, Term>> getTransitions() {
 		return mTransitions;
 	}
 
 	@Override
-	public Rational[][] getSimulationMatrix() {
+	public Integer[][] getSimulationMatrix() {
 		return mSimulationMatrix;
 	}
 
-	@Override
-	public Term getPreState() {
-		return mPreCon;
-	}
-
-	@Override
-	public Term getPostState() {
-		return mPostCon;
+	public void setStates(final Set<Term> states) {
+		mStates = states;
 	}
 
 	@Override
@@ -127,6 +141,16 @@ public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
 	@Override
 	public void setPostState(final Term post) {
 		mPostCon = post;
+	}
+
+	@Override
+	public Term getPreState() {
+		return mPreCon;
+	}
+
+	@Override
+	public Term getPostState() {
+		return mPostCon;
 	}
 
 	@Override
@@ -142,8 +166,8 @@ public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
 	@Override
 	public void setPrePostStates() {
 		final Set<Term> possiblePreStates = new HashSet<>(mStates);
-		final Set<Term> possiblePostStates = new HashSet<>(mStates);
-		for (final Triple<Term, Pair<Rational[], Rational[]>, Term> transition : mTransitions) {
+		final Set<Term> possiblePostStates = new HashSet<Term>(mStates);
+		for (final Triple<Term, Pair<Integer[], Integer[]>, Term> transition : mTransitions) {
 			if (transition.getFirst() != transition.getThird()) {
 				possiblePreStates.remove(transition.getFirst());
 				possiblePostStates.remove(transition.getThird());
