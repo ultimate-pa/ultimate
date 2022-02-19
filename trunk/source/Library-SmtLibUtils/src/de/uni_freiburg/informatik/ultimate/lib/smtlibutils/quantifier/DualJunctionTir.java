@@ -324,8 +324,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					return null;
 				}
 				// convert sbr to elpr
-				final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(script)
-						.transform(sbr.getRightHandSide());
+				final IPolynomialTerm polyRhs = PolynomialTermTransformer.convert(script, sbr.getRightHandSide());
 				elpr = new ExplicitLhsPolynomialRelation(sbr.getRelationSymbol(), Rational.ONE,
 						new Monomial(sbr.getLeftHandSide(), Rational.ONE), polyRhs);
 			} else {
