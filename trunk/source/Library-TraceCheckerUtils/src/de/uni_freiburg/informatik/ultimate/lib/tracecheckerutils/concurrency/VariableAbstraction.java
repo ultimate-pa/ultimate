@@ -179,6 +179,10 @@ public class VariableAbstraction<L extends IAction>
 
 		assert abstracted.getAssignedVars()
 				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
+		assert utf.getInVars().keySet()
+				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should not read more variables";
+		assert constrainingVars
+				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read constrained variables";
 
 		assert TransFormulaUtils.checkImplication(utf, abstracted, mMscript) != LBool.SAT : "not an abstraction";
 
