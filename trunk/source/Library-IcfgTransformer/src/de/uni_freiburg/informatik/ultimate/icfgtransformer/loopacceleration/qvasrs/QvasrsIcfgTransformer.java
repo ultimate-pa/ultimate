@@ -44,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBac
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRDetection;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrUtils;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.Backbone;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.Loop;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.LoopDetector;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -132,15 +135,37 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 		 * Finding loops using FastUPR loop detector. {@link FastUPRDetection}
 		 */
 		final FastUPRDetection<INLOC> loopDetector = new FastUPRDetection<>(mLogger, originalIcfg);
-		final Map<INLOC, Deque<IcfgEdge>> loopsWithLoopHead = loopDetector.getLoopEdgePathsWithLoopHead();
+		// final Map<INLOC, Deque<IcfgEdge>> loopsWithLoopHead = loopDetector.getLoopEdgePathsWithLoopHead();
 		final List<INLOC> loopHeads = loopDetector.getLoopHeads();
 		final Map<INLOC, IntVasrsAbstraction> qvasrsAbstractions = new HashMap<>();
 
+		final LoopDetector<INLOC> detecWerner =
+				new LoopDetector<>(mLogger, originalIcfg, originalIcfg.getLoopLocations(), mScript, mServices, 0);
+
+		final Map<IcfgLocation, Loop> loopWer = detecWerner.getLoopBodies();
+		final Map<INLOC, UnmodifiableTransFormula> loopsWithLoopHead = new HashMap<>();
+
+		for (final Entry<IcfgLocation, Loop> loopMap : loopWer.entrySet()) {
+			final Deque<Backbone> distinctLoopPaths = loopMap.getValue().getBackbones();
+			final UnmodifiableTransFormula[] distinctPathsFormulas =
+					new UnmodifiableTransFormula[distinctLoopPaths.size()];
+			int i = 0;
+			for (final Backbone distinctLoopPath : distinctLoopPaths) {
+				distinctPathsFormulas[i] = (UnmodifiableTransFormula) distinctLoopPath.getFormula();
+				i++;
+			}
+			final UnmodifiableTransFormula loopDisjunction =
+					TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false,
+							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, distinctPathsFormulas);
+			mLogger.warn(loopDisjunction.toStringDirect());
+			loopsWithLoopHead.put((INLOC) loopMap.getKey(), loopDisjunction);
+		}
+
 		final QvasrsSummarizer qvasrsSummarizer = new QvasrsSummarizer(mLogger, mServices, mScript);
-		for (final Entry<INLOC, Deque<IcfgEdge>> loopMap : loopsWithLoopHead.entrySet()) {
+		for (final Entry<INLOC, UnmodifiableTransFormula> loopMap : loopsWithLoopHead.entrySet()) {
 			final Map<INLOC, QvasrsAbstraction> mapping = new HashMap<>();
 			qvasrsAbstractions.put(loopMap.getKey(), QvasrUtils.qvasrsAbstactionToIntVasrsAbstraction(mScript,
-					qvasrsSummarizer.computeQvasrsAbstraction(edgesToFormula(loopMap.getValue()), true)));
+					qvasrsSummarizer.computeQvasrsAbstraction(loopMap.getValue(), true)));
 		}
 
 		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(init);
@@ -225,19 +250,18 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 				/*
 				 * Find loop exit.
 				 */
-				for (final IcfgEdge possibleExit : oldSource.getOutgoingEdges()) {
-					for (final IcfgEdge loopEntry : loopsWithLoopHead.get(oldSource)) {
-						if (possibleExit == loopEntry) {
-							possibleExits.remove(possibleExit);
-						}
-					}
-				}
+				// for (final IcfgEdge possibleExit : oldSource.getOutgoingEdges()) {
+				// for (final IcfgEdge loopEntry : loopsWithLoopHead.get(oldSource)) {
+				// if (possibleExit == loopEntry) {
+				// possibleExits.remove(possibleExit);
+				// }
+				// }
+				// }
 				final IcfgLocation loopExit = possibleExits.get(0).getTarget();
 				final OUTLOC newTarget = lst.createNewLocation((INLOC) loopExit);
 				final UnmodifiableTransFormula exitTranstition = QvasrUtils.buildFormula(mScript,
 						abstraction.getPostState(), abstraction.getOutVars(), abstraction.getOutVars());
 				lst.createNewInternalTransition(newLoopHead, newTarget, exitTranstition, false);
-				mLogger.debug("H");
 			} else {
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 					newSource = lst.createNewLocation(oldSource);
