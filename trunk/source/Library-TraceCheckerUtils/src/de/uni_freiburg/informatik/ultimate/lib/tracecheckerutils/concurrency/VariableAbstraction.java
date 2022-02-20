@@ -133,6 +133,7 @@ public class VariableAbstraction<L extends IAction>
 
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVars) {
+		// transform is the set of variables that can be havoced out
 		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
 		transform.addAll(utf.getAssignedVars());
 		transform.removeAll(constrainingVars);
@@ -140,12 +141,19 @@ public class VariableAbstraction<L extends IAction>
 		final Map<IProgramVar, TermVariable> nOutVars = new HashMap<>(utf.getOutVars());
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
 		for (final IProgramVar v : transform) {
-			if (nOutVars.containsKey(v)) {
+			if (nOutVars.containsKey(v) && nOutVars.get(v) == nInVars.get(v)) {
+				final TermVariable nv = mMscript.constructFreshCopy(nOutVars.get(v));
+				nAuxVars.add(nInVars.get(v));
+				nOutVars.put(v, nv);
+				nInVars.put(v, nv);
+
+			}
+			if (nOutVars.containsKey(v) && nOutVars.get(v) != nInVars.get(v)) {
 				nAuxVars.add(nOutVars.get(v));
 				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
 				nOutVars.put(v, nov);
 			}
-			if (nInVars.containsKey(v)) {
+			if (nInVars.containsKey(v) && nOutVars.get(v) != nInVars.get(v)) {
 				nAuxVars.add(nInVars.get(v));
 				nInVars.remove(v);
 			}
