@@ -139,23 +139,20 @@ public class VariableAbstraction<L extends IAction>
 		transform.removeAll(constrainingVars);
 		final Map<IProgramVar, TermVariable> nInVars = new HashMap<>(utf.getInVars());
 		final Map<IProgramVar, TermVariable> nOutVars = new HashMap<>(utf.getOutVars());
+		final Set<IProgramVar> assignedVars = utf.getAssignedVars();
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
 		for (final IProgramVar v : transform) {
-			if (nOutVars.containsKey(v) && nOutVars.get(v) == nInVars.get(v)) {
-				final TermVariable nv = mMscript.constructFreshCopy(nOutVars.get(v));
-				nAuxVars.add(nInVars.get(v));
-				nOutVars.put(v, nv);
-				nInVars.put(v, nv);
-
-			}
-			if (nOutVars.containsKey(v) && nOutVars.get(v) != nInVars.get(v)) {
+			if (assignedVars.contains(v)) {
 				nAuxVars.add(nOutVars.get(v));
 				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
 				nOutVars.put(v, nov);
 			}
-			if (nInVars.containsKey(v) && nOutVars.get(v) != nInVars.get(v)) {
+			if (nInVars.containsKey(v)) {
 				nAuxVars.add(nInVars.get(v));
 				nInVars.remove(v);
+				if (!assignedVars.contains(v)) {
+					nOutVars.remove(v);
+				}
 			}
 
 		}
@@ -177,8 +174,7 @@ public class VariableAbstraction<L extends IAction>
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		final UnmodifiableTransFormula abstracted = tfBuilder.finishConstruction(mMscript);
 
-		assert abstracted.getAssignedVars()
-				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
+		assert abstracted.getAssignedVars().equals(assignedVars) : "Abstraction should not change assigned variables";
 		assert utf.getInVars().keySet()
 				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should not read more variables";
 		assert constrainingVars
