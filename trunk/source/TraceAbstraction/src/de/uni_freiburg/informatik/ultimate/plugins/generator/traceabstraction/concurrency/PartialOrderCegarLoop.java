@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -105,12 +104,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends Basi
 
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
-	private final PartialOrderReductionFacade<L, H> mPOR;
+	private final PartialOrderReductionFacade<L> mPOR;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
 	private H mAbstractionLevel;
 	private final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> mLetterAbstraction;
+	private final IIndependenceRelation<IPredicate, L> mCoreIndependence;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -126,18 +126,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends Basi
 			mLetterAbstraction = null;
 		} else {
 			mLetterAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
+			mAbstractionLevel = mLetterAbstraction.getInitial();
 		}
 
+		mCoreIndependence = constructCoreIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
-				constructIndependence(csToolkit));
-
-		if (mLetterAbstraction != null) {
-			mAbstractionLevel = mLetterAbstraction.getInitial();
-			mPOR.setAbstractionLevel(mAbstractionLevel);
-		} else {
-			mPOR.disableAbstraction();
-		}
+				constructIndependence(mAbstractionLevel));
 	}
 
 	// Turn off one-shot partial order reduction before initial iteration.
@@ -233,7 +228,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends Basi
 			assert mLetterAbstraction.getHierarchy().compare(newLevel, mAbstractionLevel)
 					.isLessOrEqual() : "Refinement must yield a lower abstraction level";
 			mAbstractionLevel = newLevel;
-			mPOR.setAbstractionLevel(mAbstractionLevel);
+			mPOR.replaceIndependence(constructIndependence(mAbstractionLevel));
 		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
@@ -303,8 +298,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends Basi
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore());
 	}
 
-	private Function<H, IIndependenceRelation<IPredicate, L>> constructIndependence(final CfgSmtToolkit csToolkit) {
-		final var coreBuilder = IndependenceBuilder
+	private IIndependenceRelation<IPredicate, L> constructCoreIndependence(final CfgSmtToolkit csToolkit) {
+		return IndependenceBuilder
 				// Semantic independence forms the base.
 				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
 						mPref.getConditionalPor(), mPref.getSymmetricPor())
@@ -321,21 +316,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>, H> extends Basi
 				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
 				// We ignore "don't care" conditions stemming from the initial program automaton states.
 				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
-				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts);
+				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
+				// =========================================================================
+				// Retrieve the constructed relation.
+				.build();
+	}
 
-		// If abstraction is disabled:
-		if (mLetterAbstraction == null) {
-			// Never consider letters of the same thread to be independent.
-			final IIndependenceRelation<IPredicate, L> independence = coreBuilder.threadSeparated().build();
-			// The independence relation remains unchanged across refinement rounds.
-			return x -> independence;
-		}
-
-		// The core relation will remain unchanged. This means we construct only one script and only one cache.
-		final IIndependenceRelation<IPredicate, L> coreIndependence = coreBuilder.build();
-		// The independence relation changes depending on the refinement round's abstraction level.
-		return level -> IndependenceBuilder.fromPredicateActionIndependence(coreIndependence)
-				// // Apply abstraction to each letter before checking commutativity.
+	private IIndependenceRelation<IPredicate, L> constructIndependence(final H level) {
+		return IndependenceBuilder.fromPredicateActionIndependence(mCoreIndependence)
+				// Apply abstraction to each letter before checking commutativity.
 				.withAbstraction(mLetterAbstraction, level)
 				// Never consider letters of the same thread to be independent.
 				.threadSeparated()
