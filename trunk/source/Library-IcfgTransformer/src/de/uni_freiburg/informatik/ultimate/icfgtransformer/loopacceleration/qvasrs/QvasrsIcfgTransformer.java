@@ -246,22 +246,12 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 						abstraction.getInVars(), abstraction.getInVars());
 				lst.createNewInternalTransition(newSource, newLoopHead, transtition, false);
 
-				final List<IcfgEdge> possibleExits = new ArrayList<>(oldSource.getOutgoingEdges());
-				/*
-				 * Find loop exit.
-				 */
-				// for (final IcfgEdge possibleExit : oldSource.getOutgoingEdges()) {
-				// for (final IcfgEdge loopEntry : loopsWithLoopHead.get(oldSource)) {
-				// if (possibleExit == loopEntry) {
-				// possibleExits.remove(possibleExit);
-				// }
-				// }
-				// }
-				final IcfgLocation loopExit = possibleExits.get(0).getTarget();
-				final OUTLOC newTarget = lst.createNewLocation((INLOC) loopExit);
+				final IcfgLocation possibleExits = loopWer.get(oldSource).getLoopExit();
+
+				final OUTLOC newTarget = lst.createNewLocation((INLOC) possibleExits);
 				final UnmodifiableTransFormula exitTranstition = QvasrUtils.buildFormula(mScript,
 						abstraction.getPostState(), abstraction.getOutVars(), abstraction.getOutVars());
-				lst.createNewInternalTransition(newLoopHead, newTarget, exitTranstition, false);
+				lst.createNewInternalTransition(newSource, newTarget, exitTranstition, false);
 			} else {
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 					newSource = lst.createNewLocation(oldSource);
