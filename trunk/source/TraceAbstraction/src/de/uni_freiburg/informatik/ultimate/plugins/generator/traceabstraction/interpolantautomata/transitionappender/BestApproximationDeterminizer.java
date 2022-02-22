@@ -240,8 +240,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 		if (symbol2succs == null) {
 			return null;
 		}
-		final Set<IPredicate> succs = symbol2succs.get(symbol);
-		return succs;
+		return symbol2succs.get(symbol);
 	}
 
 	/**
@@ -286,8 +285,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 		if (symbol2succs == null) {
 			return null;
 		}
-		final Set<IPredicate> succs = symbol2succs.get(symbol);
-		return succs;
+		return symbol2succs.get(symbol);
 	}
 
 	/**
@@ -399,8 +397,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 		if (symbol2succs == null) {
 			return null;
 		}
-		final Set<IPredicate> succs = symbol2succs.get(symbol);
-		return succs;
+		return symbol2succs.get(symbol);
 	}
 
 	/**

@@ -119,7 +119,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicateUnifier predicateUnifier,
 			final RelevanceAnalysisMode faultLocalizationMode, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final IIcfg<IcfgLocation> IIcfg) {
+			final IIcfg<IcfgLocation> icfg) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -137,7 +137,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 			}
 			if (faultLocalizationMode == RelevanceAnalysisMode.MULTI_TRACE) {
 				doFlowSensitiveAnalysis(counterexample, predicateUnifier.getTruePredicate(), cfg,
-						modifiableGlobalsTable, csToolkit, IIcfg);
+						modifiableGlobalsTable, csToolkit, icfg);
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mErrorLocalizationStatisticsGenerator.stopTime();

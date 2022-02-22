@@ -46,40 +46,12 @@ public class CegarLoopStatisticsGenerator extends BaseStatisticsDataProvider {
 	public static final String BiggestAbstraction = "BiggestAbstraction";
 	public static final String TraceCheckStatistics = "TraceCheckStatistics";
 	public static final String AutomataMinimizationStatistics = "AutomataMinimizationStatistics";
+	public static final String REUSE_STATS = "ReuseStatistics";
+	public static final String HOARE_ANNOTATION_STATS = "HoareAnnotationStatistics";
 
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mReuseStatistics;
-
-	@Reflected(prettyName = HoareTripleCheckerStatistics)
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mEcData;
-
-	@Reflected(prettyName = PredicateUnifierStatistics)
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mPredicateUnifierData;
-
-	@Reflected(prettyName = TraceCheckStatistics)
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mTcData;
-
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mTotalInterpolationStatistics;
-
-	@Reflected(prettyName = AutomataMinimizationStatistics)
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mAmData;
-
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mHoareAnnotationStatistics;
-
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mInterpolantConsolidationStatistics;
-
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mPathInvariantsStatistics;
-
-	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
-	private final StatisticsAggregator mRefinementEngineStatistics;
+	@Reflected(prettyName = OverallTime)
+	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
+	private final TimeTracker mOverallTime = new TimeTracker();
 
 	@Reflected(prettyName = OverallIterations)
 	@Statistics(type = DefaultMeasureDefinitions.INT_COUNTER)
@@ -94,10 +66,6 @@ public class CegarLoopStatisticsGenerator extends BaseStatisticsDataProvider {
 
 	@Statistics(type = DefaultMeasureDefinitions.INT_MAX)
 	private int mPathProgramHistogramMaximum;
-
-	@Reflected(prettyName = OverallTime)
-	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
-	private final TimeTracker mOverallTime = new TimeTracker();
 
 	@Statistics(type = DefaultMeasureDefinitions.TT_TIMER)
 	private final TimeTracker mEmptinessCheckTime = new TimeTracker();
@@ -127,28 +95,37 @@ public class CegarLoopStatisticsGenerator extends BaseStatisticsDataProvider {
 	@Statistics(type = DefaultMeasureDefinitions.BACKWARD_COVERING_INFORMATION)
 	private final BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
 
+	@Reflected(prettyName = HoareTripleCheckerStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mEcData;
+
+	@Reflected(prettyName = PredicateUnifierStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mPredicateUnifierData;
+
+	@Reflected(prettyName = TraceCheckStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mTcData;
+
+	@Reflected(prettyName = AutomataMinimizationStatistics)
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mAmData;
+
+	@Statistics(type = DefaultMeasureDefinitions.STATISTICS_AGGREGATOR)
+	private final StatisticsAggregator mRefinementEngineStatistics;
+
 	// manual declaration
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 
 	public CegarLoopStatisticsGenerator(final IToolchainStorage storage) {
 		super(storage);
-
-		mReuseStatistics = new StatisticsAggregator(storage);
 		mEcData = new StatisticsAggregator(storage);
 		mPredicateUnifierData = new StatisticsAggregator(storage);
 		mTcData = new StatisticsAggregator(storage);
-		mTotalInterpolationStatistics = new StatisticsAggregator(storage);
 		mAmData = new StatisticsAggregator(storage);
-		mHoareAnnotationStatistics = new StatisticsAggregator(storage);
-		mInterpolantConsolidationStatistics = new StatisticsAggregator(storage);
-		mPathInvariantsStatistics = new StatisticsAggregator(storage);
 		mRefinementEngineStatistics = new StatisticsAggregator(storage);
 
 		declare(BiggestAbstraction, () -> mBiggestAbstraction, SizeIterationPair.KEY_TYPE);
-	}
-
-	public void addReuseStats(final IStatisticsDataProvider reuseStats) {
-		mReuseStatistics.aggregateStatisticsData(reuseStats);
 	}
 
 	public void addEdgeCheckerData(final IStatisticsDataProvider ecbd) {
@@ -167,20 +144,12 @@ public class CegarLoopStatisticsGenerator extends BaseStatisticsDataProvider {
 		mRefinementEngineStatistics.aggregateStatisticsData(res);
 	}
 
-	public void addTotalInterpolationData(final IStatisticsDataProvider tibd) {
-		mTotalInterpolationStatistics.aggregateStatisticsData(tibd);
-	}
-
-	public void announceNextIteration() {
-		mIterations++;
-	}
-
 	public void addAutomataMinimizationData(final IStatisticsDataProvider tcbd) {
 		mAmData.aggregateStatisticsData(tcbd);
 	}
 
-	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
-		mHoareAnnotationStatistics.aggregateStatisticsData(hasp);
+	public void announceNextIteration() {
+		mIterations++;
 	}
 
 	/**

@@ -212,7 +212,7 @@ public class TraceCheckStatisticsGenerator extends BaseStatisticsDataProvider {
 	public void aggregateTraceCheckStatisticsSkipNotReady(final TraceCheckStatisticsGenerator other) {
 		final Map<String, Field> fields = getStatisticFields();
 		for (final String key : other.getKeys()) {
-			final MeasureDefinition measureDef = getBenchmarkType().getMeasure(key).getMeasureDefinition();
+			final MeasureDefinition measureDef = getMeasure(key).getMeasureDefinition();
 			final Object localValue = getValue(key);
 			if (!measureDef.isReady(localValue)) {
 				// skip aggregation with local measures that are not ready like running clocks etc.

@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -147,7 +146,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
 		assert new InductivityCheck<>(mServices,
 				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(), false, true,
-				new IncrementalHoareTripleChecker(mServices.getStorage(), super.mCsToolkit, false)).getResult();
+				mRefinementResult.constructIncrementalHoareTripleChecker()).getResult();
 
 		if (mPref.dumpAutomata()) {
 			final String filename = "DiffAfterEagerReuse" + oneBasedi;

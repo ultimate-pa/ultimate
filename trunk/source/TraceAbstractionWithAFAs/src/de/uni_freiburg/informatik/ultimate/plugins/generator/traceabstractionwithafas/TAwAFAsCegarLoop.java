@@ -59,10 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
@@ -106,7 +103,6 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 				compositionFactory, transitionClazz);
 		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(), predicateFactory,
 				rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
-				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
 	}
 
@@ -404,7 +400,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 				alternatingAutomaton.generateCube(new IPredicate[] { initialState }, new IPredicate[0]));
 
 		// TODO: switch to efficient htc later, perhaps
-		final IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(mServices.getStorage(), mCsToolkit);
+		final IHoareTripleChecker mhtc = mRefinementResult.getHoareTripleChecker();
 
 		// Build the automaton according to the structure of the DAG
 		final Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
@@ -435,7 +431,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		final boolean onlySelfLoops = true;
 
 		// Add transitions according to hoare triples
-		final IHoareTripleChecker htc = getEfficientHoareTripleChecker();
+		final IHoareTripleChecker htc = mRefinementResult.getHoareTripleChecker();
 		for (final L letter : alternatingAutomaton.getAlphabet()) {
 			for (final IPredicate sourceState : alternatingAutomaton.getStates()) {
 				for (final IPredicate targetState : alternatingAutomaton.getStates()) {
@@ -462,7 +458,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
-		final IHoareTripleChecker htc = getEfficientHoareTripleChecker(); // change to CegarLoopConcurrentAutomata
+		final IHoareTripleChecker htc = mRefinementResult.getHoareTripleChecker(); // change to
+																					// CegarLoopConcurrentAutomata
 		mLogger.debug("Start constructing difference");
 		assert oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory();
 
@@ -485,7 +482,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false)).getResult();
+				mRefinementResult.constructIncrementalHoareTripleChecker()).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -528,18 +525,12 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		return !stillAccepted;
 	}
 
-	protected IHoareTripleChecker getEfficientHoareTripleChecker() // copied
-			throws AssertionError {
-		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-				mPref.getHoareTripleChecks(), mCsToolkit, mPredicateUnifier);
-	}
-
 	/**
 	 * return true if the input reversed afa has the properties we wish for those properties are: - the corresponding
 	 * hoare triple of each transition is valid
 	 */
 	private boolean checkRAFA(final AlternatingAutomaton<L, IPredicate> afa) {
-		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mServices.getStorage(), mCsToolkit);
+		final IHoareTripleChecker htc = mRefinementResult.constructIncrementalHoareTripleChecker();
 		boolean result = true;
 		for (final Entry<L, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
 			for (int i = 0; i < afa.getStates().size(); i++) {
@@ -587,4 +578,5 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		}
 		return new NestedWord<>(newWord, newNestingRelation);
 	}
+
 }

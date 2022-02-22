@@ -27,12 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType.Measure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.exception.MeasurementModifiedAfterCloseException;
+import de.uni_freiburg.informatik.ultimate.util.statistics.exception.MeasurementsAddedAfterCloseException;
+import de.uni_freiburg.informatik.ultimate.util.statistics.exception.MeasurementsRemovedAfterCloseException;
 
 /**
  * A {@link StatisticsAggregator} allows you to combine arbitrary {@link IStatisticsDataProvider} into one
@@ -52,23 +59,28 @@ public final class StatisticsAggregator extends BaseStatisticsDataProvider {
 	 * Create an empty {@link StatisticsAggregator} that does not auto-close.
 	 */
 	public StatisticsAggregator() {
-		super((IToolchainStorage) null);
-		mValues = new LinkedHashMap<>();
+		this(null, null);
 	}
 
 	/**
-	 * Create an empty {@link StatisticsAggregator} that auto-closes.
+	 * Create an empty {@link StatisticsAggregator} that auto-closes at plugin-boundaries.
 	 */
 	public StatisticsAggregator(final IToolchainStorage storage) {
-		super(Objects.requireNonNull(storage));
-		mValues = new LinkedHashMap<>();
+		this(storage, PLUGIN_STATISTICS_MARKER);
 	}
 
 	/**
 	 * Create an empty {@link StatisticsAggregator} that uses the auto-close behavior of <tt>sdp</tt>.
 	 */
 	public StatisticsAggregator(final BaseStatisticsDataProvider sdp) {
-		super(Objects.requireNonNull(sdp));
+		this(sdp.getStorage(), sdp.getMarker());
+	}
+
+	/**
+	 * Create an empty {@link StatisticsAggregator} that auto-closes when the given marker is removed.
+	 */
+	public StatisticsAggregator(final IToolchainStorage storage, final Object marker) {
+		super(storage, marker);
 		mValues = new LinkedHashMap<>();
 	}
 
@@ -108,10 +120,14 @@ public final class StatisticsAggregator extends BaseStatisticsDataProvider {
 			throw new IllegalArgumentException("Cannot aggregate with itself");
 		}
 
-		final IStatisticsType otherType = other.getBenchmarkType();
-		for (final Entry<String, Measure> entry : otherType.getMeasures().entrySet()) {
+		for (final Entry<String, Measure> entry : other.getMeasures().entrySet()) {
 			final String otherKey = entry.getKey();
-			final String newKey = String.format("%s %s", keyPrefix, otherKey);
+			final String newKey;
+			if (keyPrefix.length() == 0) {
+				newKey = otherKey;
+			} else {
+				newKey = String.format("%s %s", keyPrefix, otherKey);
+			}
 			final Measure otherMeasure = entry.getValue();
 			final MeasureDefinition otherDef = otherMeasure.getMeasureDefinition();
 			final MeasureDefinition localDef = registerKeyIfNecessary(newKey, otherKey, otherMeasure);
@@ -122,27 +138,24 @@ public final class StatisticsAggregator extends BaseStatisticsDataProvider {
 			final Object localVal = mValues.get(newKey);
 			// read other value normally (marking it as read)
 			final Object otherVal = other.getValue(otherKey);
-			if (otherVal instanceof IStatisticsDataProvider) {
-				// if measure is a nested data provider, read all its values and close it
-				closeNestedSdp((IStatisticsDataProvider) otherVal);
-			}
 			final Object newVal;
 			if (localVal == null) {
-				newVal = otherVal;
+				if (otherVal instanceof IStatisticsDataProvider) {
+					// if measure is a nested data provider, read all its values in a fresh aggregator
+					final StatisticsAggregator sa = new StatisticsAggregator(this);
+					sa.aggregateStatisticsData((IStatisticsDataProvider) otherVal);
+					newVal = sa;
+				} else {
+					newVal = otherVal;
+				}
 			} else {
 				newVal = otherDef.aggregate(localVal, otherVal);
 			}
 			mValues.put(newKey, newVal);
-
 		}
 		other.close();
-	}
-
-	private static void closeNestedSdp(final IStatisticsDataProvider sdp) {
-		for (final String key : sdp.getKeys()) {
-			sdp.getValue(key);
-		}
-		sdp.close();
+		// attach write watcher
+		new StatisticsWriteWatcher(getStorage(), other);
 	}
 
 	private MeasureDefinition registerKeyIfNecessary(final String newKey, final String sdpKey,
@@ -155,5 +168,93 @@ public final class StatisticsAggregator extends BaseStatisticsDataProvider {
 		final MeasureDefinition other = sdpMeasure.getMeasureDefinition();
 		declare(newKey, () -> mValues.get(newKey), other);
 		return other;
+	}
+
+	/**
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	protected static final class StatisticsWriteWatcher implements IStorable {
+		private static final AtomicLong NEXT_ID = new AtomicLong(0);
+		private final long mId = NEXT_ID.getAndIncrement();
+		private final IToolchainStorage mStorage;
+		private final IStatisticsDataProvider mOriginal;
+		private final StatisticsAggregator mShadow;
+
+		public StatisticsWriteWatcher(final IToolchainStorage storage, final IStatisticsDataProvider sdp) {
+			mStorage = storage;
+			if (mStorage != null) {
+				mStorage.putStorable(getStorageKey(), this);
+			}
+			mOriginal = sdp;
+			mShadow = deepCopy(sdp);
+		}
+
+		private static StatisticsAggregator deepCopy(final IStatisticsDataProvider other) {
+			// do not read watch this aggregator
+			final StatisticsAggregator rtr = new StatisticsAggregator();
+			for (final Entry<String, Measure> entry : other.getMeasures().entrySet()) {
+				final String otherKey = entry.getKey();
+				final Measure otherMeasure = entry.getValue();
+				final MeasureDefinition otherDef = otherMeasure.getMeasureDefinition();
+
+				// marking as read is ok, because we aggregated before
+				final Object otherVal = other.getValue(otherKey);
+				final Object copiedOtherVal;
+				if (otherVal instanceof IStatisticsDataProvider) {
+					// if measure is a nested data provider, create a deep copy of it as well
+					copiedOtherVal = deepCopy((IStatisticsDataProvider) otherVal);
+				} else {
+					// TODO: extend write watching to other reference types by extending MeasureDefinition with a copy
+					// operator ; move deepCopy there
+					copiedOtherVal = otherVal;
+				}
+				rtr.declare(otherKey, () -> rtr.mValues.get(otherKey), otherDef);
+				rtr.mValues.put(otherKey, copiedOtherVal);
+			}
+			return rtr;
+		}
+
+		@Override
+		public void destroy() {
+			if (mStorage != null) {
+				mStorage.removeStorable(getStorageKey());
+			}
+
+			final Map<String, Measure> orgMeasures = mOriginal.getMeasures();
+			final Map<String, Measure> shadowMeasures = mShadow.getMeasures();
+			if (!orgMeasures.keySet().equals(shadowMeasures.keySet())) {
+				final Set<String> added = DataStructureUtils.difference(orgMeasures.keySet(), shadowMeasures.keySet());
+				if (!added.isEmpty()) {
+					throw new MeasurementsAddedAfterCloseException(mOriginal, added);
+				}
+				final Set<String> removed =
+						DataStructureUtils.difference(shadowMeasures.keySet(), orgMeasures.keySet());
+				if (!removed.isEmpty()) {
+					throw new MeasurementsRemovedAfterCloseException(mOriginal, removed);
+				}
+			}
+
+			final Set<String> modifiedMeasures = new LinkedHashSet<>();
+			for (final Entry<String, Measure> orgEntry : orgMeasures.entrySet()) {
+				final Measure shadowMeasure = shadowMeasures.get(orgEntry.getKey());
+				final Object orgValue = orgEntry.getValue().getGetter().get();
+				final Object shadowValue = shadowMeasure.getGetter().get();
+				// TODO: add equals function to MeasureDefinition to prevent false positives, in particular for
+				// IStatisticsDataProvider
+				if (!Objects.equals(orgValue, shadowValue)) {
+					modifiedMeasures.add(orgEntry.getKey());
+				}
+			}
+
+			if (!modifiedMeasures.isEmpty()) {
+				throw new MeasurementModifiedAfterCloseException(mOriginal, modifiedMeasures);
+			}
+		}
+
+		private String getStorageKey() {
+			return StatisticsWriteWatcher.class.getSimpleName() + mId;
+		}
 	}
 }

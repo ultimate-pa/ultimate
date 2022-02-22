@@ -74,7 +74,7 @@ public interface IPredicateUnifier {
 	 */
 	IPredicate getOrConstructPredicate(IPredicate predicate);
 
-	String collectPredicateUnifierStatistics();
+	String getStatisticsString();
 
 	/**
 	 * We call a predicate "intricate" if we were unable to find out if it is equivalent to "true" or if we were unable
@@ -91,7 +91,7 @@ public interface IPredicateUnifier {
 
 	IPredicateCoverageChecker getCoverageRelation();
 
-	IStatisticsDataProvider getPredicateUnifierBenchmark();
+	IStatisticsDataProvider getStatistics();
 
 	/**
 	 * @return the predicateFactory

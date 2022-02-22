@@ -55,6 +55,10 @@ public final class PrettyPrint {
 		return String.format("%s: %s", key, data);
 	}
 
+	public static String keyColonDataBraced(final String key, final Object data) {
+		return String.format("[%s: %s]", key, data);
+	}
+
 	/**
 	 * Wraps another pretty printer to represent time data (given as nano seconds) in a way such that the user can
 	 * recognize the data as time.

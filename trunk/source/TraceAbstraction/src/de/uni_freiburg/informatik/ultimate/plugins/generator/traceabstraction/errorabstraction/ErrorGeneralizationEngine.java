@@ -382,9 +382,10 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
 			final NestedRun<L, IPredicate> trace, final IIcfg<IcfgLocation> icfg) {
-		final FlowSensitiveFaultLocalizer<L> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg, mServices,
-				csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
-				RelevanceAnalysisMode.SINGLE_TRACE, simplificationTechnique, xnfConversionTechnique, symbolTable, icfg);
+		final FlowSensitiveFaultLocalizer<L> faultLocalizer =
+				new FlowSensitiveFaultLocalizer<>(trace, cfg, mServices, csToolkit, predicateFactory,
+						csToolkit.getModifiableGlobalsTable(), predicateUnifier, RelevanceAnalysisMode.SINGLE_TRACE,
+						simplificationTechnique, xnfConversionTechnique, symbolTable, icfg);
 		final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
 		if (faultLocalizerStatistics != null) {
 			faultLocalizerStatistics.add(faultLocalizer.getStatistics());

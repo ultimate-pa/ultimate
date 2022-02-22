@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -143,8 +143,10 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
 				constructInterpolantAutomaton(mTrace, mCsToolkit, mPredicateFactory, false, mServices, mIpTc);
 		// 3. Determinize the finite automaton from step 2.
-		final IHoareTripleChecker cachingHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
-				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, mIpTc.getPredicateUnifier());
+
+		final IHoareTripleChecker cachingHtc =
+				new HoareTripleCheckerBuilder(mServices, mCsToolkit, mIpTc.getPredicateUnifier())
+						.constructEfficientHoareTripleCheckerWithCaching(HoareTripleChecks.INCREMENTAL);
 
 		final DeterministicInterpolantAutomaton<LETTER> interpolantAutomatonDeterminized =
 				new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, cachingHtc, interpolantAutomaton,
@@ -259,8 +261,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 
 		assert TraceCheckUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants), mTrace,
 				mIpTc.getPrecondition(), mIpTc.getPostcondition(), mIpTc.getPendingContexts(), "CP", mCsToolkit,
-				mLogger, mCsToolkit.getManagedScript(),
-				mServices.getStorage()) : "invalid Hoare triple in consolidated interpolants";
+				mLogger, mCsToolkit.getManagedScript()) : "invalid Hoare triple in consolidated interpolants";
 		final int numOfDisjunctionsGreaterOne =
 				mInterpolantConsolidationBenchmarkGenerator.getDisjunctionsGreaterOneCounter();
 

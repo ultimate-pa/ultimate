@@ -105,7 +105,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> storedRawInterpolantAutomata,
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Function<LCSP, LCS> lcsProvider,
-			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataMinimizationTimeout {
+			final boolean initialPartitionSeparatesFinalsAndNonfinals)
+			throws AutomataMinimizationTimeout {
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -392,7 +393,6 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 
 	private MinimizationResult constructNoopMinimizationResult(final boolean minimizationAttempt,
 			final INestedWordAutomaton<LETTER, IPredicate> operand) {
-		final MinimizationResult minimizationResult;
 		return new MinimizationResult(minimizationAttempt, false,
 				new AbstractMinimizeNwa<LETTER, IPredicate>(new AutomataLibraryServices(mServices), null) {
 					@Override

@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -63,7 +64,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainCancel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage.DestroyResult;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.measures.Benchmark;
 
 /**
@@ -223,7 +227,19 @@ final class ToolchainWalker implements IToolchainCancel {
 		if (mBench != null) {
 			mBench.start(pc.toString());
 		}
-		return executePluginConnector(data, plugin, pc);
+
+		final IToolchainStorage storage = data.mToolchain.getStorage();
+		storage.pushMarker(IStatisticsDataProvider.PLUGIN_STATISTICS_MARKER);
+		try {
+			return executePluginConnector(data, plugin, pc);
+		} finally {
+			final Set<DestroyResult> destroyedStorables =
+					storage.destroyMarker(IStatisticsDataProvider.PLUGIN_STATISTICS_MARKER);
+			destroyedStorables.stream().filter(a -> a.getException() != null)
+					.forEachOrdered(a -> data.mToolchain.getServices().getResultService().reportResult(plugin.getId(),
+							new ExceptionOrErrorResult(plugin.getId(), a.getException())));
+		}
+
 	}
 
 	private ReturnCode executePluginConnector(final CompleteToolchainData data, final PluginType plugin,
@@ -280,11 +296,11 @@ final class ToolchainWalker implements IToolchainCancel {
 		}
 		if (cause instanceof SMTLIBException) {
 			return handleException(data, plugin, (SMTLIBException) cause);
-		} else if (cause instanceof ToolchainCanceledException) {
-			return handleException(data, plugin, (ToolchainCanceledException) cause);
-		} else {
-			return handleExceptionFallback(data, plugin, cause);
 		}
+		if (cause instanceof ToolchainCanceledException) {
+			return handleException(data, plugin, (ToolchainCanceledException) cause);
+		}
+		return handleExceptionFallback(data, plugin, cause);
 	}
 
 	private ReturnCode handleExceptionFallback(final CompleteToolchainData data, final PluginType plugin,

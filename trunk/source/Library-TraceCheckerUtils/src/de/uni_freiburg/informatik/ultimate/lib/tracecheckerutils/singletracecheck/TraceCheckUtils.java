@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
@@ -204,8 +203,8 @@ public final class TraceCheckUtils {
 	public static boolean checkInterpolantsInductivityForward(final List<IPredicate> interpolants,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
 			final Map<Integer, IPredicate> pendingContexts, final String computation, final CfgSmtToolkit csToolkit,
-			final ILogger logger, final IToolchainStorage storage) {
-		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(storage, csToolkit);
+			final ILogger logger) {
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(null, csToolkit);
 		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		Validity result;
 		for (int i = 0; i <= interpolants.size(); i++) {
@@ -240,14 +239,13 @@ public final class TraceCheckUtils {
 	 *            logger
 	 * @param managedScript
 	 *            managed script
-	 * @param storage
 	 * @return {@code true}
 	 */
 	public static boolean checkInterpolantsInductivityBackward(final List<IPredicate> interpolants,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
 			final Map<Integer, IPredicate> pendingContexts, final String computation, final CfgSmtToolkit csToolkit,
-			final ILogger logger, final ManagedScript managedScript, final IToolchainStorage storage) {
-		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(storage, csToolkit);
+			final ILogger logger, final ManagedScript managedScript) {
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(null, csToolkit);
 		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		for (int i = interpolants.size(); i >= 0; i--) {
 			final Validity result;

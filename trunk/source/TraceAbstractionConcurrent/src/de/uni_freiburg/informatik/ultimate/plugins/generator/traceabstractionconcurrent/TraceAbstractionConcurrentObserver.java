@@ -126,8 +126,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException();
 		}
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(petrifiedIcfg);
-		final CegarLoopResult<IcfgEdge> result = abstractCegarLoop.runCegar();
-		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
+		final CegarLoopResult<IcfgEdge> result = abstractCegarLoop.getResult();
+		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = result.getCegarLoopStatisticsGenerator();
 		traceAbstractionBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(traceAbstractionBenchmark);
 
@@ -136,38 +136,38 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		clrReporter.reportCegarLoopResult(result);
 		clrReporter.reportAllSafeResultIfNecessary(result, errNodesOfAllProc.size());
 
-		mLogger.info("Statistics - iterations: " + abstractCegarLoop.getIteration());
+		mLogger.info("Statistics - iterations: " + result.getIteration());
 		// s_Logger.info("Statistics - biggest abstraction: " +
 		// abstractCegarLoop.mBiggestAbstractionSize + " states");
 		// s_Logger.info("Statistics - biggest abstraction in iteration: " +
 		// abstractCegarLoop.mBiggestAbstractionIteration);
 
-		String stat = "";
-		stat += "Statistics:  ";
-		stat += " Iterations " + abstractCegarLoop.getIteration() + ".";
-		stat += " CFG has ";
-		stat += petrifiedIcfg.getProgramPoints().size();
-		stat += " locations,";
-		stat += errNodesOfAllProc.size();
-		stat += " error locations.";
-		stat += " Satisfiability queries: ";
+		final StringBuilder stat = new StringBuilder();
+		stat.append("Statistics:  ");
+		stat.append(" Iterations ").append(result.getIteration()).append(".");
+		stat.append(" CFG has ");
+		stat.append(petrifiedIcfg.getProgramPoints().size());
+		stat.append(" locations,");
+		stat.append(errNodesOfAllProc.size());
+		stat.append(" error locations.");
+		stat.append(" Satisfiability queries: ");
 		// stat += " Biggest abstraction occured in iteration " +
 		// abstractCegarLoop.mBiggestAbstractionIteration + " had ";
 		// stat += abstractCegarLoop.mBiggestAbstractionSize;
 
 		if (abstractCegarLoop instanceof CegarLoopForPetriNet) {
-			stat += " conditions ";
+			stat.append(" conditions ");
 			final CegarLoopForPetriNet<?> clj = (CegarLoopForPetriNet<?>) abstractCegarLoop;
-			stat += "and " + clj.mBiggestAbstractionTransitions + " transitions. ";
-			stat += "Overall " + clj.mCoRelationQueries + "co-relation queries";
+			stat.append("and ").append(clj.mBiggestAbstractionTransitions).append(" transitions. ");
+			stat.append("Overall ").append(clj.mCoRelationQueries).append("co-relation queries");
 		} else if (abstractCegarLoop instanceof CegarLoopConcurrentAutomata) {
-			stat += " states ";
+			stat.append(" states ");
 		} else {
 			throw new IllegalArgumentException();
 		}
-		mLogger.warn(stat);
+		mLogger.warn(stat.toString());
 
-		mGraphroot = abstractCegarLoop.getArtifact();
+		mGraphroot = result.getArtifact();
 
 		return false;
 	}
@@ -207,8 +207,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	public static IcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
 		final int lastPosition = pe.getLength() - 1;
 		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
-		final IcfgLocation errorPP = last.getTarget();
-		return errorPP;
+		return last.getTarget();
 	}
 
 }

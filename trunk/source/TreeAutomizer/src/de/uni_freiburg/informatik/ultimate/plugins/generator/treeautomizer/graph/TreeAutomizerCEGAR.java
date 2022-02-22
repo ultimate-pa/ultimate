@@ -145,7 +145,7 @@ public class TreeAutomizerCEGAR {
 		mFinalPredicate = mPredicateFactory.getFalseLocationPredicate();
 
 		mPredicateUnifier = new PredicateUnifier(mLogger, services, mBackendSmtSolverScript, mPredicateFactory,
-				mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
+				mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
 
 		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mSymbolTable);
 		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mServices, mLogger,

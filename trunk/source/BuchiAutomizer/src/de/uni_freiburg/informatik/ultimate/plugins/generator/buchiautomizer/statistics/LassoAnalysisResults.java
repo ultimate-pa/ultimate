@@ -83,12 +83,6 @@ public class LassoAnalysisResults extends BaseStatisticsDataProvider {
 		addLassoCheck(lassoCheck);
 	}
 
-	public LassoAnalysisResults(final BaseStatisticsDataProvider sdp,
-			final LassoCheck<? extends IIcfgTransition<?>> lassoCheck) {
-		super(sdp);
-		addLassoCheck(lassoCheck);
-	}
-
 	private void addLassoCheck(final LassoCheck<? extends IIcfgTransition<?>> lassoCheck) {
 		final LassoCheck<? extends IIcfgTransition<?>>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
 		final ContinueDirective cd = lcr.getContinueDirective();

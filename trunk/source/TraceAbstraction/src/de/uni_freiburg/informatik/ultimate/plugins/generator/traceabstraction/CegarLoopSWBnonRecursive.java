@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -329,8 +328,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 		mEpimorphism.print();
 
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false))
-						.getResult() : "Not inductive";
+				mRefinementResult.constructIncrementalHoareTripleChecker()).getResult() : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;

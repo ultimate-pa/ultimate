@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -144,8 +144,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
-		mHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(services,
-				HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
+		mHtc = new HoareTripleCheckerBuilder(mServices, mCsToolkit, mPredicateUnifier)
+				.constructEfficientHoareTripleCheckerWithCaching(HoareTripleChecks.INCREMENTAL);
 		for (final IPredicate state : nestedRun.getStateSequence()) {
 			mWorklist.add(state);
 			mAnnotated.add(state);

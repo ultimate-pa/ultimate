@@ -433,8 +433,9 @@ public class InvariantChecker {
 
 	private EdgeCheckResult doCheck(final IcfgLocation startLoc, final UnmodifiableTransFormula tf,
 			final IcfgLocation errorLoc) {
+		// does not aggregate statistics
 		final IncrementalHoareTripleChecker htc =
-				new IncrementalHoareTripleChecker(mServices.getStorage(), mIcfg.getCfgSmtToolkit(), true);
+				new IncrementalHoareTripleChecker(null, mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
 		final IPredicate truePredicate =
@@ -467,7 +468,8 @@ public class InvariantChecker {
 		return ecr;
 	}
 
-	private String generateMessage(final IcfgLocation startLoc, final IcfgLocation errorLoc, final boolean positive) {
+	private static String generateMessage(final IcfgLocation startLoc, final IcfgLocation errorLoc,
+			final boolean positive) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("The annotation(s) from ");
 		sb.append(getType(startLoc));

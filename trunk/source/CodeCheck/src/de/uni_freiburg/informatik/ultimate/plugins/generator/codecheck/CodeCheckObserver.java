@@ -77,8 +77,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.biesenb.BPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -228,18 +228,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private CodeChecker createCodeChecker() {
-		final IHoareTripleChecker edgeChecker = createHoareTripleChecker();
+		final IHoareTripleChecker edgeChecker = new HoareTripleCheckerBuilder(mServices, mCsToolkit, mPredicateUnifier)
+				.constructEfficientHoareTripleCheckerWithCaching(HoareTripleChecks.INCREMENTAL);
 		if (mGlobalSettings.getChecker() == Checker.IMPULSE) {
 			return new ImpulseChecker(mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
 					mPredicateUnifier, mLogger, mGlobalSettings);
 		}
 		return new UltimateChecker(mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker, mPredicateUnifier,
 				mLogger, mGlobalSettings);
-	}
-
-	private IHoareTripleChecker createHoareTripleChecker() {
-		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-				HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
 	}
 
 	private void readPreferencePage() {
@@ -451,7 +447,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				final LBool isSafe = traceCheck.isCorrect();
 				benchmarkGenerator.addTraceCheckData(traceCheck.getStatistics());
 
-				if (isSafe == LBool.UNSAT) { // trace is infeasible
+				if (isSafe == LBool.UNSAT) {
+					// trace is infeasible
 					IPredicate[] interpolants = null;
 
 					if (mGlobalSettings.isUseInterpolantconsolidation()) {
@@ -471,7 +468,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					codechecker.codeCheck(errorRun, interpolants, procedureRoot);
 					benchmarkGenerator.addEdgeCheckerData(codechecker.mEdgeChecker.getStatistics());
 
-				} else if (isSafe == LBool.SAT) { // trace is feasible
+				} else if (isSafe == LBool.SAT) {
+					// trace is feasible
 					mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
 					allSafe = false;
 					if (traceCheck.providesRcfgProgramExecution()) {
@@ -508,7 +506,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		// benchmark stuff
 		benchmarkGenerator.stopOverallTime();
-		benchmarkGenerator.addPredicateUnifierData(mPredicateUnifier.getPredicateUnifierBenchmark());
+		benchmarkGenerator.addPredicateUnifierData(mPredicateUnifier.getStatistics());
 		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot);
 		ccb.aggregateBenchmarkData(benchmarkGenerator);
 		reportBenchmark(ccb);

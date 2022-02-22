@@ -74,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -175,26 +175,20 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiComplementationConstruction complementationConstruction) throws AutomataLibraryException {
 		mIteration = iteration;
 		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
-		// if (emptyStem(mCounterexample)) {
-		// stem = mCounterexample.getLoop().getWord();
-		// } else {
-		// stem = mCounterexample.getStem().getWord();
-		// }
 		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 
-		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
-		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
-		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
+		assert !"false".equals(bspm.getStemPrecondition().getFormula().toString());
+		assert !"false".equals(bspm.getHondaPredicate().getFormula().toString());
+		assert !"false".equals(bspm.getRankEqAndSi().getFormula().toString());
 		final PredicateUnifier pu = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
 				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
-				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
-				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
+				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition(),
+				bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 		IPredicate[] stemInterpolants;
 		InterpolatingTraceCheck<LETTER> traceCheck;
 		if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
 			stemInterpolants = null;
 		} else {
-
 			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem, mCsToolkit,
 					pu, mInterpolation);
 			final LBool stemCheck = traceCheck.isCorrect();
@@ -224,9 +218,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomaton, mDumpPath, filename, mFormat, message);
 		}
 
-		// BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(mCsToolkit));
-		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
-				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, pu);
+		final IHoareTripleChecker ehtc = new HoareTripleCheckerBuilder(mServices, mCsToolkit, pu)
+				.constructEfficientHoareTripleCheckerWithCaching(HoareTripleChecks.INCREMENTAL);
 		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true, bhtc).getResult();
@@ -274,29 +267,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				newAbstraction = rankBasedOptimization(abstraction, setting, benchmarkGenerator, stateDeterminizer,
 						optimization);
 			}
-
-			// s_Logger.warn("START: minimization test");
-			// BuchiComplementFKVNwa<LETTER, IPredicate> compl1 =
-			// diff.getSndComplemented();
-			// INestedWordAutomatonOldApi<LETTER, IPredicate> compl = (new
-			// RemoveNonLiveStates<LETTER, IPredicate>(compl1)).getResult();
-			// BuchiClosureNwa<LETTER, IPredicate> bc = (new
-			// BuchiClosureNwa<LETTER, IPredicate>(compl));
-			// MinimizeSevpa<LETTER, IPredicate> minimizeOp =
-			// new MinimizeSevpa<LETTER,
-			// IPredicate>(bc,null,false,false,mStateFactoryInterpolAutom);
-			// s_Logger.warn("END: minimization test");
-			// INestedWordAutomatonOldApi<LETTER, IPredicate> minimizedOp =
-			// minimizeOp.getResult();
-			//
-			// BuchiIntersect<LETTER, IPredicate> newDiff =
-			// new BuchiIntersect<LETTER, IPredicate>(
-			// mAbstraction, minimizedOp, mStateFactoryForRefinement);
-			// s_Logger.warn("oldDiff size" +
-			// diff.getResult().sizeInformation());
-			// s_Logger.warn("newDiff size" +
-			// (newDiff.getResult()).sizeInformation());
-
 		} else {
 			final BuchiComplementFKV<LETTER, IPredicate> complNwa =
 					new BuchiComplementFKV<>(new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
@@ -312,9 +282,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			assert interNwa.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = interNwa.getResult();
 		}
-		// INestedWordAutomatonOldApi<LETTER, IPredicate> oldApi = (new
-		// RemoveUnreachable<LETTER,
-		// IPredicate>(mInterpolAutomatonUsedInRefinement)).getResult();
 		benchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
 		mInterpolAutomaton = null;
 		final boolean isUseful = isUsefulInterpolantAutomaton(mInterpolAutomatonUsedInRefinement, mCounterexample);
@@ -322,12 +289,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			return null;
 		}
 
-		// assert (new BuchiAccepts<LETTER,
-		// IPredicate>(oldApi,mCounterexample.getNestedLassoWord())).getResult()
-		// : "interpolant automaton does not accept lasso.";
-		// assert !(new BuchiAccepts<LETTER,
-		// IPredicate>(newAbstraction,mCounterexample.getNestedLassoWord())).getResult()
-		// : "no progress";
 		if (mDumpAutomata) {
 			final String automatonString;
 			if (mInterpolAutomatonUsedInRefinement.getVpAlphabet().getCallAlphabet().isEmpty()) {

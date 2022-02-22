@@ -50,10 +50,9 @@ public class CegarLoopUtils {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation, final Concurrency automataType,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		final BasicCegarLoop<L> cegarLoop = constructCegarLoop(services, name, root, taPrefs, root.getCfgSmtToolkit(),
-				predicateFactory, errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, automataType,
-				compositionFactory, transitionClazz, witnessAutomaton);
-		return cegarLoop.runCegar();
+		return constructCegarLoop(services, name, root, taPrefs, root.getCfgSmtToolkit(), predicateFactory, errorLocs,
+				rawFloydHoareAutomataFromFile, computeHoareAnnotation, automataType, compositionFactory,
+				transitionClazz, witnessAutomaton).getResult();
 	}
 
 	public static <L extends IIcfgTransition<?>> BasicCegarLoop<L> constructCegarLoop(

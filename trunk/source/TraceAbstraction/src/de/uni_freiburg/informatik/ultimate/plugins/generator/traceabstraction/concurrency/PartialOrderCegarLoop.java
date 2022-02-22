@@ -123,33 +123,28 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
-		final IHoareTripleChecker htc = getHoareTripleChecker();
-		try {
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
-					mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
-			if (ia instanceof AbstractInterpolantAutomaton<?>) {
-				final AbstractInterpolantAutomaton<L> aia = (AbstractInterpolantAutomaton<L>) ia;
-				aia.switchToReadonlyMode();
-				mAbstractItpAutomata.add(aia);
-			} else {
-				mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
-			}
-
-			// Automaton must be total and deterministic
-			final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, mStateFactoryForRefinement, true);
-			assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
-
-			// Actual refinement step
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
-					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
-			mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
-
-			// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
-			return true;
-		} finally {
-			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
-			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
+		final IHoareTripleChecker htc = mRefinementResult.getHoareTripleChecker();
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
+				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
+		if (ia instanceof AbstractInterpolantAutomaton<?>) {
+			final AbstractInterpolantAutomaton<L> aia = (AbstractInterpolantAutomaton<L>) ia;
+			aia.switchToReadonlyMode();
+			mAbstractItpAutomata.add(aia);
+		} else {
+			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
+
+		// Automaton must be total and deterministic
+		final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, mStateFactoryForRefinement, true);
+		assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
+
+		// Actual refinement step
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
+				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
+		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
+
+		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
+		return true;
 	}
 
 	@Override

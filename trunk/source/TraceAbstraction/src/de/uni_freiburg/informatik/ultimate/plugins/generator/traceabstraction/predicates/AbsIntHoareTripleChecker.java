@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.DebuggingHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AbsIntPredicate;
@@ -161,9 +161,10 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
 		mTopState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createTopState());
 		mBottomState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createBottomState());
-		mHtcSmt = new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false);
-		mHtcSd = HoareTripleCheckerUtils.constructSdHoareTripleChecker(mServices.getStorage(), mLogger, mCsToolkit,
-				mPredicateUnifier);
+		final HoareTripleCheckerBuilder builder =
+				new HoareTripleCheckerBuilder(mServices, mCsToolkit, mPredicateUnifier);
+		mHtcSmt = builder.constructIncrementalHoareTripleChecker();
+		mHtcSd = builder.constructSdHoareTripleChecker();
 		mOnlyAbsInt = onlyAbsInt;
 
 	}

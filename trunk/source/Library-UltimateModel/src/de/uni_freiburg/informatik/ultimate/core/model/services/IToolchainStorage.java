@@ -76,8 +76,8 @@ public interface IToolchainStorage {
 	IStorable getStorable(final String key);
 
 	/**
-	 * Save a {@link IStorable} under the given key. If there is already an {@link IStorable} saved under the key, it
-	 * will be removed and returned.
+	 * Save a {@link IStorable} under the given key and mark it with the last marker. If there is already an
+	 * {@link IStorable} saved under the key, it will be removed and returned.
 	 *
 	 * @param key
 	 *            The key under which you want to store your {@link IStorable}.
@@ -90,7 +90,7 @@ public interface IToolchainStorage {
 	/**
 	 * Save a {@link IStorable} under the given key. If there is already an {@link IStorable} saved under the key, it
 	 * will be removed and returned. {@link IStorable} added with this method will never be removed when
-	 * {@link #destroyMarker(Object)} is called.
+	 * {@link #destroyMarkerStack(Object)} is called.
 	 *
 	 * @param key
 	 *            The key under which you want to store your {@link IStorable}.
@@ -99,6 +99,18 @@ public interface IToolchainStorage {
 	 * @return An {@link IStorable} if there was already one in that place or null
 	 */
 	IStorable putUnmarkedStorable(final String key, final IStorable value);
+
+	/**
+	 * Save a {@link IStorable} under the given key and mark it with the given marker. If there is already an
+	 * {@link IStorable} saved under the key, it will be removed and returned.
+	 *
+	 * @param key
+	 *            The key under which you want to store your {@link IStorable}.
+	 * @param value
+	 *            The {@link IStorable}
+	 * @return An {@link IStorable} if there was already one in that place or null
+	 */
+	IStorable putStorable(final Object marker, final String key, final IStorable value);
 
 	/**
 	 * This method clears the {@link IToolchainStorage} and destroys every {@link IStorable} by calling
@@ -123,8 +135,18 @@ public interface IToolchainStorage {
 	void pushMarker(final Object marker) throws IllegalArgumentException;
 
 	/**
-	 * Remove all marked {@link IStorable}s and markers registered after and including the supplied marker. The
-	 * {@link IStorable#destroy()} method will be called for the removed {@link IStorable}.
+	 * Remove all markers registered after and including the supplied marker. All {@link IStorable}s associated with the
+	 * removed markers will be also removed and their {@link IStorable#destroy()} method will be called.
+	 *
+	 * @param marker
+	 *            The name of the marker that should be removed.
+	 * @return A list of keys of {@link IStorable}s that have been removed and destroyed.
+	 */
+	Set<DestroyResult> destroyMarkerStack(final Object marker);
+
+	/**
+	 * Removes the given marker and all {@link IStorable}s associated with it. The order of markers will not change.
+	 * {@link IStorable#destroy()} will be called on all associated {@link IStorable}s.
 	 *
 	 * @param marker
 	 *            The name of the marker that should be removed.

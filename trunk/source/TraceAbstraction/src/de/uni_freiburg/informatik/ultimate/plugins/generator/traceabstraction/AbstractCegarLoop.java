@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -97,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -109,6 +111,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
+
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
@@ -180,6 +183,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 
 	protected Dumper mDumper;
 
+	protected StatisticsAggregationService mStatAggregagtion;
+
+	private final Lazy<IStatisticsDataProvider> mCollectedStatistics;
+
 	/**
 	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
 	 * Important only for debugging and debugging output written to files.
@@ -188,10 +195,13 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	protected final CegarLoopResultBuilder mResultBuilder;
 	private Map<IcfgLocation, Long> mTimeBudget;
 
+	private final Lazy<CegarLoopResult<L>> mResult;
+
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final ILogger logger,
-			final Class<L> transitionClazz, final boolean computeHoareAnnotation) {
+			final Class<L> transitionClazz, final boolean computeHoareAnnotation,
+			final Supplier<CegarLoopStatisticsGenerator> statGeneratorSupplier) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -208,6 +218,16 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mResultBuilder = new CegarLoopResultBuilder();
+
+		mStatAggregagtion = new StatisticsAggregationService(mServices);
+		mCollectedStatistics = new Lazy<>(mStatAggregagtion::aggregateAll);
+		mCegarLoopBenchmark = statGeneratorSupplier.get();
+		mStatAggregagtion.register(() -> mCegarLoopBenchmark, "");
+		mResult = new Lazy<>(this::startCegar);
+	}
+
+	public CegarLoopResult<L> getResult() {
+		return mResult.get();
 	}
 
 	/**
@@ -292,13 +312,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	 *
 	 * @return The root node of the artifact after it was transformed to an ULTIMATE model.
 	 */
-	public abstract IElement getArtifact();
+	protected abstract IElement getArtifact();
 
-	public int getIteration() {
-		return mIteration;
-	}
-
-	public String errorLocs() {
+	private String errorLocs() {
 		final Iterator<? extends IcfgLocation> it = mErrorLocs.iterator();
 		if (!it.hasNext()) {
 			return "[]";
@@ -320,22 +336,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	public IStatisticsDataProvider getCegarLoopBenchmark() {
-		return mCegarLoopBenchmark;
-	}
-
 	/**
 	 * Method that is called at the end of {@link #runCegar()}.
 	 */
 	protected abstract void finish();
 
-	public final CegarLoopResult<L> runCegar() {
-		final CegarLoopResult<L> r = startCegar();
-		finish();
-		return r;
-	}
-
-	public final CegarLoopResult<L> startCegar() {
+	private final CegarLoopResult<L> startCegar() {
 		mIteration = 0;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, mName);
@@ -355,6 +361,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			return performLimitReachedActions(e);
 		} catch (final AutomataLibraryException e) {
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
+		} finally {
+			finish();
+			mStatAggregagtion.aggregateAll();
 		}
 	}
 
@@ -401,7 +410,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 			final String msg = String.format("=== Iteration %s === Targeting %s === %s ===", mIteration,
 					currentErrorLoc, errorLocs());
-			mServices.getStorage().pushMarker(msg);
+			registerToolchainStorageMarker(msg);
 			mLogger.info(msg);
 			final IUltimateServiceProvider parentServices = mServices;
 			final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
@@ -457,20 +466,25 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 				if (updateBudget) {
 					mServices = updateTimeBudget(currentErrorLoc, parentServices, iterationServices);
 				}
-				final Set<DestroyResult> destroyedStorables = mServices.getStorage().destroyMarker(msg);
-				if (!destroyedStorables.isEmpty()) {
-					mLogger.warn("Destroyed unattended storables created during the last iteration: %s",
-							destroyedStorables.stream().map(DestroyResult::getKey).collect(Collectors.joining(",")));
-					destroyedStorables.stream().filter(a -> a.getException() != null).forEachOrdered(a -> {
-						mLogger.error("Storable '%s' threw exception %s during destruction", a.getKey(),
-								a.getException().getMessage());
-						mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-								new ExceptionOrErrorResult(Activator.PLUGIN_ID, a.getException()));
-					});
-				}
+				cleanupToolchainStorage(msg);
 			}
 		}
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
+	}
+
+	private void registerToolchainStorageMarker(final Object marker) {
+		mServices.getStorage().pushMarker(marker);
+	}
+
+	private void cleanupToolchainStorage(final Object marker) {
+		final Set<DestroyResult> destroyedStorables = mServices.getStorage().destroyMarkerStack(marker);
+		if (!destroyedStorables.isEmpty()) {
+			mLogger.warn("Destroyed unattended storables: %s",
+					destroyedStorables.stream().map(DestroyResult::getKey).collect(Collectors.joining(",")));
+			destroyedStorables.stream().filter(a -> a.getException() != null)
+					.forEachOrdered(a -> mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+							new ExceptionOrErrorResult(Activator.PLUGIN_ID, a.getException())));
+		}
 	}
 
 	private void refineAbstractionInternal(final AutomatonType automatonType)
@@ -506,9 +520,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			throws AutomataOperationCanceledException {
 		final IncrementalHoareTripleChecker htc =
 				new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false);
-		final InductivityCheck<L> check = new InductivityCheck<>(mServices, interpolantAutomaton, false, true, htc);
-		mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
-		return check.getResult();
+		mStatAggregagtion.register(() -> htc.getStatistics(),
+				CegarLoopStatisticsGenerator.HoareTripleCheckerStatistics);
+		return new InductivityCheck<>(mServices, interpolantAutomaton, false, true, htc).getResult();
 	}
 
 	private IcfgLocation getErrorLocFromCounterexample() {
@@ -855,8 +869,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		}
 
 		public CegarLoopResult<L> getResult() {
-			final IStatisticsDataProvider cegarLoopBenchmarkGenerator = getCegarLoopBenchmark();
-
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata;
 			if (mPref.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 				floydHoareAutomata = new ArrayList<>(getFloydHoareAutomata());
@@ -870,7 +882,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			} else {
 				mLogger.debug("Omitting computation of Hoare annotation");
 			}
-			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), floydHoareAutomata);
+			return new CegarLoopResult<>(mResults, mCollectedStatistics, getArtifact(), floydHoareAutomata, mIteration);
 		}
 
 		public int remainingErrorLocs() {

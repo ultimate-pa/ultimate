@@ -192,20 +192,6 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 		final NestedWordAutomaton<L, IPredicate> optimizedResult = constructDangerAutomaton(
 				new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
 				predicateFactoryForAutomaton, abstraction, mPredicates, true);
-		// final NestedWordAutomaton<LETTER, IPredicate> unoptimizedResult = constructDangerAutomaton(
-		// new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
-		// predicateFactoryForAutomaton, abstraction, mPredicates, false);
-		// try {
-		// final Boolean languageIsEquivalent = new IsEquivalent<LETTER, IPredicate>(
-		// new AutomataLibraryServices(services), new PredicateFactoryResultChecking(predicateFactory), optimizedResult,
-		// unoptimizedResult)
-		// .getResult();
-		// if (!languageIsEquivalent) {
-		// throw new AssertionError("language not equivalent");
-		// }
-		// } catch (final AutomataLibraryException e) {
-		// throw new AssertionError(e);
-		// }
 		mResult = optimizedResult;
 	}
 

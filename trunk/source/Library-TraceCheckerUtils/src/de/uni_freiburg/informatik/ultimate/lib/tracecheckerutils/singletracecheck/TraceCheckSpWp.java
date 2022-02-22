@@ -304,7 +304,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				throw tce;
 			}
 			assert TraceCheckUtils.checkInterpolantsInductivityForward(mInterpolantsFp, mTrace, mPrecondition,
-					mPostcondition, mPendingContexts, "FP", mCsToolkit, mLogger, null) : "invalid Hoare triple in FP";
+					mPostcondition, mPendingContexts, "FP", mCsToolkit, mLogger) : "invalid Hoare triple in FP";
 
 			mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
 			mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp, InterpolantType.Forward);
@@ -344,8 +344,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 								.getPredicates();
 
 				assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger, mCfgManagedScript,
-						mServices.getStorage()) : "invalid Hoare triple in BP";
+						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger, mCfgManagedScript) : "invalid Hoare triple in BP";
 
 				mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
 				mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,

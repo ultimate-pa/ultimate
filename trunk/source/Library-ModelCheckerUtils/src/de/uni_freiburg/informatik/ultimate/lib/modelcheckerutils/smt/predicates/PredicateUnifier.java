@@ -440,7 +440,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	}
 
 	@Override
-	public String collectPredicateUnifierStatistics() {
+	public String getStatisticsString() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append(mPredicateUnifierBenchmarkGenerator);
 		builder.append(mCoverageRelation.getCoverageRelationStatistics());
@@ -488,7 +488,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	}
 
 	@Override
-	public IStatisticsDataProvider getPredicateUnifierBenchmark() {
+	public IStatisticsDataProvider getStatistics() {
 		return mPredicateUnifierBenchmarkGenerator;
 	}
 

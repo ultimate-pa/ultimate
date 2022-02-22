@@ -97,7 +97,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 						csToolkit, predicateFactory, taBenchmarks, taPrefs, errNodesOfAllProc, taPrefs.interpolation(),
 						taPrefs.computeHoareAnnotation(), mServices, compositionFactory, IcfgEdge.class);
 
-		final CegarLoopResult<IcfgEdge> result = cegarLoop.runCegar();
+		final CegarLoopResult<IcfgEdge> result = cegarLoop.getResult();
 
 		final CegarLoopResultReporter<IcfgEdge> clrReporter =
 				new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -105,7 +105,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		clrReporter.reportAllSafeResultIfNecessary(result, errNodesOfAllProc.size());
 
 		final TraceAbstractionBenchmarks taBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
-		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = cegarLoop.getCegarLoopBenchmark();
+		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = result.getCegarLoopStatisticsGenerator();
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(taBenchmark);
 		return false;
@@ -122,8 +122,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	public BoogieIcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
 		final int lastPosition = pe.getLength() - 1;
 		final IIcfgTransition<IcfgLocation> last = pe.getTraceElement(lastPosition).getTraceElement();
-		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();
-		return errorPP;
+		return (BoogieIcfgLocation) last.getTarget();
 	}
 
 	private void reportResult(final IResult res) {

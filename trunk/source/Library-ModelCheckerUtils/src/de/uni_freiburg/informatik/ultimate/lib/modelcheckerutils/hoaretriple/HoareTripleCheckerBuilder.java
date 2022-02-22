@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -45,83 +44,79 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class HoareTripleCheckerUtils {
+public final class HoareTripleCheckerBuilder {
 
 	private static final boolean REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED = true;
 	private static final boolean REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED = true;
 
-	private HoareTripleCheckerUtils() {
-		// do not instantiate utility class
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final CfgSmtToolkit mCsToolkit;
+	private final IPredicateUnifier mUnifier;
+
+	public HoareTripleCheckerBuilder(final IUltimateServiceProvider services, final CfgSmtToolkit toolkit,
+			final IPredicateUnifier unifier) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(HoareTripleCheckerBuilder.class);
+		mCsToolkit = toolkit;
+		mUnifier = unifier;
 	}
 
-	/**
-	 *
-	 * @param services
-	 * @param hoareTripleChecks
-	 * @param csToolkit
-	 * @param unifier
-	 * @return
-	 * @throws AssertionError
-	 */
-	public static ChainingHoareTripleChecker constructEfficientHoareTripleChecker(
-			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
-		final ILogger logger = services.getLoggingService().getLogger(HoareTripleCheckerUtils.class);
-		final ChainingHoareTripleChecker sdHtc =
-				constructSdHoareTripleChecker(services.getStorage(), logger, csToolkit, unifier);
-		final ChainingHoareTripleChecker solverHtc =
-				constructSmtHoareTripleChecker(services.getStorage(), logger, hoareTripleChecks, csToolkit, unifier);
+	public ChainingHoareTripleChecker constructEfficientHoareTripleChecker(final HoareTripleChecks hoareTripleChecks) {
+		final ChainingHoareTripleChecker sdHtc = constructSdHoareTripleChecker();
+		final ChainingHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(hoareTripleChecks);
 		return sdHtc.andThen(solverHtc);
 	}
 
-	public static ChainingHoareTripleChecker constructSdHoareTripleChecker(final IToolchainStorage storage,
-			final ILogger logger, final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
-		ChainingHoareTripleChecker chain =
-				ChainingHoareTripleChecker.with(storage, logger, new SdHoareTripleChecker(storage, csToolkit, unifier));
+	public ChainingHoareTripleChecker constructSdHoareTripleChecker() {
+		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(mServices.getStorage(), mLogger,
+				new SdHoareTripleChecker(mServices.getStorage(), mCsToolkit, mUnifier));
 		if (REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED) {
-			// do not collect statistics for review HTCs
-			chain = chain.reviewWith(new MonolithicHoareTripleChecker(null, csToolkit));
+			chain = chain.reviewWith(constructMonolithicHoareTripleChecker());
 		}
 		return chain;
 	}
 
-	public static ChainingHoareTripleChecker constructSmtHoareTripleChecker(final IToolchainStorage storage,
-			final ILogger logger, final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
-			final IPredicateUnifier unifier) {
+	public IncrementalHoareTripleChecker constructIncrementalHoareTripleChecker() {
+		return new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false);
+	}
+
+	public MonolithicHoareTripleChecker constructMonolithicHoareTripleChecker() {
+		return new MonolithicHoareTripleChecker(mServices.getStorage(), mCsToolkit);
+	}
+
+	public ChainingHoareTripleChecker constructSmtHoareTripleChecker(final HoareTripleChecks hoareTripleChecks) {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(storage, csToolkit);
+			solverHtc = constructMonolithicHoareTripleChecker();
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(storage, csToolkit, false);
+			solverHtc = constructIncrementalHoareTripleChecker();
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown value " + hoareTripleChecks);
 		}
 
-		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(storage, logger, solverHtc);
+		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(mServices.getStorage(), mLogger, solverHtc);
 		// protect against quantified transition formulas and intricate predicates
 		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
 		final Predicate<IPredicate> noIntricateNoQuantifier =
-				p -> unifier.isIntricatePredicate(p) || quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula());
+				p -> mUnifier.isIntricatePredicate(p) || quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula());
 		final Predicate<IAction> noQuantifier =
 				a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula());
 		chain = chain.predicatesProtectedBy(noIntricateNoQuantifier).actionsProtectedBy(noQuantifier);
 		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
-			// do not collect statistics for review htcs
-			chain = chain.reviewWith(new MonolithicHoareTripleChecker(null, csToolkit));
+			chain = chain.reviewWith(constructMonolithicHoareTripleChecker());
 		}
 		return chain;
 	}
 
-	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
-			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
+	public IHoareTripleChecker
+			constructEfficientHoareTripleCheckerWithCaching(final HoareTripleChecks hoareTripleChecks) {
 		// TODO: Cache support in ChainingHtc
-		return new CachingHoareTripleCheckerMap(services,
-				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier),
-				predicateUnifier);
+		return new CachingHoareTripleCheckerMap(mServices, constructEfficientHoareTripleChecker(hoareTripleChecks),
+				mUnifier);
 	}
 
 	/**

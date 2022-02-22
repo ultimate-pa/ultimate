@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -27,40 +28,71 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * Classes that implement this interface can provide data to our benchmarks. Our benchmarks are key-value stores.
  * 
  * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IStatisticsDataProvider extends AutoCloseable, ICsvProviderProvider<Object> {
+public interface IStatisticsDataProvider extends ICsvProviderProvider<Object> {
+
+	/**
+	 * A marker that can be used to track the live cycle of {@link IStatisticsDataProvider} instances through
+	 * {@link IToolchainStorage}.
+	 */
+	String PLUGIN_STATISTICS_MARKER = "Statistics registered for the current plugin";
 
 	/**
 	 * @return all keys under which single metrics are retrievable
 	 */
-	default Collection<String> getKeys() {
-		return getBenchmarkType().getKeys();
-	}
+	Collection<String> getKeys();
 
-	/**
-	 * Return the current value of some metric.
-	 *
-	 * @param key
-	 *            The metric.
-	 * @return The value.
-	 */
+	Measure getMeasure(String key);
+
 	Object getValue(String key);
 
-	IStatisticsType getBenchmarkType();
-
-	@Override
-	void close();
+	Map<String, Measure> getMeasures();
 
 	default boolean isEmpty() {
 		return getKeys().isEmpty();
+	}
+
+	/**
+	 * An {@link IStatisticsDataProvider} can only be closed once. A closed {@link IStatisticsDataProvider} cannot be
+	 * aggregated anymore. Subtypes can implement additional checks.
+	 */
+	void close();
+
+	/**
+	 * Wrapper around a {@link MeasureDefinition} that describes how to aggregate, print, check a metric, and a getter
+	 * function that retrieves the metric from somewhere.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	final class Measure {
+		private final MeasureDefinition mKeyType;
+		private final Supplier<Object> mGetter;
+
+		public Measure(final MeasureDefinition keyType, final Supplier<Object> getter) {
+			mKeyType = keyType;
+			mGetter = getter;
+		}
+
+		public MeasureDefinition getMeasureDefinition() {
+			return mKeyType;
+		}
+
+		public Supplier<Object> getGetter() {
+			return mGetter;
+		}
 	}
 
 }

@@ -806,7 +806,7 @@ public final class CegarAbsIntRunner<L extends IIcfgTransition<?>> {
 				final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
 				final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
 			super(logger, services, mgdScript, predicateFactory, symbolTable, SimplificationTechnique.NONE,
-					xnfConversionTechnique, initialPredicates);
+					xnfConversionTechnique);
 		}
 
 		@Override

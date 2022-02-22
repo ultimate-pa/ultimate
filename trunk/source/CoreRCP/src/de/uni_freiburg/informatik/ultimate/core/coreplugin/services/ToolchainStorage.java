@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Simple implementation of {@link IToolchainStorage} and {@link IUltimateServiceProvider}
@@ -67,23 +66,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProvider {
 
-	private final Deque<Pair<Object, Set<String>>> mMarker;
+	private final Deque<Object> mMarkerOrder;
+	private final Map<Object, Set<String>> mMarkedKeys;
 	private final Map<String, IStorable> mToolchainStorage;
 	private final Map<String, PreferenceLayer> mPreferenceLayers;
 
 	private final Object mLock;
 
 	public ToolchainStorage() {
-		this(new LinkedHashMap<>(), new HashMap<>(), new ArrayDeque<>(), new Object());
+		this(new LinkedHashMap<>(), new HashMap<>(), new ArrayDeque<>(), new HashMap<>(), new Object());
 		pushMarker(this);
 	}
 
 	private ToolchainStorage(final Map<String, IStorable> storage, final Map<String, PreferenceLayer> layers,
-			final Deque<Pair<Object, Set<String>>> marker, final Object lock) {
+			final Deque<Object> markerOrder, final Map<Object, Set<String>> markedKeys, final Object lock) {
 		mLock = Objects.requireNonNull(lock);
 		mToolchainStorage = Objects.requireNonNull(storage);
 		mPreferenceLayers = Objects.requireNonNull(layers);
-		mMarker = Objects.requireNonNull(marker);
+		mMarkerOrder = Objects.requireNonNull(markerOrder);
+		mMarkedKeys = Objects.requireNonNull(markedKeys);
 	}
 
 	@Override
@@ -99,8 +100,22 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			throw new IllegalArgumentException("Cannot store nothing");
 		}
 		synchronized (mLock) {
-			final Pair<Object, Set<String>> currentMarker = mMarker.peek();
-			currentMarker.getSecond().add(key);
+			final Object currentMarker = mMarkerOrder.peek();
+			mMarkedKeys.get(currentMarker).add(key);
+			return mToolchainStorage.put(key, value);
+		}
+	}
+
+	@Override
+	public IStorable putStorable(final Object marker, final String key, final IStorable value) {
+		if (value == null || key == null || marker == null) {
+			throw new IllegalArgumentException("Some argument is null");
+		}
+		if (!hasMarker(marker)) {
+			throw new IllegalArgumentException("Unknown marker");
+		}
+		synchronized (mLock) {
+			mMarkedKeys.get(marker).add(key);
 			return mToolchainStorage.put(key, value);
 		}
 	}
@@ -161,7 +176,8 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 				}
 			}
 			mToolchainStorage.clear();
-			mMarker.clear();
+			mMarkerOrder.clear();
+			mMarkedKeys.clear();
 			pushMarker(this);
 			return rtr;
 		}
@@ -233,7 +249,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 				}
 				newLayers.put(pluginId, newLayer);
 			}
-			return new ToolchainStorage(mToolchainStorage, newLayers, mMarker, mLock);
+			return new ToolchainStorage(mToolchainStorage, newLayers, mMarkerOrder, mMarkedKeys, mLock);
 		}
 	}
 
@@ -268,36 +284,26 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			throw new IllegalArgumentException("duplicate marker");
 		}
 		synchronized (mLock) {
-			mMarker.push(new Pair<>(marker, new HashSet<>()));
+			mMarkerOrder.push(marker);
+			mMarkedKeys.put(marker, new HashSet<>());
 		}
 	}
 
 	@Override
-	public Set<DestroyResult> destroyMarker(final Object marker) {
-		if (mMarker.isEmpty() || !hasMarker(marker)) {
+	public Set<DestroyResult> destroyMarkerStack(final Object marker) {
+		if (mMarkerOrder.isEmpty() || !hasMarker(marker)) {
 			return Collections.emptySet();
 		}
 		synchronized (mLock) {
 			final Set<DestroyResult> rtr = new HashSet<>();
-			final Iterator<Pair<Object, Set<String>>> iter = mMarker.iterator();
+
+			final Iterator<Object> iter = mMarkerOrder.iterator();
 			final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
 			while (iter.hasNext()) {
-				final Pair<Object, Set<String>> markerPair = iter.next();
+				final Object currentMarker = iter.next();
 				iter.remove();
-				for (final String key : markerPair.getSecond()) {
-					final IStorable storable = removeStorable(key);
-					if (storable != null) {
-						try {
-							storable.destroy();
-							rtr.add(new DestroyResult(key, null));
-						} catch (final Throwable t) {
-							coreLogger.fatal("Exception while destroying storable %s: %s",
-									storable.getClass().getSimpleName(), t.getMessage());
-							rtr.add(new DestroyResult(key, t));
-						}
-					}
-				}
-				if (markerPair.getFirst() == marker) {
+				mMarkedKeys.remove(marker).stream().forEachOrdered(key -> removeStorable(rtr, coreLogger, key));
+				if (currentMarker == marker) {
 					return rtr;
 				}
 			}
@@ -305,10 +311,41 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		}
 	}
 
-	private boolean hasMarker(final Object marker) {
-		assert marker != null;
+	@Override
+	public Set<DestroyResult> destroyMarker(final Object marker) {
+		if (mMarkerOrder.isEmpty() || !hasMarker(marker)) {
+			return Collections.emptySet();
+		}
 		synchronized (mLock) {
-			return mMarker.stream().map(Pair::getFirst).anyMatch(a -> a == marker);
+			if (!mMarkerOrder.remove(marker)) {
+				// no such marker registered
+				return Collections.emptySet();
+			}
+
+			final Set<DestroyResult> rtr = new HashSet<>();
+			mMarkedKeys.remove(marker).stream().forEachOrdered(
+					key -> removeStorable(rtr, getLoggingService().getLogger(Activator.PLUGIN_ID), key));
+			return rtr;
+		}
+	}
+
+	private void removeStorable(final Set<DestroyResult> rtr, final ILogger coreLogger, final String key) {
+		final IStorable storable = removeStorable(key);
+		if (storable != null) {
+			try {
+				storable.destroy();
+				rtr.add(new DestroyResult(key, null));
+			} catch (final Throwable t) {
+				coreLogger.fatal("Exception while destroying storable %s: %s", storable.getClass().getSimpleName(),
+						t.getMessage());
+				rtr.add(new DestroyResult(key, t));
+			}
+		}
+	}
+
+	private boolean hasMarker(final Object marker) {
+		synchronized (mLock) {
+			return mMarkedKeys.containsKey(marker);
 		}
 	}
 

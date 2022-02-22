@@ -59,10 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -81,7 +78,6 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	protected AbstractIncrementalInclusionCheck<L, IPredicate> mInclusionCheck;
 	protected final LanguageOperation mLanguageOperation;
 	protected final List<AbstractInterpolantAutomaton<L>> mInterpolantAutomata = new ArrayList<>();
-	protected final List<IHoareTripleChecker> mHoareTripleChecker = new ArrayList<>();
 
 	public IncrementalInclusionCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -196,16 +192,6 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		super.mCounterexample = mInclusionCheck.getCounterexample();
-		// try {
-		// mCounterexample = emptyWithAI.getNestedRun();
-		// } else {
-		// mCounterexample = (new IsEmpty<LETTER, IPredicate>((INestedWordAutomatonOldApi) mAbstraction))
-		// .getNestedRun();
-		// }
-		// } catch (OperationCanceledException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
 		if (super.mCounterexample == null) {
 			return true;
 		}
@@ -221,20 +207,11 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		mCegarLoopBenchmark.startAutomataDifferenceTime();
 
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
-		final IHoareTripleChecker htc;
-		if (mRefinementResult.getHoareTripleChecker() != null) {
-			htc = mRefinementResult.getHoareTripleChecker();
-		} else {
-			htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-					HoareTripleChecks.MONOLITHIC, mCsToolkit, predicateUnifier);
-		}
+		final IHoareTripleChecker htc = mRefinementResult.getHoareTripleChecker();
 
 		boolean progress;
 		try {
 			mLogger.debug("Start constructing difference");
-			// assert(oldAbstraction.getStateFactory() ==
-			// mInterpolAutomaton.getStateFactory());
-
 			switch (mPref.interpolantAutomatonEnhancement()) {
 			case PREDICATE_ABSTRACTION:
 			case PREDICATE_ABSTRACTION_CONSERVATIVE:
@@ -249,13 +226,13 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(determinized);
 				mInterpolantAutomata.add(determinized);
-				mHoareTripleChecker.add(htc);
+				mStatAggregagtion.register(() -> htc.getStatistics(),
+						CegarLoopStatisticsGenerator.HoareTripleCheckerStatistics);
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(mServices), determinized).getResult();
 				assert new InductivityCheck<>(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mServices.getStorage(), mIcfg.getCfgSmtToolkit(), false))
-								.getResult();
+						mRefinementResult.constructIncrementalHoareTripleChecker()).getResult();
 				progress = true;
 				break;
 			}
@@ -272,13 +249,13 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(nondet);
 				mInterpolantAutomata.add(nondet);
-				mHoareTripleChecker.add(htc);
+				mStatAggregagtion.register(() -> htc.getStatistics(),
+						CegarLoopStatisticsGenerator.HoareTripleCheckerStatistics);
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(mServices), nondet).getResult();
 				assert new InductivityCheck<>(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mServices.getStorage(), mIcfg.getCfgSmtToolkit(), false))
-								.getResult();
+						mRefinementResult.constructIncrementalHoareTripleChecker()).getResult();
 				progress = true;
 				break;
 			}
@@ -322,15 +299,6 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				mInterpolantAutomata.get(i);
 			}
 		}
-	}
-
-	@Override
-	public void finish() {
-		assert mHoareTripleChecker.size() == mInterpolantAutomata.size();
-		for (final IHoareTripleChecker htc : mHoareTripleChecker) {
-			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
-		}
-
 	}
 
 }

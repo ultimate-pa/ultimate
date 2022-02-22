@@ -1243,8 +1243,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		}
 
 		assert TraceCheckUtils.checkInterpolantsInductivityBackward(actualInterpolants, nestedWord, mTruePred,
-				mFalsePred, Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript,
-				mServices.getStorage()) : "invalid Hoare triple in BP";
+				mFalsePred, Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript) : "invalid Hoare triple in BP";
 
 		return actualInterpolants.toArray(new IPredicate[actualInterpolants.size()]);
 	}

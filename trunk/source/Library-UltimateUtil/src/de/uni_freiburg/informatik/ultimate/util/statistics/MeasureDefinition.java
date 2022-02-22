@@ -75,13 +75,13 @@ public class MeasureDefinition {
 	public static final MeasureDefinition IN_CA_RE_COUNTER = new MeasureDefinition(InCaReCounter::new,
 			Aggregate::inCaReAdd, PrettyPrint::keyColonData, Convert::identity, Test::alwaysReady, Test::inCaReIsEmpty);
 
-	public static final MeasureDefinition STATISTICS_AGGREGATOR =
-			new MeasureDefinition(StatisticsAggregator::new, Aggregate::statisticsAggregator, PrettyPrint::keyColonData,
-					Convert::identity, Test::alwaysReady, Test::statisticsDataProviderIsEmpty);
+	public static final MeasureDefinition STATISTICS_AGGREGATOR = new MeasureDefinition(StatisticsAggregator::new,
+			Aggregate::statisticsAggregator, PrettyPrint::keyColonDataBraced, Convert::identity, Test::alwaysReady,
+			Test::statisticsDataProviderIsEmpty);
 
 	public static final MeasureDefinition STATISTICS_CONVERT_AGGREGATE =
 			new MeasureDefinition(StatisticsAggregator::new, Aggregate::statisticsConvertAndAggregate,
-					PrettyPrint::keyColonData, Convert::identity, Test::alwaysReady, a -> false);
+					PrettyPrint::keyColonDataBraced, Convert::identity, Test::alwaysReady, a -> false);
 
 	public static final MeasureDefinition BACKWARD_COVERING_INFORMATION = new MeasureDefinition(
 			BackwardCoveringInformation::new,

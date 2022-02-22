@@ -178,12 +178,6 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				}
 			} else {
 				assert kindOfInvariant == KindOfInvariant.SAFETY;
-
-				// if (mLogger.isDebugEnabled()) {
-				// for (IcfgLocation loc : invariants.keySet()) {
-				// mLogger.debug(loc + ": " + invariants.get(loc));
-				// }
-				// }
 				for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
 					final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(),
 							icfg.getCfgSmtToolkit().getModifiableGlobalsTable());

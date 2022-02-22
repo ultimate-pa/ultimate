@@ -299,8 +299,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
-				null) : "invalid Hoare triple in tree interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger) : "invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
 	}
 
@@ -408,8 +407,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		}
 
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
-				null) : "invalid Hoare triple in nested interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger) : "invalid Hoare triple in nested interpolants";
 	}
 
 	/**

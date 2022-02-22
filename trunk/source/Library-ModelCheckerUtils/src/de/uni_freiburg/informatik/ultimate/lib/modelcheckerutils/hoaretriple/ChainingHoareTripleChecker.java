@@ -139,10 +139,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		if (mStatistics == null) {
 			mStatistics = new StatisticsAggregator(mStorage);
 			for (final IWrappedHoareTripleChecker htc : mHtcs) {
-				mStatistics.aggregateStatisticsData(htc.getStatistics());
-				final ProtectedHtc under = htc.getUnderlying();
-				final String prefix = under.mHtc.getClass().getSimpleName();
-				mStatistics.aggregateStatisticsData(prefix, under.mStats);
+				htc.aggregateStatistics(mStatistics);
 			}
 		}
 		return mStatistics;
@@ -155,9 +152,9 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 	/**
 	 * Create a {@link ChainingHoareTripleChecker} with a single underlying {@link IHoareTripleChecker}.
-	 *
 	 * @param htc
 	 *            The underlying {@link IHoareTripleChecker}.
+	 *
 	 * @return A new {@link ChainingHoareTripleChecker}.
 	 */
 	public static ChainingHoareTripleChecker with(final IToolchainStorage storage, final ILogger logger,
@@ -270,6 +267,8 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		 * Create a copy that keeps everything except statistics.
 		 */
 		IWrappedHoareTripleChecker copy();
+
+		void aggregateStatistics(StatisticsAggregator sdp);
 	}
 
 	private static class ReviewedProtectedHtc implements IWrappedHoareTripleChecker {
@@ -392,7 +391,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 		@Override
 		public IStatisticsDataProvider getStatistics() {
-			return mHtc.getStatistics();
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
@@ -413,6 +412,12 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		@Override
 		public IWrappedHoareTripleChecker copy() {
 			return new ReviewedProtectedHtc(mReviewHtc, new ProtectedHtc(mHtc.getUnderlying()));
+		}
+
+		@Override
+		public void aggregateStatistics(final StatisticsAggregator sdp) {
+			sdp.aggregateStatisticsData(mReviewHtc.getClass().getSimpleName(), mReviewHtc.getStatistics());
+			mHtc.aggregateStatistics(sdp);
 		}
 	}
 
@@ -496,7 +501,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 		@Override
 		public IStatisticsDataProvider getStatistics() {
-			return mHtc.getStatistics();
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
@@ -547,6 +552,11 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		public IWrappedHoareTripleChecker copy() {
 			mStats.close();
 			return new ProtectedHtc(this);
+		}
+
+		@Override
+		public void aggregateStatistics(final StatisticsAggregator sdp) {
+			sdp.aggregateStatisticsData(mHtc.getClass().getSimpleName(), mHtc.getStatistics());
 		}
 
 	}

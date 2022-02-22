@@ -197,15 +197,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return Script.LBool.UNSAT;
 		}
 
-		// if (simpleSelfloopCheck(ps1, ta, ps2)) {
-		// mTrivialSatQueries = mTrivialSatQueries + 10000000;
-		// return Script.LBool.UNSAT;
-		// }
-
 		final UnmodifiableTransFormula tf = ta.getTransformula();
 		final String procPred = ta.getPrecedingProcedure();
 		final String procSucc = ta.getSucceedingProcedure();
-		// assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
 		final Set<IProgramNonOldVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
 		final Set<IProgramNonOldVar> modifiableGlobalsSucc = mModifiableGlobals.getModifiedBoogieVars(procSucc);
 
@@ -318,13 +312,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final Set<IProgramVar> assignedVarsOnReturn = new HashSet<>();
 		final Term fReturn = PredicateUtils.formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn,
 				mIndexedConstants, mManagedScript.getScript());
-		// fReturn = (new FormulaUnLet()).unlet(fReturn);
 
 		final UnmodifiableTransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
 		final Set<IProgramVar> assignedVarsOnCall = new HashSet<>();
 		final Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, mIndexedConstants,
 				mManagedScript.getScript());
-		// fCall = (new FormulaUnLet()).unlet(fCall);
 
 		final String callee = ta.getPrecedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
@@ -437,7 +429,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		}
 		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mStorage, mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
-		// assert testRes == result : "my return dataflow check failed";
 		if (testRes != null && testRes != IncrementalPlicationChecker.convertLBool2Validity(result)) {
 			sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		}
@@ -454,9 +445,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (testRes != null) {
 			assert testRes == IncrementalPlicationChecker
 					.convertLBool2Validity(result) : "my call dataflow check failed";
-			// if (testRes != result) {
-			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
-			// }
 		}
 	}
 
@@ -470,9 +458,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result)
 						|| testRes == IncrementalPlicationChecker.convertLBool2Validity(LBool.UNKNOWN)
 								&& result == LBool.SAT : "my internal dataflow check failed";
-				// if (testRes != result) {
-				// sdhtch.sdecInternalToFalse(ps1, ta);
-				// }
 			}
 			return;
 		}
@@ -482,9 +467,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			if (testRes != null) {
 				assert testRes == IncrementalPlicationChecker
 						.convertLBool2Validity(result) : "my internal dataflow check failed";
-				// if (testRes != result) {
-				// sdhtch.sdecReturn(ps1, psk, ta, ps2);
-				// }
 			}
 		}
 		if (ta.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
@@ -495,9 +477,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (testRes != null) {
 			assert testRes == IncrementalPlicationChecker
 					.convertLBool2Validity(result) : "my internal dataflow check failed";
-			// if (testRes != result) {
-			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
-			// }
 		}
 	}
 

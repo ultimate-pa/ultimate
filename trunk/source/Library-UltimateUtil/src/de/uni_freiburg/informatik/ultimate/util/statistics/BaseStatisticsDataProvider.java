@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType.Measure;
 import de.uni_freiburg.informatik.ultimate.util.statistics.exception.MeasurementNotReadyException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.exception.MeasurementUnreadException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.exception.StatisticsDataProviderAlreadyClosedException;
@@ -106,31 +105,32 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.exception.StatisticsD
 public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvider {
 
 	private final Map<String, Measure> mMeasures = new LinkedHashMap<>();
-	private final StatisticsType mStatisticsType = new StatisticsType();
-	protected final StatisticWatcher mWatcher;
+	protected final StatisticsReadWatcher mWatcher;
 
 	/**
 	 * Create a new {@link BaseStatisticsDataProvider}. If <tt>storage</tt> is not null, the instance will register
-	 * itself with the storage and be closed at the end of the {@link IToolchainStorage} life cycle.
+	 * itself with the storage and be closed after the {@link IStatisticsDataProvider#PLUGIN_STATISTICS_MARKER} is
+	 * removed, i.e., at plugin boundaries.
 	 *
 	 * @param storage
 	 *            A {@link IToolchainStorage} instance or null
 	 */
 	protected BaseStatisticsDataProvider(final IToolchainStorage storage) {
-		mWatcher = new StatisticWatcher(storage, this);
-		autoDeclare();
+		this(storage, PLUGIN_STATISTICS_MARKER);
 	}
 
 	/**
-	 * Instead of providing IToolchainStorage yourself, you can take one from an existing
-	 * {@link BaseStatisticsDataProvider}.
+	 * Create a new {@link BaseStatisticsDataProvider}. If <tt>storage</tt> is not null, the instance will register
+	 * itself with the storage and be closed at the end of the {@link IToolchainStorage} life cycle. If <tt>marker</tt>
+	 * is not null, the instance will register itself to the given marker.
 	 *
-	 * @see #BaseStatisticsDataProvider(IToolchainStorage)
-	 *
-	 * @param sdp
+	 * @param storage
+	 *            A {@link IToolchainStorage} instance or null
+	 * @param marker
+	 *            An already pushed marker for {@link IToolchainStorage} or null
 	 */
-	protected BaseStatisticsDataProvider(final BaseStatisticsDataProvider sdp) {
-		mWatcher = new StatisticWatcher(sdp.mWatcher.mStorage, this);
+	protected BaseStatisticsDataProvider(final IToolchainStorage storage, final Object marker) {
+		mWatcher = new StatisticsReadWatcher(storage, marker, this);
 		autoDeclare();
 	}
 
@@ -217,15 +217,10 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 	}
 
 	@Override
-	public IStatisticsType getBenchmarkType() {
-		return mStatisticsType;
-	}
-
-	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		String delimiter = "";
-		for (final Entry<String, Measure> entry : getBenchmarkType().getMeasures().entrySet()) {
+		for (final Entry<String, Measure> entry : getMeasures().entrySet()) {
 			sb.append(delimiter);
 			final Measure measure = entry.getValue();
 			final MeasureDefinition type = measure.getMeasureDefinition();
@@ -255,15 +250,24 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 		mWatcher.requireIsOpen();
 	}
 
+	protected IToolchainStorage getStorage() {
+		return mWatcher.getStorage();
+	}
+
+	protected Object getMarker() {
+		return mWatcher.mMarker;
+	}
+
 	/**
 	 * 
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	protected static final class StatisticWatcher implements IStorable {
+	protected static final class StatisticsReadWatcher implements IStorable {
 		private static final AtomicLong NEXT_ID = new AtomicLong(0);
 		private final long mId = NEXT_ID.getAndIncrement();
 		private final IToolchainStorage mStorage;
+		private final Object mMarker;
 
 		private final String mCreationSignature;
 		private final BaseStatisticsDataProvider mSDP;
@@ -271,14 +275,24 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 
 		private boolean mIsClosed;
 
-		public StatisticWatcher(final IToolchainStorage storage, final BaseStatisticsDataProvider sdp) {
+		public StatisticsReadWatcher(final BaseStatisticsDataProvider sdp) {
+			this(null, null, sdp);
+		}
+
+		public StatisticsReadWatcher(final IToolchainStorage storage, final Object marker,
+				final BaseStatisticsDataProvider sdp) {
 			mIsClosed = false;
 			mCreationSignature = ReflectionUtil.getCurrentCallStackOneLine();
 			mSDP = sdp;
 			mStorage = storage;
+			mMarker = marker;
 			mReadKeys = new HashSet<>();
 			if (mStorage != null) {
-				mStorage.putStorable(getStorageKey(), this);
+				if (marker != null) {
+					mStorage.putStorable(marker, getStorageKey(), this);
+				} else {
+					mStorage.putStorable(getStorageKey(), this);
+				}
 			}
 		}
 
@@ -290,7 +304,7 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 		public void destroy() {
 			requireIsOpen();
 			// Useful when looking at StatisticsDataProviderAlreadyClosedException
-			// System.out.println("Closing " + mId + " " + ReflectionUtil.getCurrentCallStackOneLine());
+			System.out.println("Closing " + mId + " " + ReflectionUtil.getCurrentCallStackOneLine());
 			if (mStorage != null) {
 				mStorage.removeStorable(getStorageKey());
 			}
@@ -317,7 +331,6 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 			if (!unreadKeys.isEmpty()) {
 				throw new MeasurementUnreadException(mSDP, mCreationSignature, mId, unreadKeys);
 			}
-
 		}
 
 		public void requireIsOpen() {
@@ -331,32 +344,27 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 		}
 
 		private String getStorageKey() {
-			return StatisticWatcher.class.getSimpleName() + mId;
+			return StatisticsReadWatcher.class.getSimpleName() + mId;
 		}
 
+		private IToolchainStorage getStorage() {
+			return mStorage;
+		}
 	}
 
-	private final class StatisticsType implements IStatisticsType {
+	@Override
+	public Collection<String> getKeys() {
+		return mMeasures.keySet();
+	}
 
-		@Override
-		public Collection<String> getKeys() {
-			return mMeasures.keySet();
-		}
+	@Override
+	public Measure getMeasure(final String key) {
+		return getStatChecked(key);
+	}
 
-		@Override
-		public Measure getMeasure(final String key) {
-			return getStatChecked(key);
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			return getStatChecked(key).getGetter().get();
-		}
-
-		@Override
-		public Map<String, Measure> getMeasures() {
-			return Collections.unmodifiableMap(mMeasures);
-		}
+	@Override
+	public Map<String, Measure> getMeasures() {
+		return Collections.unmodifiableMap(mMeasures);
 	}
 
 	/**
@@ -422,4 +430,5 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 		 */
 		DefaultMeasureDefinitions type();
 	}
+
 }

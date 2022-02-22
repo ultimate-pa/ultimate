@@ -29,8 +29,8 @@ import de.uni_freiburg.informatik.ultimate.lib.mcr.McrAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrTraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerBuilder.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -78,8 +78,8 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		mToolkit = prefs.getCfgSmtToolkit();
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mResultProvider = resultProvider;
-		mHoareTripleChecker = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-				HoareTripleChecks.INCREMENTAL, mToolkit, mPredicateUnifier);
+		mHoareTripleChecker = new HoareTripleCheckerBuilder(mServices, mToolkit, mPredicateUnifier)
+				.constructEfficientHoareTripleCheckerWithCaching(HoareTripleChecks.INCREMENTAL);
 		mInterpolantProvider = interpolantProvider;
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);

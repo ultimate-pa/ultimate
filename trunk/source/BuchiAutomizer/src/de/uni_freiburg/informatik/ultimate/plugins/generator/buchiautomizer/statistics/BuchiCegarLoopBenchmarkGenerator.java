@@ -185,7 +185,8 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			}
 			mLassoNonterminationAnalysisTime += nab.getTime();
 		}
-		mLassoAnalysisResults.aggregateStatisticsData(new LassoAnalysisResults(this, lassoCheck));
+
+		mLassoAnalysisResults.aggregateStatisticsData(new LassoAnalysisResults(getStorage(), lassoCheck));
 	}
 
 	public void startLassoAnalysisTime() {
