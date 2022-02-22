@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * IResult that is reported if toolchain has thrown a Throwable (Error or Exception). The Throwable stored in the result
@@ -63,11 +64,11 @@ public class ExceptionOrErrorResult extends AbstractResult implements IFailedAna
 	@Override
 	public String getLongDescription() {
 		final StackTraceElement[] stacktrace = mThrowable.getStackTrace();
-		String rtr = getPlugin() + ": " + getShortDescription();
+		final StringBuilder rtr = new StringBuilder().append(getPlugin()).append(": ").append(getShortDescription());
 		if (stacktrace != null && stacktrace.length > 0) {
-			rtr = rtr + ": " + stacktrace[0].toString();
+			rtr.append(": ").append(CoreUtil.getStackTraceOneLine(mThrowable));
 		}
-		return rtr;
+		return rtr.toString();
 	}
 
 	@Override

@@ -111,7 +111,8 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			if (param[paramctr].equals("--")) {
 				paramctr++;
 				break;
-			} else if (param[paramctr].equals("-no-success")) {
+			}
+			if (param[paramctr].equals("-no-success")) {
 				options.set(":print-success", false);
 			} else if (param[paramctr].equals("-v")) {
 				options.set(":verbosity", LogProxy.LOGLEVEL_DEBUG);
@@ -174,7 +175,8 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 		String filename = null;
 		if (paramctr < param.length) {
-			filename = param[paramctr++];
+			filename = param[paramctr];
+			paramctr++;
 		}
 		if (paramctr != param.length) {
 			usage();
@@ -220,7 +222,7 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			return exitCode;
 		} catch (final Throwable ex) {
 			mLogger.fatal(ex);
-			mLogger.fatal(CoreUtil.getStackTrace("\t", ex));
+			mLogger.fatal(CoreUtil.getStackTrace("\t", false, ex));
 			return -1;
 		}
 	}
@@ -252,9 +254,9 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 		mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		mLogger.info("Maximal heap size is set to "
 				+ CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
-		final String[] sysProps = new String[] { "java.version", "java.specification.name", "java.specification.vendor",
-				"java.specification.version", "java.runtime.version", "java.vm.name", "java.vm.vendor",
-				"java.vm.version", };
+		final String[] sysProps =
+				{ "java.version", "java.specification.name", "java.specification.vendor", "java.specification.version",
+						"java.runtime.version", "java.vm.name", "java.vm.vendor", "java.vm.version", };
 
 		for (final String sysProp : sysProps) {
 			String value = System.getProperty(sysProp);

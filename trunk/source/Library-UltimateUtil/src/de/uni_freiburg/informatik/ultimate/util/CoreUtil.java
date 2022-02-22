@@ -919,14 +919,22 @@ public class CoreUtil {
 	}
 
 	public static String getStackTrace(final Throwable t) {
-		return getStackTrace("", t);
+		return getStackTrace("", false, t);
 	}
 
-	public static String getStackTrace(final String indent, final Throwable t) {
+	public static String getStackTraceOneLine(final Throwable t) {
+		return getStackTrace("", true, t);
+	}
+
+	public static String getStackTrace(final String indent, final boolean singleLine, final Throwable t) {
 		final StringBuilder sb = new StringBuilder();
+		final String sep = " -> ";
+		final String format = singleLine ? "%s " + sep : "%s%n";
 		for (final StackTraceElement elem : t.getStackTrace()) {
-			sb.append(indent);
-			sb.append(String.format("%s%n", elem.toString()));
+			sb.append(indent).append(String.format(format, elem));
+		}
+		if (singleLine && sb.length() >= sep.length()) {
+			sb.delete(sb.length() - sep.length(), sb.length());
 		}
 		return sb.toString();
 	}

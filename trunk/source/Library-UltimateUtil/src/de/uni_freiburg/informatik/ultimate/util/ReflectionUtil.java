@@ -156,8 +156,12 @@ public class ReflectionUtil {
 	}
 
 	public static String getCurrentCallStackOneLine() {
+		final String sep = " -> ";
 		final StringBuilder sb = new StringBuilder();
-		supplyCallStackStrings(a -> sb.append(a).append(" -> "));
+		supplyCallStackStrings(a -> sb.append(a).append(sep));
+		if (sb.length() >= sep.length()) {
+			sb.delete(sb.length() - sep.length(), sb.length());
+		}
 		return sb.toString();
 	}
 
@@ -407,10 +411,6 @@ public class ReflectionUtil {
 		} catch (final IllegalArgumentException | IllegalAccessException e) {
 			throw new UnsupportedOperationException(e);
 		}
-	}
-
-	public static String printableStackTrace() {
-		return Arrays.toString(Thread.currentThread().getStackTrace());
 	}
 
 	/**
