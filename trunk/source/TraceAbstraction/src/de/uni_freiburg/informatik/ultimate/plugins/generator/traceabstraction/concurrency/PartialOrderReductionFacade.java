@@ -302,6 +302,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	public StateSplitter<IPredicate> getStateSplitter() {
+		return mStateSplitter;
+	}
+
 	/**
 	 * Helper class to split states of reduction automata into the original state (i.e., the state of the input
 	 * automaton) and extra information added by reduction algorithms.
@@ -310,7 +314,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	 *
 	 * @param <S>
 	 */
-	private static class StateSplitter<S> {
+	public static class StateSplitter<S> {
 		private final Function<S, S> mGetOriginal;
 		private final Function<S, Object> mGetExtraInfo;
 

@@ -277,9 +277,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
 			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
-			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
+			visitor = new SleepSetVisitorSearch<>(this::isGoalState, this::isProvenState);
 		} else {
-			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
+			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, this::isProvenState);
 		}
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
@@ -339,7 +339,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		}
 	}
 
-	private Boolean isGoalState(final IPredicate state) {
+	private boolean isGoalState(final IPredicate state) {
 		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
 				+ state.getClass();
 
@@ -352,7 +352,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return isErrorState && !isProvenState(state);
 	}
 
-	private static boolean isProvenState(final IPredicate state) {
+	private boolean isProvenState(IPredicate state) {
+		final PartialOrderReductionFacade.StateSplitter<IPredicate> splitter = mPOR.getStateSplitter();
+		if (splitter != null) {
+			state = splitter.getOriginal(state);
+		}
+		return isFalseLiteral(state);
+	}
+
+	private static boolean isFalseLiteral(final IPredicate state) {
 		if (state instanceof MLPredicateWithConjuncts) {
 			// By the way we create conjunctions in the state factory below, any conjunction that contains the conjunct
 			// "false" will contain no other conjuncts.
@@ -360,18 +368,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			return conjuncts.size() == 1 && isFalseLiteral(conjuncts.getHead());
 		}
 
-		// TODO use mPOR.mStateSplitter for this
-		if (state instanceof PredicateWithLastThread) {
-			return isProvenState(((PredicateWithLastThread) state).getUnderlying());
-		}
-		if (state instanceof SleepPredicate<?>) {
-			return isProvenState(((SleepPredicate<?>) state).getUnderlying());
-		}
-
-		return isFalseLiteral(state);
-	}
-
-	private static boolean isFalseLiteral(final IPredicate state) {
 		// We assume here that all inconsistent interpolant predicates are syntactically equal to "false".
 		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
@@ -411,7 +407,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
-			if (isProvenState(state1) || isTrueLiteral(state2)) {
+			if (isFalseLiteral(state1) || isTrueLiteral(state2)) {
 				// If state1 is "false", we add no other conjuncts, and do not create a new state.
 				// Similarly, there is no point in adding state2 as conjunct if it is "true".
 				return state1;
@@ -419,7 +415,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 			final IPredicate newState;
 			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
-				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isProvenState.
+				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
 				// As another (less important) optimization, we also ignore state1 if it is "true".
 				newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
 						((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state2)));
