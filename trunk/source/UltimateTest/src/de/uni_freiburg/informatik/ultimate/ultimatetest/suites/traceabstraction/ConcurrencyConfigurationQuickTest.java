@@ -60,7 +60,7 @@ public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionT
 
 	@Override
 	protected long getTimeout() {
-		return 60L;
+		return 1000L;
 	}
 
 	@Override

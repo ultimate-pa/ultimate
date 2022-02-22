@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +38,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -90,8 +95,14 @@ public class VariableAbstraction<L extends IAction>
 	 */
 	@Override
 	public L abstractLetter(final L inLetter, final Set<IProgramVar> constrainingVariables) {
+		if (inLetter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
+				|| nothingWillChange(inLetter.getTransformula(), constrainingVariables)) {
+			return inLetter;
+		}
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), constrainingVariables);
+		// Ist relativ leicht zu sehen, dass die Abstraktion die TF nicht ändern wird (weil z.B. alle benutzten
+		// Variablen constraining sind)
 
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
@@ -100,6 +111,17 @@ public class VariableAbstraction<L extends IAction>
 			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 		}
 		return mCopyFactory.copy(inLetter, newFormula, null);
+	}
+
+	private boolean nothingWillChange(final UnmodifiableTransFormula utf,
+			final Set<IProgramVar> constrainingVariables) {
+		final Set<IProgramVar> relevantVariables = new HashSet<>(utf.getInVars().keySet());
+		relevantVariables.addAll(utf.getOutVars().keySet());
+		if (constrainingVariables.containsAll(relevantVariables)) {
+			return true;
+		}
+		return false;
+
 	}
 
 	/**
@@ -111,14 +133,16 @@ public class VariableAbstraction<L extends IAction>
 
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVars) {
+		// transform is the set of variables that can be havoced out
 		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
 		transform.addAll(utf.getAssignedVars());
 		transform.removeAll(constrainingVars);
 		final Map<IProgramVar, TermVariable> nInVars = new HashMap<>(utf.getInVars());
 		final Map<IProgramVar, TermVariable> nOutVars = new HashMap<>(utf.getOutVars());
+		final Set<IProgramVar> assignedVars = utf.getAssignedVars();
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
 		for (final IProgramVar v : transform) {
-			if (nOutVars.containsKey(v)) {
+			if (assignedVars.contains(v)) {
 				nAuxVars.add(nOutVars.get(v));
 				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
 				nOutVars.put(v, nov);
@@ -126,6 +150,9 @@ public class VariableAbstraction<L extends IAction>
 			if (nInVars.containsKey(v)) {
 				nAuxVars.add(nInVars.get(v));
 				nInVars.remove(v);
+				if (!assignedVars.contains(v)) {
+					nOutVars.remove(v);
+				}
 			}
 
 		}
@@ -137,11 +164,7 @@ public class VariableAbstraction<L extends IAction>
 			final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
 			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
 		}
-		/*
-		 * for (final TermVariable auxVar : nAuxVars) { tfBuilder.addAuxVar(auxVar);
-		 *
-		 * }
-		 */
+
 		if (nAuxVars.isEmpty()) {
 			tfBuilder.setFormula(utf.getFormula());
 		} else {
@@ -151,8 +174,11 @@ public class VariableAbstraction<L extends IAction>
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		final UnmodifiableTransFormula abstracted = tfBuilder.finishConstruction(mMscript);
 
-		assert abstracted.getAssignedVars()
-				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
+		assert abstracted.getAssignedVars().equals(assignedVars) : "Abstraction should not change assigned variables";
+		assert utf.getInVars().keySet()
+				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should not read more variables";
+		assert constrainingVars
+				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read constrained variables";
 
 		assert TransFormulaUtils.checkImplication(utf, abstracted, mMscript) != LBool.SAT : "not an abstraction";
 
@@ -191,12 +217,66 @@ public class VariableAbstraction<L extends IAction>
 		return constrainingVars;
 	}
 
-	public Map<L, Set<IProgramVar>> refineSpecific(final Map<L, Set<IProgramVar>> current,
+	public Map<L, VarAbsConstraints<L>> refineSpecific(final Map<L, VarAbsConstraints<L>> current,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-		for (final QualifiedTracePredicates qtp : refinement.getUsedTracePredicates()) {
-			qtp.getTracePredicates().getPostcondition().getVars();
-			qtp.getTracePredicates().getPredicates();
-			// So how exactly are these things stored?
+		Set<TermVariable> in = Collections.emptySet();
+		Set<TermVariable> out = Collections.emptySet();
+		Set<IProgramVar> l;
+		// Set<L> letters = refinement.getInfeasibilityProof().getAlphabet();
+		// Set<IPredicate> states = refinement.getInfeasibilityProof().getStates();
+
+		/*
+		 * What is an OutgoingCallTransititon? CallTransisitons?
+		 *
+		 * TODO: If this appraoch makes any sense: Add the states of outgoingTransisiton again to the set to iterate
+		 * over. Sort the the things; which in incoming, which is outgoing;
+		 *
+		 * It doesnt make any sense. How do i get the States after the inital ones? I can iterate over all states. But
+		 * would this really make sense?
+		 *
+		 * Maybe I should just look at the Letters and their formulas...
+		 *
+		 *
+		 */
+
+		final List<IPredicate> li = new ArrayList<>(refinement.getInfeasibilityProof().getInitialStates());
+		for (final IPredicate s : li) {
+
+			for (final OutgoingInternalTransition<L, IPredicate> m : refinement.getInfeasibilityProof()
+					.internalSuccessors(s)) {
+				in = (Set<TermVariable>) m.getLetter().getTransformula().getInVars().values();
+				out = (Set<TermVariable>) m.getLetter().getTransformula().getOutVars().values();
+				if (!current.containsKey(m.getLetter())) {
+					current.put(m.getLetter(), new VarAbsConstraints<L>(m.getLetter(), in, out));
+				} else {
+					// add
+				}
+
+			}
+
+			for (final IncomingCallTransition<L, IPredicate> ict : refinement.getInfeasibilityProof()
+					.callPredecessors(s)) {
+				l = ict.getPred().getVars();
+				in = Collections.emptySet();
+				for (final IProgramVar m : l) {
+					in.add(m.getTermVariable());
+				}
+			}
+
+			for (final OutgoingCallTransition<L, IPredicate> oct : refinement.getInfeasibilityProof()
+					.callSuccessors(s)) {
+				l = oct.getSucc().getVars();
+				out = Collections.emptySet();
+				for (final IProgramVar m : l) {
+					out.add(m.getTermVariable());
+				}
+				// oct.getLetter().getTransformula().getInVars().values();
+			}
+			/*
+			 * if (!current.containsKey(oct.getLetter())) { current.put(oct.getLetter(), new
+			 * VarAbsConstraints<L>(oct.getLetter(), in, out)); }
+			 */
+
 		}
 
 		return null;

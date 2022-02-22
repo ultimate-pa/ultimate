@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  * @param <H>
  *            The type of abstraction levels if abstract independence is used. Arbitrary type otherwise.
  */
-public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
+public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public enum OrderType {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
 	}
@@ -91,21 +91,19 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 	private final PartialOrderMode mMode;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
-	private final Function<H, IIndependenceRelation<IPredicate, L>> mIndependenceAtLevel;
 	private StateSplitter<IPredicate> mStateSplitter;
 	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
 	private final IIcfg<?> mIcfg;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
 
-	private H mAbstractionLevel;
 	private IIndependenceRelation<IPredicate, L> mIndependence;
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
-			final Function<H, IIndependenceRelation<IPredicate, L>> independenceAtLevel) {
+			final IIndependenceRelation<IPredicate, L> independence) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
@@ -117,21 +115,15 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
 
-		mIndependenceAtLevel = independenceAtLevel;
-	}
-
-	public void disableAbstraction() {
-		mAbstractionLevel = null;
-		mIndependence = mIndependenceAtLevel.apply(null);
+		mIndependence = independence;
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
-	public void setAbstractionLevel(final H level) {
-		if (Objects.equals(level, mAbstractionLevel)) {
+	public void replaceIndependence(final IIndependenceRelation<IPredicate, L> independence) {
+		if (Objects.equals(independence, mIndependence)) {
 			return;
 		}
-		mAbstractionLevel = level;
-		mIndependence = mIndependenceAtLevel.apply(level);
+		mIndependence = independence;
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
@@ -310,6 +302,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 		}
 	}
 
+	public StateSplitter<IPredicate> getStateSplitter() {
+		return mStateSplitter;
+	}
+
 	/**
 	 * Helper class to split states of reduction automata into the original state (i.e., the state of the input
 	 * automaton) and extra information added by reduction algorithms.
@@ -318,7 +314,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 	 *
 	 * @param <S>
 	 */
-	private static class StateSplitter<S> {
+	public static class StateSplitter<S> {
 		private final Function<S, S> mGetOriginal;
 		private final Function<S, Object> mGetExtraInfo;
 
