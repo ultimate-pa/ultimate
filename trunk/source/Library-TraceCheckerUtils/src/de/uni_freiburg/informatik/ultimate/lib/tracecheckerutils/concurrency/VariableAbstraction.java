@@ -80,7 +80,6 @@ public class VariableAbstraction<L extends IAction>
 		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
-		// TODO pass real set of all program variables
 		mAllProgramVars = allProgramVars;
 		mHierarchy = new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
 	}
@@ -113,7 +112,7 @@ public class VariableAbstraction<L extends IAction>
 		return mCopyFactory.copy(inLetter, newFormula, null);
 	}
 
-	private boolean nothingWillChange(final UnmodifiableTransFormula utf,
+	private static boolean nothingWillChange(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVariables) {
 		final Set<IProgramVar> relevantVariables = new HashSet<>(utf.getInVars().keySet());
 		relevantVariables.addAll(utf.getOutVars().keySet());
