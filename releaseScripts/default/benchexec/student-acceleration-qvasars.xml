@@ -38,6 +38,10 @@
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerCTransformed.xml</option>
         <option name="-s">../../../trunk/examples/settings/automizer/LoopAccelerationJordanC.epf</option>
     </rundefinition>
+    <rundefinition name="Automizer IcfgTranformation QVasar">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/loopacceleration/qvasr/qvasr_64.epf</option>
+    </rundefinition>
     <rundefinition name="Automizer AcceleratedInterpolation Jordan">
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
         <option name="-s">../../../trunk/examples/settings/automizer/acceleratedInterpolation/acceleratedInterpolationJordan_32.epf</option>
