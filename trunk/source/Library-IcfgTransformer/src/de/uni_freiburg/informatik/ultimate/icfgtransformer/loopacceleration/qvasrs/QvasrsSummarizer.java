@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,20 +41,14 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvas
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractionJoin;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -101,21 +94,14 @@ public class QvasrsSummarizer {
 	 */
 	public QvasrsAbstraction computeQvasrsAbstraction(final UnmodifiableTransFormula transitionFormula,
 			final boolean usedInIcfgTransformation) {
-		final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer =
-				new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
-		final Collection<TermVariable> quantOutVars = transitionFormula.getOutVars().values();
-		final Term quantifiedTransitionFormula = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.EXISTS,
-				quantOutVars, transitionFormula.getFormula());
-		/*
-		 * Get the topologic closure
-		 */
-		Term topologicClosure = PartialQuantifierElimination.eliminate(mServices, mScript, quantifiedTransitionFormula,
-				SimplificationTechnique.POLY_PAC);
+		Set<Term> disjuncts = QvasrUtils.splitDisjunction(transitionFormula.getFormula());
+		final Set<Term> guards = new HashSet<>();
+		for (final Term disjunct : disjuncts) {
+			final UnmodifiableTransFormula disTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
+			guards.add(TransFormulaUtils.computeGuard(disTf, mScript, mServices).getFormula());
+		}
 
-		topologicClosure = SmtUtils.toDnf(mServices, mScript, topologicClosure,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		Set<Term> disjuncts = QvasrUtils.splitDisjunction(topologicClosure);
-
+		disjuncts = guards;
 		disjuncts = QvasrUtils.checkDisjoint(disjuncts, mScript, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
 		final Map<Term, Term> outToInMap = new HashMap<>();
@@ -155,10 +141,6 @@ public class QvasrsSummarizer {
 					preTfPostAbstraction =
 							QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction).getThird();
 				}
-
-				// final QvasrAbstraction preTfPostAbstraction =
-				// QvasrAbstractor.computeAbstraction(mScript, conjunctionFormula);
-
 				final Triple<Rational[][], Rational[][], QvasrAbstraction> abstractionWithSimulations =
 						QvasrAbstractionJoin.join(mScript, bestAbstraction, preTfPostAbstraction);
 				final Pair<Term, Term> prePostPair = new Pair<>(pre, post);

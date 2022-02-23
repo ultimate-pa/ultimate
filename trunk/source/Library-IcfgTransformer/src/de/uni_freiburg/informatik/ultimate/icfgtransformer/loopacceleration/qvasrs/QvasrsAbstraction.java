@@ -63,6 +63,15 @@ public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
 	 *            The abstractions simulation matrix
 	 * @param states
 	 *            The set of states.
+	 *
+	 * @param abstraction
+	 *            A {@link QvasrAbstraction} used for computing states and transitions.
+	 * @param states
+	 *            Set of control states in form of {@link Term}
+	 * @param inVars
+	 *            Map of invariables.
+	 * @param outVars
+	 *            Map of outvariables.
 	 */
 	public QvasrsAbstraction(final QvasrAbstraction abstraction, final Set<Term> states,
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {

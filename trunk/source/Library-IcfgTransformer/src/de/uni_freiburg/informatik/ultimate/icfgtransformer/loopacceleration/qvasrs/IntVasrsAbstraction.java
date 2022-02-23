@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.IntvasrAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -62,6 +63,12 @@ public class IntVasrsAbstraction implements IVasrsAbstraction<Integer> {
 	 *            The abstractions simulation matrix
 	 * @param states
 	 *            The set of states.
+	 * @param abstraction
+	 *            An {@link IntvasrAbstraction} used for construction of the states etc.
+	 * @param inVars
+	 *            Set of invariables
+	 * @param outVars
+	 *            Set of outvariables
 	 */
 	public IntVasrsAbstraction(final IntvasrAbstraction abstraction, final Set<Term> states,
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
@@ -82,6 +89,19 @@ public class IntVasrsAbstraction implements IVasrsAbstraction<Integer> {
 	 *            The abstractions simulation matrix
 	 * @param states
 	 *            The set of states.
+	 *
+	 * @param abstraction
+	 *            An {@link IntvasrAbstraction} used for construction of the states etc.
+	 * @param states
+	 *            A set of states in form of {@link Term}
+	 * @param inVars
+	 *            Set of invariables
+	 * @param outVars
+	 *            Set of outvariables
+	 * @param preCondition
+	 *            precondition of the loop, ie, the guard
+	 * @param postCondition
+	 *            postcondition of the loop, ie, negated guard. Pre and post are only used in {@link IcfgTransformer}
 	 */
 	public IntVasrsAbstraction(final IntvasrAbstraction abstraction, final Set<Term> states,
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
@@ -166,7 +186,7 @@ public class IntVasrsAbstraction implements IVasrsAbstraction<Integer> {
 	@Override
 	public void setPrePostStates() {
 		final Set<Term> possiblePreStates = new HashSet<>(mStates);
-		final Set<Term> possiblePostStates = new HashSet<Term>(mStates);
+		final Set<Term> possiblePostStates = new HashSet<>(mStates);
 		for (final Triple<Term, Pair<Integer[], Integer[]>, Term> transition : mTransitions) {
 			if (transition.getFirst() != transition.getThird()) {
 				possiblePreStates.remove(transition.getFirst());

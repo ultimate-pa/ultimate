@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -69,6 +70,8 @@ public class QvasrsLoopSummarization {
 	 *
 	 * @param loopTransitionFormula
 	 *            A {@link UnmodifiableTransFormula} representing changes to variables in a loop.
+	 * @param usedInIcfgTransformation
+	 *            Indicate whether the instance is used in a {@link IcfgTransformer}
 	 * @return A loop acceleration as reachability relation of a Qvasrs abstraction in form of a
 	 *         {@link UnmodifiableTransFormula}
 	 */
