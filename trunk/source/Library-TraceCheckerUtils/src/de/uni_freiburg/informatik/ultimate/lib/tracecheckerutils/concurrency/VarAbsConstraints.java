@@ -29,27 +29,45 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /*
  * Data Structure to assign constraining inVars and constraining outVars to a Letter L
+ *
+ * Caution: If a Constrain is removed the Sets for the In-Constraints and Out-Constraints aren't sound.
  */
 
 public class VarAbsConstraints<L extends IAction> {
 	// Letter mapsto a Pair of InVars(Set) and Outvars (Set)
 	private final Map<L, Pair<Set<IProgramVar>, Set<IProgramVar>>> mConstr;
+	private final Set<IProgramVar> mInVars;
+	private final Set<IProgramVar> mOutVars;
 
 	public VarAbsConstraints() {
 		mConstr = new HashMap<>();
+		mInVars = new HashSet<>();
+		mOutVars = new HashSet<>();
 	}
 
-	public boolean contains(final L letter) {
+	public boolean containsLetter(final L letter) {
 		return mConstr.containsKey(letter);
+	}
+
+	public boolean containsAsInvar(final IProgramVar pv) {
+		return mInVars.contains(pv);
+	}
+
+	public boolean containsAsOutVar(final IProgramVar pv) {
+		return mOutVars.contains(pv);
+	}
+
+	public boolean containsProgramVar(final IProgramVar pv) {
+		return (this.containsAsInvar(pv) || this.containsAsOutVar(pv));
 	}
 
 	public Set<L> getLetters() {
@@ -76,35 +94,33 @@ public class VarAbsConstraints<L extends IAction> {
 
 	public void addNewLetter(final L letter, final Set<IProgramVar> inVars, final Set<IProgramVar> outVars) {
 		mConstr.put(letter, new Pair<>(inVars, outVars));
-	}
-
-	public L getLetter() {
-		return mLetter;
-	}
-
-	public Set<TermVariable> getInVars() {
-		return mInVars;
-	}
-
-	public Set<TermVariable> getOutVars() {
-		return mOutVars;
-	}
-
-	public void setInVars(final Set<TermVariable> inVars) {
-		mInVars = inVars;
-	}
-
-	public void setOutVars(final Set<TermVariable> outVars) {
-		mOutVars = outVars;
-	}
-
-	public void addInVars(final Set<TermVariable> inVars) {
 		mInVars.addAll(inVars);
-
-	}
-
-	public void addOutVars(final Set<TermVariable> outVars) {
 		mOutVars.addAll(outVars);
 	}
 
+	public void addInVar(final L letter, final IProgramVar inVar) {
+		if (mConstr.containsKey(letter)) {
+			mConstr.get(letter).getKey().add(inVar);
+			mInVars.add(inVar);
+		}
+	}
+
+	public void addInVars(final L letter, final Iterable<IProgramVar> inVars) {
+		for (final IProgramVar pv : inVars) {
+			this.addInVar(letter, pv);
+		}
+	}
+
+	public void addOutVar(final L letter, final IProgramVar outVar) {
+		if (mConstr.containsKey(letter)) {
+			mConstr.get(letter).getValue().add(outVar);
+			mOutVars.add(outVar);
+		}
+	}
+
+	public void addOutVars(final L letter, final Iterable<IProgramVar> outVars) {
+		for (final IProgramVar pv : outVars) {
+			this.addOutVar(letter, pv);
+		}
+	}
 }
