@@ -213,21 +213,21 @@ public class VariableAbstraction<L extends IAction>
 		return constrainingVars;
 	}
 
-	public VarAbsConstraints<L> refineSpecific(final VarAbsConstraints<L> current,
+	public VarAbsConstraints<L> refineSpecific(final VarAbsConstraints<L> constraint,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
 
 		final Set<IPredicate> states = refinement.getInfeasibilityProof().getStates();
 		for (final IPredicate p : states) {
 			for (final IncomingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
 					.internalPredecessors(p)) {
-				current.addInVars(it.getLetter(), it.getPred().getVars());
+				constraint.addInVars(it.getLetter(), it.getPred().getVars());
 			}
 			for (final OutgoingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
 					.internalSuccessors(p)) {
-				current.addOutVars(it.getLetter(), it.getSucc().getVars());
+				constraint.addOutVars(it.getLetter(), it.getSucc().getVars());
 			}
 		}
 
-		return current;
+		return constraint;
 	}
 }
