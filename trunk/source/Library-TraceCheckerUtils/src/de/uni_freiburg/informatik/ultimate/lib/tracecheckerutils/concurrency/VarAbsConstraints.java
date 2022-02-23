@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /*
  * Data Structure to assign constraining inVars and constraining outVars to a Letter L
  *
- * Caution: If a Constrain is removed the Sets for the In-Constraints and Out-Constraints aren't sound.
+ * Caution: If a Constrain is removed, the Methods "containsAsInvar", "containsAsOutVar", "containsProgramVar" are not sound anymore.
  */
 
 public class VarAbsConstraints<L extends IAction> {
@@ -99,10 +99,11 @@ public class VarAbsConstraints<L extends IAction> {
 	}
 
 	public void addInVar(final L letter, final IProgramVar inVar) {
-		if (mConstr.containsKey(letter)) {
-			mConstr.get(letter).getKey().add(inVar);
-			mInVars.add(inVar);
+		if (!mConstr.containsKey(letter)) {
+			this.addNewLetter(letter, Collections.emptySet(), Collections.emptySet());
 		}
+		mConstr.get(letter).getKey().add(inVar);
+		mInVars.add(inVar);
 	}
 
 	public void addInVars(final L letter, final Iterable<IProgramVar> inVars) {
@@ -112,10 +113,11 @@ public class VarAbsConstraints<L extends IAction> {
 	}
 
 	public void addOutVar(final L letter, final IProgramVar outVar) {
-		if (mConstr.containsKey(letter)) {
-			mConstr.get(letter).getValue().add(outVar);
-			mOutVars.add(outVar);
+		if (!mConstr.containsKey(letter)) {
+			this.addNewLetter(letter, Collections.emptySet(), Collections.emptySet());
 		}
+		mConstr.get(letter).getValue().add(outVar);
+		mOutVars.add(outVar);
 	}
 
 	public void addOutVars(final L letter, final Iterable<IProgramVar> outVars) {
