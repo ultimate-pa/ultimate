@@ -28,29 +28,54 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /*
  * Data Structure to assign constraining inVars and constraining outVars to a Letter L
  */
 
 public class VarAbsConstraints<L extends IAction> {
-	private final L mLetter;
-	private Set<TermVariable> mInVars;
-	private Set<TermVariable> mOutVars;
+	// Letter mapsto a Pair of InVars(Set) and Outvars (Set)
+	private final Map<L, Pair<Set<IProgramVar>, Set<IProgramVar>>> mConstr;
 
-	public VarAbsConstraints(final L letter) {
-		mLetter = letter;
-		mInVars = Collections.emptySet();
-		mOutVars = Collections.emptySet();
+	public VarAbsConstraints() {
+		mConstr = new HashMap<>();
 	}
 
-	public VarAbsConstraints(final L letter, final Set<TermVariable> inVars, final Set<TermVariable> outVars) {
-		mLetter = letter;
-		mInVars = inVars;
-		mOutVars = outVars;
+	public boolean contains(final L letter) {
+		return mConstr.containsKey(letter);
+	}
+
+	public Set<L> getLetters() {
+		return mConstr.keySet();
+	}
+
+	public Pair<Set<IProgramVar>, Set<IProgramVar>> getConstraints(final L letter) {
+		return mConstr.get(letter);
+	}
+
+	public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
+		final Set<L> in = Collections.emptySet();
+		final Set<L> out = Collections.emptySet();
+		for (final Map.Entry<L, Pair<Set<IProgramVar>, Set<IProgramVar>>> pIv : mConstr.entrySet()) {
+			if (pIv.getValue().getKey().contains(pv)) {
+				in.add(pIv.getKey());
+			}
+			if (pIv.getValue().getValue().contains(pv)) {
+				in.add(pIv.getKey());
+			}
+		}
+		return new Pair<>(in, out);
+	}
+
+	public void addNewLetter(final L letter, final Set<IProgramVar> inVars, final Set<IProgramVar> outVars) {
+		mConstr.put(letter, new Pair<>(inVars, outVars));
 	}
 
 	public L getLetter() {
