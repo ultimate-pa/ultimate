@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -44,26 +44,34 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class VarAbsConstraints<L extends IAction> {
 	// Letter mapsto a Pair of InVars(Set) and Outvars (Set)
-	private final Map<L, Pair<Set<IProgramVar>, Set<IProgramVar>>> mConstr;
-	private final Set<IProgramVar> mInVars;
-	private final Set<IProgramVar> mOutVars;
+	private final Map<L, Set<IProgramVar>> mInConstr;
+	private final Map<L, Set<IProgramVar>> mOutConstr;
 
 	public VarAbsConstraints() {
-		mConstr = new HashMap<>();
-		mInVars = new HashSet<>();
-		mOutVars = new HashSet<>();
+		mInConstr = new HashMap<>();
+		mOutConstr = new HashMap<>();
 	}
 
 	public boolean containsLetter(final L letter) {
-		return mConstr.containsKey(letter);
+		return mInConstr.containsKey(letter);
 	}
 
 	public boolean containsAsInvar(final IProgramVar pv) {
-		return mInVars.contains(pv);
+		for (final Set<IProgramVar> vars : mInConstr.values()) {
+			if (vars.contains(pv)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public boolean containsAsOutVar(final IProgramVar pv) {
-		return mOutVars.contains(pv);
+		for (final Set<IProgramVar> vars : mOutConstr.values()) {
+			if (vars.contains(pv)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public boolean containsProgramVar(final IProgramVar pv) {
@@ -71,39 +79,44 @@ public class VarAbsConstraints<L extends IAction> {
 	}
 
 	public Set<L> getLetters() {
-		return mConstr.keySet();
+		return mInConstr.keySet();
 	}
 
-	public Pair<Set<IProgramVar>, Set<IProgramVar>> getConstraints(final L letter) {
-		return mConstr.get(letter);
+	public Set<IProgramVar> getInConstraints(final L letter) {
+		return mInConstr.get(letter);
+	}
+
+	public Set<IProgramVar> getOutConstraints(final L letter) {
+		return mOutConstr.get(letter);
 	}
 
 	public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
 		final Set<L> in = Collections.emptySet();
 		final Set<L> out = Collections.emptySet();
-		for (final Map.Entry<L, Pair<Set<IProgramVar>, Set<IProgramVar>>> pIv : mConstr.entrySet()) {
-			if (pIv.getValue().getKey().contains(pv)) {
-				in.add(pIv.getKey());
+		for (final Entry<L, Set<IProgramVar>> vIn : mInConstr.entrySet()) {
+			if (vIn.getValue().contains(pv)) {
+				in.add(vIn.getKey());
 			}
-			if (pIv.getValue().getValue().contains(pv)) {
-				in.add(pIv.getKey());
+		}
+		for (final Entry<L, Set<IProgramVar>> vOut : mInConstr.entrySet()) {
+			if (vOut.getValue().contains(pv)) {
+				out.add(vOut.getKey());
 			}
 		}
 		return new Pair<>(in, out);
 	}
 
 	public void addNewLetter(final L letter, final Set<IProgramVar> inVars, final Set<IProgramVar> outVars) {
-		mConstr.put(letter, new Pair<>(inVars, outVars));
-		mInVars.addAll(inVars);
-		mOutVars.addAll(outVars);
+		mInConstr.put(letter, inVars);
+		mOutConstr.put(letter, outVars);
 	}
 
 	public void addInVar(final L letter, final IProgramVar inVar) {
-		if (!mConstr.containsKey(letter)) {
+		if (!mInConstr.containsKey(letter)) {
 			this.addNewLetter(letter, Collections.emptySet(), Collections.emptySet());
 		}
-		mConstr.get(letter).getKey().add(inVar);
-		mInVars.add(inVar);
+		mInConstr.get(letter).add(inVar);
+
 	}
 
 	public void addInVars(final L letter, final Iterable<IProgramVar> inVars) {
@@ -113,11 +126,10 @@ public class VarAbsConstraints<L extends IAction> {
 	}
 
 	public void addOutVar(final L letter, final IProgramVar outVar) {
-		if (!mConstr.containsKey(letter)) {
+		if (!mOutConstr.containsKey(letter)) {
 			this.addNewLetter(letter, Collections.emptySet(), Collections.emptySet());
 		}
-		mConstr.get(letter).getValue().add(outVar);
-		mOutVars.add(outVar);
+		mOutConstr.get(letter).add(outVar);
 	}
 
 	public void addOutVars(final L letter, final Iterable<IProgramVar> outVars) {
