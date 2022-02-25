@@ -24,13 +24,14 @@
  * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.VarAbsConstraints;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstraints<L>> {
 	CanonicalLatticeForMaps<L, Set<IProgramVar>> mMapLattice;
