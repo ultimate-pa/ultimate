@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /*
  * Data Structure to assign constraining inVars and constraining outVars to a Letter L
  *
- * Caution: If a Constrain is removed, the Methods "containsAsInvar", "containsAsOutVar", "containsProgramVar" are not sound anymore.
  */
 
 public class VarAbsConstraints<L extends IAction> {
@@ -88,6 +87,14 @@ public class VarAbsConstraints<L extends IAction> {
 
 	public Set<IProgramVar> getOutConstraints(final L letter) {
 		return mOutConstr.get(letter);
+	}
+
+	public Map<L, Set<IProgramVar>> getCopyOfInContraintsMap() {
+		return new HashMap<>(mInConstr);
+	}
+
+	public Map<L, Set<IProgramVar>> getCopyOfOutContraintsMap() {
+		return new HashMap<>(mOutConstr);
 	}
 
 	public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
