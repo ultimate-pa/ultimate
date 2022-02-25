@@ -4,8 +4,7 @@ Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-Version: 0.2.2
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
- de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
 Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.csv,
  de.uni_freiburg.informatik.ultimate.util.datastructures,
@@ -16,5 +15,3 @@ Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.statistics,
  de.uni_freiburg.informatik.ultimate.util.simplifier
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.util
-Import-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure,
- de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables
