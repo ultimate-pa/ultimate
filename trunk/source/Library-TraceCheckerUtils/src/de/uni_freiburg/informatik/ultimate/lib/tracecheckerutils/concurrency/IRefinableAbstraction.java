@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 
 /**
- * An interface for abstraction functions that can be refined to ensure they remain sound w.r.t. the current abstraction
+ * An interface for abstraction functions that can be refined to ensure they remain sound wrt the current abstraction
  * computed by a CEGAR loop.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 public interface IRefinableAbstraction<R, H, L extends IAction> extends IAbstraction<H, L> {
 	/**
 	 * Retrieves the initial abstraction level. By default, this is the top element of the abstraction hierarchy (see
-	 * {@link #getHierarchy()}.
+	 * {@link #getHierarchy()}).
 	 */
 	default H getInitial() {
 		return getHierarchy().getTop();
