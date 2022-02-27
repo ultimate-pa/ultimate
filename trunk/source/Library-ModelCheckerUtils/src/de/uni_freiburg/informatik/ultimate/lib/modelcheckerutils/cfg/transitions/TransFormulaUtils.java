@@ -1270,6 +1270,34 @@ public final class TransFormulaUtils {
 			substitutionMapping.put(arrayStore.asTerm(), resultStore);
 		}
 		final Term resultTerm = Substitution.apply(mgdScript, substitutionMapping, term);
-		return new Triple<Term, List<TermVariable>, List<Term>>(resultTerm, resultVariables, resultEqualities);
+		return new Triple<>(resultTerm, resultVariables, resultEqualities);
+	}
+
+	/**
+	 * Determines if the given {@link TransFormula} is in <em>internal normal form</em>.
+	 *
+	 * We say that a {@link TransFormula} is in internal normal form iff every in-variable also appears as out-variable,
+	 * or its {@link TermVariable} is a free variable of the formula. This rules out certain representations of
+	 * {@code havoc}-like transitions, where a variable appears only as in-variable but not as out-variable.
+	 *
+	 * The effect of this normal form is that the in-variables of the {@link TransFormula} are not an unnecessarily
+	 * coarse over-approximation of the variables being <em>read</em> by the transition, i.e. whose values can influence
+	 * (1) whether the transition can execute, or (2) the values of the transition's assigned variables.
+	 *
+	 * Note that this normal form is only applicable to {@link TransFormula}s where the predecessor and successor state
+	 * range over the same variables. For instance, it is not applicable to transitions corresponding to procedure calls
+	 * or returns.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param tf
+	 *            The transition to check
+	 * @return {@code true} if the transition is in internal normal form, {@code false} otherwise
+	 */
+	public static boolean hasInternalNormalForm(final TransFormula tf) {
+		final Set<IProgramVar> outVars = tf.getOutVars().keySet();
+		final Set<TermVariable> freeVars = Arrays.stream(tf.getFormula().getFreeVars()).collect(Collectors.toSet());
+		return tf.getInVars().entrySet().stream()
+				.allMatch(e -> outVars.contains(e.getKey()) || freeVars.contains(e.getValue()));
 	}
 }
