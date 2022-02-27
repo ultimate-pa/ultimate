@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Represents an edge without any effect to the programs variables. While constructing the CFG of a Boogie program these
@@ -58,5 +60,11 @@ public class GotoEdge extends CodeBlock implements IIcfgInternalTransition<IcfgL
 	@Override
 	public String toString() {
 		return "goto;";
+	}
+
+	@Override
+	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
+		assert TransFormulaUtils.hasInternalNormalForm(transFormula) : "Expected TF in internal normal form";
+		super.setTransitionFormula(transFormula);
 	}
 }
