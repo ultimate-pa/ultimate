@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -242,9 +243,32 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		applyRules(letter, index, direction);
 	}
 
+	private void moveEntry(final int index, final L letter, final Direction direction,
+			final Set<Element> changedElements) {
+		final Direction currentDirection = mElements.get(index).mDirection;
+		if (currentDirection == direction) {
+			return;
+		}
+		if (currentDirection != Direction.MIDDLE) {
+			mContradiction = true;
+			return;
+		}
+
+		mElements.get(index).mDirection = direction;
+		changedElements.add(mElements.get(index));
+	}
+
 	protected void applyRules(final L letter, final int index, final Direction direction) {
 		if (direction != Direction.MIDDLE) {
-			applyRule1Or2(letter, index, direction);
+			final Set<Element> changedElements = applyRule1Or2(letter, index, direction);
+			for (final Element elem : changedElements) {
+				applyRules3and4(elem.mLetter, mElements.indexOf(elem), direction);
+			}
+		}
+	}
+
+	private void applyRules3and4(final L letter, final int index, final Direction direction) {
+		if (direction != Direction.MIDDLE) {
 			applyRule3Or4(letter, index, direction);
 		}
 
@@ -304,10 +328,13 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		return letter.getTransformula().getInVars().keySet();
 	}
 
-	private void applyRule1Or2(final L letter, final int index, final Direction direction) {
+	private Set<Element> applyRule1Or2(final L letter, final int index, final Direction direction) {
 		if (mContradiction) {
-			return;
+			return Collections.emptySet();
 		}
+
+		final Set<Element> changedElements = new HashSet<>();
+		changedElements.add(mElements.get(index));
 
 		final ListIterator<Element> iter;
 		if (direction == Direction.RIGHT) {
@@ -318,10 +345,11 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		}
 		boolean foundSameThread = false;
 		final Set<IProgramVar> variables = new HashSet<>(getVars(letter, direction == Direction.RIGHT));
+		Set<IProgramVar> annotation3 = mElements.get(index).mAnnotation3;
 
 		for (final Element elem : (Iterable<Element>) () -> iter) {
 			boolean stronglyDependent = false;
-			if (!foundSameThread && isInSameThread(elem.mLetter, letter)) {
+			if (!foundSameThread && changedElements.stream().anyMatch(e -> isInSameThread(e.mLetter, letter))) {
 				foundSameThread = true;
 				stronglyDependent = true;
 			}
@@ -331,30 +359,39 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 				stronglyDependent = true;
 			}
 
-			variables.removeAll(getVars(elem.mLetter, true));
-
-			if (stronglyDependent) {
-				moveEntry(iter.previousIndex(), elem.mLetter, direction);
+			if (direction == Direction.LEFT) {
+				variables.removeAll(getVars(elem.mLetter, true));
 			}
 
-			if (!stronglyDependent && direction == Direction.RIGHT && !mElements.get(index).mAnnotation3.isEmpty()
-					&& DataStructureUtils.haveNonEmptyIntersection(mElements.get(index).mAnnotation3,
-							getVars(elem.mLetter, true))) {
-				moveEntry(iter.previousIndex(), elem.mLetter, Direction.RIGHT);
+			if (stronglyDependent) {
+				moveEntry(iter.previousIndex(), elem.mLetter, direction, changedElements);
+				variables.addAll(getVars(elem.mLetter, direction == Direction.RIGHT));
+				if (!elem.mAnnotation3.isEmpty()) {
+					annotation3 = DataStructureUtils.union(annotation3, elem.mAnnotation3);
+				}
+			}
+
+			if (!stronglyDependent && direction == Direction.RIGHT && !annotation3.isEmpty()
+					&& DataStructureUtils.haveNonEmptyIntersection(annotation3, getVars(elem.mLetter, true))) {
+				moveEntry(iter.previousIndex(), elem.mLetter, Direction.RIGHT, changedElements);
+				if (!elem.mAnnotation3.isEmpty()) {
+					annotation3 = DataStructureUtils.union(annotation3, elem.mAnnotation3);
+				}
 			}
 		}
 
-		if (direction == Direction.RIGHT && !mElements.get(index).mAnnotation3.isEmpty()) {
-			mGlobalAnnotation3.addAll(mElements.get(index).mAnnotation3);
+		if (direction == Direction.RIGHT && !annotation3.isEmpty()) {
+			mGlobalAnnotation3.addAll(annotation3);
 
 			final ListIterator<Element> iter2 = new ReversedIterator<>(mElements.listIterator(index));
 			for (final Element elem : (Iterable<Element>) () -> iter2) {
-				if (DataStructureUtils.haveNonEmptyIntersection(mElements.get(index).mAnnotation3,
-						getVars(elem.mLetter, true))) {
+				if (DataStructureUtils.haveNonEmptyIntersection(annotation3, getVars(elem.mLetter, true))) {
 					moveEntry(iter2.previousIndex(), elem.mLetter, Direction.LEFT);
 				}
 			}
 		}
+
+		return changedElements;
 	}
 
 	private void applyRule3Or4(final L letter, final int index, final Direction direction) {
