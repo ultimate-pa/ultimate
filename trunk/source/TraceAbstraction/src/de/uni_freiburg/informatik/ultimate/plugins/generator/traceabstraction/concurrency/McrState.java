@@ -349,8 +349,8 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		}
 
 		final Map<String, DependencyRank> newThreads = new HashMap<>(mThreads);
-		final Map<IProgramVar, DependencyRank> newVariables = new HashMap<>(mVariables);
-		final Map<IProgramVar, L> newLastWriteSt = new HashMap<>(mLastWriteSt);
+		final Map<IProgramVar, DependencyRank> newVariables = writes.isEmpty() ? mVariables : new HashMap<>(mVariables);
+		final Map<IProgramVar, L> newLastWriteSt = writes.isEmpty() ? mLastWriteSt : new HashMap<>(mLastWriteSt);
 
 		for (final String thread : getThreadId(transition)) {
 			newThreads.put(thread, deprank);
