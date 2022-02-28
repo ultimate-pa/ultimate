@@ -72,6 +72,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	private final Set<LeftRightSplit<L>> mLeftRightSplits;
 	private final Map<IProgramVar, ConstantTerm> mThreadValues;
 	private final Set<LeftRightSplit<L>> mTemplates;
+	private final int mHash;
 
 	/**
 	 * Constructs a new McrState for the initial state.
@@ -88,6 +89,9 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		mLeftRightSplits = Collections.emptySet();
 		mThreadValues = Collections.emptyMap();
 		mTemplates = Set.of(new LeftRightSplit<>());
+
+		mHash = Objects.hash(mLastStatement, mLastWriteSt, mLeftRightSplits, mOldState, mThreads, mVariables,
+				mTemplates);
 	}
 
 	/**
@@ -122,6 +126,9 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		mLeftRightSplits = leftRightSplits;
 		mThreadValues = threadValues;
 		mTemplates = templates;
+
+		mHash = Objects.hash(mLastStatement, mLastWriteSt, mLeftRightSplits, mOldState, mThreads, mVariables,
+				mTemplates);
 	}
 
 	@Override
@@ -397,8 +404,7 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mLastStatement, mLastWriteSt, mLeftRightSplits, mOldState, mThreads, mVariables,
-				mTemplates);
+		return mHash;
 	}
 
 	@Override
@@ -413,7 +419,8 @@ public class McrState<L extends IIcfgTransition<?>> implements IMcrState<L> {
 			return false;
 		}
 		final McrState<?> other = (McrState<?>) obj;
-		return Objects.equals(mLastStatement, other.mLastStatement) && Objects.equals(mLastWriteSt, other.mLastWriteSt)
+		return mHash == other.mHash && Objects.equals(mLastStatement, other.mLastStatement)
+				&& Objects.equals(mLastWriteSt, other.mLastWriteSt)
 				&& Objects.equals(mLeftRightSplits, other.mLeftRightSplits)
 				&& Objects.equals(mOldState, other.mOldState) && Objects.equals(mThreads, other.mThreads)
 				&& Objects.equals(mVariables, other.mVariables) && Objects.equals(mTemplates, other.mTemplates);
