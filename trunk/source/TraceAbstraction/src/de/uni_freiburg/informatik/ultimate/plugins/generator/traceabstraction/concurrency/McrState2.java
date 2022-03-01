@@ -92,15 +92,22 @@ public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
 	}
 
 	private <SPLIT extends LeftRightSplit<L>> boolean addStatementToSplit(final SPLIT split, final L letter,
-			final Direction direction, final Set<SPLIT> set, final boolean optimizeDeadEnds) {
+			final Direction direction, final Set<SPLIT> set, final boolean optimizeDeadEnds,
+			final boolean optimizeInitial) {
 		final SPLIT duplicate = (SPLIT) split.addStatement(letter, direction);
 		if (!split.containsContradiction()) {
+			if (optimizeInitial) {
+				split.optimizeInitialElements();
+			}
 			if (optimizeDeadEnds && split.willNeverContradict()) {
 				return false;
 			}
 			set.add(split);
 		}
 		if (duplicate != null && !duplicate.containsContradiction()) {
+			if (optimizeInitial) {
+				duplicate.optimizeInitialElements();
+			}
 			if (optimizeDeadEnds && duplicate.willNeverContradict()) {
 				return false;
 			}
@@ -127,19 +134,19 @@ public class McrState2<L extends IIcfgTransition<?>> implements IMcrState<L> {
 		for (final LeftRightSplit<L> template : mTemplates) {
 			final ReducingLeftRightSplit<L> split = new ReducingLeftRightSplit<>(template, ranks);
 			split.moveLast(Direction.RIGHT);
-			addStatementToSplit(split, transition, Direction.LEFT, newSplits, false);
+			addStatementToSplit(split, transition, Direction.LEFT, newSplits, false, true);
 		}
 
 		for (final ReducingLeftRightSplit<L> split : mSplits) {
 			final ReducingLeftRightSplit<L> copy = new ReducingLeftRightSplit<>(split, ranks);
-			if (!addStatementToSplit(copy, transition, Direction.MIDDLE, newSplits, OPTIMIZE_DEAD_ENDS)) {
+			if (!addStatementToSplit(copy, transition, Direction.MIDDLE, newSplits, OPTIMIZE_DEAD_ENDS, false)) {
 				return null;
 			}
 		}
 
 		for (final LeftRightSplit<L> template : mTemplates) {
 			final LeftRightSplit<L> copy = new LeftRightSplit<>(template);
-			addStatementToSplit(copy, transition, Direction.MIDDLE, newTemplates, false);
+			addStatementToSplit(copy, transition, Direction.MIDDLE, newTemplates, false, false);
 		}
 
 		return new McrState2<>(successor, newTemplates, newSplits);

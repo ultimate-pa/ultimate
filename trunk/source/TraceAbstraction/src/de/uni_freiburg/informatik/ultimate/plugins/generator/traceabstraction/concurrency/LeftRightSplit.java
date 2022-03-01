@@ -505,6 +505,17 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	}
 
 	/**
+	 * Delete unneeded initial elements from the split. This is only sound if all further events will be added in the
+	 * middle.
+	 */
+	public void optimizeInitialElements() {
+		while (!mElements.isEmpty() && mElements.get(0).mDirection != Direction.RIGHT) {
+			mLetters.remove(mElements.get(0).mLetter);
+			mElements.remove(0);
+		}
+	}
+
+	/**
 	 * Checks whether the left-right split will never result in a contradiction if further events are always added in
 	 * the middle.
 	 *
