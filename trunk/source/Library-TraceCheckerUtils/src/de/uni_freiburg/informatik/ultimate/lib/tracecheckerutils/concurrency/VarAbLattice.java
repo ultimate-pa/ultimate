@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -35,12 +37,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstraints<L>> {
-	ILattice<Set<IProgramVar>> mLattice;
+	Set<IProgramVar> mAllVars;
+	Set<L> mAllLetters;
+	VarAbsConstraints<L> mBottom;
 
 	// This lattice Should be an UpsideDownLattice of a Powersetlattice
-	public VarAbLattice(final ILattice<Set<IProgramVar>> lattice) {
-		mLattice = lattice;
-
+	public VarAbLattice(final Set<IProgramVar> allVars, final Set<L> allLetters) {
+		mAllVars = allVars;
+		mAllLetters = allLetters;
+		mBottom = new VarAbsConstraints<>();
+		for (final L l : mAllLetters) {
+			mBottom.addInVars(l, mAllVars);
+			mBottom.addOutVars(l, mAllVars);
+		}
 	}
 
 	@Override
@@ -109,26 +118,61 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 
 	@Override
 	public VarAbsConstraints<L> getBottom() {
-		// TODO Auto-generated method stub
-		return null;
+
+		return mBottom;
 	}
 
 	@Override
 	public VarAbsConstraints<L> getTop() {
 		// TODO Auto-generated method stub
-		return null;
+		return new VarAbsConstraints<>();
 	}
 
 	@Override
 	public VarAbsConstraints<L> supremum(final VarAbsConstraints<L> h1, final VarAbsConstraints<L> h2) {
 		// TODO Auto-generated method stub
-		return null;
+		// the supremum (h1 OR h2) should usually be a Object with all the InConstraints and all the OutConstraints.
+		// Since we have to think inversely, it should be the Object with the Cut of all Constraints (h1 AND h2)
+		return new VarAbsConstraints<>(supremumMaps(h1.getCopyOfInContraintsMap(), h2.getCopyOfInContraintsMap()),
+				supremumMaps(h1.getCopyOfOutContraintsMap(), h2.getCopyOfOutContraintsMap()));
+
+	}
+
+	public Map<L, Set<IProgramVar>> supremumMaps(final Map<L, Set<IProgramVar>> m1, final Map<L, Set<IProgramVar>> m2) {
+		// This Part is taken from /heavily inspired by CanonicalLatticeForMaps... Do I credit Dominik here; in the
+		// Header? How?
+		final Map<L, Set<IProgramVar>> smaller;
+		final Map<L, Set<IProgramVar>> bigger;
+		if (m1.size() < m2.size()) {
+			smaller = m1;
+			bigger = m2;
+		} else {
+			smaller = m2;
+			bigger = m1;
+		}
+		final Map<L, Set<IProgramVar>> result = new HashMap<>();
+		for (final Entry<L, Set<IProgramVar>> en : smaller.entrySet()) {
+			if (bigger.containsKey(en.getKey())) {
+				final Set<IProgramVar> value = new HashSet<>(en.getValue());
+				value.removeAll(bigger.get(en.getKey()));
+				result.put(en.getKey(), value);
+			}
+		}
+		return result;
 	}
 
 	@Override
+	// Look at commentary on supremum. infimum and supremum is flipped in this class. infimum is h1 OR h2
 	public VarAbsConstraints<L> infimum(final VarAbsConstraints<L> h1, final VarAbsConstraints<L> h2) {
-		// TODO Auto-generated method stub
-		return null;
+		final VarAbsConstraints<L> result =
+				new VarAbsConstraints<>(h1.getCopyOfInContraintsMap(), h2.getCopyOfOutContraintsMap());
+		for (final Entry<L, Set<IProgramVar>> en : h2.getCopyOfInContraintsMap().entrySet()) {
+			result.addInVars(en.getKey(), en.getValue());
+		}
+		for (final Entry<L, Set<IProgramVar>> en : h2.getCopyOfOutContraintsMap().entrySet()) {
+			result.addOutVars(en.getKey(), en.getValue());
+		}
+		return result;
 	}
 
 }

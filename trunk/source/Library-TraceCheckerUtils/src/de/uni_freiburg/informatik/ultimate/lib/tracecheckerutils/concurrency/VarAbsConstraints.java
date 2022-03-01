@@ -51,6 +51,11 @@ public class VarAbsConstraints<L extends IAction> {
 		mOutConstr = new HashMap<>();
 	}
 
+	public VarAbsConstraints(final Map<L, Set<IProgramVar>> in, final Map<L, Set<IProgramVar>> out) {
+		mInConstr = in;
+		mOutConstr = out;
+	}
+
 	public boolean containsLetter(final L letter) {
 		return mInConstr.containsKey(letter);
 	}
@@ -118,9 +123,17 @@ public class VarAbsConstraints<L extends IAction> {
 		mOutConstr.put(letter, outVars);
 	}
 
+	public void addNewInLetter(final L letter, final Set<IProgramVar> inVars) {
+		mInConstr.put(letter, inVars);
+	}
+
+	public void addNewOutLetter(final L letter, final Set<IProgramVar> outVars) {
+		mInConstr.put(letter, outVars);
+	}
+
 	public void addInVar(final L letter, final IProgramVar inVar) {
 		if (!mInConstr.containsKey(letter)) {
-			this.addNewLetter(letter, Collections.emptySet(), Collections.emptySet());
+			this.addNewInLetter(letter, Collections.emptySet());
 		}
 		mInConstr.get(letter).add(inVar);
 
@@ -134,7 +147,7 @@ public class VarAbsConstraints<L extends IAction> {
 
 	public void addOutVar(final L letter, final IProgramVar outVar) {
 		if (!mOutConstr.containsKey(letter)) {
-			this.addNewLetter(letter, Collections.emptySet(), Collections.emptySet());
+			this.addNewOutLetter(letter, Collections.emptySet());
 		}
 		mOutConstr.get(letter).add(outVar);
 	}
