@@ -65,9 +65,9 @@
 	<!-- === Sleep Set Reduction (with unrolling, minimal) integrated in TAR === -->
 	<!-- ======================================================================= -->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.Symm">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Symm.epf</option>
@@ -129,9 +129,9 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-LoopLockstep.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder">
+	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLockstep">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Lockstep.epf</option>
@@ -177,13 +177,13 @@
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy-NoForkJoinOpt.epf</option>
 	</rundefinition>
 
-	<rundefinition name="MCR_with_DEPRANKS_LAZY+ForkJoinOpt">
+	<!--rundefinition name="MCR_with_DEPRANKS_LAZY+ForkJoinOpt">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy-wrwc.epf</option>
 	</rundefinition>
 
 	<rundefinition name="MCR_with_DEPRANKS_LAZY+ForkJoinOpt+OverapproxWrW">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="MCR_with_DEPRANKS_BASICCEGAR">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-BasicCegarLoop.epf</option>
@@ -193,7 +193,7 @@
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithoutDepranks.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="MCR_only_LRSPLITS_LAZY+ForkJoinOpt">
+	<rundefinition name="MCR_only_LRSPLITS_LAZY">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithoutDepranks-Lazy.epf</option>
 	</rundefinition>
 
