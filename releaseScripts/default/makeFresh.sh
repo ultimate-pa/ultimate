@@ -12,7 +12,7 @@ pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
 test mvn -T 1C clean install -Pmaterialize
 popd > /dev/null
 
-for platform in {linux,win32}; do
+for platform in {linux}; do
     # makeZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
     # Taipan
     # exitOnFail bash makeZip.sh Taipan $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
