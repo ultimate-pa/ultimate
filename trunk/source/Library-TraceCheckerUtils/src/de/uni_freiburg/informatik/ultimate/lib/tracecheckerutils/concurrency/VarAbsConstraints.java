@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /*
  * Data Structure to assign constraining inVars and constraining outVars to a Letter L
+ * Represented as two Maps.
+ * Not optimized deleting constraints may lead to unsound results.
  *
  */
 
