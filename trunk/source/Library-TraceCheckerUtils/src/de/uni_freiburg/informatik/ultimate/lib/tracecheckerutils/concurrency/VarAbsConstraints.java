@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 
 public class VarAbsConstraints<L extends IAction> {
-	// Letter mapsto a Pair of InVars(Set) and Outvars (Set)
+	// Letter mapsto a Pair of InVars(Set) and OutV ars (Set)
 	private final Map<L, Set<IProgramVar>> mInConstr;
 	private final Map<L, Set<IProgramVar>> mOutConstr;
 
