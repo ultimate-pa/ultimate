@@ -36,8 +36,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -213,21 +211,4 @@ public class VariableAbstraction<L extends IAction>
 		return constrainingVars;
 	}
 
-	public VarAbsConstraints<L> refineSpecific(final VarAbsConstraints<L> constraint,
-			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-
-		final Set<IPredicate> states = refinement.getInfeasibilityProof().getStates();
-		for (final IPredicate p : states) {
-			for (final IncomingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
-					.internalPredecessors(p)) {
-				constraint.addInVars(it.getLetter(), it.getPred().getVars());
-			}
-			for (final OutgoingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
-					.internalSuccessors(p)) {
-				constraint.addOutVars(it.getLetter(), it.getSucc().getVars());
-			}
-		}
-
-		return constraint;
-	}
 }

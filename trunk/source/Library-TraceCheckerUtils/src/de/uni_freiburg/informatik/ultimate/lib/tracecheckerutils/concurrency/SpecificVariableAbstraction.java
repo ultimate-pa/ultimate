@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2022 Marcel Rogg
+ * Copyright (C) 2022 University of Freiburg
+ *
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.HashMap;
@@ -7,7 +33,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -15,14 +44,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
-public class SpecificVariableAbstraction<L extends IAction> extends VariableAbstraction<L>
-		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> {
+public class SpecificVariableAbstraction<L extends IAction>
+		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, VarAbsConstraints<L>, L> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
@@ -33,7 +63,6 @@ public class SpecificVariableAbstraction<L extends IAction> extends VariableAbst
 
 	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript,
 			final Set<IProgramVar> allProgramVars, final Set<L> allLetters) {
-		super(copyFactory, mscript, allProgramVars);
 		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
@@ -42,16 +71,25 @@ public class SpecificVariableAbstraction<L extends IAction> extends VariableAbst
 		mHierarchy = new VarAbLattice<>(allProgramVars, mAllLetters);
 	}
 
+	@Override
 	public L abstractLetter(final L inLetter, final VarAbsConstraints<L> constraints) {
 		if (inLetter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
 				|| nothingWillChange(inLetter, constraints)) {
 			return inLetter;
 		}
 		final Set<IProgramVar> transformInVars = new HashSet<>(inLetter.getTransformula().getInVars().keySet());
-		final Set<IProgramVar> transformIOutVars = new HashSet<>(inLetter.getTransformula().getOutVars().keySet());
+		final Set<IProgramVar> transformOutVars = new HashSet<>(inLetter.getTransformula().getOutVars().keySet());
 		transformInVars.removeAll(constraints.getInConstraints(inLetter));
-		transformIOutVars.removeAll(constraints.getOutConstraints(inLetter));
-		return inLetter;
+		transformOutVars.removeAll(constraints.getOutConstraints(inLetter));
+		final UnmodifiableTransFormula newFormula =
+				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
+		if (inLetter instanceof IActionWithBranchEncoders) {
+			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
+					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(), transformInVars,
+					transformOutVars);
+			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
+		}
+		return mCopyFactory.copy(inLetter, newFormula, null);
 	}
 
 	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {
@@ -64,6 +102,12 @@ public class SpecificVariableAbstraction<L extends IAction> extends VariableAbst
 		return false;
 	}
 
+	boolean buildNewInAndOutVars(final UnmodifiableTransFormula utf, final Set<IProgramVar> inTransform,
+			final Set<IProgramVar> outTransform) {
+
+		return true;
+	}
+
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> inTransform, final Set<IProgramVar> outTransform) {
 
@@ -72,23 +116,29 @@ public class SpecificVariableAbstraction<L extends IAction> extends VariableAbst
 		final Set<IProgramVar> assignedVars = utf.getAssignedVars();
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
 
-		for (final IProgramVar v : inTransform) {
+		// This Part should be reviewed. I'm not sure, if it leads to problems regarding the usage of TransFormulas in
+		// Ultimate.
+		for (final IProgramVar v : outTransform) {
 			if (assignedVars.contains(v)) {
 				nAuxVars.add(nOutVars.get(v));
 				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
 				nOutVars.put(v, nov);
 			}
 		}
-		/*
-		 * 
-		 * for (final IProgramVar v : transform) { if (assignedVars.contains(v)) { nAuxVars.add(nOutVars.get(v)); final
-		 * TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v)); nOutVars.put(v, nov); } if
-		 * (nInVars.containsKey(v)) { nAuxVars.add(nInVars.get(v)); nInVars.remove(v); if (!assignedVars.contains(v)) {
-		 * nOutVars.remove(v); } }
-		 * 
-		 * }
-		 */
+		for (final IProgramVar v : inTransform) {
+			nAuxVars.add(nInVars.get(v));
+			nInVars.remove(v);
+			if (!assignedVars.contains(v)) {
+				nOutVars.remove(v);
+			}
+		}
 
+		return buildTransFormula(utf, nOutVars, nOutVars, assignedVars, nAuxVars);
+	}
+
+	UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
+			final Map<IProgramVar, TermVariable> nInVars, final Map<IProgramVar, TermVariable> nOutVars,
+			final Set<IProgramVar> assignedVars, final Set<TermVariable> nAuxVars) {
 		final TransFormulaBuilder tfBuilder;
 		final Set<IProgramConst> ntc = new HashSet<>(utf.getNonTheoryConsts());
 		if (utf.getBranchEncoders().isEmpty()) {
@@ -105,17 +155,55 @@ public class SpecificVariableAbstraction<L extends IAction> extends VariableAbst
 					nAuxVars.toArray(TermVariable[]::new), utf.getFormula()));
 		}
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula abstracted = tfBuilder.finishConstruction(mMscript);
+		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMscript);
 
-		assert abstracted.getAssignedVars().equals(assignedVars) : "Abstraction should not change assigned variables";
+		assert newTransFormula.getAssignedVars()
+				.equals(assignedVars) : "Abstraction should not change assigned variables";
 		assert utf.getInVars().keySet()
-				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should not read more variables";
-		assert constrainingVars
-				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read constrained variables";
+				.containsAll(newTransFormula.getInVars().keySet()) : "Abstraction should not read more variables";
+		// assert constrainingVars.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read
+		// constrained variables";
 
-		assert TransFormulaUtils.checkImplication(utf, abstracted, mMscript) != LBool.SAT : "not an abstraction";
-
-		return abstracted;
+		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
+		return newTransFormula;
 	}
 
+	@Override
+	public VarAbsConstraints<L> refine(final VarAbsConstraints<L> constraint,
+			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
+
+		final Set<IPredicate> states = refinement.getInfeasibilityProof().getStates();
+		for (final IPredicate p : states) {
+			for (final IncomingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
+					.internalPredecessors(p)) {
+				constraint.addInVars(it.getLetter(), it.getPred().getVars());
+			}
+			for (final OutgoingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
+					.internalSuccessors(p)) {
+				constraint.addOutVars(it.getLetter(), it.getSucc().getVars());
+			}
+		}
+
+		return constraint;
+	}
+
+	@Override
+	public VarAbsConstraints<L> restrict(final L input, final VarAbsConstraints<L> constraints) {
+		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
+
+		final Set<IProgramVar> nInLevel = new HashSet<>(mAllProgramVars);
+		final Set<IProgramVar> nOutLevel = new HashSet<>(mAllProgramVars);
+		nOutLevel.removeAll(input.getTransformula().getOutVars().keySet());
+		nInLevel.removeAll(input.getTransformula().getInVars().keySet());
+		final VarAbsConstraints<L> nLevel = new VarAbsConstraints<>(constraints.getCopyOfInContraintsMap(),
+				constraints.getCopyOfOutContraintsMap());
+		nLevel.addInVars(input, nInLevel);
+		nLevel.addOutVars(input, nOutLevel);
+		return nLevel;
+	}
+
+	@Override
+	public ILattice<VarAbsConstraints<L>> getHierarchy() {
+		return mHierarchy;
+	}
 }
