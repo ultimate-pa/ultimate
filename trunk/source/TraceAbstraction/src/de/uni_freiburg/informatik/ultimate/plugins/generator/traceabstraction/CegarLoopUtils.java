@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.PartialOrderAbstractionProvider;
@@ -193,11 +192,11 @@ public class CegarLoopUtils {
 		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
 				createPetriAbstractionProvider(services, compositionFactory, stateFactory, predicateFactory,
 						transitionClazz, pref, false);
-
-		if (pref.getPartialOrderMode() == PartialOrderMode.NONE) {
+		if (!pref.applyOneShotPOR()) {
 			return new Petri2FiniteAutomatonAbstractionProvider.Eager<>(netProvider, stateFactory,
 					new AutomataLibraryServices(services));
 		}
+
 		return new PartialOrderAbstractionProvider<>(
 				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
 				new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(netProvider, stateFactory,

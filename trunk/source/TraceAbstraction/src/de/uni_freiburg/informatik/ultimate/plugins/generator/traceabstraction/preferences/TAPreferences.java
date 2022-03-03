@@ -364,6 +364,10 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY, PetriNetLbe.class);
 	}
 
+	public boolean applyOneShotPOR() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_POR_ONESHOT);
+	}
+
 	public PartialOrderMode getPartialOrderMode() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_MODE, PartialOrderMode.class);
 	}
