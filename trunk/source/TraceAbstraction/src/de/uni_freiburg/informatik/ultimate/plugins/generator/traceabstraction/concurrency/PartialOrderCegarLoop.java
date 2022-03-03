@@ -103,10 +103,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, compositionFactory, transitionClazz);
+			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
+			final Class<L> transitionClazz) {
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false, services,
+				compositionFactory, transitionClazz);
 		mPartialOrderMode = mPref.getPartialOrderMode();
 		mFactory = new InformationStorageFactory();
 

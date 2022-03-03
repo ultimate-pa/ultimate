@@ -113,8 +113,7 @@ public class CegarLoopUtils {
 						throw new UnsupportedOperationException("Reuse with POR-based analysis");
 					}
 					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
-							transitionClazz);
+							taPrefs.interpolation(), services, compositionFactory, transitionClazz);
 					break;
 				case PETRI_NET:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
