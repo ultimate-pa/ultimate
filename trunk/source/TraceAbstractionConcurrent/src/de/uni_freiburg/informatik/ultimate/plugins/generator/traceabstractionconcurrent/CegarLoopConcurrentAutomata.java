@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -64,11 +65,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -77,12 +76,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
 
 	public CegarLoopConcurrentAutomata(final DebugIdentifier name, final IIcfg<?> rootNode,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
-				compositionFactory, transitionClazz);
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false,
+				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement, null);
 	}
 
 	@Override

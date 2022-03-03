@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -48,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResultReporter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -91,11 +92,11 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
-		final TAwAFAsCegarLoop<IcfgEdge> cegarLoop =
-				new TAwAFAsCegarLoop<>(TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE, rootAnnot,
-						csToolkit, predicateFactory, taBenchmarks, taPrefs, errNodesOfAllProc, taPrefs.interpolation(),
-						taPrefs.computeHoareAnnotation(), mServices, compositionFactory, IcfgEdge.class);
+		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
+				csToolkit.getManagedScript(), predicateFactory, false, Collections.emptySet());
+		final TAwAFAsCegarLoop<IcfgEdge> cegarLoop = new TAwAFAsCegarLoop<>(
+				TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE, rootAnnot, csToolkit, predicateFactory,
+				taPrefs, errNodesOfAllProc, mServices, IcfgEdge.class, stateFactoryForRefinement);
 
 		final CegarLoopResult<IcfgEdge> result = cegarLoop.runCegar();
 

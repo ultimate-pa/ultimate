@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -67,10 +68,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -86,11 +87,12 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	public IncrementalInclusionCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final LanguageOperation languageOperation, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> transitionClazz) {
+			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final IUltimateServiceProvider services, final LanguageOperation languageOperation,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement,
+			final IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> abstractionProvider) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, compositionFactory, transitionClazz);
+				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement, abstractionProvider);
 		mLanguageOperation = languageOperation;
 		if (mComputeHoareAnnotation) {
 			throw new UnsupportedOperationException(

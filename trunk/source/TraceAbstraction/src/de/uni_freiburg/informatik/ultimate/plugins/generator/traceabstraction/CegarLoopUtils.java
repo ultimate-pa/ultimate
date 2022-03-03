@@ -94,8 +94,9 @@ public class CegarLoopUtils {
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), services, compositionFactory,
-						transitionClazz);
+						taPrefs.interpolation(), computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz,
+						stateFactoryForRefinement, createAutomataAbstractionProvider(services, compositionFactory, root,
+								predicateFactory, stateFactoryForRefinement, transitionClazz, taPrefs));
 			} else if (FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root)) {
 				result = createFiniteAutomataCegarLoop(services, name, root, taPrefs, csToolkit, predicateFactory,
 						errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, hoareAnnotationLocs,
@@ -132,8 +133,10 @@ public class CegarLoopUtils {
 			}
 		} else {
 			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-					taPrefs.interpolation(), computeHoareAnnotation, services, languageOperation, compositionFactory,
-					transitionClazz);
+					taPrefs.interpolation(), computeHoareAnnotation, hoareAnnotationLocs, services, languageOperation,
+					transitionClazz, stateFactoryForRefinement,
+					createAutomataAbstractionProvider(services, compositionFactory, root, predicateFactory,
+							stateFactoryForRefinement, transitionClazz, taPrefs));
 		}
 		result.setWitnessAutomaton(witnessAutomaton);
 		return result;
@@ -181,7 +184,7 @@ public class CegarLoopUtils {
 		return check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
 	}
 
-	public static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
+	private static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
 			IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> createAutomataAbstractionProvider(
 					final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
 					final IIcfg<?> icfg, final PredicateFactory predicateFactory, final F stateFactory,
@@ -207,7 +210,7 @@ public class CegarLoopUtils {
 				pref.getDfsOrderSeed());
 	}
 
-	private static <L extends IIcfgTransition<?>> IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>>
+	public static <L extends IIcfgTransition<?>> IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>>
 			createPetriAbstractionProvider(final IUltimateServiceProvider services,
 					final IPLBECompositionFactory<L> compositionFactory,
 					final IEmptyStackStateFactory<IPredicate> stateFactory, final PredicateFactory predicateFactory,
@@ -221,7 +224,7 @@ public class CegarLoopUtils {
 				pref.useLbeInConcurrentAnalysis(), compositionFactory);
 	}
 
-	public static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
+	private static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
 			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 			createPartialOrderAbstractionProvider(final IUltimateServiceProvider services,
 					final IPLBECompositionFactory<L> compositionFactory, final PredicateFactory predicateFactory,

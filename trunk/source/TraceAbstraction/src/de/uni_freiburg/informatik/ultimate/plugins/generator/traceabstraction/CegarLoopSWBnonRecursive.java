@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -68,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -174,10 +175,11 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 	public CegarLoopSWBnonRecursive(final DebugIdentifier name, final IIcfg<?> icfg, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> transitionClazz) {
+			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement,
+			final IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> abstractionProvider) {
 		super(name, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, compositionFactory, transitionClazz);
+				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement, abstractionProvider);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}

@@ -125,7 +125,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DangerInvariantGuesser;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -245,48 +244,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private final Integer mAStarRandomHeuristicSeed;
 
 	private final IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> mAbstractionProvider;
-
-	@Deprecated
-	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		this(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				computeHoareAnnotation
-						? (Set<IcfgLocation>) TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(
-								rootNode, taPrefs.getHoareAnnotationPositions())
-						: Collections.emptySet(),
-				services, compositionFactory, transitionClazz);
-	}
-
-	@Deprecated
-	private BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
-			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> transitionClazz) {
-		this(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				hoareAnnotationLocs, services, transitionClazz, new PredicateFactoryRefinement(services,
-						csToolkit.getManagedScript(), predicateFactory, computeHoareAnnotation, hoareAnnotationLocs),
-				compositionFactory);
-	}
-
-	@Deprecated
-	private BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IPLBECompositionFactory<L> compositionFactory) {
-		this(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement,
-				CegarLoopUtils.<L, PredicateFactoryRefinement> createAutomataAbstractionProvider(services,
-						compositionFactory, rootNode, predicateFactory, stateFactoryForRefinement, transitionClazz,
-						taPrefs));
-	}
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
