@@ -112,7 +112,9 @@ public class CegarLoopUtils {
 						throw new UnsupportedOperationException("Reuse with POR-based analysis");
 					}
 					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), services, compositionFactory, transitionClazz);
+							taPrefs.interpolation(), services, transitionClazz, stateFactoryForRefinement,
+							createPartialOrderAbstractionProvider(services, compositionFactory, predicateFactory,
+									stateFactoryForRefinement, transitionClazz, taPrefs));
 					break;
 				case PETRI_NET:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
@@ -217,5 +219,17 @@ public class CegarLoopUtils {
 		}
 		return new PetriLbeInitialAbstractionProvider<>(netProvider, services, transitionClazz,
 				pref.useLbeInConcurrentAnalysis(), compositionFactory);
+	}
+
+	public static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
+			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
+			createPartialOrderAbstractionProvider(final IUltimateServiceProvider services,
+					final IPLBECompositionFactory<L> compositionFactory, final PredicateFactory predicateFactory,
+					final F stateFactory, final Class<L> transitionClazz, final TAPreferences pref) {
+		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
+				createPetriAbstractionProvider(services, compositionFactory, stateFactory, predicateFactory,
+						transitionClazz, pref, false);
+		return new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(netProvider, stateFactory,
+				new AutomataLibraryServices(services));
 	}
 }
