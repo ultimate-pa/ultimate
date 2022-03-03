@@ -329,7 +329,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		mAbstraction = mAbstractionProvider.getInitialAbstraction(mIcfg, mErrorLocs);
 
-		// TODO see if this can be done properly when mHoareAnnotationLocations is set up in the constructor
+		// TODO see if this can be done properly when mHoareAnnotationLocations is set up in CegarLoopUtils
 		if (mComputeHoareAnnotation
 				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			final INestedWordAutomaton<L, IPredicate> nwa = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
@@ -1137,10 +1137,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	public IPostconditionProvider getPostconditionProvider() {
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
-	}
-
-	private final boolean isSequential() {
-		return !IcfgUtils.isConcurrent(super.mIcfg);
 	}
 
 	private class TimeoutRefinementEngineResult
