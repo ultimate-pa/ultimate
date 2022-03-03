@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
@@ -73,18 +73,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -125,16 +118,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.IInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.PartialOrderAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DangerInvariantGuesser;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -225,7 +217,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
-	protected final InterpolationTechnique mInterpolation;
 	protected final InterpolantAutomaton mInterpolantAutomatonConstructionProcedure;
 	protected final UnsatCores mUnsatCores;
 	protected final boolean mUseLiveVariables;
@@ -255,39 +246,72 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
-	protected final IPLBECompositionFactory<L> mCompositionFactory;
+	private final IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> mAbstractionProvider;
 
+	@Deprecated
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
+		this(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
+				computeHoareAnnotation
+						? (Set<IcfgLocation>) TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(
+								rootNode, taPrefs.getHoareAnnotationPositions())
+						: Collections.emptySet(),
+				services, compositionFactory, transitionClazz);
+	}
+
+	@Deprecated
+	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
+			final Class<L> transitionClazz) {
+		this(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
+				hoareAnnotationLocs, services, transitionClazz, new PredicateFactoryRefinement(services,
+						csToolkit.getManagedScript(), predicateFactory, computeHoareAnnotation, hoareAnnotationLocs),
+				compositionFactory);
+	}
+
+	@Deprecated
+	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement,
+			final IPLBECompositionFactory<L> compositionFactory) {
+		this(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
+				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement,
+				CegarLoopUtils.<L, PredicateFactoryRefinement> createAbstractionProvider(services, compositionFactory,
+						rootNode, predicateFactory, stateFactoryForRefinement, transitionClazz, taPrefs));
+	}
+
+	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<? extends IcfgLocation> errorLocs, InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement,
+			final IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> abstractionProvider) {
 		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz, computeHoareAnnotation);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
-		mCompositionFactory = compositionFactory;
-		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
-			if (interpolation == InterpolationTechnique.FPandBP) {
-				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
-				mInterpolation = InterpolationTechnique.ForwardPredicates;
-			} else {
-				mInterpolation = interpolation;
-			}
-		} else {
-			mInterpolation = interpolation;
+
+		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
+				&& interpolation == InterpolationTechnique.FPandBP) {
+			mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
+			interpolation = InterpolationTechnique.ForwardPredicates;
 		}
+
 		mInterpolantAutomatonConstructionProcedure = mPref.interpolantAutomaton();
-		if (mComputeHoareAnnotation) {
-			mHoareAnnotationLocations = (Set<IcfgLocation>) TraceAbstractionUtils
-					.getLocationsForWhichHoareAnnotationIsComputed(rootNode, mPref.getHoareAnnotationPositions());
-		} else {
-			mHoareAnnotationLocations = Collections.emptySet();
-		}
+		mHoareAnnotationLocations = hoareAnnotationLocs;
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
-		mStateFactoryForRefinement = new PredicateFactoryRefinement(getServices(), super.mCsToolkit.getManagedScript(),
-				predicateFactory, computeHoareAnnotation, mHoareAnnotationLocations);
+		mStateFactoryForRefinement = stateFactoryForRefinement;
 
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
@@ -314,9 +338,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolation, mSimplificationTechnique,
+				new TaCheckAndRefinementPreferences<>(getServices(), mPref, interpolation, mSimplificationTechnique,
 						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfg);
-
 		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
 				mPredicateFactoryInterpolantAutomata, mTransitionClazz);
 
@@ -342,57 +365,15 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mScoringMethod = taPrefs.getHeuristicEmptinessCheckScoringMethod();
 		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
+
+		mAbstractionProvider = abstractionProvider;
 	}
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		if (isSequential()) {
-			mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(getServices(), super.mIcfg,
-					mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
-		} else {
-			final boolean addThreadUsageMonitors = true;
-			final BoundedPetriNet<L, IPredicate> petrifiedCfg =
-					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(getServices(), mIcfg,
-							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
-			final BoundedPetriNet<L, IPredicate> net;
-			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-				final PetriNetLargeBlockEncoding<L> lbe =
-						new PetriNetLargeBlockEncoding<>(getServices(), mIcfg.getCfgSmtToolkit(), petrifiedCfg,
-								mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
-				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
-				getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
-				net = lbecfg;
-				getServices().getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(
-						Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
-			} else {
-				net = petrifiedCfg;
-			}
+		mAbstraction = mAbstractionProvider.getInitialAbstraction(mIcfg, mErrorLocs);
 
-			final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
-			if (mPref.getPartialOrderMode() != PartialOrderMode.NONE) {
-				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
-				automaton = new LazyPetriNet2FiniteAutomaton<>(new AutomataLibraryServices(getServices()),
-						mStateFactoryForRefinement, net, s -> areAllLocationsHopeless(hopelessCache, s));
-			} else {
-				try {
-					automaton = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(getServices()),
-							mStateFactoryForRefinement, net, s -> areAllLocationsHopeless(hopelessCache, s))
-									.getResult();
-				} catch (final PetriNetNot1SafeException e) {
-					final Collection<?> unsafePlaces = e.getUnsafePlaces();
-					if (unsafePlaces == null) {
-						throw new AssertionError("Unable to find Petri net place that violates 1-safety");
-					}
-					final ISLPredicate unsafePlace = (ISLPredicate) unsafePlaces.iterator().next();
-					final String proc = unsafePlace.getProgramPoint().getProcedure();
-					throw new IllegalStateException(
-							"Petrification does not provide enough thread instances for " + proc);
-				}
-			}
-			mAbstraction = computePartialOrderReduction(mPref.getPartialOrderMode(), automaton);
-		}
-
+		// TODO see if this can be done properly when mHoareAnnotationLocations is set up in the constructor
 		if (mComputeHoareAnnotation
 				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			final INestedWordAutomaton<L, IPredicate> nwa = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
@@ -403,73 +384,24 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				}
 			}
 		}
+
+		// TODO see if this can be an IInitialAbstractionProvider; this is the only use of mWitnessAutomaton
 		if (mWitnessAutomaton != null) {
 			mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(getServices(), mAbstraction, mWitnessAutomaton,
 					mCsToolkit, mPredicateFactory, mStateFactoryForRefinement, mLogger, Property.NON_REACHABILITY);
 		}
 	}
 
-	/**
-	 * Determines if the locations belonging to the given marking are all hopeless. In this case, the state
-	 * corresponding to this marking can be omitted from the program automaton.
-	 */
-	private boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
-			final Marking<?, IPredicate> marking) {
-		for (final IPredicate place : marking) {
-			if (place instanceof ISLPredicate) {
-				final IcfgLocation location = ((ISLPredicate) place).getProgramPoint();
-				if (!isLocationHopeless(hopelessCache, location)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * A location is hopeless if in the CFG there is no path from this location to an error location.
-	 */
-	private boolean isLocationHopeless(final Map<IcfgLocation, Boolean> hopelessCache, final IcfgLocation loc) {
-		if (mErrorLocs.contains(loc)) {
-			return false;
-		}
-		return !IcfgUtils.canReachCached(loc, e -> mErrorLocs.contains(e.getTarget()), e -> false, l -> {
-			if (!hopelessCache.containsKey(l)) {
-				return LBool.UNKNOWN;
-			}
-			return hopelessCache.get(l) ? LBool.SAT : LBool.UNSAT;
-		}, (l, res) -> {
-			assert hopelessCache.getOrDefault(l, res) == res : "contradictory reachability";
-			assert res != null;
-			hopelessCache.put(l, res);
-		});
-	}
-
-	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> computePartialOrderReduction(
-			final PartialOrderMode mode, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input)
-			throws AutomataOperationCanceledException {
+	// TODO eliminate by separating setting of "do one-shot POR yes/no" from "POR mode" (but keep NONE)
+	@Deprecated
+	protected IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> computePartialOrderReduction(
+			final PartialOrderMode mode,
+			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying) {
 		if (mode == PartialOrderMode.NONE) {
-			return input;
+			return underlying;
 		}
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		try {
-			// setup POR depending on settings
-			final IIndependenceRelation<IPredicate, L> indep =
-					IndependenceBuilder.<L> semantic(getServices(), mCsToolkit.getManagedScript(), false, false)
-							.withSyntacticCheck().cached().threadSeparated().build();
-			final PartialOrderReductionFacade<L> por =
-					new PartialOrderReductionFacade<>(getServices(), mPredicateFactory, mIcfg, mErrorLocs,
-							mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), indep);
-
-			// actually apply POR to automaton
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> result =
-					por.constructReduction(input, mStateFactoryForRefinement);
-
-			por.reportStatistics();
-			return result;
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		}
+		return new PartialOrderAbstractionProvider<>(underlying, mServices, mStateFactoryForRefinement,
+				mPredicateFactory, mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed());
 	}
 
 	@Override
