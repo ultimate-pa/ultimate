@@ -261,7 +261,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	@Deprecated
-	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+	private BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
@@ -274,7 +274,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	}
 
 	@Deprecated
-	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+	private BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
