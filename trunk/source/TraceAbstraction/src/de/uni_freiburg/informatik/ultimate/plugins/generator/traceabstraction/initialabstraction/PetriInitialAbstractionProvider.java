@@ -28,8 +28,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -43,22 +48,40 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 
 	private static final boolean ADD_THREAD_USAGE_MONITORS = true;
 	private static final boolean INTERPROCEDURAL = false;
+	private static final boolean KEEP_USELESS_SUCCESSOR_PLACES = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
 	private final IEmptyStackStateFactory<IPredicate> mStateFactory;
+	private final boolean mRemoveDeadEnds;
 
 	public PetriInitialAbstractionProvider(final IUltimateServiceProvider services,
-			final IEmptyStackStateFactory<IPredicate> stateFactory, final PredicateFactory predicateFactory) {
+			final IEmptyStackStateFactory<IPredicate> stateFactory, final PredicateFactory predicateFactory,
+			final boolean removeDeadEnds) {
 		mServices = services;
 		mPredicateFactory = predicateFactory;
 		mStateFactory = stateFactory;
+		mRemoveDeadEnds = removeDeadEnds;
 	}
 
 	@Override
 	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
-			final Set<? extends IcfgLocation> errorLocs) {
-		return CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
-				INTERPROCEDURAL, mPredicateFactory, ADD_THREAD_USAGE_MONITORS);
+			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
+		final BoundedPetriNet<L, IPredicate> net = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices,
+				icfg, mStateFactory, errorLocs, INTERPROCEDURAL, mPredicateFactory, ADD_THREAD_USAGE_MONITORS);
+		if (!mRemoveDeadEnds) {
+			return net;
+		}
+
+		try {
+			return new RemoveDead<>(new AutomataLibraryServices(mServices), net, null, KEEP_USELESS_SUCCESSOR_PLACES)
+					.getResult();
+		} catch (final AutomataOperationCanceledException aoce) {
+			final String taskDescription = "removing dead transitions from Petri net that has " + net.sizeInformation();
+			aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw aoce;
+		} catch (final PetriNetNot1SafeException e) {
+			throw new AssertionError(e);
+		}
 	}
 }

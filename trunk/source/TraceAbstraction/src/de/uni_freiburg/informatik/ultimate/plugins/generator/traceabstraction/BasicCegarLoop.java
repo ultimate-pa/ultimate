@@ -285,8 +285,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			final IPLBECompositionFactory<L> compositionFactory) {
 		this(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement,
-				CegarLoopUtils.<L, PredicateFactoryRefinement> createAbstractionProvider(services, compositionFactory,
-						rootNode, predicateFactory, stateFactoryForRefinement, transitionClazz, taPrefs));
+				CegarLoopUtils.<L, PredicateFactoryRefinement> createAutomataAbstractionProvider(services,
+						compositionFactory, rootNode, predicateFactory, stateFactoryForRefinement, transitionClazz,
+						taPrefs));
 	}
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,

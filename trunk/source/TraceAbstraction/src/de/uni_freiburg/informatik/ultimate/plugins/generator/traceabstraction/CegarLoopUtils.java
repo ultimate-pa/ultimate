@@ -81,6 +81,16 @@ public class CegarLoopUtils {
 		final LanguageOperation languageOperation = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 
+		final Set<IcfgLocation> hoareAnnotationLocs;
+		if (computeHoareAnnotation) {
+			hoareAnnotationLocs = TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(root,
+					taPrefs.getHoareAnnotationPositions());
+		} else {
+			hoareAnnotationLocs = Collections.emptySet();
+		}
+		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(services,
+				csToolkit.getManagedScript(), predicateFactory, computeHoareAnnotation, hoareAnnotationLocs);
+
 		BasicCegarLoop<L> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
@@ -89,14 +99,14 @@ public class CegarLoopUtils {
 						transitionClazz);
 			} else if (FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root)) {
 				result = createFiniteAutomataCegarLoop(services, name, root, taPrefs, csToolkit, predicateFactory,
-						errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, compositionFactory,
-						transitionClazz);
+						errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, hoareAnnotationLocs,
+						compositionFactory, transitionClazz, stateFactoryForRefinement);
 			} else {
 				switch (automataType) {
 				case FINITE_AUTOMATA:
 					result = createFiniteAutomataCegarLoop(services, name, root, taPrefs, csToolkit, predicateFactory,
-							errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, compositionFactory,
-							transitionClazz);
+							errorLocs, rawFloydHoareAutomataFromFile, computeHoareAnnotation, hoareAnnotationLocs,
+							compositionFactory, transitionClazz, stateFactoryForRefinement);
 					break;
 				case PARTIAL_ORDER_FA:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
@@ -111,7 +121,9 @@ public class CegarLoopUtils {
 						throw new UnsupportedOperationException("Reuse with Petri net-based analysis");
 					}
 					result = new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							services, compositionFactory, transitionClazz);
+							services, transitionClazz, stateFactoryForRefinement,
+							CegarLoopUtils.<L> createPetriAbstractionProvider(services, compositionFactory,
+									stateFactoryForRefinement, predicateFactory, transitionClazz, taPrefs, true));
 
 					break;
 				default:
@@ -132,19 +144,12 @@ public class CegarLoopUtils {
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final boolean computeHoareAnnotation, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> transitionClazz) {
-		final Set<IcfgLocation> hoareAnnotationLocs;
-		if (computeHoareAnnotation) {
-			hoareAnnotationLocs = TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(root,
-					taPrefs.getHoareAnnotationPositions());
-		} else {
-			hoareAnnotationLocs = Collections.emptySet();
-		}
-		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(services,
-				csToolkit.getManagedScript(), predicateFactory, computeHoareAnnotation, hoareAnnotationLocs);
-		final var abstractionProvider = createAbstractionProvider(services, compositionFactory, root, predicateFactory,
-				stateFactoryForRefinement, transitionClazz, taPrefs);
+			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+
+		final var abstractionProvider = createAutomataAbstractionProvider(services, compositionFactory, root,
+				predicateFactory, stateFactoryForRefinement, transitionClazz, taPrefs);
 
 		switch (taPrefs.getFloydHoareAutomataReuse()) {
 		case EAGER:
@@ -177,7 +182,7 @@ public class CegarLoopUtils {
 	}
 
 	public static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
-			IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> createAbstractionProvider(
+			IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> createAutomataAbstractionProvider(
 					final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
 					final IIcfg<?> icfg, final PredicateFactory predicateFactory, final F stateFactory,
 					final Class<L> transitionClazz, final TAPreferences pref) {
@@ -186,12 +191,9 @@ public class CegarLoopUtils {
 					predicateFactory);
 		}
 
-		IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
-				new PetriInitialAbstractionProvider<>(services, stateFactory, predicateFactory);
-		if (pref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-			netProvider = new PetriLbeInitialAbstractionProvider<>(netProvider, services, transitionClazz,
-					pref.useLbeInConcurrentAnalysis(), compositionFactory);
-		}
+		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
+				createPetriAbstractionProvider(services, compositionFactory, stateFactory, predicateFactory,
+						transitionClazz, pref, false);
 
 		if (pref.getPartialOrderMode() == PartialOrderMode.NONE) {
 			return new Petri2FiniteAutomatonAbstractionProvider.Eager<>(netProvider, stateFactory,
@@ -203,5 +205,19 @@ public class CegarLoopUtils {
 						new AutomataLibraryServices(services)),
 				services, stateFactory, predicateFactory, pref.getPartialOrderMode(), pref.getDfsOrderType(),
 				pref.getDfsOrderSeed());
+	}
+
+	private static <L extends IIcfgTransition<?>> IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>>
+			createPetriAbstractionProvider(final IUltimateServiceProvider services,
+					final IPLBECompositionFactory<L> compositionFactory,
+					final IEmptyStackStateFactory<IPredicate> stateFactory, final PredicateFactory predicateFactory,
+					final Class<L> transitionClazz, final TAPreferences pref, final boolean removeDead) {
+		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
+				new PetriInitialAbstractionProvider<>(services, stateFactory, predicateFactory, removeDead);
+		if (pref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
+			return netProvider;
+		}
+		return new PetriLbeInitialAbstractionProvider<>(netProvider, services, transitionClazz,
+				pref.useLbeInConcurrentAnalysis(), compositionFactory);
 	}
 }

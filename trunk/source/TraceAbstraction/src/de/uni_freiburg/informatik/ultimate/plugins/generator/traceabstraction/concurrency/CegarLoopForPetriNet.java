@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Differen
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveRedundantFlow;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
@@ -88,12 +88,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.PetriInitialAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.PetriLbeInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -144,17 +143,15 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 
 	private final CounterexampleCache<L> mCounterexampleCache;
 
-	private final IPLBECompositionFactory<L> mCompositionFactory;
-
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
-			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false, services,
-				compositionFactory, transitionClazz);
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement,
+			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> abstractionProvider) {
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(), false,
+				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement, abstractionProvider);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
 		mCounterexampleCache = new CounterexampleCache<>();
-		mCompositionFactory = compositionFactory;
 	}
 
 	@Override
@@ -164,39 +161,18 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			throw new UnsupportedOperationException("Program must have " + TraceAbstractionStarter.ULTIMATE_START
 					+ " procedure (this is the procedure where all executions start)");
 		}
-		final BoundedPetriNet<L, IPredicate> cfg = constructPetriNetWithoutDeadTransitions();
+
+		super.getInitialAbstraction();
+
+		final BoundedPetriNet<L, IPredicate> cfg = (BoundedPetriNet<L, IPredicate>) mAbstraction;
 		if (DEBUG_WRITE_NET_HASH_CODES) {
 			mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(cfg));
 		}
-		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-			mAbstraction = new PetriLbeInitialAbstractionProvider<>((x, y) -> cfg, mServices, mTransitionClazz,
-					mPref.useLbeInConcurrentAnalysis(), mCompositionFactory).getInitialAbstraction(mIcfg, mErrorLocs);
-		} else {
-			mAbstraction = cfg;
-		}
-		mProgramPointPlaces = ((BoundedPetriNet<L, IPredicate>) mAbstraction).getPlaces();
+		mProgramPointPlaces = cfg.getPlaces();
 
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
-		}
-	}
-
-	private BoundedPetriNet<L, IPredicate> constructPetriNetWithoutDeadTransitions()
-			throws AutomataOperationCanceledException {
-		final BoundedPetriNet<L, IPredicate> cfg =
-				new PetriInitialAbstractionProvider<L>(mServices, mStateFactoryForRefinement, mPredicateFactory)
-						.getInitialAbstraction(mIcfg, mErrorLocs);
-		try {
-			final BoundedPetriNet<L, IPredicate> vitalCfg =
-					new RemoveDead<>(new AutomataLibraryServices(getServices()), cfg, null, true).getResult();
-			return vitalCfg;
-		} catch (final AutomataOperationCanceledException aoce) {
-			final String taskDescription = "removing dead transitions from Petri net that has " + cfg.sizeInformation();
-			aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
-			throw aoce;
-		} catch (final PetriNetNot1SafeException e) {
-			throw new AssertionError(e);
 		}
 	}
 
