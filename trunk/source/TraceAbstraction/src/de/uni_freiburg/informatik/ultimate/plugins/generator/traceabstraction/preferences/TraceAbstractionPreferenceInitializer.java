@@ -503,7 +503,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
 						PetriNetLbe.values()),
-				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_MODE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
 				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
