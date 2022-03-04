@@ -120,7 +120,6 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 
 	public static <LETTER> BoundedPetriNet<LETTER, IPredicate> constructPetriNetWithSPredicates(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
-			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final PredicateFactory predicateFactory, final boolean addThreadUsageMonitors) {
 		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
@@ -129,8 +128,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		predicateProvider = constructSPredicateProvider(predicateFactory, mgdScript);
 		final Function<IIcfgTransition<?>, LETTER> transitionMapping = constructIdentityTransitionProvider();
-		return constructPetriNet(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
-				predicateProvider, transitionMapping, predicateFactory, addThreadUsageMonitors);
+		return constructPetriNet(services, icfg, acceptingLocations, interprocedural, vpAlphabet, predicateProvider,
+				transitionMapping, predicateFactory, addThreadUsageMonitors);
 	}
 
 	public static <LETTER> String printIcfg(final IUltimateServiceProvider services,
@@ -249,7 +248,6 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	@SuppressWarnings("unchecked")
 	private static <LETTER> BoundedPetriNet<LETTER, IPredicate> constructPetriNet(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
-			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider,
 			final Function<IIcfgTransition<?>, LETTER> letterProvider, final PredicateFactory predicateFactory,

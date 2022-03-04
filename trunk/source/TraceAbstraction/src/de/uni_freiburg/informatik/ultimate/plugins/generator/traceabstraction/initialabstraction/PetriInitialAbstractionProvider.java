@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -52,15 +51,12 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
-	private final IEmptyStackStateFactory<IPredicate> mStateFactory;
 	private final boolean mRemoveDeadEnds;
 
 	public PetriInitialAbstractionProvider(final IUltimateServiceProvider services,
-			final IEmptyStackStateFactory<IPredicate> stateFactory, final PredicateFactory predicateFactory,
-			final boolean removeDeadEnds) {
+			final PredicateFactory predicateFactory, final boolean removeDeadEnds) {
 		mServices = services;
 		mPredicateFactory = predicateFactory;
-		mStateFactory = stateFactory;
 		mRemoveDeadEnds = removeDeadEnds;
 	}
 
@@ -68,7 +64,7 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
 		final BoundedPetriNet<L, IPredicate> net = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices,
-				icfg, mStateFactory, errorLocs, INTERPROCEDURAL, mPredicateFactory, ADD_THREAD_USAGE_MONITORS);
+				icfg, errorLocs, INTERPROCEDURAL, mPredicateFactory, ADD_THREAD_USAGE_MONITORS);
 		if (!mRemoveDeadEnds) {
 			return net;
 		}

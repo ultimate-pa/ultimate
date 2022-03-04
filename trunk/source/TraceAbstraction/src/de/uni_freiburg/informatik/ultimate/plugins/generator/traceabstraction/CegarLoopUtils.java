@@ -123,7 +123,7 @@ public class CegarLoopUtils {
 					result = new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							services, transitionClazz, stateFactoryForRefinement,
 							CegarLoopUtils.<L> createPetriAbstractionProvider(services, compositionFactory,
-									stateFactoryForRefinement, predicateFactory, transitionClazz, taPrefs, true));
+									predicateFactory, transitionClazz, taPrefs, true));
 
 					break;
 				default:
@@ -194,8 +194,8 @@ public class CegarLoopUtils {
 		}
 
 		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
-				createPetriAbstractionProvider(services, compositionFactory, stateFactory, predicateFactory,
-						transitionClazz, pref, false);
+				createPetriAbstractionProvider(services, compositionFactory, predicateFactory, transitionClazz, pref,
+						false);
 		if (!pref.applyOneShotPOR()) {
 			return new Petri2FiniteAutomatonAbstractionProvider.Eager<>(netProvider, stateFactory,
 					new AutomataLibraryServices(services));
@@ -211,11 +211,10 @@ public class CegarLoopUtils {
 
 	public static <L extends IIcfgTransition<?>> IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>>
 			createPetriAbstractionProvider(final IUltimateServiceProvider services,
-					final IPLBECompositionFactory<L> compositionFactory,
-					final IEmptyStackStateFactory<IPredicate> stateFactory, final PredicateFactory predicateFactory,
+					final IPLBECompositionFactory<L> compositionFactory, final PredicateFactory predicateFactory,
 					final Class<L> transitionClazz, final TAPreferences pref, final boolean removeDead) {
 		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
-				new PetriInitialAbstractionProvider<>(services, stateFactory, predicateFactory, removeDead);
+				new PetriInitialAbstractionProvider<>(services, predicateFactory, removeDead);
 		if (pref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
 			return netProvider;
 		}
@@ -223,14 +222,15 @@ public class CegarLoopUtils {
 				pref.useLbeInConcurrentAnalysis(), compositionFactory);
 	}
 
-	private static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
+	private static <L extends IIcfgTransition<?>>
 			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 			createPartialOrderAbstractionProvider(final IUltimateServiceProvider services,
 					final IPLBECompositionFactory<L> compositionFactory, final PredicateFactory predicateFactory,
-					final F stateFactory, final Class<L> transitionClazz, final TAPreferences pref) {
+					final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory,
+					final Class<L> transitionClazz, final TAPreferences pref) {
 		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
-				createPetriAbstractionProvider(services, compositionFactory, stateFactory, predicateFactory,
-						transitionClazz, pref, false);
+				createPetriAbstractionProvider(services, compositionFactory, predicateFactory, transitionClazz, pref,
+						false);
 		return new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(netProvider, stateFactory,
 				new AutomataLibraryServices(services));
 	}

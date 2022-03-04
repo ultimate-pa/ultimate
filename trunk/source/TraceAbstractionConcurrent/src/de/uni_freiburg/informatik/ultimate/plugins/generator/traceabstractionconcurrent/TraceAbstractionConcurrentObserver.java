@@ -124,8 +124,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
 			abstractCegarLoop = new CegarLoopForPetriNet<>(name, petrifiedIcfg, csToolkit, predicateFactory, taPrefs,
 					errNodesOfAllProc, mServices, IcfgEdge.class, stateFactoryForRefinement,
-					CegarLoopUtils.createPetriAbstractionProvider(mServices, compositionFactory,
-							stateFactoryForRefinement, predicateFactory, IcfgEdge.class, taPrefs, false));
+					CegarLoopUtils.createPetriAbstractionProvider(mServices, compositionFactory, predicateFactory,
+							IcfgEdge.class, taPrefs, false));
 		} else if (taPrefs.getAutomataTypeConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
 					taPrefs, errNodesOfAllProc, mServices, IcfgEdge.class, stateFactoryForRefinement);
