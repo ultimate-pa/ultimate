@@ -38,6 +38,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 
+/**
+ * Provides an initial abstraction in the form of a nested word automaton. This is only applicable to sequential
+ * programs.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of transitions
+ */
 public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
 
@@ -46,6 +55,10 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final boolean mInterprocedural;
 	private final PredicateFactory mPredicateFactory;
 
+	/**
+	 * Create a new instance. For documentation of the parameters, see the corresponding parameters in
+	 * {@link CFG2NestedWordAutomaton#constructAutomatonWithSPredicates(IUltimateServiceProvider, IIcfg, IEmptyStackStateFactory, java.util.Collection, boolean, PredicateFactory)}.
+	 */
 	public NwaInitialAbstractionProvider(final IUltimateServiceProvider services,
 			final IEmptyStackStateFactory<IPredicate> stateFactory, final boolean interprocedural,
 			final PredicateFactory predicateFactory) {
@@ -61,5 +74,4 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		return CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
 				mInterprocedural, mPredicateFactory);
 	}
-
 }

@@ -41,6 +41,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 
+/**
+ * Transforms an initial abstraction by applying one-shot Petri LBE.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of transitions
+ */
 public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> {
 
@@ -50,6 +58,20 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final Class<L> mTransitionClazz;
 	private final PetriNetLbe mLbeMode;
 
+	/**
+	 * Create a new instance.
+	 *
+	 * @param underlying
+	 *            The underlying provider whose provided instance is transformed
+	 * @param services
+	 *            Ultimate services used for Petri net LBE, and to report statistics
+	 * @param transitionClazz
+	 *            The class of transitions
+	 * @param lbeMode
+	 *            The kind of Petri net LBE to apply
+	 * @param compositionFactory
+	 *            A factory to fuse transitions for Petri net LBE
+	 */
 	public PetriLbeInitialAbstractionProvider(
 			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz, final PetriNetLbe lbeMode,
@@ -76,5 +98,4 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 
 		return lbecfg;
 	}
-
 }

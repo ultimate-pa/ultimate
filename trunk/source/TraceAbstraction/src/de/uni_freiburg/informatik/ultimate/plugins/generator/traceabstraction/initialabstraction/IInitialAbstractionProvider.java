@@ -35,9 +35,41 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Interface for the computation of the initial abstraction in a {@link BasicCegarLoop}.
+ *
+ * Separating the computation of the initial abstraction in this interface and its various implementations allows for
+ * the following benefits:
+ *
+ * <ul>
+ * <li>decoupling: {@link BasicCegarLoop} does not depend on the many possible (and configurable) steps in the creation
+ * of the initial abstraction (nested word automata, Petri nets, Petri net LBE, partial order reduction, ...).</li>
+ * <li>deduplication: Implementations of this interface can be used for different CEGAR loops, avoiding e.g. the
+ * duplication of Petri net related code in {@link BasicCegarLoop} and {@link CegarLoopForPetriNet}.</li>
+ * <li>flexibility: Representing the computation of the initial abstraction as a separate artifact allows it to be used
+ * in more flexible ways, e.g. reusing the same initial abstraction for multiple CEGAR loop instances.</li>
+ * </ul>
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of transitions
+ * @param <A>
+ *            The type of the computed abstraction
+ */
 public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
-
+	/**
+	 * Computes the initial abstraction for the given control flow graph and error locations.
+	 *
+	 * @param icfg
+	 *            The control flow graph from which an abstraction is computed
+	 * @param errorLocs
+	 *            The error locations to consider for the abstraction
+	 * @return the new initial abstraction
+	 * @throws AutomataLibraryException
+	 *             Since trace abstraction represents abstractions as automata, the computation of the initial
+	 *             abstraction typically involves automata operations and may throw {@link AutomataLibraryException}s.
+	 */
 	A getInitialAbstraction(IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs)
 			throws AutomataLibraryException;
-
 }

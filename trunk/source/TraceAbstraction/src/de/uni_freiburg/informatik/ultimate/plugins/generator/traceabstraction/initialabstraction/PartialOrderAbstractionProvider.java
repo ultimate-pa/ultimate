@@ -44,6 +44,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 
+/**
+ * Transforms an initial abstraction by applying one-shot Partial Order Reduction.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            the type of transitions
+ */
 public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, NestedWordAutomaton<L, IPredicate>> {
 
@@ -55,18 +63,36 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final OrderType mOrderType;
 	private final long mDfsOrderSeed;
 
+	/**
+	 * Create a new instance of the provider.
+	 *
+	 * @param underlying
+	 *            The provider whose provided initial abstraction is then transformed by this instance
+	 * @param services
+	 *            Ultimate services used by Partial Order Reduction
+	 * @param stateFactory
+	 *            A state factory used by the reduced automaton
+	 * @param predicateFactory
+	 *            Predicate factory used to create predicate states for the reduced automaton
+	 * @param partialOrderMode
+	 *            The type of Partial Order Reduction that shall be applied
+	 * @param orderType
+	 *            Indicates the preference order used by Partial Order Reduction
+	 * @param dfsOrderSeed
+	 *            If {@code orderType} is random-based, the seed to use for the random generator.
+	 */
 	public PartialOrderAbstractionProvider(
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
 			final PredicateFactory predicateFactory, final PartialOrderMode partialOrderMode, final OrderType orderType,
 			final long dfsOrderSeed) {
-		this.mUnderlying = underlying;
-		this.mServices = services;
-		this.mStateFactory = stateFactory;
-		this.mPredicateFactory = predicateFactory;
-		this.mPartialOrderMode = partialOrderMode;
-		this.mOrderType = orderType;
-		this.mDfsOrderSeed = dfsOrderSeed;
+		mUnderlying = underlying;
+		mServices = services;
+		mStateFactory = stateFactory;
+		mPredicateFactory = predicateFactory;
+		mPartialOrderMode = partialOrderMode;
+		mOrderType = orderType;
+		mDfsOrderSeed = dfsOrderSeed;
 	}
 
 	@Override
@@ -94,5 +120,4 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 			// mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 		}
 	}
-
 }

@@ -42,6 +42,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 
+/**
+ * Provides an initial abstraction in the form of a Petri net. This is primarily applicable for concurrent programs.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of transitions
+ */
 public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> {
 
@@ -53,6 +61,16 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final PredicateFactory mPredicateFactory;
 	private final boolean mRemoveDeadEnds;
 
+	/**
+	 * Create a new instance.
+	 *
+	 * @param services
+	 *            Ultimate services used in the creation of the Petri net
+	 * @param predicateFactory
+	 *            A predicate factory used to construct places of the Petri net
+	 * @param removeDeadEnds
+	 *            {@code true} to remove dead ends from the created Petri net, {@code false} to return it unmodified
+	 */
 	public PetriInitialAbstractionProvider(final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory, final boolean removeDeadEnds) {
 		mServices = services;

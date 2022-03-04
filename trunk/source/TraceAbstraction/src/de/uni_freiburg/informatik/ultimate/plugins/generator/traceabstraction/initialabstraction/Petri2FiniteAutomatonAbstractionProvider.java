@@ -49,6 +49,18 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
+/**
+ * Transforms an initial abstraction in the form of a Petri net to a finite automaton.
+ *
+ * This class is abstract. Users should pick one of the concrete subclasses {@link Eager} or {@link Lazy} as required.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of transitions
+ * @param <A>
+ *            The type of automaton that is provided
+ */
 public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTransition<?>, A extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 		implements IInitialAbstractionProvider<L, A> {
 	private final Map<IcfgLocation, Boolean> mHopelessCache = new HashMap<>();
@@ -102,9 +114,28 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		});
 	}
 
+	/**
+	 * Transforms an initial abstraction in the form of a Petri net to a finite automaton, by eagerly exploring and
+	 * explicitly constructing all reachable states of the reachability graph.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of transitions
+	 */
 	public static class Eager<L extends IIcfgTransition<?>>
 			extends Petri2FiniteAutomatonAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
 
+		/**
+		 * Create a new instance of the provider.
+		 *
+		 * @param underlying
+		 *            The underlying provider whose abstraction is transformed to a finite automaton
+		 * @param stateFactory
+		 *            The state factory used to create the automaton states
+		 * @param services
+		 *            Automata library services used in the transformation
+		 */
 		public Eager(final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
 				final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory,
 				final AutomataLibraryServices services) {
@@ -130,9 +161,28 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		}
 	}
 
+	/**
+	 * Transforms an initial abstraction in the form of a Petri net to a finite automaton. Transitions and states in the
+	 * automaton are created only on-demand, not eagerly.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of transitions
+	 */
 	public static class Lazy<L extends IIcfgTransition<?>>
 			extends Petri2FiniteAutomatonAbstractionProvider<L, LazyPetriNet2FiniteAutomaton<L, IPredicate>> {
 
+		/**
+		 * Create a new instance.
+		 *
+		 * @param underlying
+		 *            The underlying provider whose provided abstraction is transformed.
+		 * @param stateFactory
+		 *            The state factory used to create automaton states
+		 * @param services
+		 *            Automata library services used in the transformation
+		 */
 		public Lazy(final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
 				final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory,
 				final AutomataLibraryServices services) {
