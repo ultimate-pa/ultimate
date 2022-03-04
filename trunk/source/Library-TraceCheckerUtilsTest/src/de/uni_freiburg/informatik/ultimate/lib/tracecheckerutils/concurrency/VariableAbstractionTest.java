@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -75,15 +74,16 @@ public class VariableAbstractionTest {
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
+	private static final String PROCEDURE = "VariableAbstractionTest";
+
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 	private SemanticIndependenceConditionGenerator mGenerator;
-	ICopyActionFactory<IcfgEdge> mCopyFactory;
 	CfgSmtToolkit mToolkit;
-	VariableAbstraction<IcfgEdge> mVaAbs;
+	VariableAbstraction<BasicInternalAction> mVaAbs;
 
 	// variables for SimpleSet example
 	private IProgramVar x, y, a, b, sz, r1, r2, s1, s2;
@@ -110,13 +110,22 @@ public class VariableAbstractionTest {
 		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript,
 				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
 		mToolkit = new CfgSmtToolkit(null, mMgdScript, mSymbolTable, null, null, null, null, null, null);
-		mCopyFactory = new IcfgCopyFactory(mServices, mToolkit);
 		final Set<IProgramVar> mAllVariables = new HashSet<>();
 		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
 			mAllVariables.add(nOV);
 		}
-		mVaAbs = new VariableAbstraction<>(mCopyFactory, mMgdScript, mAllVariables);
+		mVaAbs = new VariableAbstraction<>(VariableAbstractionTest::copyAction, mMgdScript, mAllVariables);
 
+	}
+
+	private static BasicInternalAction copyAction(final BasicInternalAction old,
+			final UnmodifiableTransFormula newTransformula, final UnmodifiableTransFormula newTransformulaWithBE) {
+		assert newTransformulaWithBE == null : "TF with branch encoders should be null";
+		return createAction(newTransformula);
+	}
+
+	private static BasicInternalAction createAction(final UnmodifiableTransFormula newTransformula) {
+		return new BasicInternalAction(PROCEDURE, PROCEDURE, newTransformula);
 	}
 
 	@After
@@ -216,7 +225,7 @@ public class VariableAbstractionTest {
 
 	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> constrainingVars) {
 		final UnmodifiableTransFormula abstractedTF =
-				mVaAbs.abstractTransFormula(utf, mVaAbs.getTransformVariables(utf, constrainingVars));
+				mVaAbs.abstractLetter(createAction(utf), constrainingVars).getTransformula();
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
@@ -235,7 +244,8 @@ public class VariableAbstractionTest {
 
 	private void runTestAbstractionDoesNothing(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVars) {
-		final UnmodifiableTransFormula abstractedTF = mVaAbs.abstractTransFormula(utf, constrainingVars);
+		final UnmodifiableTransFormula abstractedTF =
+				mVaAbs.abstractLetter(createAction(utf), constrainingVars).getTransformula();
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
