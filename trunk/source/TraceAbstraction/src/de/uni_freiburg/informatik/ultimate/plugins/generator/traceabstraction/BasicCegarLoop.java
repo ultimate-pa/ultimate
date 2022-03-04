@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
@@ -132,7 +131,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
@@ -328,18 +326,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		mAbstraction = mAbstractionProvider.getInitialAbstraction(mIcfg, mErrorLocs);
-
-		// TODO see if this can be done properly when mHoareAnnotationLocations is set up in CegarLoopUtils
-		if (mComputeHoareAnnotation
-				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
-			final INestedWordAutomaton<L, IPredicate> nwa = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
-			for (final IPredicate pred : nwa.getStates()) {
-				for (final OutgoingCallTransition<L, IPredicate> trans : nwa.callSuccessors(pred)) {
-					mHoareAnnotationLocations.add(((ISLPredicate) pred).getProgramPoint());
-					mHoareAnnotationLocations.add(((ISLPredicate) trans.getSucc()).getProgramPoint());
-				}
-			}
-		}
 
 		// TODO see if this can be an IInitialAbstractionProvider; this is the only use of mWitnessAutomaton
 		if (mWitnessAutomaton != null) {

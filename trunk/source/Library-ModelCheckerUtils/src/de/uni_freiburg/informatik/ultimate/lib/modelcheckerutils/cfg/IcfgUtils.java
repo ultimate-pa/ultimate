@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
@@ -81,6 +83,11 @@ public class IcfgUtils {
 			final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(b);
 			return loa != null && loa.getLoopEntryType() == LoopEntryType.GOTO;
 		})).collect(Collectors.toSet());
+	}
+
+	public static <LOC extends IcfgLocation> Set<LOC> getCallerAndCalleePoints(final IIcfg<LOC> icfg) {
+		return new IcfgEdgeIterator(icfg).asStream().filter(e -> e instanceof IIcfgCallTransition<?>)
+				.flatMap(e -> Stream.of((LOC) e.getSource(), (LOC) e.getTarget())).collect(Collectors.toSet());
 	}
 
 	public static boolean isConcurrent(final IIcfg<?> icfg) {
