@@ -204,11 +204,19 @@ public class SpecificVariableAbstraction<L extends IAction>
 		final Set<IProgramVar> nOutLevel = new HashSet<>(mAllProgramVars);
 		nOutLevel.removeAll(input.getTransformula().getOutVars().keySet());
 		nInLevel.removeAll(input.getTransformula().getInVars().keySet());
-		final VarAbsConstraints<L> nLevel = new VarAbsConstraints<>(constraints.getCopyOfInContraintsMap(),
-				constraints.getCopyOfOutContraintsMap());
-		nLevel.addInVars(input, nInLevel);
-		nLevel.addOutVars(input, nOutLevel);
-		return nLevel;
+		final Map<L, Set<IProgramVar>> nInConstr = new HashMap<>(constraints.getInContraintsMap());
+		final Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>(constraints.getOutContraintsMap());
+		if (nInConstr.containsKey(input)) {
+			nInConstr.get(input).addAll(nInLevel);
+		} else {
+			nInConstr.put(input, nInLevel);
+		}
+		if (nOutConstr.containsKey(input)) {
+			nOutConstr.get(input).addAll(nOutLevel);
+		} else {
+			nInConstr.put(input, nOutLevel);
+		}
+		return new VarAbsConstraints<>(nInConstr, nOutConstr);
 	}
 
 	@Override

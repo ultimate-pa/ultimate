@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,18 +46,21 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 	public VarAbLattice(final Set<IProgramVar> allVars, final Set<L> allLetters) {
 		mAllVars = allVars;
 		mAllLetters = allLetters;
-		mBottom = new VarAbsConstraints<>();
+		final Map<L, Set<IProgramVar>> inConstr = new HashMap<>();
+		final Map<L, Set<IProgramVar>> outConstr = new HashMap<>();
+
 		for (final L l : mAllLetters) {
-			mBottom.addInVars(l, mAllVars);
-			mBottom.addOutVars(l, mAllVars);
+			inConstr.put(l, mAllVars);
+			outConstr.put(l, mAllVars);
 		}
+		mBottom = new VarAbsConstraints<>(inConstr, outConstr);
 	}
 
 	@Override
 	public ComparisonResult compare(final VarAbsConstraints<L> o1, final VarAbsConstraints<L> o2) {
 
-		return ComparisonResult.aggregate(compareMaps(o1.getCopyOfInContraintsMap(), o2.getCopyOfInContraintsMap()),
-				compareMaps(o1.getCopyOfOutContraintsMap(), o2.getCopyOfOutContraintsMap()));
+		return ComparisonResult.aggregate(compareMaps(o1.getInContraintsMap(), o2.getInContraintsMap()),
+				compareMaps(o1.getOutContraintsMap(), o2.getOutContraintsMap()));
 	}
 
 	public ComparisonResult compareMapsSameLetters(final Map<L, Set<IProgramVar>> m1,
@@ -125,7 +129,7 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 	@Override
 	public VarAbsConstraints<L> getTop() {
 		// TODO Auto-generated method stub
-		return new VarAbsConstraints<>();
+		return new VarAbsConstraints<>(Collections.emptyMap(), Collections.emptyMap());
 	}
 
 	@Override
@@ -133,8 +137,8 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 		// TODO Auto-generated method stub
 		// the supremum (h1 OR h2) should usually be a Object with all the InConstraints and all the OutConstraints.
 		// Since we have to think inversely, it should be the Object with the Cut of all Constraints (h1 AND h2)
-		return new VarAbsConstraints<>(supremumMaps(h1.getCopyOfInContraintsMap(), h2.getCopyOfInContraintsMap()),
-				supremumMaps(h1.getCopyOfOutContraintsMap(), h2.getCopyOfOutContraintsMap()));
+		return new VarAbsConstraints<>(supremumMaps(h1.getInContraintsMap(), h2.getInContraintsMap()),
+				supremumMaps(h1.getOutContraintsMap(), h2.getOutContraintsMap()));
 
 	}
 
@@ -164,15 +168,26 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 	@Override
 	// Look at commentary on supremum. infimum and supremum is flipped in this class. infimum is h1 OR h2
 	public VarAbsConstraints<L> infimum(final VarAbsConstraints<L> h1, final VarAbsConstraints<L> h2) {
-		final VarAbsConstraints<L> result =
-				new VarAbsConstraints<>(h1.getCopyOfInContraintsMap(), h2.getCopyOfOutContraintsMap());
-		for (final Entry<L, Set<IProgramVar>> en : h2.getCopyOfInContraintsMap().entrySet()) {
-			result.addInVars(en.getKey(), en.getValue());
+		final Map<L, Set<IProgramVar>> inResult = new HashMap<>(h1.getInContraintsMap());
+		final Map<L, Set<IProgramVar>> OutResult = new HashMap<>(h1.getOutContraintsMap());
+		// final VarAbsConstraints<L> inResult = new VarAbsConstraints<>(h1.getCopyOfInContraintsMap(),
+		// h2.getCopyOfOutContraintsMap());
+		for (final Entry<L, Set<IProgramVar>> en : h2.getInContraintsMap().entrySet()) {
+			if (inResult.containsKey(en.getKey())) {
+				inResult.get(en.getKey()).addAll(en.getValue());
+			} else {
+				inResult.put(en.getKey(), en.getValue());
+			}
 		}
-		for (final Entry<L, Set<IProgramVar>> en : h2.getCopyOfOutContraintsMap().entrySet()) {
-			result.addOutVars(en.getKey(), en.getValue());
+		for (final Entry<L, Set<IProgramVar>> en : h2.getOutContraintsMap().entrySet()) {
+			// result.addOutVars(en.getKey(), en.getValue());
+			if (OutResult.containsKey(en.getKey())) {
+				OutResult.get(en.getKey()).addAll(en.getValue());
+			} else {
+				OutResult.put(en.getKey(), en.getValue());
+			}
 		}
-		return result;
+		return new VarAbsConstraints<>(inResult, OutResult);
 	}
 
 }
