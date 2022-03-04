@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.co
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
-public class VariableAbstractionTest {
+public class SpecificVariableAbstractionTest {
 
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10000000000000L;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
@@ -92,6 +92,7 @@ public class VariableAbstractionTest {
 	private IProgramVar arr, max, top, e1, e2;
 
 	private Term axioms;
+	private SpecificVariableAbstraction<IcfgEdge> mSpVaAbs;
 
 	@Before
 	public void setUp() {
@@ -116,6 +117,7 @@ public class VariableAbstractionTest {
 			mAllVariables.add(nOV);
 		}
 		mVaAbs = new VariableAbstraction<>(mCopyFactory, mMgdScript, mAllVariables);
+		mSpVaAbs = new SpecificVariableAbstraction<>(mCopyFactory, mMgdScript, mAllVariables, Collections.emptySet());
 
 	}
 
@@ -175,28 +177,29 @@ public class VariableAbstractionTest {
 
 	@Test
 	public void sharedInOutVar() {
-		runTestAbstraction(yIsXPlusY(), Set.of(y));
+		runTestAbstraction(yIsXPlusY(), Set.of(y), Set.of(y));
 	}
 
 	@Test
 	public void rightSideAbstracted() {
 		// abstract variable on right side, but not left side
-		final Set<IProgramVar> constrVars = new HashSet<>();
-		constrVars.add(y);
-		runTestAbstraction(yIsXTimesTwo(), constrVars);
+		final Set<IProgramVar> constrInVars = new HashSet<>();
+		final Set<IProgramVar> constrOutVars = new HashSet<>();
+		constrInVars.add(y);
+		runTestAbstraction(yIsXTimesTwo(), constrInVars, constrOutVars);
 	}
 
 	@Test
 	public void leftSideAbstracton() {
 		final Set<IProgramVar> constrVars = new HashSet<>();
 		constrVars.add(x);
-		runTestAbstraction(yIsXTimesTwo(), constrVars);
+		runTestAbstraction(yIsXTimesTwo(), constrVars, constrVars);
 	}
 
 	@Test
 	public void bothSidesDifferentVariablesEmptyConstrVars() {
 		final Set<IProgramVar> constrVars = new HashSet<>();
-		runTestAbstraction(yIsXTimesTwo(), constrVars);
+		runTestAbstraction(yIsXTimesTwo(), constrVars, constrVars);
 	}
 
 	@Test
@@ -211,12 +214,14 @@ public class VariableAbstractionTest {
 	@Test
 	public void bothSidesSameVariable() {
 		final Set<IProgramVar> constrVars = new HashSet<>();
-		runTestAbstraction(xIsXPlusOne(), constrVars);
+		runTestAbstraction(xIsXPlusOne(), constrVars, constrVars);
 	}
 
-	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> constrainingVars) {
+	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> inConstr,
+			final Set<IProgramVar> outConstr) {
 		final UnmodifiableTransFormula abstractedTF =
-				mVaAbs.abstractTransFormula(utf, mVaAbs.getTransformVariables(utf, constrainingVars));
+				mSpVaAbs.abstractTransFormula(utf, SpecificVariableAbstraction.getTransformVariablesIn(utf, inConstr),
+						SpecificVariableAbstraction.getTransformVariablesOut(utf, outConstr));
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";

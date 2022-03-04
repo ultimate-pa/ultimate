@@ -93,14 +93,13 @@ public class VariableAbstraction<L extends IAction>
 				|| nothingWillChange(inLetter.getTransformula(), constrainingVariables)) {
 			return inLetter;
 		}
-		final Set<IProgramVar> transform = new HashSet<>(inLetter.getTransformula().getInVars().keySet());
-		transform.addAll(inLetter.getTransformula().getOutVars().keySet());
-		transform.removeAll(constrainingVariables);
-		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(), transform);
+
+		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(),
+				getTransformVariables(inLetter.getTransformula(), constrainingVariables));
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
 					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(),
-					constrainingVariables);
+					getTransformVariables(inLetter.getTransformula(), constrainingVariables));
 			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 		}
 		return mCopyFactory.copy(inLetter, newFormula, null);
@@ -115,6 +114,14 @@ public class VariableAbstraction<L extends IAction>
 		}
 		return false;
 
+	}
+
+	static Set<IProgramVar> getTransformVariables(final UnmodifiableTransFormula utf,
+			final Set<IProgramVar> constrainingVariables) {
+		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
+		transform.addAll(utf.getOutVars().keySet());
+		transform.removeAll(constrainingVariables);
+		return transform;
 	}
 
 	/**

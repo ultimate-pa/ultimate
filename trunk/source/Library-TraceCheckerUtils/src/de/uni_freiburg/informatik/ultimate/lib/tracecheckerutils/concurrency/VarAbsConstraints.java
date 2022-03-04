@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -39,19 +39,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /*
  * Data Structure to assign constraining inVars and constraining outVars to a Letter L
  * Represented as two Maps.
- * Not optimized deleting constraints may lead to unsound results.
- *
+ * Hopefully Immutable
  */
 
 public class VarAbsConstraints<L extends IAction> {
-	// Letter mapsto a Pair of InVars(Set) and OutV ars (Set)
+	// Letter mapsto a Pair of InVars(Set) and OutVars(Set)
 	private final Map<L, Set<IProgramVar>> mInConstr;
 	private final Map<L, Set<IProgramVar>> mOutConstr;
-
-	public VarAbsConstraints() {
-		mInConstr = new HashMap<>();
-		mOutConstr = new HashMap<>();
-	}
 
 	public VarAbsConstraints(final Map<L, Set<IProgramVar>> in, final Map<L, Set<IProgramVar>> out) {
 		mInConstr = in;
@@ -96,12 +90,12 @@ public class VarAbsConstraints<L extends IAction> {
 		return mOutConstr.get(letter);
 	}
 
-	public Map<L, Set<IProgramVar>> getCopyOfInContraintsMap() {
-		return new HashMap<>(mInConstr);
+	public Map<L, Set<IProgramVar>> getInContraintsMap() {
+		return mInConstr;
 	}
 
-	public Map<L, Set<IProgramVar>> getCopyOfOutContraintsMap() {
-		return new HashMap<>(mOutConstr);
+	public Map<L, Set<IProgramVar>> getOutContraintsMap() {
+		return mOutConstr;
 	}
 
 	public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
@@ -120,43 +114,24 @@ public class VarAbsConstraints<L extends IAction> {
 		return new Pair<>(in, out);
 	}
 
-	public void addNewLetter(final L letter, final Set<IProgramVar> inVars, final Set<IProgramVar> outVars) {
-		mInConstr.put(letter, inVars);
-		mOutConstr.put(letter, outVars);
+	@Override
+	public int hashCode() {
+		return Objects.hash(mInConstr, mOutConstr);
 	}
 
-	public void addNewInLetter(final L letter, final Set<IProgramVar> inVars) {
-		mInConstr.put(letter, inVars);
-	}
-
-	public void addNewOutLetter(final L letter, final Set<IProgramVar> outVars) {
-		mInConstr.put(letter, outVars);
-	}
-
-	public void addInVar(final L letter, final IProgramVar inVar) {
-		if (!mInConstr.containsKey(letter)) {
-			this.addNewInLetter(letter, Collections.emptySet());
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
 		}
-		mInConstr.get(letter).add(inVar);
-
-	}
-
-	public void addInVars(final L letter, final Iterable<IProgramVar> inVars) {
-		for (final IProgramVar pv : inVars) {
-			this.addInVar(letter, pv);
+		if (obj == null) {
+			return false;
 		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final VarAbsConstraints other = (VarAbsConstraints) obj;
+		return Objects.equals(mInConstr, other.mInConstr) && Objects.equals(mOutConstr, other.mOutConstr);
 	}
 
-	public void addOutVar(final L letter, final IProgramVar outVar) {
-		if (!mOutConstr.containsKey(letter)) {
-			this.addNewOutLetter(letter, Collections.emptySet());
-		}
-		mOutConstr.get(letter).add(outVar);
-	}
-
-	public void addOutVars(final L letter, final Iterable<IProgramVar> outVars) {
-		for (final IProgramVar pv : outVars) {
-			this.addOutVar(letter, pv);
-		}
-	}
 }
