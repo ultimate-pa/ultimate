@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
@@ -93,11 +93,10 @@ public class VariableAbstraction<L extends IAction>
 				|| nothingWillChange(inLetter.getTransformula(), constrainingVariables)) {
 			return inLetter;
 		}
-		final UnmodifiableTransFormula newFormula =
-				abstractTransFormula(inLetter.getTransformula(), constrainingVariables);
-		// Ist relativ leicht zu sehen, dass die Abstraktion die TF nicht ändern wird (weil z.B. alle benutzten
-		// Variablen constraining sind)
-
+		final Set<IProgramVar> transform = new HashSet<>(inLetter.getTransformula().getInVars().keySet());
+		transform.addAll(inLetter.getTransformula().getOutVars().keySet());
+		transform.removeAll(constrainingVariables);
+		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(), transform);
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
 					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(),
@@ -126,57 +125,52 @@ public class VariableAbstraction<L extends IAction>
 	 */
 
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
-			final Set<IProgramVar> constrainingVars) {
+			final Set<IProgramVar> transform) {
 		// transform is the set of variables that can be havoced out
-		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
-		transform.addAll(utf.getAssignedVars());
-		transform.removeAll(constrainingVars);
-		final Map<IProgramVar, TermVariable> nInVars = new HashMap<>(utf.getInVars());
-		final Map<IProgramVar, TermVariable> nOutVars = new HashMap<>(utf.getOutVars());
-		final Set<IProgramVar> assignedVars = utf.getAssignedVars();
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
+		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
 		for (final IProgramVar v : transform) {
-			if (assignedVars.contains(v)) {
-				nAuxVars.add(nOutVars.get(v));
-				final TermVariable nov = mMscript.constructFreshCopy(nOutVars.get(v));
-				nOutVars.put(v, nov);
+			if (utf.getInVars().containsKey(v)) {
+				final TermVariable nInVar = mMscript.constructFreshCopy(utf.getInVars().get(v));
+				substitutionMap.put(utf.getInVars().get(v), nInVar);
+				nAuxVars.add(nInVar);
 			}
-			if (nInVars.containsKey(v)) {
-				nAuxVars.add(nInVars.get(v));
-				nInVars.remove(v);
-				if (!assignedVars.contains(v)) {
-					nOutVars.remove(v);
-				}
+			if (utf.getOutVars().containsKey(v) && !substitutionMap.containsKey(utf.getOutVars().get(v))) {
+				final TermVariable nOutVar = mMscript.constructFreshCopy(utf.getOutVars().get(v));
+				substitutionMap.put(utf.getOutVars().get(v), nOutVar);
+				nAuxVars.add(nOutVar);
 			}
-
 		}
+		return buildTransFormula(utf, substitutionMap, nAuxVars);
+
+	}
+
+	UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
+			final Map<TermVariable, TermVariable> substitutionMap, final Set<TermVariable> nAuxVars) {
 		final TransFormulaBuilder tfBuilder;
 		final Set<IProgramConst> ntc = new HashSet<>(utf.getNonTheoryConsts());
 		if (utf.getBranchEncoders().isEmpty()) {
-			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, true, null, false);
+			tfBuilder = new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), false, ntc, true, null, false);
 		} else {
 			final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
-			tfBuilder = new TransFormulaBuilder(nInVars, nOutVars, false, ntc, false, be, false);
+			tfBuilder = new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), false, ntc, false, be, false);
 		}
-
-		if (nAuxVars.isEmpty()) {
-			tfBuilder.setFormula(utf.getFormula());
-		} else {
-			tfBuilder.setFormula(mMscript.getScript().quantifier(QuantifiedFormula.EXISTS,
-					nAuxVars.toArray(TermVariable[]::new), utf.getFormula()));
+		for (final TermVariable aV : nAuxVars) {
+			tfBuilder.addAuxVar(aV);
 		}
+		tfBuilder.setFormula(Substitution.apply(mMscript, substitutionMap, utf.getFormula()));
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula abstracted = tfBuilder.finishConstruction(mMscript);
+		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMscript);
 
-		assert abstracted.getAssignedVars().equals(assignedVars) : "Abstraction should not change assigned variables";
+		assert newTransFormula.getAssignedVars()
+				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
 		assert utf.getInVars().keySet()
-				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should not read more variables";
-		assert constrainingVars
-				.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read constrained variables";
+				.containsAll(newTransFormula.getInVars().keySet()) : "Abstraction should not read more variables";
+		// assert constrainingVars.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read
+		// constrained variables";
 
-		assert TransFormulaUtils.checkImplication(utf, abstracted, mMscript) != LBool.SAT : "not an abstraction";
-
-		return abstracted;
+		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
+		return newTransFormula;
 	}
 
 	// Verband - Lattice
