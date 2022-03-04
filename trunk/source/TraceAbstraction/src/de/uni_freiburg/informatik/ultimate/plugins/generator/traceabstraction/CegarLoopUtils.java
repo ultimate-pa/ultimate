@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -185,10 +184,10 @@ public class CegarLoopUtils {
 	}
 
 	private static <L extends IIcfgTransition<?>, F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
-			IInitialAbstractionProvider<L, ? extends IAutomaton<L, IPredicate>> createAutomataAbstractionProvider(
-					final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
-					final IIcfg<?> icfg, final PredicateFactory predicateFactory, final F stateFactory,
-					final Class<L> transitionClazz, final TAPreferences pref) {
+			IInitialAbstractionProvider<L, ?> createAutomataAbstractionProvider(final IUltimateServiceProvider services,
+					final IPLBECompositionFactory<L> compositionFactory, final IIcfg<?> icfg,
+					final PredicateFactory predicateFactory, final F stateFactory, final Class<L> transitionClazz,
+					final TAPreferences pref) {
 		if (!IcfgUtils.isConcurrent(icfg)) {
 			return new NwaInitialAbstractionProvider<>(services, stateFactory, pref.interprocedural(),
 					predicateFactory);
