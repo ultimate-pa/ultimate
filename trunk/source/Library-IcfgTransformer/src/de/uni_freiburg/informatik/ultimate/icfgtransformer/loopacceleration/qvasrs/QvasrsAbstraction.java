@@ -28,10 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -42,10 +46,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
-public class QvasrsAbstraction {
+public class QvasrsAbstraction implements IVasrsAbstraction<Rational> {
+	private final QvasrAbstraction mQvasrAbstraction;
 	private final Rational[][] mSimulationMatrix;
 	private final Set<Term> mStates;
 	private final Set<Triple<Term, Pair<Rational[], Rational[]>, Term>> mTransitions;
+	private Term mPreCon;
+	private Term mPostCon;
+	private final Map<IProgramVar, TermVariable> mInVars;
+	private final Map<IProgramVar, TermVariable> mOutVars;
 
 	/**
 	 * Create a new Qvasrs-abstraction.
@@ -54,11 +63,26 @@ public class QvasrsAbstraction {
 	 *            The abstractions simulation matrix
 	 * @param states
 	 *            The set of states.
+	 *
+	 * @param abstraction
+	 *            A {@link QvasrAbstraction} used for computing states and transitions.
+	 * @param states
+	 *            Set of control states in form of {@link Term}
+	 * @param inVars
+	 *            Map of invariables.
+	 * @param outVars
+	 *            Map of outvariables.
 	 */
-	public QvasrsAbstraction(final Rational[][] simulationMatrix, final Set<Term> states) {
-		mSimulationMatrix = simulationMatrix;
+	public QvasrsAbstraction(final QvasrAbstraction abstraction, final Set<Term> states,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
+		mQvasrAbstraction = abstraction;
+		mSimulationMatrix = abstraction.getSimulationMatrix();
 		mStates = states;
 		mTransitions = new HashSet<>();
+		mPreCon = null;
+		mPostCon = null;
+		mInVars = inVars;
+		mOutVars = outVars;
 	}
 
 	/**
@@ -69,19 +93,72 @@ public class QvasrsAbstraction {
 	 *            A new transition (p, [r, a], q). p, q being predicates and [r, a] is a pair of rational reset and
 	 *            addition vectors.
 	 */
+	@Override
 	public void addTransition(final Triple<Term, Pair<Rational[], Rational[]>, Term> transition) {
 		mTransitions.add(transition);
 	}
 
+	@Override
+	public QvasrAbstraction getAbstraction() {
+		return mQvasrAbstraction;
+	}
+
+	@Override
 	public Set<Term> getStates() {
 		return mStates;
 	}
 
+	@Override
 	public Set<Triple<Term, Pair<Rational[], Rational[]>, Term>> getTransitions() {
 		return mTransitions;
 	}
 
+	@Override
 	public Rational[][] getSimulationMatrix() {
 		return mSimulationMatrix;
+	}
+
+	@Override
+	public Term getPreState() {
+		return mPreCon;
+	}
+
+	@Override
+	public Term getPostState() {
+		return mPostCon;
+	}
+
+	@Override
+	public void setPreState(final Term pre) {
+		mPreCon = pre;
+	}
+
+	@Override
+	public void setPostState(final Term post) {
+		mPostCon = post;
+	}
+
+	@Override
+	public Map<IProgramVar, TermVariable> getInVars() {
+		return mInVars;
+	}
+
+	@Override
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		return mOutVars;
+	}
+
+	@Override
+	public void setPrePostStates() {
+		final Set<Term> possiblePreStates = new HashSet<>(mStates);
+		final Set<Term> possiblePostStates = new HashSet<>(mStates);
+		for (final Triple<Term, Pair<Rational[], Rational[]>, Term> transition : mTransitions) {
+			if (transition.getFirst() != transition.getThird()) {
+				possiblePreStates.remove(transition.getFirst());
+				possiblePostStates.remove(transition.getThird());
+			}
+		}
+		mPreCon = possiblePreStates.toArray(new Term[1])[0];
+		mPostCon = possiblePostStates.toArray(new Term[1])[0];
 	}
 }

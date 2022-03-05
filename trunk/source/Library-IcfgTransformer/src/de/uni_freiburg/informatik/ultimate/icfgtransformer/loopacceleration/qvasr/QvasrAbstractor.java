@@ -398,7 +398,7 @@ public class QvasrAbstractor {
 		final int prunedLength = matrix.length - toBeEliminated.size();
 		final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
 		int cnt = 0;
-		for (int k = 0; k < prunedLength; k++) {
+		for (int k = 0; k < matrix.length; k++) {
 			if (!toBeEliminated.contains(k)) {
 				for (int l = 0; l < matrix[0].length; l++) {
 					prunedMatrix[cnt][l] = matrix[k][l];

@@ -1,13 +1,14 @@
-package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.horn;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.hornverifier.algorithm;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -31,12 +32,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
- * Class to create horn clause constraints from a CFG to verify the corresponding program.
+ * Class to create a set of horn-clauses from a given set of provided transitions.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class Cfg2HornClauses {
+public class HornClauseSystem {
 	private static final String FUNCTION_NAME = "Inv";
 
 	private final TermTransferrer mTermTransferrer;
@@ -51,12 +52,12 @@ public class Cfg2HornClauses {
 	private final Map<String, Integer> mNumberOfThreads;
 	private final Term mBottom;
 
-	public Cfg2HornClauses(final Map<String, Integer> numberOfThreads, final ManagedScript managedScript,
-			final CfgSmtToolkit CfgSmtToolkit) {
-		final IIcfgSymbolTable symbolTable = CfgSmtToolkit.getSymbolTable();
+	public HornClauseSystem(final Map<String, Integer> numberOfThreads, final ManagedScript managedScript,
+			final CfgSmtToolkit cfgSmtToolkit, final Predicate<IProgramVar> variableFilter) {
+		final IIcfgSymbolTable symbolTable = cfgSmtToolkit.getSymbolTable();
 		mManagedScript = managedScript;
-		mTermTransferrer = new TermTransferrer(CfgSmtToolkit.getManagedScript().getScript(), getScript());
-		mGlobalVariables = new ArrayList<>(symbolTable.getGlobals());
+		mTermTransferrer = new TermTransferrer(cfgSmtToolkit.getManagedScript().getScript(), getScript());
+		mGlobalVariables = symbolTable.getGlobals().stream().filter(variableFilter).collect(Collectors.toList());
 		mNumberOfThreads = new LinkedHashMap<>(numberOfThreads);
 		mDimension = mGlobalVariables.size();
 		mLocalVariables = new LinkedHashMap<>();
@@ -66,9 +67,8 @@ public class Cfg2HornClauses {
 		mBottom = numeral(-1);
 		for (final Entry<String, Integer> entry : mNumberOfThreads.entrySet()) {
 			final String proc = entry.getKey();
-			final List<IProgramVar> localVars = symbolTable.getLocals(proc).stream()
-					.sorted((x, y) -> x.getGloballyUniqueId().compareTo(y.getGloballyUniqueId()))
-					.collect(Collectors.toList());
+			final List<IProgramVar> localVars =
+					symbolTable.getLocals(proc).stream().filter(variableFilter).collect(Collectors.toList());
 			final int n = entry.getValue();
 			for (int i = 0; i < n; i++) {
 				for (final IProgramVar var : localVars) {
@@ -83,6 +83,11 @@ public class Cfg2HornClauses {
 		mManagedScript.lock(this);
 		declareFunction();
 		assertSymmetry();
+	}
+
+	public HornClauseSystem(final Map<String, Integer> numberOfThreads, final ManagedScript managedScript,
+			final CfgSmtToolkit cfgSmtToolkit) {
+		this(numberOfThreads, managedScript, cfgSmtToolkit, x -> true);
 	}
 
 	// Order Inv(global, location_1, local_1, ..., location_n, local_n)
@@ -142,7 +147,7 @@ public class Cfg2HornClauses {
 		return mManagedScript.getScript();
 	}
 
-	private Term getPredicate(final Map<IProgramVar, ? extends Term> globalVarMap,
+	private Term[] getParams(final Map<IProgramVar, ? extends Term> globalVarMap,
 			final NestedMap3<String, Integer, IProgramVar, Term> localVarMap,
 			final NestedMap2<String, Integer, Term> locationMap) {
 		final Term[] params = new Term[mDimension];
@@ -163,7 +168,13 @@ public class Cfg2HornClauses {
 				}
 			}
 		}
-		return getScript().term(FUNCTION_NAME, params);
+		return params;
+	}
+
+	private Term getPredicate(final Map<IProgramVar, ? extends Term> globalVarMap,
+			final NestedMap3<String, Integer, IProgramVar, Term> localVarMap,
+			final NestedMap2<String, Integer, Term> locationMap) {
+		return getScript().term(FUNCTION_NAME, getParams(globalVarMap, localVarMap, locationMap));
 	}
 
 	private Term getPredicate(final NestedMap2<String, Integer, Term> locationMap) {
@@ -172,13 +183,8 @@ public class Cfg2HornClauses {
 
 	private void assertClause(final Term... terms) {
 		final Term clause = Util.implies(getScript(), terms);
-		final TermVariable[] freeVars = clause.getFreeVars();
-		if (freeVars.length == 0) {
-			mManagedScript.assertTerm(this, clause);
-		} else {
-			final Term quantified = getScript().quantifier(QuantifiedFormula.FORALL, freeVars, clause);
-			mManagedScript.assertTerm(this, quantified);
-		}
+		final List<TermVariable> freeVars = Arrays.asList(clause.getFreeVars());
+		mManagedScript.assertTerm(this, SmtUtils.quantifier(getScript(), QuantifiedFormula.FORALL, freeVars, clause));
 	}
 
 	private Term getLocIndexTerm(final IcfgLocation loc, final String proc) {
@@ -276,9 +282,5 @@ public class Cfg2HornClauses {
 		return mManagedScript.checkSat(this);
 	}
 
-	public void unlockScript() {
-		mManagedScript.unlock(this);
-	}
-
-	// TODO: Allow to get the model and "interpret" it correctly as an invariant?
+	// TODO: Return a model for a satisfiable system!
 }

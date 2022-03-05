@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.Equivalence;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -105,5 +106,17 @@ public interface IPolynomialTerm {
 	 *         exists.
 	 */
 	IPolynomialTerm divInvertible(Rational divisor);
+
+	/**
+	 * @return
+	 *         <ul>
+	 *         <li>{@link Equivalence#EQUALS} if (= this otherTerm) is valid for all
+	 *         variable assignments
+	 *         <li>{@link Equivalence#DISTINCT} if (not (= this otherTerm)) is valid
+	 *         for all variable assignments
+	 *         <li>{@link Equivalence#INCOMPARABLE} otherwise. </ ul>
+	 *
+	 */
+	Equivalence compare(IPolynomialTerm otherTerm);
 
 }

@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -235,6 +236,22 @@ public class TransFormulaBuilder {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		}
 		mOutVars.clear();
+	}
+
+	/**
+	 * Remove from the outVars all local vars and outVars.
+	 */
+	public void removeOutVarsOfLocalContext() {
+		if (mConstructionFinished) {
+			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		}
+		final Iterator<Entry<IProgramVar, TermVariable>> it = mOutVars.entrySet().iterator();
+		while (it.hasNext()) {
+			final Entry<IProgramVar, TermVariable> next = it.next();
+			if (!next.getKey().isGlobal() || next.getKey().isOldvar()) {
+				it.remove();
+			}
+		}
 	}
 
 	public boolean addProgramConst(final IProgramConst progConst) {

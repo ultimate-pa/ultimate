@@ -7,12 +7,14 @@
 
     <tasks name="reach-svcomp-all">
         <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-        
-        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
-        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+
         <!-- 
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-Heap.set</includesfile>
@@ -35,6 +37,10 @@
     <rundefinition name="Automizer IcfgTranformation Jordan">
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerCTransformed.xml</option>
         <option name="-s">../../../trunk/examples/settings/automizer/LoopAccelerationJordanC.epf</option>
+    </rundefinition>
+    <rundefinition name="Automizer IcfgTranformation QVasar">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/loopacceleration/qvasr/qvasr_64.epf</option>
     </rundefinition>
     <rundefinition name="Automizer AcceleratedInterpolation Jordan">
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>

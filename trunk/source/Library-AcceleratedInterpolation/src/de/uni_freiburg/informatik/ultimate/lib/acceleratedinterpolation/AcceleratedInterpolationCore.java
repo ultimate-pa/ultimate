@@ -202,6 +202,19 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 * checked for satisfiability.
 	 */
 	public LBool acceleratedInterpolationCoreIsCorrect() {
+		// Use new Script for interpolation:
+		final ManagedScript ipScript = constructManagedScriptForInterpolation();
+		final Interpolator<L> interpolator =
+				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
+		if (mLoops.isEmpty() || mIcfg.getLoopLocations().isEmpty()) {
+			/*
+			 * No loops
+			 */
+			mLogger.info("No loops in this trace, falling back to nested interpolation");
+			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
+			mInterpolants = interpolator.getInterpolants();
+			return interpolator.getTraceCheckResult();
+		}
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
@@ -240,9 +253,9 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 					break;
 				}
 				accelerationFinishedCorrectly = true;
-				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
+				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), loop);
 				// t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
-				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
+				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, loop, false);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 					mLogger.debug("Simplified: " + SmtUtils
@@ -261,17 +274,11 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			mAccelerations.put(loophead.getKey(), accelerations);
 			mLogger.info("Starting analysis with loop acceleration approximation " + mApproximationType.toString());
 		}
-
-		// Use new Script for interpolation:
-		final ManagedScript ipScript = constructManagedScriptForInterpolation();
-		final Interpolator<L> interpolator =
-				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
-
-		if (mLoops.isEmpty() || mAccelerations.isEmpty()) {
+		if (mAccelerations.isEmpty()) {
 			/*
-			 * No loops or no acceleration
+			 * Could not compute an acceleration.
 			 */
-			mLogger.info("No loops in this trace, falling back to nested interpolation");
+			mLogger.info("Could not accelerate.");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 			mInterpolants = interpolator.getInterpolants();
 		} else {
