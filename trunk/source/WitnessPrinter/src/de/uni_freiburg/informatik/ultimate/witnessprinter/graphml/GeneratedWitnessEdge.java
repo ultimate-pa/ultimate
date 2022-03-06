@@ -211,7 +211,7 @@ public class GeneratedWitnessEdge<TE, E> {
 		final String valStr = mStringProvider.getStringFromExpression(value);
 		try {
 			new BigDecimal(valStr);
-		} catch (final Exception ex) {
+		} catch (final NumberFormatException ex) {
 			// this is no valid number literal, maybe its true or false?
 			if (!"true".equalsIgnoreCase(valStr) && !"false".equalsIgnoreCase(valStr)) {
 				// nope, give up
