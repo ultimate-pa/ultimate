@@ -61,7 +61,7 @@ public class GeneratedWitnessEdge<TE, E> {
 			mResultFunction = null;
 		} else {
 			mResultFunction =
-					mState.getVariables().stream().filter(mStringProvider::isFunctionCall).findFirst().orElse(null);
+					mState.getVariables().stream().filter(mStringProvider::isProcedureCall).findFirst().orElse(null);
 		}
 	}
 
@@ -123,7 +123,7 @@ public class GeneratedWitnessEdge<TE, E> {
 
 		final StringBuilder sb = new StringBuilder();
 		for (final E var : mState.getVariables()) {
-			if (mStringProvider.isFunctionCall(var) && var != mResultFunction) {
+			if (mStringProvider.isProcedureCall(var) && var != mResultFunction) {
 				// Only one result function can be specified per edge; others are dropped silently
 				// TODO output a warning / fail in this case ?
 				continue;

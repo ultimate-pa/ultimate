@@ -106,7 +106,7 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 	}
 
 	@Override
-	public boolean isFunctionCall(final IASTExpression expression) {
+	public boolean isProcedureCall(final IASTExpression expression) {
 		return expression instanceof IASTFunctionCallExpression;
 	}
 }

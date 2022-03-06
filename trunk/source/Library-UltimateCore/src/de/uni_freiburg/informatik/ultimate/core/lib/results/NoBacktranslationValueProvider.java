@@ -50,7 +50,7 @@ public class NoBacktranslationValueProvider<TTE, TE> implements IBacktranslation
 	}
 
 	@Override
-	public boolean isFunctionCall(final TE expression) {
+	public boolean isProcedureCall(final TE expression) {
 		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 

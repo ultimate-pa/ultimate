@@ -74,7 +74,7 @@ public class IcfgBacktranslationValueProvider<L extends IAction>
 	}
 
 	@Override
-	public boolean isFunctionCall(final Term expression) {
+	public boolean isProcedureCall(final Term expression) {
 		return false;
 	}
 }
