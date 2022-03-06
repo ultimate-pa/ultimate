@@ -196,19 +196,19 @@ public class GeneratedWitnessEdge<TE, E> {
 		return sb.toString();
 	}
 
-	private void appendValidExpression(final E var, final E val, final StringBuilder sb) {
+	private void appendValidExpression(final E variable, final E value, final StringBuilder sb) {
 		final String varStr;
-		if (var == mResultFunction) {
+		if (Objects.equals(variable, mResultFunction)) {
 			varStr = "\\result";
 		} else {
-			varStr = mStringProvider.getStringFromExpression(var);
+			varStr = mStringProvider.getStringFromExpression(variable);
 			if (varStr.contains("\\") || varStr.contains("&")) {
 				// is something like read, old, etc.
 				return;
 			}
 		}
 
-		final String valStr = mStringProvider.getStringFromExpression(val);
+		final String valStr = mStringProvider.getStringFromExpression(value);
 		try {
 			new BigDecimal(valStr);
 		} catch (final Exception ex) {
