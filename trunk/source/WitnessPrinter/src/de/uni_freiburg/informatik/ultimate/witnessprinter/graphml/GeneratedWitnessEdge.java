@@ -122,16 +122,16 @@ public class GeneratedWitnessEdge<TE, E> {
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		for (final E var : mState.getVariables()) {
-			if (mStringProvider.isProcedureCall(var) && var != mResultFunction) {
+		for (final E variable : mState.getVariables()) {
+			if (mStringProvider.isProcedureCall(variable) && !Objects.equals(variable, mResultFunction)) {
 				// Only one result function can be specified per edge; others are dropped silently
 				// TODO output a warning / fail in this case ?
 				continue;
 			}
 			// TODO This appends equalities with ";", not distinguishing conjunctions (between different variables) and
 			// disjunctions (between different values for the same variable).
-			for (final E val : mState.getValues(var)) {
-				appendValidExpression(var, val, sb);
+			for (final E val : mState.getValues(variable)) {
+				appendValidExpression(variable, val, sb);
 			}
 		}
 		if (sb.length() > 0) {
