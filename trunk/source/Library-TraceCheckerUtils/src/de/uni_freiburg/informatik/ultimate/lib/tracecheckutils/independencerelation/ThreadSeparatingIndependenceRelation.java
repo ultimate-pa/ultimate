@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation;
 
 import java.util.Objects;
 

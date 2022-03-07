@@ -26,7 +26,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe;
 
 import java.util.Arrays;
 import java.util.List;
@@ -54,12 +54,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.SyntacticIndependenceRelation;
 
 /**
  * Performs a Large Block Encoding on Petri nets. This operation performs Lipton reduction ({@link LiptonReduction}) and
@@ -100,11 +98,11 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 * @throws PetriNetNot1SafeException
 	 *             if Petri net is not 1-safe.
 	 */
-	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final BoundedPetriNet<L, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> clazz)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final ILogger logger,
+			final CfgSmtToolkit cfgSmtToolkit, final BoundedPetriNet<L, IPredicate> petriNet,
+			final PetriNetLbe petriNetLbeSettings, final IPLBECompositionFactory<L> compositionFactory,
+			final Class<L> clazz) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		mLogger = logger;
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
 
@@ -197,5 +195,18 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public interface IPLBECompositionFactory<L> extends ICompositionFactory<L> {
 		Map<L, TermVariable> getBranchEncoders();
+	}
+
+	public enum PetriNetLbe {
+
+		OFF,
+		/**
+		 * TODO: documentation
+		 */
+		SEMANTIC_BASED_MOVER_CHECK,
+		/**
+		 * TODO: documentation
+		 */
+		VARIABLE_BASED_MOVER_CHECK,
 	}
 }
