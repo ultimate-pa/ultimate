@@ -46,7 +46,6 @@ public class GeneratedWitnessEdge<TE, E> {
 	private final ProgramState<E> mState;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 	private final boolean mIsEnteringLoopHead;
-	private final E mResultFunction;
 
 	GeneratedWitnessEdge(final AtomicTraceElement<TE> traceElement, final ProgramState<E> state,
 			final boolean isEnteringLoopHead, final IBacktranslationValueProvider<TE, E> stringProvider,
@@ -57,12 +56,6 @@ public class GeneratedWitnessEdge<TE, E> {
 		mATE = traceElement;
 		mState = state;
 		mIsEnteringLoopHead = isEnteringLoopHead;
-		if (mState == null) {
-			mResultFunction = null;
-		} else {
-			mResultFunction =
-					mState.getVariables().stream().filter(mStringProvider::isProcedureCall).findFirst().orElse(null);
-		}
 	}
 
 	public boolean isDummy() {
@@ -123,9 +116,7 @@ public class GeneratedWitnessEdge<TE, E> {
 
 		final StringBuilder sb = new StringBuilder();
 		for (final E variable : mState.getVariables()) {
-			if (mStringProvider.isProcedureCall(variable) && !Objects.equals(variable, mResultFunction)) {
-				// Only one result function can be specified per edge; others are dropped silently
-				// TODO output a warning / fail in this case ?
+			if (mStringProvider.isProcedureCall(variable)) {
 				continue;
 			}
 			// TODO This appends equalities with ";", not distinguishing conjunctions (between different variables) and
@@ -138,14 +129,6 @@ public class GeneratedWitnessEdge<TE, E> {
 			return sb.toString();
 		}
 		return null;
-	}
-
-	public String getAssumptionResultFunction() {
-		if (mResultFunction == null) {
-			return null;
-		}
-		final String callExpr = mStringProvider.getStringFromExpression(mResultFunction);
-		return callExpr.substring(0, callExpr.indexOf('('));
 	}
 
 	public String getEnterFunction() {
@@ -197,15 +180,10 @@ public class GeneratedWitnessEdge<TE, E> {
 	}
 
 	private void appendValidExpression(final E variable, final E value, final StringBuilder sb) {
-		final String varStr;
-		if (Objects.equals(variable, mResultFunction)) {
-			varStr = "\\result";
-		} else {
-			varStr = mStringProvider.getStringFromExpression(variable);
-			if (varStr.contains("\\") || varStr.contains("&")) {
-				// is something like read, old, etc.
-				return;
-			}
+		final String varStr = mStringProvider.getStringFromExpression(variable);
+		if (varStr.contains("\\") || varStr.contains("&")) {
+			// is something like read, old, etc.
+			return;
 		}
 
 		final String valStr = mStringProvider.getStringFromExpression(value);
@@ -250,5 +228,4 @@ public class GeneratedWitnessEdge<TE, E> {
 		}
 		return null;
 	}
-
 }
