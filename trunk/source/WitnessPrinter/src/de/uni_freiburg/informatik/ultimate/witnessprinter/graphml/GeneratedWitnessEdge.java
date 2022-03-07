@@ -116,7 +116,7 @@ public class GeneratedWitnessEdge<TE, E> {
 
 		final StringBuilder sb = new StringBuilder();
 		for (final E variable : mState.getVariables()) {
-			if (mStringProvider.isProcedureCall(variable)) {
+			if (mStringProvider.containsProcedureCall(variable)) {
 				continue;
 			}
 			// TODO This appends equalities with ";", not distinguishing conjunctions (between different variables) and

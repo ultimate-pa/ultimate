@@ -30,6 +30,6 @@ public interface IBacktranslationValueProvider<TTE, TE> {
 
 	String getStringFromExpression(TE expression);
 
-	boolean isProcedureCall(TE expression);
+	boolean containsProcedureCall(TE expression);
 
 }

@@ -69,7 +69,7 @@ public class BoogieBacktranslationValueProvider implements IBacktranslationValue
 	}
 
 	@Override
-	public boolean isProcedureCall(final Expression expression) {
+	public boolean containsProcedureCall(final Expression expression) {
 		return false;
 	}
 }
