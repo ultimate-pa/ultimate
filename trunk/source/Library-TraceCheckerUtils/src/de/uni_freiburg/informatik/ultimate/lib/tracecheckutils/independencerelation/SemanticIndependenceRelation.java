@@ -120,6 +120,16 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public boolean contains(final IPredicate state, final L a, final L b) {
+		return containsLBool(state, a, b) == LBool.UNSAT;
+	}
+
+	/**
+	 * Implements {@link #contains(IPredicate, IAction, IAction)} but returns {@code UNKNOWN} if the solver is unable to
+	 * decide commutativity.
+	 *
+	 * TODO This should be the signature of #contains in {@link IIndependenceRelation}.
+	 */
+	public LBool containsLBool(final IPredicate state, final L a, final L b) {
 		final IPredicate context = mConditional ? state : null;
 		if (context instanceof IMLPredicate) {
 			// Locations will be ignored. However, using predicates with the same formula but different locations will
@@ -141,7 +151,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		}
 
 		mStatistics.reportQuery(result, context != null);
-		return result == LBool.UNSAT;
+		return result;
 	}
 
 	private UnmodifiableTransFormula getTransFormula(final L a) {
