@@ -296,10 +296,16 @@ public class TransFormulaBuilder {
 	}
 
 	/**
-	 * Remove inVars, outVars and auxVars that are not necessary. Remove auxVars if it does not occur in the formula.
-	 * Remove inVars if it does not occur in the formula. Remove outVar if it does not occur in the formula and is also
-	 * an inVar (case where the var is not modified). Note that we may not generally remove outVars that do not occur in
-	 * the formula (e.g., TransFormula for havoc statement).
+	 * Remove inVars, outVars and auxVars that are not necessary.
+	 * <ul>
+	 * <li>Remove auxVars if it does not occur in the formula.
+	 * <li>Remove {@link IProgramVar} from inVars and outVars if inVar and outVar
+	 * are similar but do not occur in the formula.
+	 * <li>If an {@link IProgramVar} occurs only in the inVars or only in the
+	 * outVars, the variable must be kept since this indicates the
+	 * {@link ITransitionRelation} does not state any constraint on values of this
+	 * variable (Sometimes called a havoc. Non-occurring variables implicitly state
+	 * that the value of the variable does not change. </ ul>
 	 */
 	private static void removeSuperfluousVars(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars) {
@@ -307,27 +313,18 @@ public class TransFormulaBuilder {
 		if (!auxVars.isEmpty()) {
 			auxVars.retainAll(allVars);
 		}
-		final List<IProgramVar> superfluousInVars = new ArrayList<>();
-		final List<IProgramVar> superfluousOutVars = new ArrayList<>();
-		for (final Entry<IProgramVar, TermVariable> bv : inVars.entrySet()) {
-			final TermVariable inVar = bv.getValue();
-			if (!allVars.contains(inVar)) {
-				superfluousInVars.add(bv.getKey());
-			}
-		}
+		final List<IProgramVar> superfluousVars = new ArrayList<>();
 		for (final Entry<IProgramVar, TermVariable> bv : outVars.entrySet()) {
 			final TermVariable outVar = bv.getValue();
 			if (!allVars.contains(outVar)) {
 				final TermVariable inVar = inVars.get(bv.getKey());
 				if (outVar == inVar) {
-					superfluousOutVars.add(bv.getKey());
+					superfluousVars.add(bv.getKey());
 				}
 			}
 		}
-		for (final IProgramVar bv : superfluousInVars) {
+		for (final IProgramVar bv : superfluousVars) {
 			inVars.remove(bv);
-		}
-		for (final IProgramVar bv : superfluousOutVars) {
 			outVars.remove(bv);
 		}
 	}
