@@ -113,13 +113,8 @@ public class VariableAbstraction<L extends IAction>
 
 	private static boolean nothingWillChange(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVariables) {
-		final Set<IProgramVar> relevantVariables = new HashSet<>(utf.getInVars().keySet());
-		relevantVariables.addAll(utf.getOutVars().keySet());
-		if (constrainingVariables.containsAll(relevantVariables)) {
-			return true;
-		}
-		return false;
-
+		return constrainingVariables.containsAll(utf.getInVars().keySet())
+				&& constrainingVariables.containsAll(utf.getOutVars().keySet());
 	}
 
 	static Set<IProgramVar> getTransformVariables(final UnmodifiableTransFormula utf,
@@ -140,7 +135,7 @@ public class VariableAbstraction<L extends IAction>
 	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> transform) {
 		// transform is the set of variables that can be havoced out
-		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
+		final Set<TermVariable> nAuxVars = new HashSet<>();
 		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
 		for (final IProgramVar v : transform) {
 			if (utf.getInVars().containsKey(v)) {
@@ -154,20 +149,22 @@ public class VariableAbstraction<L extends IAction>
 				nAuxVars.add(nOutVar);
 			}
 		}
+		for (final TermVariable tv : utf.getAuxVars()) {
+			final TermVariable newVariable = mMscript.constructFreshCopy(tv);
+			substitutionMap.put(tv, newVariable);
+			nAuxVars.add(newVariable);
+		}
 		return buildTransFormula(utf, substitutionMap, nAuxVars);
-
 	}
 
 	UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
 			final Map<TermVariable, TermVariable> substitutionMap, final Set<TermVariable> nAuxVars) {
-		final TransFormulaBuilder tfBuilder;
-		final Set<IProgramConst> ntc = new HashSet<>(utf.getNonTheoryConsts());
-		if (utf.getBranchEncoders().isEmpty()) {
-			tfBuilder = new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), false, ntc, true, null, false);
-		} else {
-			final Set<TermVariable> be = new HashSet<>(utf.getBranchEncoders());
-			tfBuilder = new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), false, ntc, false, be, false);
-		}
+
+		final Set<IProgramConst> ntc = utf.getNonTheoryConsts();
+		final Set<TermVariable> be = utf.getBranchEncoders();
+		final TransFormulaBuilder tfBuilder =
+				new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), ntc.isEmpty(), ntc, be.isEmpty(), be, false);
+
 		for (final TermVariable aV : nAuxVars) {
 			tfBuilder.addAuxVar(aV);
 		}
