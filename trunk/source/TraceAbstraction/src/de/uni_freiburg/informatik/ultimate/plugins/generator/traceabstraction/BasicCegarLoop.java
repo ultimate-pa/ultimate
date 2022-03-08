@@ -341,12 +341,12 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		} else {
 			final boolean addThreadUsageMonitors = true;
 			final BoundedPetriNet<L, IPredicate> petrifiedCfg =
-					Cfg2Automaton.constructPetriNetWithSPredicates(getServices(), mIcfg,
-							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
+					Cfg2Automaton.constructPetriNetWithSPredicates(getServices(), mIcfg, mStateFactoryForRefinement,
+							mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			final BoundedPetriNet<L, IPredicate> net;
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 				final PetriNetLargeBlockEncoding<L> lbe =
-						new PetriNetLargeBlockEncoding<>(getServices(), mLogger, mIcfg.getCfgSmtToolkit(), petrifiedCfg,
+						new PetriNetLargeBlockEncoding<>(getServices(), mIcfg.getCfgSmtToolkit(), petrifiedCfg,
 								mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
 				final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 				getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
@@ -623,9 +623,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			}
 
 			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
-				final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton
-						.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
-								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+				final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+						getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+						mPref.interprocedural(), mPredicateFactory);
 				final FlowSensitiveFaultLocalizer<L> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<L, IPredicate>) mCounterexample, cfg, getServices(), mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
@@ -825,9 +825,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final VpAlphabet<L> newVpAlphabet = Cfg2Automaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
 		final VpAlphabet<L> oldVpAlphabet = new VpAlphabet<>(newVpAlphabet, (Map<L, L>) newTransition2OldTransition);
 		final INestedWordAutomaton<L, IPredicate> pathProgramAutomaton =
-				Cfg2Automaton.constructAutomatonWithDebugPredicates(getServices(), pp,
-						mPredicateFactoryResultChecking, Collections.singleton(oldLocation2NewLocation.get(errorLoc)),
-						mPref.interprocedural(), newVpAlphabet, newTransition2OldTransition);
+				Cfg2Automaton.constructAutomatonWithDebugPredicates(getServices(), pp, mPredicateFactoryResultChecking,
+						Collections.singleton(oldLocation2NewLocation.get(errorLoc)), mPref.interprocedural(),
+						newVpAlphabet, newTransition2OldTransition);
 		assert pathProgramAutomaton.getFinalStates().size() == 1 : "incorrect accepting states";
 		final INestedWordAutomaton<L, IPredicate> intersection =
 				new Intersect<>(new AutomataLibraryServices(getServices()), mPredicateFactoryResultChecking,
@@ -879,9 +879,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
 				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
-					final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton
-							.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
-									super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+					final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+							mPref.interprocedural(), mPredicateFactory);
 					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
 							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
 							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,

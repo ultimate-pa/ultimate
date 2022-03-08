@@ -171,7 +171,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			final long start_time = System.currentTimeMillis();
 			final PetriNetLargeBlockEncoding<L> lbe =
-					new PetriNetLargeBlockEncoding<>(getServices(), mLogger, mIcfg.getCfgSmtToolkit(), cfg,
+					new PetriNetLargeBlockEncoding<>(getServices(), mIcfg.getCfgSmtToolkit(), cfg,
 							mPref.useLbeInConcurrentAnalysis(), mCompositionFactory, mTransitionClazz);
 			final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 			getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
@@ -197,9 +197,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 	private BoundedPetriNet<L, IPredicate> constructPetriNetWithoutDeadTransitions()
 			throws AutomataOperationCanceledException {
 		final boolean addThreadUsageMonitors = true;
-		final BoundedPetriNet<L, IPredicate> cfg =
-				Cfg2Automaton.constructPetriNetWithSPredicates(getServices(), mIcfg,
-						mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
+		final BoundedPetriNet<L, IPredicate> cfg = Cfg2Automaton.constructPetriNetWithSPredicates(getServices(), mIcfg,
+				mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 		try {
 			final BoundedPetriNet<L, IPredicate> vitalCfg =
 					new RemoveDead<>(new AutomataLibraryServices(getServices()), cfg, null, true).getResult();

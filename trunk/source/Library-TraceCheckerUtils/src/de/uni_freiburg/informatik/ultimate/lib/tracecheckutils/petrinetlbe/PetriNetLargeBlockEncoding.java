@@ -98,11 +98,11 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 * @throws PetriNetNot1SafeException
 	 *             if Petri net is not 1-safe.
 	 */
-	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final ILogger logger,
-			final CfgSmtToolkit cfgSmtToolkit, final BoundedPetriNet<L, IPredicate> petriNet,
-			final PetriNetLbe petriNetLbeSettings, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> clazz) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		mLogger = logger;
+	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
+			final BoundedPetriNet<L, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings,
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> clazz)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		mLogger = services.getLoggingService().getLogger(getClass());
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
 
