@@ -96,13 +96,19 @@ public class VariableAbstraction<L extends IAction>
 
 		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(),
 				getTransformVariables(inLetter.getTransformula(), constrainingVariables));
+
+		L newLetter;
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
 					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(),
 					getTransformVariables(inLetter.getTransformula(), constrainingVariables));
-			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
+			newLetter = mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
+		} else {
+			newLetter = mCopyFactory.copy(inLetter, newFormula, null);
 		}
-		return mCopyFactory.copy(inLetter, newFormula, null);
+		assert constrainingVariables.containsAll(newLetter.getTransformula().getInVars()
+				.keySet()) : "Abstraction should only read constrained variables";
+		return newLetter;
 	}
 
 	private static boolean nothingWillChange(final UnmodifiableTransFormula utf,
@@ -173,8 +179,6 @@ public class VariableAbstraction<L extends IAction>
 				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
 		assert utf.getInVars().keySet()
 				.containsAll(newTransFormula.getInVars().keySet()) : "Abstraction should not read more variables";
-		// assert constrainingVars.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read
-		// constrained variables";
 
 		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
 		return newTransFormula;
