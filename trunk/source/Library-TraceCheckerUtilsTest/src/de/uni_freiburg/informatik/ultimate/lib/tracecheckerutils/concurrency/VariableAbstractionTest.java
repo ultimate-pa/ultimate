@@ -182,6 +182,21 @@ public class VariableAbstractionTest {
 		return utf;
 	}
 
+	public UnmodifiableTransFormula jointHavocXandY() {
+		final TermVariable aux = mMgdScript.variable("aux", mScript.sort("Int"));
+		final TermVariable xOut = mMgdScript.variable("x_out", mScript.sort("Int"));
+		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
+
+		final Term formula = parseWithVariables("(and (= x_out aux) (= y_out aux))");
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, false);
+		tfb.addOutVar(x, xOut);
+		tfb.addOutVar(y, yOut);
+		tfb.addAuxVar(aux);
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mMgdScript);
+	}
+
 	@Test
 	public void sharedInOutVar() {
 		runTestAbstraction(yIsXPlusY(), Set.of(y));
@@ -221,6 +236,11 @@ public class VariableAbstractionTest {
 	public void bothSidesSameVariable() {
 		final Set<IProgramVar> constrVars = new HashSet<>();
 		runTestAbstraction(xIsXPlusOne(), constrVars);
+	}
+
+	@Test
+	public void withAuxVar() {
+		runTestAbstraction(jointHavocXandY(), Set.of(x));
 	}
 
 	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> constrainingVars) {
@@ -405,7 +425,7 @@ public class VariableAbstractionTest {
 		final String declarations = mSymbolTable.getGlobals().stream()
 				.map(pv -> "(" + pv.getTermVariable().getName() + "_in " + pv.getSort() + ") ("
 						+ pv.getTermVariable().getName() + "_out " + pv.getSort() + ") ")
-				.collect(Collectors.joining(" "));
+				.collect(Collectors.joining(" ")) + " (aux Int)";
 		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
 		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
