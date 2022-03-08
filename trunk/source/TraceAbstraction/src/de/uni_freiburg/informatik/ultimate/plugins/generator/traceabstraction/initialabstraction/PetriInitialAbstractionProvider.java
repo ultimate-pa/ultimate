@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 
 /**
  * Provides an initial abstraction in the form of a Petri net. This is primarily applicable for concurrent programs.
@@ -81,8 +81,8 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
-		final BoundedPetriNet<L, IPredicate> net = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices,
-				icfg, errorLocs, INTERPROCEDURAL, mPredicateFactory, ADD_THREAD_USAGE_MONITORS);
+		final BoundedPetriNet<L, IPredicate> net = Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg,
+				errorLocs, INTERPROCEDURAL, mPredicateFactory, ADD_THREAD_USAGE_MONITORS);
 		if (!mRemoveDeadEnds) {
 			return net;
 		}

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 
 /**
  * Provides an initial abstraction in the form of a nested word automaton. This is only applicable to sequential
@@ -71,7 +71,7 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) {
-		return CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
+		return Cfg2Automaton.constructAutomatonWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
 				mInterprocedural, mPredicateFactory);
 	}
 }
