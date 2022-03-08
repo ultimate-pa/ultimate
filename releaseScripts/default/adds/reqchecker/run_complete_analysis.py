@@ -930,10 +930,11 @@ re_phase2_start = SimpleMatcher(
     r".* trace abstraction to program that has (\d+) error locations"
 )
 re_phase2_description = SimpleMatcher(
-    r".*======== Iteration 0==of CEGAR loop == myProcedureErr\d+ASSERT_VIOLATION(\w+)for(.*?)========"
+    r".* === Iteration \d === Targeting myProcedureErr\d+ASSERT_VIOLATION(\w+)for(.*?) ==="
 )
+#  r".*Result for error location myProcedureErr\d+ASSERT_VIOLATION\w+(.*?) was (\w+) \((\d+)/\d+\)"
 re_phase2_progress = SimpleMatcher(
-    r".*Result for error location myProcedureErr\d+ASSERT_VIOLATION\w+(.*?) was (\w+) \((\d+)/\d+\)"
+    r".* Registering result (\w+) for location myProcedureErr\d+ASSERT_VIOLATION\w+(.*?) \((\d+) of \d+ remaining\)"
 )
 re_plugin_end = SimpleMatcher(r".*------------------------ END.*")
 
