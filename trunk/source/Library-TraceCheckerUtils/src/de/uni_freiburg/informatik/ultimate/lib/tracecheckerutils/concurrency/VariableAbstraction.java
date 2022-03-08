@@ -190,7 +190,11 @@ public class VariableAbstraction<L extends IAction>
 
 	@Override
 	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> constrainingVars) {
-		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
+		// We do not abstract infeasible letters, even if all variables are constraining.
+		if (input.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
+			return mAllProgramVars;
+		}
+
 		final Set<IProgramVar> nLevel = new HashSet<>(mAllProgramVars);
 		nLevel.removeAll(input.getTransformula().getOutVars().keySet());
 		nLevel.removeAll(input.getTransformula().getInVars().keySet());
