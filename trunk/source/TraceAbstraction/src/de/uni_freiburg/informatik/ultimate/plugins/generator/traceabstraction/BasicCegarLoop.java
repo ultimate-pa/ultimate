@@ -106,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -181,19 +182,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			return mShortString;
 		}
 
-	}
-
-	public enum PetriNetLbe {
-
-		OFF,
-		/**
-		 * TODO: documentation
-		 */
-		SEMANTIC_BASED_MOVER_CHECK,
-		/**
-		 * TODO: documentation
-		 */
-		VARIABLE_BASED_MOVER_CHECK,
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
@@ -495,9 +483,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			}
 
 			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
-				final INestedWordAutomaton<L, IPredicate> cfg = CFG2NestedWordAutomaton
-						.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
-								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+				final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+						getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+						mPref.interprocedural(), mPredicateFactory);
 				final FlowSensitiveFaultLocalizer<L> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<L, IPredicate>) mCounterexample, cfg, getServices(), mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
@@ -694,12 +682,12 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final IcfgLocation errorLoc =
 				((ISLPredicate) mCounterexample.getStateSequence().get(mCounterexample.getStateSequence().size() - 1))
 						.getProgramPoint();
-		final VpAlphabet<L> newVpAlphabet = CFG2NestedWordAutomaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
+		final VpAlphabet<L> newVpAlphabet = Cfg2Automaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
 		final VpAlphabet<L> oldVpAlphabet = new VpAlphabet<>(newVpAlphabet, (Map<L, L>) newTransition2OldTransition);
 		final INestedWordAutomaton<L, IPredicate> pathProgramAutomaton =
-				CFG2NestedWordAutomaton.constructAutomatonWithDebugPredicates(getServices(), pp,
-						mPredicateFactoryResultChecking, Collections.singleton(oldLocation2NewLocation.get(errorLoc)),
-						mPref.interprocedural(), newVpAlphabet, newTransition2OldTransition);
+				Cfg2Automaton.constructAutomatonWithDebugPredicates(getServices(), pp, mPredicateFactoryResultChecking,
+						Collections.singleton(oldLocation2NewLocation.get(errorLoc)), mPref.interprocedural(),
+						newVpAlphabet, newTransition2OldTransition);
 		assert pathProgramAutomaton.getFinalStates().size() == 1 : "incorrect accepting states";
 		final INestedWordAutomaton<L, IPredicate> intersection =
 				new Intersect<>(new AutomataLibraryServices(getServices()), mPredicateFactoryResultChecking,
@@ -751,9 +739,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
 				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
-					final INestedWordAutomaton<L, IPredicate> cfg = CFG2NestedWordAutomaton
-							.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
-									super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+					final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+							mPref.interprocedural(), mPredicateFactory);
 					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
 							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
 							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,

@@ -276,9 +276,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			if (USE_ON_DEMAND_RESULT) {
 				mAbstraction = enhancementResult.getSecond().getResult();
 			} else {
-				final Difference<L, IPredicate, ?> diff =
-						new Difference<>(new AutomataLibraryServices(getServices()), mPredicateFactoryInterpolantAutomata,
-								abstraction, dia, LoopSyncMethod.HEURISTIC, enhancementResult.getSecond(), true);
+				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
+						mPredicateFactoryInterpolantAutomata, abstraction, dia, LoopSyncMethod.HEURISTIC,
+						enhancementResult.getSecond(), true);
 				mLogger.info(diff.getAutomataOperationStatistics());
 				mAbstraction = diff.getResult();
 			}
@@ -346,8 +346,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 						.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
 			}
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
-			final FinitePrefix2PetriNet<L, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
-					new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, unf.getFinitePrefix(), true);
+			final FinitePrefix2PetriNet<L, IPredicate> fp2pn =
+					new FinitePrefix2PetriNet<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+							unf.getFinitePrefix(), true);
 			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
 			mAbstraction = fp2pn.getResult();
 			mProgramPointPlaces = fp2pn.getOldToNewPlaces().projectToRange(mProgramPointPlaces);
@@ -410,8 +411,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends BasicCeg
 			case REMOVE_REDUNDANT_FLOW:
 				final Set<IPredicate> redundancyCandidates = input.getPlaces().stream()
 						.filter(x -> !mProgramPointPlaces.contains(x)).collect(Collectors.toSet());
-				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(getServices()), input, null, null, null)
-						.getResult();
+				reducedNet =
+						new RemoveRedundantFlow<>(new AutomataLibraryServices(getServices()), input, null, null, null)
+								.getResult();
 				break;
 			default:
 				throw new AssertionError("unknown value " + method);
