@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -50,9 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independence.SemanticIndependenceConditionGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -65,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -75,15 +71,16 @@ public class SpecificVariableAbstractionTest {
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
+	private static final String PROCEDURE = "SpecificVariableAbstractionTest";
+
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
-	private SemanticIndependenceConditionGenerator mGenerator;
-	ICopyActionFactory<IcfgEdge> mCopyFactory;
+
 	CfgSmtToolkit mToolkit;
-	VariableAbstraction<IcfgEdge> mVaAbs;
+	VariableAbstraction<BasicInternalAction> mVaAbs;
 
 	// variables for SimpleSet example
 	private IProgramVar x, y, a, b, sz, r1, r2, s1, s2;
@@ -92,7 +89,7 @@ public class SpecificVariableAbstractionTest {
 	private IProgramVar arr, max, top, e1, e2;
 
 	private Term axioms;
-	private SpecificVariableAbstraction<IcfgEdge> mSpVaAbs;
+	private SpecificVariableAbstraction<BasicInternalAction> mSpVaAbs;
 
 	@Before
 	public void setUp() {
@@ -108,17 +105,24 @@ public class SpecificVariableAbstractionTest {
 		setupSimpleSet();
 		setupArrayStack();
 
-		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript,
-				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
 		mToolkit = new CfgSmtToolkit(null, mMgdScript, mSymbolTable, null, null, null, null, null, null);
-		mCopyFactory = new IcfgCopyFactory(mServices, mToolkit);
 		final Set<IProgramVar> mAllVariables = new HashSet<>();
 		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
 			mAllVariables.add(nOV);
 		}
-		mVaAbs = new VariableAbstraction<>(mCopyFactory, mMgdScript, mAllVariables);
-		mSpVaAbs = new SpecificVariableAbstraction<>(mCopyFactory, mMgdScript, mAllVariables, Collections.emptySet());
+		mVaAbs = new VariableAbstraction<>(SpecificVariableAbstractionTest::copyAction, mMgdScript, mAllVariables);
+		mSpVaAbs = new SpecificVariableAbstraction<>(SpecificVariableAbstractionTest::copyAction, mMgdScript,
+				mAllVariables, Collections.emptySet());
+	}
 
+	private static BasicInternalAction copyAction(final BasicInternalAction old,
+			final UnmodifiableTransFormula newTransformula, final UnmodifiableTransFormula newTransformulaWithBE) {
+		assert newTransformulaWithBE == null : "TF with branch encoders should be null";
+		return createAction(newTransformula);
+	}
+
+	private static BasicInternalAction createAction(final UnmodifiableTransFormula newTransformula) {
+		return new BasicInternalAction(PROCEDURE, PROCEDURE, newTransformula);
 	}
 
 	@After
@@ -253,21 +257,6 @@ public class SpecificVariableAbstractionTest {
 		final LBool working = TransFormulaUtils.checkImplication(utf, abstractedTF, mMgdScript);
 		assert working != LBool.SAT : "IS SAT";
 
-	}
-
-	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term expected) {
-
-		final IPredicate actual = mGenerator.generateCondition(tfA, tfB);
-
-		if (expected == null) {
-			assert actual == null : "No commutativity condition expected, but found " + actual.getFormula();
-		} else {
-			assert actual != null : "Expected commutativity condition " + expected + ", but found none";
-			final LBool impl = SmtUtils.checkSatTerm(mScript,
-					SmtUtils.and(mScript, axioms, actual.getFormula(), SmtUtils.not(mScript, expected)));
-			assert impl == LBool.UNSAT : "Actual condition " + actual.getFormula()
-					+ " does not imply expected condition " + expected;
-		}
 	}
 
 	private void setupSimpleSet() {

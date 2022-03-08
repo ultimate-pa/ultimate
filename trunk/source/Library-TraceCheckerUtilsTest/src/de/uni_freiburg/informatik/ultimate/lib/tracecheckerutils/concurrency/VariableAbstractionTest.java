@@ -50,9 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independence.SemanticIndependenceConditionGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -81,7 +78,6 @@ public class VariableAbstractionTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
-	private SemanticIndependenceConditionGenerator mGenerator;
 	CfgSmtToolkit mToolkit;
 	VariableAbstraction<BasicInternalAction> mVaAbs;
 
@@ -107,8 +103,6 @@ public class VariableAbstractionTest {
 		setupSimpleSet();
 		setupArrayStack();
 
-		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript,
-				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
 		mToolkit = new CfgSmtToolkit(null, mMgdScript, mSymbolTable, null, null, null, null, null, null);
 		final Set<IProgramVar> mAllVariables = new HashSet<>();
 		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
@@ -278,21 +272,6 @@ public class VariableAbstractionTest {
 		final LBool working = TransFormulaUtils.checkImplication(utf, abstractedTF, mMgdScript);
 		assert working != LBool.SAT : "IS SAT";
 
-	}
-
-	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term expected) {
-
-		final IPredicate actual = mGenerator.generateCondition(tfA, tfB);
-
-		if (expected == null) {
-			assert actual == null : "No commutativity condition expected, but found " + actual.getFormula();
-		} else {
-			assert actual != null : "Expected commutativity condition " + expected + ", but found none";
-			final LBool impl = SmtUtils.checkSatTerm(mScript,
-					SmtUtils.and(mScript, axioms, actual.getFormula(), SmtUtils.not(mScript, expected)));
-			assert impl == LBool.UNSAT : "Actual condition " + actual.getFormula()
-					+ " does not imply expected condition " + expected;
-		}
 	}
 
 	private void setupSimpleSet() {
