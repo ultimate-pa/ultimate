@@ -107,8 +107,20 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * compute the assigned/updated variables. A variable is updated by this transition if it occurs as outVar and - it
-	 * does not occur as inVar - or the inVar is represented by a different TermVariable
+	 * Compute the assigned/updated variables.
+	 *
+	 * A variable is assigned/updated by a transition if either
+	 * <ul>
+	 * <li>It occurs only as inVar,</li>
+	 * <li>or it occurs only as outVar,</li>
+	 * <li>or it occurs as inVar and as outVar, but represented by different {@link TermVariable}s.</li>
+	 * </ul>
+	 *
+	 * @param inVars
+	 *            The map of in-variables, see the documentation of {@link TransFormula}
+	 * @param outVars
+	 *            The map of out-variables, see the documentation of {@link TransFormula}
+	 * @return The set of assigned/updated variables as specified above
 	 */
 	public static Set<IProgramVar> computeAssignedVars(final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
@@ -117,6 +129,11 @@ public final class TransFormulaUtils {
 			assert entry.getValue() != null;
 			if (entry.getValue() != inVars.get(entry.getKey())) {
 				assignedVars.add(entry.getKey());
+			}
+		}
+		for (final IProgramVar pv : inVars.keySet()) {
+			if (!outVars.containsKey(pv)) {
+				assignedVars.add(pv);
 			}
 		}
 		return assignedVars;
