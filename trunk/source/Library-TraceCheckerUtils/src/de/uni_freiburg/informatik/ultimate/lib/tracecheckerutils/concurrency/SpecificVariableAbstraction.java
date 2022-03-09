@@ -96,8 +96,9 @@ public class SpecificVariableAbstraction<L extends IAction>
 					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(), transformInVars,
 					transformOutVars);
 			newLetter = mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
+		} else {
+			newLetter = mCopyFactory.copy(inLetter, newFormula, null);
 		}
-		newLetter = mCopyFactory.copy(inLetter, newFormula, null);
 		return newLetter;
 	}
 
