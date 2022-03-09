@@ -56,8 +56,8 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 		mMapLattice = new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(new PowersetLattice<>(allVars)));
 
 		for (final L l : mAllLetters) {
-			inConstr.put(l, mAllVars);
-			outConstr.put(l, mAllVars);
+			inConstr.put(l, new HashSet<>(mAllVars));
+			outConstr.put(l, new HashSet<>(mAllVars));
 		}
 		mBottom = new VarAbsConstraints<>(inConstr, outConstr);
 	}

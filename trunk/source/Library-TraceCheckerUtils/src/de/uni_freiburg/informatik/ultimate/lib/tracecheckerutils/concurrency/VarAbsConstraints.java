@@ -102,6 +102,7 @@ public class VarAbsConstraints<L extends IAction> {
 	public Map<L, Set<IProgramVar>> getOutContraintsMap() {
 		return mOutConstr;
 	}
+	/*
 
 	public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
 		final Set<L> in = Collections.emptySet();
@@ -123,6 +124,7 @@ public class VarAbsConstraints<L extends IAction> {
 	public int hashCode() {
 		return Objects.hash(mInConstr, mOutConstr);
 	}
+	*/
 
 	@Override
 	public boolean equals(final Object obj) {

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -85,9 +86,9 @@ public class SpecificVariableAbstraction<L extends IAction>
 			return inLetter;
 		}
 		final Set<IProgramVar> transformInVars =
-				getTransformVariablesIn(inLetter.getTransformula(), constraints.getInConstraints(inLetter));
+				getTransformVariablesIn(inLetter.getTransformula(), new HashSet<>(constraints.getInConstraints(inLetter)));
 		final Set<IProgramVar> transformOutVars =
-				getTransformVariablesOut(inLetter.getTransformula(), constraints.getOutConstraints(inLetter));
+				getTransformVariablesOut(inLetter.getTransformula(), new HashSet<>(constraints.getOutConstraints(inLetter)));
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
 		L newLetter;
@@ -116,10 +117,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 		return transform;
 	}
 
-	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {
-		// Is this sound? If every Variable, that can be assigned is in InVars .. and so on?
-		// What if Map is empty?
-		
+	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {		
 		return constraints.getInConstraints(inLetter).containsAll(inLetter.getTransformula().getInVars().keySet())
 				&& constraints.getOutConstraints(inLetter)
 						.containsAll(inLetter.getTransformula().getOutVars().keySet());
@@ -181,13 +179,28 @@ public class SpecificVariableAbstraction<L extends IAction>
 		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
 		return newTransFormula;
 	}
+	
+	Map<L, Set<IProgramVar>> deepcopyInConstr(VarAbsConstraints<L> constraint){
+		Map<L, Set<IProgramVar>> nInConstr = new HashMap<>();
+		for ( Entry<L, Set<IProgramVar>> entry: constraint.getInContraintsMap().entrySet()) {
+			nInConstr.put(entry.getKey(), new HashSet<>(entry.getValue()));
+		}
+		return nInConstr;
+	}
+	
+	Map<L, Set<IProgramVar>> deepcopyOutConstr(VarAbsConstraints<L> constraint){
+		Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>();
+		for ( Entry<L, Set<IProgramVar>> entry: constraint.getOutContraintsMap().entrySet()) {
+			nOutConstr.put(entry.getKey(), new HashSet<>(entry.getValue()));
+		}
+		return nOutConstr;
+	}
 
 	@Override
 	public VarAbsConstraints<L> refine(final VarAbsConstraints<L> constraint,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-		Map<L, Set<IProgramVar>> nInConstr = new HashMap<>(constraint.getInContraintsMap());
-		Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>(constraint.getOutContraintsMap());
-
+		Map<L, Set<IProgramVar>> nInConstr = deepcopyInConstr(constraint);
+		Map<L, Set<IProgramVar>> nOutConstr = deepcopyOutConstr(constraint);
 		final Set<IPredicate> states = refinement.getInfeasibilityProof().getStates();
 		for (final IPredicate p : states) {
 			for (final IncomingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
@@ -223,8 +236,8 @@ public class SpecificVariableAbstraction<L extends IAction>
 		final Set<IProgramVar> nOutLevel = new HashSet<>(mAllProgramVars);
 		nInLevel.removeAll(input.getTransformula().getInVars().keySet());
 		nOutLevel.removeAll(input.getTransformula().getOutVars().keySet());
-		Map<L, Set<IProgramVar>> nInConstr = new HashMap<>(constraints.getInContraintsMap());
-		Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>(constraints.getOutContraintsMap());
+		Map<L, Set<IProgramVar>> nInConstr = deepcopyInConstr(constraints);
+		Map<L, Set<IProgramVar>> nOutConstr = deepcopyOutConstr(constraints);
 		if (nInConstr.containsKey(input)) {
 			nInConstr.get(input).addAll(nInLevel);
 		} 
