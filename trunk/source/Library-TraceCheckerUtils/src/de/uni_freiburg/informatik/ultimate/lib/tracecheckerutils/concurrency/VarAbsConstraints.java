@@ -79,9 +79,6 @@ public class VarAbsConstraints<L extends IAction> {
 		
 	}
 
-	public Set<L> getLetters() {
-		return mInConstr.keySet();
-	}
 
 	public Set<IProgramVar> getInConstraints(final L letter) {
 		if (mInConstr.containsKey(letter)) {
