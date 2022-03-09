@@ -55,7 +55,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PARTIAL_ORDER_FA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Large\ block\ encoding\ in\ concurrent\ analysis=OFF
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Partial\ Order\ Reduction\ in\ concurrent\ analysis=PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstraction\ used\ for\ commutativity\ in\ POR=VARIABLES_GLOBAL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstraction\ used\ for\ commutativity\ in\ POR=VARIABLES_LOCAL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=CANONICAL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=NONE
 
 
 #Thu Oct 29 23:01:13 CET 2015
