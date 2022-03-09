@@ -297,16 +297,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		return null;
 	}
 
-
-	private boolean eachInVarOccursAsOutVar() {
-		for (final IProgramVar bv : super.getInVars().keySet()) {
-			if (!super.getOutVars().containsKey(bv)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	@Override
 	public Term getFormula() {
 		return mFormula;
