@@ -76,6 +76,7 @@ public class VarAbsConstraints<L extends IAction> {
 
 	public boolean containsProgramVar(final IProgramVar pv) {
 		return (this.containsAsInvar(pv) || this.containsAsOutVar(pv));
+		
 	}
 
 	public Set<L> getLetters() {
@@ -83,11 +84,18 @@ public class VarAbsConstraints<L extends IAction> {
 	}
 
 	public Set<IProgramVar> getInConstraints(final L letter) {
-		return mInConstr.get(letter);
+		if (mInConstr.containsKey(letter)) {
+			return mInConstr.get(letter);
+		}
+		return Collections.emptySet();
+		
 	}
 
 	public Set<IProgramVar> getOutConstraints(final L letter) {
+		if (mOutConstr.containsKey(letter)) {
 		return mOutConstr.get(letter);
+		}
+		return Collections.emptySet();
 	}
 
 	public Map<L, Set<IProgramVar>> getInContraintsMap() {

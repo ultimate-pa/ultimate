@@ -35,12 +35,17 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
 public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstraints<L>> {
 	Set<IProgramVar> mAllVars;
 	Set<L> mAllLetters;
 	VarAbsConstraints<L> mBottom;
+	private UpsideDownLattice<Map<L, Set<IProgramVar>>> mMapLattice;
+	
 
 	// This lattice Should be an UpsideDownLattice of a Powersetlattice
 	public VarAbLattice(final Set<IProgramVar> allVars, final Set<L> allLetters) {
@@ -48,6 +53,7 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 		mAllLetters = allLetters;
 		final Map<L, Set<IProgramVar>> inConstr = new HashMap<>();
 		final Map<L, Set<IProgramVar>> outConstr = new HashMap<>();
+		mMapLattice = new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(new PowersetLattice<>(allVars)));
 
 		for (final L l : mAllLetters) {
 			inConstr.put(l, mAllVars);
@@ -59,9 +65,11 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 	@Override
 	public ComparisonResult compare(final VarAbsConstraints<L> o1, final VarAbsConstraints<L> o2) {
 
-		return ComparisonResult.aggregate(compareMaps(o1.getInContraintsMap(), o2.getInContraintsMap()),
-				compareMaps(o1.getOutContraintsMap(), o2.getOutContraintsMap()));
+		return ComparisonResult.aggregate(mMapLattice.compare(o1.getInContraintsMap(), o2.getInContraintsMap()),
+				mMapLattice.compare(o1.getOutContraintsMap(), o2.getOutContraintsMap()));
 	}
+	
+	/*
 
 	public ComparisonResult compareMapsSameLetters(final Map<L, Set<IProgramVar>> m1,
 			final Map<L, Set<IProgramVar>> m2) {
@@ -119,6 +127,7 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 		}
 		return ComparisonResult.INCOMPARABLE;
 	}
+	*/
 
 	@Override
 	public VarAbsConstraints<L> getBottom() {
@@ -137,11 +146,15 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 		// TODO Auto-generated method stub
 		// the supremum (h1 OR h2) should usually be a Object with all the InConstraints and all the OutConstraints.
 		// Since we have to think inversely, it should be the Object with the Cut of all Constraints (h1 AND h2)
-		return new VarAbsConstraints<>(supremumMaps(h1.getInContraintsMap(), h2.getInContraintsMap()),
+		/* return new VarAbsConstraints<>(supremumMaps(h1.getInContraintsMap(), h2.getInContraintsMap()),
 				supremumMaps(h1.getOutContraintsMap(), h2.getOutContraintsMap()));
+		*/
+		return new VarAbsConstraints<>(mMapLattice.supremum(new HashMap<>(h1.getInContraintsMap()), new HashMap<>(h2.getInContraintsMap())), 
+				mMapLattice.supremum(new HashMap<>(h1.getOutContraintsMap()), new HashMap<>(h2.getOutContraintsMap())));
 
 	}
-
+	
+	/*
 	public Map<L, Set<IProgramVar>> supremumMaps(final Map<L, Set<IProgramVar>> m1, final Map<L, Set<IProgramVar>> m2) {
 		// This Part is taken from /heavily inspired by CanonicalLatticeForMaps... Do I credit Dominik here; in the
 		// Header? How?
@@ -164,10 +177,17 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 		}
 		return result;
 	}
+	*/
 
 	@Override
 	// Look at commentary on supremum. infimum and supremum is flipped in this class. infimum is h1 OR h2
 	public VarAbsConstraints<L> infimum(final VarAbsConstraints<L> h1, final VarAbsConstraints<L> h2) {
+		return new VarAbsConstraints<>(mMapLattice.infimum(new HashMap<>(h1.getInContraintsMap()), new HashMap<>(h2.getInContraintsMap())),
+				mMapLattice.infimum(new HashMap<>(h1.getOutContraintsMap()), new HashMap<>(h2.getOutContraintsMap())));
+		
+		
+		
+		/*
 		final Map<L, Set<IProgramVar>> inResult = new HashMap<>(h1.getInContraintsMap());
 		final Map<L, Set<IProgramVar>> OutResult = new HashMap<>(h1.getOutContraintsMap());
 		// final VarAbsConstraints<L> inResult = new VarAbsConstraints<>(h1.getCopyOfInContraintsMap(),
@@ -188,6 +208,7 @@ public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstrain
 			}
 		}
 		return new VarAbsConstraints<>(inResult, OutResult);
+		*/
 	}
 
 }

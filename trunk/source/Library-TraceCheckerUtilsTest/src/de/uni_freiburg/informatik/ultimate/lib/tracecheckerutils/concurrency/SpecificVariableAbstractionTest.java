@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -178,10 +180,23 @@ public class SpecificVariableAbstractionTest {
 		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
 		return utf;
 	}
+	
+	private VarAbsConstraints<BasicInternalAction> makeSimpleVarAbConstaraint(BasicInternalAction letter, Set<IProgramVar> in, Set<IProgramVar> out ){
+		Map<BasicInternalAction, Set<IProgramVar>>inConstr = new HashMap<>();
+		Map<BasicInternalAction, Set<IProgramVar>>outConstr = new HashMap<>();
+			if (!in.isEmpty()) {
+				inConstr.put(letter, in);
+			}
+			if (!out.isEmpty()) {
+				outConstr.put(letter, out);
+			}
+		return new VarAbsConstraints<BasicInternalAction>(inConstr, outConstr); 
+	}
 
 	@Test
 	public void sharedInOutVar() {
-		runTestAbstraction(yIsXPlusY(), Set.of(y), Set.of(y));
+		//runTestAbstraction(yIsXPlusY(), Set.of(y), Set.of(y));
+		
 	}
 
 	@Test
@@ -205,6 +220,26 @@ public class SpecificVariableAbstractionTest {
 		final Set<IProgramVar> constrVars = new HashSet<>();
 		runTestAbstraction(yIsXTimesTwo(), constrVars, constrVars);
 	}
+	
+	@Test
+	public void withAuxVar() {
+		runTestAbstraction(jointHavocXandY(), Set.of(x), Set.of(x));
+	}
+	
+	public UnmodifiableTransFormula jointHavocXandY() {
+		final TermVariable aux = mMgdScript.variable("aux", mScript.sort("Int"));
+		final TermVariable xOut = mMgdScript.variable("x_out", mScript.sort("Int"));
+		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
+
+		final Term formula = parseWithVariables("(and (= x_out aux) (= y_out aux))");
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, false);
+		tfb.addOutVar(x, xOut);
+		tfb.addOutVar(y, yOut);
+		tfb.addAuxVar(aux);
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mMgdScript);
+	}
 
 	@Test
 	public void DoNothingFullConstrVars() {
@@ -221,11 +256,11 @@ public class SpecificVariableAbstractionTest {
 		runTestAbstraction(xIsXPlusOne(), constrVars, constrVars);
 	}
 
-	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> inConstr,
-			final Set<IProgramVar> outConstr) {
+	private void runTestAbstraction(final UnmodifiableTransFormula utf,Set<IProgramVar> inConstr, Set<IProgramVar>outConstr) {
+		BasicInternalAction action = createAction(utf);
 		final UnmodifiableTransFormula abstractedTF =
-				mSpVaAbs.abstractTransFormula(utf, SpecificVariableAbstraction.getTransformVariablesIn(utf, inConstr),
-						SpecificVariableAbstraction.getTransformVariablesOut(utf, outConstr));
+				mSpVaAbs.abstractLetter(action, makeSimpleVarAbConstaraint(action, inConstr, outConstr)).getTransformula();
+
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
@@ -384,15 +419,16 @@ public class SpecificVariableAbstractionTest {
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
 				Arrays.asList(a, b));
 	}
-
+	
 	private Term parseWithVariables(final String syntax) {
 		final String declarations = mSymbolTable.getGlobals().stream()
 				.map(pv -> "(" + pv.getTermVariable().getName() + "_in " + pv.getSort() + ") ("
 						+ pv.getTermVariable().getName() + "_out " + pv.getSort() + ") ")
-				.collect(Collectors.joining(" "));
+				.collect(Collectors.joining(" ")) + " (aux Int)";
 		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
 		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
 	}
+
 
 }

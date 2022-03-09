@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -16,12 +17,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.IRefinableAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.SpecificVariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
@@ -163,7 +166,8 @@ public class CegarLoopUtils {
 		case VARIABLES_GLOBAL:
 			return new VariableAbstraction<>(copyFactorySupplier.get(), icfg.getCfgSmtToolkit());
 		case VARIABLES_LOCAL:
-			throw new UnsupportedOperationException("local variable abstraction not fully implemented yet");
+			final Set<L> allLetters = new IcfgEdgeIterator(icfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
+			return new SpecificVariableAbstraction<>(copyFactorySupplier.get(), icfg.getCfgSmtToolkit(), allLetters);
 		case NONE:
 			return null;
 		default:
