@@ -298,13 +298,18 @@ public class TransFormulaBuilder {
 	/**
 	 * Remove inVars, outVars and auxVars that are not necessary.
 	 * <ul>
-	 * <li>Remove auxVars if it does not occur in the formula.
+	 * <li>Remove auxVars if it does not occur in the formula.</li>
 	 * <li>Remove {@link IProgramVar} from inVars and outVars if inVar and outVar are the same but do not occur in the
-	 * formula.
+	 * formula.</li>
+	 * <li>Remove {@link IProgramVar} from inVars if it also occurs in outVars, and the inVar does not occur in the
+	 * formula.</li>
+	 * <li>Remove {@link IProgramVar} from outVars if it also occurs in inVars, and the outVar does not occur in the
+	 * formula. However, this can only be done if the inVar is not also removed!</li>
 	 * <li>If an {@link IProgramVar} occurs only in the inVars resp. only in the outVars, the variable must be kept
 	 * since this indicates the {@link ITransitionRelation} does not state any constraint on the output values resp. the
 	 * input values of this variable (sometimes called a havoc). Non-occurring variables implicitly state that the value
-	 * of the variable does not change. </ ul>
+	 * of the variable does not change.</li>
+	 * </ul>
 	 */
 	private static void removeSuperfluousVars(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars) {
@@ -312,18 +317,36 @@ public class TransFormulaBuilder {
 		if (!auxVars.isEmpty()) {
 			auxVars.retainAll(allVars);
 		}
-		final List<IProgramVar> superfluousVars = new ArrayList<>();
+
+		final List<IProgramVar> superfluousOutVars = new ArrayList<>();
 		for (final Entry<IProgramVar, TermVariable> bv : outVars.entrySet()) {
+			final IProgramVar pv = bv.getKey();
 			final TermVariable outVar = bv.getValue();
-			if (!allVars.contains(outVar)) {
-				final TermVariable inVar = inVars.get(bv.getKey());
-				if (outVar == inVar) {
-					superfluousVars.add(bv.getKey());
+			final TermVariable inVar = inVars.get(pv);
+
+			if (inVar == null) {
+				// The variable occurs only as outVar. Thus it may change its value, and we must keep the outVar.
+				continue;
+			}
+
+			if (inVar == outVar) {
+				// The variable pv does not change. If it is not constrained either (because it does not occur in the
+				// formula), it can be removed entirely.
+				if (!allVars.contains(outVar)) {
+					inVars.remove(pv);
+					superfluousOutVars.add(pv);
 				}
+			} else if (!allVars.contains(inVar)) {
+				// The variable pv may change, and its input value is not constrained. Hence we can remove it from
+				// inVars (but we keep the outVar).
+				inVars.remove(pv);
+			} else if (!allVars.contains(outVar)) {
+				// The variable is havoced. We do not need to keep the outVar, because a variable that occurs only as
+				// inVar is still havoced.
+				superfluousOutVars.add(pv);
 			}
 		}
-		for (final IProgramVar bv : superfluousVars) {
-			inVars.remove(bv);
+		for (final IProgramVar bv : superfluousOutVars) {
 			outVars.remove(bv);
 		}
 	}
