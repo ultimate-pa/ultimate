@@ -299,13 +299,12 @@ public class TransFormulaBuilder {
 	 * Remove inVars, outVars and auxVars that are not necessary.
 	 * <ul>
 	 * <li>Remove auxVars if it does not occur in the formula.
-	 * <li>Remove {@link IProgramVar} from inVars and outVars if inVar and outVar
-	 * are similar but do not occur in the formula.
-	 * <li>If an {@link IProgramVar} occurs only in the inVars or only in the
-	 * outVars, the variable must be kept since this indicates the
-	 * {@link ITransitionRelation} does not state any constraint on values of this
-	 * variable (Sometimes called a havoc. Non-occurring variables implicitly state
-	 * that the value of the variable does not change. </ ul>
+	 * <li>Remove {@link IProgramVar} from inVars and outVars if inVar and outVar are the same but do not occur in the
+	 * formula.
+	 * <li>If an {@link IProgramVar} occurs only in the inVars resp. only in the outVars, the variable must be kept
+	 * since this indicates the {@link ITransitionRelation} does not state any constraint on the output values resp. the
+	 * input values of this variable (sometimes called a havoc). Non-occurring variables implicitly state that the value
+	 * of the variable does not change. </ ul>
 	 */
 	private static void removeSuperfluousVars(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars) {

@@ -283,11 +283,9 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	}
 
 	/**
-	 * Returns null if each inVar is a free variable of the formula. Returns a
-	 * counterexample otherwise. Note that inVars (like outVars) must not occur in
-	 * the formula. If we have an inVar that neither occurs as outVar nor in the
-	 * formula this indicates that the value of this variable may
-	 * nondeterministically get any value.
+	 * Returns null if each inVar is a free variable of the formula. Returns a counterexample otherwise. Note that
+	 * inVars (like outVars) need not occur in the formula. If we have an inVar that neither occurs as outVar nor in the
+	 * formula this indicates that the value of this variable may nondeterministically get any value.
 	 */
 	public IProgramVar eachInVarOccursInFormula() {
 		final HashSet<TermVariable> allVars = new HashSet<>(Arrays.asList(mFormula.getFreeVars()));
