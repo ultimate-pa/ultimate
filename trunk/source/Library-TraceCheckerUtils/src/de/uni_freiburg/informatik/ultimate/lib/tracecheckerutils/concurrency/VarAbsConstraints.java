@@ -28,12 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class VarAbsConstraints<L extends IAction> {
 	private final Map<L, Set<IProgramVar>> mInConstr;
@@ -66,6 +68,31 @@ public class VarAbsConstraints<L extends IAction> {
 		return mOutConstr;
 	}
 
+	/**
+	 * Creates a copy of this instance, where the constraints for the given letter have been extended with the given
+	 * sets of variables.
+	 *
+	 * @param letter
+	 *            The letter whose constraints shall be changed. Constraints for all other letters remain unchanged.
+	 * @param additionalInConstraints
+	 *            Additional variables to add to the input constraints for the given letter.
+	 * @param additionalOutConstraints
+	 *            Additional variables to add to the output constraints for the given letter.
+	 * @return the modified copy
+	 */
+	public VarAbsConstraints<L> withExtendedConstraints(final L letter, final Set<IProgramVar> additionalInConstraints,
+			final Set<IProgramVar> additionalOutConstraints) {
+		// We make shallow copies of the maps here. This is ok, because the original map and its values will never be
+		// mutated, and the copy will only be mutated in this method (replacing a value, not mutating the old value).
+
+		final Map<L, Set<IProgramVar>> nInConstr = new HashMap<>(mInConstr);
+		nInConstr.merge(letter, additionalInConstraints, DataStructureUtils::union);
+
+		final Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>(mOutConstr);
+		nOutConstr.merge(letter, additionalOutConstraints, DataStructureUtils::union);
+
+		return new VarAbsConstraints<>(nInConstr, nOutConstr);
+	}
 
 	@Override
 	public int hashCode() {

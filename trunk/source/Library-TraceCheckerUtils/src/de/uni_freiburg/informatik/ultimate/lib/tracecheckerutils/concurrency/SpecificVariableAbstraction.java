@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 public class SpecificVariableAbstraction<L extends IAction>
@@ -227,30 +228,15 @@ public class SpecificVariableAbstraction<L extends IAction>
 
 	@Override
 	public VarAbsConstraints<L> restrict(final L input, final VarAbsConstraints<L> constraints) {
-		// TODO implement this properly to avoid redundant abstractions and redundant SMT calls
 		if (input.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return mHierarchy.getBottom();
 		}
 
-		final Set<IProgramVar> nInLevel = new HashSet<>(mAllProgramVars);
-		final Set<IProgramVar> nOutLevel = new HashSet<>(mAllProgramVars);
-		nInLevel.removeAll(input.getTransformula().getInVars().keySet());
-		nOutLevel.removeAll(input.getTransformula().getOutVars().keySet());
-		Map<L, Set<IProgramVar>> nInConstr = deepcopyInConstr(constraints);
-		Map<L, Set<IProgramVar>> nOutConstr = deepcopyOutConstr(constraints);
-		if (nInConstr.containsKey(input)) {
-			nInConstr.get(input).addAll(nInLevel);
-		} 
-		else {
-			nInConstr.put(input, nInLevel);
-		}
-		if (nOutConstr.containsKey(input)) {
-			nOutConstr.get(input).addAll(nOutLevel);
-		} 
-		else {
-			nOutConstr.put(input, nOutLevel);
-		}
-		return new VarAbsConstraints<>(nInConstr, nOutConstr);
+		final Set<IProgramVar> nInLevel =
+				DataStructureUtils.difference(mAllProgramVars, input.getTransformula().getInVars().keySet());
+		final Set<IProgramVar> nOutLevel =
+				DataStructureUtils.difference(mAllProgramVars, input.getTransformula().getOutVars().keySet());
+		return constraints.withExtendedConstraints(input, nInLevel, nOutLevel);
 	}
 
 	@Override
