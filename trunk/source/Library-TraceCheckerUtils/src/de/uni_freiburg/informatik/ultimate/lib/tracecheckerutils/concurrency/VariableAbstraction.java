@@ -34,12 +34,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -57,12 +57,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
+/**
+ * Implements an abstraction of actions, by (conceptually) quantifying variables that are not used in a proof candidate.
+ *
+ * On an implementation level, we avoid explicit quantification by the usage of auxiliary variables in
+ * {@link TransFormula}s.
+ *
+ *
+ * @author Marcel Rogg
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of actions
+ */
 public class VariableAbstraction<L extends IAction>
 		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> {
 
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
-	private final ManagedScript mMscript;
+	private final ManagedScript mMgdScript;
 	private final Set<IProgramVar> mAllProgramVars;
 	private final ILattice<Set<IProgramVar>> mHierarchy;
 
@@ -70,11 +82,10 @@ public class VariableAbstraction<L extends IAction>
 		this(copyFactory, csToolkit.getManagedScript(), IcfgUtils.collectAllProgramVars(csToolkit));
 	}
 
-	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript,
+	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
 			final Set<IProgramVar> allProgramVars) {
-		this.automaton = null;
 		mCopyFactory = copyFactory;
-		mMscript = mscript;
+		mMgdScript = mgdScript;
 		mAllProgramVars = allProgramVars;
 		mHierarchy = new UpsideDownLattice<>(new PowersetLattice<>(mAllProgramVars));
 	}
@@ -97,7 +108,7 @@ public class VariableAbstraction<L extends IAction>
 		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(),
 				getTransformVariables(inLetter.getTransformula(), constrainingVariables));
 
-		L newLetter;
+		final L newLetter;
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
 					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(),
@@ -131,7 +142,6 @@ public class VariableAbstraction<L extends IAction>
 	 * @param constrainingVars
 	 * @return
 	 */
-
 	private UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> transform) {
 		// transform is the set of variables that can be havoced out
@@ -139,18 +149,18 @@ public class VariableAbstraction<L extends IAction>
 		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
 		for (final IProgramVar v : transform) {
 			if (utf.getInVars().containsKey(v)) {
-				final TermVariable nInVar = mMscript.constructFreshCopy(utf.getInVars().get(v));
+				final TermVariable nInVar = mMgdScript.constructFreshCopy(utf.getInVars().get(v));
 				substitutionMap.put(utf.getInVars().get(v), nInVar);
 				nAuxVars.add(nInVar);
 			}
 			if (utf.getOutVars().containsKey(v) && !substitutionMap.containsKey(utf.getOutVars().get(v))) {
-				final TermVariable nOutVar = mMscript.constructFreshCopy(utf.getOutVars().get(v));
+				final TermVariable nOutVar = mMgdScript.constructFreshCopy(utf.getOutVars().get(v));
 				substitutionMap.put(utf.getOutVars().get(v), nOutVar);
 				nAuxVars.add(nOutVar);
 			}
 		}
 		for (final TermVariable tv : utf.getAuxVars()) {
-			final TermVariable newVariable = mMscript.constructFreshCopy(tv);
+			final TermVariable newVariable = mMgdScript.constructFreshCopy(tv);
 			substitutionMap.put(tv, newVariable);
 			nAuxVars.add(newVariable);
 		}
@@ -168,16 +178,16 @@ public class VariableAbstraction<L extends IAction>
 		for (final TermVariable aV : nAuxVars) {
 			tfBuilder.addAuxVar(aV);
 		}
-		tfBuilder.setFormula(Substitution.apply(mMscript, substitutionMap, utf.getFormula()));
+		tfBuilder.setFormula(Substitution.apply(mMgdScript, substitutionMap, utf.getFormula()));
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMscript);
+		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMgdScript);
 
 		assert newTransFormula.getAssignedVars()
 				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
 		assert utf.getInVars().keySet()
 				.containsAll(newTransFormula.getInVars().keySet()) : "Abstraction should not read more variables";
+		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMgdScript) != LBool.SAT : "not an abstraction";
 
-		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
 		return newTransFormula;
 	}
 

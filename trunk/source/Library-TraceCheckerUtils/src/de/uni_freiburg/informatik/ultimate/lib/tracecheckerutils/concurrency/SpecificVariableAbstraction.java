@@ -56,20 +56,20 @@ public class SpecificVariableAbstraction<L extends IAction>
 		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, VarAbsConstraints<L>, L> {
 
 	private final ICopyActionFactory<L> mCopyFactory;
-	private final ManagedScript mMscript;
+	private final ManagedScript mMgdScript;
 	private final Set<IProgramVar> mAllProgramVars;
 	private final Set<L> mAllLetters;
 	private final ILattice<VarAbsConstraints<L>> mHierarchy;
-	
 
-	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final CfgSmtToolkit csToolkit, final Set<L> allLetters) {
+	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final CfgSmtToolkit csToolkit,
+			final Set<L> allLetters) {
 		this(copyFactory, csToolkit.getManagedScript(), IcfgUtils.collectAllProgramVars(csToolkit), allLetters);
 	}
 
-	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript,
+	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
 			final Set<IProgramVar> allProgramVars, final Set<L> allLetters) {
 		mCopyFactory = copyFactory;
-		mMscript = mscript;
+		mMgdScript = mgdScript;
 		mAllProgramVars = allProgramVars;
 		mAllLetters = allLetters;
 		mHierarchy = new VarAbLattice<>(allProgramVars, mAllLetters);
@@ -81,13 +81,14 @@ public class SpecificVariableAbstraction<L extends IAction>
 				|| nothingWillChange(inLetter, constraints)) {
 			return inLetter;
 		}
-		final Set<IProgramVar> transformInVars =
-				getTransformVariablesIn(inLetter.getTransformula(), new HashSet<>(constraints.getInConstraints(inLetter)));
-		final Set<IProgramVar> transformOutVars =
-				getTransformVariablesOut(inLetter.getTransformula(), new HashSet<>(constraints.getOutConstraints(inLetter)));
+		final Set<IProgramVar> transformInVars = getTransformVariablesIn(inLetter.getTransformula(),
+				new HashSet<>(constraints.getInConstraints(inLetter)));
+		final Set<IProgramVar> transformOutVars = getTransformVariablesOut(inLetter.getTransformula(),
+				new HashSet<>(constraints.getOutConstraints(inLetter)));
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
-		L newLetter;
+
+		final L newLetter;
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
 					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(), transformInVars,
@@ -128,7 +129,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
 		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
 		for (final IProgramVar v : inTransform) {
-			final TermVariable nInVar = mMscript.constructFreshCopy(utf.getInVars().get(v));
+			final TermVariable nInVar = mMgdScript.constructFreshCopy(utf.getInVars().get(v));
 			substitutionMap.put(utf.getInVars().get(v), nInVar);
 			nAuxVars.add(nInVar);
 			/*
@@ -139,13 +140,13 @@ public class SpecificVariableAbstraction<L extends IAction>
 		}
 		for (final IProgramVar v : outTransform) {
 			if (!substitutionMap.containsKey(utf.getOutVars().get(v))) {
-				final TermVariable nOutVar = mMscript.constructFreshCopy(utf.getOutVars().get(v));
+				final TermVariable nOutVar = mMgdScript.constructFreshCopy(utf.getOutVars().get(v));
 				substitutionMap.put(utf.getOutVars().get(v), nOutVar);
 				nAuxVars.add(nOutVar);
 			}
 		}
 		for (final TermVariable tv : utf.getAuxVars()) {
-			final TermVariable newVariable = mMscript.constructFreshCopy(tv);
+			final TermVariable newVariable = mMgdScript.constructFreshCopy(tv);
 			substitutionMap.put(tv, newVariable);
 			nAuxVars.add(newVariable);
 		}
@@ -159,20 +160,20 @@ public class SpecificVariableAbstraction<L extends IAction>
 		final Set<TermVariable> be = utf.getBranchEncoders();
 		final TransFormulaBuilder tfBuilder =
 				new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), ntc.isEmpty(), ntc, be.isEmpty(), be, false);
-		
+
 		for (final TermVariable aV : nAuxVars) {
 			tfBuilder.addAuxVar(aV);
 		}
-		tfBuilder.setFormula(Substitution.apply(mMscript, substitutionMap, utf.getFormula()));
+		tfBuilder.setFormula(Substitution.apply(mMgdScript, substitutionMap, utf.getFormula()));
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMscript);
+		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMgdScript);
 
 		assert newTransFormula.getAssignedVars()
 				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
 		assert utf.getInVars().keySet()
 				.containsAll(newTransFormula.getInVars().keySet()) : "Abstraction should not read more variables";
+		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMgdScript) != LBool.SAT : "not an abstraction";
 
-		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
 		return newTransFormula;
 	}
 
