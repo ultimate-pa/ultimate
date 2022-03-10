@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -55,10 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -76,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.IRe
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.RefinableCachedAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
@@ -121,6 +116,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				services, compositionFactory, transitionClazz);
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
+		if (mPref.getPorAbstraction() == AbstractionType.VARIABLES_LOCAL
+				&& mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE) {
+			throw new UnsupportedOperationException(
+					"specific variable abstraction is only supported with interpolant automaton enhancement turned off");
+		}
+
 		// Setup management of abstraction levels and corresponding independence relations.
 		final IIndependenceRelation<IPredicate, L> independence = constructIndependence(csToolkit);
 		if (letterAbstraction == null) {
@@ -143,69 +144,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return input;
 	}
 
-	public Set<IProgramVar> getAllVariables() {
-		final Set<IProgramVar> allVariables = new HashSet<>();
-		for (final IProgramNonOldVar nOV : mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
-			allVariables.add(nOV);
-		}
-		return allVariables;
-	}
-	/*
-	 * public Set<IProgramVar> getAllVariables() { final Set<IProgramVar> allVars = new HashSet<>(); for (final L l :
-	 * mAbstraction.getAlphabet()) { allVars.addAll(l.getTransformula().getInVars().keySet());
-	 * allVars.addAll(l.getTransformula().getOutVars().keySet()); } return allVars; }
-	 */
-
-	// returns the set of all variables that are used to describe states of the automaton
-	public Set<IProgramVar> getAllConstrainingVariables() {
-		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
-		final Set<IProgramVar> constrainingVars = new HashSet<>();
-		for (final QualifiedTracePredicates qtp : usedTracePredicates) {
-			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
-			for (final IPredicate ip : lp) {
-				constrainingVars.addAll(ip.getVars());
-			}
-		}
-		return constrainingVars;
-	}
-
-	// returns the set of all free variables that are used to describe states of the automaton
-	public Set<TermVariable> getAllConstrainingFreeVariables() {
-		final List<QualifiedTracePredicates> usedTracePredicates = mRefinementResult.getUsedTracePredicates();
-		final Set<TermVariable> freeVars = new HashSet<>();
-		for (final QualifiedTracePredicates qtp : usedTracePredicates) {
-			final List<IPredicate> lp = qtp.getTracePredicates().getPredicates();
-			for (final IPredicate ip : lp) {
-				freeVars.addAll(Arrays.asList(ip.getFormula().getFreeVars()));
-			}
-		}
-		return freeVars;
-	}
-
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
-		// auf dem RefinementResult hat man die Information, welche Ipredicates überhaupt in dem Automaten vorkommen
-		// können
-		// mRefinementResult.getUsedTracePredicates()
-		// ist eine Liste von qualified predicates, und da noch irgendwann predicates
-		// bekommt listen von prädikaten;
-		// Zustäne von automaten sind Konjunktionen von automaten. Uns reichen diese prädikate
-		// Menge der Prädikate
-		// wird neue Mehtode in PartialOrderCegarLoop; der VariableAbstraction nicht mehr Automaten, sondern Menge der
-		// Variablen
-
-		// todo: Diesem Kommentar in eine Methode verwandeln. Menge der benutzen Prädikaten berechnen.
 		final IHoareTripleChecker htc = getHoareTripleChecker();
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia;
-		if (mPref.getPorAbstraction() == AbstractionType.VARIABLES_LOCAL) {
-			ia = enhanceInterpolantAutomaton(InterpolantAutomatonEnhancement.NONE, predicateUnifier, htc,
-					mInterpolAutomaton);
-		} else {
-			ia = enhanceInterpolantAutomaton(mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc,
-					mInterpolAutomaton);
-		}
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
+				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
 		if (ia instanceof AbstractInterpolantAutomaton<?>) {
 			final AbstractInterpolantAutomaton<L> aia = (AbstractInterpolantAutomaton<L>) ia;
 			aia.switchToReadonlyMode();
