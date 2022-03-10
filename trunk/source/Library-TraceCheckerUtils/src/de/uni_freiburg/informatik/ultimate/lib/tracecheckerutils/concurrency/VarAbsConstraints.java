@@ -102,29 +102,28 @@ public class VarAbsConstraints<L extends IAction> {
 	public Map<L, Set<IProgramVar>> getOutContraintsMap() {
 		return mOutConstr;
 	}
-	/*
 
-	public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
-		final Set<L> in = Collections.emptySet();
-		final Set<L> out = Collections.emptySet();
-		for (final Entry<L, Set<IProgramVar>> vIn : mInConstr.entrySet()) {
-			if (vIn.getValue().contains(pv)) {
-				in.add(vIn.getKey());
-			}
-		}
-		for (final Entry<L, Set<IProgramVar>> vOut : mInConstr.entrySet()) {
-			if (vOut.getValue().contains(pv)) {
-				out.add(vOut.getKey());
-			}
-		}
-		return new Pair<>(in, out);
-	}
+	// public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
+	// final Set<L> in = Collections.emptySet();
+	// final Set<L> out = Collections.emptySet();
+	// for (final Entry<L, Set<IProgramVar>> vIn : mInConstr.entrySet()) {
+	// if (vIn.getValue().contains(pv)) {
+	// in.add(vIn.getKey());
+	// }
+	// }
+	// for (final Entry<L, Set<IProgramVar>> vOut : mInConstr.entrySet()) {
+	// if (vOut.getValue().contains(pv)) {
+	// out.add(vOut.getKey());
+	// }
+	// }
+	// return new Pair<>(in, out);
+	// }
 
 	@Override
 	public int hashCode() {
+		// TODO consider caching this
 		return Objects.hash(mInConstr, mOutConstr);
 	}
-	*/
 
 	@Override
 	public boolean equals(final Object obj) {
