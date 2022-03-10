@@ -82,7 +82,7 @@ public class SpecificVariableAbstractionTest {
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 
 	CfgSmtToolkit mToolkit;
-	VariableAbstraction<BasicInternalAction> mVaAbs;
+	private SpecificVariableAbstraction<BasicInternalAction> mSpVaAbs;
 
 	// variables for SimpleSet example
 	private IProgramVar x, y, a, b, sz, r1, r2, s1, s2;
@@ -91,7 +91,6 @@ public class SpecificVariableAbstractionTest {
 	private IProgramVar arr, max, top, e1, e2;
 
 	private Term axioms;
-	private SpecificVariableAbstraction<BasicInternalAction> mSpVaAbs;
 
 	@Before
 	public void setUp() {
@@ -112,7 +111,6 @@ public class SpecificVariableAbstractionTest {
 		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
 			mAllVariables.add(nOV);
 		}
-		mVaAbs = new VariableAbstraction<>(SpecificVariableAbstractionTest::copyAction, mMgdScript, mAllVariables);
 		mSpVaAbs = new SpecificVariableAbstraction<>(SpecificVariableAbstractionTest::copyAction, mMgdScript,
 				mAllVariables, Collections.emptySet());
 	}
@@ -180,23 +178,24 @@ public class SpecificVariableAbstractionTest {
 		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
 		return utf;
 	}
-	
-	private VarAbsConstraints<BasicInternalAction> makeSimpleVarAbConstaraint(BasicInternalAction letter, Set<IProgramVar> in, Set<IProgramVar> out ){
-		Map<BasicInternalAction, Set<IProgramVar>>inConstr = new HashMap<>();
-		Map<BasicInternalAction, Set<IProgramVar>>outConstr = new HashMap<>();
-			if (!in.isEmpty()) {
-				inConstr.put(letter, in);
-			}
-			if (!out.isEmpty()) {
-				outConstr.put(letter, out);
-			}
-		return new VarAbsConstraints<BasicInternalAction>(inConstr, outConstr); 
+
+	private VarAbsConstraints<BasicInternalAction> makeSimpleVarAbConstaraint(final BasicInternalAction letter,
+			final Set<IProgramVar> in, final Set<IProgramVar> out) {
+		final Map<BasicInternalAction, Set<IProgramVar>> inConstr = new HashMap<>();
+		final Map<BasicInternalAction, Set<IProgramVar>> outConstr = new HashMap<>();
+		if (!in.isEmpty()) {
+			inConstr.put(letter, in);
+		}
+		if (!out.isEmpty()) {
+			outConstr.put(letter, out);
+		}
+		return new VarAbsConstraints<>(inConstr, outConstr);
 	}
 
 	@Test
 	public void sharedInOutVar() {
-		//runTestAbstraction(yIsXPlusY(), Set.of(y), Set.of(y));
-		
+		// runTestAbstraction(yIsXPlusY(), Set.of(y), Set.of(y));
+
 	}
 
 	@Test
@@ -220,12 +219,12 @@ public class SpecificVariableAbstractionTest {
 		final Set<IProgramVar> constrVars = new HashSet<>();
 		runTestAbstraction(yIsXTimesTwo(), constrVars, constrVars);
 	}
-	
+
 	@Test
 	public void withAuxVar() {
 		runTestAbstraction(jointHavocXandY(), Set.of(x), Set.of(x));
 	}
-	
+
 	public UnmodifiableTransFormula jointHavocXandY() {
 		final TermVariable aux = mMgdScript.variable("aux", mScript.sort("Int"));
 		final TermVariable xOut = mMgdScript.variable("x_out", mScript.sort("Int"));
@@ -256,11 +255,11 @@ public class SpecificVariableAbstractionTest {
 		runTestAbstraction(xIsXPlusOne(), constrVars, constrVars);
 	}
 
-	private void runTestAbstraction(final UnmodifiableTransFormula utf,Set<IProgramVar> inConstr, Set<IProgramVar>outConstr) {
-		BasicInternalAction action = createAction(utf);
-		final UnmodifiableTransFormula abstractedTF =
-				mSpVaAbs.abstractLetter(action, makeSimpleVarAbConstaraint(action, inConstr, outConstr)).getTransformula();
-
+	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> inConstr,
+			final Set<IProgramVar> outConstr) {
+		final BasicInternalAction action = createAction(utf);
+		final UnmodifiableTransFormula abstractedTF = mSpVaAbs
+				.abstractLetter(action, makeSimpleVarAbConstaraint(action, inConstr, outConstr)).getTransformula();
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
@@ -279,7 +278,10 @@ public class SpecificVariableAbstractionTest {
 
 	private void runTestAbstractionDoesNothing(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVars) {
-		final UnmodifiableTransFormula abstractedTF = mVaAbs.abstractTransFormula(utf, constrainingVars);
+		final BasicInternalAction action = createAction(utf);
+		final UnmodifiableTransFormula abstractedTF =
+				mSpVaAbs.abstractLetter(action, makeSimpleVarAbConstaraint(action, constrainingVars, constrainingVars))
+						.getTransformula();
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
@@ -419,7 +421,7 @@ public class SpecificVariableAbstractionTest {
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
 				Arrays.asList(a, b));
 	}
-	
+
 	private Term parseWithVariables(final String syntax) {
 		final String declarations = mSymbolTable.getGlobals().stream()
 				.map(pv -> "(" + pv.getTermVariable().getName() + "_in " + pv.getSort() + ") ("
@@ -429,6 +431,5 @@ public class SpecificVariableAbstractionTest {
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
 		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
 	}
-
 
 }

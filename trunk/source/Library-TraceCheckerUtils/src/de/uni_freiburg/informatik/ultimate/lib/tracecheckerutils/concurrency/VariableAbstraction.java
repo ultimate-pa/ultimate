@@ -117,7 +117,7 @@ public class VariableAbstraction<L extends IAction>
 				&& constrainingVariables.containsAll(utf.getOutVars().keySet());
 	}
 
-	static Set<IProgramVar> getTransformVariables(final UnmodifiableTransFormula utf,
+	private static Set<IProgramVar> getTransformVariables(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVariables) {
 		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
 		transform.addAll(utf.getOutVars().keySet());
@@ -132,7 +132,7 @@ public class VariableAbstraction<L extends IAction>
 	 * @return
 	 */
 
-	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
+	private UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> transform) {
 		// transform is the set of variables that can be havoced out
 		final Set<TermVariable> nAuxVars = new HashSet<>();
@@ -157,7 +157,7 @@ public class VariableAbstraction<L extends IAction>
 		return buildTransFormula(utf, substitutionMap, nAuxVars);
 	}
 
-	UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
+	private UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
 			final Map<TermVariable, TermVariable> substitutionMap, final Set<TermVariable> nAuxVars) {
 
 		final Set<IProgramConst> ntc = utf.getNonTheoryConsts();

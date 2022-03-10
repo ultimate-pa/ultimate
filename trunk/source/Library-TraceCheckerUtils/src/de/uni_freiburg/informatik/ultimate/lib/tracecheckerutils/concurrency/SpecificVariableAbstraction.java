@@ -101,28 +101,28 @@ public class SpecificVariableAbstraction<L extends IAction>
 		return newLetter;
 	}
 
-	public static Set<IProgramVar> getTransformVariablesIn(final UnmodifiableTransFormula utf,
+	private static Set<IProgramVar> getTransformVariablesIn(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrVars) {
 		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
 		transform.removeAll(constrVars);
 		return transform;
 	}
 
-	public static Set<IProgramVar> getTransformVariablesOut(final UnmodifiableTransFormula utf,
+	private static Set<IProgramVar> getTransformVariablesOut(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrVars) {
 		final Set<IProgramVar> transform = new HashSet<>(utf.getOutVars().keySet());
 		transform.removeAll(constrVars);
 		return transform;
 	}
 
-	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {		
+	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {
 		return constraints.getInConstraints(inLetter).containsAll(inLetter.getTransformula().getInVars().keySet())
 				&& constraints.getOutConstraints(inLetter)
 						.containsAll(inLetter.getTransformula().getOutVars().keySet());
 
 	}
 
-	public UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
+	private UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> inTransform, final Set<IProgramVar> outTransform) {
 
 		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
@@ -153,7 +153,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 		return buildTransFormula(utf, substitutionMap, nAuxVars);
 	}
 
-	UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
+	private UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
 			final Map<TermVariable, TermVariable> substitutionMap, final Set<TermVariable> nAuxVars) {
 		final Set<IProgramConst> ntc = new HashSet<>(utf.getNonTheoryConsts());
 		final Set<TermVariable> be = utf.getBranchEncoders();
