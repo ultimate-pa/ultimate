@@ -29,12 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -58,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 public class SpecificVariableAbstraction<L extends IAction>
 		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, VarAbsConstraints<L>, L> {
 
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final ManagedScript mMscript;
 	private final Set<IProgramVar> mAllProgramVars;
@@ -72,7 +68,6 @@ public class SpecificVariableAbstraction<L extends IAction>
 
 	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mscript,
 			final Set<IProgramVar> allProgramVars, final Set<L> allLetters) {
-		this.automaton = null;
 		mCopyFactory = copyFactory;
 		mMscript = mscript;
 		mAllProgramVars = allProgramVars;
@@ -180,50 +175,30 @@ public class SpecificVariableAbstraction<L extends IAction>
 		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
 		return newTransFormula;
 	}
-	
-	Map<L, Set<IProgramVar>> deepcopyInConstr(VarAbsConstraints<L> constraint){
-		Map<L, Set<IProgramVar>> nInConstr = new HashMap<>();
-		for ( Entry<L, Set<IProgramVar>> entry: constraint.getInContraintsMap().entrySet()) {
-			nInConstr.put(entry.getKey(), new HashSet<>(entry.getValue()));
-		}
-		return nInConstr;
-	}
-	
-	Map<L, Set<IProgramVar>> deepcopyOutConstr(VarAbsConstraints<L> constraint){
-		Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>();
-		for ( Entry<L, Set<IProgramVar>> entry: constraint.getOutContraintsMap().entrySet()) {
-			nOutConstr.put(entry.getKey(), new HashSet<>(entry.getValue()));
-		}
-		return nOutConstr;
-	}
 
 	@Override
 	public VarAbsConstraints<L> refine(final VarAbsConstraints<L> constraint,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-		Map<L, Set<IProgramVar>> nInConstr = deepcopyInConstr(constraint);
-		Map<L, Set<IProgramVar>> nOutConstr = deepcopyOutConstr(constraint);
-		final Set<IPredicate> states = refinement.getInfeasibilityProof().getStates();
-		for (final IPredicate p : states) {
-			for (final IncomingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
-					.internalPredecessors(p)) {
-				if (nInConstr.containsKey(it.getLetter())) {
-					nInConstr.get(it.getLetter()).addAll(it.getPred().getVars());
-				} else {
-					nInConstr.put(it.getLetter(), it.getPred().getVars());
-				}
+		return mHierarchy.infimum(constraint, fromAutomaton(refinement.getInfeasibilityProof()));
+	}
 
-			}
-			for (final OutgoingInternalTransition<L, IPredicate> it : refinement.getInfeasibilityProof()
-					.internalSuccessors(p)) {
-				if (nOutConstr.containsKey(it.getLetter())) {
-					nOutConstr.get(it.getLetter()).addAll(it.getSucc().getVars());
-				} else {
-					nOutConstr.put(it.getLetter(), it.getSucc().getVars());
-				}
+	private VarAbsConstraints<L> fromAutomaton(final NestedWordAutomaton<L, IPredicate> automaton) {
+		final Map<L, Set<IProgramVar>> inConstraints = new HashMap<>();
+		final Map<L, Set<IProgramVar>> outConstraints = new HashMap<>();
+
+		for (final IPredicate state : automaton.getStates()) {
+			for (final OutgoingInternalTransition<L, IPredicate> trans : automaton.internalSuccessors(state)) {
+				addConstraints(inConstraints, trans.getLetter(), state.getVars());
+				addConstraints(outConstraints, trans.getLetter(), trans.getSucc().getVars());
 			}
 		}
 
-		return new VarAbsConstraints<>(nInConstr, nOutConstr);
+		return new VarAbsConstraints<>(inConstraints, outConstraints);
+	}
+
+	private void addConstraints(final Map<L, Set<IProgramVar>> map, final L key, final Set<IProgramVar> variables) {
+		final Set<IProgramVar> set = map.computeIfAbsent(key, x -> new HashSet<>());
+		set.addAll(variables);
 	}
 
 	@Override
