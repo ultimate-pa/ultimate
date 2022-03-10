@@ -82,7 +82,7 @@ public class VarAbsConstraints<L extends IAction> {
 
 	public Set<IProgramVar> getInConstraints(final L letter) {
 		if (mInConstr.containsKey(letter)) {
-			return mInConstr.get(letter);
+			return Collections.unmodifiableSet(mInConstr.get(letter));
 		}
 		return Collections.emptySet();
 		
@@ -90,7 +90,7 @@ public class VarAbsConstraints<L extends IAction> {
 
 	public Set<IProgramVar> getOutConstraints(final L letter) {
 		if (mOutConstr.containsKey(letter)) {
-		return mOutConstr.get(letter);
+			return Collections.unmodifiableSet(mOutConstr.get(letter));
 		}
 		return Collections.emptySet();
 	}
