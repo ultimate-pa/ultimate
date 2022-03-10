@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,21 +38,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLat
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
 public class VarAbLattice<L extends IAction> implements ILattice<VarAbsConstraints<L>> {
-	private final Set<L> mAllLetters;
 	private final VarAbsConstraints<L> mBottom;
 	private final UpsideDownLattice<Map<L, Set<IProgramVar>>> mMapLattice;
 
 	public VarAbLattice(final Set<IProgramVar> allVars, final Set<L> allLetters) {
-		mAllLetters = allLetters;
-		mMapLattice = new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(new PowersetLattice<>(allVars)));
-
-		final Map<L, Set<IProgramVar>> inConstr = new HashMap<>();
-		final Map<L, Set<IProgramVar>> outConstr = new HashMap<>();
-		for (final L l : mAllLetters) {
-			inConstr.put(l, allVars);
-			outConstr.put(l, allVars);
-		}
-		mBottom = new VarAbsConstraints<>(inConstr, outConstr);
+		mMapLattice =
+				new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(new PowersetLattice<>(allVars), allLetters));
+		mBottom = new VarAbsConstraints<>(mMapLattice.getBottom(), mMapLattice.getBottom());
 	}
 
 	@Override
