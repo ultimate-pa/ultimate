@@ -29,21 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-/*
- * Data Structure to assign constraining inVars and constraining outVars to a Letter L
- * Represented as two Maps.
- * Hopefully Immutable
- */
 
 public class VarAbsConstraints<L extends IAction> {
-	// Letter mapsto a Pair of InVars(Set) and OutVars(Set)
 	private final Map<L, Set<IProgramVar>> mInConstr;
 	private final Map<L, Set<IProgramVar>> mOutConstr;
 
@@ -52,40 +44,11 @@ public class VarAbsConstraints<L extends IAction> {
 		mOutConstr = out;
 	}
 
-	public boolean containsLetter(final L letter) {
-		return mInConstr.containsKey(letter);
-	}
-
-	public boolean containsAsInvar(final IProgramVar pv) {
-		for (final Set<IProgramVar> vars : mInConstr.values()) {
-			if (vars.contains(pv)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public boolean containsAsOutVar(final IProgramVar pv) {
-		for (final Set<IProgramVar> vars : mOutConstr.values()) {
-			if (vars.contains(pv)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public boolean containsProgramVar(final IProgramVar pv) {
-		return (this.containsAsInvar(pv) || this.containsAsOutVar(pv));
-		
-	}
-
-
 	public Set<IProgramVar> getInConstraints(final L letter) {
 		if (mInConstr.containsKey(letter)) {
 			return Collections.unmodifiableSet(mInConstr.get(letter));
 		}
 		return Collections.emptySet();
-		
 	}
 
 	public Set<IProgramVar> getOutConstraints(final L letter) {
@@ -103,21 +66,6 @@ public class VarAbsConstraints<L extends IAction> {
 		return mOutConstr;
 	}
 
-	// public Pair<Set<L>, Set<L>> getConstrainedLetter(final IProgramVar pv) {
-	// final Set<L> in = Collections.emptySet();
-	// final Set<L> out = Collections.emptySet();
-	// for (final Entry<L, Set<IProgramVar>> vIn : mInConstr.entrySet()) {
-	// if (vIn.getValue().contains(pv)) {
-	// in.add(vIn.getKey());
-	// }
-	// }
-	// for (final Entry<L, Set<IProgramVar>> vOut : mInConstr.entrySet()) {
-	// if (vOut.getValue().contains(pv)) {
-	// out.add(vOut.getKey());
-	// }
-	// }
-	// return new Pair<>(in, out);
-	// }
 
 	@Override
 	public int hashCode() {
@@ -139,5 +87,4 @@ public class VarAbsConstraints<L extends IAction> {
 		final VarAbsConstraints other = (VarAbsConstraints) obj;
 		return Objects.equals(mInConstr, other.mInConstr) && Objects.equals(mOutConstr, other.mOutConstr);
 	}
-
 }
