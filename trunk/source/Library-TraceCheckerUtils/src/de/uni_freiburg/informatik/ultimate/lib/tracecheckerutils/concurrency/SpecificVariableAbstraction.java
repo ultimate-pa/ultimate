@@ -96,6 +96,8 @@ public class SpecificVariableAbstraction<L extends IAction>
 		} else {
 			newLetter = mCopyFactory.copy(inLetter, newFormula, null);
 		}
+		assert constraints.getInConstraints(inLetter).containsAll(newLetter.getTransformula().getInVars()
+				.keySet()) : "Abstraction should only read constrained variables";
 		return newLetter;
 	}
 
@@ -169,8 +171,6 @@ public class SpecificVariableAbstraction<L extends IAction>
 				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
 		assert utf.getInVars().keySet()
 				.containsAll(newTransFormula.getInVars().keySet()) : "Abstraction should not read more variables";
-		// assert constrainingVars.containsAll(abstracted.getInVars().keySet()) : "Abstraction should only read
-		// constrained variables";
 
 		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMscript) != LBool.SAT : "not an abstraction";
 		return newTransFormula;
