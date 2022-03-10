@@ -24,42 +24,35 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * An interface for abstraction functions that can be refined to ensure they remain sound wrt the current abstraction
- * computed by a CEGAR loop.
+ * An interface to allow copying actions with modified transition formulas.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
- * @param <R>
- *            The type of infeasibility proof produced by the CEGAR loop
- * @param <H>
- *            The type of abstraction levels
  * @param <L>
- *            The type of abstracted actions
+ *            The type of action
  */
-public interface IRefinableAbstraction<R, H, L extends IAction> extends IAbstraction<H, L> {
+public interface ICopyActionFactory<L extends IAction> {
 	/**
-	 * Retrieves the initial abstraction level. By default, this is the top element of the abstraction hierarchy (see
-	 * {@link #getHierarchy()}).
-	 */
-	default H getInitial() {
-		return getHierarchy().getTop();
-	}
-
-	/**
-	 * Computes a refined abstraction level for the next CEGAR iteration.
+	 * Creates a copy of a given action but replaces transition formulas.
 	 *
-	 * @param current
-	 *            the abstraction level used in the last iteration
-	 * @param refinement
-	 *            the refinement made during the last iteration
-	 * @return the new refinement level, which must be less or equal to the current level
+	 * @param original
+	 *            The original action. The copy should retain all data not derived from the transition formulas.
+	 * @param newTransformula
+	 *            A new transition formula to use for the copied action.
+	 * @param newTransformulaWithBE
+	 *            A new transition formula with branch encoders for the copied action. This parameter should be non-null
+	 *            iff the original action implements {@link IActionWithBranchEncoders}.
+	 * @return A copied action using the new transition formulas.
+	 * @throws IllegalArgumentException
+	 *             if the given original is not an {@link IActionWithBranchEncoders} and the last parameter is non-null,
+	 *             or if the given original is an {@link IActionWithBranchEncoders} but the last parameter is null.
 	 */
-	H refine(H current, IRefinementEngineResult<L, R> refinement);
+	L copy(L original, UnmodifiableTransFormula newTransformula, UnmodifiableTransFormula newTransformulaWithBE);
 }

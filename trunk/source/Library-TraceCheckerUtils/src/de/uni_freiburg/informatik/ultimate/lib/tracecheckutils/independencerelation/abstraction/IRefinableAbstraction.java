@@ -24,24 +24,42 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.CachedAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 
-public class RefinableCachedAbstraction<R, H, L extends IAction> extends CachedAbstraction<H, L>
-		implements IRefinableAbstraction<R, H, L> {
-
-	private final IRefinableAbstraction<R, H, L> mUnderlying;
-
-	public RefinableCachedAbstraction(final IRefinableAbstraction<R, H, L> underlying) {
-		super(underlying);
-		mUnderlying = underlying;
+/**
+ * An interface for abstraction functions that can be refined to ensure they remain sound wrt the current abstraction
+ * computed by a CEGAR loop.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <R>
+ *            The type of infeasibility proof produced by the CEGAR loop
+ * @param <H>
+ *            The type of abstraction levels
+ * @param <L>
+ *            The type of abstracted actions
+ */
+public interface IRefinableAbstraction<R, H, L extends IAction> extends IAbstraction<H, L> {
+	/**
+	 * Retrieves the initial abstraction level. By default, this is the top element of the abstraction hierarchy (see
+	 * {@link #getHierarchy()}).
+	 */
+	default H getInitial() {
+		return getHierarchy().getTop();
 	}
 
-	@Override
-	public H refine(final H current, final IRefinementEngineResult<L, R> refinement) {
-		return mUnderlying.refine(current, refinement);
-	}
+	/**
+	 * Computes a refined abstraction level for the next CEGAR iteration.
+	 *
+	 * @param current
+	 *            the abstraction level used in the last iteration
+	 * @param refinement
+	 *            the refinement made during the last iteration
+	 * @return the new refinement level, which must be less or equal to the current level
+	 */
+	H refine(H current, IRefinementEngineResult<L, R> refinement);
 }

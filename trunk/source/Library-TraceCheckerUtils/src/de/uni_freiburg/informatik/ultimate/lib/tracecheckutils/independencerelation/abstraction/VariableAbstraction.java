@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction;
 
 import java.util.HashMap;
 import java.util.HashSet;
