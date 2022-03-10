@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2022 Marcel Rogg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
@@ -36,6 +37,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
 public class VarAbsConstraints<L extends IAction> {
 	private final Map<L, Set<IProgramVar>> mInConstr;
@@ -58,14 +63,6 @@ public class VarAbsConstraints<L extends IAction> {
 			return Collections.unmodifiableSet(mOutConstr.get(letter));
 		}
 		return Collections.emptySet();
-	}
-
-	public Map<L, Set<IProgramVar>> getInContraintsMap() {
-		return mInConstr;
-	}
-
-	public Map<L, Set<IProgramVar>> getOutContraintsMap() {
-		return mOutConstr;
 	}
 
 	/**
@@ -113,5 +110,47 @@ public class VarAbsConstraints<L extends IAction> {
 		}
 		final VarAbsConstraints other = (VarAbsConstraints) obj;
 		return Objects.equals(mInConstr, other.mInConstr) && Objects.equals(mOutConstr, other.mOutConstr);
+	}
+
+	public static final class Lattice<L extends IAction> implements ILattice<VarAbsConstraints<L>> {
+		private final VarAbsConstraints<L> mBottom;
+		private final UpsideDownLattice<Map<L, Set<IProgramVar>>> mMapLattice;
+
+		public Lattice(final Set<IProgramVar> allVars, final Set<L> allLetters) {
+			mMapLattice =
+					new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(new PowersetLattice<>(allVars), allLetters));
+			mBottom = new VarAbsConstraints<>(mMapLattice.getBottom(), mMapLattice.getBottom());
+		}
+
+		@Override
+		public ComparisonResult compare(final VarAbsConstraints<L> o1, final VarAbsConstraints<L> o2) {
+			return ComparisonResult.aggregate(mMapLattice.compare(o1.mInConstr, o2.mInConstr),
+					mMapLattice.compare(o1.mOutConstr, o2.mOutConstr));
+		}
+
+		@Override
+		public VarAbsConstraints<L> getBottom() {
+			return mBottom;
+		}
+
+		@Override
+		public VarAbsConstraints<L> getTop() {
+			return new VarAbsConstraints<>(Collections.emptyMap(), Collections.emptyMap());
+		}
+
+		@Override
+		public VarAbsConstraints<L> supremum(final VarAbsConstraints<L> h1, final VarAbsConstraints<L> h2) {
+			// the supremum (h1 OR h2) should usually be a Object with all the InConstraints and all the OutConstraints.
+			// Since we have to think inversely, it should be the Object with the Cut of all Constraints (h1 AND h2)
+			return new VarAbsConstraints<>(mMapLattice.supremum(h1.mInConstr, h2.mInConstr),
+					mMapLattice.supremum(h1.mOutConstr, h2.mOutConstr));
+		}
+
+		@Override
+		public VarAbsConstraints<L> infimum(final VarAbsConstraints<L> h1, final VarAbsConstraints<L> h2) {
+			// Look at commentary on supremum. infimum and supremum is flipped in this class. infimum is h1 OR h2
+			return new VarAbsConstraints<>(mMapLattice.infimum(h1.mInConstr, h2.mInConstr),
+					mMapLattice.infimum(h1.mOutConstr, h2.mOutConstr));
+		}
 	}
 }

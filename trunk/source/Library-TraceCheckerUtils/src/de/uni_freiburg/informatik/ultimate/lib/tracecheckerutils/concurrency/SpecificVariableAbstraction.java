@@ -72,7 +72,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 		mMgdScript = mgdScript;
 		mAllProgramVars = allProgramVars;
 		mAllLetters = allLetters;
-		mHierarchy = new VarAbLattice<>(allProgramVars, mAllLetters);
+		mHierarchy = new VarAbsConstraints.Lattice<>(allProgramVars, mAllLetters);
 	}
 
 	@Override
