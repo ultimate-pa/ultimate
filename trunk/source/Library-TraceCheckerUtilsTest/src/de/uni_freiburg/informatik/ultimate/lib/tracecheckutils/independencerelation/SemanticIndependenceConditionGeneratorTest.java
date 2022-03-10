@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtilsTest Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,12 +39,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
@@ -74,13 +74,17 @@ public class SemanticIndependenceConditionGeneratorTest {
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
+	private static final String DUMMY_PROCEDURE = "proc";
+	private static final boolean SYMMETRIC = false;
 
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
+	private BasicPredicateFactory mPredicateFactory;
 	private SemanticIndependenceConditionGenerator mGenerator;
+	private SemanticIndependenceRelation<BasicInternalAction> mIndependence;
 
 	// variables for SimpleSet example
 	private IProgramVar x, y, a, b, sz, r1, r2, s1, s2;
@@ -104,8 +108,9 @@ public class SemanticIndependenceConditionGeneratorTest {
 		setupSimpleSet();
 		setupArrayStack();
 
-		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript,
-				new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable), false);
+		mPredicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
+		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript, mPredicateFactory, SYMMETRIC);
+		mIndependence = new SemanticIndependenceRelation<>(mServices, mMgdScript, true, SYMMETRIC);
 	}
 
 	@After
@@ -192,10 +197,13 @@ public class SemanticIndependenceConditionGeneratorTest {
 	}
 
 	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term expected) {
-		// TODO Actually run tests against SemanticIndependenceRelation: Check if result is sufficient for independence.
-
 		final IPredicate actual = mGenerator.generateCondition(tfA, tfB);
 		if (expected == null) {
+			if (actual != null) {
+				assert !mIndependence.contains(actual, toAction(tfA),
+						toAction(tfB)) : "No commutativity condition expected, but found working condition "
+								+ actual.getFormula();
+			}
 			assert actual == null : "No commutativity condition expected, but found " + actual.getFormula();
 		} else {
 			assert actual != null : "Expected commutativity condition " + expected + ", but found none";
@@ -203,7 +211,17 @@ public class SemanticIndependenceConditionGeneratorTest {
 					SmtUtils.and(mScript, axioms, actual.getFormula(), SmtUtils.not(mScript, expected)));
 			assert impl == LBool.UNSAT : "Actual condition " + actual.getFormula()
 					+ " does not imply expected condition " + expected;
+
+			assert mIndependence.contains(mPredicateFactory.newPredicate(expected), toAction(tfA),
+					toAction(tfB)) : "expected condition insufficient: " + expected;
+			assert mIndependence.contains(actual, toAction(tfA), toAction(tfB)) : "condition insufficient: "
+					+ actual.getFormula();
 		}
+
+	}
+
+	private static BasicInternalAction toAction(final UnmodifiableTransFormula tf) {
+		return new BasicInternalAction(DUMMY_PROCEDURE, DUMMY_PROCEDURE, tf);
 	}
 
 	private void setupSimpleSet() {

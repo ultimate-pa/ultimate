@@ -115,8 +115,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
@@ -128,14 +133,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.independencerelation.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DangerInvariantGuesser;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -195,19 +197,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			return mShortString;
 		}
 
-	}
-
-	public enum PetriNetLbe {
-
-		OFF,
-		/**
-		 * TODO: documentation
-		 */
-		SEMANTIC_BASED_MOVER_CHECK,
-		/**
-		 * TODO: documentation
-		 */
-		VARIABLE_BASED_MOVER_CHECK,
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
@@ -347,13 +336,13 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		if (isSequential()) {
-			mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(getServices(), super.mIcfg,
+			mAbstraction = Cfg2Automaton.constructAutomatonWithSPredicates(getServices(), super.mIcfg,
 					mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 		} else {
 			final boolean addThreadUsageMonitors = true;
 			final BoundedPetriNet<L, IPredicate> petrifiedCfg =
-					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(getServices(), mIcfg,
-							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
+					Cfg2Automaton.constructPetriNetWithSPredicates(getServices(), mIcfg, mStateFactoryForRefinement,
+							mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			final BoundedPetriNet<L, IPredicate> net;
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 				final PetriNetLargeBlockEncoding<L> lbe =
@@ -634,9 +623,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			}
 
 			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
-				final INestedWordAutomaton<L, IPredicate> cfg = CFG2NestedWordAutomaton
-						.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
-								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+				final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+						getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+						mPref.interprocedural(), mPredicateFactory);
 				final FlowSensitiveFaultLocalizer<L> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<L, IPredicate>) mCounterexample, cfg, getServices(), mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
@@ -833,12 +822,12 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		final IcfgLocation errorLoc =
 				((ISLPredicate) mCounterexample.getStateSequence().get(mCounterexample.getStateSequence().size() - 1))
 						.getProgramPoint();
-		final VpAlphabet<L> newVpAlphabet = CFG2NestedWordAutomaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
+		final VpAlphabet<L> newVpAlphabet = Cfg2Automaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
 		final VpAlphabet<L> oldVpAlphabet = new VpAlphabet<>(newVpAlphabet, (Map<L, L>) newTransition2OldTransition);
 		final INestedWordAutomaton<L, IPredicate> pathProgramAutomaton =
-				CFG2NestedWordAutomaton.constructAutomatonWithDebugPredicates(getServices(), pp,
-						mPredicateFactoryResultChecking, Collections.singleton(oldLocation2NewLocation.get(errorLoc)),
-						mPref.interprocedural(), newVpAlphabet, newTransition2OldTransition);
+				Cfg2Automaton.constructAutomatonWithDebugPredicates(getServices(), pp, mPredicateFactoryResultChecking,
+						Collections.singleton(oldLocation2NewLocation.get(errorLoc)), mPref.interprocedural(),
+						newVpAlphabet, newTransition2OldTransition);
 		assert pathProgramAutomaton.getFinalStates().size() == 1 : "incorrect accepting states";
 		final INestedWordAutomaton<L, IPredicate> intersection =
 				new Intersect<>(new AutomataLibraryServices(getServices()), mPredicateFactoryResultChecking,
@@ -890,9 +879,9 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
 				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
-					final INestedWordAutomaton<L, IPredicate> cfg = CFG2NestedWordAutomaton
-							.constructAutomatonWithSPredicates(getServices(), super.mIcfg, mStateFactoryForRefinement,
-									super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
+					final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+							mPref.interprocedural(), mPredicateFactory);
 					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
 							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
 							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,

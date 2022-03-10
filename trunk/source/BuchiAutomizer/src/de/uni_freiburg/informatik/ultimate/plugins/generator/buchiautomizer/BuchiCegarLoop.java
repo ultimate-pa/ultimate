@@ -100,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
@@ -107,7 +108,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -864,7 +864,7 @@ public class BuchiCegarLoop<L extends IIcfgTransition<?>> {
 			mLTLMode = false;
 			acceptingNodes = allNodes;
 		}
-		mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, mIcfg, mDefaultStateFactory,
+		mAbstraction = Cfg2Automaton.constructAutomatonWithSPredicates(mServices, mIcfg, mDefaultStateFactory,
 				acceptingNodes, mPref.interprocedural(), mPredicateFactory);
 		if (!ALLOW_CALLS && !mAbstraction.getVpAlphabet().getCallAlphabet().isEmpty()) {
 			throw new AssertionError("Calls are not allowed in this debugging mode");
