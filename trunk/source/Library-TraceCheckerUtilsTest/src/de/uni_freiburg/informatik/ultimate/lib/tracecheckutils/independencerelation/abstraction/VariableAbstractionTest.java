@@ -27,9 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -60,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
@@ -81,6 +85,8 @@ public class VariableAbstractionTest {
 	CfgSmtToolkit mToolkit;
 	VariableAbstraction<BasicInternalAction> mVaAbs;
 
+	private Sort mIntSort;
+
 	// variables for SimpleSet example
 	private IProgramVar x, y, a, b, sz, r1, r2, s1, s2;
 
@@ -98,6 +104,7 @@ public class VariableAbstractionTest {
 		mScript = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
+		mIntSort = SmtSortUtils.getIntSort(mScript);
 
 		axioms = mScript.term("true");
 		setupSimpleSet();
@@ -128,58 +135,26 @@ public class VariableAbstractionTest {
 	}
 
 	public UnmodifiableTransFormula yIsXPlusY() {
-		final TermVariable xIn = mMgdScript.variable("x_in", mScript.sort("Int"));
-		final TermVariable yIn = mMgdScript.variable("y_in", mScript.sort("Int"));
-		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
-
-		final Term formula = parseWithVariables("(= y_out (+ x_in y_in))");
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
-		tfb.addInVar(y, yIn);
-		tfb.addInVar(x, xIn); // x as inVar
-		tfb.addOutVar(y, yOut);
-		tfb.addOutVar(x, xIn); // x as outVar with the same TermVariable
-		tfb.setFormula(formula);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
-		return utf;
+		return TransFormulaBuilder.constructAssignment(List.of(y),
+				List.of(SmtUtils.sum(mScript, mIntSort, x.getTerm(), y.getTerm())), mSymbolTable, mMgdScript);
 	}
 
 	public UnmodifiableTransFormula yIsXTimesTwo() {
-		final TermVariable xIn = mMgdScript.variable("x_in", mScript.sort("Int"));
-		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
-
-		// y = x*2
-		final Term formula = parseWithVariables("(= (* x_in 2 ) y_out)");
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
-		tfb.addInVar(x, xIn);
-		tfb.addOutVar(y, yOut);
-		// tfb.addOutVar(x, x.getTermVariable());
-		tfb.setFormula(formula);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
-		return utf;
+		return TransFormulaBuilder.constructAssignment(List.of(y), List
+				.of(SmtUtils.mul(mScript, mIntSort, x.getTerm(), SmtUtils.constructIntValue(mScript, BigInteger.TWO))),
+				mSymbolTable, mMgdScript);
 	}
 
 	public UnmodifiableTransFormula xIsXPlusOne() {
-		final TermVariable xIn = mMgdScript.variable("x_in", mScript.sort("Int"));
-		final TermVariable xOut = mMgdScript.variable("x_out", mScript.sort("Int"));
-
-		// x = x+1
-		final Term formula = parseWithVariables("(= (+ x_in 1 ) x_out)");
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
-		tfb.addInVar(x, xIn);
-		tfb.addOutVar(x, xOut);
-		// tfb.addOutVar(x, x.getTermVariable());
-		tfb.setFormula(formula);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula utf = tfb.finishConstruction(mMgdScript);
-		return utf;
+		return TransFormulaBuilder.constructAssignment(List.of(x), List
+				.of(SmtUtils.sum(mScript, mIntSort, x.getTerm(), SmtUtils.constructIntValue(mScript, BigInteger.ONE))),
+				mSymbolTable, mMgdScript);
 	}
 
 	public UnmodifiableTransFormula jointHavocXandY() {
-		final TermVariable aux = mMgdScript.variable("aux", mScript.sort("Int"));
-		final TermVariable xOut = mMgdScript.variable("x_out", mScript.sort("Int"));
-		final TermVariable yOut = mMgdScript.variable("y_out", mScript.sort("Int"));
+		final TermVariable aux = mMgdScript.variable("aux", mIntSort);
+		final TermVariable xOut = mMgdScript.variable("x_out", mIntSort);
+		final TermVariable yOut = mMgdScript.variable("y_out", mIntSort);
 
 		final Term formula = parseWithVariables("(and (= x_out aux) (= y_out aux))");
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, false);
