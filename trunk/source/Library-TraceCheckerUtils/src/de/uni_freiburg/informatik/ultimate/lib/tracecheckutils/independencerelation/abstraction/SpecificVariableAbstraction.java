@@ -161,6 +161,16 @@ public class SpecificVariableAbstraction<L extends IAction>
 		final TransFormulaBuilder tfBuilder =
 				new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), ntc.isEmpty(), ntc, be.isEmpty(), be, false);
 
+		// TODO make this a method ensureInternalNormalForm() on TransFormulaBuilder
+		for (final Map.Entry<IProgramVar, TermVariable> inEntry : utf.getInVars().entrySet()) {
+			if (!utf.getOutVars().containsKey(inEntry.getKey()) && substitutionMap.containsKey(inEntry.getValue())) {
+				// A program variable that appeared only as inVar, whose TermVariable does no longer appear in the
+				// substituted formula, must be moved to outVars to preserve internal normal form.
+				tfBuilder.removeInVar(inEntry.getKey());
+				tfBuilder.addOutVar(inEntry.getKey(), inEntry.getValue());
+			}
+		}
+
 		for (final TermVariable aV : nAuxVars) {
 			tfBuilder.addAuxVar(aV);
 		}
