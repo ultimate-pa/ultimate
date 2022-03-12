@@ -281,6 +281,37 @@ public class TransFormulaBuilder {
 		mFormula = formula;
 	}
 
+	/**
+	 * Ensures that the constructed TransFormula will be in <em>internal normal form</em>.
+	 *
+	 * See {@link TransFormulaUtils#hasInternalNormalForm(TransFormula)} for more information. If the caller already
+	 * ensures that the TransFormula will be in internal normal form, it is not necessary to call this method.
+	 *
+	 * This method must only be called after the formula has been set, but before
+	 * {@link #finishConstruction(ManagedScript)} has been called. Do not modify the input or output variables after
+	 * calling this method.
+	 */
+	public void ensureInternalNormalForm() {
+		if (mFormula == null) {
+			throw new IllegalStateException("Cannot ensure internal normal form without formula");
+		}
+		if (mConstructionFinished) {
+			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		}
+
+		final List<TermVariable> freeVars = Arrays.asList(mFormula.getFreeVars());
+		final Set<IProgramVar> obsoleteInVars = new HashSet<>();
+		for (final Map.Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
+			if (!mOutVars.containsKey(entry.getKey()) && !freeVars.contains(entry.getValue())) {
+				mOutVars.put(entry.getKey(), entry.getValue());
+				obsoleteInVars.add(entry.getKey());
+			}
+		}
+		for (final IProgramVar pv : obsoleteInVars) {
+			mInVars.remove(pv);
+		}
+	}
+
 	public UnmodifiableTransFormula finishConstruction(final ManagedScript script) {
 		if (mFormula == null) {
 			throw new IllegalStateException("cannot finish without formula");
