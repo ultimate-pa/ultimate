@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -1082,9 +1083,9 @@ public final class TransFormulaUtils {
 
 		// Get the core part of the transition formulas.
 		// The RHS formula must be explicitly quantified, as it will be negated.
-		final Term lhsClosedFormula = lhs.getClosedFormula();
-		final Term rhsQuantFormula =
-				SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, rhs.getAuxVars(), rhs.getFormula());
+		final Term lhsClosedFormula = getClosedFormulaWithBranchEncoderConstants(mgdScript, lhs, lhs);
+		final Term rhsQuantFormula = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
+				DataStructureUtils.union(rhs.getAuxVars(), rhs.getBranchEncoders()), rhs.getFormula());
 		final Term rhsClosedFormula = UnmodifiableTransFormula.computeClosedFormula(rhsQuantFormula, rhs.getInVars(),
 				rhs.getOutVars(), new HashSet<>(), mgdScript);
 
@@ -1109,6 +1110,22 @@ public final class TransFormulaUtils {
 		mgdScript.unlock(lhs);
 
 		return result;
+	}
+
+	private static Term getClosedFormulaWithBranchEncoderConstants(final ManagedScript mgdScript, final Object lock,
+			final UnmodifiableTransFormula tf) {
+		if (tf.getBranchEncoders().isEmpty()) {
+			return tf.getClosedFormula();
+		}
+		final Map<TermVariable, Term> substitutionMap = new HashMap<>();
+		int i = 0;
+		for (final TermVariable be : tf.getBranchEncoders()) {
+			final String name = be.getName() + "_be_" + i;
+			mgdScript.declareFun(lock, name, new Sort[0], be.getSort());
+			substitutionMap.put(be, mgdScript.term(lock, name));
+			i++;
+		}
+		return Substitution.apply(mgdScript, substitutionMap, tf.getClosedFormula());
 	}
 
 	private static Term constructExplicitEqualities(final Script script, final Set<IProgramVar> variables) {
@@ -1253,6 +1270,6 @@ public final class TransFormulaUtils {
 			substitutionMapping.put(arrayStore.asTerm(), resultStore);
 		}
 		final Term resultTerm = Substitution.apply(mgdScript, substitutionMapping, term);
-		return new Triple<Term, List<TermVariable>, List<Term>>(resultTerm, resultVariables, resultEqualities);
+		return new Triple<>(resultTerm, resultVariables, resultEqualities);
 	}
 }
