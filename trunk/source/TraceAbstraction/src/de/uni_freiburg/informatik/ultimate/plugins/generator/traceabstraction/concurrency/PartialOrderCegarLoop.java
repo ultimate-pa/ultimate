@@ -30,14 +30,18 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
@@ -47,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -80,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -161,15 +167,35 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		}
 
 		// Automaton must be total and deterministic
-		final IPredicate initialSink = DataStructureUtils.getOneAndOnly(ia.getInitialStates(), "initial state");
-		assert initialSink == predicateUnifier.getTruePredicate() : "initial state should be TRUE";
-		final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, true);
-		assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> determinized;
+		switch (mPref.interpolantAutomatonEnhancement()) {
+		case PREDICATE_ABSTRACTION:
+		case PREDICATE_ABSTRACTION_CANNIBALIZE:
+		case PREDICATE_ABSTRACTION_CONSERVATIVE:
+			// already total and deterministic
+			assert ia instanceof DeterministicInterpolantAutomaton<?>;
+			determinized = ia;
+			break;
+		case NONE:
+			// make automaton total
+			final IPredicate initialSink = DataStructureUtils.getOneAndOnly(ia.getInitialStates(), "initial state");
+			assert initialSink == predicateUnifier.getTruePredicate() : "initial state should be TRUE";
+			final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
+
+			// determinize total automaton
+			final var det = new PowersetDeterminizer<>(totalInterpol, false, new DeterminizationFactory());
+			determinized = new DeterminizeNwa<>(new AutomataLibraryServices(mServices), totalInterpol, det,
+					mStateFactoryForRefinement, null, false);
+			break;
+		default:
+			throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support enhancement "
+					+ mPref.interpolantAutomatonEnhancement());
+		}
 
 		// Actual refinement step
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
-		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
+		mAbstraction = new InformationStorage<>(oldAbstraction, determinized, mFactory, false);
 
 		// update independence in case of abstract independence
 		mIndependenceContainer.refine(mRefinementResult);
@@ -375,6 +401,30 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 			mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
 			return newState;
+		}
+	}
+
+	private final class DeterminizationFactory implements IDeterminizeStateFactory<IPredicate> {
+		@Override
+		public IPredicate createEmptyStackState() {
+			return mPredicateFactoryInterpolantAutomata.createEmptyStackState();
+		}
+
+		@Override
+		public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
+			// No support for calls and returns means the map should always have a simple structure.
+			assert down2up.size() == 1 && down2up.containsKey(createEmptyStackState());
+			final Set<IPredicate> conjuncts = down2up.get(createEmptyStackState());
+
+			// Interpolant automaton should not have "don't care".
+			assert conjuncts.stream().noneMatch(mPredicateFactory::isDontCare);
+
+			// Don't create unnecessary conjunctions of single predicates.
+			if (conjuncts.size() == 1) {
+				return DataStructureUtils.getOneAndOnly(conjuncts, "predicate");
+			}
+
+			return mPredicateFactory.and(conjuncts);
 		}
 	}
 
