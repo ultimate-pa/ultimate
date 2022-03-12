@@ -107,19 +107,20 @@ public class VariableAbstraction<L extends IAction>
 
 		final UnmodifiableTransFormula newFormula = abstractTransFormula(inLetter.getTransformula(),
 				getTransformVariables(inLetter.getTransformula(), constrainingVariables));
+		assert constrainingVariables
+				.containsAll(newFormula.getInVars().keySet()) : "Abstraction must only read constrained variables";
 
-		final L newLetter;
 		if (inLetter instanceof IActionWithBranchEncoders) {
-			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
-					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(),
-					getTransformVariables(inLetter.getTransformula(), constrainingVariables));
-			newLetter = mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
-		} else {
-			newLetter = mCopyFactory.copy(inLetter, newFormula, null);
+			final UnmodifiableTransFormula oldFormulaBE =
+					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders();
+			final UnmodifiableTransFormula newFormulaBE =
+					abstractTransFormula(oldFormulaBE, getTransformVariables(oldFormulaBE, constrainingVariables));
+			assert constrainingVariables.containsAll(
+					newFormulaBE.getInVars().keySet()) : "Abstraction must only read constrained variables";
+
+			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 		}
-		assert constrainingVariables.containsAll(newLetter.getTransformula().getInVars()
-				.keySet()) : "Abstraction should only read constrained variables";
-		return newLetter;
+		return mCopyFactory.copy(inLetter, newFormula, null);
 	}
 
 	private static boolean nothingWillChange(final UnmodifiableTransFormula utf,

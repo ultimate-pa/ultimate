@@ -85,21 +85,23 @@ public class SpecificVariableAbstraction<L extends IAction>
 				new HashSet<>(constraints.getInConstraints(inLetter)));
 		final Set<IProgramVar> transformOutVars = getTransformVariablesOut(inLetter.getTransformula(),
 				new HashSet<>(constraints.getOutConstraints(inLetter)));
+
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
+		assert constraints.getInConstraints(inLetter)
+				.containsAll(newFormula.getInVars().keySet()) : "Abstraction must only read constrained variables";
 
-		final L newLetter;
 		if (inLetter instanceof IActionWithBranchEncoders) {
-			final UnmodifiableTransFormula newFormulaBE = abstractTransFormula(
-					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders(), transformInVars,
-					transformOutVars);
-			newLetter = mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
-		} else {
-			newLetter = mCopyFactory.copy(inLetter, newFormula, null);
+			final UnmodifiableTransFormula oldFormulaBE =
+					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders();
+			final UnmodifiableTransFormula newFormulaBE =
+					abstractTransFormula(oldFormulaBE, transformInVars, transformOutVars);
+			assert constraints.getInConstraints(inLetter).containsAll(
+					newFormulaBE.getInVars().keySet()) : "Abstraction must only read constrained variables";
+
+			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 		}
-		assert constraints.getInConstraints(inLetter).containsAll(newLetter.getTransformula().getInVars()
-				.keySet()) : "Abstraction should only read constrained variables";
-		return newLetter;
+		return mCopyFactory.copy(inLetter, newFormula, null);
 	}
 
 	private static Set<IProgramVar> getTransformVariablesIn(final UnmodifiableTransFormula utf,
