@@ -66,6 +66,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 	private final Set<L> mLetters;
 	private final Set<IProgramVar> mGlobalAnnotation1;
 	private final Set<IProgramVar> mGlobalAnnotation3;
+	private int mChangeCounter;
 
 	/**
 	 * Constructs a new empty left-right split containing to statements.
@@ -128,8 +129,13 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		}
 		mElements.add(elem);
 
+		mChangeCounter = 0;
 		moveEntry(mElements.size() - 1, letter, direction);
-		applyRule5();
+		if (mChangeCounter > 1) {
+			applyRule5();
+		} else {
+			applyRule5WhereNeeded(letter, mElements.size() - 1, direction);
+		}
 
 		LeftRightSplit<L> duplicatedSplit = null;
 
@@ -240,6 +246,7 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		}
 
 		mElements.get(index).mDirection = direction;
+		mChangeCounter++;
 		applyRules(letter, index, direction);
 	}
 
@@ -540,6 +547,126 @@ public class LeftRightSplit<L extends IIcfgTransition<?>> {
 		}
 		check.applyRule5();
 		return !check.mContradiction;
+	}
+
+	private boolean tryMove(final L letter, final int index, final Direction direction) {
+		final LeftRightSplit<L> testSplit = duplicateThis();
+		testSplit.moveEntry(index, letter, direction);
+		if (testSplit.containsContradiction()) {
+			moveEntry(index, letter, direction == Direction.LEFT ? Direction.RIGHT : Direction.LEFT);
+			return true;
+		}
+		return false;
+	}
+
+	private void tryRule5Right(final L letter, final int index) {
+		final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
+		final Set<IProgramVar> readVars = new HashSet<>(getVars(letter, false));
+
+		for (final Element elem : (Iterable<Element>) () -> iter) {
+			if (elem.mDirection == Direction.MIDDLE && (isInSameThread(letter, elem.mLetter)
+					|| DataStructureUtils.haveNonEmptyIntersection(readVars, getVars(elem.mLetter, true)))) {
+				if (tryMove(elem.mLetter, iter.previousIndex(), Direction.LEFT)) {
+					applyRule5();
+					return;
+				}
+			}
+			readVars.removeAll(getVars(elem.mLetter, true));
+		}
+	}
+
+	/**
+	 * Apply rule 5 but skip events that cannot be changed by it. This only works if a single events has been appended
+	 * at the end.
+	 *
+	 * @param letter
+	 *            The last letter.
+	 * @param index
+	 *            The index of the last letter.
+	 * @param direction
+	 *            The direction of the last letter.
+	 */
+	private void applyRule5WhereNeeded(final L letter, final int index, final Direction direction) {
+		LeftRightSplit<L> leftTest = null;
+		LeftRightSplit<L> rightTest = null;
+
+		if (direction == Direction.LEFT) {
+			leftTest = this;
+		} else if (direction == Direction.RIGHT) {
+			rightTest = this;
+		} else if (direction == Direction.MIDDLE) {
+			leftTest = duplicateThis();
+			rightTest = duplicateThis();
+
+			mChangeCounter = 0;
+			leftTest.moveEntry(index, letter, Direction.LEFT);
+			if (leftTest.containsContradiction()) {
+				moveEntry(index, letter, Direction.RIGHT);
+				leftTest = null;
+				rightTest = this;
+			}
+
+			rightTest.moveEntry(index, letter, Direction.RIGHT);
+			if (rightTest.containsContradiction()) {
+				moveEntry(index, letter, Direction.LEFT);
+				leftTest = this;
+				rightTest = null;
+			}
+
+			if (mChangeCounter > 1) {
+				applyRule5();
+				return;
+			}
+		}
+
+		if (mContradiction) {
+			return;
+		}
+
+		if (rightTest != null) {
+			rightTest.tryRule5Right(letter, index);
+			if (rightTest.containsContradiction()) {
+				moveEntry(index, letter, Direction.LEFT);
+				if (!mContradiction) {
+					leftTest = this;
+				}
+			}
+		}
+
+		if (leftTest != null) {
+			final ListIterator<Element> iter = new ReversedIterator<>(mElements.listIterator(index));
+			final Set<IProgramVar> writtenVars = new HashSet<>(getVars(letter, true));
+
+			for (final Element elem : (Iterable<Element>) () -> iter) {
+				if (elem.mDirection == Direction.LEFT) {
+					writtenVars.removeAll(getVars(elem.mLetter, true));
+				}
+
+				if (elem.mDirection == Direction.MIDDLE) {
+					if (DataStructureUtils.haveNonEmptyIntersection(writtenVars, getVars(elem.mLetter, true))) {
+						if (leftTest.tryMove(elem.mLetter, iter.previousIndex(), Direction.LEFT)) {
+							leftTest.applyRule5();
+							break;
+						}
+					}
+					if (DataStructureUtils.haveNonEmptyIntersection(writtenVars, getVars(elem.mLetter, false))) {
+						if (leftTest.tryMove(elem.mLetter, iter.previousIndex(), Direction.RIGHT)) {
+							leftTest.applyRule5();
+							break;
+						}
+					}
+				}
+
+			}
+
+			if (leftTest.containsContradiction()) {
+				moveEntry(index, letter, Direction.RIGHT);
+				if (!mContradiction) {
+					// Apply the changes done to rightTest to ourselves.
+					tryRule5Right(letter, index);
+				}
+			}
+		}
 	}
 
 	@Override
