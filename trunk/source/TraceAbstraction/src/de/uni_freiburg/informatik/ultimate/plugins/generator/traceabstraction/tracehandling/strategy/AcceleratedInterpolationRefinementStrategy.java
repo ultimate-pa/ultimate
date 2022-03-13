@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -26,49 +26,27 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy;
 
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceCheck} using
- * {@link InterpolationTechnique#Craig_TreeInterpolation} and then {@link InterpolationTechnique#FPandBP}.
- * <p>
- * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
- *
- * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class PenguinRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
+public class AcceleratedInterpolationRefinementStrategy<L extends IIcfgTransition<?>>
+		extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public PenguinRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
+	public AcceleratedInterpolationRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory,
-				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(
-								InterpolationTechnique.Craig_TreeInterpolation),
-						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP),
-						factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP), },
+		super(factory, new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleAcceleratedInterpolation() },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override
 	public String getName() {
-		return RefinementStrategy.PENGUIN.toString();
-	}
-
-	@Override
-	protected boolean needsMoreInterpolants(final List<QualifiedTracePredicates> perfectIpps,
-			final List<QualifiedTracePredicates> imperfectIpps) {
-		return perfectIpps.isEmpty();
+		return RefinementStrategy.ACCELERATED_INTERPOLATION.toString();
 	}
 }

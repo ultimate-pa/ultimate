@@ -97,9 +97,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<L extends IIcfgTransition<?>> {
@@ -356,10 +356,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private UnmodifiableTransFormula computeTF(final NestedWord<L> word, final boolean simplify,
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
-		final UnmodifiableTransFormula tf = SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify,
+		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify,
 				extendedPartialQuantifierElimination, toCNF, withBranchEncoders, mLogger, mServices, word.asList(),
 				mXnfConversionTechnique, mSimplificationTechnique);
-		return tf;
 	}
 
 	private boolean areSupportingInvariantsCorrect() {
@@ -388,8 +387,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private boolean isRankingFunctionCorrect() {
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 		mLogger.info("Loop: " + loop);
-		final boolean rfCorrect = mBspm.checkRankDecrease(loop, mCsToolkit.getModifiableGlobalsTable());
-		return rfCorrect;
+		return mBspm.checkRankDecrease(loop, mCsToolkit.getModifiableGlobalsTable());
 	}
 
 	private String generateFileBasenamePrefix(final boolean withStem) {
@@ -400,7 +398,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final boolean overapproximateArrayIndexConnection, final NlaHandling nlaHandling,
 			final AnalysisTechnique analysis) {
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final ILassoRankerPreferences pref = new DefaultLassoRankerPreferences() {
+		return new DefaultLassoRankerPreferences() {
 			@Override
 			public boolean isDumpSmtSolverScript() {
 				return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DUMP_SCRIPT_TO_FILE);
@@ -482,7 +480,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				}
 			}
 		};
-		return pref;
 	}
 
 	private TerminationAnalysisSettings constructTASettings() {
@@ -567,7 +564,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 
 		final boolean doNonterminationAnalysis =
-				!(AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED && containsArrays);
+				(!AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED || !containsArrays);
 
 		NonTerminationArgument nonTermArgument = null;
 		if (doNonterminationAnalysis) {
@@ -703,9 +700,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 					}
 				}
-			} catch (final SMTLIBException e) {
-				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
-			} catch (final TermException e) {
+			} catch (final SMTLIBException | TermException e) {
 				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
 			if (termArg != null) {
@@ -916,7 +911,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<L, IPredicate> run, final TaskIdentifier taskIdentifier) {
 			try {
-				final IRefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
+				final ITARefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
 						mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
 						IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider());
@@ -979,7 +974,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	}
 
-	private class SubtaskLassoCheckIdentifier extends TaskIdentifier {
+	private static class SubtaskLassoCheckIdentifier extends TaskIdentifier {
 
 		private final LassoPart mLassoPart;
 

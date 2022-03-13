@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,22 +46,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.
- *
- * This class is used in the {@link BasicCegarLoop}.
  *
  * @see IRefinementStrategy
  *
@@ -167,7 +159,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			interpolantGenerator.aggregateStatistics(mRefinementEngineStatistics);
 		}
 
-		// strategy has finished providing interpolants, use them to construct the interpolant automaton
+		// strategy has finished providing interpolants, use them to construct the
+		// interpolant automaton
 		logStats(perfectIpps, imperfectIpps);
 		if (!perfectIpps.isEmpty()) {
 			mSomePerfectSequenceFound = true;
@@ -312,18 +305,20 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			throw new AssertionError("unknown case : " + status.getStatus());
 		}
 		throwIfNecessary(category, status.getException());
-		final String message = status.getException() == null ? String.valueOf(status.getStatus())
-				: status.getException().getMessage();
+		final String message =
+				status.getException() == null ? String.valueOf(status.getStatus()) : status.getException().getMessage();
 		mLogger.warn("Interpolation failed due to " + category + ": " + message);
 		return null;
 	}
 
 	private void throwIfNecessary(final ExceptionHandlingCategory category, final Throwable t) {
-		// note: you only need to use this function if you did not get the throwable from a catch block!
+		// note: you only need to use this function if you did not get the throwable
+		// from a catch block!
 		final boolean throwException = category.throwException(mStrategy.getExceptionBlacklist());
 		if (throwException) {
 			mLogger.warn("Global settings require throwing the following exception");
-			// throw unchecked exceptions directly, wrap checked exceptions in AssertionError
+			// throw unchecked exceptions directly, wrap checked exceptions in
+			// AssertionError
 			if (t instanceof Error) {
 				throw (Error) t;
 			}
