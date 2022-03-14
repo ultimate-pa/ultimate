@@ -255,7 +255,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz, computeHoareAnnotation);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
 		mCompositionFactory = compositionFactory;
-		if ((mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) && (interpolation == InterpolationTechnique.FPandBP)) {
+		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
+				&& interpolation == InterpolationTechnique.FPandBP) {
 			mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 			mInterpolation = InterpolationTechnique.ForwardPredicates;
 		} else {
@@ -726,7 +727,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		if (refinementHtc != null) {
 			return refinementHtc;
 		}
-
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier());
 	}
