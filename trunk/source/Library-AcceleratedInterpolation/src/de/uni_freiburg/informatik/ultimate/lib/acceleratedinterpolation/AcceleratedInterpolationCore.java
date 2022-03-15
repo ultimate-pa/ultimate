@@ -129,8 +129,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 	private final IStrategySupplier<L> mStrategySupplier;
 
-	private final String mAccelerationMethod;
-
 	/**
 	 * Main function of the {@link AcceleratedInterpolation} interpolant generation scheme.
 	 *
