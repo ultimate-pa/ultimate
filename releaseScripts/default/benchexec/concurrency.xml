@@ -17,6 +17,10 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
 	</rundefinition-->
 
+	<rundefinition name="Automizer FA+MCR">
+	  <option name="-s">../../../trunk/examples/settings/automizer/mcr/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-McrAutomaton-WP.epf</option>
+	</rundefinition>
+
 
 	<!-- === Cassez/Ziegler-style: single-shot up-front reduction, then normal verification === -->
 	<!-- ====================================================================================== -->
