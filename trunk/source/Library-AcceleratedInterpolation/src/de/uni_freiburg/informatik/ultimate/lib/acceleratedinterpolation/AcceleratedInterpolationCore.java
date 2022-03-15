@@ -96,7 +96,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 * underapproximation: multiple accelerations per loop)
 	 */
 	public enum AccelerationApproximationType {
-		PRECISE, UNDERAPPROXIMATION
+		PRECISE, UNDERAPPROXIMATION, OVERAPPROXIMATION
 	}
 
 	private final ILogger mLogger;
@@ -114,7 +114,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IRun<L, IPredicate> mCounterexampleTrace;
 	private final List<L> mCounterexample;
-	private final Map<IcfgLocation, Set<List<L>>> mLoops;
+	private Map<IcfgLocation, Set<List<L>>> mLoops;
 	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
 	private final Map<IcfgLocation, IcfgLocation> mNestingRelation;
 	private final Map<IcfgLocation, Set<List<L>>> mNestedLoops;
@@ -128,6 +128,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
 	private final IStrategySupplier<L> mStrategySupplier;
+
+	private final String mAccelerationMethod;
 
 	/**
 	 * Main function of the {@link AcceleratedInterpolation} interpolant generation scheme.
@@ -202,8 +204,20 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			mLogger.info("No loops in this trace, falling back to nested interpolation");
 			return runStrategy(mCounterexampleTrace);
 		}
-
-		// After finding loops in the trace, start calculating loop accelerations.
+		final Map<IcfgLocation, Set<List<L>>> trueLoops = new HashMap<>();
+		for (final Entry<IcfgLocation, Set<List<L>>> loop : mLoops.entrySet()) {
+			if (mIcfg.getLoopLocations().contains(loop.getKey())) {
+				trueLoops.put(loop.getKey(), loop.getValue());
+			} else {
+				mLoopsAsTf.remove(loop.getKey());
+				mLoopExitTransitions.remove(loop.getKey());
+				mLoopSize.remove(loop.getKey());
+			}
+		}
+		mLoops = trueLoops;
+		/*
+		 * After finding loops in the trace, start calculating loop accelerations.
+		 */
 		if (!mNestedLoops.isEmpty()) {
 			final Map<IcfgLocation, Set<List<L>>> nestedLoopFiltered = new HashMap<>(mNestedLoops);
 			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
@@ -252,8 +266,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				loopheadIterator.remove();
 				break;
 			}
-			if (accelerations.size() > 1) {
-				mApproximationType = AccelerationApproximationType.UNDERAPPROXIMATION;
+			if (mAccelerator.isOverapprox()) {
+				mApproximationType = AccelerationApproximationType.OVERAPPROXIMATION;
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
 			mLogger.info("Starting analysis with loop acceleration approximation " + mApproximationType.toString());

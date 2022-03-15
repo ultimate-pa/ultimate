@@ -1215,6 +1215,12 @@ public class QvasrAbstractor {
 		 */
 		final Map<Term, Term> realTvs = new HashMap<>();
 		final Map<IProgramVar, Term> updates = su.getDeterministicAssignment();
+		/*
+		 * TODO: Look at havoced vars.
+		 */
+		for (final IProgramVar readOnlyVar : su.getReadonlyVars()) {
+			updates.put(readOnlyVar, readOnlyVar.getTermVariable());
+		}
 		for (final IProgramVar pv : updates.keySet()) {
 			final TermVariable inVar = script.constructFreshTermVariable(pv.getGloballyUniqueId() + "_real",
 					SmtSortUtils.getRealSort(script));
@@ -1271,6 +1277,10 @@ public class QvasrAbstractor {
 				final ConstantTerm paramConst = (ConstantTerm) param;
 				final Rational paramValue = (Rational) paramConst.getValue();
 				subMap.put(param, paramValue.toTerm(SmtSortUtils.getRealSort(script)));
+			}
+			if (param instanceof TermVariable) {
+				subMap.put(param, script.constructFreshTermVariable(((TermVariable) param).getName(),
+						SmtSortUtils.getRealSort(script)));
 			} else {
 				subMap.putAll(appTermToReal(script, (ApplicationTerm) param));
 			}
