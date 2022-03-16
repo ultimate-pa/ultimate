@@ -555,7 +555,7 @@ public class NestedSsaBuilder<L extends IAction> {
 				if (mTF.getInVars().get(entry.getKey()) != entry.getValue()) {
 					// if invar is similar to outvar no new copy is required
 					final IProgramVar bv = entry.getKey();
-					final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
+					final TermVariable tv = transferToCurrentScriptIfNecessary(entry.getValue());
 					final Term versioneered = setCurrentVarVersion(bv, currentPos);
 					mConstants2BoogieVar.put(versioneered, bv);
 					mSubstitutionMapping.put(tv, versioneered);
