@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
@@ -52,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -550,11 +551,15 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public void versionAssignedVars(final int currentPos) {
-			for (final IProgramVar bv : mTF.getAssignedVars()) {
-				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
-				final Term versioneered = setCurrentVarVersion(bv, currentPos);
-				mConstants2BoogieVar.put(versioneered, bv);
-				mSubstitutionMapping.put(tv, versioneered);
+			for (final Entry<IProgramVar, TermVariable> entry : mTF.getOutVars().entrySet()) {
+				if (mTF.getInVars().get(entry.getKey()) != entry.getValue()) {
+					// if invar is similar to outvar no new copy is required
+					final IProgramVar bv = entry.getKey();
+					final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
+					final Term versioneered = setCurrentVarVersion(bv, currentPos);
+					mConstants2BoogieVar.put(versioneered, bv);
+					mSubstitutionMapping.put(tv, versioneered);
+				}
 			}
 		}
 
