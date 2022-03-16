@@ -290,6 +290,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		if (feasResult == LBool.UNSAT) {
 			mInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(mInterpolants, mAccelerations, mLoopSize,
 					mMetaTraceApplicationMethod);
+		} else {
+			return runStrategy(mCounterexampleTrace);
 		}
 		return feasResult;
 	}
