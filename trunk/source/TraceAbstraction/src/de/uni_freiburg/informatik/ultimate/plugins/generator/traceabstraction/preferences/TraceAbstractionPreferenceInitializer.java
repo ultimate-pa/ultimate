@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
@@ -174,6 +175,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
 	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
 	public static final String LABEL_MCR_REFINEMENT_STRATEGY = "Trace refinement strategy used in MCR";
+	public static final String LABEL_ACIP_REFINEMENT_STRATEGY =
+			"Trace refinement strategy used in Accelerated Interpolation";
+
 	public static final String LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Trace refinement exception blacklist";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
@@ -221,6 +225,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 	public static final RefinementStrategy DEF_MCR_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
+	public static final RefinementStrategy DEF_ACIP_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
 			RefinementStrategyExceptionBlacklist.DEPENDING;
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
@@ -239,7 +244,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private static final boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
+	private static final boolean DEF_ABSINT_ALWAYS_REFINE = false;
 	private static final boolean DEF_ONLY_REUSE = false;
 	private static final boolean DEF_COMPUTE_COUNTEREXAMPLE = true;
 	private static final boolean DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = true;
@@ -339,8 +344,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE =
 			"Loop acceleration method that is used by accelerated interpolation";
-	public static final AcceleratedInterpolationLoopAccelerationTechnique DEF_LOOPACCELERATION_TECHNIQUE =
-			AcceleratedInterpolationLoopAccelerationTechnique.FAST_UPR;
+	public static final LoopAccelerators DEF_LOOPACCELERATION_TECHNIQUE = LoopAccelerators.FAST_UPR;
 	public static final String DESC_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE = "Set the loop acceleration technique.";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
@@ -530,6 +534,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_MCR_REFINEMENT_STRATEGY, DEF_MCR_REFINEMENT_STRATEGY,
 						PreferenceType.Combo, RefinementStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_ACIP_REFINEMENT_STRATEGY, DEF_ACIP_REFINEMENT_STRATEGY,
+						PreferenceType.Combo, RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
@@ -546,8 +552,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
 				new UltimatePreferenceItem<>(LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
-						DEF_LOOPACCELERATION_TECHNIQUE, PreferenceType.Combo,
-						AcceleratedInterpolationLoopAccelerationTechnique.values()),
+						DEF_LOOPACCELERATION_TECHNIQUE, PreferenceType.Combo, LoopAccelerators.values()),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
 						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
@@ -727,6 +732,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Maximal Causality reduction strategy
 		 */
 		MCR,
+
+		/**
+		 * Use accelerated interpolation and some other, nested strategy
+		 */
+		ACCELERATED_INTERPOLATION,
 	}
 
 	/**
@@ -807,10 +817,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum McrInterpolantMethod {
 		WP, SP
-	}
-
-	public enum AcceleratedInterpolationLoopAccelerationTechnique {
-		FAST_UPR, WERNER_OVERAPPROX, JORDAN, QVASR, QVASRS
 	}
 
 	public enum InsufficientError {

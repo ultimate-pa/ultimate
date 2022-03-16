@@ -175,7 +175,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 			final INLOC oldSource = iter.next();
 			OUTLOC newSource;
 			if (loopHeads.contains(oldSource)) {
-				final int i = 0;
+				int i = 0;
 				final IntVasrsAbstraction abstraction = qvasrsAbstractions.get(oldSource);
 				final Map<Term, OUTLOC> qvasrsStateToLoc = new HashMap<>();
 				for (final Term state : abstraction.getStates()) {
@@ -183,6 +183,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 					@SuppressWarnings("unchecked")
 					final OUTLOC newLoc = (OUTLOC) new IcfgLocation(id, oldSource.getProcedure());
 					qvasrsStateToLoc.put(state, newLoc);
+					i++;
 				}
 				final Term[] inVarsReal =
 						abstraction.getInVars().values().toArray(new Term[abstraction.getInVars().size()]);

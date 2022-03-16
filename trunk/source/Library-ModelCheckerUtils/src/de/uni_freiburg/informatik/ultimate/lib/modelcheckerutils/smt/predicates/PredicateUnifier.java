@@ -400,15 +400,10 @@ public class PredicateUnifier implements IPredicateUnifier {
 		if (term instanceof AnnotatedTerm) {
 			final AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
 			final Annotation[] annotations = annotatedTerm.getAnnotations();
-			if (annotations.length == 1) {
-				if (":quoted".equals(annotations[0].getKey())) {
-					withoutAnnotation = annotatedTerm.getSubterm();
-				} else {
-					throw new UnsupportedOperationException();
-				}
-			} else {
+			if ((annotations.length != 1) || !":quoted".equals(annotations[0].getKey())) {
 				throw new UnsupportedOperationException();
 			}
+			withoutAnnotation = annotatedTerm.getSubterm();
 		} else {
 			withoutAnnotation = term;
 		}
@@ -683,7 +678,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 	}
 
-	public class CoverageRelationStatistics {
+	public static class CoverageRelationStatistics {
 		private final int mValidCoverageRelations;
 		private final int mInvalidCoverageRelations;
 		private final int mUnknownCoverageRelations;
@@ -974,11 +969,10 @@ public class PredicateUnifier implements IPredicateUnifier {
 							&& !thisIsLessQuantifiedThanOther(mClosedTerm, otherClosedTerm)) {
 						return other;
 					}
-					if (mEquivalentGtQuantifiedPredicate == null) {
-						mEquivalentGtQuantifiedPredicate = other;
-					} else {
+					if (mEquivalentGtQuantifiedPredicate != null) {
 						throw new AssertionError("at most one deprecated predicate");
 					}
+					mEquivalentGtQuantifiedPredicate = other;
 				}
 			}
 			// no predicate was equivalent

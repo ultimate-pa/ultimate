@@ -28,12 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -43,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.MetaTraceTransformer.MetaTraceApplicationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.IAccelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.ILoopdetector;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.looppreprocessor.ILoopPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
@@ -58,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -65,14 +68,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -93,7 +96,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 * underapproximation: multiple accelerations per loop)
 	 */
 	public enum AccelerationApproximationType {
-		PRECISE, UNDERAPPROXIMATION
+		PRECISE, UNDERAPPROXIMATION, OVERAPPROXIMATION
 	}
 
 	private final ILogger mLogger;
@@ -103,18 +106,15 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> mLoopPreprocessor;
 	private final PredicateHelper<L> mPredHelper;
 	private final IUltimateServiceProvider mServices;
-	private final IPredicateUnifier mPredUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final ITraceCheckPreferences mPrefs;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private IPredicate[] mInterpolants;
-	// private IProgramExecution<L, Term> mFeasibleProgramExecution;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IRun<L, IPredicate> mCounterexampleTrace;
 	private final List<L> mCounterexample;
-	private final Map<IcfgLocation, Set<List<L>>> mLoops;
+	private Map<IcfgLocation, Set<List<L>>> mLoops;
 	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
 	private final Map<IcfgLocation, IcfgLocation> mNestingRelation;
 	private final Map<IcfgLocation, Set<List<L>>> mNestedLoops;
@@ -127,6 +127,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private AccelerationApproximationType mApproximationType;
 	private final MetaTraceApplicationMethod mMetaTraceApplicationMethod;
 	private final MetaTraceTransformer<L> mMetaTraceTransformer;
+	private final IStrategySupplier<L> mStrategySupplier;
 
 	/**
 	 * Main function of the {@link AcceleratedInterpolation} interpolant generation scheme.
@@ -157,7 +158,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
 			final ILoopdetector<IcfgLocation, L> loopdetector,
 			final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> loopPreprocessor,
-			final IAccelerator accelerator) {
+			final IAccelerator accelerator, final IStrategySupplier<L> strategySupplier) {
 
 		mScript = script;
 		mLogger = logger;
@@ -177,9 +178,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mNestedLoopsTf = new HashMap<>();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
-		mPrefs = prefs;
+		mStrategySupplier = strategySupplier;
 		mServices = services;
-		mPredUnifier = predicateUnifier;
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 		mSimplificationTechnique = prefs.getSimplificationTechnique();
 
@@ -188,13 +188,9 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 
 		mIcfgEdgeFactory = mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 
-		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
-		mMetaTraceTransformer = new MetaTraceTransformer<>(mLogger, mScript, mCounterexample, mPredUnifier, mServices,
-				mPredTransformer, mIcfg.getCfgSmtToolkit());
-
-		mInterpolants = new IPredicate[mCounterexample.size()];
-		mInterpolants[0] = mPredUnifier.getTruePredicate();
-		mInterpolants[mCounterexample.size() - 1] = mPredUnifier.getFalsePredicate();
+		mPredHelper = new PredicateHelper<>(predicateUnifier, mPredTransformer, mLogger, mScript, mServices);
+		mMetaTraceTransformer = new MetaTraceTransformer<>(mLogger, mScript, mCounterexample, predicateUnifier,
+				mServices, mPredTransformer, mIcfg.getCfgSmtToolkit());
 	}
 
 	/**
@@ -202,19 +198,21 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 * checked for satisfiability.
 	 */
 	public LBool acceleratedInterpolationCoreIsCorrect() {
-		// Use new Script for interpolation:
-		final ManagedScript ipScript = constructManagedScriptForInterpolation();
-		final Interpolator<L> interpolator =
-				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
 		if (mLoops.isEmpty() || mIcfg.getLoopLocations().isEmpty()) {
-			/*
-			 * No loops
-			 */
 			mLogger.info("No loops in this trace, falling back to nested interpolation");
-			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
-			mInterpolants = interpolator.getInterpolants();
-			return interpolator.getTraceCheckResult();
+			return runStrategy(mCounterexampleTrace);
 		}
+		final Map<IcfgLocation, Set<List<L>>> trueLoops = new HashMap<>();
+		for (final Entry<IcfgLocation, Set<List<L>>> loop : mLoops.entrySet()) {
+			if (mIcfg.getLoopLocations().contains(loop.getKey())) {
+				trueLoops.put(loop.getKey(), loop.getValue());
+			} else {
+				mLoopsAsTf.remove(loop.getKey());
+				mLoopExitTransitions.remove(loop.getKey());
+				mLoopSize.remove(loop.getKey());
+			}
+		}
+		mLoops = trueLoops;
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
@@ -223,7 +221,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			for (final Entry<IcfgLocation, Set<List<L>>> nestedLoop : nestedLoopFiltered.entrySet()) {
 				if (nestedLoop.getValue() == null) {
 					mNestedLoops.remove(nestedLoop.getKey());
-					continue;
 				}
 			}
 			if (mLoopPreprocessor != null) {
@@ -254,7 +251,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				}
 				accelerationFinishedCorrectly = true;
 				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), loop);
-				// t = PartialQuantifierElimination.eliminateCompat(mServices, mScript, mSimplificationTechnique, term);
 				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, loop, false);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
@@ -268,63 +264,61 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 				loopheadIterator.remove();
 				break;
 			}
-			if (accelerations.size() > 1) {
-				mApproximationType = AccelerationApproximationType.UNDERAPPROXIMATION;
+			if (mAccelerator.isOverapprox()) {
+				mApproximationType = AccelerationApproximationType.OVERAPPROXIMATION;
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
 			mLogger.info("Starting analysis with loop acceleration approximation " + mApproximationType.toString());
 		}
 		if (mAccelerations.isEmpty()) {
-			/*
-			 * Could not compute an acceleration.
-			 */
-			mLogger.info("Could not accelerate.");
-			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
-			mInterpolants = interpolator.getInterpolants();
-		} else {
-			/*
-			 * translate the given trace into a meta trace which makes use of the loop acceleration.
-			 */
-			final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Meta-Trace: ");
-				for (int i = 0; i < metaTrace.getLength() - 1; i++) {
-					mLogger.debug(SmtUtils.simplify(mScript, metaTrace.getSymbol(i).getTransformula().getFormula(),
-							mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
-				}
-			}
+			mLogger.info("Could not compute an accelerate.");
+			return runStrategy(mCounterexampleTrace);
+		}
 
-			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, metaTrace);
-			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
-				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Is " + interpolator.getTraceCheckResult().toString());
-				}
-				final IPredicate[] inductiveInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(
-						tempInterpolants, mAccelerations, mLoopSize, mMetaTraceApplicationMethod);
-				mInterpolants = inductiveInterpolants;
+		// translate the given trace into a meta trace which makes use of the loop
+		// acceleration.
+		final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Meta-Trace: ");
+			for (int i = 0; i < metaTrace.getLength() - 1; i++) {
+				mLogger.debug(SmtUtils.simplify(mScript, metaTrace.getSymbol(i).getTransformula().getFormula(),
+						mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
 			}
 		}
-		return interpolator.getTraceCheckResult();
+
+		final LBool feasResult = runStrategy(metaTrace);
+		if (feasResult == LBool.UNSAT) {
+			mInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(mInterpolants, mAccelerations, mLoopSize,
+					mMetaTraceApplicationMethod);
+		}
+		return feasResult;
 	}
 
-	private IPredicate[] refineMetaInterpolants(final IPredicate[] unrefinedMetaInterpolants,
-			final NestedRun<L, IPredicate> metaTrace) {
+	private LBool runStrategy(final IRun<L, ?> actualTrace) throws AssertionError {
+		final AutomatonFreeRefinementEngine<L> afre = new AutomatonFreeRefinementEngine<>(mServices, mLogger,
+				mStrategySupplier.constructStrategy(actualTrace));
 
-		final IPredicate[] result = new IPredicate[unrefinedMetaInterpolants.length];
-		final List<L> metaTraceTransitions = metaTrace.getWord().asList();
-		for (int i = 0; i < metaTrace.getLength() - 2; i++) {
-			final IPredicate metaInterpolant;
-			if (i == 0) {
-				metaInterpolant = mPredUnifier.getTruePredicate();
-			} else {
-				metaInterpolant = unrefinedMetaInterpolants[i - 1];
-			}
-			final UnmodifiableTransFormula transition = metaTraceTransitions.get(i).getTransformula();
-			final Term inductiveInterpolant = mPredTransformer.strongestPostcondition(metaInterpolant, transition);
-			result[i] = mPredUnifier.getOrConstructPredicate(inductiveInterpolant);
+		final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> result = afre.getResult();
+		if (result.getCounterexampleFeasibility() != LBool.UNSAT) {
+			return result.getCounterexampleFeasibility();
 		}
-		return result;
+
+		final Collection<QualifiedTracePredicates> qtp = afre.getResult().getInfeasibilityProof();
+		final List<IPredicate> predicates;
+		final Optional<QualifiedTracePredicates> perfect =
+				qtp.stream().filter(QualifiedTracePredicates::isPerfect).findFirst();
+		if (perfect.isPresent()) {
+			predicates = perfect.get().getPredicates();
+		} else {
+			final Optional<QualifiedTracePredicates> imperfect = qtp.stream().findFirst();
+			if (imperfect.isEmpty()) {
+				throw new AssertionError();
+			}
+			predicates = imperfect.get().getPredicates();
+		}
+
+		mInterpolants = predicates.toArray(new IPredicate[predicates.size()]);
+		return result.getCounterexampleFeasibility();
 	}
 
 	/**
@@ -335,19 +329,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 */
 	private UnmodifiableTransFormula constructEpsilon() {
 		return TransFormulaBuilder.getTrivialTransFormula(mScript);
-	}
-
-	/**
-	 * It might be necessary to create a fresh mScript instance for the interpolation, in particular if you want to
-	 * interpolate multiple times.
-	 *
-	 * @return
-	 * @throws AssertionError
-	 */
-	private ManagedScript constructManagedScriptForInterpolation() throws AssertionError {
-		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(false)
-				.setSolverMode(SolverMode.Internal_SMTInterpol);
-		return mPrefs.getIcfgContainer().getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
 	}
 
 	/**
@@ -536,5 +517,10 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 
 	public IPredicate[] getInterpolants() {
 		return mInterpolants;
+	}
+
+	@FunctionalInterface
+	public interface IStrategySupplier<L extends IAction> {
+		IRefinementStrategy<L> constructStrategy(final IRun<L, ?> counterexample);
 	}
 }

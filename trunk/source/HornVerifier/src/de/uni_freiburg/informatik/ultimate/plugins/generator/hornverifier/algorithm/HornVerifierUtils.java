@@ -1,14 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.hornverifier.algorithm;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -32,19 +33,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class HornVerifierUtils {
-	private static final String SCRIPT_BASENAME = "dumped";
-
 	private HornVerifierUtils() {
 	}
 
-	public static ManagedScript createSolver(final IUltimateServiceProvider services) {
+	public static ManagedScript createSolver(final IUltimateServiceProvider services, final String basename,
+			final ILogger logger) {
 		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String dumpDir = prefs.getString(HornVerifierPreferenceInitializer.LABEL_DUMP_DIR);
 		final boolean dumpToFile = prefs.getBoolean(HornVerifierPreferenceInitializer.LABEL_DUMP_TO_FILE);
 		final SolverSettings solverSettings =
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
 						.setUseExternalSolver(ExternalSolver.Z3, Logics.HORN)
-						.setDumpSmtScriptToFile(dumpToFile, dumpDir, SCRIPT_BASENAME, false);
+						.setDumpSmtScriptToFile(dumpToFile, dumpDir, basename, false);
+		if (dumpToFile) {
+			final String path = Paths.get(dumpDir, basename).toString();
+			logger.info("Dumping script to " + path + ".smt2");
+		}
 		return new ManagedScript(services,
 				SolverBuilder.buildAndInitializeSolver(services, solverSettings, Activator.PLUGIN_NAME));
 	}
@@ -71,9 +75,8 @@ public class HornVerifierUtils {
 			}
 		}
 		// TODO: This is only an approximation for now and should be improved
-		final Predicate<IProgramVar> filter = x -> !x.getSort().isArraySort() && readVariables.contains(x);
 		final HornClauseSystem result =
-				new HornClauseSystem(numberOfThreads, managedScript, icfg.getCfgSmtToolkit(), filter);
+				new HornClauseSystem(numberOfThreads, managedScript, icfg.getCfgSmtToolkit(), readVariables::contains);
 		result.assertInitially(icfg.getInitialNodes());
 		final Set<IcfgLocation> errorNodes =
 				icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toSet());
