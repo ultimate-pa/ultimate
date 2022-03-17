@@ -76,7 +76,9 @@ public class IpTcStrategyModulePdr<L extends IIcfgTransition<?>>
 
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator stats) {
-		stats.aggregateStatisticsData("PDR", getOrConstruct().getStatistics());
+		if (isConstructed()) {
+			stats.aggregateStatisticsData("PDR", getOrConstruct().getStatistics());
+		}
 	}
 
 }

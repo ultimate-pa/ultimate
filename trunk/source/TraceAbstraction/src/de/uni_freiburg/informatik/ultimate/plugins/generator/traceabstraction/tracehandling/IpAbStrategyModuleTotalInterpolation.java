@@ -109,7 +109,9 @@ public class IpAbStrategyModuleTotalInterpolation<L extends IIcfgTransition<?>> 
 
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator statistics) {
-		statistics.aggregateStatisticsData("TotalInterpolation", mBench);
+		if (mBench != null) {
+			statistics.aggregateStatisticsData("TotalInterpolation", mBench);
+		}
 	}
 
 }

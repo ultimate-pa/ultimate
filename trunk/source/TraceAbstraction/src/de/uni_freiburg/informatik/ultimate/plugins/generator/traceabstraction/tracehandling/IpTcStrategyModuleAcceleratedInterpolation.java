@@ -83,7 +83,9 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator stats) {
-		stats.aggregateStatisticsData("ACCELERATED_INTERPOLATION", getOrConstruct().getStatistics());
+		if (isConstructed()) {
+			stats.aggregateStatisticsData("ACCELERATED_INTERPOLATION", getOrConstruct().getStatistics());
+		}
 	}
 
 	@Override

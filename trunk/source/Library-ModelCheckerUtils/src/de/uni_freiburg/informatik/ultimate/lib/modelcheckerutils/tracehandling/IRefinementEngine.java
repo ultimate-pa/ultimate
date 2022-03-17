@@ -28,26 +28,37 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <L>
+ *            Type of {@link IAction} used in the analysed abstraction.
  * @param <T>
  *            The type of the infeasibility proof, e.g., an interpolant automaton or a set of Hoare triples.
  */
 public interface IRefinementEngine<L extends IAction, T> {
 
 	/**
-	 * @return The result of the refinement engine run.
+	 * @return The {@link IRefinementEngineResult} of the refinement engine.
 	 */
 	IRefinementEngineResult<L, T> getResult();
 
 	/**
-	 * @return An {@link RefinementEngineStatisticsGenerator} instance that contains all statistics collected during the
-	 *         execution of this {@link IRefinementEngine} instance.
+	 * Exception to throw if {@link IRefinementEngine#getResult()} did not complete normally
+	 * ({@link IRefinementEngineResult#completedNormally()}) and the provided exception can or should not be handled
+	 * locally.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
 	 */
-	StatisticsAggregator getRefinementEngineStatistics();
+	final class RefinementEngineException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
+		public RefinementEngineException(final Throwable t) {
+			super(t);
+		}
+	}
 }

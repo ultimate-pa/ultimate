@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine.RefinementEngineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -871,22 +872,26 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<L, IPredicate> run, final TaskIdentifier taskIdentifier) {
-			try {
-				final ITARefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
+			final ITARefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
 						mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
 						IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider());
-				final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =
-						new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
-				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
-				return engine.getResult();
-			} catch (final ToolchainCanceledException tce) {
-				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
-				final String taskDescription =
-						"analyzing trace of length " + run.getLength() + " with TraceHistMax " + traceHistogramMax;
-				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
-				throw tce;
+			final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =
+					new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
+			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> result = engine.getResult();
+			mCegarStatistics.addRefinementEngineStatistics(result.getRefinementEngineStatistics());
+			if (!result.completedNormally()) {
+				if (result.getException() instanceof ToolchainCanceledException) {
+					final ToolchainCanceledException tce = (ToolchainCanceledException) result.getException();
+					final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
+					final String taskDescription =
+							"analyzing trace of length " + run.getLength() + " with TraceHistMax " + traceHistogramMax;
+					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+					throw tce;
+				}
+				throw new RefinementEngineException(result.getException());
 			}
+			return result;
 		}
 
 		private SynthesisResult checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {

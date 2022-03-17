@@ -109,7 +109,9 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator stats) {
 		mIpTcModule.aggregateStatistics(stats);
-		stats.aggregateStatisticsData("INTERPOLANT_CONSOLIDATION", getOrConstruct().getStatistics());
+		if (mInterpolantConsolidation != null) {
+			stats.aggregateStatisticsData("INTERPOLANT_CONSOLIDATION", mInterpolantConsolidation.getStatistics());
+		}
 	}
 
 	@Override

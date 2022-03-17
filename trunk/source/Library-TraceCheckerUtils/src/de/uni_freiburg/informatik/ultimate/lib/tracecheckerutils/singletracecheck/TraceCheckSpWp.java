@@ -163,7 +163,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				computeInterpolants(new AllIntegers(), interpolation);
 				actualInterpolationComputationStatus = new InterpolantComputationStatus();
 			} catch (final ToolchainCanceledException ex) {
-				throw ex;
+				actualInterpolationComputationStatus =
+						new InterpolantComputationStatus(ItpErrorStatus.RESOURCE_LIMIT, ex);
 			} catch (final Throwable ex) {
 				actualInterpolationComputationStatus =
 						new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH, ex);
@@ -641,5 +642,4 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		return mInterpolantComputationStatus;
 	}
-
 }

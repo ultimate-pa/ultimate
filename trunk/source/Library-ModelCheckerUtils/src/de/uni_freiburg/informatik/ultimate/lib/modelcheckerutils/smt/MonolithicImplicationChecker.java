@@ -29,16 +29,16 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Check implication between two formulas that each represent a set of
- * program states.
+ * Check implication between two formulas that each represent a set of program states.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -48,26 +48,26 @@ public class MonolithicImplicationChecker {
 	private final ManagedScript mManagedScript;
 
 	public MonolithicImplicationChecker(final IUltimateServiceProvider services, final ManagedScript managedScript) {
-		super();
 		mServices = services;
 		mManagedScript = managedScript;
 	}
 
-
 	/**
-	 * Check if implication  antecedent ==> succedent  is valid.
+	 * Check if implication antecedent ==> succedent is valid.
 	 */
 	public Validity checkImplication(final IPredicate antecedent, final boolean affirmAntecedentNeitherValidNorUnsat,
 			final IPredicate succedent, final boolean affirmSuccedentNeitherValidNorUnsat) {
-		return checkImplication(antecedent.getFormula(), antecedent.getClosedFormula(),	affirmAntecedentNeitherValidNorUnsat,
-				succedent.getFormula(), succedent.getClosedFormula(), affirmSuccedentNeitherValidNorUnsat);
+		return checkImplication(antecedent.getFormula(), antecedent.getClosedFormula(),
+				affirmAntecedentNeitherValidNorUnsat, succedent.getFormula(), succedent.getClosedFormula(),
+				affirmSuccedentNeitherValidNorUnsat);
 	}
 
 	/**
-	 * Check if implication  antecedent ==> succedent  is valid.
+	 * Check if implication antecedent ==> succedent is valid.
 	 */
-	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormula, final boolean affirmAntecedentNeitherValidNorUnsat,
-			final Term succedent, final Term succedentClosedFormula, final boolean affirmSuccedentNeitherValidNorUnsat) {
+	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormula,
+			final boolean affirmAntecedentNeitherValidNorUnsat, final Term succedent, final Term succedentClosedFormula,
+			final boolean affirmSuccedentNeitherValidNorUnsat) {
 		if (affirmAntecedentNeitherValidNorUnsat && affirmSuccedentNeitherValidNorUnsat) {
 			final Validity dataflowAnalysisResult = dataflowBasedImplicationCheck(antecedent, succedent);
 			if (dataflowAnalysisResult == Validity.INVALID) {
@@ -89,7 +89,7 @@ public class MonolithicImplicationChecker {
 		return IncrementalPlicationChecker.convertLBool2Validity(lbool);
 	}
 
-	private Validity dataflowBasedImplicationCheck(final Term antecedent, final Term succedent) {
+	private static Validity dataflowBasedImplicationCheck(final Term antecedent, final Term succedent) {
 		return Validity.UNKNOWN;
 	}
 

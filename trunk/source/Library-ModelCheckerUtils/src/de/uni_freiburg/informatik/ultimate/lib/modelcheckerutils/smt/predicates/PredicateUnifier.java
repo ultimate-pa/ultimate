@@ -308,71 +308,70 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 */
 	private IPredicate getOrConstructPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
 			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate) {
+		mPredicateUnifierBenchmarkGenerator.startTime();
+		try {
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
 
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
-		mPredicateUnifierBenchmarkGenerator.continueTime();
-		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
-		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
-		final Term withoutAnnotation = stripAnnotation(term);
-
-		{
-			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
-			if (p != null) {
-				if (mDeprecatedPredicates.containsKey(p)) {
-					p = mDeprecatedPredicates.get(p);
+			mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
+			assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
+			final Term withoutAnnotation = stripAnnotation(term);
+			{
+				IPredicate p = mTerm2Predicates.get(withoutAnnotation);
+				if (p != null) {
+					if (mDeprecatedPredicates.containsKey(p)) {
+						p = mDeprecatedPredicates.get(p);
+					}
+					mPredicateUnifierBenchmarkGenerator.incrementSyntacticMatches();
+					return p;
 				}
-				mPredicateUnifierBenchmarkGenerator.incrementSyntacticMatches();
-				mPredicateUnifierBenchmarkGenerator.stopTime();
-				return p;
 			}
-		}
-		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(withoutAnnotation);
-		{
-			IPredicate p = mTerm2Predicates.get(commuNF);
-			if (p != null) {
-				if (mDeprecatedPredicates.containsKey(p)) {
-					p = mDeprecatedPredicates.get(p);
+			final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(withoutAnnotation);
+			{
+				IPredicate p = mTerm2Predicates.get(commuNF);
+				if (p != null) {
+					if (mDeprecatedPredicates.containsKey(p)) {
+						p = mDeprecatedPredicates.get(p);
+					}
+					mPredicateUnifierBenchmarkGenerator.incrementSyntacticMatches();
+					return p;
 				}
-				mPredicateUnifierBenchmarkGenerator.incrementSyntacticMatches();
-				mPredicateUnifierBenchmarkGenerator.stopTime();
-				return p;
 			}
-		}
 
-		final PredicateComparison pc =
-				new PredicateComparison(commuNF, tvp.getVars(), impliedPredicates, expliedPredicates);
-		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
-			mPredicateUnifierBenchmarkGenerator.incrementSemanticMatches();
+			final PredicateComparison pc =
+					new PredicateComparison(commuNF, tvp.getVars(), impliedPredicates, expliedPredicates);
+			if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
+				mPredicateUnifierBenchmarkGenerator.incrementSemanticMatches();
+				return pc.getEquivalantLeqQuantifiedPredicate();
+			}
+
+			assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
+			assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
+			assert !mTerm2Predicates.containsKey(commuNF);
+			final Term simplifiedTerm;
+			if (pc.isIntricatePredicate()) {
+				simplifiedTerm = commuNF;
+			} else {
+				try {
+					final Term tmp = SmtUtils.simplify(mMgdScript, commuNF, mServices, mSimplificationTechnique);
+					simplifiedTerm = new CommuhashNormalForm(mServices, mScript).transform(tmp);
+				} catch (final ToolchainCanceledException tce) {
+					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
+					throw tce;
+				}
+			}
+			final IPredicate result = constructNewPredicate(simplifiedTerm, originalPredicate);
+			if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
+				mDeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
+				mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
+			}
+			addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
+			assert new CheckClosedTerm().isClosed(result.getClosedFormula());
+			assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
+			mPredicateUnifierBenchmarkGenerator.incrementConstructedPredicates();
+			return result;
+		} finally {
 			mPredicateUnifierBenchmarkGenerator.stopTime();
-			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
-		final IPredicate result;
-		assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
-		assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
-		assert !mTerm2Predicates.containsKey(commuNF);
-		final Term simplifiedTerm;
-		if (pc.isIntricatePredicate()) {
-			simplifiedTerm = commuNF;
-		} else {
-			try {
-				final Term tmp = SmtUtils.simplify(mMgdScript, commuNF, mServices, mSimplificationTechnique);
-				simplifiedTerm = new CommuhashNormalForm(mServices, mScript).transform(tmp);
-			} catch (final ToolchainCanceledException tce) {
-				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
-				throw tce;
-			}
-		}
-		result = constructNewPredicate(simplifiedTerm, originalPredicate);
-		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
-			mDeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
-			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
-		}
-		addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
-		assert new CheckClosedTerm().isClosed(result.getClosedFormula());
-		assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
-		mPredicateUnifierBenchmarkGenerator.incrementConstructedPredicates();
-		mPredicateUnifierBenchmarkGenerator.stopTime();
-		return result;
 	}
 
 	protected IPredicate constructNewPredicate(final Term term, final IPredicate originalPredicate) {

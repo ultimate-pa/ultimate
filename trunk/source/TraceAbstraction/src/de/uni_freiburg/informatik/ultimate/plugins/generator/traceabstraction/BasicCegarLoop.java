@@ -110,8 +110,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine.RefinementEngineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
@@ -156,7 +156,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
-import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -578,31 +577,36 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
+		if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
+				.getPathProgramCache().getPathProgramCount(mCounterexample)) {
+			final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
+			throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
+		}
 
 		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), mCounterexample,
 				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
-		try {
-			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
-					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
-				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
-				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
+		final TraceAbstractionRefinementEngine<L> refinementEngine =
+				new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
+		mRefinementResult = refinementEngine.getResult();
+		mCegarLoopBenchmark.addRefinementEngineStatistics(mRefinementResult.getRefinementEngineStatistics());
+		if (!mRefinementResult.completedNormally()) {
+			if (mRefinementResult.getPredicateUnifier() != null) {
+				mCegarLoopBenchmark.addPredicateUnifierData(
+						mRefinementResult.getPredicateUnifier().getPredicateUnifierBenchmark());
+			}
+			if (mRefinementResult.getHoareTripleChecker() != null) {
+				mCegarLoopBenchmark.addEdgeCheckerData(mRefinementResult.getHoareTripleChecker().getStatistics());
 			}
 
-			final TraceAbstractionRefinementEngine<L> refinementEngine =
-					new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
-			mRefinementResult = refinementEngine.getResult();
-			mCegarLoopBenchmark.addRefinementEngineStatistics(refinementEngine.getRefinementEngineStatistics());
-
-		} catch (final ToolchainCanceledException tce) {
-			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
-			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
-					+ " with TraceHistMax " + traceHistogramMax;
-			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
-
-			mRefinementResult = new TimeoutRefinementEngineResult(new Lazy<>(() -> null),
-					new Lazy<>(() -> strategy.getPredicateUnifier(null)));
-			throw tce;
+			if (mRefinementResult.getException() instanceof ToolchainCanceledException) {
+				final ToolchainCanceledException tce = (ToolchainCanceledException) mRefinementResult.getException();
+				final String taskDescription = String.format("analyzing trace of length %s with TraceHistMax %s",
+						mCounterexample.getLength(), new HistogramOfIterable<>(mCounterexample.getWord()).getMax());
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				throw tce;
+			}
+			throw new RefinementEngineException(mRefinementResult.getException());
 		}
 
 		final LBool feasibility = mRefinementResult.getCounterexampleFeasibility();
@@ -992,18 +996,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		}
 		assert isInterpolantAutomatonOfSingleStateType(
 				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult());
-		assert checkInductivity(interpolantAutomaton);
-	}
-
-	private boolean checkInductivity(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
-			throws AutomataOperationCanceledException {
-		final IncrementalHoareTripleChecker htc =
-				new IncrementalHoareTripleChecker(mServices.getStorage(), super.mCsToolkit, false);
-		final InductivityCheck<L> check = new InductivityCheck<>(mServices,
-				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),
-				false, true, htc);
-		mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
-		return check.getResult();
+		assert checkInductivity(
+				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult());
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(
@@ -1246,15 +1240,5 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 	private final boolean isSequential() {
 		return !IcfgUtils.isConcurrent(super.mIcfg);
-	}
-
-	private class TimeoutRefinementEngineResult
-			extends BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> {
-
-		public TimeoutRefinementEngineResult(final Lazy<IHoareTripleChecker> htc,
-				final Lazy<IPredicateUnifier> predicateUnifier) {
-			super(LBool.UNKNOWN, null, null, false, Collections.emptyList(), htc, predicateUnifier);
-		}
-
 	}
 }

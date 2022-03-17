@@ -68,7 +68,9 @@ public class IpTcStrategyModuleSifa<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator stats) {
-		stats.aggregateStatisticsData("SIFA", getOrConstruct().getStatistics());
+		if (isConstructed()) {
+			stats.aggregateStatisticsData("SIFA", getOrConstruct().getStatistics());
+		}
 	}
 
 }

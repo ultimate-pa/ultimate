@@ -82,7 +82,9 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator stats) {
-		stats.aggregateStatisticsData("ABSTRACT_INTERPRETATION", getOrConstructRunner().getStatistics());
+		if (isConstructed()) {
+			stats.aggregateStatisticsData("ABSTRACT_INTERPRETATION", getOrConstructRunner().getStatistics());
+		}
 	}
 
 	@Override

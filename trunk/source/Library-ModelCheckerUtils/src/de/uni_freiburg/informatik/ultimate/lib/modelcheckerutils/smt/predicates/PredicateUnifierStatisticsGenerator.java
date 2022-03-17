@@ -75,7 +75,7 @@ public final class PredicateUnifierStatisticsGenerator extends BaseStatisticsDat
 		mImplicationChecksByTransitivity++;
 	}
 
-	public void continueTime() {
+	public void startTime() {
 		mTime.start();
 	}
 

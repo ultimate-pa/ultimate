@@ -216,12 +216,13 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	}
 
 	private IPredicate getOrConstructPredicateInternal(final Term term) {
-		mStatisticsTracker.continueTime();
+		mStatisticsTracker.startTime();
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
 		final IPredicate predicate = mBasicPredicateFactory.newPredicate(commuNF);
 		// catch terms equal to true of false
 		final IPredicate tfPred = catchTrueOrFalse(predicate);
 		if (tfPred != null) {
+			mStatisticsTracker.stopTime();
 			return tfPred;
 		}
 		final IPredicate unifiedPredicate = mPredicateTrie.unifyPredicate(predicate);

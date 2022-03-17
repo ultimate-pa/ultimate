@@ -103,6 +103,10 @@ public abstract class IpTcStrategyModuleBase<T extends IInterpolatingTraceCheck<
 		return mTrack;
 	}
 
+	protected boolean isConstructed() {
+		return mTrack != null;
+	}
+
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker() {
 		return null;

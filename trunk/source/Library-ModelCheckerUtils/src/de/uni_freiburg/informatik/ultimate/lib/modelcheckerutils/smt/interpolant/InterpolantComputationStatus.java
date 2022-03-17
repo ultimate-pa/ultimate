@@ -50,6 +50,8 @@ public class InterpolantComputationStatus {
 		 * Trace was feasible, we cannot interpolate.
 		 */
 		TRACE_FEASIBLE,
+
+		RESOURCE_LIMIT,
 	}
 
 	private final boolean mComputationSuccessful;
@@ -75,7 +77,6 @@ public class InterpolantComputationStatus {
 
 	private InterpolantComputationStatus(final boolean computationSuccessful, final ItpErrorStatus status,
 			final Throwable exception) {
-		super();
 		mComputationSuccessful = computationSuccessful;
 		mStatus = status;
 		mException = exception;

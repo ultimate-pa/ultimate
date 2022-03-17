@@ -88,7 +88,9 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator stats) {
-		stats.aggregateStatisticsData("TRACE_CHECK", getOrConstruct().getStatistics());
+		if (mTraceCheck != null) {
+			stats.aggregateStatisticsData("TRACE_CHECK", getOrConstruct().getStatistics());
+		}
 	}
 
 	@Override

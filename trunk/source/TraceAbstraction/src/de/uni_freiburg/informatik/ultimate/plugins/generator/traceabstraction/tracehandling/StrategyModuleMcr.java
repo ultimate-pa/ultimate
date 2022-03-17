@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -23,8 +24,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine.RefinementEngineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -160,18 +160,23 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 				mAbstraction, mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier,
 				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(), refinementStrategy);
 		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
-		final List<L> trace = counterexample.getWord().asList();
-		final StatisticsAggregator statistics = afe.getRefinementEngineStatistics();
 		mAfeResult = afe.getResult();
+		if (!mAfeResult.completedNormally()) {
+			if (mAfeResult.getException() instanceof ToolchainCanceledException) {
+				throw (ToolchainCanceledException) mAfeResult.getException();
+			}
+			throw new RefinementEngineException(mAfeResult.getException());
+		}
+		final List<L> trace = counterexample.getWord().asList();
 		final LBool feasibility = mAfeResult.getCounterexampleFeasibility();
 		// We found a feasible counterexample
 		if (feasibility != LBool.UNSAT) {
-			return McrTraceCheckResult.constructFeasibleResult(trace, feasibility, statistics,
-					mAfeResult.getIcfgProgramExecution());
+			return McrTraceCheckResult.constructFeasibleResult(trace, feasibility,
+					mAfeResult.getRefinementEngineStatistics(), mAfeResult.getIcfgProgramExecution());
 		}
 		// Extract interpolants, try to get a perfect sequence
 		final Collection<QualifiedTracePredicates> proof = mAfeResult.getInfeasibilityProof();
 		mUsedPredicates.addAll(proof);
-		return McrTraceCheckResult.constructInfeasibleResult(trace, proof, statistics);
+		return McrTraceCheckResult.constructInfeasibleResult(trace, proof, mAfeResult.getRefinementEngineStatistics());
 	}
 }

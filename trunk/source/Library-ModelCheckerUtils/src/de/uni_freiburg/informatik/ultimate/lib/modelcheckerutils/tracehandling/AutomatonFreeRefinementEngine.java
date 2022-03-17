@@ -69,34 +69,54 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		implements IRefinementEngine<L, Collection<QualifiedTracePredicates>> {
 
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IRefinementStrategy<L> mStrategy;
-	private final StatisticsAggregator mRefinementEngineStatistics;
 
-	private final LBool mFeasibility;
+	private final Set<IModuleStatisticProvider> mModuleStatisticProviders;
 	private IProgramExecution<L, Term> mIcfgProgramExecution;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
 	private boolean mSomePerfectSequenceFound;
 	private List<QualifiedTracePredicates> mQualifiedTracePredicates;
-	private final Set<IModuleStatisticProvider> mModuleStatisticProviders;
+	private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mResult;
 
 	private String mUsedTraceCheckFingerprint;
-	private final IUltimateServiceProvider mServices;
 
 	public AutomatonFreeRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final IRefinementStrategy<L> strategy) {
 		mServices = services;
 		mLogger = logger;
 		mStrategy = strategy;
-		mRefinementEngineStatistics = new StatisticsAggregator(services.getStorage());
 		mModuleStatisticProviders = new HashSet<>();
+
+		LBool feasibility;
+		Throwable exception;
 		try {
-			mFeasibility = executeStrategy();
-		} finally {
-			for (final IModuleStatisticProvider module : mModuleStatisticProviders) {
-				module.aggregateStatistics(mRefinementEngineStatistics);
+			feasibility = executeStrategy();
+			exception = null;
+		} catch (final Throwable t) {
+			if (t instanceof ToolchainCanceledException) {
+				mLogger.warn("Exception during %s run: %s", AutomatonFreeRefinementEngine.class.getSimpleName(),
+						t.getMessage());
+			} else {
+				mLogger.fatal("Exception during %s run: %s", AutomatonFreeRefinementEngine.class.getSimpleName(),
+						t.getMessage());
 			}
+			exception = t;
+			feasibility = LBool.UNKNOWN;
 		}
+		final StatisticsAggregator stats = new StatisticsAggregator(services.getStorage());
+		for (final IModuleStatisticProvider module : mModuleStatisticProviders) {
+			module.aggregateStatistics(stats);
+		}
+		mResult = new BasicRefinementEngineResult<>(feasibility, mQualifiedTracePredicates, mIcfgProgramExecution,
+				mSomePerfectSequenceFound, mUsedTracePredicates, new Lazy<>(this::getHoareTripleChecker),
+				new Lazy<>(this::getPredicateUnifier), stats, exception);
+	}
+
+	@Override
+	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> getResult() {
+		return mResult;
 	}
 
 	private IHoareTripleChecker getHoareTripleChecker() {
@@ -113,11 +133,6 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		mLogger.info("Using predicate unifier %s provided by strategy %s", strategyUnifier.getClass().getSimpleName(),
 				mStrategy.getName());
 		return strategyUnifier;
-	}
-
-	@Override
-	public StatisticsAggregator getRefinementEngineStatistics() {
-		return mRefinementEngineStatistics;
 	}
 
 	/**
@@ -347,13 +362,6 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 
 	private static String getModuleFingerprintString(final Object obj) {
 		return String.format("%s [%s]", obj.getClass().getSimpleName(), obj.hashCode());
-	}
-
-	@Override
-	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> getResult() {
-		return new BasicRefinementEngineResult<>(mFeasibility, mQualifiedTracePredicates, mIcfgProgramExecution,
-				mSomePerfectSequenceFound, mUsedTracePredicates, new Lazy<>(this::getHoareTripleChecker),
-				new Lazy<>(this::getPredicateUnifier));
 	}
 
 }

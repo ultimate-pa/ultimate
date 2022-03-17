@@ -78,7 +78,9 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 
 	@Override
 	public void aggregateStatistics(final StatisticsAggregator stats) {
-		stats.aggregateStatisticsData("TRACE_CHECK", getOrConstruct().getStatistics());
+		if (isConstructed()) {
+			stats.aggregateStatisticsData("TRACE_CHECK", getOrConstruct().getStatistics());
+		}
 	}
 
 	protected ManagedScript createExternalManagedScript(final SolverSettings solverSettings) {

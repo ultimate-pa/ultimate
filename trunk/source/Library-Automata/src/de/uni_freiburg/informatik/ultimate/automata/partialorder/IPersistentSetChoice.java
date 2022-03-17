@@ -60,7 +60,7 @@ public interface IPersistentSetChoice<L, S> {
 	 */
 	default IStatisticsDataProvider getStatistics() {
 		// by default, no statistics are collected
-		return new StatisticsAggregator(null);
+		return new StatisticsAggregator();
 	}
 
 	default boolean ensuresCompatibility(final IDfsOrder<L, S> order) {

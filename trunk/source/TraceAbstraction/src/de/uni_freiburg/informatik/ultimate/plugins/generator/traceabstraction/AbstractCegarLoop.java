@@ -488,9 +488,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		}
 
 		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-			assert new InductivityCheck<>(mServices, (INestedWordAutomaton<L, IPredicate>) mAbstraction, false, true,
-					new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false))
-							.getResult() : "Not inductive";
+			assert checkInductivity((INestedWordAutomaton<L, IPredicate>) mAbstraction) : "Not inductive";
 		}
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
@@ -502,6 +500,15 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 			final String filename = mIcfg.getIdentifier() + "_BiggestAutomaton";
 			writeAutomatonToFile(mAbstraction, filename);
 		}
+	}
+
+	protected boolean checkInductivity(final INestedWordAutomaton<L, IPredicate> interpolantAutomaton)
+			throws AutomataOperationCanceledException {
+		final IncrementalHoareTripleChecker htc =
+				new IncrementalHoareTripleChecker(mServices.getStorage(), mCsToolkit, false);
+		final InductivityCheck<L> check = new InductivityCheck<>(mServices, interpolantAutomaton, false, true, htc);
+		mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
+		return check.getResult();
 	}
 
 	private IcfgLocation getErrorLocFromCounterexample() {

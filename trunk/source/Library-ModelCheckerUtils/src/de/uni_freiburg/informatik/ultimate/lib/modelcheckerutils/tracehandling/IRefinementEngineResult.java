@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 
 /**
  * The result provided by {@link IRefinementEngine#getResult()}
@@ -108,7 +109,35 @@ public interface IRefinementEngineResult<L extends IAction, T> {
 	 */
 	IPredicateUnifier getPredicateUnifier();
 
-	public class BasicRefinementEngineResult<L extends IAction, T> implements IRefinementEngineResult<L, T> {
+	/**
+	 * @return An {@link StatisticsAggregator} instance that contains all statistics collected during the execution of
+	 *         this {@link IRefinementEngine} instance.
+	 */
+	StatisticsAggregator getRefinementEngineStatistics();
+
+	/**
+	 * 
+	 * @return A {@link Throwable} if the execution of the refinement engine was interrupted by an exception, or null if
+	 *         it completed normally.
+	 */
+	Throwable getException();
+
+	/**
+	 * 
+	 * @return true iff the {@link IRefinementEngine} completed normally.
+	 */
+	default boolean completedNormally() {
+		return getException() == null;
+	}
+
+	/**
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 * @param <T>
+	 */
+	class BasicRefinementEngineResult<L extends IAction, T> implements IRefinementEngineResult<L, T> {
 
 		private final LBool mFeasibility;
 		private final T mProof;
@@ -118,11 +147,14 @@ public interface IRefinementEngineResult<L extends IAction, T> {
 
 		private final Lazy<IHoareTripleChecker> mHtc;
 		private final Lazy<IPredicateUnifier> mPredicateUnifier;
+		private final StatisticsAggregator mStats;
+		private final Throwable mException;
 
 		public BasicRefinementEngineResult(final LBool feasibility, final T proof,
 				final IProgramExecution<L, Term> programExecution, final boolean isSequencePerfect,
 				final List<QualifiedTracePredicates> usedTracePredicates, final Lazy<IHoareTripleChecker> htc,
-				final Lazy<IPredicateUnifier> predicateUnifier) {
+				final Lazy<IPredicateUnifier> predicateUnifier, final StatisticsAggregator stats,
+				final Throwable exception) {
 			mFeasibility = feasibility;
 			mProof = proof;
 			mProgramExecution = programExecution;
@@ -130,6 +162,8 @@ public interface IRefinementEngineResult<L extends IAction, T> {
 			mUsedTracePredicates = usedTracePredicates;
 			mHtc = htc;
 			mPredicateUnifier = predicateUnifier;
+			mStats = stats;
+			mException = exception;
 		}
 
 		@Override
@@ -170,6 +204,16 @@ public interface IRefinementEngineResult<L extends IAction, T> {
 		@Override
 		public IPredicateUnifier getPredicateUnifier() {
 			return mPredicateUnifier.get();
+		}
+
+		@Override
+		public StatisticsAggregator getRefinementEngineStatistics() {
+			return mStats;
+		}
+
+		@Override
+		public Throwable getException() {
+			return mException;
 		}
 	}
 }

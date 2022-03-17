@@ -73,6 +73,6 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	 */
 	default IStatisticsDataProvider getStatistics() {
 		// by default, no statistics are collected
-		return new StatisticsAggregator(null);
+		return new StatisticsAggregator();
 	}
 }
