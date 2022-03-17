@@ -304,7 +304,7 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 		public void destroy() {
 			requireIsOpen();
 			// Useful when looking at StatisticsDataProviderAlreadyClosedException
-			System.out.println("Closing " + mId + " " + ReflectionUtil.getCurrentCallStackOneLine());
+			// System.out.println("Closing " + mId + " " + ReflectionUtil.getCurrentCallStackOneLine());
 			if (mStorage != null) {
 				mStorage.removeStorable(getStorageKey());
 			}

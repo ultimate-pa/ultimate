@@ -73,7 +73,7 @@ public class StatisticsAggregationService {
 			final StatisticsAggregator leaf = new StatisticsAggregator(mServices.getStorage());
 			entry.getValue().stream().map(Supplier::get).collect(Collectors.toSet()).stream().forEach(a -> {
 				leaf.aggregateStatisticsData(a);
-				mLogger.info("Aggregated %s", a);
+				mLogger.debug("Aggregated %s", a);
 			});
 			final String[] path = entry.getKey().split(PATH_SEPARATOR);
 			aggregate(path, 0, rtr, leaf);
@@ -98,7 +98,7 @@ public class StatisticsAggregationService {
 			throw new IllegalStateException();
 		}
 		final String path = Arrays.stream(pathSegments).collect(Collectors.joining(PATH_SEPARATOR));
-		mLogger.info("Registering statistics aggregation to %s", path);
+		mLogger.debug("Registering statistics aggregation to %s", path);
 		mStats.computeIfAbsent(path, a -> new HashSet<>()).add(sdp);
 	}
 
