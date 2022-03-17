@@ -224,7 +224,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final IIcfg<IcfgLocation> petrifiedIcfg = petrify(icfg, numberOfThreadInstances);
 			mResultsPerLocation.clear();
 
-			final var results = analyseProgram(petrifiedIcfg, CegarLoopUtils::hasSufficientThreadInstances);
+			final var results = analyseProgram(petrifiedIcfg, TraceAbstractionStarter::hasSufficientThreadInstances);
 			// Stop if either every in-use error location is unreachable or any other error locations is reachable
 			if (resultsHaveSufficientInstances(results)) {
 				mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances
@@ -245,7 +245,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (r.resultStream().allMatch(a -> a != Result.UNSAFE)) {
 				continue;
 			}
-			if (CegarLoopUtils.hasSufficientThreadInstances(r)) {
+			if (hasSufficientThreadInstances(r)) {
 				return true;
 			}
 			res = false;
@@ -373,15 +373,13 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				switch (mPrefs.insufficientThreadErrorsVsProgramErrors()) {
 				case AFTER:
 					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
-					errorLocs =
-							errorLocs.sorted((x, y) -> Boolean.compare(CegarLoopUtils.isInsufficientThreadsLocation(x),
-									CegarLoopUtils.isInsufficientThreadsLocation(y)));
+					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(x),
+							isInsufficientThreadsLocation(y)));
 					break;
 				case BEFORE:
 					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations first
-					errorLocs =
-							errorLocs.sorted((x, y) -> Boolean.compare(CegarLoopUtils.isInsufficientThreadsLocation(y),
-									CegarLoopUtils.isInsufficientThreadsLocation(x)));
+					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(y),
+							isInsufficientThreadsLocation(x)));
 					break;
 				default:
 					break;
@@ -586,8 +584,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private void reportLocationResults() {
 		// Determine if we were unable to prove thread instance sufficiency. This could e.g. be due to a counterexample,
 		// a timeout, or a unprovable trace.
-		final boolean couldBeInsufficient = mResultsPerLocation.entrySet().stream()
-				.anyMatch(entry -> CegarLoopUtils.isInsufficientThreadsLocation(entry.getKey())
+		final boolean couldBeInsufficient =
+				mResultsPerLocation.entrySet().stream().anyMatch(entry -> isInsufficientThreadsLocation(entry.getKey())
 						&& !(entry.getValue() instanceof PositiveResult<?>));
 
 		for (final Map.Entry<IcfgLocation, IResult> entry : mResultsPerLocation.entrySet()) {
@@ -600,7 +598,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			} else {
 				// Output only results for real error locations. (If not mentioned, the user can simply assume that
 				// sufficient thread instances were used.)
-				output = !CegarLoopUtils.isInsufficientThreadsLocation(entry.getKey());
+				output = !isInsufficientThreadsLocation(entry.getKey());
 			}
 
 			if (output) {
@@ -638,6 +636,16 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 */
 	public IElement getRootOfNewModel() {
 		return mRootOfNewModel;
+	}
+
+	private static <L extends IIcfgTransition<?>> boolean hasSufficientThreadInstances(final CegarLoopResult<L> clres) {
+		return clres.getResults().entrySet().stream().filter(a -> a.getValue().getResult() == Result.UNSAFE)
+				.noneMatch(a -> isInsufficientThreadsLocation(a.getKey()));
+	}
+
+	private static boolean isInsufficientThreadsLocation(final IcfgLocation loc) {
+		final Check check = Check.getAnnotation(loc);
+		return check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
 	}
 
 	public static final class AllErrorsAtOnceDebugIdentifier extends DebugIdentifier {
