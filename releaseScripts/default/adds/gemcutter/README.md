@@ -41,7 +41,7 @@ GemCutter currently supports a limited array of preference orders.
 
 * Possible Values: `BY_SERIAL_NUMBER` (approximates sequential composition), `PSEUDO_LOCKSTEP` (approximates lockstep), `RANDOM` (randomized with a fixed seed, see below), `POSITIONAL_RANDOM` (positional randomized order with a fixed seed, see below), `LOOP_LOCKSTEP` (aims to context switch after a thread has completed an entire iteration of a loop)
 * Default Value: `BY_SERIAL_NUMBER`
-* Command Line: `--traceabstraction.dfs.order.used.in.por <arg>
+* Command Line: `--traceabstraction.dfs.order.used.in.por <arg>`
 * Settings Directive:
   ```
   /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/DFS\ Order\ used\ in\ POR=<arg>
