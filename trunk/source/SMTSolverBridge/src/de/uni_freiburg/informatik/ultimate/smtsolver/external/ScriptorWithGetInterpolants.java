@@ -60,8 +60,8 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 
 	public ScriptorWithGetInterpolants(final String command, final ILogger logger,
 			final IUltimateServiceProvider services, final ExternalInterpolator externalInterpolator, final String name,
-			final String fullPathOfDumpedFile) throws IOException {
-		super(command, logger, services, name, fullPathOfDumpedFile);
+			final String fullPathOfDumpedFile, final Object marker) throws IOException {
+		super(command, logger, services, name, fullPathOfDumpedFile, marker);
 		mInterpolationAdapter = createAdapter(externalInterpolator);
 	}
 

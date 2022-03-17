@@ -102,7 +102,7 @@ public class NonIncrementalScriptor extends NoopScript {
 	public NonIncrementalScriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
 			final String solverName, final boolean dumpFakeNonIncrementalScript,
 			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript,
-			final String fullPathOfDumpedFile) throws IOException {
+			final String fullPathOfDumpedFile, final Object marker) throws IOException {
 		if (dumpFakeNonIncrementalScript) {
 			mPathOfDumpedFakeNonIncrementalScript = pathOfDumpedFakeNonIncrementalScript;
 			mBasenameOfDumpedFakeNonIcrementalScript = basenameOfDumpedFakeNonIcrementalScript;
@@ -114,7 +114,7 @@ public class NonIncrementalScriptor extends NoopScript {
 			mPathOfDumpedFakeNonIncrementalScript = null;
 			mBasenameOfDumpedFakeNonIcrementalScript = null;
 		}
-		mExecutor = new Executor(command, this, logger, services, solverName, fullPathOfDumpedFile);
+		mExecutor = new Executor(command, this, logger, services, solverName, fullPathOfDumpedFile, marker);
 		mCommandStack = new LinkedList<>();
 		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
 	}

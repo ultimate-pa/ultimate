@@ -36,9 +36,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
  * possibility to store information related to one {@link IToolchain} execution. At the end of the lifetime of a
  * {@link IToolchain}, the core will destroy the storage (i.e. call {@link IStorable#destroy() and clear the storage}.
  *
- * There you can release all resources that need to be released (e.g. close file handlers).
- *
- * Ultimate's {@link MonitoredProcess} already uses the {@link IToolchainStorage}, so you don't need to care for that.
+ * This allows you to release all resources that need to be released (e.g., close file handlers, close interactive
+ * solvers).
+ * 
+ * {@link IStorable}s can also be removed and destroyed in other ways. They can be associated with a marker through
+ * {@link #putStorable(String, IStorable)} or {@link #putStorable(Object, String, IStorable)} and then
+ * <ul>
+ * <li>removed explicitly when the specified marker is destroyed, or
+ * <li>removed implicitly, when they were associated to a stack marker and the marker or an underlying marker is
+ * removed.
+ * </ul>
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -77,7 +84,7 @@ public interface IToolchainStorage {
 
 	/**
 	 * Save a {@link IStorable} under the given key and mark it with the last marker. If there is already an
-	 * {@link IStorable} saved under the key, it will be removed and returned.
+	 * {@link IStorable} saved under the key, it will be removed and returned. The last marker is always a stack marker.
 	 *
 	 * @param key
 	 *            The key under which you want to store your {@link IStorable}.
@@ -86,6 +93,20 @@ public interface IToolchainStorage {
 	 * @return An {@link IStorable} if there was already one in that place or null
 	 */
 	IStorable putStorable(final String key, final IStorable value);
+
+	/**
+	 * Save a {@link IStorable} under the given key and mark it with the given marker. If there is already an
+	 * {@link IStorable} saved under the key, it will be removed and returned.
+	 *
+	 * @param marker
+	 *            A marker or null. If null, behaves like {@link #putStorable(String, IStorable)}.
+	 * @param key
+	 *            The key under which you want to store your {@link IStorable}.
+	 * @param value
+	 *            The {@link IStorable}
+	 * @return An {@link IStorable} if there was already one in that place or null
+	 */
+	IStorable putStorable(final Object marker, final String key, final IStorable value);
 
 	/**
 	 * Save a {@link IStorable} under the given key. If there is already an {@link IStorable} saved under the key, it
@@ -101,18 +122,6 @@ public interface IToolchainStorage {
 	IStorable putUnmarkedStorable(final String key, final IStorable value);
 
 	/**
-	 * Save a {@link IStorable} under the given key and mark it with the given marker. If there is already an
-	 * {@link IStorable} saved under the key, it will be removed and returned.
-	 *
-	 * @param key
-	 *            The key under which you want to store your {@link IStorable}.
-	 * @param value
-	 *            The {@link IStorable}
-	 * @return An {@link IStorable} if there was already one in that place or null
-	 */
-	IStorable putStorable(final Object marker, final String key, final IStorable value);
-
-	/**
 	 * This method clears the {@link IToolchainStorage} and destroys every {@link IStorable} by calling
 	 * {@link IStorable#destroy()} on it. Possible exceptions should be caught, logged, and otherwise ignored.
 	 */
@@ -124,19 +133,35 @@ public interface IToolchainStorage {
 	Set<String> keys();
 
 	/**
-	 * Register a marker with the {@link IToolchainStorage} that allows you to destroy all marked {@link IStorable}s
-	 * that were registered after the marker has been pushed.
+	 * Push a marker to the {@link IToolchainStorage} marker stack. This allows you to destroy all marked
+	 * {@link IStorable}s that were registered after the marker has been pushed or that have been assigned to the
+	 * marker.
 	 *
 	 * @param marker
 	 *            The marker.
 	 * @throws IllegalArgumentException
-	 *             iff this markerId is already registered.
+	 *             iff this marker is already registered.
 	 */
 	void pushMarker(final Object marker) throws IllegalArgumentException;
 
 	/**
+	 * Register a marker with the {@link IToolchainStorage} that allows you to destroy all marked {@link IStorable}s
+	 * that were registered to this particular marker. This marker is not part of the stack, so {@link IStorable}s
+	 * registered to it will not be removed through stack operations.
+	 *
+	 * @param marker
+	 *            The marker.
+	 * @throws IllegalArgumentException
+	 *             iff this marker is already registered.
+	 */
+	void registerMarker(final Object marker) throws IllegalArgumentException;
+
+	/**
 	 * Remove all markers registered after and including the supplied marker. All {@link IStorable}s associated with the
 	 * removed markers will be also removed and their {@link IStorable#destroy()} method will be called.
+	 * 
+	 * If the marker is registered but not part of the stack, only the associated items will be destroyed (same behavior
+	 * as {@link #destroyMarker(Object)}).
 	 *
 	 * @param marker
 	 *            The name of the marker that should be removed.

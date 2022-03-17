@@ -70,8 +70,8 @@ public class Scriptor extends NoopScript {
 	 *             If the solver is not installed
 	 */
 	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
-			final String solverName, final String fullPathOfDumpedLogFile) throws IOException {
-		mExecutor = new Executor(command, this, logger, services, solverName, fullPathOfDumpedLogFile);
+			final String solverName, final String fullPathOfDumpedLogFile, final Object marker) throws IOException {
+		mExecutor = new Executor(command, this, logger, services, solverName, fullPathOfDumpedLogFile, marker);
 		super.setOption(":print-success", true);
 	}
 

@@ -77,6 +77,7 @@ class Executor {
 	private final IUltimateServiceProvider mServices;
 	private final String mName;
 	private final String mFullPathOfDumpedFile;
+	private final Object mMarker;
 
 	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
 
@@ -97,8 +98,8 @@ class Executor {
 	 * @throws IOException
 	 */
 	Executor(final String solverCommand, final Script script, final ILogger logger,
-			final IUltimateServiceProvider services, final String solverName, final String fullPathOfDumpedFile)
-			throws IOException {
+			final IUltimateServiceProvider services, final String solverName, final String fullPathOfDumpedFile,
+			final Object marker) throws IOException {
 		mServices = services;
 		mSolverCmd = solverCommand;
 		mScript = script;
@@ -107,11 +108,12 @@ class Executor {
 		mFullPathOfDumpedFile = fullPathOfDumpedFile;
 		mParser = new Parser();
 		mParser.setScript(mScript);
+		mMarker = marker;
 		createProcess();
 	}
 
 	private void createProcess() throws IOException {
-		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices);
+		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mMarker);
 		if (mProcess == null) {
 			final String errorMsg = getLogStringPrefix() + " Could not create process, terminating... ";
 			mLogger.fatal(errorMsg);

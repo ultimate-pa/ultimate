@@ -380,15 +380,19 @@ public class CfgBuilder {
 
 		final Logics logicForExternalSolver =
 				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(fakeNonIncrementalScript)
-						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
-						.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
-						.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
-						.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver)
-						.setSolverMode(solverMode).setAdditionalOptions(additionalSmtOptions);
 
-		return SolverBuilder.buildAndInitializeSolver(services, solverSettings, "CfgBuilderScript");
+		final String solverName = "CfgBuilderScript";
+		// ensure that this solver is only removed at the end of the toolchain
+		mServices.getStorage().registerMarker(solverName);
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setUseFakeIncrementalScript(fakeNonIncrementalScript)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
+				.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
+				.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
+				.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver).setSolverMode(solverMode)
+				.setAdditionalOptions(additionalSmtOptions).withCustomMarker(solverName);
+
+		return SolverBuilder.buildAndInitializeSolver(services, solverSettings, solverName);
 	}
 
 	private static Expression getNegation(final Expression expr) {
@@ -424,8 +428,7 @@ public class CfgBuilder {
 				mIcfg.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st, simplificationTechnique);
 		final TranslationResult outParams2CallerVars = mIcfg.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller, simplificationTechnique);
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(arguments2InParams.getOverapproximations());
+		final Map<String, ILocation> overapproximations = new HashMap<>(arguments2InParams.getOverapproximations());
 		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
 
 		final Call call = mCbf.constructCall(callerNode, calleeEntryLoc, st);
@@ -753,9 +756,7 @@ public class CfgBuilder {
 			final Iterator<Entry<DebugIdentifier, BoogieIcfgLocation>> it = constructedPPs.entrySet().iterator();
 			while (it.hasNext()) {
 				final Entry<DebugIdentifier, BoogieIcfgLocation> entry = it.next();
-				if (reachablePPs.contains(entry.getValue())) {
-					// do nothing
-				} else if (exitPP == entry.getValue()) {
+				if (reachablePPs.contains(entry.getValue()) || exitPP == entry.getValue()) {
 					// do nothing
 				} else {
 					it.remove();
@@ -1094,9 +1095,9 @@ public class CfgBuilder {
 			mNameCache.put(startLine, value);
 			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(stmt);
 			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
-				return new LoopEntryDebugIdentifier(startLine, value.intValue());
+				return new LoopEntryDebugIdentifier(startLine, value);
 			}
-			return new OrdinaryDebugIdentifier(startLine, value.intValue());
+			return new OrdinaryDebugIdentifier(startLine, value);
 		}
 
 		/**
@@ -1220,13 +1221,7 @@ public class CfgBuilder {
 		}
 
 		private boolean isIntraproceduralBranchFreeStatement(final Statement st) {
-			if (st instanceof AssumeStatement) {
-				return true;
-			}
-			if (st instanceof AssignmentStatement) {
-				return true;
-			}
-			if (st instanceof HavocStatement) {
+			if (st instanceof AssumeStatement || st instanceof AssignmentStatement || st instanceof HavocStatement) {
 				return true;
 			}
 			if (!(st instanceof CallStatement)) {
@@ -1797,11 +1792,9 @@ public class CfgBuilder {
 		 * Determines what kind of sequential composition (if any) should be performed at this node.
 		 */
 		private SequentialCompositionType classifySequentialCompositionNode(final BoogieIcfgLocation pp) {
-			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty() || mEntryNodes.contains(pp)) {
-				return SequentialCompositionType.NONE;
-			}
-			if (DataStructureUtils.haveNonEmptyIntersection(new HashSet<>(pp.getIncomingEdges()),
-					new HashSet<>(pp.getOutgoingEdges()))) {
+			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty() || mEntryNodes.contains(pp)
+					|| DataStructureUtils.haveNonEmptyIntersection(new HashSet<>(pp.getIncomingEdges()),
+							new HashSet<>(pp.getOutgoingEdges()))) {
 				// do not allow loops
 				return SequentialCompositionType.NONE;
 			}

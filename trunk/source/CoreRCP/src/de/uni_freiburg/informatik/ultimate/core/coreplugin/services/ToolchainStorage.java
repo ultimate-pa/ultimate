@@ -108,6 +108,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public IStorable putStorable(final Object marker, final String key, final IStorable value) {
+		if (marker == null) {
+			return putStorable(key, value);
+		}
 		if (value == null || key == null || marker == null) {
 			throw new IllegalArgumentException("Some argument is null");
 		}
@@ -277,15 +280,27 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public void pushMarker(final Object marker) throws IllegalArgumentException {
+		checkArgMarker(marker);
+		synchronized (mLock) {
+			mMarkerOrder.push(marker);
+			mMarkedKeys.put(marker, new HashSet<>());
+		}
+	}
+
+	@Override
+	public void registerMarker(final Object marker) throws IllegalArgumentException {
+		checkArgMarker(marker);
+		synchronized (mLock) {
+			mMarkedKeys.put(marker, new HashSet<>());
+		}
+	}
+
+	private void checkArgMarker(final Object marker) {
 		if (marker == null) {
 			throw new IllegalArgumentException("marker may not be null");
 		}
 		if (hasMarker(marker)) {
 			throw new IllegalArgumentException("duplicate marker");
-		}
-		synchronized (mLock) {
-			mMarkerOrder.push(marker);
-			mMarkedKeys.put(marker, new HashSet<>());
 		}
 	}
 
@@ -295,8 +310,11 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			return Collections.emptySet();
 		}
 		synchronized (mLock) {
-			final Set<DestroyResult> rtr = new HashSet<>();
+			if (!mMarkerOrder.contains(marker)) {
+				return destroyMarker(marker);
+			}
 
+			final Set<DestroyResult> rtr = new HashSet<>();
 			final Iterator<Object> iter = mMarkerOrder.iterator();
 			final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
 			while (iter.hasNext()) {
@@ -313,17 +331,14 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public Set<DestroyResult> destroyMarker(final Object marker) {
-		if (mMarkerOrder.isEmpty() || !hasMarker(marker)) {
+		if (!hasMarker(marker)) {
 			return Collections.emptySet();
 		}
 		synchronized (mLock) {
-			if (!mMarkerOrder.remove(marker)) {
-				// no such marker registered
-				return Collections.emptySet();
-			}
-
+			mMarkerOrder.remove(marker);
 			final Set<DestroyResult> rtr = new HashSet<>();
-			mMarkedKeys.remove(marker).stream().forEachOrdered(
+			final Set<String> keyToRemove = mMarkedKeys.remove(marker);
+			keyToRemove.stream().forEachOrdered(
 					key -> removeStorable(rtr, getLoggingService().getLogger(Activator.PLUGIN_ID), key));
 			return rtr;
 		}

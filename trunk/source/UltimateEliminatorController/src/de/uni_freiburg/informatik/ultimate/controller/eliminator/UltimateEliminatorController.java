@@ -208,12 +208,14 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			// actual start of eliminator
 			final IUltimateServiceProvider services = tcData.getServices();
 
+			// TODO: Use solver builder or set marker manually (or else the script gets destroyed when this plugin is
+			// finished
 			final Script solver;
 			if (externalSolverCommand == null) {
 				solver = new HistoryRecordingScript(new SMTInterpol(null, options));
 			} else {
 				solver = new HistoryRecordingScript(
-						new Scriptor(externalSolverCommand, mLogger, services, "External Solver", null));
+						new Scriptor(externalSolverCommand, mLogger, services, "External Solver", null, null));
 			}
 
 			final Script eliminator = new UltimateEliminator(services, mLogger, solver);

@@ -185,7 +185,8 @@ public final class StatisticsAggregator extends BaseStatisticsDataProvider {
 		public StatisticsWriteWatcher(final IToolchainStorage storage, final IStatisticsDataProvider sdp) {
 			mStorage = storage;
 			if (mStorage != null) {
-				mStorage.putStorable(getStorageKey(), this);
+				// TODO: Allow callers to customize the marker
+				mStorage.putStorable(IStatisticsDataProvider.PLUGIN_STATISTICS_MARKER, getStorageKey(), this);
 			}
 			mOriginal = sdp;
 			mShadow = deepCopy(sdp);

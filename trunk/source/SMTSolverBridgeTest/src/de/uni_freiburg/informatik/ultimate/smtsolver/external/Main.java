@@ -53,7 +53,7 @@ public class Main {
 		int paramctr = 0;
 		Script benchmark;
 		if (!command.equals("SMTInterpol")) {
-			benchmark = new Scriptor(command, logger, null, "external in solverbridge", null);
+			benchmark = new Scriptor(command, logger, null, "external in solverbridge", null, null);
 		} else {
 			benchmark = new SMTInterpol(logProxy);
 		}
@@ -62,18 +62,17 @@ public class Main {
 			if (param[paramctr].equals("--")) {
 				paramctr++;
 				break;
-			} else if (param[paramctr].equals("-v")) {
+			}
+			if (param[paramctr].equals("-v")) {
 				try {
 					benchmark.setOption(":verbosity", BigInteger.valueOf(5));
 				} catch (final SMTLIBException doesNotHappen) {
 				}
-				paramctr++;
 			} else if (param[paramctr].equals("-q")) {
 				try {
 					benchmark.setOption(":verbosity", BigInteger.valueOf(3));
 				} catch (final SMTLIBException doesNotHappen) {
 				}
-				paramctr++;
 			} else if (param[paramctr].equals("-t") && ++paramctr < param.length) {
 				try {
 					final int timeout = Integer.parseInt(param[paramctr]);
@@ -88,7 +87,6 @@ public class Main {
 				} catch (final NumberFormatException nfe) {
 					logger.error("Cannot parse timeout " + "argument: Not a number");
 				}
-				paramctr++;
 			} else if (param[paramctr].equals("-r") && ++paramctr < param.length) {
 				try {
 					final int seed = Integer.parseInt(param[paramctr]);
@@ -103,15 +101,16 @@ public class Main {
 				} catch (final NumberFormatException nfe) {
 					logger.error("Cannot parse random seed " + "argument: Not a number");
 				}
-				paramctr++;
 			} else {
 				usage();
 				return;
 			}
+			paramctr++;
 		}
 		String filename;
 		if (paramctr < param.length) {
-			filename = param[paramctr++];
+			filename = param[paramctr];
+			paramctr++;
 		} else {
 			filename = "<stdin>";
 		}

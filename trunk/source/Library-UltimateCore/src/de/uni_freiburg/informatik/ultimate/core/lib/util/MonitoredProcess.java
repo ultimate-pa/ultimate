@@ -143,7 +143,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
 	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
-			final IUltimateServiceProvider services) throws IOException {
+			final IUltimateServiceProvider services, final Object marker) throws IOException {
 		if (command == null || command.length == 0) {
 			throw new IllegalArgumentException("Cannot execute empty argument");
 		}
@@ -162,8 +162,13 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).orElseThrow(AssertionError::new);
 		final MonitoredProcess newMonitoredProcess = new MonitoredProcess(
 				Runtime.getRuntime().exec(command, null, workingDirFile), oneLineCmd, exitCommand, services, logger);
-		newMonitoredProcess.start(workingDir, services.getStorage(), oneLineCmd);
+		newMonitoredProcess.start(workingDir, services.getStorage(), oneLineCmd, marker);
 		return newMonitoredProcess;
+	}
+
+	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
+			final IUltimateServiceProvider services) throws IOException {
+		return exec(command, workingDir, exitCommand, services, null);
 	}
 
 	private static String findExecutableBinary(final String command, final ILogger logger) {
@@ -212,13 +217,19 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 */
 	public static MonitoredProcess exec(final String command, final String exitCommand,
 			final IUltimateServiceProvider services) throws IOException {
-		return exec(command.split(" "), null, exitCommand, services);
+		return exec(command.split(" "), null, exitCommand, services, null);
 	}
 
-	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd) {
+	public static MonitoredProcess exec(final String command, final String exitCommand,
+			final IUltimateServiceProvider services, final Object marker) throws IOException {
+		return exec(command.split(" "), null, exitCommand, services, marker);
+	}
+
+	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd,
+			final Object marker) {
 		mID = sInstanceCounter.incrementAndGet();
 		final String key = getKey(mID, oneLineCmd);
-		final IStorable old = storage.putStorable(key, this);
+		final IStorable old = storage.putStorable(marker, key, this);
 		if (old != null) {
 			mLogger.warn("Destroyed unexpected old storable " + key);
 			old.destroy();

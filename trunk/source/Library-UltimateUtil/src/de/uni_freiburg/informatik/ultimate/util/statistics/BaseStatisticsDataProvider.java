@@ -275,10 +275,6 @@ public abstract class BaseStatisticsDataProvider implements IStatisticsDataProvi
 
 		private boolean mIsClosed;
 
-		public StatisticsReadWatcher(final BaseStatisticsDataProvider sdp) {
-			this(null, null, sdp);
-		}
-
 		public StatisticsReadWatcher(final IToolchainStorage storage, final Object marker,
 				final BaseStatisticsDataProvider sdp) {
 			mIsClosed = false;

@@ -229,7 +229,7 @@ final class ToolchainWalker implements IToolchainCancel {
 		}
 
 		final IToolchainStorage storage = data.mToolchain.getStorage();
-		storage.pushMarker(IStatisticsDataProvider.PLUGIN_STATISTICS_MARKER);
+		storage.registerMarker(IStatisticsDataProvider.PLUGIN_STATISTICS_MARKER);
 		try {
 			return executePluginConnector(data, plugin, pc);
 		} finally {
