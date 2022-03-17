@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -108,6 +107,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final boolean mComputeHoareAnnotation;
 	private final boolean mIsConcurrent;
 	private final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
+	private final CegarLoopFactory<L> mCegarFactory;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
@@ -119,9 +119,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final List<INestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 	private final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomataFromErrorLocations =
 			new ArrayList<>();
-
-	private final Class<L> mTransitionClazz;
-	private final Supplier<IPLBECompositionFactory<L>> mCreateCompositionFactory;
 
 	// list has one entry per analysis restart with increased number of threads (only 1 entry if sequential)
 	private final Map<DebugIdentifier, List<TraceAbstractionBenchmarks>> mStatistics = new LinkedHashMap<>();
@@ -136,8 +133,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory, final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mTransitionClazz = transitionClazz;
-		mCreateCompositionFactory = createCompositionFactory;
 		mPrefs = new TAPreferences(mServices);
 		mResultsPerLocation = new LinkedHashMap<>();
 		mWitnessAutomaton = witnessAutomaton;
@@ -152,6 +147,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		} else {
 			mComputeHoareAnnotation = mPrefs.computeHoareAnnotation();
 		}
+
+		mCegarFactory =
+				new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, mComputeHoareAnnotation);
 
 		runCegarLoops(icfg);
 	}
@@ -408,10 +406,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private CegarLoopResult<L> executeCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<IcfgLocation> icfg, final TraceAbstractionBenchmarks taBenchmark,
 			final Set<IcfgLocation> errorLocs) {
-		final CegarLoopResult<L> clres =
-				CegarLoopUtils.getCegarLoopResult(services, name, icfg, mPrefs, getPredicateFactory(icfg), errorLocs,
-						mWitnessAutomaton, mRawFloydHoareAutomataFromFile, mComputeHoareAnnotation,
-						mPrefs.getAutomataTypeConcurrency(), mCreateCompositionFactory.get(), mTransitionClazz);
+		final CegarLoopResult<L> clres = mCegarFactory
+				.constructCegarLoop(services, name, icfg, errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile)
+				.runCegar();
 		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 		return clres;
 	}
@@ -536,11 +533,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mLocationMap = ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getLocationMapping();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		return petrifiedIcfg;
-	}
-
-	private PredicateFactory getPredicateFactory(final IIcfg<IcfgLocation> icfg) {
-		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
-		return new PredicateFactory(mServices, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
 
 	private TraceAbstractionBenchmarks createNewBenchmark(final DebugIdentifier ident, final IIcfg<IcfgLocation> icfg) {

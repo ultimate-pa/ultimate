@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResultReporter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
@@ -124,7 +124,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
 			abstractCegarLoop = new CegarLoopForPetriNet<>(name, petrifiedIcfg, csToolkit, predicateFactory, taPrefs,
 					errNodesOfAllProc, mServices, IcfgEdge.class, stateFactoryForRefinement,
-					CegarLoopUtils.createPetriAbstractionProvider(mServices, compositionFactory, predicateFactory,
+					CegarLoopFactory.createPetriAbstractionProvider(mServices, compositionFactory, predicateFactory,
 							IcfgEdge.class, taPrefs, false));
 		} else if (taPrefs.getAutomataTypeConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
