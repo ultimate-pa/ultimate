@@ -180,6 +180,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Trace refinement exception blacklist";
 
+	public static final String LABEL_DUMP_PATH_PROGRAM_IF_NOT_PERFECT =
+			"Dump path programs if interpolant sequence is not perfect";
+	public static final String LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN =
+			"Dump path programs if already analyzed N times";
+	public static final String LABEL_DUMP_PATH_PROGRAM_STOP_MODE = "Stop after dumping path program";
+
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
 	public static final String VALUE_INTERPOLANT_AUTOMATON = "InterpolantAutomaton";
@@ -562,7 +568,15 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL,
 						DESC_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
-						PreferenceType.KeyValue), };
+						PreferenceType.KeyValue),
+
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_NOT_PERFECT, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
+						PreferenceType.Combo, PathProgramDumpStop.values()),
+
+		};
+
 	}
 
 	/**
@@ -821,5 +835,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum InsufficientError {
 		BEFORE, TOGETHER, AFTER
+	}
+
+	public enum PathProgramDumpStop {
+		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
 }
