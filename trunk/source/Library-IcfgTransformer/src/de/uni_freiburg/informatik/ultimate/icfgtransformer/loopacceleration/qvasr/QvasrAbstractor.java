@@ -351,17 +351,22 @@ public class QvasrAbstractor {
 			}
 		}
 		final int prunedLength = matrix.length - toBeEliminated.size();
-		final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
-		int cnt = 0;
-		for (int k = 0; k < matrix.length; k++) {
-			if (!toBeEliminated.contains(k)) {
-				for (int l = 0; l < matrix[0].length; l++) {
-					prunedMatrix[cnt][l] = matrix[k][l];
+		if (prunedLength > 0) {
+			final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
+			int cnt = 0;
+			for (int k = 0; k < matrix.length; k++) {
+				if (!toBeEliminated.contains(k)) {
+					for (int l = 0; l < matrix[0].length; l++) {
+						prunedMatrix[cnt][l] = matrix[k][l];
+					}
+					cnt++;
 				}
-				cnt++;
 			}
+			return prunedMatrix;
+		} else {
+			return matrix;
 		}
-		return prunedMatrix;
+
 	}
 
 	/**
@@ -396,17 +401,23 @@ public class QvasrAbstractor {
 			}
 		}
 		final int prunedLength = matrix.length - toBeEliminated.size();
-		final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
-		int cnt = 0;
-		for (int k = 0; k < matrix.length; k++) {
-			if (!toBeEliminated.contains(k)) {
-				for (int l = 0; l < matrix[0].length; l++) {
-					prunedMatrix[cnt][l] = matrix[k][l];
+		if (prunedLength > 0) {
+			final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
+			int cnt = 0;
+			for (int k = 0; k < matrix.length; k++) {
+				if (!toBeEliminated.contains(k)) {
+					for (int l = 0; l < matrix[0].length; l++) {
+						prunedMatrix[cnt][l] = matrix[k][l];
+					}
+					cnt++;
 				}
-				cnt++;
 			}
+			return prunedMatrix;
+		} else {
+			return matrix;
+
 		}
-		return prunedMatrix;
+
 	}
 
 	/**
@@ -1271,14 +1282,11 @@ public class QvasrAbstractor {
 		final Map<Term, Term> subMap = new HashMap<>();
 		for (final Term param : appTerm.getParameters()) {
 			if (param.getSort() == SmtSortUtils.getRealSort(script)) {
-				continue;
-			}
-			if (param instanceof ConstantTerm) {
+			} else if (param instanceof ConstantTerm) {
 				final ConstantTerm paramConst = (ConstantTerm) param;
 				final Rational paramValue = (Rational) paramConst.getValue();
 				subMap.put(param, paramValue.toTerm(SmtSortUtils.getRealSort(script)));
-			}
-			if (param instanceof TermVariable) {
+			} else if (param instanceof TermVariable) {
 				subMap.put(param, script.constructFreshTermVariable(((TermVariable) param).getName(),
 						SmtSortUtils.getRealSort(script)));
 			} else {
