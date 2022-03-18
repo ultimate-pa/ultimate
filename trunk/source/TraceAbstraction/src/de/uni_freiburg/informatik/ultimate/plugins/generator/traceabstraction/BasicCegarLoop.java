@@ -208,7 +208,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	 * If the trace histogram max is larger than this number we try to find a danger invariant. Only used for debugging.
 	 */
 	private static final int DEBUG_DANGER_INVARIANTS_THRESHOLD = Integer.MAX_VALUE;
-	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -610,6 +609,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		final LBool feasibility = mRefinementResult.getCounterexampleFeasibility();
 		IProgramExecution<L, Term> rcfgProgramExecution = null;
+		if (feasibility != LBool.SAT) {
+			// dump path program if necessary
+			mPathProgramDumpController.reportPathProgram((NestedRun<L, IPredicate>) mCounterexample,
+					mRefinementResult.somePerfectSequenceFound(), mIteration);
+		}
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
 			if (mRefinementResult.providesIcfgProgramExecution()) {
@@ -639,9 +643,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 							new IcfgAngelicProgramExecution<>(rcfgProgramExecution, fl.getAngelicStatus());
 				}
 			}
-		} else if (DUMP_DIFFICULT_PATH_PROGRAMS) {
-			mPathProgramDumpController.reportPathProgram((NestedRun<L, IPredicate>) mCounterexample,
-					mRefinementResult.somePerfectSequenceFound(), mIteration);
 		}
 
 		if (refinementEngineStats != null) {
