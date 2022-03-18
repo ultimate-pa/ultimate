@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
@@ -551,13 +550,12 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public void versionAssignedVars(final int currentPos) {
-			for (final Entry<IProgramVar, TermVariable> entry : mTF.getOutVars().entrySet()) {
-				if (mTF.getInVars().get(entry.getKey()) != entry.getValue()) {
-					// if invar is similar to outvar no new copy is required
-					final IProgramVar bv = entry.getKey();
-					final TermVariable tv = transferToCurrentScriptIfNecessary(entry.getValue());
-					final Term versioneered = setCurrentVarVersion(bv, currentPos);
-					mConstants2BoogieVar.put(versioneered, bv);
+			for (final IProgramVar bv : mTF.getAssignedVars()) {
+				final Term versioneered = setCurrentVarVersion(bv, currentPos);
+				mConstants2BoogieVar.put(versioneered, bv);
+				final TermVariable originalTv = mTF.getOutVars().get(bv);
+				if (originalTv != null) {
+					final TermVariable tv = transferToCurrentScriptIfNecessary(originalTv);
 					mSubstitutionMapping.put(tv, versioneered);
 				}
 			}
