@@ -239,7 +239,7 @@ public class TransFormulaBuilder {
 	}
 
 	/**
-	 * Remove from the outVars all local vars and outVars.
+	 * Remove from the outVars all local vars and oldVars.
 	 */
 	public void removeOutVarsOfLocalContext() {
 		if (mConstructionFinished) {
