@@ -39,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.PartialOrderReductionFacade;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.PartialOrderReductionFacade.OrderType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 
 /**
  * Transforms an initial abstraction by applying one-shot Partial Order Reduction.

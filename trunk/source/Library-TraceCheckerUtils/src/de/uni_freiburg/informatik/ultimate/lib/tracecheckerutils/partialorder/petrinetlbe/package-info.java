@@ -32,4 +32,4 @@
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Elisabeth Schanno
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.petrinetlbe;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe;

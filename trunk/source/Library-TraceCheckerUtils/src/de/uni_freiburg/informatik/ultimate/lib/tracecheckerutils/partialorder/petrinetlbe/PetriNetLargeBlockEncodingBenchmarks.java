@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
@@ -11,7 +11,7 @@
  *
  * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
@@ -24,13 +24,29 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Provides classes for computing and providing a relation that states which
- * transitions of a concurrent system are independent in the sense that the
- * execution order does not affect the result. 
- * 
- * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
- */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe;
+
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+
+public class PetriNetLargeBlockEncodingBenchmarks implements ICsvProviderProvider<Object> {
+
+	private final StatisticsData mStatisticsData;
+
+	public PetriNetLargeBlockEncodingBenchmarks(final PetriNetLargeBlockEncodingStatisticsGenerator gen) {
+		mStatisticsData = new StatisticsData();
+		mStatisticsData.aggregateBenchmarkData(gen);
+	}
+
+	@Override
+	public String toString() {
+		return mStatisticsData.toString();
+	}
+
+	@Override
+	public ICsvProvider<Object> createCsvProvider() {
+		return mStatisticsData.createCsvProvider();
+	}
+
+}

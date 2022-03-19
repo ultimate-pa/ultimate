@@ -24,29 +24,19 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.petrinetlbe;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe;
 
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class PetriNetLargeBlockEncodingBenchmarks implements ICsvProviderProvider<Object> {
+public class PetriNetLargeBlockEncodingStatisticsGenerator extends AbstractStatisticsDataProvider {
+	public static final String LIPTON_STATISTICS = "Lipton Reduction Statistics";
+	public static final String INDEPENDENCE_STATISTICS = "Independence Relation Statistics";
 
-	private final StatisticsData mStatisticsData;
-
-	public PetriNetLargeBlockEncodingBenchmarks(final PetriNetLargeBlockEncodingStatisticsGenerator gen) {
-		mStatisticsData = new StatisticsData();
-		mStatisticsData.aggregateBenchmarkData(gen);
+	public PetriNetLargeBlockEncodingStatisticsGenerator(final LiptonReductionStatisticsGenerator liptonStats,
+			final IStatisticsDataProvider independenceStats) {
+		forward(LIPTON_STATISTICS, () -> liptonStats);
+		forward(INDEPENDENCE_STATISTICS, () -> independenceStats);
 	}
-
-	@Override
-	public String toString() {
-		return mStatisticsData.toString();
-	}
-
-	@Override
-	public ICsvProvider<Object> createCsvProvider() {
-		return mStatisticsData.createCsvProvider();
-	}
-
 }

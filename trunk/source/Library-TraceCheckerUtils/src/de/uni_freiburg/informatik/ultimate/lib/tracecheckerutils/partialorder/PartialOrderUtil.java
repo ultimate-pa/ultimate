@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
