@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -130,52 +129,58 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(services,
 				csToolkit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
 
-		BasicCegarLoop<L> result;
-		if (languageOperation == LanguageOperation.DIFFERENCE) {
-			if (mPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-						mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services,
-						mTransitionClazz, stateFactoryForRefinement,
-						createAutomataAbstractionProvider(services, root, predicateFactory, stateFactoryForRefinement));
-			} else if (FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root)) {
-				result = createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
-						rawFloydHoareAutomataFromFile, hoareAnnotationLocs, stateFactoryForRefinement);
-			} else {
-				switch (mPrefs.getAutomataTypeConcurrency()) {
-				case FINITE_AUTOMATA:
-					result = createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
-							rawFloydHoareAutomataFromFile, hoareAnnotationLocs, stateFactoryForRefinement);
-					break;
-				case PARTIAL_ORDER_FA:
-					if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
-						throw new UnsupportedOperationException("Reuse with POR-based analysis");
-					}
-					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-							mPrefs.interpolation(), services, mTransitionClazz, stateFactoryForRefinement,
-							createPartialOrderAbstractionProvider(services, predicateFactory,
-									stateFactoryForRefinement));
-					break;
-				case PETRI_NET:
-					if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
-						throw new UnsupportedOperationException("Reuse with Petri net-based analysis");
-					}
-					result = new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-							services, mTransitionClazz, stateFactoryForRefinement,
-							createPetriAbstractionProvider(services, predicateFactory, true));
-
-					break;
-				default:
-					throw new AssertionError("Unknown Setting: " + mPrefs.getAutomataTypeConcurrency());
-				}
-			}
-		} else {
-			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+		if (languageOperation != LanguageOperation.DIFFERENCE) {
+			return new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs,
 					mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services, languageOperation,
-					mTransitionClazz, stateFactoryForRefinement,
-					createAutomataAbstractionProvider(services, root, predicateFactory, stateFactoryForRefinement));
+					mTransitionClazz, stateFactoryForRefinement, createAutomataAbstractionProvider(services, root,
+							predicateFactory, stateFactoryForRefinement, witnessAutomaton));
 		}
-		result.setWitnessAutomaton(witnessAutomaton);
-		return result;
+
+		if (mPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
+			return new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services, mTransitionClazz,
+					stateFactoryForRefinement, createAutomataAbstractionProvider(services, root, predicateFactory,
+							stateFactoryForRefinement, witnessAutomaton));
+		}
+
+		if (FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root)) {
+			return createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
+					rawFloydHoareAutomataFromFile, hoareAnnotationLocs, stateFactoryForRefinement, witnessAutomaton);
+		}
+
+		switch (mPrefs.getAutomataTypeConcurrency()) {
+		case FINITE_AUTOMATA:
+			return createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
+					rawFloydHoareAutomataFromFile, hoareAnnotationLocs, stateFactoryForRefinement, witnessAutomaton);
+		case PARTIAL_ORDER_FA:
+			requireNoReuse("POR-based analysis");
+			requireNoWitnesses(witnessAutomaton, "POR-based analysis");
+			return new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					mPrefs.interpolation(), services, mTransitionClazz, stateFactoryForRefinement,
+					createPartialOrderAbstractionProvider(services, predicateFactory, stateFactoryForRefinement));
+		case PETRI_NET:
+			requireNoReuse("Petri net-based analysis");
+			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
+			return new CegarLoopForPetriNet<>(name, root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
+					mTransitionClazz, stateFactoryForRefinement,
+					createPetriAbstractionProvider(services, predicateFactory, true));
+		default:
+			throw new AssertionError("Unknown Setting: " + mPrefs.getAutomataTypeConcurrency());
+		}
+	}
+
+	private void requireNoReuse(final String analysis) {
+		if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
+			throw new UnsupportedOperationException("Floyd/Hoare automaton reuse not supported for " + analysis);
+		}
+	}
+
+	private static void requireNoWitnesses(
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final String analysis) {
+		if (witnessAutomaton != null) {
+			throw new UnsupportedOperationException("Witness automata not supported for " + analysis);
+		}
 	}
 
 	private static PredicateFactory getPredicateFactory(final IUltimateServiceProvider services,
@@ -187,10 +192,11 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final Set<IcfgLocation> hoareAnnotationLocs, final PredicateFactoryRefinement stateFactoryForRefinement) {
+			final Set<IcfgLocation> hoareAnnotationLocs, final PredicateFactoryRefinement stateFactoryForRefinement,
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 
-		final var abstractionProvider =
-				createAutomataAbstractionProvider(services, root, predicateFactory, stateFactoryForRefinement);
+		final var abstractionProvider = createAutomataAbstractionProvider(services, root, predicateFactory,
+				stateFactoryForRefinement, witnessAutomaton);
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
 
 		switch (mPrefs.getFloydHoareAutomataReuse()) {
@@ -213,23 +219,34 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private <F extends IEmptyStackStateFactory<IPredicate> & IPetriNet2FiniteAutomatonStateFactory<IPredicate>>
-			IInitialAbstractionProvider<L, ?> createAutomataAbstractionProvider(final IUltimateServiceProvider services,
-					final IIcfg<?> icfg, final PredicateFactory predicateFactory, final F stateFactory) {
+	private IInitialAbstractionProvider<L, ?> createAutomataAbstractionProvider(final IUltimateServiceProvider services,
+			final IIcfg<?> icfg, final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		if (!IcfgUtils.isConcurrent(icfg)) {
-			return new NwaInitialAbstractionProvider<>(services, stateFactory, mPrefs.interprocedural(),
-					predicateFactory);
+			final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> provider =
+					new NwaInitialAbstractionProvider<>(services, stateFactory, mPrefs.interprocedural(),
+							predicateFactory);
+			if (witnessAutomaton == null) {
+				return provider;
+			}
+			return new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory, provider,
+					witnessAutomaton);
+		}
+
+		if (witnessAutomaton != null) {
+			throw new UnsupportedOperationException("Witness automata not supported for concurrent programs");
 		}
 
 		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> netProvider =
 				createPetriAbstractionProvider(services, predicateFactory, false);
+
 		if (!mPrefs.applyOneShotPOR()) {
 			return new Petri2FiniteAutomatonAbstractionProvider.Eager<>(netProvider, stateFactory,
 					new AutomataLibraryServices(services));
 		}
-
 		return new PartialOrderAbstractionProvider<>(
 				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
+				// Hence we use the lazy abstraction provider.
 				new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(netProvider, stateFactory,
 						new AutomataLibraryServices(services)),
 				services, stateFactory, predicateFactory, mPrefs.getPartialOrderMode(), mPrefs.getDfsOrderType(),
