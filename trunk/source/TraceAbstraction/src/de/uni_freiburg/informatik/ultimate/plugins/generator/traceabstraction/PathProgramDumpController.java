@@ -30,12 +30,11 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramDumper.InputMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -78,15 +77,14 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 
 	}
 
-	public void reportPathProgram(final NestedRun<L, IPredicate> counterexample,
-			final boolean perfectInterpolatSequenceFound, final int iteration) {
-		if (shouldDumpPathProgram(perfectInterpolatSequenceFound, counterexample)) {
-			doDump(counterexample, iteration);
+	public void reportPathProgram(final IRun<L, ?> cex, final boolean somePerfectSequenceFound, final int iteration) {
+		if (shouldDumpPathProgram(somePerfectSequenceFound, cex)) {
+			doDump(cex, iteration);
 		}
 	}
 
 	private boolean shouldDumpPathProgram(final boolean perfectInterpolatSequenceFound,
-			final NestedRun<L, IPredicate> counterexample) {
+			final IRun<L, ?> counterexample) {
 		if (!mEnabled) {
 			return false;
 		}
@@ -100,7 +98,7 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 		return false;
 	}
 
-	private void doDump(final NestedRun<L, IPredicate> counterexample, final int iteration) {
+	private void doDump(final IRun<L, ?> counterexample, final int iteration) {
 		final boolean wasNew = mAlreadyDumped.add(new HashSet<>(counterexample.getWord().asList()));
 		if (mDumpStopMode == PathProgramDumpStop.BEFORE_FIRST_DUPLICATE && !wasNew) {
 			final String message = "stopped before dumping similar path program twice";
@@ -120,4 +118,5 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 		final String taskDescription = "trying to verify (iteration " + iteration + ")";
 		return new ToolchainCanceledException(message, getClass(), taskDescription);
 	}
+
 }

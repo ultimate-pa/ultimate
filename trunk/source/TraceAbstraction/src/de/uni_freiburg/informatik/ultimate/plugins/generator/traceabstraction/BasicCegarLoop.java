@@ -611,8 +611,8 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		IProgramExecution<L, Term> rcfgProgramExecution = null;
 		if (feasibility != LBool.SAT) {
 			// dump path program if necessary
-			mPathProgramDumpController.reportPathProgram((NestedRun<L, IPredicate>) mCounterexample,
-					mRefinementResult.somePerfectSequenceFound(), mIteration);
+			mPathProgramDumpController.reportPathProgram(mCounterexample, mRefinementResult.somePerfectSequenceFound(),
+					mIteration);
 		}
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
