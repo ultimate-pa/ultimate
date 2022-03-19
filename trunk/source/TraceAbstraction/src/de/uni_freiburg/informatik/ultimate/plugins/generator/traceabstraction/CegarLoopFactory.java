@@ -48,16 +48,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PartialOrderAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.IInitialAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.NwaInitialAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.PartialOrderAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.PetriInitialAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
@@ -254,7 +254,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			return netProvider;
 		}
 		return new PetriLbeInitialAbstractionProvider<>(netProvider, services, mTransitionClazz,
-				mPrefs.useLbeInConcurrentAnalysis(), mCreateCompositionFactory.get());
+				mPrefs.useLbeInConcurrentAnalysis(), mCreateCompositionFactory.get(), Activator.PLUGIN_ID);
 	}
 
 	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>

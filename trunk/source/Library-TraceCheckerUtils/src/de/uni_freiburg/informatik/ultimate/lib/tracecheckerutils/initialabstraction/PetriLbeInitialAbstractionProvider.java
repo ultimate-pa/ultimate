@@ -2,29 +2,29 @@
  * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2022 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.initialabstraction;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
 import java.util.Set;
 
@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
  * Transforms an initial abstraction by applying one-shot Petri LBE.
@@ -57,6 +56,7 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IPLBECompositionFactory<L> mCompositionFactory;
 	private final Class<L> mTransitionClazz;
 	private final PetriNetLbe mLbeMode;
+	private final String mPluginId;
 
 	/**
 	 * Create a new instance.
@@ -75,12 +75,13 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	public PetriLbeInitialAbstractionProvider(
 			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz, final PetriNetLbe lbeMode,
-			final IPLBECompositionFactory<L> compositionFactory) {
+			final IPLBECompositionFactory<L> compositionFactory, final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
 		mTransitionClazz = transitionClazz;
 		mLbeMode = lbeMode;
 		mCompositionFactory = compositionFactory;
+		mPluginId = pluginId;
 	}
 
 	@Override
@@ -93,8 +94,8 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
 		mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
-				"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
+		mServices.getResultService().reportResult(mPluginId,
+				new StatisticsResult<>(mPluginId, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 
 		return lbecfg;
 	}
