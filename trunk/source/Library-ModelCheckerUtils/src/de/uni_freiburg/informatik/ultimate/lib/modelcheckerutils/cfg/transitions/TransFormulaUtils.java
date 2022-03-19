@@ -140,24 +140,37 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * @param services
+	 * Performs sequential composition of TransFormulas.
+	 *
+	 * In terms of statements, the sequential composition describes the effect of executing the TransFormulas one after
+	 * the other (in sequence). Another way to describe it is the relational composition of the transition relations
+	 * represented by the TransFormulas.
+	 *
+	 * NOTE: This method is not suited for TransFormulas that switch to different contexts! In particular, it should not
+	 * be used for procedure calls and returns.
+	 *
+	 * The returned TransFormula is in internal normal form (see {@link #hasInternalNormalForm(TransFormula)}).
+	 *
+	 * @param logger
+	 *            for debugging purposes
+	 * @param simplify
+	 *            whether or not the composed formula should be simplified.
 	 * @param tryAuxVarElimination
 	 *            Apply our partial quantifier elimination and try to eliminate auxVars. This is a postprocessing that
-	 *            we apply to the resulting formula which produces an equivalent formula with less auxvars.
-	 * @return the relational composition (concatenation) of transformula1 and transformula2
+	 *            we apply to the resulting formula which produces an equivalent formula with less auxVars.
+	 * @param tranformToCNF
+	 *            whether or not the composed formula should be transformed to conjunctive normal form
+	 * @param xnfConversionTechnique
+	 *            If the formula is transformed to CNF, the technique to do so
+	 * @param simplificationTechnique
+	 *            If the formula is simplified, the technique to do so. Also applies if quantifiers are eliminated.
+	 * @param transFormula
+	 *            The list of transition formulas to compose
+	 * @return the relational composition the given TransFormulas.
 	 */
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
 			final boolean tryAuxVarElimination, final boolean tranformToCNF,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final List<UnmodifiableTransFormula> transFormula) {
-		return sequentialComposition(logger, services, mgdScript, simplify, tryAuxVarElimination, tranformToCNF, true,
-				xnfConversionTechnique, simplificationTechnique, transFormula);
-	}
-
-	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
-			final boolean tryAuxVarElimination, final boolean tranformToCNF, final boolean checkSat,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<UnmodifiableTransFormula> transFormula) {
 		if (logger.isDebugEnabled()) {
@@ -304,6 +317,7 @@ public final class TransFormulaUtils {
 		for (final TermVariable auxVar : auxVars) {
 			tfb.addAuxVar(auxVar);
 		}
+		tfb.ensureInternalNormalForm();
 		return tfb.finishConstruction(mgdScript);
 	}
 
