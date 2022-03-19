@@ -26,7 +26,7 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.petrinetlbe;
 
 import java.util.Arrays;
 import java.util.List;
@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 

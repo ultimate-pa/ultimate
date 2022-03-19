@@ -24,12 +24,19 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Large block encoding (LBE) for concurrent programs. Algorithms in this
- * package require that the concurrent progra is given as a Petri net.
- *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Elisabeth Schanno
- */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.petrinetlbe;
+
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
+public class PetriNetLargeBlockEncodingStatisticsGenerator extends AbstractStatisticsDataProvider {
+	public static final String LIPTON_STATISTICS = "Lipton Reduction Statistics";
+	public static final String INDEPENDENCE_STATISTICS = "Independence Relation Statistics";
+
+	public PetriNetLargeBlockEncodingStatisticsGenerator(final LiptonReductionStatisticsGenerator liptonStats,
+			final IStatisticsDataProvider independenceStats) {
+		forward(LIPTON_STATISTICS, () -> liptonStats);
+		forward(INDEPENDENCE_STATISTICS, () -> independenceStats);
+	}
+}

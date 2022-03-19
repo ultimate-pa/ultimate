@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
@@ -11,7 +11,7 @@
  *
  * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
@@ -25,12 +25,11 @@
  * to convey the resulting work.
  */
 /**
- * Provides classes for computing and providing a relation that states which
- * transitions of a concurrent system are independent in the sense that the
- * execution order does not affect the result. 
- * 
- * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Large block encoding (LBE) for concurrent programs. Algorithms in this
+ * package require that the concurrent progra is given as a Petri net.
  *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * @author Elisabeth Schanno
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.petrinetlbe;

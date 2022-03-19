@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
@@ -11,7 +11,7 @@
  *
  * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
@@ -24,19 +24,13 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe;
-
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReductionStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-
-public class PetriNetLargeBlockEncodingStatisticsGenerator extends AbstractStatisticsDataProvider {
-	public static final String LIPTON_STATISTICS = "Lipton Reduction Statistics";
-	public static final String INDEPENDENCE_STATISTICS = "Independence Relation Statistics";
-
-	public PetriNetLargeBlockEncodingStatisticsGenerator(final LiptonReductionStatisticsGenerator liptonStats,
-			final IStatisticsDataProvider independenceStats) {
-		forward(LIPTON_STATISTICS, () -> liptonStats);
-		forward(INDEPENDENCE_STATISTICS, () -> independenceStats);
-	}
-}
+/**
+ * Provides classes for computing and providing a relation that states which
+ * transitions of a concurrent system are independent in the sense that the
+ * execution order does not affect the result. 
+ * 
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence;

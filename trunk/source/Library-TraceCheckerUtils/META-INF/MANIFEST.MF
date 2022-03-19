@@ -9,8 +9,8 @@ Export-Package:
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck,
- de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation,
- de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence,
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.petrinetlbe
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.automata,

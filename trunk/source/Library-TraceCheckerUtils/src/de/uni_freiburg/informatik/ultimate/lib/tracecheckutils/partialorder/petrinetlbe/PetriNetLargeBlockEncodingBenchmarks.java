@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.petrinetlbe;
 
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
