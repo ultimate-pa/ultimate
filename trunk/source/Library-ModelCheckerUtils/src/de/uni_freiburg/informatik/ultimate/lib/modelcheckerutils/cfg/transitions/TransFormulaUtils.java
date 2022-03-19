@@ -235,16 +235,33 @@ public final class TransFormulaUtils {
 				if (currentTf.getOutVars().containsKey(var)) {
 					// nothing do to, this var was already considered above
 				} else {
-					// case var occurs only as inVar: var is not modfied.
+					// case var occurs only as inVar: var is havoc'ed (and possibly read)
 					final TermVariable inVar = entry.getValue();
-					TermVariable newInVar;
-					if (tfb.containsInVar(var)) {
-						newInVar = tfb.getInVar(var);
-					} else {
-						newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
-								var.getTermVariable().getSort());
-						tfb.addInVar(var, newInVar);
+
+					if (!tfb.containsOutVar(var)) {
+						// If var is not yet an outVar of tfb, add it.
+						final TermVariable newOutVar;
+						if (tfb.containsInVar(var)) {
+							// If var is an inVar of tfb, we must use the existing TermVariable.
+							// Note that below, the inVar of tfb for var is replaced, so we can use it here as outVar
+							// without implying that the value of var doesn't change.
+							newOutVar = tfb.getInVar(var);
+						} else {
+							// If var is not an inVar of tfb, we create a fresh dummy TermVariable.
+							newOutVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
+									var.getTermVariable().getSort());
+						}
+						tfb.addOutVar(var, newOutVar);
+					} else if (tfb.containsInVar(var) && tfb.getOutVar(var) != tfb.getInVar(var)) {
+						// If tfb has an inVar for var, and the inVar occurs *only* as inVar (not as outVar), we must
+						// make it an auxVar before we introduce a new inVar below.
+						tfb.addAuxVar(tfb.getInVar(var));
 					}
+
+					// Add a new inVar for var
+					final TermVariable newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
+							var.getTermVariable().getSort());
+					tfb.addInVar(var, newInVar);
 					substitutionMapping.put(inVar, newInVar);
 				}
 			}
