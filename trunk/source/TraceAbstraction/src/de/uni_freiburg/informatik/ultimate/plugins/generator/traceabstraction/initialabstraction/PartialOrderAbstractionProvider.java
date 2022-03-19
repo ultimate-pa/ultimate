@@ -39,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.PartialOrderReductionFacade;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence.IndependenceBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 
 /**
  * Transforms an initial abstraction by applying one-shot Partial Order Reduction.
@@ -62,6 +62,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final PartialOrderMode mPartialOrderMode;
 	private final OrderType mOrderType;
 	private final long mDfsOrderSeed;
+	private final String mPluginId;
 
 	/**
 	 * Create a new instance of the provider.
@@ -80,12 +81,14 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	 *            Indicates the preference order used by Partial Order Reduction
 	 * @param dfsOrderSeed
 	 *            If {@code orderType} is random-based, the seed to use for the random generator.
+	 * @param pluginId
+	 *            Plugin ID used to report statistics
 	 */
 	public PartialOrderAbstractionProvider(
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
 			final PredicateFactory predicateFactory, final PartialOrderMode partialOrderMode, final OrderType orderType,
-			final long dfsOrderSeed) {
+			final long dfsOrderSeed, final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -93,6 +96,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		mPartialOrderMode = partialOrderMode;
 		mOrderType = orderType;
 		mDfsOrderSeed = dfsOrderSeed;
+		mPluginId = pluginId;
 	}
 
 	@Override
@@ -114,7 +118,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 			// actually apply POR to automaton
 			final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);
 
-			por.reportStatistics();
+			por.reportStatistics(mPluginId);
 			return result;
 		} finally {
 			// mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);

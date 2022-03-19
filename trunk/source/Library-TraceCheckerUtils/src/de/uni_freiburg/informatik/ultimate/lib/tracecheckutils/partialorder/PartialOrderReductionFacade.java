@@ -2,29 +2,29 @@
  * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2021 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -60,9 +60,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.partialorder.independence.IndependenceBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -265,17 +264,17 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return visitor.getReductionAutomaton();
 	}
 
-	public void reportStatistics() {
+	public void reportStatistics(final String pluginId) {
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(mIndependence.getStatistics());
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_NAME, "Independence relation benchmarks", data));
+		mServices.getResultService().reportResult(pluginId,
+				new StatisticsResult<>(pluginId, "Independence relation benchmarks", data));
 
 		if (mPersistent != null) {
 			final StatisticsData persistentData = new StatisticsData();
 			persistentData.aggregateBenchmarkData(mPersistent.getStatistics());
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new StatisticsResult<>(Activator.PLUGIN_NAME, "Persistent set benchmarks", persistentData));
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Persistent set benchmarks", persistentData));
 		}
 	}
 
