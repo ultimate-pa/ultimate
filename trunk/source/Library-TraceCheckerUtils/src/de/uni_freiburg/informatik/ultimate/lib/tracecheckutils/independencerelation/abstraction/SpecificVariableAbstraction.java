@@ -33,8 +33,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -60,11 +58,6 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private final Set<IProgramVar> mAllProgramVars;
 	private final Set<L> mAllLetters;
 	private final ILattice<VarAbsConstraints<L>> mHierarchy;
-
-	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final CfgSmtToolkit csToolkit,
-			final Set<L> allLetters) {
-		this(copyFactory, csToolkit.getManagedScript(), IcfgUtils.collectAllProgramVars(csToolkit), allLetters);
-	}
 
 	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
 			final Set<IProgramVar> allProgramVars, final Set<L> allLetters) {
@@ -128,17 +121,12 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> inTransform, final Set<IProgramVar> outTransform) {
 
-		final Set<TermVariable> nAuxVars = new HashSet<>(utf.getAuxVars());
+		final Set<TermVariable> nAuxVars = new HashSet<>();
 		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
 		for (final IProgramVar v : inTransform) {
 			final TermVariable nInVar = mMgdScript.constructFreshCopy(utf.getInVars().get(v));
 			substitutionMap.put(utf.getInVars().get(v), nInVar);
 			nAuxVars.add(nInVar);
-			/*
-			if (outTransform.contains(v) && utf.getInVars().get(v) == utf.getOutVars().get(v)) {
-				outTransform.remove(v);
-			}
-			*/
 		}
 		for (final IProgramVar v : outTransform) {
 			if (!substitutionMap.containsKey(utf.getOutVars().get(v))) {
@@ -158,7 +146,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 
 	private UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
 			final Map<TermVariable, TermVariable> substitutionMap, final Set<TermVariable> nAuxVars) {
-		final Set<IProgramConst> ntc = new HashSet<>(utf.getNonTheoryConsts());
+		final Set<IProgramConst> ntc = utf.getNonTheoryConsts();
 		final Set<TermVariable> be = utf.getBranchEncoders();
 		final TransFormulaBuilder tfBuilder =
 				new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), ntc.isEmpty(), ntc, be.isEmpty(), be, false);

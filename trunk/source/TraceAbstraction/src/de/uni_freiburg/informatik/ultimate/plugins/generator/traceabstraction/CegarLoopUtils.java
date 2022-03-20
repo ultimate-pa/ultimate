@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.ICopyActionFactory;
@@ -162,12 +163,15 @@ public class CegarLoopUtils {
 	private static <L extends IAction> IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L>
 			constructPartialOrderAbstraction(final TAPreferences prefs, final IIcfg<?> icfg,
 					final Supplier<ICopyActionFactory<L>> copyFactorySupplier) {
+		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
 		switch (prefs.getPorAbstraction()) {
 		case VARIABLES_GLOBAL:
-			return new VariableAbstraction<>(copyFactorySupplier.get(), icfg.getCfgSmtToolkit());
+			return new VariableAbstraction<>(copyFactorySupplier.get(), icfg.getCfgSmtToolkit().getManagedScript(),
+					allVariables);
 		case VARIABLES_LOCAL:
 			final Set<L> allLetters = new IcfgEdgeIterator(icfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
-			return new SpecificVariableAbstraction<>(copyFactorySupplier.get(), icfg.getCfgSmtToolkit(), allLetters);
+			return new SpecificVariableAbstraction<>(copyFactorySupplier.get(),
+					icfg.getCfgSmtToolkit().getManagedScript(), allVariables, allLetters);
 		case NONE:
 			return null;
 		default:
