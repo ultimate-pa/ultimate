@@ -283,7 +283,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 		for (final IcfgEdge edge : loopEdges) {
 			edgeTransitions.add(edge.getTransformula());
 		}
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false, false,
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.POLY_PAC,
 				edgeTransitions);
 	}

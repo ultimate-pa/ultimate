@@ -415,10 +415,13 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		for (final IProgramVar bv : nsb.getIndexedVarRepresentative().keySet()) {
+		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+			final IProgramVar bv = entry.getKey();
+			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
-					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
+				for (final var representative : indexedRepresentatives.entrySet()) {
+					final Integer index = representative.getKey();
+					final Term indexedVar = representative.getValue();
 					final Term valueT = funGetValue.apply(indexedVar);
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}

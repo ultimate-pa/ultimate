@@ -96,7 +96,8 @@ public class IcfgProgramExecutionBuilder<L extends IAction> {
 					throw new AssertionError("unknown var");
 				}
 			} else {
-				result = callee.equals(bv.getProcedure());
+				final String caller = call.getPrecedingProcedure();
+				result = callee.equals(bv.getProcedure()) || caller.equals(bv.getProcedure());
 			}
 		} else {
 			throw new AssertionError();
