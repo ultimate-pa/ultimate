@@ -1,15 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.hornverifier.algorithm;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -39,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class HornClauseSystem {
 	private static final String FUNCTION_NAME = "Inv";
+	private static final boolean USE_SYMMETRY = false;
 
 	private final TermTransferrer mTermTransferrer;
 	private final ManagedScript mManagedScript;
@@ -82,7 +87,9 @@ public class HornClauseSystem {
 		}
 		mManagedScript.lock(this);
 		declareFunction();
-		assertSymmetry();
+		if (USE_SYMMETRY) {
+			assertSymmetry();
+		}
 	}
 
 	public HornClauseSystem(final Map<String, Integer> numberOfThreads, final ManagedScript managedScript,
@@ -211,12 +218,21 @@ public class HornClauseSystem {
 		assertClause(getPredicate(locationMap));
 	}
 
+	private int getMaxIndexToCheck(final String proc) {
+		if (USE_SYMMETRY) {
+			return 0;
+		}
+		return mNumberOfThreads.get(proc) - 1;
+	}
+
 	public void assertSafety(final Collection<IcfgLocation> errorLocations) {
 		for (final IcfgLocation loc : errorLocations) {
 			final String proc = loc.getProcedure();
-			final NestedMap2<String, Integer, Term> locationMap = new NestedMap2<>();
-			locationMap.put(proc, 0, getLocIndexTerm(loc, proc));
-			assertClause(SmtUtils.not(getScript(), getPredicate(locationMap)));
+			for (int i = 0; i <= getMaxIndexToCheck(proc); i++) {
+				final NestedMap2<String, Integer, Term> locationMap = new NestedMap2<>();
+				locationMap.put(proc, i, getLocIndexTerm(loc, proc));
+				assertClause(SmtUtils.not(getScript(), getPredicate(locationMap)));
+			}
 		}
 	}
 
@@ -227,30 +243,53 @@ public class HornClauseSystem {
 		return result;
 	}
 
+	private List<Map<String, Integer>> getCartesianProductOfIndices(final Collection<String> procs) {
+		List<Map<String, Integer>> result = List.of(Map.of());
+		for (final String p : procs) {
+			final List<Map<String, Integer>> newResult = new ArrayList<>();
+			for (int i = 0; i <= getMaxIndexToCheck(p); i++) {
+				for (final Map<String, Integer> map : result) {
+					final Map<String, Integer> newMap = new HashMap<>(map);
+					newMap.put(p, i);
+					newResult.add(newMap);
+				}
+			}
+			result = newResult;
+		}
+		return result;
+	}
+
 	public void assertInductivity(final List<IcfgLocation> pre, final IIcfgTransition<?> edge,
 			final List<IcfgLocation> post) {
-		final NestedMap2<String, Integer, Term> locMapIn = new NestedMap2<>();
-		final NestedMap2<String, Integer, Term> locMapOut = new NestedMap2<>();
-		for (final IcfgLocation loc : pre) {
-			final String proc = loc.getProcedure();
-			locMapIn.put(proc, 0, getLocIndexTerm(loc, proc));
-			locMapOut.put(proc, 0, mBottom);
-		}
-		for (final IcfgLocation loc : post) {
-			final String proc = loc.getProcedure();
-			locMapOut.put(proc, 0, getLocIndexTerm(loc, proc));
-			if (!locMapIn.containsKey(proc)) {
-				locMapIn.put(proc, 0, mBottom);
+		final Set<String> containedProcs =
+				Stream.concat(pre.stream(), post.stream()).map(IcfgLocation::getProcedure).collect(Collectors.toSet());
+		for (final Map<String, Integer> indexMap : getCartesianProductOfIndices(containedProcs)) {
+			final NestedMap2<String, Integer, Term> locMapIn = new NestedMap2<>();
+			final NestedMap2<String, Integer, Term> locMapOut = new NestedMap2<>();
+			for (final IcfgLocation loc : pre) {
+				final String proc = loc.getProcedure();
+				final int index = indexMap.get(proc);
+				locMapIn.put(proc, index, getLocIndexTerm(loc, proc));
+				locMapOut.put(proc, index, mBottom);
 			}
+			for (final IcfgLocation loc : post) {
+				final String proc = loc.getProcedure();
+				final int index = indexMap.get(proc);
+				locMapOut.put(proc, index, getLocIndexTerm(loc, proc));
+				if (!locMapIn.containsKey(proc)) {
+					locMapIn.put(proc, index, mBottom);
+				}
+			}
+			final TransFormula transformula = edge.getTransformula();
+			final Map<IProgramVar, TermVariable> inVars = transformula.getInVars();
+			final Map<IProgramVar, TermVariable> outVars = transformula.getOutVars();
+			final Term prePred =
+					getPredicate(inVars, constructLocalVarMap(edge.getPrecedingProcedure(), inVars), locMapIn);
+			final Term transition = mTermTransferrer.transform(transformula.getFormula());
+			final Term postPred =
+					getPredicate(outVars, constructLocalVarMap(edge.getSucceedingProcedure(), outVars), locMapOut);
+			assertClause(prePred, transition, postPred);
 		}
-		final TransFormula transformula = edge.getTransformula();
-		final Map<IProgramVar, TermVariable> inVars = transformula.getInVars();
-		final Map<IProgramVar, TermVariable> outVars = transformula.getOutVars();
-		final Term prePred = getPredicate(inVars, constructLocalVarMap(edge.getPrecedingProcedure(), inVars), locMapIn);
-		final Term transition = mTermTransferrer.transform(transformula.getFormula());
-		final Term postPred =
-				getPredicate(outVars, constructLocalVarMap(edge.getSucceedingProcedure(), outVars), locMapOut);
-		assertClause(prePred, transition, postPred);
 	}
 
 	public void assertInductivity(final IIcfgTransition<?> edge) {
