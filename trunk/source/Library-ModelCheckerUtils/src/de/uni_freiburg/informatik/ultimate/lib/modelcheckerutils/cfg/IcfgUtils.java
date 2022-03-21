@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -386,5 +387,34 @@ public class IcfgUtils {
 		final String mainThread =
 				DataStructureUtils.getOneAndOnly(icfg.getInitialNodes(), "initial node").getProcedure();
 		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
+	}
+
+	public static Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> getForksInLoop(final IIcfg<IcfgLocation> icfg) {
+		final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> result = new HashSet<>();
+		final Map<String, IcfgLocation> entryLocs = icfg.getProcedureEntryNodes();
+		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+			final ArrayDeque<IcfgLocation> queue = new ArrayDeque<>();
+			final Set<IcfgLocation> visited = new HashSet<>();
+			queue.add(fork.getTarget());
+			queue.add(entryLocs.get(fork.getNameOfForkedProcedure()));
+			while (!queue.isEmpty()) {
+				final IcfgLocation loc = queue.pop();
+				if (!visited.add(loc)) {
+					continue;
+				}
+				if (loc.equals(fork.getSource())) {
+					result.add(fork);
+					break;
+				}
+				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+					queue.add(edge.getTarget());
+					if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+						final var fork2 = (IIcfgForkTransitionThreadCurrent<?>) edge;
+						queue.add(entryLocs.get(fork2.getNameOfForkedProcedure()));
+					}
+				}
+			}
+		}
+		return result;
 	}
 }
