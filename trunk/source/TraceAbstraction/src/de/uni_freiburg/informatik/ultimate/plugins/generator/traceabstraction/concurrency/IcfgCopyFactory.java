@@ -82,7 +82,7 @@ public class IcfgCopyFactory implements ICopyActionFactory<IcfgEdge> {
 						newTransformula, false);
 			}
 			return mEdgeBuilder.constructInternalTransition(original, original.getSource(), original.getTarget(),
-					newTransformula, false);
+					newTransformula);
 		}
 
 		if (!(original instanceof IActionWithBranchEncoders)) {
