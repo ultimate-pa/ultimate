@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
@@ -61,6 +62,10 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 */
 	public SleepSetStateFactoryForRefinement(final PredicateFactory predicateFactory) {
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
+	}
+
+	public Set<IPredicate> getConstructedStates() {
+		return mKnownStates.values().stream().flatMap(m -> m.values().stream()).collect(Collectors.toSet());
 	}
 
 	@Override

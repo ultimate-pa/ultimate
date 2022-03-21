@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -78,6 +79,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -365,6 +368,11 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(traversalStatisticsVisitor.getStatistics());
 		mStatisticsData.add(data);
+
+		final StatisticsData sleepData = new StatisticsData();
+		sleepData.aggregateBenchmarkData(
+				new SleepBlockedStatistics<>((SleepSetStateFactoryForRefinement<L>) mSleepFactory, input));
+		mStatisticsData.add(sleepData);
 	}
 
 	/**
@@ -459,6 +467,35 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	public StateSplitter<IPredicate> getStateSplitter() {
 		return mStateSplitter;
+	}
+
+	private final class SleepBlockedStatistics<L> extends AbstractStatisticsDataProvider {
+		private static final String SLEEP_BLOCKED_STATES = "Sleep-blocked states";
+
+		private final int mSleepBlockedStates;
+
+		public SleepBlockedStatistics(final SleepSetStateFactoryForRefinement<L> sleepFactory,
+				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+			mSleepBlockedStates = computeSleepBlocked(sleepFactory, input);
+
+			declare(SLEEP_BLOCKED_STATES, () -> mSleepBlockedStates, KeyType.COUNTER);
+		}
+
+		private int computeSleepBlocked(final SleepSetStateFactoryForRefinement<L> sleepFactory,
+				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
+			int sleepBlockedStates = 0;
+			for (final IPredicate state : sleepFactory.getConstructedStates()) {
+				final IPredicate original = sleepFactory.getOriginalState(state);
+				final Set<L> sleepSet = sleepFactory.getSleepSet(state);
+
+				final Set<L> outgoing = StreamSupport.stream(input.internalSuccessors(original).spliterator(), false)
+						.map(x -> x.getLetter()).collect(Collectors.toSet());
+				if (!outgoing.isEmpty() && sleepSet.containsAll(outgoing)) {
+					sleepBlockedStates++;
+				}
+			}
+			return sleepBlockedStates;
+		}
 	}
 
 	/**
