@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.MultiPersistent
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.TraversalStatisticsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
@@ -59,11 +60,11 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -299,8 +300,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	 *            A visitor that traverses the reduced automaton
 	 * @throws AutomataOperationCanceledException
 	 */
-	public void apply(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
-			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
+	public void apply(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input, IDfsVisitor<L, IPredicate> visitor)
+			throws AutomataOperationCanceledException {
 		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
 			input = ((LoopLockstepOrder<L>) mDfsOrder).wrapAutomaton(input);
 		}
@@ -313,6 +314,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		final IIndependenceRelation<IPredicate, L> independence =
 				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
+		visitor = new TraversalStatisticsVisitor<>(visitor);
 		switch (mMode) {
 		case SLEEP_DELAY_SET:
 			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
@@ -352,6 +354,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
 		}
+		visitor.getStatistics();
 	}
 
 	/**
@@ -438,6 +441,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			mServices.getResultService().reportResult(pluginId,
 					new StatisticsResult<>(pluginId, "Persistent set benchmarks", persistentData));
 		}
+
+		// TODO report visitor statistics
 	}
 
 	public StateSplitter<IPredicate> getStateSplitter() {
