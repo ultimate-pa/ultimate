@@ -122,6 +122,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final List<StatisticsData> mOldIndependenceStatistics = new ArrayList<>();
 	private final List<StatisticsData> mOldPersistentSetStatistics = new ArrayList<>();
 
+	private final List<StatisticsData> mStatisticsData;
+
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
@@ -153,6 +155,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mErrorLocs = errorLocs;
 
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
+		mStatisticsData = new ArrayList<>();
 	}
 
 	public void replaceIndependence(final int index, final IIndependenceRelation<IPredicate, L> independence) {
@@ -300,8 +303,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	 *            A visitor that traverses the reduced automaton
 	 * @throws AutomataOperationCanceledException
 	 */
-	public void apply(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input, IDfsVisitor<L, IPredicate> visitor)
-			throws AutomataOperationCanceledException {
+	public void apply(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
+			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
 		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
 			input = ((LoopLockstepOrder<L>) mDfsOrder).wrapAutomaton(input);
 		}
@@ -314,47 +317,54 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		final IIndependenceRelation<IPredicate, L> independence =
 				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
-		visitor = new TraversalStatisticsVisitor<>(visitor);
+		final TraversalStatisticsVisitor<L, IPredicate, ?> traversalStatisticsVisitor =
+				new TraversalStatisticsVisitor<>(visitor);
 		switch (mMode) {
 		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
+			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder,
+					traversalStatisticsVisitor);
 			break;
 		case SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
 				DepthFirstTraversal.traverse(mAutomataServices,
 						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
-						visitor);
+						traversalStatisticsVisitor);
 			} else {
 				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
 						mGetBudget.andThen(CachedBudget::new));
-				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
+				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, traversalStatisticsVisitor);
 			}
 			break;
 		case PERSISTENT_SETS:
-			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
+			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent,
+					traversalStatisticsVisitor);
 			break;
 		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
 		case PERSISTENT_SLEEP_DELAY_SET:
 			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, independence, mDfsOrder,
-					mPersistent, visitor);
+					mPersistent, traversalStatisticsVisitor);
 			break;
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
 				PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
-						mSleepFactory, mPersistent, visitor);
+						mSleepFactory, mPersistent, traversalStatisticsVisitor);
 			} else {
 				PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
-						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
+						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent,
+						traversalStatisticsVisitor);
 			}
 			break;
 		case NONE:
-			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);
+			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, traversalStatisticsVisitor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
 		}
-		visitor.getStatistics();
+
+		final StatisticsData data = new StatisticsData();
+		data.aggregateBenchmarkData(traversalStatisticsVisitor.getStatistics());
+		mStatisticsData.add(data);
 	}
 
 	/**
@@ -441,8 +451,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			mServices.getResultService().reportResult(pluginId,
 					new StatisticsResult<>(pluginId, "Persistent set benchmarks", persistentData));
 		}
-
-		// TODO report visitor statistics
+		for (final StatisticsData singleStatisticsData : mStatisticsData) {
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Traversal Statistics Data", singleStatisticsData));
+		}
 	}
 
 	public StateSplitter<IPredicate> getStateSplitter() {

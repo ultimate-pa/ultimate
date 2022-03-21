@@ -27,9 +27,72 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class TraversalStatisticsVisitor<L, S, V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
 
-	StatisticsData getStatistics();
+	private Statistics mStatistics;
+	
+	public TraversalStatisticsVisitor(V underlying) {
+		super(underlying);
+		mStatistics = new Statistics();
+		// TODO Auto-generated constructor stub
+	}
+
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+	
+	@Override
+	public boolean addStartState(S state) {
+		// TODO Auto-generated method stub
+		mStatistics.incStates();
+		return super.addStartState(state);
+	}
+	
+	@Override
+	public boolean discoverState(S state) {
+		// TODO Auto-generated method stub
+		mStatistics.incStates();
+		return super.discoverState(state);
+	}
+	
+	@Override
+	public boolean discoverTransition(S source, L letter, S target) {
+		// TODO Auto-generated method stub
+		mStatistics.incTransitions();
+		return super.discoverTransition(source, letter, target);
+	}
+	
+	private final class Statistics extends AbstractStatisticsDataProvider {
+		public static final String STATES = "States";
+		public static final String TRANSITIONS = "Transitions";
+
+		private int mStates;
+		private int mTransitions;
+
+		private Statistics() {
+			declare(STATES, () -> mStates, KeyType.COUNTER);
+			declare(TRANSITIONS, () -> mTransitions, KeyType.COUNTER);
+		}
+
+		private void incStates() {
+//			assert mComputationStart == -1 : "Computation timer already running";
+			mStates++;
+		}
+		
+		private void incTransitions() {
+//			assert mComputationStart == -1 : "Computation timer already running";
+			mTransitions++;
+		}
+		
+		 public String toString() {
+			 return "States: " + mStates + ", Transitions: " + mTransitions;
+		 }
+	}
 }
+
+
