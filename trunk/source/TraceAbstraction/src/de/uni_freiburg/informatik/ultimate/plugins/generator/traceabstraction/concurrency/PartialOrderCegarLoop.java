@@ -265,7 +265,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 							(SleepSetStateFactoryForRefinement<L>) mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
 		}
-		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore());
+		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), false);
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
