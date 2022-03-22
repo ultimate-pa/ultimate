@@ -95,7 +95,7 @@ public class SpecificVariableAbstractionTest {
 	// variables for ArrayStack example
 	private IProgramVar arr, max, top, e1, e2;
 
-	private Term axioms;
+	
 
 	@Before
 	public void setUp() {
@@ -108,7 +108,6 @@ public class SpecificVariableAbstractionTest {
 		mScript.setLogic(Logics.ALL);
 		mIntSort = SmtSortUtils.getIntSort(mScript);
 
-		axioms = mScript.term("true");
 		setupSimpleSet();
 		setupArrayStack();
 
@@ -214,7 +213,7 @@ public class SpecificVariableAbstractionTest {
 	}
 
 	@Test
-	public void DoNothingFullConstrVars() {
+	public void doNothingFullConstrVars() {
 		final Set<IProgramVar> constrVars = new HashSet<>();
 		constrVars.add(x);
 		constrVars.add(y);
@@ -285,8 +284,6 @@ public class SpecificVariableAbstractionTest {
 		s1 = constructVar("s1", "Int");
 		s2 = constructVar("s2", "Int");
 
-		// UINT values
-		axioms = SmtUtils.and(mScript, axioms, nonNegative(x), nonNegative(y));
 	}
 
 	private void setupArrayStack() {
@@ -298,8 +295,6 @@ public class SpecificVariableAbstractionTest {
 		top = constructVar("top", "Int");
 		e1 = constructVar("e1", "Int");
 		e2 = constructVar("e2", "Int");
-
-		axioms = SmtUtils.and(mScript, axioms, nonNegative(max));
 	}
 
 	private IProgramVar constructVar(final String name, final String sort) {
@@ -308,93 +303,7 @@ public class SpecificVariableAbstractionTest {
 		mSymbolTable.add(variable);
 		return variable;
 	}
-
-	private Term nonNegative(final IProgramVar variable) {
-		return SmtUtils.geq(mScript, variable.getTerm(), mScript.numeral("0"));
-	}
-
-	public UnmodifiableTransFormula isIn(final IProgramVar arg, final IProgramVar out) {
-		final Term term = SmtUtils.or(mScript, SmtUtils.binaryEquality(mScript, arg.getTerm(), a.getTerm()),
-				SmtUtils.binaryEquality(mScript, arg.getTerm(), b.getTerm()));
-		return TransFormulaBuilder.constructAssignment(Collections.singletonList(out), Collections.singletonList(term),
-				mSymbolTable, mMgdScript);
-	}
-
-	public UnmodifiableTransFormula getSize(final IProgramVar out) {
-		return TransFormulaBuilder.constructAssignment(Collections.singletonList(out),
-				Collections.singletonList(sz.getTerm()), mSymbolTable, mMgdScript);
-	}
-
-	public UnmodifiableTransFormula clear() {
-		return TransFormulaBuilder.constructAssignment(Arrays.asList(a, b, sz),
-				Arrays.asList(mScript.numeral("-1"), mScript.numeral("-1"), mScript.numeral("0")), mSymbolTable,
-				mMgdScript);
-	}
-
-	public UnmodifiableTransFormula add(final IProgramVar arg) {
-		final UnmodifiableTransFormula skip = TransFormulaUtils.constructHavoc(Collections.emptySet(), mMgdScript);
-		return constructIte(parseWithVariables("(= sz 0)"),
-				TransFormulaBuilder.constructAssignment(Arrays.asList(a, sz),
-						Arrays.asList(arg.getTerm(), parseWithVariables("(+ sz 1)")), mSymbolTable, mMgdScript),
-
-				constructIte(
-						SmtUtils.or(mScript, SmtUtils.binaryEquality(mScript, a.getTerm(), arg.getTerm()),
-								SmtUtils.binaryEquality(mScript, b.getTerm(), arg.getTerm())),
-						skip,
-						constructIte(parseWithVariables("(= a (- 1))"),
-								TransFormulaBuilder.constructAssignment(Arrays.asList(a, sz),
-										Arrays.asList(arg.getTerm(), parseWithVariables("(+ sz 1)")), mSymbolTable,
-										mMgdScript),
-								constructIte(parseWithVariables("(= b (- 1))"),
-										TransFormulaBuilder.constructAssignment(Arrays.asList(b, sz),
-												Arrays.asList(arg.getTerm(), parseWithVariables("(+ sz 1)")),
-												mSymbolTable, mMgdScript),
-										skip))));
-	}
-
-	private UnmodifiableTransFormula pop(final IProgramVar out) {
-		return constructIte(parseWithVariables("(= top (- 1))"),
-				TransFormulaBuilder.constructAssignment(Arrays.asList(out), Arrays.asList(mScript.numeral("-1")),
-						mSymbolTable, mMgdScript),
-				TransFormulaBuilder.constructAssignment(Arrays.asList(top, out),
-						Arrays.asList(parseWithVariables("(- top 1)"), parseWithVariables("(select arr top)")),
-						mSymbolTable, mMgdScript));
-	}
-
-	private UnmodifiableTransFormula push(final IProgramVar arg, final IProgramVar out) {
-		return constructIte(parseWithVariables("(= top (- max 1))"),
-				TransFormulaBuilder.constructAssignment(Arrays.asList(out), Arrays.asList(mScript.term("false")),
-						mSymbolTable, mMgdScript),
-				TransFormulaBuilder.constructAssignment(Arrays.asList(arr, top, out),
-						Arrays.asList(
-								SmtUtils.store(mScript, arr.getTerm(), parseWithVariables("(+ top 1)"), arg.getTerm()),
-								parseWithVariables("(+ top 1)"), mScript.term("true")),
-						mSymbolTable, mMgdScript));
-	}
-
-	private UnmodifiableTransFormula isEmpty(final IProgramVar out) {
-		return TransFormulaBuilder.constructAssignment(Arrays.asList(out),
-				Arrays.asList(SmtUtils.binaryEquality(mScript, top.getTerm(), mScript.numeral("-1"))), mSymbolTable,
-				mMgdScript);
-	}
-
-	private UnmodifiableTransFormula constructIte(final Term condition, final UnmodifiableTransFormula thenBranch,
-			final UnmodifiableTransFormula elseBranch) {
-		final UnmodifiableTransFormula takeThen = compose(TransFormulaBuilder.constructTransFormulaFromTerm(condition,
-				(Set) mSymbolTable.getGlobals(), mMgdScript), thenBranch);
-		final UnmodifiableTransFormula takeElse =
-				compose(TransFormulaBuilder.constructTransFormulaFromTerm(SmtUtils.not(mScript, condition),
-						(Set) mSymbolTable.getGlobals(), mMgdScript), elseBranch);
-		return TransFormulaUtils.parallelComposition(mLogger, mServices, mMgdScript, null, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, takeThen, takeElse);
-	}
-
-	private UnmodifiableTransFormula compose(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
-				Arrays.asList(a, b));
-	}
-
+	
 	private Term parseWithVariables(final String syntax) {
 		final String declarations = mSymbolTable.getGlobals().stream()
 				.map(pv -> "(" + pv.getTermVariable().getName() + "_in " + pv.getSort() + ") ("
