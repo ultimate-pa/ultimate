@@ -74,10 +74,10 @@ public class SpecificVariableAbstraction<L extends IAction>
 				|| nothingWillChange(inLetter, constraints)) {
 			return inLetter;
 		}
-		final Set<IProgramVar> transformInVars = getTransformVariablesIn(inLetter.getTransformula(),
-				new HashSet<>(constraints.getInConstraints(inLetter)));
-		final Set<IProgramVar> transformOutVars = getTransformVariablesOut(inLetter.getTransformula(),
-				new HashSet<>(constraints.getOutConstraints(inLetter)));
+		final Set<IProgramVar> transformInVars =
+				getTransformVariablesIn(inLetter.getTransformula(), constraints.getInConstraints(inLetter));
+		final Set<IProgramVar> transformOutVars =
+				getTransformVariablesOut(inLetter.getTransformula(), constraints.getOutConstraints(inLetter));
 
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
@@ -99,23 +99,18 @@ public class SpecificVariableAbstraction<L extends IAction>
 
 	private static Set<IProgramVar> getTransformVariablesIn(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrVars) {
-		final Set<IProgramVar> transform = new HashSet<>(utf.getInVars().keySet());
-		transform.removeAll(constrVars);
-		return transform;
+		return DataStructureUtils.difference(utf.getInVars().keySet(), constrVars);
 	}
 
 	private static Set<IProgramVar> getTransformVariablesOut(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrVars) {
-		final Set<IProgramVar> transform = new HashSet<>(utf.getOutVars().keySet());
-		transform.removeAll(constrVars);
-		return transform;
+		return DataStructureUtils.difference(utf.getOutVars().keySet(), constrVars);
 	}
 
 	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {
 		return constraints.getInConstraints(inLetter).containsAll(inLetter.getTransformula().getInVars().keySet())
 				&& constraints.getOutConstraints(inLetter)
 						.containsAll(inLetter.getTransformula().getOutVars().keySet());
-
 	}
 
 	private UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
