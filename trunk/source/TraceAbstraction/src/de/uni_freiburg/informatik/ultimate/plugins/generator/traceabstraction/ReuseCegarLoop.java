@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -69,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -95,7 +95,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, IAutomaton<L, IPredicate>> {
 
 	public static boolean USE_AUTOMATA_WITH_UNMATCHED_PREDICATES = false;
 
@@ -106,17 +106,16 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 	protected final ReuseStatisticsGenerator mReuseStats;
 	private boolean mStatsAlreadyAggregated = false;
 
-	public ReuseCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
-			final IUltimateServiceProvider services,
+	public ReuseCegarLoop(final DebugIdentifier name, final IAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IInitialAbstractionProvider<L, ?> abstractionProvider) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement, abstractionProvider);
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mFloydHoareAutomataFromFile = new ArrayList<>();
@@ -124,8 +123,8 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 	}
 
 	@Override
-	protected void getInitialAbstraction() throws AutomataLibraryException {
-		super.getInitialAbstraction();
+	protected void initialize() throws AutomataLibraryException {
+		super.initialize();
 
 		mLogger.info(
 				"Constructing FH automata from " + mRawFloydHoareAutomataFromFile.size() + " parsed reuse automata");

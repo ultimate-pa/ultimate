@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InsufficientError;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -407,7 +408,16 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final CegarLoopResult<L> clres = mCegarFactory
 				.constructCegarLoop(services, name, icfg, errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile)
 				.runCegar();
-		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
+
+		final StatisticsData cegarStatistics = new StatisticsData();
+		cegarStatistics.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
+		if (clres.getCegarLoopStatisticsGenerator().getBenchmarkType() instanceof PetriCegarStatisticsType) {
+			cegarStatistics
+					.aggregateBenchmarkData(new PetriCegarLoopStatisticsGenerator(mCegarFactory.getStatistics()));
+		} else {
+			cegarStatistics.aggregateBenchmarkData(mCegarFactory.getStatistics());
+		}
+		taBenchmark.aggregateBenchmarkData(cegarStatistics);
 		return clres;
 	}
 

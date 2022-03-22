@@ -53,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopResultReporter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
@@ -115,17 +115,18 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			}
 		}
 
-		BasicCegarLoop<IcfgEdge> abstractCegarLoop;
+		BasicCegarLoop<IcfgEdge, ?> abstractCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				csToolkit.getManagedScript(), predicateFactory, false, Collections.emptySet());
 
 		if (taPrefs.getAutomataTypeConcurrency() == Concurrency.PETRI_NET) {
 			final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
-			abstractCegarLoop = new CegarLoopForPetriNet<>(name, petrifiedIcfg, csToolkit, predicateFactory, taPrefs,
-					errNodesOfAllProc, mServices, IcfgEdge.class, stateFactoryForRefinement,
-					CegarLoopFactory.createPetriAbstractionProvider(mServices, compositionFactory, predicateFactory,
-							IcfgEdge.class, taPrefs, false));
+			abstractCegarLoop = new CegarLoopForPetriNet<>(name,
+					CegarLoopFactory.createPetriAbstraction(mServices, compositionFactory, predicateFactory,
+							IcfgEdge.class, taPrefs, false, (IIcfg<IcfgLocation>) petrifiedIcfg, errNodesOfAllProc),
+					petrifiedIcfg, csToolkit, predicateFactory, taPrefs, errNodesOfAllProc, mServices, IcfgEdge.class,
+					stateFactoryForRefinement);
 		} else if (taPrefs.getAutomataTypeConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
 					taPrefs, errNodesOfAllProc, mServices, IcfgEdge.class, stateFactoryForRefinement);

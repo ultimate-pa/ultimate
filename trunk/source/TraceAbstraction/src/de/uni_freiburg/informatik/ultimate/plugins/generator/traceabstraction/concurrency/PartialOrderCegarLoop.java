@@ -67,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
@@ -95,7 +94,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  * @param <L>
  *            The type of statements in the program.
  */
-public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
+		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
@@ -105,14 +105,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
-	public PartialOrderCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> rootNode,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+	public PartialOrderCegarLoop(final DebugIdentifier name,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
+			final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> abstractionProvider) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
-				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement, abstractionProvider);
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
+				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
@@ -143,9 +143,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
 
 		// Actual refinement step
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> oldAbstraction =
-				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
-		mAbstraction = new InformationStorage<>(oldAbstraction, totalInterpol, mFactory, false);
+		mAbstraction = new InformationStorage<>(mAbstraction, totalInterpol, mFactory, false);
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -153,18 +151,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction =
-				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction;
-
 		switchToOnDemandConstructionMode();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
 		final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 		try {
-			mPOR.apply(abstraction, visitor);
+			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
-			assert mCounterexample == null || accepts(getServices(), abstraction, mCounterexample.getWord(),
+			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(),
 					false) : "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
 		} finally {

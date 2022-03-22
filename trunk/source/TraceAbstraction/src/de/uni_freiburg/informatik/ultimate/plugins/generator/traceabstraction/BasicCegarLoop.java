@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2022 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2011-2022 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
@@ -107,7 +109,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -151,7 +152,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarLoop<L> {
+public class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+		extends AbstractCegarLoop<L, A> {
 
 	public enum AutomatonType {
 		FLOYD_HOARE, ERROR;
@@ -222,16 +224,13 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
-	private final IInitialAbstractionProvider<L, ?> mAbstractionProvider;
-
-	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+	public BasicCegarLoop(final DebugIdentifier name, final A initialAbstraction, final IIcfg<?> rootNode,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IInitialAbstractionProvider<L, ?> abstractionProvider) {
-		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz, computeHoareAnnotation);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
@@ -299,13 +298,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		mScoringMethod = taPrefs.getHeuristicEmptinessCheckScoringMethod();
 		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
-
-		mAbstractionProvider = abstractionProvider;
-	}
-
-	@Override
-	protected void getInitialAbstraction() throws AutomataLibraryException {
-		mAbstraction = mAbstractionProvider.getInitialAbstraction(mIcfg, mErrorLocs);
 	}
 
 	@Override
@@ -752,7 +744,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 					mHaf.addDeadEndDoubleDeckers(diff);
 				}
 			}
-			mAbstraction = diff.getResult();
+			mAbstraction = (A) diff.getResult();
 			if (mPref.dumpAutomata()) {
 				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 						+ "AbstractionAfterDifferenceAndDeadEndRemoval";
@@ -999,7 +991,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
 
 			// use result
-			mAbstraction = newAbstraction;
+			mAbstraction = (A) newAbstraction;
 		}
 	}
 

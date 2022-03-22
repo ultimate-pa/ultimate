@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -66,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Inc
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -76,22 +76,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 
-public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>>
+		extends BasicCegarLoop<L, IAutomaton<L, IPredicate>> {
 
 	protected AbstractIncrementalInclusionCheck<L, IPredicate> mInclusionCheck;
 	protected final LanguageOperation mLanguageOperation;
 	protected final List<AbstractInterpolantAutomaton<L>> mInterpolantAutomata = new ArrayList<>();
 	protected final List<IHoareTripleChecker> mHoareTripleChecker = new ArrayList<>();
 
-	public IncrementalInclusionCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
-			final IUltimateServiceProvider services, final LanguageOperation languageOperation,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IInitialAbstractionProvider<L, ?> abstractionProvider) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement, abstractionProvider);
+	public IncrementalInclusionCegarLoop(final DebugIdentifier name, final IAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
+			final LanguageOperation languageOperation, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
 		if (mComputeHoareAnnotation) {
 			throw new UnsupportedOperationException(
@@ -100,8 +101,8 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	}
 
 	@Override
-	protected void getInitialAbstraction() throws AutomataLibraryException {
-		super.getInitialAbstraction();
+	protected void initialize() throws AutomataLibraryException {
+		super.initialize();
 		switch (mLanguageOperation) {
 		case DIFFERENCE:
 			throw new AssertionError("wrong cegar loop for this");

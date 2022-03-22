@@ -34,6 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Inc
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -76,23 +76,22 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 
 	private Pair<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, IPredicateUnifier> mAutomatonAcceptingCounterexample;
 
-	public LazyReuseCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
-			final IUltimateServiceProvider services,
+	public LazyReuseCegarLoop(final DebugIdentifier name, final IAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFiles,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IInitialAbstractionProvider<L, ?> abstractionProvider) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				hoareAnnotationLocs, services, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFiles,
-				transitionClazz, stateFactoryForRefinement, abstractionProvider);
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation, hoareAnnotationLocs, services, floydHoareAutomataFromOtherLocations,
+				rawFloydHoareAutomataFromFiles, transitionClazz, stateFactoryForRefinement);
 	}
 
 	@Override
-	protected void getInitialAbstraction() throws AutomataLibraryException {
-		super.getInitialAbstraction();
+	protected void initialize() throws AutomataLibraryException {
+		super.initialize();
 		mReuseAutomata = new ArrayList<>();
 		// TODO just ignore automata from other error locations for now
 		// for (final Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier> pair

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -64,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
@@ -77,7 +77,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author haettigj@informatik.uni-freiburg.de
  *
  */
-public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>>
+		extends BasicCegarLoop<L, IAutomaton<L, IPredicate>> {
 	/**
 	 * Maps states from the original automaton to corresponding states in the new interpolant automaton.
 	 */
@@ -171,14 +172,14 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 	 * @param services
 	 * @param transitionClazz
 	 */
-	public CegarLoopSWBnonRecursive(final DebugIdentifier name, final IIcfg<?> icfg, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
-			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IInitialAbstractionProvider<L, ?> abstractionProvider) {
-		super(name, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement, abstractionProvider);
+	public CegarLoopSWBnonRecursive(final DebugIdentifier name, final IAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> icfg, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}

@@ -106,7 +106,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
+public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
@@ -153,7 +153,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of the program.
 	 */
-	protected IAutomaton<L, IPredicate> mAbstraction;
+	protected A mAbstraction;
 
 	/**
 	 * IInterpolantGenerator that was used in the current iteration.
@@ -186,16 +186,35 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	protected final CegarLoopResultBuilder mResultBuilder;
 	private Map<IcfgLocation, Long> mTimeBudget;
 
+	/**
+	 *
+	 * @param services
+	 * @param name
+	 * @param initialAbstraction
+	 *            An automaton such that the recognised language is a superset of the language of the program. The
+	 *            initial abstraction in our implementations will usually be an automaton that has the same graph as the
+	 *            program.
+	 * @param rootNode
+	 * @param csToolkit
+	 * @param predicateFactory
+	 * @param taPrefs
+	 * @param errorLocs
+	 * @param logger
+	 * @param transitionClazz
+	 * @param computeHoareAnnotation
+	 */
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
-			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final ILogger logger,
-			final Class<L> transitionClazz, final boolean computeHoareAnnotation) {
+			final A initialAbstraction, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<? extends IcfgLocation> errorLocs, final ILogger logger, final Class<L> transitionClazz,
+			final boolean computeHoareAnnotation) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
 		mName = name;
+		mAbstraction = initialAbstraction;
 		mIcfg = rootNode;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
@@ -209,13 +228,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * Construct the automaton mAbstraction such that the language recognised by mAbstraction is a superset of the
-	 * language of the program. The initial abstraction in our implementations will usually be an automaton that has the
-	 * same graph as the program.
-	 *
-	 * @throws AutomataLibraryException
+	 * Perform any initialization that is needed before the iteration begins.
 	 */
-	protected abstract void getInitialAbstraction() throws AutomataLibraryException;
+	protected void initialize() throws AutomataLibraryException {
+		// by default, no action needed
+	}
 
 	/**
 	 * Return true iff the mAbstraction does not accept any trace.
@@ -364,7 +381,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>> {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
 		try {
 			abortIfTimeout();
-			getInitialAbstraction();
+			initialize();
 		} catch (AutomataOperationCanceledException | ToolchainCanceledException ex) {
 			final RunningTaskInfo runningTaskInfo =
 					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
