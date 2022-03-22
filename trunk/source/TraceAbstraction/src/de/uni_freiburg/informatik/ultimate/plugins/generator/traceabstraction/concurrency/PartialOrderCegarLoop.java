@@ -152,7 +152,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		switchToOnDemandConstructionMode();
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 		try {
 			mPOR.apply(mAbstraction, visitor);
@@ -163,7 +163,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					false) : "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
 	}
 

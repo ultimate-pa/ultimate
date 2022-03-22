@@ -105,23 +105,17 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input =
 				mUnderlying.getInitialAbstraction(icfg, errorLocs);
 
-		// TODO recover these statistics
-		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		try {
-			// setup POR depending on settings
-			final IIndependenceRelation<IPredicate, L> indep = IndependenceBuilder
-					.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
-					.withSyntacticCheck().cached().threadSeparated().build();
-			final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory,
-					icfg, errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, indep);
+		// setup POR depending on settings
+		final IIndependenceRelation<IPredicate, L> indep =
+				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
+						.withSyntacticCheck().cached().threadSeparated().build();
+		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
+				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, indep);
 
-			// actually apply POR to automaton
-			final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);
+		// actually apply POR to automaton
+		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);
 
-			por.reportStatistics(mPluginId);
-			return result;
-		} finally {
-			// mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.PartialOrderReductionTime);
-		}
+		por.reportStatistics(mPluginId);
+		return result;
 	}
 }
