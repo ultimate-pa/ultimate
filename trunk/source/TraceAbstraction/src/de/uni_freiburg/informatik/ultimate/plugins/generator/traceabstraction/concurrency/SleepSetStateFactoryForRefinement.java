@@ -193,6 +193,11 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		public ImmutableSet<L> getSleepSet() {
 			return mSleepSet;
 		}
+
+		@Override
+		public String toString() {
+			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mSleepSet + "]";
+		}
 	}
 
 	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {
