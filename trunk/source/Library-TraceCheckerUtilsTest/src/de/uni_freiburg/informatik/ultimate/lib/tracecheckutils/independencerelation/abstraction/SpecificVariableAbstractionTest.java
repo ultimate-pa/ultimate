@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -54,8 +55,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -70,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class SpecificVariableAbstractionTest {
 
@@ -87,6 +97,10 @@ public class SpecificVariableAbstractionTest {
 
 	CfgSmtToolkit mToolkit;
 	private SpecificVariableAbstraction<BasicInternalAction> mSpVaAbs;
+
+	private IPredicateUnifier mUnifier;
+	private IHoareTripleChecker mHtc;
+
 	private Sort mIntSort;
 
 	// variables for SimpleSet example
@@ -111,13 +125,20 @@ public class SpecificVariableAbstractionTest {
 		setupSimpleSet();
 		setupArrayStack();
 
-		mToolkit = new CfgSmtToolkit(null, mMgdScript, mSymbolTable, null, null, null, null, null, null);
+		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(new HashRelation<>());
+		mToolkit = new CfgSmtToolkit(modGlobTab, mMgdScript, mSymbolTable, null, null, null, null, null, null);
 		final Set<IProgramVar> mAllVariables = new HashSet<>();
 		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
 			mAllVariables.add(nOV);
 		}
 		mSpVaAbs = new SpecificVariableAbstraction<>(SpecificVariableAbstractionTest::copyAction, mMgdScript,
 				mAllVariables, Collections.emptySet());
+
+		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
+		mUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, mSymbolTable,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleChecker(mServices, HoareTripleChecks.MONOLITHIC,
+				mToolkit, mUnifier);
 	}
 
 	private static BasicInternalAction copyAction(final BasicInternalAction old,
@@ -133,6 +154,11 @@ public class SpecificVariableAbstractionTest {
 	@After
 	public void tearDown() {
 		mScript.exit();
+	}
+
+	public UnmodifiableTransFormula assumeXZero() {
+		return TransFormulaBuilder.constructEqualityAssumption(List.of(x),
+				List.of(SmtUtils.constructIntValue(mScript, BigInteger.ZERO)), mSymbolTable, mMgdScript);
 	}
 
 	public UnmodifiableTransFormula yIsXPlusY() {
@@ -227,33 +253,53 @@ public class SpecificVariableAbstractionTest {
 		runTestAbstraction(xIsXPlusOne(), constrVars, constrVars);
 	}
 
+	@Test
+	public void sameInOutVariableAbstractOnlyLeft() {
+		final IPredicate pre = mUnifier.getTruePredicate();
+		final IPredicate post = mUnifier.getOrConstructPredicate(parseWithVariables("(>= x 0)"));
+		runTestWithHoareTriple(pre, assumeXZero(), post);
+	}
+
+	@Test
+	public void sameInOutVariableAbstractOnlyRight() {
+		final IPredicate pre = mUnifier.getOrConstructPredicate(parseWithVariables("(>= x 0)"));
+		final IPredicate post = mUnifier.getOrConstructPredicate(parseWithVariables("(>= y 0)"));
+		runTestWithHoareTriple(pre, yIsXTimesTwo(), post);
+	}
+
+	private void runTestWithHoareTriple(final IPredicate pre, final UnmodifiableTransFormula tf,
+			final IPredicate post) {
+		final BasicInternalAction concreteAction = createAction(tf);
+		final Validity concreteValidity = mHtc.checkInternal(pre, concreteAction, post);
+		assert concreteValidity == Validity.VALID : "Could not establish Hoare triple validity before abstraction";
+
+		final BasicInternalAction abstracted = createAndCheckAbstraction(concreteAction, pre.getVars(), post.getVars());
+		final Validity abstractedValidity = mHtc.checkInternal(pre, abstracted, post);
+		assert abstractedValidity == Validity.VALID : "Abstraction breaks Hoare triple";
+	}
+
 	private void runTestAbstraction(final UnmodifiableTransFormula utf, final Set<IProgramVar> inConstr,
 			final Set<IProgramVar> outConstr) {
-		final BasicInternalAction action = createAction(utf);
-		final UnmodifiableTransFormula abstractedTF = mSpVaAbs
-				.abstractLetter(action, makeSimpleVarAbConstaraint(action, inConstr, outConstr)).getTransformula();
+		final BasicInternalAction abstracted = createAndCheckAbstraction(createAction(utf), inConstr, outConstr);
 
-		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
-			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
-		}
-
-		for (final IProgramVar iv : abstractedTF.getOutVars().keySet()) {
-			assert !abstractedTF.getAuxVars().contains(abstractedTF.getOutVars().get(iv)) : "auxVar in OutVar "
-					+ iv.getTermVariable().toString();
-		}
-		LBool working = TransFormulaUtils.checkImplication(utf, abstractedTF, mMgdScript);
-		assert working != LBool.SAT : "IS SAT";
-		working = TransFormulaUtils.checkImplication(abstractedTF, utf, mMgdScript);
-		assert working != LBool.UNSAT : "IS UNSAT";
-
+		final LBool subset = TransFormulaUtils.checkImplication(abstracted.getTransformula(), utf, mMgdScript);
+		assert subset != LBool.UNSAT : "Abstracted TF is equivalent to input, but was expected to be strictly more abstract";
 	}
 
 	private void runTestAbstractionDoesNothing(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> constrainingVars) {
-		final BasicInternalAction action = createAction(utf);
-		final UnmodifiableTransFormula abstractedTF =
-				mSpVaAbs.abstractLetter(action, makeSimpleVarAbConstaraint(action, constrainingVars, constrainingVars))
-						.getTransformula();
+		final BasicInternalAction abstracted =
+				createAndCheckAbstraction(createAction(utf), constrainingVars, constrainingVars);
+
+		final LBool subset = TransFormulaUtils.checkImplication(abstracted.getTransformula(), utf, mMgdScript);
+		assert subset == LBool.UNSAT : "Abstracted TF is strictly more abstract than input, but was expected to be equivalent";
+	}
+
+	private BasicInternalAction createAndCheckAbstraction(final BasicInternalAction action,
+			final Set<IProgramVar> inConstr, final Set<IProgramVar> outConstr) {
+		final BasicInternalAction abstracted =
+				mSpVaAbs.abstractLetter(action, makeSimpleVarAbConstaraint(action, inConstr, outConstr));
+		final UnmodifiableTransFormula abstractedTF = abstracted.getTransformula();
 
 		for (final IProgramVar iv : abstractedTF.getInVars().keySet()) {
 			assert !abstractedTF.getAuxVars().contains(iv.getTermVariable()) : "auxVar in InVar ";
@@ -263,9 +309,10 @@ public class SpecificVariableAbstractionTest {
 			assert !abstractedTF.getAuxVars().contains(abstractedTF.getOutVars().get(iv)) : "auxVar in OutVar "
 					+ iv.getTermVariable().toString();
 		}
-		final LBool working = TransFormulaUtils.checkImplication(utf, abstractedTF, mMgdScript);
-		assert working != LBool.SAT : "IS SAT";
+		final LBool superset = TransFormulaUtils.checkImplication(action.getTransformula(), abstractedTF, mMgdScript);
+		assert superset != LBool.SAT : "Abstracted TF is not a superset of original TF";
 
+		return abstracted;
 	}
 
 	private void setupSimpleSet() {
@@ -305,9 +352,9 @@ public class SpecificVariableAbstractionTest {
 	}
 	
 	private Term parseWithVariables(final String syntax) {
+		final String template = "(%1$s %2$s) (%1$s_in %2$s) (%1$s_out %2$s)";
 		final String declarations = mSymbolTable.getGlobals().stream()
-				.map(pv -> "(" + pv.getTermVariable().getName() + "_in " + pv.getSort() + ") ("
-						+ pv.getTermVariable().getName() + "_out " + pv.getSort() + ") ")
+				.map(pv -> String.format(template, pv.getTermVariable().getName(), pv.getSort()))
 				.collect(Collectors.joining(" ")) + " (aux Int)";
 		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
