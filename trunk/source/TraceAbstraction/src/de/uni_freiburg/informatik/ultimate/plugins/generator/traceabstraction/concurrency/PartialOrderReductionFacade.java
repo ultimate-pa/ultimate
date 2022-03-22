@@ -31,15 +31,20 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.CoveringMode;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
@@ -50,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateF
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -125,6 +131,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 		mIndependence = independence;
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
+	}
+
+	public IIndependenceRelation<IPredicate, L> getIndependence() {
+		return mIndependence;
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -286,6 +296,39 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 		apply(input, visitor);
 		return visitor.getReductionAutomaton();
+	}
+
+	public NestedWordAutomaton<L, IPredicate> constructReduction(
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
+			final Predicate<IPredicate> isAccepting) throws AutomataOperationCanceledException {
+		final IDfsVisitor<L, IPredicate> buildVisitor = createBuildVisitor(abstraction.getVpAlphabet(), isAccepting);
+		apply(abstraction, buildVisitor);
+		AutomatonConstructingVisitor<L, IPredicate> builder;
+		if (buildVisitor instanceof WrapperVisitor<?, ?, ?>) {
+			builder = (AutomatonConstructingVisitor<L, IPredicate>) ((WrapperVisitor<L, IPredicate, ?>) buildVisitor)
+					.getBaseVisitor();
+		} else {
+			builder = (AutomatonConstructingVisitor<L, IPredicate>) buildVisitor;
+		}
+		return builder.getReductionAutomaton();
+	}
+
+	private IDfsVisitor<L, IPredicate> createBuildVisitor(final VpAlphabet<L> alphabet,
+			final Predicate<IPredicate> isAccepting) {
+		IDfsVisitor<L, IPredicate> visitor = new AutomatonConstructingVisitor<>(x -> false, isAccepting, alphabet,
+				new AutomataLibraryServices(mServices), mSleepFactory);
+
+		if (getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
+			visitor = ((BetterLockstepOrder<L, IPredicate>) getDfsOrder()).wrapVisitor(visitor);
+		}
+
+		if (PartialOrderCegarLoop.ENABLE_COVERING_OPTIMIZATION) {
+			visitor = new CoveringOptimizationVisitor<>(visitor,
+					new SleepSetStateFactoryForRefinement.FactoryCoveringRelation<>(
+							(SleepSetStateFactoryForRefinement<L>) mSleepFactory),
+					CoveringMode.PRUNE);
+		}
+		return new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, true);
 	}
 
 	public void reportStatistics() {
