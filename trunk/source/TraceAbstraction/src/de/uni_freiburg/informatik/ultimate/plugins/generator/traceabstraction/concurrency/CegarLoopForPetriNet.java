@@ -621,6 +621,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		throw new UnsupportedOperationException("Petri net based analysis cannot compute Hoare annotation.");
 	}
 
+	@Override
+	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
+		throw new UnsupportedOperationException("Error automata not supported for " + CegarLoopForPetriNet.class);
+	}
+
 	private boolean acceptsPetriViaFA(final IUltimateServiceProvider services,
 			final IAutomaton<L, IPredicate> automaton, final Word<L> word)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {

@@ -211,8 +211,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final Set<IcfgLocation> hoareAnnotationLocs, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 
-		final IAutomaton<L, IPredicate> initialAbstraction = createAutomataAbstraction(services, root, errorLocs,
-				predicateFactory, stateFactoryForRefinement, witnessAutomaton);
+		final INestedWordAutomaton<L, IPredicate> initialAbstraction = createAutomataAbstraction(services, root,
+				errorLocs, predicateFactory, stateFactoryForRefinement, witnessAutomaton);
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
 
 		switch (mPrefs.getFloydHoareAutomataReuse()) {
@@ -227,7 +227,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
 					stateFactoryForRefinement);
 		case NONE:
-			return new BasicCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+			return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
 					mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services, mTransitionClazz,
 					stateFactoryForRefinement);
 		default:
@@ -235,7 +235,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private IAutomaton<L, IPredicate> createAutomataAbstraction(final IUltimateServiceProvider services,
+	private INestedWordAutomaton<L, IPredicate> createAutomataAbstraction(final IUltimateServiceProvider services,
 			final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs, final PredicateFactory predicateFactory,
 			final PredicateFactoryRefinement stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
@@ -243,10 +243,10 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				stateFactory, witnessAutomaton), icfg, errorLocs);
 	}
 
-	private IInitialAbstractionProvider<L, ?> createAutomataAbstractionProvider(final IUltimateServiceProvider services,
-			final boolean isConcurrent, final PredicateFactory predicateFactory,
-			final PredicateFactoryRefinement stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
+	private IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>
+			createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
+					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
+					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		if (!isConcurrent) {
 			final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> provider =
 					new NwaInitialAbstractionProvider<>(services, stateFactory, mPrefs.interprocedural(),

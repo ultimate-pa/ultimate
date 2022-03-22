@@ -32,7 +32,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -77,7 +76,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 	private static final boolean IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA = false;
 
 	// TODO can this method be removed?
-	public EagerReuseCegarLoop(final DebugIdentifier name, final IAutomaton<L, IPredicate> initialAbstraction,
+	public EagerReuseCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
@@ -170,9 +169,8 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 
 		if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
 			final AutomataLibraryServices als = new AutomataLibraryServices(getServices());
-			final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
-					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, diff.getResult())
-							.getResult();
+			final Boolean noTraceExcluded =
+					new IsIncluded<>(als, mPredicateFactoryResultChecking, mAbstraction, diff.getResult()).getResult();
 			if (noTraceExcluded) {
 				mLogger.warn("Floyd-Hoare automaton" + iteration
 						+ " did not remove an error trace from abstraction and was hence useless for this error location.");

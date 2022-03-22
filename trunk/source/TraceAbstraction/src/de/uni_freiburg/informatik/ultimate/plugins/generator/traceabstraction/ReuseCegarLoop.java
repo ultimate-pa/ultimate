@@ -40,7 +40,6 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -95,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, IAutomaton<L, IPredicate>> {
+public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L> {
 
 	public static boolean USE_AUTOMATA_WITH_UNMATCHED_PREDICATES = false;
 
@@ -106,7 +105,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 	protected final ReuseStatisticsGenerator mReuseStats;
 	private boolean mStatsAlreadyAggregated = false;
 
-	public ReuseCegarLoop(final DebugIdentifier name, final IAutomaton<L, IPredicate> initialAbstraction,
+	public ReuseCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
@@ -147,7 +146,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			final INestedWordAutomaton<String, String> rawAutomatonFromFile) {
 		// Create map from strings to all equivalent "new" letters (abstraction letters)
 		final Map<String, Set<L>> mapStringToLetter = new HashMap<>();
-		final VpAlphabet<L> abstractionAlphabet = ((INestedWordAutomaton<L, IPredicate>) mAbstraction).getVpAlphabet();
+		final VpAlphabet<L> abstractionAlphabet = mAbstraction.getVpAlphabet();
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());

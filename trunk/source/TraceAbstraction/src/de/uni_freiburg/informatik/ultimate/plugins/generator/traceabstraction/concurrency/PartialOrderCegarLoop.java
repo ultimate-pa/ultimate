@@ -318,6 +318,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return ImmutableList.singleton(conjunction);
 	}
 
+	@Override
+	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
+		throw new UnsupportedOperationException("Error automata not supported for " + PartialOrderCegarLoop.class);
+	}
+
+	@Override
+	protected void computeIcfgHoareAnnotation() {
+		throw new UnsupportedOperationException("Hoare annotation not supported for " + PartialOrderCegarLoop.class);
+	}
+
 	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
 		@Override
 		public IPredicate createEmptyStackState() {
