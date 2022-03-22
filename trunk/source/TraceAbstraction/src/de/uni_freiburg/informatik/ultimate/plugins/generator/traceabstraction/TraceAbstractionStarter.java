@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -67,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
@@ -388,7 +386,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		assert restartBehaviour == CegarRestartBehaviour.ONLY_ONE_CEGAR : "unsupported CEGAR restart behaviour";
 		if (mIsConcurrent && mPrefs.insufficientThreadErrorsVsProgramErrors() != InsufficientError.TOGETHER
-				&& isAnyForkInCycle(icfg)) {
+				&& !IcfgUtils.getForksInLoop(icfg).isEmpty()) {
 			final Set<IcfgLocation> inUseErrors = new HashSet<>(getInUseErrorNodeMap(icfg).values());
 			final Set<IcfgLocation> otherErrors = DataStructureUtils.difference(errNodesOfAllProc, inUseErrors);
 			final Pair<DebugIdentifier, Set<IcfgLocation>> other =
@@ -411,33 +409,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				.runCegar();
 		taBenchmark.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 		return clres;
-	}
-
-	private static boolean isAnyForkInCycle(final IIcfg<IcfgLocation> icfg) {
-		final Map<String, IcfgLocation> entryLocs = icfg.getProcedureEntryNodes();
-		for (final var fork : getInUseErrorNodeMap(icfg).keySet()) {
-			final ArrayDeque<IcfgLocation> queue = new ArrayDeque<>();
-			final Set<IcfgLocation> visited = new HashSet<>();
-			queue.add(fork.getTarget());
-			queue.add(entryLocs.get(fork.getNameOfForkedProcedure()));
-			while (!queue.isEmpty()) {
-				final IcfgLocation loc = queue.pop();
-				if (!visited.add(loc)) {
-					continue;
-				}
-				if (loc.equals(fork.getSource())) {
-					return true;
-				}
-				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-					queue.add(edge.getTarget());
-					if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
-						final var fork2 = (IIcfgForkTransitionThreadCurrent<?>) edge;
-						queue.add(entryLocs.get(fork2.getNameOfForkedProcedure()));
-					}
-				}
-			}
-		}
-		return false;
 	}
 
 	private static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation>

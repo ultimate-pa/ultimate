@@ -239,7 +239,7 @@ public class TransFormulaBuilder {
 	}
 
 	/**
-	 * Remove from the outVars all local vars and outVars.
+	 * Remove from the outVars all local vars and oldVars.
 	 */
 	public void removeOutVarsOfLocalContext() {
 		if (mConstructionFinished) {
@@ -281,6 +281,37 @@ public class TransFormulaBuilder {
 		mFormula = formula;
 	}
 
+	/**
+	 * Ensures that the constructed TransFormula will be in <em>internal normal form</em>.
+	 *
+	 * See {@link TransFormulaUtils#hasInternalNormalForm(TransFormula)} for more information. If the caller already
+	 * ensures that the TransFormula will be in internal normal form, it is not necessary to call this method.
+	 *
+	 * This method must only be called after the formula has been set, but before
+	 * {@link #finishConstruction(ManagedScript)} has been called. Do not modify the input or output variables after
+	 * calling this method.
+	 */
+	public void ensureInternalNormalForm() {
+		if (mFormula == null) {
+			throw new IllegalStateException("Cannot ensure internal normal form without formula");
+		}
+		if (mConstructionFinished) {
+			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		}
+
+		final List<TermVariable> freeVars = Arrays.asList(mFormula.getFreeVars());
+		final Set<IProgramVar> obsoleteInVars = new HashSet<>();
+		for (final Map.Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
+			if (!mOutVars.containsKey(entry.getKey()) && !freeVars.contains(entry.getValue())) {
+				mOutVars.put(entry.getKey(), entry.getValue());
+				obsoleteInVars.add(entry.getKey());
+			}
+		}
+		for (final IProgramVar pv : obsoleteInVars) {
+			mInVars.remove(pv);
+		}
+	}
+
 	public UnmodifiableTransFormula finishConstruction(final ManagedScript script) {
 		if (mFormula == null) {
 			throw new IllegalStateException("cannot finish without formula");
@@ -296,10 +327,20 @@ public class TransFormulaBuilder {
 	}
 
 	/**
-	 * Remove inVars, outVars and auxVars that are not necessary. Remove auxVars if it does not occur in the formula.
-	 * Remove inVars if it does not occur in the formula. Remove outVar if it does not occur in the formula and is also
-	 * an inVar (case where the var is not modified). Note that we may not generally remove outVars that do not occur in
-	 * the formula (e.g., TransFormula for havoc statement).
+	 * Remove inVars, outVars and auxVars that are not necessary.
+	 * <ul>
+	 * <li>Remove auxVars if it does not occur in the formula.</li>
+	 * <li>Remove {@link IProgramVar} from inVars and outVars if inVar and outVar are the same but do not occur in the
+	 * formula.</li>
+	 * <li>Remove {@link IProgramVar} from inVars if it also occurs in outVars, and the inVar does not occur in the
+	 * formula.</li>
+	 * <li>Remove {@link IProgramVar} from outVars if it also occurs in inVars, and the outVar does not occur in the
+	 * formula. However, this can only be done if the inVar is not also removed!</li>
+	 * <li>If an {@link IProgramVar} occurs only in the inVars resp. only in the outVars, the variable must be kept
+	 * since this indicates the {@link ITransitionRelation} does not state any constraint on the output values resp. the
+	 * input values of this variable (sometimes called a havoc). Non-occurring variables implicitly state that the value
+	 * of the variable does not change.</li>
+	 * </ul>
 	 */
 	private static void removeSuperfluousVars(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars) {
@@ -307,25 +348,34 @@ public class TransFormulaBuilder {
 		if (!auxVars.isEmpty()) {
 			auxVars.retainAll(allVars);
 		}
-		final List<IProgramVar> superfluousInVars = new ArrayList<>();
+
 		final List<IProgramVar> superfluousOutVars = new ArrayList<>();
-		for (final Entry<IProgramVar, TermVariable> bv : inVars.entrySet()) {
-			final TermVariable inVar = bv.getValue();
-			if (!allVars.contains(inVar)) {
-				superfluousInVars.add(bv.getKey());
-			}
-		}
 		for (final Entry<IProgramVar, TermVariable> bv : outVars.entrySet()) {
+			final IProgramVar pv = bv.getKey();
 			final TermVariable outVar = bv.getValue();
-			if (!allVars.contains(outVar)) {
-				final TermVariable inVar = inVars.get(bv.getKey());
-				if (outVar == inVar) {
-					superfluousOutVars.add(bv.getKey());
-				}
+			final TermVariable inVar = inVars.get(pv);
+
+			if (inVar == null) {
+				// The variable occurs only as outVar. Thus it may change its value, and we must keep the outVar.
+				continue;
 			}
-		}
-		for (final IProgramVar bv : superfluousInVars) {
-			inVars.remove(bv);
+
+			if (inVar == outVar) {
+				// The variable pv does not change. If it is not constrained either (because it does not occur in the
+				// formula), it can be removed entirely.
+				if (!allVars.contains(outVar)) {
+					inVars.remove(pv);
+					superfluousOutVars.add(pv);
+				}
+			} else if (!allVars.contains(inVar)) {
+				// The variable pv may change, and its input value is not constrained. Hence we can remove it from
+				// inVars (but we keep the outVar).
+				inVars.remove(pv);
+			} else if (!allVars.contains(outVar)) {
+				// The variable is havoced. We do not need to keep the outVar, because a variable that occurs only as
+				// inVar is still havoced.
+				superfluousOutVars.add(pv);
+			}
 		}
 		for (final IProgramVar bv : superfluousOutVars) {
 			outVars.remove(bv);

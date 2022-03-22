@@ -31,5 +31,5 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
  */
 public enum InterpolationTechnique {
 	Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP,
-	FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR, AcceleratedInterpolation
+	FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR
 }

@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -110,6 +111,11 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 		mTransitionFormulaWithBranchEncoders =
 				TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript, branchIndicator,
 						transformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
+
+		assert !Objects.equals(mSource.getProcedure(), mTarget.getProcedure())
+				|| TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
+		assert !Objects.equals(mSource.getProcedure(), mTarget.getProcedure()) || TransFormulaUtils
+				.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders) : "Expected TF in internal normal form";
 	}
 
 	@Override

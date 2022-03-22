@@ -747,6 +747,8 @@ def create_reqchecker_cli_args(args, dump_folder):
         "true",
         "--pea2boogie.report.trivial.rt-consistency",
         "false",
+        "--pea2boogie.use.epsilon.transformation.during.rt-inconsistency.check",
+        "false",
         "--pea2boogie.rt-inconsistency.range",
         str(args.rt_inconsistency_range),
     ]

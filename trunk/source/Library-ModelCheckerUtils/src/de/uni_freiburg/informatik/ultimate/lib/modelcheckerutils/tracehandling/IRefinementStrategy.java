@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -35,11 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
 /**
  * A {@link IRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of strategy modules,
@@ -120,12 +116,6 @@ public interface IRefinementStrategy<L extends IAction> {
 	 * @throws NoSuchElementException
 	 */
 	IIpgStrategyModule<?, L> nextInterpolantGenerator();
-
-	/**
-	 * @return the {@link IIpAbStrategyModule} that should be used to build an interpolant automaton from the collected
-	 *         interpolant sequences.
-	 */
-	IIpAbStrategyModule<L> getInterpolantAutomatonBuilder();
 
 	/**
 	 * @return A {@link RefinementStrategyExceptionBlacklist} that defines how exceptions during trace checks or

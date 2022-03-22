@@ -134,10 +134,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -189,7 +189,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 	 * If the trace histogram max is larger than this number we try to find a danger invariant. Only used for debugging.
 	 */
 	private static final int DEBUG_DANGER_INVARIANTS_THRESHOLD = Integer.MAX_VALUE;
-	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -235,7 +234,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz, computeHoareAnnotation);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
-
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
 				&& interpolation == InterpolationTechnique.FPandBP) {
 			mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
@@ -434,7 +432,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 			throws AutomataOperationCanceledException {
 
 		IStatisticsDataProvider refinementEngineStats = null;
-		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), mCounterexample,
+		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), mCounterexample,
 				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
 		try {
@@ -462,6 +460,11 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 
 		final LBool feasibility = mRefinementResult.getCounterexampleFeasibility();
 		IProgramExecution<L, Term> rcfgProgramExecution = null;
+		if (feasibility != LBool.SAT) {
+			// dump path program if necessary
+			mPathProgramDumpController.reportPathProgram(mCounterexample, mRefinementResult.somePerfectSequenceFound(),
+					mIteration);
+		}
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
 			if (mRefinementResult.providesIcfgProgramExecution()) {
@@ -491,9 +494,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 							new IcfgAngelicProgramExecution<>(rcfgProgramExecution, fl.getAngelicStatus());
 				}
 			}
-		} else if (DUMP_DIFFICULT_PATH_PROGRAMS) {
-			mPathProgramDumpController.reportPathProgram((NestedRun<L, IPredicate>) mCounterexample,
-					mRefinementResult.somePerfectSequenceFound(), mIteration);
 		}
 
 		if (refinementEngineStats != null) {
@@ -579,7 +579,6 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 		if (refinementHtc != null) {
 			return refinementHtc;
 		}
-
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier());
 	}
@@ -682,8 +681,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 				new Intersect<>(new AutomataLibraryServices(getServices()), mPredicateFactoryResultChecking,
 						(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, pathProgramAutomaton)
 								.getResult();
-		final Boolean isEmpty = new IsEmpty<>(new AutomataLibraryServices(getServices()), intersection).getResult();
-		return isEmpty;
+		return new IsEmpty<>(new AutomataLibraryServices(getServices()), intersection).getResult();
 	}
 
 	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
@@ -707,12 +705,7 @@ public class BasicCegarLoop<L extends IIcfgTransition<?>> extends AbstractCegarL
 							minuend, subtrahend, psd, explointSigmaStarConcatOfIA);
 				}
 				mCegarLoopBenchmark.reportInterpolantAutomatonStates(subtrahend.size());
-			} catch (final AutomataOperationCanceledException aoce) {
-				final RunningTaskInfo runningTaskInfo = executeDifferenceTimeoutActions(minuend, subtrahend,
-						subtrahendBeforeEnhancement, automatonType);
-				aoce.addRunningTaskInfo(runningTaskInfo);
-				throw aoce;
-			} catch (final ToolchainCanceledException tce) {
+			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {
 				final RunningTaskInfo runningTaskInfo = executeDifferenceTimeoutActions(minuend, subtrahend,
 						subtrahendBeforeEnhancement, automatonType);
 				tce.addRunningTaskInfo(runningTaskInfo);

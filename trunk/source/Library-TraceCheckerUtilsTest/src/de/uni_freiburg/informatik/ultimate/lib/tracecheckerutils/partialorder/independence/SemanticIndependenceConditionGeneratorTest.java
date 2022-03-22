@@ -92,7 +92,8 @@ public class SemanticIndependenceConditionGeneratorTest {
 	// variables for ArrayStack example
 	private IProgramVar arr, max, top, e1, e2;
 
-	private Term axioms;
+	private Term mSimpleSetAxioms;
+	private Term mArrayStackAxioms;
 
 	@Before
 	public void setUp() {
@@ -104,7 +105,6 @@ public class SemanticIndependenceConditionGeneratorTest {
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 
-		axioms = mScript.term("true");
 		setupSimpleSet();
 		setupArrayStack();
 
@@ -120,48 +120,48 @@ public class SemanticIndependenceConditionGeneratorTest {
 
 	@Test
 	public void isInIsIn() {
-		runTest(isIn(x, r1), isIn(y, r2), mScript.term("true"));
+		testSimpleSet(isIn(x, r1), isIn(y, r2), mScript.term("true"));
 	}
 
 	@Test
 	public void addIsIn() {
 		final Term expected =
 				parseWithVariables("(or (distinct x y) (= a x) (= b x) (and (distinct a (- 1)) (distinct b (- 1))))");
-		runTest(add(x), isIn(y, r1), expected);
+		testSimpleSet(add(x), isIn(y, r1), expected);
 	}
 
 	@Test
 	public void clearIsIn() {
 		final Term expected = parseWithVariables("(and (distinct a x) (distinct b x))");
-		runTest(clear(), isIn(x, r1), expected);
+		testSimpleSet(clear(), isIn(x, r1), expected);
 	}
 
 	@Test
 	public void getSizeIsIn() {
-		runTest(getSize(s1), isIn(x, r1), mScript.term("true"));
+		testSimpleSet(getSize(s1), isIn(x, r1), mScript.term("true"));
 	}
 
 	@Test
 	public void clearAdd() {
-		runTest(clear(), add(x), null);
+		testSimpleSet(clear(), add(x), null);
 	}
 
 	@Test
 	public void getSizeClear() {
 		final Term expected = parseWithVariables("(= sz 0)");
-		runTest(getSize(s1), clear(), expected);
+		testSimpleSet(getSize(s1), clear(), expected);
 	}
 
 	@Test
 	public void getSizeAdd() {
 		final Term expected = parseWithVariables("(or (= a x) (= b x) (and (distinct a (- 1)) (distinct b (- 1))))");
-		runTest(getSize(s1), add(x), expected);
+		testSimpleSet(getSize(s1), add(x), expected);
 	}
 
 	@Test
 	public void popPop() {
 		final Term expected = parseWithVariables("(= top (- 1))");
-		runTest(pop(s1), pop(s2), expected);
+		testArrayStack(pop(s1), pop(s2), expected);
 	}
 
 	@Test
@@ -170,38 +170,50 @@ public class SemanticIndependenceConditionGeneratorTest {
 		// only guarantees equivalence "with respect to stack semantics", i.e., observational equivalence.
 		// Instead, we find the trivial case of a full 0-capacity stack, which guarantees our notion of commutativity.
 		final Term expected = parseWithVariables("(and (= top (- max 1)) (= max 0))");
-		runTest(pop(s1), push(e1, r1), expected);
+		testArrayStack(pop(s1), push(e1, r1), expected);
 	}
 
 	@Test
 	public void popIsEmpty() {
 		final Term expected = parseWithVariables("(distinct top 0)");
-		runTest(pop(s1), isEmpty(r1), expected);
+		testArrayStack(pop(s1), isEmpty(r1), expected);
 	}
 
 	@Test
 	public void pushPush() {
 		final Term expected = parseWithVariables("(= (+ top 1) max)");
-		runTest(push(e1, r1), push(e2, r2), expected);
+		testArrayStack(push(e1, r1), push(e2, r2), expected);
 	}
 
 	@Test
 	public void pushIsEmpty() {
-		final Term expected = parseWithVariables("(distinct top (- 1))");
-		runTest(push(e1, r2), isEmpty(r1), expected);
+		final Term expected = parseWithVariables("(or (>= top 0) (< top (- 2)))");
+		testArrayStack(push(e1, r2), isEmpty(r1), expected);
 	}
 
 	@Test
 	public void isEmptyIsEmpty() {
-		runTest(isEmpty(r1), isEmpty(r2), mScript.term("true"));
+		testArrayStack(isEmpty(r1), isEmpty(r2), mScript.term("true"));
 	}
 
-	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term expected) {
-		final IPredicate actual = mGenerator.generateCondition(tfA, tfB);
+	private void testSimpleSet(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB,
+			final Term expected) {
+		runTest(tfA, tfB, mSimpleSetAxioms, expected);
+	}
+
+	private void testArrayStack(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB,
+			final Term expected) {
+		runTest(tfA, tfB, mArrayStackAxioms, expected);
+	}
+
+	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term axioms,
+			final Term expected) {
+		final IPredicate axiomPredicate = mPredicateFactory.newPredicate(axioms);
+		final IPredicate actual = mGenerator.generateCondition(axiomPredicate, tfA, tfB);
 		if (expected == null) {
 			if (actual != null) {
-				assert !mIndependence.contains(actual, toAction(tfA),
-						toAction(tfB)) : "No commutativity condition expected, but found working condition "
+				assert checkIndependence(axiomPredicate, actual, tfA,
+						tfB) == LBool.SAT : "No commutativity condition expected, but found working condition "
 								+ actual.getFormula();
 			}
 			assert actual == null : "No commutativity condition expected, but found " + actual.getFormula();
@@ -212,12 +224,17 @@ public class SemanticIndependenceConditionGeneratorTest {
 			assert impl == LBool.UNSAT : "Actual condition " + actual.getFormula()
 					+ " does not imply expected condition " + expected;
 
-			assert mIndependence.contains(mPredicateFactory.newPredicate(expected), toAction(tfA),
-					toAction(tfB)) : "expected condition insufficient: " + expected;
-			assert mIndependence.contains(actual, toAction(tfA), toAction(tfB)) : "condition insufficient: "
+			assert checkIndependence(axiomPredicate, mPredicateFactory.newPredicate(expected), tfA,
+					tfB) != LBool.SAT : "expected condition insufficient: " + expected;
+			assert checkIndependence(axiomPredicate, actual, tfA, tfB) != LBool.SAT : "condition insufficient: "
 					+ actual.getFormula();
 		}
+	}
 
+	private final LBool checkIndependence(final IPredicate axioms, final IPredicate condition,
+			final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB) {
+		final IPredicate conditionWithAxioms = mPredicateFactory.and(axioms, condition);
+		return mIndependence.containsLBool(conditionWithAxioms, toAction(tfA), toAction(tfB));
 	}
 
 	private static BasicInternalAction toAction(final UnmodifiableTransFormula tf) {
@@ -241,7 +258,12 @@ public class SemanticIndependenceConditionGeneratorTest {
 		s2 = constructVar("s2", "Int");
 
 		// UINT values
-		axioms = SmtUtils.and(mScript, axioms, nonNegative(x), nonNegative(y));
+		mSimpleSetAxioms = SmtUtils.and(mScript, nonNegative(x), nonNegative(y));
+
+		// Data structure invariant
+		// Adding this invariant was necessary to make the commutativity conditions given in the paper work.
+		mSimpleSetAxioms = SmtUtils.and(mScript, mSimpleSetAxioms, SmtUtils.implies(mScript,
+				parseWithVariables("(= sz 0)"), parseWithVariables("(and (= a (- 1)) (= b (- 1)))")));
 	}
 
 	private void setupArrayStack() {
@@ -254,7 +276,7 @@ public class SemanticIndependenceConditionGeneratorTest {
 		e1 = constructVar("e1", "Int");
 		e2 = constructVar("e2", "Int");
 
-		axioms = SmtUtils.and(mScript, axioms, nonNegative(max));
+		mArrayStackAxioms = nonNegative(max);
 	}
 
 	private IProgramVar constructVar(final String name, final String sort) {

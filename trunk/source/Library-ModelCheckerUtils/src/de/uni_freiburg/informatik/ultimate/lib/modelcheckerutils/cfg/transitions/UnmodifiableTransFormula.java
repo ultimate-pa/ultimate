@@ -96,12 +96,8 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
 		assert !branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0 : String
 				.format("free variables %s", Arrays.asList(mClosedFormula.getFreeVars()));
-		// mVars = new
-		// HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
-		assert inAuxSubsetAll(false) : "superfluous vars in TransFormula";
-		// assert super.getOutVars().keySet().containsAll(super.getInVars().keySet()) :
-		// " strange inVar";
+		assert eachAuxVarOccursInForula() == null : "Superfluous aux var: " + eachAuxVarOccursInForula();
 
 		mAssignedVars = TransFormulaUtils.computeAssignedVars(inVars, outVars);
 		// TODO: The following line is a workaround, in the future the set of
@@ -110,10 +106,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		assert doConstantConsistencyCheck() : "consts inconsistent";
 		// assert isSupersetOfOccurringConstants(mConstants, mFormula) :
 		// "forgotten constant";
-
-		// if (!eachInVarOccursAsOutVar()) {
-		// System.out.println("Fixietest failed");
-		// }
 	}
 
 	private boolean doConstantConsistencyCheck() {
@@ -277,31 +269,32 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	}
 
 	/**
-	 * Returns true each auxVar is in allVars and each inVar occurs in allVars.
+	 * Returns null if each auxVar is a free variable of the formula. Returns a
+	 * counterexample otherwise.
 	 */
-	private boolean inAuxSubsetAll(final boolean allowSuperflousInVars) {
-		boolean result = true;
+	private TermVariable eachAuxVarOccursInForula() {
 		final HashSet<TermVariable> allVars = new HashSet<>(Arrays.asList(mFormula.getFreeVars()));
-		if (!allowSuperflousInVars) {
-			for (final IProgramVar bv : super.getInVars().keySet()) {
-				result &= allVars.contains(super.getInVars().get(bv));
-				assert result : "superfluous inVar";
+		for (final TermVariable tv : super.getAuxVars()) {
+			if (!allVars.contains(tv)) {
+				return tv;
 			}
 		}
-		for (final TermVariable tv : super.getAuxVars()) {
-			result &= allVars.contains(tv);
-			assert result : "superfluous auxVar";
-		}
-		return result;
+		return null;
 	}
 
-	private boolean eachInVarOccursAsOutVar() {
+	/**
+	 * Returns null if each inVar is a free variable of the formula. Returns a counterexample otherwise. Note that
+	 * inVars (like outVars) need not occur in the formula. If we have an inVar that neither occurs as outVar nor in the
+	 * formula this indicates that the value of this variable may nondeterministically get any value.
+	 */
+	public IProgramVar eachInVarOccursInFormula() {
+		final HashSet<TermVariable> allVars = new HashSet<>(Arrays.asList(mFormula.getFreeVars()));
 		for (final IProgramVar bv : super.getInVars().keySet()) {
-			if (!super.getOutVars().containsKey(bv)) {
-				return false;
+			if (!allVars.contains(super.getInVars().get(bv))) {
+				return bv;
 			}
 		}
-		return true;
+		return null;
 	}
 
 	@Override

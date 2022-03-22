@@ -38,14 +38,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  *
  * @author Matthias Heizmann
  *
- * @param <ELEM>
+ * @param <E>
  */
-public class TimeoutResultAtElement<ELEM extends IElement> extends AbstractResultAtElement<ELEM>
+public class TimeoutResultAtElement<E extends IElement> extends AbstractResultAtElement<E>
 		implements ITimeoutResult {
 
 	private final String mLongDescription;
 
-	public TimeoutResultAtElement(final ELEM element, final String plugin,
+	public TimeoutResultAtElement(final E element, final String plugin,
 			final IBacktranslationService translatorSequence, final String longDescription) {
 		super(element, plugin, translatorSequence);
 		mLongDescription = longDescription;
