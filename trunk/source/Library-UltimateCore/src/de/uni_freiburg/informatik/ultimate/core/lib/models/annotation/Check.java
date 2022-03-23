@@ -152,6 +152,11 @@ public class Check extends ModernAnnotations {
 
 		DATA_RACE,
 
+		/***
+		 * Satisfiability of constraint Horn clauses
+		 */
+		CHC_SATISFIABILITY,
+
 	}
 
 	private static final long serialVersionUID = -3753413284642976683L;
@@ -260,6 +265,8 @@ public class Check extends ModernAnnotations {
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
 			return "there are no data races";
+		case CHC_SATISFIABILITY:
+			return "the set of constraint Horn clauses is satisfiable";
 		default:
 			return "a specification is correct but has no positive message: " + spec;
 		}
@@ -313,6 +320,8 @@ public class Check extends ModernAnnotations {
 			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
 			return "the program contains a data race";
+		case CHC_SATISFIABILITY:
+			return "the set of constraint Horn clauses is unsatisfiable";
 		default:
 			return "a specification may be violated but has no negative message: " + spec;
 		}
