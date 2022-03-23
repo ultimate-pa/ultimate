@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2022 Marcel Rogg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
@@ -81,16 +82,12 @@ public class SpecificVariableAbstraction<L extends IAction>
 
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
-		assert constraints.getInConstraints(inLetter)
-				.containsAll(newFormula.getInVars().keySet()) : "Abstraction must only read constrained variables";
 
 		if (inLetter instanceof IActionWithBranchEncoders) {
 			final UnmodifiableTransFormula oldFormulaBE =
 					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders();
 			final UnmodifiableTransFormula newFormulaBE =
 					abstractTransFormula(oldFormulaBE, transformInVars, transformOutVars);
-			assert constraints.getInConstraints(inLetter).containsAll(
-					newFormulaBE.getInVars().keySet()) : "Abstraction must only read constrained variables";
 
 			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 		}
@@ -116,27 +113,44 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
 			final Set<IProgramVar> inTransform, final Set<IProgramVar> outTransform) {
 
-		final Set<TermVariable> nAuxVars = new HashSet<>();
+		final Set<TermVariable> newAuxVars = new HashSet<>();
 		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
+
 		for (final IProgramVar v : inTransform) {
-			final TermVariable nInVar = mMgdScript.constructFreshCopy(utf.getInVars().get(v));
-			substitutionMap.put(utf.getInVars().get(v), nInVar);
-			nAuxVars.add(nInVar);
-		}
-		for (final IProgramVar v : outTransform) {
-			if (!substitutionMap.containsKey(utf.getOutVars().get(v))) {
-				final TermVariable nOutVar = mMgdScript.constructFreshCopy(utf.getOutVars().get(v));
-				substitutionMap.put(utf.getOutVars().get(v), nOutVar);
-				nAuxVars.add(nOutVar);
+			final TermVariable inVar = utf.getInVars().get(v);
+			if (!outTransform.contains(v) && utf.getOutVars().get(v) == inVar) {
+				// We cannot transform the variables independently.
+				// To avoid introducing new writes, we skip abstraction of this variable.
+				continue;
 			}
+			assert !substitutionMap.containsKey(inVar) : "Same TermVariable used for different program variables";
+			final TermVariable nInVar = mMgdScript.constructFreshCopy(inVar);
+			substitutionMap.put(inVar, nInVar);
+			newAuxVars.add(nInVar);
 		}
+
+		for (final IProgramVar v : outTransform) {
+			final TermVariable outVar = utf.getOutVars().get(v);
+			if (utf.getInVars().get(v) == outVar) {
+				// Either the variable was already handled above (if it is also in inTransform), or we skip it because
+				// the inVar should not be abstracted and we can not separate the in- and outVar without introducing
+				// new writes.
+				continue;
+			}
+			assert !substitutionMap.containsKey(outVar) : "Same TermVariable used for different program variables";
+			final TermVariable nOutVar = mMgdScript.constructFreshCopy(outVar);
+			substitutionMap.put(utf.getOutVars().get(v), nOutVar);
+			newAuxVars.add(nOutVar);
+		}
+
+		// Copy all auxVars, as different TFs must not share auxiliary variables.
 		for (final TermVariable tv : utf.getAuxVars()) {
 			final TermVariable newVariable = mMgdScript.constructFreshCopy(tv);
 			substitutionMap.put(tv, newVariable);
-			nAuxVars.add(newVariable);
+			newAuxVars.add(newVariable);
 		}
 
-		return buildTransFormula(utf, substitutionMap, nAuxVars);
+		return buildTransFormula(utf, substitutionMap, newAuxVars);
 	}
 
 	private UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
