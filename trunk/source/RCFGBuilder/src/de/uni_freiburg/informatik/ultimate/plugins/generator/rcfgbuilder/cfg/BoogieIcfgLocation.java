@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -71,11 +70,11 @@ public class BoogieIcfgLocation extends IcfgLocation {
 	public BoogieIcfgLocation(final DebugIdentifier debugIdentifier, final String procedure, final boolean isErrorLoc,
 			final BoogieASTNode boogieASTNode) {
 		super(debugIdentifier, procedure);
-		if (isErrorLoc) {
-			if (Check.getAnnotation(boogieASTNode) == null) {
-				throw new IllegalArgumentException("Error location needs specification");
-			}
-		}
+//		if (isErrorLoc) {
+//			if (Check.getAnnotation(boogieASTNode) == null) {
+//				throw new IllegalArgumentException("Error location needs specification");
+//			}
+//		}
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
 		ModelUtils.copyAnnotations(boogieASTNode, this);
