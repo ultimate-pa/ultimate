@@ -4,29 +4,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.ICopyActionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.IRefinableAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.SpecificVariableAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
@@ -103,7 +94,7 @@ public class CegarLoopUtils {
 					}
 					result = new PartialOrderCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), computeHoareAnnotation, services, compositionFactory,
-							constructPartialOrderAbstraction(taPrefs, root, copyFactorySupplier), transitionClazz);
+							copyFactorySupplier.get(), transitionClazz);
 					break;
 				case PETRI_NET:
 					if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
@@ -158,24 +149,5 @@ public class CegarLoopUtils {
 	public static boolean isInsufficientThreadsLocation(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
 		return check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
-	}
-
-	private static <L extends IAction> IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L>
-			constructPartialOrderAbstraction(final TAPreferences prefs, final IIcfg<?> icfg,
-					final Supplier<ICopyActionFactory<L>> copyFactorySupplier) {
-		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
-		switch (prefs.getPorAbstraction()) {
-		case VARIABLES_GLOBAL:
-			return new VariableAbstraction<>(copyFactorySupplier.get(), icfg.getCfgSmtToolkit().getManagedScript(),
-					allVariables);
-		case VARIABLES_LOCAL:
-			final Set<L> allLetters = new IcfgEdgeIterator(icfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
-			return new SpecificVariableAbstraction<>(copyFactorySupplier.get(),
-					icfg.getCfgSmtToolkit().getManagedScript(), allVariables, allLetters);
-		case NONE:
-			return null;
-		default:
-			throw new UnsupportedOperationException("Unknown abstraction type: " + prefs.getPorAbstraction());
-		}
 	}
 }

@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -55,10 +56,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -75,14 +79,16 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.RefinableCachedAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.SpecificVariableAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -116,21 +122,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory,
-			final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> letterAbstraction,
+			final IPLBECompositionFactory<L> compositionFactory, final ICopyActionFactory<L> copyFactory,
 			final Class<L> transitionClazz) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, compositionFactory, transitionClazz);
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
-		if (mPref.getPorAbstraction() == AbstractionType.VARIABLES_LOCAL
-				&& mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE) {
-			throw new UnsupportedOperationException(
-					"specific variable abstraction is only supported with interpolant automaton enhancement turned off");
-		}
-
 		// Setup management of abstraction levels and corresponding independence relations.
 		final IIndependenceRelation<IPredicate, L> independence = constructIndependence(csToolkit);
+		final var letterAbstraction = constructAbstraction(copyFactory);
 		if (letterAbstraction == null) {
 			mIndependenceContainer = new StaticIndependenceContainer<>(independence);
 		} else {
@@ -299,6 +299,28 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, 1000);
 		final Script solver = SolverBuilder.buildAndInitializeSolver(getServices(), settings, "SemanticIndependence");
 		return new ManagedScript(getServices(), solver);
+	}
+
+	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L>
+			constructAbstraction(final ICopyActionFactory<L> copyFactory) {
+		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(mCsToolkit);
+		switch (mPref.getPorAbstraction()) {
+		case VARIABLES_GLOBAL:
+			return new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), allVariables);
+		case VARIABLES_LOCAL:
+			if (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE) {
+				throw new UnsupportedOperationException(
+						"specific variable abstraction is only supported with interpolant automaton enhancement turned off");
+			}
+			final Set<L> allLetters =
+					new IcfgEdgeIterator(mIcfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
+			return new SpecificVariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), allVariables,
+					allLetters);
+		case NONE:
+			return null;
+		default:
+			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
+		}
 	}
 
 	private void switchToOnDemandConstructionMode() {
