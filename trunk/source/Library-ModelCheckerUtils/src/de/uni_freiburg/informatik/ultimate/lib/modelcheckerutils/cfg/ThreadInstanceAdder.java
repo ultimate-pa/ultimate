@@ -61,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorWithCheckDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -429,11 +429,11 @@ public class ThreadInstanceAdder {
 
 	static IcfgLocation constructErrorLocation(final int i, final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork) {
 		final IcfgLocation errorLocation;
-		final DebugIdentifier debugIdentifier =
-				new ProcedureErrorDebugIdentifier(fork.getPrecedingProcedure(), i, ProcedureErrorType.INUSE_VIOLATION);
+		final Check check = new Check(Spec.SUFFICIENT_THREAD_INSTANCES);
+		final DebugIdentifier debugIdentifier = new ProcedureErrorWithCheckDebugIdentifier(fork.getPrecedingProcedure(),
+				i, ProcedureErrorType.INUSE_VIOLATION, check);
 		errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
 		ModelUtils.copyAnnotations(fork, errorLocation);
-		final Check check = new Check(Spec.SUFFICIENT_THREAD_INSTANCES);
 		check.annotate(errorLocation);
 		return errorLocation;
 	}
