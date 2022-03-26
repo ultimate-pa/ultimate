@@ -473,15 +473,13 @@ public class CfgBuilder {
 
 		final ProcedureErrorDebugIdentifier errorLocLabel;
 		final Check check = Check.getAnnotation(boogieASTNode);
-		if (check != null) {
-			errorLocLabel = new ProcedureErrorWithCheckDebugIdentifier(procName, locNodeNumber, type, check);
-		} else {
-			errorLocLabel = new ProcedureErrorDebugIdentifier(procName, locNodeNumber, type);
+		if (check == null) {
+			throw new IllegalArgumentException(
+					"Constructing error location without specification for the following AST node: " + boogieASTNode);
 		}
+		errorLocLabel = new ProcedureErrorWithCheckDebugIdentifier(procName, locNodeNumber, type, check);
 		final BoogieIcfgLocation errorLocNode = new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
-		if (check != null) {
-			check.annotate(errorLocNode);
-		}
+		check.annotate(errorLocNode);
 		procLocNodes.put(errorLocLabel, errorLocNode);
 		errorNodes.add(errorLocNode);
 		return errorLocNode;

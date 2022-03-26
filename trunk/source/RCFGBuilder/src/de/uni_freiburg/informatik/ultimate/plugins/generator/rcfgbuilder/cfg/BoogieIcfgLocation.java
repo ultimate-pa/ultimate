@@ -70,11 +70,6 @@ public class BoogieIcfgLocation extends IcfgLocation {
 	public BoogieIcfgLocation(final DebugIdentifier debugIdentifier, final String procedure, final boolean isErrorLoc,
 			final BoogieASTNode boogieASTNode) {
 		super(debugIdentifier, procedure);
-//		if (isErrorLoc) {
-//			if (Check.getAnnotation(boogieASTNode) == null) {
-//				throw new IllegalArgumentException("Error location needs specification");
-//			}
-//		}
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
 		ModelUtils.copyAnnotations(boogieASTNode, this);
