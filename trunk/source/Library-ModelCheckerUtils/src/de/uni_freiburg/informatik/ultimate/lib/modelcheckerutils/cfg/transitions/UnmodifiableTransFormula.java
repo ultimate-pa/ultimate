@@ -97,7 +97,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		assert !branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0 : String
 				.format("free variables %s", Arrays.asList(mClosedFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
-		assert eachAuxVarOccursInForula() == null : "Superfluous aux var: " + eachAuxVarOccursInForula();
+		assert eachAuxVarOccursInFormula() == null : "Superfluous aux var: " + eachAuxVarOccursInFormula();
 
 		mAssignedVars = TransFormulaUtils.computeAssignedVars(inVars, outVars);
 		// TODO: The following line is a workaround, in the future the set of
@@ -272,7 +272,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	 * Returns null if each auxVar is a free variable of the formula. Returns a
 	 * counterexample otherwise.
 	 */
-	private TermVariable eachAuxVarOccursInForula() {
+	private TermVariable eachAuxVarOccursInFormula() {
 		final HashSet<TermVariable> allVars = new HashSet<>(Arrays.asList(mFormula.getFreeVars()));
 		for (final TermVariable tv : super.getAuxVars()) {
 			if (!allVars.contains(tv)) {
