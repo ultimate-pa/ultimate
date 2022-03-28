@@ -97,6 +97,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 				.format("free variables %s", Arrays.asList(mClosedFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
 		assert eachAuxVarOccursInFormula() == null : "Superfluous aux var: " + eachAuxVarOccursInFormula();
+		assert termVariablesHaveUniqueProgramVar() : "Same TermVariable used for different program variables";
 		assert doConstantConsistencyCheck() : "consts inconsistent";
 	}
 
@@ -185,6 +186,25 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			}
 		}
 		return null;
+	}
+
+	private boolean termVariablesHaveUniqueProgramVar() {
+		final Map<TermVariable, IProgramVar> progVars = new HashMap<>();
+		for (final Map.Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
+			final IProgramVar existing = progVars.get(entry.getValue());
+			if (existing != null && existing != entry.getValue()) {
+				return false;
+			}
+			progVars.put(entry.getValue(), entry.getKey());
+		}
+		for (final Map.Entry<IProgramVar, TermVariable> entry : mOutVars.entrySet()) {
+			final IProgramVar existing = progVars.get(entry.getValue());
+			if (existing != null && existing != entry.getValue()) {
+				return false;
+			}
+			progVars.put(entry.getValue(), entry.getKey());
+		}
+		return true;
 	}
 
 	private boolean doConstantConsistencyCheck() {
