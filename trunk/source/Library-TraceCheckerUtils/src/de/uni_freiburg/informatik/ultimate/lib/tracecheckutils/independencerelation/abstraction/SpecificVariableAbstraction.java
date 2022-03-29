@@ -75,11 +75,9 @@ public class SpecificVariableAbstraction<L extends IAction>
 				|| nothingWillChange(inLetter, constraints)) {
 			return inLetter;
 		}
-		final Set<IProgramVar> transformInVars =
-				getTransformVariablesIn(inLetter.getTransformula(), constraints.getInConstraints(inLetter));
-		final Set<IProgramVar> transformOutVars =
-				getTransformVariablesOut(inLetter.getTransformula(), constraints.getOutConstraints(inLetter));
 
+		final Set<IProgramVar> transformInVars = getTransformVariablesIn(inLetter, constraints);
+		final Set<IProgramVar> transformOutVars = getTransformVariablesOut(inLetter, constraints);
 		final UnmodifiableTransFormula newFormula =
 				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
 
@@ -94,14 +92,14 @@ public class SpecificVariableAbstraction<L extends IAction>
 		return mCopyFactory.copy(inLetter, newFormula, null);
 	}
 
-	private static Set<IProgramVar> getTransformVariablesIn(final UnmodifiableTransFormula utf,
-			final Set<IProgramVar> constrVars) {
-		return DataStructureUtils.difference(utf.getInVars().keySet(), constrVars);
+	private Set<IProgramVar> getTransformVariablesIn(final L letter, final VarAbsConstraints<L> constraints) {
+		return DataStructureUtils.difference(letter.getTransformula().getInVars().keySet(),
+				constraints.getInConstraints(letter));
 	}
 
-	private static Set<IProgramVar> getTransformVariablesOut(final UnmodifiableTransFormula utf,
-			final Set<IProgramVar> constrVars) {
-		return DataStructureUtils.difference(utf.getOutVars().keySet(), constrVars);
+	private Set<IProgramVar> getTransformVariablesOut(final L letter, final VarAbsConstraints<L> constraints) {
+		return DataStructureUtils.difference(letter.getTransformula().getOutVars().keySet(),
+				constraints.getOutConstraints(letter));
 	}
 
 	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {
