@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -269,10 +270,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
+		final ManagedScript indepScript = constructIndependenceScript();
+		final TransferrerWithVariableCache transferrer =
+				new TransferrerWithVariableCache(csToolkit.getManagedScript().getScript(), indepScript);
 		return IndependenceBuilder
 				// Semantic independence forms the base.
-				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
-						mPref.getConditionalPor(), mPref.getSymmetricPor())
+				.<L> semantic(getServices(), indepScript, transferrer, mPref.getConditionalPor(),
+						mPref.getSymmetricPor())
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
 				// Cache independence query results.

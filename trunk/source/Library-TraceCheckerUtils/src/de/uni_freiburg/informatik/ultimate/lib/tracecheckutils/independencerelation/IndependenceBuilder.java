@@ -44,11 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAb
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IndependenceRelationWithAbstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -105,15 +104,14 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 *
 	 * @param mgdScript
 	 *            This script is used for SMT checks
-	 * @param originalScript
-	 *            TransFormulas of actions are created by this script, and must hence be transferred (using
-	 *            {@link TermTransferrer}) to the given mgdScript.
+	 * @param transferrer
+	 *            TransFormulas of input actions and the formulae of input conditions are assumed to not be created by
+	 *            the given {@code mgdScript}, this is used to transfer them.
 	 */
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final Script originalScript,
-			final boolean conditional, final boolean symmetric) {
-		final TermTransferrer independenceTransferrer = new TermTransferrer(originalScript, mgdScript.getScript());
-		return semantic(services, mgdScript, conditional, symmetric, independenceTransferrer);
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final TransferrerWithVariableCache transferrer, final boolean conditional, final boolean symmetric) {
+		return semantic(services, mgdScript, conditional, symmetric, transferrer);
 	}
 
 	/**
@@ -122,7 +120,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 */
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
-			final boolean symmetric, final TermTransferrer transferrer) {
+			final boolean symmetric, final TransferrerWithVariableCache transferrer) {
 		return new PredicateActionIndependenceBuilder.Impl<>(
 				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, transferrer));
 	}

@@ -37,16 +37,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
@@ -57,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.BaseTuple;
 
 /**
  * An object of this class allows one to construct a {@link UnmodifiableTransFormula}. {@link UnmodifiableTransFormula}s
@@ -405,15 +402,6 @@ public class TransFormulaBuilder {
 		return constructTransFormulaFromTerm(pred.getFormula(), pred.getVars(), script);
 	}
 
-	public static UnmodifiableTransFormula constructTransFormulaFromPredicate(final TermTransferrer tt,
-			final Map<IProgramVarOrConst, IProgramVarOrConst> cache, final IPredicate pred,
-			final ManagedScript script) {
-		final Set<IProgramVar> newVars =
-				pred.getVars().stream().map(pv -> getOrTransferProgramVar(tt, cache, pv)).collect(Collectors.toSet());
-		final Term newTerm = tt.transform(pred.getFormula());
-		return constructTransFormulaFromTerm(newTerm, newVars, script);
-	}
-
 	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term, final Set<IProgramVar> vars,
 			final ManagedScript script) {
 		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(term, false);
@@ -472,8 +460,8 @@ public class TransFormulaBuilder {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
 		for (final IProgramVar pv : rhsPvs) {
-			final TermVariable freshTv = mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(),
-					pv.getTermVariable().getSort());
+			final TermVariable freshTv =
+					mgdScript.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
 			substitutionMapping.put(pv.getTermVariable(), freshTv);
 			tfb.addInVar(pv, freshTv);
 			// outVar may be replaced later
@@ -691,38 +679,28 @@ public class TransFormulaBuilder {
 	 * cache instance between the transfer calls. Also, <code>script</code> must be the script that {@link Term}s are
 	 * transferred to, i.e., the new script.
 	 */
-	public static TransferResult transferTransformula(final TermTransferrer tt, final ManagedScript script,
-			final Map<IProgramVarOrConst, IProgramVarOrConst> cache, final TransFormula tf) {
-
-		final Function<TermVariable, TermVariable> transferTv = a -> (TermVariable) tt.transform(a);
-		final Function<IProgramConst, IProgramConst> getOrTransferProgramConst = oldPc -> {
-			IProgramVarOrConst newPc = cache.get(oldPc);
-			if (newPc == null) {
-				newPc = ProgramVarUtils.transferProgramConst(tt, oldPc);
-				cache.put(oldPc, newPc);
-			}
-			return (IProgramConst) newPc;
-		};
+	public static UnmodifiableTransFormula transferTransformula(final TransferrerWithVariableCache tt,
+			final ManagedScript script, final TransFormula tf) {
 
 		final Set<TermVariable> branchEncoders;
 		if (tf instanceof UnmodifiableTransFormula) {
 			final Set<TermVariable> oldBranchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
-			branchEncoders = oldBranchEncoders.stream().map(transferTv).collect(Collectors.toSet());
+			branchEncoders = oldBranchEncoders.stream().map(tt::transferTerm).collect(Collectors.toSet());
 		} else {
 			branchEncoders = ImmutableSet.empty();
 		}
-		final Set<TermVariable> auxVars = tf.getAuxVars().stream().map(transferTv).collect(Collectors.toSet());
+		final Set<TermVariable> auxVars = tf.getAuxVars().stream().map(tt::transferTerm).collect(Collectors.toSet());
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			final IProgramVar newPv = getOrTransferProgramVar(tt, cache, entry.getKey());
-			final TermVariable newTv = transferTv.apply(entry.getValue());
+			final IProgramVar newPv = tt.transferProgramVar(entry.getKey());
+			final TermVariable newTv = tt.transferTerm(entry.getValue());
 			newInVars.put(newPv, newTv);
 		}
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			final IProgramVar newPv = getOrTransferProgramVar(tt, cache, entry.getKey());
-			final TermVariable newTv = transferTv.apply(entry.getValue());
+			final IProgramVar newPv = tt.transferProgramVar(entry.getKey());
+			final TermVariable newTv = tt.transferTerm(entry.getValue());
 			newOutVars.put(newPv, newTv);
 		}
 
@@ -732,9 +710,9 @@ public class TransFormulaBuilder {
 		} else {
 			infeasibility = Infeasibility.NOT_DETERMINED;
 		}
-		final Term newFormula = tt.transform(tf.getFormula());
+		final Term newFormula = tt.transferTerm(tf.getFormula());
 		final Set<IProgramConst> nonTheoryConsts =
-				tf.getNonTheoryConsts().stream().map(getOrTransferProgramConst).collect(Collectors.toSet());
+				tf.getNonTheoryConsts().stream().map(tt::transferProgramConst).collect(Collectors.toSet());
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars, nonTheoryConsts.isEmpty(),
 				nonTheoryConsts.isEmpty() ? null : nonTheoryConsts, branchEncoders.isEmpty(),
@@ -745,33 +723,6 @@ public class TransFormulaBuilder {
 			tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
 		}
 
-		return new TransferResult(cache, tfb.finishConstruction(script));
-	}
-
-	private static IProgramVar getOrTransferProgramVar(final TermTransferrer tt,
-			final Map<IProgramVarOrConst, IProgramVarOrConst> cache, final IProgramVar oldPv) {
-		IProgramVarOrConst newPv = cache.get(oldPv);
-		if (newPv == null) {
-			newPv = ProgramVarUtils.transferProgramVar(tt, oldPv);
-			cache.put(oldPv, newPv);
-		}
-		return (IProgramVar) newPv;
-	}
-
-	public static final class TransferResult
-			extends BaseTuple<Map<IProgramVarOrConst, IProgramVarOrConst>, UnmodifiableTransFormula> {
-
-		public TransferResult(final Map<IProgramVarOrConst, IProgramVarOrConst> cache,
-				final UnmodifiableTransFormula tf) {
-			super(cache, tf);
-		}
-
-		public UnmodifiableTransFormula getTransformula() {
-			return mSecondElement;
-		}
-
-		public Map<IProgramVarOrConst, IProgramVarOrConst> getTransferedProgramVarOrConsts() {
-			return mFirstElement;
-		}
+		return tfb.finishConstruction(script);
 	}
 }
