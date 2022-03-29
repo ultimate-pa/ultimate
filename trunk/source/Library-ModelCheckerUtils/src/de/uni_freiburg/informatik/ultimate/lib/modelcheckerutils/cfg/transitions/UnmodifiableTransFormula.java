@@ -192,14 +192,14 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		final Map<TermVariable, IProgramVar> progVars = new HashMap<>();
 		for (final Map.Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
 			final IProgramVar existing = progVars.get(entry.getValue());
-			if (existing != null && existing != entry.getValue()) {
+			if (existing != null && existing != entry.getKey()) {
 				return false;
 			}
 			progVars.put(entry.getValue(), entry.getKey());
 		}
 		for (final Map.Entry<IProgramVar, TermVariable> entry : mOutVars.entrySet()) {
 			final IProgramVar existing = progVars.get(entry.getValue());
-			if (existing != null && existing != entry.getValue()) {
+			if (existing != null && existing != entry.getKey()) {
 				return false;
 			}
 			progVars.put(entry.getValue(), entry.getKey());
