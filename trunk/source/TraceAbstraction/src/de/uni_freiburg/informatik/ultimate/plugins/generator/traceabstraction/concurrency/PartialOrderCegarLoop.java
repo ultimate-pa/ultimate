@@ -86,10 +86,10 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelat
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.SpecificVariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -130,14 +130,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
 		// Setup management of abstraction levels and corresponding independence relations.
-		final IIndependenceRelation<IPredicate, L> independence = constructIndependence(csToolkit);
-		final var letterAbstraction = constructAbstraction(copyFactory);
-		if (letterAbstraction == null) {
-			mIndependenceContainer = new StaticIndependenceContainer<>(independence);
-		} else {
-			mIndependenceContainer = new IndependenceContainerWithAbstraction<>(
-					new RefinableCachedAbstraction<>(letterAbstraction), independence);
-		}
+		mIndependenceContainer = constructIndependenceContainer(copyFactory);
 		mIndependenceContainer.initialize();
 
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
@@ -269,14 +262,45 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), false);
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
-		final ManagedScript indepScript = constructIndependenceScript();
+	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final ICopyActionFactory<L> copyFactory) {
+		// Construct the script used for independence checks.
+		final ManagedScript independenceScript = constructIndependenceScript();
+
+		// We need to transfer given transition formulas and condition predicates to the independenceScript.
 		final TransferrerWithVariableCache transferrer =
-				new TransferrerWithVariableCache(csToolkit.getManagedScript().getScript(), indepScript);
+				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), independenceScript);
+
+		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
+			// Construct the independence relation (without abstraction). It is the responsibility of the independence
+			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
+			final var independence = constructIndependence(independenceScript, transferrer, false);
+			return new StaticIndependenceContainer<>(independence);
+		}
+
+		// Construct the abstraction function.
+		final var letterAbstraction = constructAbstraction(copyFactory, independenceScript, transferrer);
+		final var cachedAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
+
+		// Construct the independence relation (still without abstraction).
+		// It is the responsibility of the abstraction function to transfer the transition formulas. But we leave it to
+		// the independence relation to transfer conditions.
+		final var independence = constructIndependence(independenceScript, transferrer, true);
+
+		return new IndependenceContainerWithAbstraction<>(cachedAbstraction, independence);
+	}
+
+	private IIndependenceRelation<IPredicate, L> constructIndependence(final ManagedScript independenceScript,
+			final TransferrerWithVariableCache transferrer, final boolean tfsAlreadyTransferred) {
 		return IndependenceBuilder
 				// Semantic independence forms the base.
-				.<L> semantic(getServices(), indepScript, transferrer, mPref.getConditionalPor(),
-						mPref.getSymmetricPor())
+				// If transition formulas are already transferred to the independenceScript, we need not transfer them
+				// here. Otherwise, pass on the transferrer. Conditions are handled below.
+				.<L> semantic(getServices(), independenceScript, tfsAlreadyTransferred ? null : transferrer,
+						mPref.getConditionalPor(), mPref.getSymmetricPor())
+				// If TFs have already been transferred and the relation is conditional, then we need to also transfer
+				// the condition predicates to the independenceScript.
+				.ifThen(tfsAlreadyTransferred && mPref.getConditionalPor(),
+						b -> b.withTransformedPredicates(transferrer::transferPredicate))
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
 				// Cache independence query results.
@@ -305,23 +329,27 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		return new ManagedScript(getServices(), solver);
 	}
 
-	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L>
-			constructAbstraction(final ICopyActionFactory<L> copyFactory) {
+	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(
+			final ICopyActionFactory<L> copyFactory, final ManagedScript abstractionScript,
+			final TransferrerWithVariableCache transferrer) {
+		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
+			return null;
+		}
+
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(mCsToolkit);
+
 		switch (mPref.getPorAbstraction()) {
 		case VARIABLES_GLOBAL:
-			return new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), null, allVariables);
+			return new VariableAbstraction<>(copyFactory, abstractionScript, transferrer, allVariables);
 		case VARIABLES_LOCAL:
 			if (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE) {
 				throw new UnsupportedOperationException(
-						"specific variable abstraction is only supported with interpolant automaton enhancement turned off");
+						"specific variable abstraction is only supported with interpolant automaton enhancement NONE");
 			}
 			final Set<L> allLetters =
 					new IcfgEdgeIterator(mIcfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
-			return new SpecificVariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), null, allVariables,
+			return new SpecificVariableAbstraction<>(copyFactory, abstractionScript, transferrer, allVariables,
 					allLetters);
-		case NONE:
-			return null;
 		default:
 			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
 		}
