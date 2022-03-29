@@ -36,7 +36,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
@@ -66,27 +65,27 @@ public class VarAbsConstraints<L extends IAction> {
 	}
 
 	/**
-	 * Creates a copy of this instance, where the constraints for the given letter have been extended with the given
+	 * Creates a copy of this instance, where the constraints for the given letter have been replaced with the given
 	 * sets of variables.
 	 *
 	 * @param letter
 	 *            The letter whose constraints shall be changed. Constraints for all other letters remain unchanged.
-	 * @param additionalInConstraints
-	 *            Additional variables to add to the input constraints for the given letter.
-	 * @param additionalOutConstraints
-	 *            Additional variables to add to the output constraints for the given letter.
+	 * @param inConstraints
+	 *            Input constraints for the given letter.
+	 * @param outConstraints
+	 *            Output constraints for the given letter.
 	 * @return the modified copy
 	 */
-	public VarAbsConstraints<L> withExtendedConstraints(final L letter, final Set<IProgramVar> additionalInConstraints,
-			final Set<IProgramVar> additionalOutConstraints) {
+	public VarAbsConstraints<L> withModifiedConstraints(final L letter, final Set<IProgramVar> inConstraints,
+			final Set<IProgramVar> outConstraints) {
 		// We make shallow copies of the maps here. This is ok, because the original map and its values will never be
 		// mutated, and the copy will only be mutated in this method (replacing a value, not mutating the old value).
 
 		final Map<L, Set<IProgramVar>> nInConstr = new HashMap<>(mInConstr);
-		nInConstr.merge(letter, additionalInConstraints, DataStructureUtils::union);
+		nInConstr.put(letter, inConstraints);
 
 		final Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>(mOutConstr);
-		nOutConstr.merge(letter, additionalOutConstraints, DataStructureUtils::union);
+		nOutConstr.put(letter, outConstraints);
 
 		return new VarAbsConstraints<>(nInConstr, nOutConstr);
 	}

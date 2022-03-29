@@ -79,12 +79,12 @@ public class VariableAbstraction<L extends IAction>
 	 * @param constrainingVariables
 	 *            are the Variables that describe the states of the automaton, e.g. the set of variables that
 	 *            saves/preserves off of havocing a variable
-	 * @return new Letter with all variables abstracted that have no occurrence in any constraining variables
+	 * @return new letter with all variables abstracted that have no occurrence in any constraining variables
 	 */
 	@Override
 	public L abstractLetter(final L inLetter, final Set<IProgramVar> constrainingVariables) {
 		// We implement this simply be delegating to SpecificVariableAbstraction with a suitable constraint.
-		final VarAbsConstraints<L> constraint = mSpecific.getHierarchy().getTop().withExtendedConstraints(inLetter,
+		final VarAbsConstraints<L> constraint = mSpecific.getHierarchy().getTop().withModifiedConstraints(inLetter,
 				constrainingVariables, constrainingVariables);
 		return mSpecific.abstractLetter(inLetter, constraint);
 	}

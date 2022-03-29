@@ -244,11 +244,18 @@ public class SpecificVariableAbstraction<L extends IAction>
 			return mHierarchy.getBottom();
 		}
 
-		final Set<IProgramVar> nInLevel =
+		// Add all variables not used as inVars to the inConstraint.
+		final Set<IProgramVar> uselessIn =
 				DataStructureUtils.difference(mAllProgramVars, input.getTransformula().getInVars().keySet());
-		final Set<IProgramVar> nOutLevel =
-				DataStructureUtils.difference(mAllProgramVars, input.getTransformula().getOutVars().keySet());
-		return constraints.withExtendedConstraints(input, nInLevel, nOutLevel);
+		final Set<IProgramVar> inLevel = DataStructureUtils.union(constraints.getInConstraints(input), uselessIn);
+
+		// Add all variables not used as outVars to the outConstraint.
+		final Set<IProgramVar> uselessOut =
+				DataStructureUtils.difference(mAllProgramVars, input.getTransformula().getInVars().keySet());
+		final Set<IProgramVar> outLevel = DataStructureUtils.union(constraints.getOutConstraints(input), uselessOut);
+
+		// For all letters, pick the minimal abstraction level, except for the input.
+		return mHierarchy.getBottom().withModifiedConstraints(input, inLevel, outLevel);
 	}
 
 	@Override
