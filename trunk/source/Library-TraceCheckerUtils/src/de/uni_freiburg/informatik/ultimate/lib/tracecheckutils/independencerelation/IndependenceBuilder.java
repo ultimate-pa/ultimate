@@ -166,6 +166,36 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	}
 
 	/**
+	 * Conditionally apply a builder transformation.
+	 *
+	 * @param condition
+	 *            A condition to evaluate
+	 * @param then
+	 *            If the condition holds, apply this step. Otherwise do nothing.
+	 */
+	public B ifThen(final boolean condition, final Function<? super B, ? extends B> then) {
+		return ifThenElse(condition, then, Function.identity());
+	}
+
+	/**
+	 * Conditionally pick one of two builder transformations.
+	 *
+	 * @param condition
+	 *            A condition to evaluate
+	 * @param then
+	 *            If the condition holds, apply this step
+	 * @param otherwise
+	 *            If the condition does not hold, apply this step
+	 */
+	public <C extends IndependenceBuilder<L, S, C>> C ifThenElse(final boolean condition,
+			final Function<? super B, ? extends C> then, final Function<? super B, ? extends C> otherwise) {
+		if (condition) {
+			return then.apply(mCreator.apply(mRelation));
+		}
+		return otherwise.apply(mCreator.apply(mRelation));
+	}
+
+	/**
 	 * Union the current independence relation with the given relation (the given relation is queried first).
 	 */
 	public B unionLeft(final IIndependenceRelation<S, L> relation) {
