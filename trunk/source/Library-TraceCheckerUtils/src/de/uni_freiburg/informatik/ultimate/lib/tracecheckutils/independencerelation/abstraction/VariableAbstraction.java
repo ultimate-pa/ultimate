@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
@@ -66,9 +67,10 @@ public class VariableAbstraction<L extends IAction>
 	private final SpecificVariableAbstraction<L> mSpecific;
 
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
-			final Set<IProgramVar> allProgramVars) {
+			final TransferrerWithVariableCache transferrer, final Set<IProgramVar> allProgramVars) {
 		mHierarchy = new UpsideDownLattice<>(new PowersetLattice<>(allProgramVars));
-		mSpecific = new SpecificVariableAbstraction<>(copyFactory, mgdScript, allProgramVars, Collections.emptySet());
+		mSpecific = new SpecificVariableAbstraction<>(copyFactory, mgdScript, transferrer, allProgramVars,
+				Collections.emptySet());
 	}
 
 	/**

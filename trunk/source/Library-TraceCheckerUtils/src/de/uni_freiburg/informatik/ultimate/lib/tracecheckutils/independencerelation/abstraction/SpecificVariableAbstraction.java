@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -56,16 +58,40 @@ public class SpecificVariableAbstraction<L extends IAction>
 
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final ManagedScript mMgdScript;
+	private final TransferrerWithVariableCache mTransferrer;
+
 	private final Set<IProgramVar> mAllProgramVars;
 	private final Set<L> mAllLetters;
+
 	private final ILattice<VarAbsConstraints<L>> mHierarchy;
 
+	/**
+	 * Create a new instance of the abstraction function.
+	 *
+	 * @param copyFactory
+	 *            Used to create the abstracted letters
+	 * @param mgdScript
+	 *            Used to create the abstracted transition formulas, and for some sanity checks. The abstracted letters'
+	 *            transition formulas will belong to this script.
+	 * @param transferrer
+	 *            If the input letters' transition formulas do not belong to {@code mgdScript}, this must be a
+	 *            transferrer that transfers them from the script to which they belong to {@code mgdScript}. Otherwise,
+	 *            this should be null.
+	 * @param allProgramVars
+	 *            The set of all variables appearing in the program to which the input letters belong.
+	 * @param allLetters
+	 *            The set of all letters that may be given as input.
+	 */
 	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
-			final Set<IProgramVar> allProgramVars, final Set<L> allLetters) {
+			final TransferrerWithVariableCache transferrer, final Set<IProgramVar> allProgramVars,
+			final Set<L> allLetters) {
 		mCopyFactory = copyFactory;
 		mMgdScript = mgdScript;
+		mTransferrer = transferrer;
+
 		mAllProgramVars = allProgramVars;
 		mAllLetters = allLetters;
+
 		mHierarchy = new VarAbsConstraints.Lattice<>(allProgramVars, mAllLetters);
 	}
 
@@ -73,23 +99,27 @@ public class SpecificVariableAbstraction<L extends IAction>
 	public L abstractLetter(final L inLetter, final VarAbsConstraints<L> constraints) {
 		if (inLetter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
 				|| nothingWillChange(inLetter, constraints)) {
-			return inLetter;
+			if (mTransferrer == null) {
+				return inLetter;
+			}
+			return copy(inLetter, mTransferrer::transferTransFormula);
 		}
 
 		final Set<IProgramVar> transformInVars = getTransformVariablesIn(inLetter, constraints);
 		final Set<IProgramVar> transformOutVars = getTransformVariablesOut(inLetter, constraints);
-		final UnmodifiableTransFormula newFormula =
-				abstractTransFormula(inLetter.getTransformula(), transformInVars, transformOutVars);
+		return copy(inLetter, tf -> abstractTransFormula(tf, transformInVars, transformOutVars));
+	}
 
+	private L copy(final L inLetter, final UnaryOperator<UnmodifiableTransFormula> transform) {
+		final UnmodifiableTransFormula newFormula = transform.apply(inLetter.getTransformula());
+		final UnmodifiableTransFormula newFormulaBE;
 		if (inLetter instanceof IActionWithBranchEncoders) {
-			final UnmodifiableTransFormula oldFormulaBE =
-					((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders();
-			final UnmodifiableTransFormula newFormulaBE =
-					abstractTransFormula(oldFormulaBE, transformInVars, transformOutVars);
-
-			return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
+			newFormulaBE =
+					transform.apply(((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders());
+		} else {
+			newFormulaBE = null;
 		}
-		return mCopyFactory.copy(inLetter, newFormula, null);
+		return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 	}
 
 	private Set<IProgramVar> getTransformVariablesIn(final L letter, final VarAbsConstraints<L> constraints) {
@@ -108,8 +138,15 @@ public class SpecificVariableAbstraction<L extends IAction>
 						.containsAll(inLetter.getTransformula().getOutVars().keySet());
 	}
 
-	private UnmodifiableTransFormula abstractTransFormula(final UnmodifiableTransFormula utf,
-			final Set<IProgramVar> inTransform, final Set<IProgramVar> outTransform) {
+	private UnmodifiableTransFormula abstractTransFormula(UnmodifiableTransFormula utf, Set<IProgramVar> inTransform,
+			Set<IProgramVar> outTransform) {
+		if (mTransferrer != null) {
+			// If necessary, transfer the TF to another script, and replace the transformed variables by their
+			// transferred equivalents.
+			utf = mTransferrer.transferTransFormula(utf);
+			inTransform = mTransferrer.transferVariables(inTransform);
+			outTransform = mTransferrer.transferVariables(outTransform);
+		}
 
 		final Set<TermVariable> newAuxVars = new HashSet<>();
 		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();

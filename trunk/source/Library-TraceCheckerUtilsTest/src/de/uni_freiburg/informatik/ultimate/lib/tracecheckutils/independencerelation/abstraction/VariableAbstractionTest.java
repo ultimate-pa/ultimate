@@ -28,8 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,8 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -93,8 +89,6 @@ public class VariableAbstractionTest {
 	// variables for ArrayStack example
 	private IProgramVar arr, max, top, e1, e2;
 
-
-
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
@@ -114,7 +108,7 @@ public class VariableAbstractionTest {
 		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
 			mAllVariables.add(nOV);
 		}
-		mVaAbs = new VariableAbstraction<>(VariableAbstractionTest::copyAction, mMgdScript, mAllVariables);
+		mVaAbs = new VariableAbstraction<>(VariableAbstractionTest::copyAction, mMgdScript, null, mAllVariables);
 
 	}
 

@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.independencerelation.abstraction;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -109,8 +108,6 @@ public class SpecificVariableAbstractionTest {
 	// variables for ArrayStack example
 	private IProgramVar arr, max, top, e1, e2;
 
-	
-
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
@@ -131,7 +128,7 @@ public class SpecificVariableAbstractionTest {
 		for (final IProgramNonOldVar nOV : mSymbolTable.getGlobals()) {
 			mAllVariables.add(nOV);
 		}
-		mSpVaAbs = new SpecificVariableAbstraction<>(SpecificVariableAbstractionTest::copyAction, mMgdScript,
+		mSpVaAbs = new SpecificVariableAbstraction<>(SpecificVariableAbstractionTest::copyAction, mMgdScript, null,
 				mAllVariables, Collections.emptySet());
 
 		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
@@ -350,7 +347,7 @@ public class SpecificVariableAbstractionTest {
 		mSymbolTable.add(variable);
 		return variable;
 	}
-	
+
 	private Term parseWithVariables(final String syntax) {
 		final String template = "(%1$s %2$s) (%1$s_in %2$s) (%1$s_out %2$s)";
 		final String declarations = mSymbolTable.getGlobals().stream()

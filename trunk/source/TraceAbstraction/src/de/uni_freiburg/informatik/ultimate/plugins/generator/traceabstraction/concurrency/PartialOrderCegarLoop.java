@@ -310,7 +310,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(mCsToolkit);
 		switch (mPref.getPorAbstraction()) {
 		case VARIABLES_GLOBAL:
-			return new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), allVariables);
+			return new VariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), null, allVariables);
 		case VARIABLES_LOCAL:
 			if (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE) {
 				throw new UnsupportedOperationException(
@@ -318,7 +318,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 			}
 			final Set<L> allLetters =
 					new IcfgEdgeIterator(mIcfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
-			return new SpecificVariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), allVariables,
+			return new SpecificVariableAbstraction<>(copyFactory, mCsToolkit.getManagedScript(), null, allVariables,
 					allLetters);
 		case NONE:
 			return null;
