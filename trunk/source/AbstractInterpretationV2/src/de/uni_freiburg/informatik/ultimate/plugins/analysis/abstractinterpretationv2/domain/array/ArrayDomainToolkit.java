@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -207,7 +207,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 			// hack for oldvars
 			final String newIdent = variable.getIdentifier().replaceAll("old\\((.*)\\)", "$1");
 			rtr = mVariableProvider.getBoogieVar(newIdent, variable.getDeclarationInformation(), false);
-			rtr = ((BoogieNonOldVar) rtr).getOldVar();
+			rtr = ((ProgramNonOldVar) rtr).getOldVar();
 		}
 		assert rtr != null : "Could not find boogie var";
 		return rtr;

@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -351,7 +351,7 @@ public class NonrelationalStatementProcessor<STATE extends NonrelationalState<ST
 			// hack for oldvars
 			final String newIdent = expr.getIdentifier().replaceAll("old\\((.*)\\)", "$1");
 			rtr = mBoogie2SmtSymbolTable.getBoogieVar(newIdent, expr.getDeclarationInformation(), false);
-			rtr = ((BoogieNonOldVar) rtr).getOldVar();
+			rtr = ((ProgramNonOldVar) rtr).getOldVar();
 		}
 		assert rtr != null : "Could not find boogie var";
 		return rtr;

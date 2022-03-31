@@ -37,8 +37,8 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -86,8 +86,8 @@ public class PredicateTreeTest {
 		final PredicateTree<TestPredicate> ptree = new PredicateTree<>(mMgdScript);
 		mMgdScript.lock(this);
 		final Set<IProgramVar> vars = new HashSet<>();
-		final BoogieNonOldVar a = constructProgramVar("a");
-		final BoogieNonOldVar b = constructProgramVar("b");
+		final ProgramNonOldVar a = constructProgramVar("a");
+		final ProgramNonOldVar b = constructProgramVar("b");
 		vars.add(a);
 		vars.add(b);
 		final TestPredicate pred1 =
@@ -160,8 +160,8 @@ public class PredicateTreeTest {
 		mScript.exit();
 	}
 
-	private BoogieNonOldVar constructProgramVar(final String identifier) {
-		BoogieOldVar oldVar;
+	private ProgramNonOldVar constructProgramVar(final String identifier) {
+		ProgramOldVar oldVar;
 		final Sort sort = SmtSortUtils.getIntSort(mMgdScript);
 		{
 			final boolean isOldVar = true;
@@ -172,9 +172,9 @@ public class PredicateTreeTest {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
 
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+			oldVar = new ProgramOldVar(identifier, termVariable, defaultConstant, primedConstant);
 		}
-		BoogieNonOldVar nonOldVar;
+		ProgramNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
@@ -184,7 +184,7 @@ public class PredicateTreeTest {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
 
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+			nonOldVar = new ProgramNonOldVar(identifier, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -327,7 +327,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 			// hack for oldvars
 			final String newIdent = vLhs.getIdentifier().replaceAll("old\\((.*)\\)", "$1");
 			rtr = getBoogie2SmtSymbolTable().getBoogieVar(newIdent, vLhs.getDeclarationInformation(), false);
-			rtr = ((BoogieNonOldVar) rtr).getOldVar();
+			rtr = ((ProgramNonOldVar) rtr).getOldVar();
 		}
 		assert rtr != null : "Unknown Boogie var: " + vLhs.getIdentifier();
 		return rtr;

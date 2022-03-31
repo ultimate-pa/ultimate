@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -334,8 +334,8 @@ public class ProcedureMultiplier {
 		final ApplicationTerm primedConstant =
 				ProgramVarUtils.constructPrimedConstant(managedScript, lockOwner, sort, name);
 
-		final LocalBoogieVar bv = new LocalBoogieVar(localVar.getIdentifier(), copyIdentifier, null, termVariable,
-				defaultConstant, primedConstant);
+		final LocalProgramVar bv = new LocalProgramVar(localVar.getIdentifier(), copyIdentifier, termVariable, defaultConstant,
+				primedConstant);
 		return bv;
 	}
 

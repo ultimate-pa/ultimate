@@ -27,27 +27,31 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * See comment in GlobalBoogieVar.
+ * Default implementation of a global program variable that does not represent
+ * the copy that refers to the value of global variable at the beginning of a
+ * procedure.
  *
- * @author heizmann@informatik.uni-freiburg.de
+ * @see {@link IProgramVar}.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class BoogieNonOldVar extends GlobalBoogieVar implements IProgramNonOldVar {
+public class ProgramNonOldVar extends GlobalBoogieVar implements IProgramNonOldVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 
 	private final int mHashCode;
-	private final BoogieOldVar mOldVar;
+	private final ProgramOldVar mOldVar;
 
-	public BoogieNonOldVar(final String identifier, final IBoogieType iType, final TermVariable tv,
-			final ApplicationTerm defaultConstant, final ApplicationTerm primedConstant, final BoogieOldVar oldVar) {
-		super(identifier, iType, tv, defaultConstant, primedConstant);
+	public ProgramNonOldVar(final String identifier, final TermVariable tv, final ApplicationTerm defaultConstant,
+			final ApplicationTerm primedConstant, final ProgramOldVar oldVar) {
+		super(identifier, tv, defaultConstant, primedConstant);
 		mOldVar = oldVar;
 		mHashCode = computeHashCode();
 	}
@@ -63,7 +67,7 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements IProgramNonOldVa
 	}
 
 	@Override
-	public BoogieOldVar getOldVar() {
+	public ProgramOldVar getOldVar() {
 		return mOldVar;
 	}
 

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRCore;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -220,7 +220,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx01LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -244,7 +244,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx02LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -277,7 +277,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx03LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -310,7 +310,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx04LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -350,7 +350,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx05LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);

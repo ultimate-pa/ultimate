@@ -467,16 +467,16 @@ public final class MappedTerm2Expression implements Serializable {
 				assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
 				final ILocation loc = astNode.getLocation();
 				final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
-				if (pv instanceof LocalBoogieVar) {
+				if (pv instanceof LocalProgramVar) {
 					result = new IdentifierExpression(loc, type,
-							translateIdentifier(((LocalBoogieVar) pv).getIdentifier()), declInfo);
-				} else if (pv instanceof BoogieNonOldVar) {
+							translateIdentifier(((LocalProgramVar) pv).getIdentifier()), declInfo);
+				} else if (pv instanceof ProgramNonOldVar) {
 					result = new IdentifierExpression(loc, type,
-							translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
-				} else if (pv instanceof BoogieOldVar) {
+							translateIdentifier(((ProgramNonOldVar) pv).getIdentifier()), declInfo);
+				} else if (pv instanceof ProgramOldVar) {
 					assert pv.isGlobal();
 					final Expression nonOldExpression = new IdentifierExpression(loc, type,
-							translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
+							translateIdentifier(((ProgramOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 					result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
 				} else if (pv instanceof BoogieConst) {
 					result = new IdentifierExpression(loc, type,

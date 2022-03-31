@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -442,13 +442,13 @@ public class ThreadInstanceAdder {
 			final boolean addThreadInUseViolationVariablesAndErrorLocation, final ManagedScript mgdScript,
 			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork, final String procedureName,
 			final String threadInstanceId) {
-		final BoogieNonOldVar threadInUseVar;
+		final ProgramNonOldVar threadInUseVar;
 		if (addThreadInUseViolationVariablesAndErrorLocation) {
 			threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
 		} else {
 			threadInUseVar = null;
 		}
-		final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
+		final ProgramNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
 				fork.getForkSmtArguments().getThreadIdArguments().getTerms());
 
 		final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar);
@@ -465,17 +465,17 @@ public class ThreadInstanceAdder {
 		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + fork.hashCode();
 	}
 
-	private static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,
+	private static ProgramNonOldVar constructThreadInUseVariable(final String threadInstanceId,
 			final ManagedScript mgdScript) {
 		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final BoogieNonOldVar threadInUseVar =
+		final ProgramNonOldVar threadInUseVar =
 				constructThreadAuxiliaryVariable(threadInstanceId + "_inUse", booleanSort, mgdScript);
 		return threadInUseVar;
 	}
 
-	private static BoogieNonOldVar[] constructThreadIdVariable(final String threadInstanceId,
+	private static ProgramNonOldVar[] constructThreadIdVariable(final String threadInstanceId,
 			final ManagedScript mgdScript, final Term[] threadIdArguments) {
-		final BoogieNonOldVar[] threadIdVars = new BoogieNonOldVar[threadIdArguments.length];
+		final ProgramNonOldVar[] threadIdVars = new ProgramNonOldVar[threadIdArguments.length];
 		int i = 0;
 		for (final Term forkId : threadIdArguments) {
 			threadIdVars[i] =
@@ -488,10 +488,10 @@ public class ThreadInstanceAdder {
 	/**
 	 * TODO Concurrent Boogie:
 	 */
-	private static BoogieNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
+	private static ProgramNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
 			final ManagedScript mgdScript) {
 		mgdScript.lock(id);
-		final BoogieNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
+		final ProgramNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(id, sort, mgdScript, id);
 		mgdScript.unlock(id);
 		return var;
 	}

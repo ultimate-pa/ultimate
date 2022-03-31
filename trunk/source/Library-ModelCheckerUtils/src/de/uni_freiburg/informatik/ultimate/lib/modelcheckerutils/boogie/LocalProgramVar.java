@@ -27,55 +27,56 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
+import java.io.Serializable;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * See comment in GlobalBoogieVar.
+ * Default implementation of an {@link ILocalProgramVar}
  *
- * @author heizmann@informatik.uni-freiburg.de
+ * @see {@link IProgramVar}.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class BoogieOldVar extends GlobalBoogieVar implements IProgramOldVar {
+public class LocalProgramVar extends ProgramVar implements Serializable, ILocalProgramVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
+	private final String mProcedure;
 
-	private IProgramNonOldVar mNonOldVar;
 	private final int mHashCode;
 
-	public BoogieOldVar(final String identifier, final IBoogieType iType, final TermVariable tv,
+	public LocalProgramVar(final String identifier, final String procedure, final TermVariable tv,
 			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
-		super(identifier, iType, tv, defaultConstant, primedContant);
+		super(identifier, tv, defaultConstant, primedContant);
+		mProcedure = procedure;
 		mHashCode = computeHashCode();
 	}
 
 	@Override
 	public String getGloballyUniqueId() {
-		return IProgramOldVar.super.getGloballyUniqueId();
+		return ILocalProgramVar.super.getGloballyUniqueId();
 	}
 
 	@Override
-	public String getIdentifierOfNonOldVar() {
+	public String getIdentifier() {
 		return mIdentifier;
 	}
 
 	@Override
-	public IProgramNonOldVar getNonOldVar() {
-		return mNonOldVar;
-	}
-
-	public void setNonOldVar(final IProgramNonOldVar nonOldVar) {
-		mNonOldVar = nonOldVar;
+	public String getProcedure() {
+		return mProcedure;
 	}
 
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((getIdentifierOfNonOldVar() == null) ? 0 : getIdentifierOfNonOldVar().hashCode());
-		result = prime * result + ((getProcedure() == null) ? 0 : getProcedure().hashCode());
+		result = prime * result + (getIdentifier() == null ? 0 : getIdentifier().hashCode());
+		result = prime * result + (isOldvar() ? 1231 : 1237);
+		result = prime * result + (getProcedure() == null ? 0 : getProcedure().hashCode());
 		return result;
 	}
 
@@ -95,12 +96,12 @@ public class BoogieOldVar extends GlobalBoogieVar implements IProgramOldVar {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final BoogieOldVar other = (BoogieOldVar) obj;
-		if (getIdentifierOfNonOldVar() == null) {
-			if (other.getIdentifierOfNonOldVar() != null) {
+		final LocalProgramVar other = (LocalProgramVar) obj;
+		if (getIdentifier() == null) {
+			if (other.getIdentifier() != null) {
 				return false;
 			}
-		} else if (!getIdentifierOfNonOldVar().equals(other.getIdentifierOfNonOldVar())) {
+		} else if (!getIdentifier().equals(other.getIdentifier())) {
 			return false;
 		}
 		if (isOldvar() != other.isOldvar()) {
@@ -115,4 +116,5 @@ public class BoogieOldVar extends GlobalBoogieVar implements IProgramOldVar {
 		}
 		return true;
 	}
+
 }
