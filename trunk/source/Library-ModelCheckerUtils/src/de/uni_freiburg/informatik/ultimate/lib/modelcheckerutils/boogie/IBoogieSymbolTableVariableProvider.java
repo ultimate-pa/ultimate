@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
 
 /**
  * Provides BoogieVars from BoogieSymbolTables. This is mainly used in abstract interpretation's abstract domains.
