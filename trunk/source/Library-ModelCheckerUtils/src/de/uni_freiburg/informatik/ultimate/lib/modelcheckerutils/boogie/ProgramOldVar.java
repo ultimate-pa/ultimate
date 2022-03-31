@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ProgramOldVar extends GlobalBoogieVar implements IProgramOldVar {
+public class ProgramOldVar extends GlobalProgramVar implements IProgramOldVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 
