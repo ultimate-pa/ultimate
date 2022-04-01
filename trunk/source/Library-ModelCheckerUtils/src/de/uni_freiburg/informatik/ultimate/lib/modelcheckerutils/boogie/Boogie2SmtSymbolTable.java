@@ -129,7 +129,7 @@ public class Boogie2SmtSymbolTable
 	private final Map<String, Map<String, LocalProgramVar>> mImplementationLocals = new HashMap<>();
 	private final Map<String, BoogieConst> mConstants = new HashMap<>();
 
-	private final Map<TermVariable, IProgramVar> mSmtVar2BoogieVar = new HashMap<>();
+	private final Map<TermVariable, IProgramVar> mSmtVar2ProgramVar = new HashMap<>();
 	private final Map<IProgramVar, DeclarationInformation> mBoogieVar2DeclarationInformation = new HashMap<>();
 	private final Map<IProgramVar, BoogieASTNode> mBoogieVar2AstNode = new HashMap<>();
 	private final Map<ApplicationTerm, BoogieConst> mSmtConst2BoogieConst = new HashMap<>();
@@ -179,14 +179,14 @@ public class Boogie2SmtSymbolTable
 		mScript.unlock(this);
 	}
 
-	private static <T extends IProgramVar> void putNew(final String procId, final String varId, final T bv,
+	private static <T extends IProgramVar> void putNew(final String procId, final String varId, final T pv,
 			final Map<String, Map<String, T>> map) {
-		Map<String, T> varId2BoogieVar = map.get(procId);
-		if (varId2BoogieVar == null) {
-			varId2BoogieVar = new HashMap<>();
-			map.put(procId, varId2BoogieVar);
+		Map<String, T> varId2ProgramVar = map.get(procId);
+		if (varId2ProgramVar == null) {
+			varId2ProgramVar = new HashMap<>();
+			map.put(procId, varId2ProgramVar);
 		}
-		final IProgramVar previousValue = varId2BoogieVar.put(varId, bv);
+		final IProgramVar previousValue = varId2ProgramVar.put(varId, pv);
 		assert previousValue == null : "variable already contained";
 	}
 
@@ -264,12 +264,12 @@ public class Boogie2SmtSymbolTable
 	}
 
 	@Override
-	public DeclarationInformation getDeclarationInformation(final IProgramVar bv) {
-		return mBoogieVar2DeclarationInformation.get(bv);
+	public DeclarationInformation getDeclarationInformation(final IProgramVar pv) {
+		return mBoogieVar2DeclarationInformation.get(pv);
 	}
 
-	public BoogieASTNode getAstNode(final IProgramVar bv) {
-		return mBoogieVar2AstNode.get(bv);
+	public BoogieASTNode getAstNode(final IProgramVar pv) {
+		return mBoogieVar2AstNode.get(pv);
 	}
 
 	private void declareConstants(final ConstDeclaration constdecl) {
@@ -606,11 +606,11 @@ public class Boogie2SmtSymbolTable
 				throw new IllegalArgumentException("specification and implementation have different param length");
 			}
 			for (int j = 0; j < specIds.length; j++) {
-				final LocalProgramVar bv =
-						constructLocalBoogieVar(implIds[j], procId, implType, implVl[i], declarationInformation);
-				putNew(procId, implIds[j], bv, implMap);
-				putNew(procId, specIds[j], bv, specMap);
-				params.add(bv);
+				final LocalProgramVar pv =
+						constructLocalProgramVar(implIds[j], procId, implType, implVl[i], declarationInformation);
+				putNew(procId, implIds[j], pv, implMap);
+				putNew(procId, specIds[j], pv, specMap);
+				params.add(pv);
 			}
 		}
 	}
@@ -639,9 +639,9 @@ public class Boogie2SmtSymbolTable
 			final IBoogieType type = vl[i].getType().getBoogieType();
 			final String[] ids = vl[i].getIdentifiers();
 			for (int j = 0; j < ids.length; j++) {
-				final LocalProgramVar bv = constructLocalBoogieVar(ids[j], procId, type, vl[i], declarationInformation);
-				putNew(procId, ids[j], bv, specMap);
-				params.add(bv);
+				final LocalProgramVar pv = constructLocalProgramVar(ids[j], procId, type, vl[i], declarationInformation);
+				putNew(procId, ids[j], pv, specMap);
+				params.add(pv);
 			}
 		}
 	}
@@ -654,9 +654,9 @@ public class Boogie2SmtSymbolTable
 				for (final VarList vl : vdecl.getVariables()) {
 					for (final String id : vl.getIdentifiers()) {
 						final IBoogieType type = vl.getType().getBoogieType();
-						final LocalProgramVar bv =
-								constructLocalBoogieVar(id, proc.getIdentifier(), type, vl, declarationInformation);
-						putNew(proc.getIdentifier(), id, bv, mImplementationLocals);
+						final LocalProgramVar pv =
+								constructLocalProgramVar(id, proc.getIdentifier(), type, vl, declarationInformation);
+						putNew(proc.getIdentifier(), id, pv, mImplementationLocals);
 					}
 				}
 			}
@@ -675,7 +675,7 @@ public class Boogie2SmtSymbolTable
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 * @param declarationInformation
 	 */
-	public LocalProgramVar constructLocalBoogieVar(final String identifier, final String procedure,
+	public LocalProgramVar constructLocalProgramVar(final String identifier, final String procedure,
 			final IBoogieType iType, final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
@@ -686,14 +686,14 @@ public class Boogie2SmtSymbolTable
 		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
 		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
 
-		final LocalProgramVar bv =
+		final LocalProgramVar pv =
 				new LocalProgramVar(identifier, procedure, termVariable, defaultConstant, primedConstant);
 
-		mSmtVar2BoogieVar.put(termVariable, bv);
-		mBoogieVar2DeclarationInformation.put(bv, declarationInformation);
-		mBoogieVar2AstNode.put(bv, varList);
-		mIcfgSymbolTable.add(bv);
-		return bv;
+		mSmtVar2ProgramVar.put(termVariable, pv);
+		mBoogieVar2DeclarationInformation.put(pv, declarationInformation);
+		mBoogieVar2AstNode.put(pv, varList);
+		mIcfgSymbolTable.add(pv);
+		return pv;
 	}
 
 	/**
@@ -710,12 +710,12 @@ public class Boogie2SmtSymbolTable
 
 		final ProgramNonOldVar nonOldVar =
 				ProgramVarUtils.constructGlobalProgramVarPair(identifier, sort, mScript, this);
-		mSmtVar2BoogieVar.put(nonOldVar.getTermVariable(), nonOldVar);
+		mSmtVar2ProgramVar.put(nonOldVar.getTermVariable(), nonOldVar);
 		mBoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
 		mBoogieVar2AstNode.put(nonOldVar, varlist);
 
 		final ProgramOldVar oldVar = nonOldVar.getOldVar();
-		mSmtVar2BoogieVar.put(oldVar.getTermVariable(), oldVar);
+		mSmtVar2ProgramVar.put(oldVar.getTermVariable(), oldVar);
 		mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
 		mBoogieVar2AstNode.put(oldVar, varlist);
 
