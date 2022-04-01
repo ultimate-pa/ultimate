@@ -102,6 +102,11 @@ public class QvasrAbstractor {
 	public static QvasrAbstraction computeAbstraction(final ManagedScript script,
 			final UnmodifiableTransFormula transitionFormula) {
 
+		if (!SmtUtils.containsArrayVariables(transitionFormula.getFormula())
+				|| !SmtUtils.isArrayFree(transitionFormula.getFormula())) {
+			throw new UnsupportedOperationException("Cannot deal with arrays.");
+		}
+
 		final Map<TermVariable, Term> updatesInFormulaAdditions =
 				getUpdates(script, transitionFormula, BaseType.ADDITIONS);
 		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(script, transitionFormula, BaseType.RESETS);
@@ -660,7 +665,6 @@ public class QvasrAbstractor {
 			} else {
 				divisorDividend = divisorAppTerm;
 			}
-
 			if ("/".equals(divisorAppTerm.getFunction().getName())
 					|| "/".equals(dividendAppTerm.getFunction().getName())) {
 				final Term commonDividend = SmtUtils.mul(script.getScript(), "*", dividendDividend, divisorDivisor);
@@ -855,7 +859,6 @@ public class QvasrAbstractor {
 						SmtUtils.minus(script.getScript(), commonDenominatorSubtrahend, commonDenominatorMinuend);
 				result = QvasrAbstractor.simplifyRealDivision(script, simplifiedMinuend, divisorMinuend);
 				result.toStringDirect();
-
 			}
 		}
 		if (QvasrUtils.isApplicationTerm(subtrahend) && !(QvasrUtils.isApplicationTerm(minuend))) {
@@ -1102,7 +1105,6 @@ public class QvasrAbstractor {
 					final Term[] divisorArray =
 							simplifiedDivisorParamSet.toArray(new Term[simplifiedDivisorParamSet.size()]);
 					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
-
 				}
 			}
 			if (QvasrUtils.checkTermEquiv(script, simplifiedDividendPre, simplifiedDividend)) {
