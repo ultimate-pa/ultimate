@@ -64,7 +64,7 @@ public class TransferrerWithVariableCache {
 
 	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript) {
 		mTargetScript = targetScript;
-		mTransferrer = new TermTransferrer(sourceScript, targetScript.getScript());
+		mTransferrer = new TermTransferrer(sourceScript, targetScript.getScript(), new HashMap<>(), false);
 	}
 
 	public IProgramVar transferProgramVar(final IProgramVar oldPv) {
@@ -82,7 +82,7 @@ public class TransferrerWithVariableCache {
 	}
 
 	public UnmodifiableTransFormula transferTransFormula(final UnmodifiableTransFormula tf) {
-		return TransFormulaBuilder.transferTransformula(this, mTargetScript, tf);
+		return TransFormulaBuilder.transferTransformula(this, mTargetScript, tf, true);
 	}
 
 	public BasicPredicate transferPredicate(final IPredicate predicate) {
@@ -96,4 +96,10 @@ public class TransferrerWithVariableCache {
 	public <T extends Term> T transferTerm(final T term) {
 		return (T) mTransferrer.transform(term);
 	}
+
+	public TermTransferrer getTransferrer() {
+		return mTransferrer;
+	}
+
+
 }

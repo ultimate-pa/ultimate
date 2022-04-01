@@ -103,7 +103,7 @@ public class CfgSmtToolkit {
 			final SolverSettings solverSettings, final String solverId) {
 		final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, solverSettings, solverId);
 		final ManagedScript mgdScriptTc = new ManagedScript(services, tcSolver);
-		getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
+//		getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
 		return mgdScriptTc;
 	}
 

@@ -680,7 +680,7 @@ public class TransFormulaBuilder {
 	 * transferred to, i.e., the new script.
 	 */
 	public static UnmodifiableTransFormula transferTransformula(final TransferrerWithVariableCache tt,
-			final ManagedScript script, final TransFormula tf) {
+			final ManagedScript script, final TransFormula tf, final boolean constructFreshVariables) {
 
 		final Set<TermVariable> branchEncoders;
 		if (tf instanceof UnmodifiableTransFormula) {
@@ -689,19 +689,44 @@ public class TransFormulaBuilder {
 		} else {
 			branchEncoders = ImmutableSet.empty();
 		}
-		final Set<TermVariable> auxVars = tf.getAuxVars().stream().map(tt::transferTerm).collect(Collectors.toSet());
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			final IProgramVar newPv = tt.transferProgramVar(entry.getKey());
-			final TermVariable newTv = tt.transferTerm(entry.getValue());
+			final TermVariable newTv;
+			if (constructFreshVariables) {
+				newTv = script.constructFreshTermVariable(newPv.getGloballyUniqueId(), newPv.getSort());
+				tt.getTransferrer().getTransferMapping().put(entry.getValue(), newTv);
+			} else {
+				newTv = tt.transferTerm(entry.getValue());
+			}
 			newInVars.put(newPv, newTv);
 		}
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			final IProgramVar newPv = tt.transferProgramVar(entry.getKey());
-			final TermVariable newTv = tt.transferTerm(entry.getValue());
+
+			final TermVariable newTv;
+			if (entry.getValue() == tf.getInVars().get(entry.getKey())) {
+				//inVar and outVar are similar
+				newTv = newInVars.get(newPv);
+			} else {
+				if (constructFreshVariables) {
+					newTv = script.constructFreshTermVariable(newPv.getGloballyUniqueId(), newPv.getSort());
+					tt.getTransferrer().getTransferMapping().put(entry.getValue(), newTv);
+				} else {
+					newTv = tt.transferTerm(entry.getValue());
+				}
+			}
 			newOutVars.put(newPv, newTv);
+		}
+
+		final Set<TermVariable> newAuxVars = new HashSet<>();
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			final TermVariable newAuxVar = script.constructFreshTermVariable("auxVar",
+					tt.getTransferrer().transferSort(auxVar.getSort()));
+			tt.getTransferrer().getTransferMapping().put(auxVar, newAuxVar);
+			newAuxVars.add(newAuxVar);
 		}
 
 		final Infeasibility infeasibility;
@@ -717,11 +742,11 @@ public class TransFormulaBuilder {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars, nonTheoryConsts.isEmpty(),
 				nonTheoryConsts.isEmpty() ? null : nonTheoryConsts, branchEncoders.isEmpty(),
 				branchEncoders.isEmpty() ? null : branchEncoders, false);
+		for (final TermVariable newAuxVar : newAuxVars) {
+			tfb.addAuxVar(newAuxVar);
+		}
 		tfb.setFormula(newFormula);
 		tfb.setInfeasibility(infeasibility);
-		if (!auxVars.isEmpty()) {
-			tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
-		}
 
 		return tfb.finishConstruction(script);
 	}
