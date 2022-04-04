@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithLbe;
 
 /**
  *
@@ -60,6 +62,9 @@ public class IcfgToChcObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 
 	private IElement mResult;
+
+	// TODO: Make this a setting
+	private static final boolean USE_LBE_FOR_CONCURRENT_PROGRAMS = true;
 
 	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -147,6 +152,14 @@ public class IcfgToChcObserver extends BaseObserver {
 
 	private IChcProvider getChcProvider(final IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
+		if (IcfgUtils.isConcurrent(icfg)) {
+			assert !isReturnReachable(icfg);
+			if (USE_LBE_FOR_CONCURRENT_PROGRAMS) {
+				return new ChcProviderConcurrentWithLbe(mgdScript, hcSymbolTable, mServices);
+			} else {
+				return new ChcProviderConcurrent(mgdScript, hcSymbolTable);
+			}
+		}
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable);
 	}
 
