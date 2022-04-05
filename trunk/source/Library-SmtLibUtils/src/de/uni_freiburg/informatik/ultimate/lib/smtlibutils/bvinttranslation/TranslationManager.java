@@ -50,6 +50,10 @@ public class TranslationManager {
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
 
+	/*
+	 * Wrapper class for bit-vector to integer translation and back-translation
+	 * Manages: variables and constraints
+	 */
 	public TranslationManager(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations cfbo) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
@@ -66,6 +70,14 @@ public class TranslationManager {
 		mVariableMap = replacementVarMap;
 	}
 
+	/*
+	 * Method to translate bit-vector to integer.
+	 * This method fills mVariableMap, mReversedVarMap and mConstraintSet in the process.
+	 * returns a triple, first element is the translation result,
+	 * second element is a map containing all variables used to overapproximate bit-wise function in constraint mode
+	 * NONE,
+	 * third is a flag that is true if constraint mode is NONE
+	 */
 	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoInt(final Term bitvecFromula) {
 		final BvToIntTranslation bvToInt =
 				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars());
@@ -86,6 +98,11 @@ public class TranslationManager {
 	}
 
 
+	/*
+	 * Method to translate from integer back to bit-vector
+	 * requires mReversedVarMap to be filled
+	 * returns the translation result
+	 */
 	public Term translateIntBacktoBv(final Term integerFormula) {
 		// The preprocessing steps need also to be applied on the constraint, to ensure the map matches them.
 		final UnfTransformer unfT = new UnfTransformer(mScript);
