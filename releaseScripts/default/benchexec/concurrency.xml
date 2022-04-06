@@ -73,6 +73,10 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
 	</rundefinition>
 
+	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.SYNTACTIC">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep.SYNTACTIC-NoLbe.epf</option>
+	</rundefinition>
+
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.Symm">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Symm.epf</option>
 	</rundefinition>

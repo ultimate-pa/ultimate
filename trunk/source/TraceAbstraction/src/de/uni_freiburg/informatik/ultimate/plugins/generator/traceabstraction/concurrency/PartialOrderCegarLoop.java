@@ -213,6 +213,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends BasicCe
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
+		if (mPref.getSyntacticPor()) {
+			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
+		}
 		return IndependenceBuilder
 				// Semantic independence forms the base.
 				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
