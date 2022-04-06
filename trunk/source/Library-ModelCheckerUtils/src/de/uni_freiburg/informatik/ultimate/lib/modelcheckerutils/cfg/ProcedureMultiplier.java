@@ -63,12 +63,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -111,7 +108,7 @@ public class ProcedureMultiplier {
 		final Map<ILocalProgramVar, ILocalProgramVar> newVar2OldVar = new HashMap<>();
 		final Map<String, Map<ILocalProgramVar, ILocalProgramVar>> oldVar2newVar = new HashMap<>();
 		final Map<Term, Term> variableBacktranslationMapping = new HashMap<>();
-		icfg.getCfgSmtToolkit().getManagedScript().lock(this);
+		managedScript.lock(this);
 		for (final String proc : copyDirectives.getDomain()) {
 			assert icfg.getCfgSmtToolkit().getProcedures().contains(proc) : "procedure " + proc + " missing";
 			for (final String copyIdentifier : copyDirectives.getImage(proc)) {
@@ -120,33 +117,24 @@ public class ProcedureMultiplier {
 				procedures.add(copyIdentifier);
 				final List<ILocalProgramVar> inParamsOfCopy = new ArrayList<>();
 				for (final ILocalProgramVar inParam : inParams.get(proc)) {
-					final ILocalProgramVar inParamCopy =
-							constructCopy(inParam, copyIdentifier, icfg.getCfgSmtToolkit().getManagedScript(), this);
+					final ILocalProgramVar inParamCopy = constructVariableCopy(inParam, copyIdentifier, managedScript,
+							procOldVar2NewVar, variableBacktranslationMapping, symbolTable);
 					inParamsOfCopy.add(inParamCopy);
 					newVar2OldVar.put(inParamCopy, inParam);
-					procOldVar2NewVar.put(inParam, inParamCopy);
-					variableBacktranslationMapping.put(inParamCopy.getTermVariable(), inParam.getTermVariable());
-					symbolTable.add(inParamCopy);
 				}
 				inParams.put(copyIdentifier, inParamsOfCopy);
 				final List<ILocalProgramVar> outParamsOfCopy = new ArrayList<>();
 				for (final ILocalProgramVar outParam : outParams.get(proc)) {
-					final ILocalProgramVar outParamCopy =
-							constructCopy(outParam, copyIdentifier, icfg.getCfgSmtToolkit().getManagedScript(), this);
+					final ILocalProgramVar outParamCopy = constructVariableCopy(outParam, copyIdentifier, managedScript,
+							procOldVar2NewVar, variableBacktranslationMapping, symbolTable);
 					outParamsOfCopy.add(outParamCopy);
 					newVar2OldVar.put(outParamCopy, outParam);
-					procOldVar2NewVar.put(outParam, outParamCopy);
-					variableBacktranslationMapping.put(outParamCopy.getTermVariable(), outParam.getTermVariable());
-					symbolTable.add(outParamCopy);
 				}
 				outParams.put(copyIdentifier, outParamsOfCopy);
 				for (final ILocalProgramVar localVar : icfg.getCfgSmtToolkit().getSymbolTable().getLocals(proc)) {
 					if (!procOldVar2NewVar.containsKey(localVar)) {
-						final ILocalProgramVar localVarCopy = constructCopy(localVar, copyIdentifier,
-								icfg.getCfgSmtToolkit().getManagedScript(), this);
-						procOldVar2NewVar.put(localVar, localVarCopy);
-						variableBacktranslationMapping.put(localVarCopy.getTermVariable(), localVar.getTermVariable());
-						symbolTable.add(localVarCopy);
+						constructVariableCopy(localVar, copyIdentifier, managedScript, procOldVar2NewVar,
+								variableBacktranslationMapping, symbolTable);
 					}
 				}
 				final List<IProgramNonOldVar> modifiableGlobals = new ArrayList<>();
@@ -157,9 +145,8 @@ public class ProcedureMultiplier {
 				oldVar2newVar.put(copyIdentifier, procOldVar2NewVar);
 			}
 		}
-		backtranslator.setTermTranslator(
-				x -> Substitution.apply(icfg.getCfgSmtToolkit().getManagedScript(), variableBacktranslationMapping, x));
-		icfg.getCfgSmtToolkit().getManagedScript().unlock(this);
+		backtranslator.setTermTranslator(x -> Substitution.apply(managedScript, variableBacktranslationMapping, x));
+		managedScript.unlock(this);
 
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 		final CfgSmtToolkit newCfgSmtToolkit =
@@ -263,6 +250,17 @@ public class ProcedureMultiplier {
 		icfg.setCfgSmtToolkit(newCfgSmtToolkit);
 	}
 
+	private ILocalProgramVar constructVariableCopy(final ILocalProgramVar localVar, final String procedureCopy,
+			final ManagedScript managedScript, final Map<ILocalProgramVar, ILocalProgramVar> procOldVar2NewVar,
+			final Map<Term, Term> variableBacktranslationMapping, final DefaultIcfgSymbolTable symbolTable) {
+		final ILocalProgramVar localVarCopy = ProgramVarUtils.constructLocalProgramVar(localVar.getIdentifier(),
+				procedureCopy, localVar.getSort(), managedScript, this);
+		procOldVar2NewVar.put(localVar, localVarCopy);
+		variableBacktranslationMapping.put(localVarCopy.getTermVariable(), localVar.getTermVariable());
+		symbolTable.add(localVarCopy);
+		return localVarCopy;
+	}
+
 	private ForkSmtArguments copyForkSmtArguments(final ForkSmtArguments forkSmtArguments,
 			final Map<ILocalProgramVar, ILocalProgramVar> map, final ManagedScript managedScript) {
 		final Map<Term, Term> defaultVariableMapping = constructDefaultVariableMapping(map);
@@ -294,8 +292,8 @@ public class ProcedureMultiplier {
 
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
 			final Map<Term, Term> defaultVariableMadefaultVariableMappingpping2, final ManagedScript managedScript) {
-		final Function<Term, Term> subst = (x -> Substitution.apply(managedScript,
-				defaultVariableMadefaultVariableMappingpping2, x));
+		final Function<Term, Term> subst =
+				(x -> Substitution.apply(managedScript, defaultVariableMadefaultVariableMappingpping2, x));
 		final Term[] terms = Arrays.stream(oldProcedureArguments.getTerms()).map(subst).toArray(Term[]::new);
 		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.getAuxiliaryVars();
 		final Map<String, ILocation> overapproximations = oldProcedureArguments.getOverappoximations();
@@ -303,7 +301,7 @@ public class ProcedureMultiplier {
 		return copy;
 	}
 
-	private Map<Term, Term> constructDefaultVariableMapping(final Map<ILocalProgramVar, ILocalProgramVar> map) {
+	private static Map<Term, Term> constructDefaultVariableMapping(final Map<ILocalProgramVar, ILocalProgramVar> map) {
 		final Map<Term, Term> result = new HashMap<>();
 		for (final Entry<ILocalProgramVar, ILocalProgramVar> entry : map.entrySet()) {
 			result.put(entry.getKey().getTermVariable(), entry.getValue().getTermVariable());
@@ -317,30 +315,6 @@ public class ProcedureMultiplier {
 		ModelUtils.copyAnnotations(oldLoc, newLoc);
 		backtranslator.mapLocations(newLoc, oldLoc);
 		return newLoc;
-	}
-
-	/**
-	 * FIXME Merge
-	 */
-	private ILocalProgramVar constructCopy(final ILocalProgramVar localVar, final String copyIdentifier,
-			final ManagedScript managedScript, final Object lockOwner) {
-		final Sort sort = localVar.getSort();
-		final String name = ProgramVarUtils.buildBoogieVarName(localVar.getIdentifier(), copyIdentifier, false, false);
-
-		final TermVariable termVariable = managedScript.getScript().variable(name, sort);
-
-		final ApplicationTerm defaultConstant =
-				ProgramVarUtils.constructDefaultConstant(managedScript, lockOwner, sort, name);
-		final ApplicationTerm primedConstant =
-				ProgramVarUtils.constructPrimedConstant(managedScript, lockOwner, sort, name);
-
-		final LocalProgramVar bv = new LocalProgramVar(localVar.getIdentifier(), copyIdentifier, termVariable, defaultConstant,
-				primedConstant);
-		return bv;
-	}
-
-	private String construtCopyIdentifier(final String proc, final String suffix) {
-		return proc + "_" + suffix;
 	}
 
 	public static HashRelation<String, String>
