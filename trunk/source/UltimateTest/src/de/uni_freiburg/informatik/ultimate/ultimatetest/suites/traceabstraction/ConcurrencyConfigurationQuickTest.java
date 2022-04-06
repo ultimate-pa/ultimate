@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionTestSuite {
 
 	// @formatter:off
-	private static final String SETTINGS_DIR = "automizer/concurrent/";
+	private static final String[] SETTINGS_DIRS = { "automizer/concurrent/", "automizer/mcr" };
 
 	private static final String[] BOOGIE_EXAMPLES = {
 		"examples/concurrent/bpl/regression/example_interleaving.bpl",
@@ -66,8 +67,10 @@ public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionT
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		final Path settingsDir = UltimateRunDefinitionGenerator.getFileFromSettingsDir("").toPath();
-		final File[] settings = UltimateRunDefinitionGenerator.getFileFromSettingsDir(SETTINGS_DIR)
-				.listFiles(f -> f.isFile() && f.getName().endsWith(".epf"));
+		final File[] settings = Arrays
+				.stream(SETTINGS_DIRS).flatMap(dir -> Arrays.stream(UltimateRunDefinitionGenerator
+						.getFileFromSettingsDir(dir).listFiles(f -> f.isFile() && f.getName().endsWith(".epf"))))
+				.toArray(File[]::new);
 		for (final File setting : settings) {
 			final Path settingPath = settingsDir.relativize(setting.toPath());
 			for (final String file : BOOGIE_EXAMPLES) {
