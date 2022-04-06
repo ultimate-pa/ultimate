@@ -1,4 +1,4 @@
-//#unsafe
+//#Unsafe
 // author: nutz
 
 var x, y : int;

@@ -1,3 +1,4 @@
+//#Safe
 /*
  * Although, the system can construct infinitely many
  * threads there are only two active threads at each
