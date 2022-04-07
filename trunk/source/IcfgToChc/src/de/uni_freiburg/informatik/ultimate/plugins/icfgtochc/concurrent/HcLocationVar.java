@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 
@@ -15,12 +13,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToCh
 public class HcLocationVar implements IHcReplacementVar {
 	private final String mProcedure;
 	private final int mIndex;
-	private final Script mScript;
+	private final Sort mSort;
 
-	public HcLocationVar(final String procedure, final int index, final Script script) {
+	public HcLocationVar(final String procedure, final int index, final Sort sort) {
 		mProcedure = procedure;
 		mIndex = index;
-		mScript = script;
+		mSort = sort;
 	}
 
 	public String getProcedure() {
@@ -33,7 +31,7 @@ public class HcLocationVar implements IHcReplacementVar {
 
 	@Override
 	public Sort getSort() {
-		return SmtSortUtils.getIntSort(mScript);
+		return mSort;
 	}
 
 	@Override

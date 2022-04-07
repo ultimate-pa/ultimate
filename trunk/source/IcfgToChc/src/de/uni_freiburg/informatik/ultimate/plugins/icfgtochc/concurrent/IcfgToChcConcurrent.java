@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -100,12 +101,16 @@ public class IcfgToChcConcurrent {
 			final List<IProgramVar> localVars = localVariables.get(proc);
 			for (int j = 0; j < entry.getValue(); j++) {
 				// Location
-				mPositions2Vars.put(i++, new HcLocationVar(proc, j, getScript()));
+				mPositions2Vars.put(i++, new HcLocationVar(proc, j, getIntSort()));
 				for (final IProgramVar v : localVars) {
 					mPositions2Vars.put(i++, new HcLocalVar(v, j));
 				}
 			}
 		}
+	}
+
+	private Sort getIntSort() {
+		return SmtSortUtils.getIntSort(getScript());
 	}
 
 	private List<Term> getDefaultArgs() {
@@ -153,7 +158,7 @@ public class IcfgToChcConcurrent {
 	private Term getConstraintFromLocationMap(final NestedMap2<String, Integer, Term> locationMap) {
 		final List<Term> constraints = new ArrayList<>();
 		for (final var triple : locationMap.entrySet()) {
-			final HcLocationVar locVar = new HcLocationVar(triple.getFirst(), triple.getSecond(), getScript());
+			final HcLocationVar locVar = new HcLocationVar(triple.getFirst(), triple.getSecond(), getIntSort());
 			final int index = mPositions2Vars.inverse().get(locVar);
 			final Term term = mDefaultHeadVars.get(index).getTerm();
 			constraints.add(SmtUtils.binaryEquality(getScript(), term, triple.getThird()));
@@ -352,7 +357,7 @@ public class IcfgToChcConcurrent {
 					final Term loc = getLocIndexTerm(edge.getSource(), procedure);
 					for (int i = 0; i < n; i++) {
 						final int newIndex =
-								mPositions2Vars.inverse().get(new HcLocationVar(procedure, i, getScript()));
+								mPositions2Vars.inverse().get(new HcLocationVar(procedure, i, getIntSort()));
 						bodyArguments.get(i + 1).set(newIndex, loc);
 					}
 				}

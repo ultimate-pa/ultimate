@@ -6,6 +6,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 
+/**
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ *
+ */
 public class HcGlobalVar implements IHcReplacementVar {
 	private final IProgramVar mVariable;
 
