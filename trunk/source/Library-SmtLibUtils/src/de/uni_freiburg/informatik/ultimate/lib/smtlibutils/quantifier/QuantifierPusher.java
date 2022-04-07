@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils.IQuantifierEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -74,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  */
 public class QuantifierPusher extends TermTransformer {
 
-	private static final String NOT_DUAL_FINITE_CONNECTIVE = "not dual finite connective";
+	public static final String NOT_DUAL_FINITE_CONNECTIVE = "not dual finite connective";
 
 	public enum PqeTechniques {
 		/**
@@ -428,6 +429,12 @@ public class QuantifierPusher extends TermTransformer {
 				return eliminationResult;
 			}
 		}
+		final Term tmp = QuantifierPushUtils.pushLocalEliminateesOverCorrespondingFiniteJunction(services, mgdScript,
+				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
+		if (tmp != null) {
+			return tmp;
+		}
+
 		if (!applyDistributivity) {
 			// nothing eliminated
 			return null;
@@ -1021,7 +1028,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	private static FormulaClassification classify(final int quantifier, final Term subformula) {
+	public static FormulaClassification classify(final int quantifier, final Term subformula) {
 		if (subformula instanceof QuantifiedFormula) {
 			final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) subformula;
 			if (quantifiedSubFormula.getQuantifier() == quantifier) {
