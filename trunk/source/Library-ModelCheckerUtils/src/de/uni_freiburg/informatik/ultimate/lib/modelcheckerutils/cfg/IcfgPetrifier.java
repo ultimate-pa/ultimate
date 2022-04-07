@@ -52,31 +52,30 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformat
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IcfgDuplicator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Takes a given {@link IIcfg} that has {@link IcfgForkThreadCurrentTransition}s
- * but no {@link IcfgForkThreadOtherTransition}s and adds
- * {@link ThreadInstance}s to the {@link IIcfg}s {@link ConcurrencyInformation}.
+ * Takes a given {@link IIcfg} that has {@link IcfgForkThreadCurrentTransition}s but no
+ * {@link IcfgForkThreadOtherTransition}s and adds {@link ThreadInstance}s to the {@link IIcfg}s
+ * {@link ConcurrencyInformation}.
  *
- * Currently the number of thread instances is hardcoded. We have one thread
- * instance per {@link IcfgForkThreadCurrentTransition}s. But in the future we
- * will also allow that the amount of thread instances becomes a parameter of
- * this class.
+ * Currently the number of thread instances is hardcoded. We have one thread instance per
+ * {@link IcfgForkThreadCurrentTransition}s. But in the future we will also allow that the amount of thread instances
+ * becomes a parameter of this class.
  *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class IcfgPetrifier {
 
-	public enum IcfgConstructionMode { CHECK_THREAD_INSTANCE_SUFFICIENCY, ASSUME_THREAD_INSTANCE_SUFFICIENCY };
+	public enum IcfgConstructionMode {
+		CHECK_THREAD_INSTANCE_SUFFICIENCY, ASSUME_THREAD_INSTANCE_SUFFICIENCY
+	};
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	private final IIcfg<IcfgLocation> mPetrifiedIcfg;
+	private final BasicIcfg<IcfgLocation> mPetrifiedIcfg;
 	private final BlockEncodingBacktranslator mBacktranslator;
-
 
 	public IcfgPetrifier(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final IcfgConstructionMode icfgConstructionModefinal, final int numberOfThreadInstances) {
@@ -84,66 +83,65 @@ public class IcfgPetrifier {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
-		final Collection<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads = icfg.getCfgSmtToolkit()
-				.getConcurrencyInformation().getThreadInstanceMap().keySet();
-		final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads = icfg.getCfgSmtToolkit()
-				.getConcurrencyInformation().getJoinTransitions();
+		final Collection<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads =
+				icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet();
+		final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads =
+				icfg.getCfgSmtToolkit().getConcurrencyInformation().getJoinTransitions();
 
-		final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class,
-				mLogger);
-		final IcfgDuplicator duplicator = new IcfgDuplicator(mLogger, mServices,
-				icfg.getCfgSmtToolkit().getManagedScript(), backtranslator);
+		final BlockEncodingBacktranslator backtranslator =
+				new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+		final IcfgDuplicator duplicator =
+				new IcfgDuplicator(mLogger, mServices, icfg.getCfgSmtToolkit().getManagedScript(), backtranslator);
 		mPetrifiedIcfg = duplicator.copy(icfg);
-		final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping = duplicator
-				.getOld2NewEdgeMapping();
-		final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> newForkCurrentThreads = forkCurrentThreads.stream()
-				.map(old2newEdgeMapping::get).map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) x)
-				.collect(Collectors.toList());
-		final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> newJoinCurrentThreads = joinCurrentThreads.stream()
-				.map(old2newEdgeMapping::get).map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x)
-				.collect(Collectors.toList());
+		final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
+				duplicator.getOld2NewEdgeMapping();
+		final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> newForkCurrentThreads =
+				forkCurrentThreads.stream().map(old2newEdgeMapping::get)
+						.map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
+		final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> newJoinCurrentThreads =
+				joinCurrentThreads.stream().map(old2newEdgeMapping::get)
+						.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) x).collect(Collectors.toList());
 		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
 		// TODO Matthias: Variables only needed for predicates in monitor
 		final boolean addThreadInUseViolationVariablesAndErrorLocation = true;
-				// (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
-		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap = ThreadInstanceAdder
-				.constructThreadInstances(mPetrifiedIcfg, newForkCurrentThreads,
+		// (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
+		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap =
+				ThreadInstanceAdder.constructThreadInstances(mPetrifiedIcfg, newForkCurrentThreads,
 						addThreadInUseViolationVariablesAndErrorLocation, numberOfThreadInstances);
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap = new HashMap<>();
-		final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(),
-				threadInstanceMap, inUseErrorNodeMap, newJoinCurrentThreads, addThreadInUseViolationVariablesAndErrorLocation);
-		((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).setCfgSmtToolkit(cfgSmtToolkit);
-		final HashRelation<String, String> copyDirectives = ProcedureMultiplier
-				.generateCopyDirectives(getAllInstances(threadInstanceMap));
+		final CfgSmtToolkit cfgSmtToolkit =
+				adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(), threadInstanceMap, inUseErrorNodeMap,
+						newJoinCurrentThreads, addThreadInUseViolationVariablesAndErrorLocation);
+		mPetrifiedIcfg.setCfgSmtToolkit(cfgSmtToolkit);
+		final List<ThreadInstance> instances = getAllInstances(threadInstanceMap);
 		// Note that threadInstanceMap, newForkCurrentThreads, and
 		// newJoinCurrentThreads are modified because the
 		// ProcedureMultiplier might introduce new
 		// IcfgForkThreadCurrentTransitions, namely in the case where
 		// a forked transition contains a fork.
-		new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) mPetrifiedIcfg, copyDirectives, backtranslator,
-				threadInstanceMap, newForkCurrentThreads, newJoinCurrentThreads);
+		ProcedureMultiplier.duplicateProcedures(mServices, mPetrifiedIcfg, instances, backtranslator, threadInstanceMap,
+				newForkCurrentThreads, newJoinCurrentThreads, this);
 		fillErrorNodeMap(threadInstanceMap.keySet(), inUseErrorNodeMap);
 		for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> entry : inUseErrorNodeMap
 				.entrySet()) {
-			((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).addLocation(entry.getValue(), false, true, false, false, false);
+			mPetrifiedIcfg.addLocation(entry.getValue(), false, true, false, false, false);
 		}
-//		if (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY) {
-//			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
-//					getAllInstances(threadInstanceMap));
-//		}
+		// if (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY) {
+		// ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
+		// getAllInstances(threadInstanceMap));
+		// }
 		final boolean addThreadInUseViolationEdges = true;
-				//(icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
+		// (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads, threadInstanceMap,
 				inUseErrorNodeMap, backtranslator, addThreadInUseViolationEdges);
 
-		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(getAllInstances(threadInstanceMap),
-				addThreadInUseViolationEdges);
+		final Set<Term> auxiliaryThreadVariables =
+				collectAxiliaryThreadVariables(instances, addThreadInUseViolationEdges);
 		backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
 		mBacktranslator = backtranslator;
 	}
 
-
-	private void fillErrorNodeMap(final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkTransitions,
+	private static void fillErrorNodeMap(final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkTransitions,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap) {
 		int errorNodeId = 0;
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkTransitions) {
@@ -164,21 +162,18 @@ public class IcfgPetrifier {
 		return result;
 	}
 
-
 	public IIcfg<IcfgLocation> getPetrifiedIcfg() {
 		return mPetrifiedIcfg;
 	}
 
-
-	public ITranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, IcfgLocation, IcfgLocation> getBacktranslator() {
+	public ITranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, IcfgLocation, IcfgLocation>
+			getBacktranslator() {
 		return mBacktranslator;
 	}
 
-
-
-	static List<ThreadInstance> getAllInstances(
+	public static List<ThreadInstance> getAllInstances(
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap) {
-		return threadInstanceMap.entrySet().stream().flatMap(x -> x.getValue().stream()).collect(Collectors.toList());
+		return threadInstanceMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 	}
 
 }
