@@ -63,11 +63,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorWithCheckDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -75,12 +73,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -99,8 +95,6 @@ public class ThreadInstanceAdder {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 
-	// public BoogieIcfgContainer connectThreadInstances(final BoogieIcfgContainer
-	// icfg,
 	public IIcfg<IcfgLocation> connectThreadInstances(final IIcfg<IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
@@ -129,7 +123,6 @@ public class ThreadInstanceAdder {
 		// location of the procedure
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot : joinCurrentThreads) {
-			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
 			for (final ThreadInstance ti : IcfgPetrifier.getAllInstances(threadInstanceMap)) {
 				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
 						jot.getJoinSmtArguments().getThreadIdArguments().getTerms());
@@ -142,8 +135,6 @@ public class ThreadInstanceAdder {
 					joinOtherThreadTransitions++;
 				}
 			}
-
-			// }
 		}
 		mLogger.info("Constructed " + joinOtherThreadTransitions + " joinOtherThreadTransitions.");
 		return icfg;
@@ -220,27 +211,23 @@ public class ThreadInstanceAdder {
 
 		final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 
-		final UnmodifiableTransFormula forkTransformula;
-		{
-			final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(
-					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
-					icfg.getCfgSmtToolkit().getInParams().get(threadInstanceName));
-			final UnmodifiableTransFormula threadIdAssignment =
-					fsa.constructThreadIdAssignment(icfg.getCfgSmtToolkit().getSymbolTable(),
-							icfg.getCfgSmtToolkit().getManagedScript(), Arrays.asList(threadIdVars));
-			final Set<IProgramVar> localVarsWithoutInParams =
-					icfg.getCfgSmtToolkit().getSymbolTable().getLocals(threadInstanceName).stream()
-							.filter(x -> !icfg.getCfgSmtToolkit().getInParams().get(threadInstanceName).contains(x))
-							.collect(Collectors.toSet());
-			final UnmodifiableTransFormula havocOfLocalVars = TransFormulaUtils.constructHavoc(localVarsWithoutInParams,
-					icfg.getCfgSmtToolkit().getManagedScript());
-			final List<UnmodifiableTransFormula> conjuncts =
-					Arrays.asList(parameterAssignment, threadIdAssignment, havocOfLocalVars);
-			forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-					icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-					conjuncts);
-		}
+		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(
+				icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
+				icfg.getCfgSmtToolkit().getInParams().get(threadInstanceName));
+		final UnmodifiableTransFormula threadIdAssignment =
+				fsa.constructThreadIdAssignment(icfg.getCfgSmtToolkit().getSymbolTable(),
+						icfg.getCfgSmtToolkit().getManagedScript(), Arrays.asList(threadIdVars));
+		final Set<IProgramVar> localVarsWithoutInParams =
+				icfg.getCfgSmtToolkit().getSymbolTable().getLocals(threadInstanceName).stream()
+						.filter(x -> !icfg.getCfgSmtToolkit().getInParams().get(threadInstanceName).contains(x))
+						.collect(Collectors.toSet());
+		final UnmodifiableTransFormula havocOfLocalVars =
+				TransFormulaUtils.constructHavoc(localVarsWithoutInParams, icfg.getCfgSmtToolkit().getManagedScript());
+		final List<UnmodifiableTransFormula> conjuncts =
+				Arrays.asList(parameterAssignment, threadIdAssignment, havocOfLocalVars);
+		final UnmodifiableTransFormula forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+				icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE, conjuncts);
 
 		final IcfgForkThreadOtherTransition forkThreadOther =
 				ef.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
@@ -259,7 +246,7 @@ public class ThreadInstanceAdder {
 		}
 	}
 
-	private void integrateForkEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,
+	private static void integrateForkEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,
 			final BlockEncodingBacktranslator backtranslator, final IcfgLocation source, final IcfgLocation target,
 			final IcfgEdge newEdge) {
 		source.addOutgoing(newEdge);
@@ -278,7 +265,7 @@ public class ThreadInstanceAdder {
 		});
 	}
 
-	private IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgTransition<IcfgLocation> newEdge,
+	private static IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgTransition<IcfgLocation> newEdge,
 			final BlockEncodingBacktranslator backtranslator) {
 		final List<IIcfgTransition<IcfgLocation>> transRes =
 				backtranslator.translateTrace(Collections.singletonList(newEdge));
@@ -308,26 +295,21 @@ public class ThreadInstanceAdder {
 
 		final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 
-		final UnmodifiableTransFormula joinTransformula;
-		{
-			final UnmodifiableTransFormula threadIdAssumption =
-					jsa.constructThreadIdAssumption(icfg.getCfgSmtToolkit().getSymbolTable(),
-							icfg.getCfgSmtToolkit().getManagedScript(), Arrays.asList(threadIdVars));
-			final UnmodifiableTransFormula resultAssignment;
-			if (jsa.getAssignmentLhs().isEmpty()) {
-				// no result assignment
-				resultAssignment =
-						TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
-			} else {
-				resultAssignment = jsa.constructResultAssignment(icfg.getCfgSmtToolkit().getManagedScript(),
-						icfg.getCfgSmtToolkit().getOutParams().get(threadInstanceName));
-			}
-			final List<UnmodifiableTransFormula> conjuncts = Arrays.asList(resultAssignment, threadIdAssumption);
-			joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-					icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-					conjuncts);
+		final UnmodifiableTransFormula threadIdAssumption =
+				jsa.constructThreadIdAssumption(icfg.getCfgSmtToolkit().getSymbolTable(),
+						icfg.getCfgSmtToolkit().getManagedScript(), Arrays.asList(threadIdVars));
+		final UnmodifiableTransFormula resultAssignment;
+		if (jsa.getAssignmentLhs().isEmpty()) {
+			// no result assignment
+			resultAssignment = TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
+		} else {
+			resultAssignment = jsa.constructResultAssignment(icfg.getCfgSmtToolkit().getManagedScript(),
+					icfg.getCfgSmtToolkit().getOutParams().get(threadInstanceName));
 		}
+		final List<UnmodifiableTransFormula> conjuncts = Arrays.asList(resultAssignment, threadIdAssumption);
+		final UnmodifiableTransFormula joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+				icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE, conjuncts);
 
 		final IcfgJoinThreadOtherTransition joinThreadOther =
 				ef.createJoinThreadOtherTransition(exitNode, callerNode, null, joinTransformula, jot);
@@ -342,63 +324,6 @@ public class ThreadInstanceAdder {
 		if (!overapproximations.isEmpty()) {
 			new Overapprox(overapproximations).annotate(jot);
 		}
-	}
-
-	/**
-	 * TODO Concurrent Boogie:
-	 *
-	 * @param mgdScript
-	 */
-	private static UnmodifiableTransFormula constructForkInUseAssignment(final IProgramNonOldVar threadInUseVar,
-			final ManagedScript mgdScript) {
-		final Map<IProgramVar, TermVariable> outVars =
-				Collections.singletonMap(threadInUseVar, threadInUseVar.getTermVariable());
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), outVars, true,
-				Collections.emptySet(), true, Collections.emptySet(), true);
-		tfb.setFormula(threadInUseVar.getTermVariable());
-		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mgdScript);
-	}
-
-	/**
-	 * TODO Concurrent Boogie:
-	 *
-	 * @param mgdScript
-	 * @return A {@link TransFormula} that represents the assume statement {@code var == true}.
-	 * @deprecated ThreadInUse violations are currently handled via a monitor (i.e., certain places of the petri net).
-	 *             Yet unclear if we re-introduce the threadInUse variables in the future.
-	 */
-	@Deprecated
-	private static UnmodifiableTransFormula constructThreadInUseViolationAssumption(
-			final IProgramNonOldVar threadInUseVar, final ManagedScript mgdScript) {
-		final Map<IProgramVar, TermVariable> inVars =
-				Collections.singletonMap(threadInUseVar, threadInUseVar.getTermVariable());
-		final Map<IProgramVar, TermVariable> outVars = inVars;
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, Collections.emptySet(), true,
-				Collections.emptySet(), true);
-		tfb.setFormula(threadInUseVar.getTermVariable());
-		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mgdScript);
-	}
-
-	/**
-	 * TODO Concurrent Boogie:
-	 *
-	 * @param mgdScript
-	 * @return A {@link TransFormula} that represents the assignment statement {@code var := false}.
-	 * @deprecated ThreadInUse violations are currently handled via a monitor (i.e., certain places of the petri net).
-	 *             Yet unclear if we re-introduce the threadInUse variables in the future.
-	 */
-	@Deprecated
-	private static UnmodifiableTransFormula constructThreadNotInUseAssingment(final IProgramNonOldVar threadInUseVar,
-			final ManagedScript mgdScript) {
-		final Map<IProgramVar, TermVariable> outVars =
-				Collections.singletonMap(threadInUseVar, threadInUseVar.getTermVariable());
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), outVars, true,
-				Collections.emptySet(), true, Collections.emptySet(), true);
-		tfb.setFormula(SmtUtils.not(mgdScript.getScript(), threadInUseVar.getTermVariable()));
-		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mgdScript);
 	}
 
 	/**
@@ -460,11 +385,6 @@ public class ThreadInstanceAdder {
 		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + forkNumber;
 	}
 
-	private static String generateThreadInstanceId(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork,
-			final String procedureName, final int threadInstanceNumber, final int threadInstanceMax) {
-		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + fork.hashCode();
-	}
-
 	private static ProgramNonOldVar constructThreadInUseVariable(final String threadInstanceId,
 			final ManagedScript mgdScript) {
 		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
@@ -485,9 +405,6 @@ public class ThreadInstanceAdder {
 		return threadIdVars;
 	}
 
-	/**
-	 * TODO Concurrent Boogie:
-	 */
 	private static ProgramNonOldVar constructThreadAuxiliaryVariable(final String id, final Sort sort,
 			final ManagedScript mgdScript) {
 		mgdScript.lock(id);
