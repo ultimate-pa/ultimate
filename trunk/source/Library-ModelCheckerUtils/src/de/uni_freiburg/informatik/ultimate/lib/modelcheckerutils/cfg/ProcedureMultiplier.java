@@ -130,7 +130,7 @@ public class ProcedureMultiplier {
 				}
 				outParams.put(copyIdentifier, outParamsOfCopy);
 				for (final ILocalProgramVar localVar : cfgSmtToolkit.getSymbolTable().getLocals(proc)) {
-					if (procOldVar2NewVar.containsKey(localVar)) {
+					if (!procOldVar2NewVar.containsKey(localVar)) {
 						constructVariableCopy(localVar, copyIdentifier, managedScript, procOldVar2NewVar,
 								variableBacktranslationMapping, symbolTable, lockOwner);
 					}
