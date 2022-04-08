@@ -99,21 +99,18 @@ public class ThreadInstanceAdder {
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap,
-			final BlockEncodingBacktranslator backtranslator, final boolean addThreadInUseViolationEdges) {
+			final BlockEncodingBacktranslator backtranslator) {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
-			if (addThreadInUseViolationEdges) {
-				final IcfgLocation callerNode = fct.getSource();
-				final IcfgLocation errorNode = inUseErrorNodeMap.get(fct);
-				final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
-				final UnmodifiableTransFormula errorTransformula =
-						TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
-				final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
-						new Payload(), errorTransformula, errorTransformula);
-				integrateForkEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
-			}
+			final IcfgLocation callerNode = fct.getSource();
+			final IcfgLocation errorNode = inUseErrorNodeMap.get(fct);
+			final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
+			final UnmodifiableTransFormula errorTransformula =
+					TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
+			final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
+					new Payload(), errorTransformula, errorTransformula);
+			integrateForkEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
 			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
-				addForkOtherThreadTransition(fct, ti.getIdVars(), icfg, ti.getThreadInstanceName(), backtranslator,
-						addThreadInUseViolationEdges);
+				addForkOtherThreadTransition(fct, ti.getIdVars(), icfg, ti.getThreadInstanceName(), backtranslator);
 			}
 		}
 
@@ -129,8 +126,7 @@ public class ThreadInstanceAdder {
 						isReturnValueCompatible(jot.getJoinSmtArguments().getAssignmentLhs(),
 								icfg.getCfgSmtToolkit().getOutParams().get(ti.getThreadInstanceName()));
 				if (threadIdCompatible && returnValueCompatible) {
-					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(), icfg, backtranslator,
-							addThreadInUseViolationEdges);
+					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(), icfg, backtranslator);
 					joinOtherThreadTransitions++;
 				}
 			}
@@ -186,7 +182,6 @@ public class ThreadInstanceAdder {
 	 * Add ForkOtherThreadEdge from the ForkCurrentThreadEdge source to the entry location of the forked procedure.
 	 *
 	 * @param backtranslator
-	 * @param addThreadInUseViolationEdges
 	 * @param string
 	 *
 	 * @param edge
@@ -194,8 +189,7 @@ public class ThreadInstanceAdder {
 	 */
 	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct,
 			final IProgramNonOldVar[] threadIdVars, final IIcfg<? extends IcfgLocation> icfg,
-			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator,
-			final boolean addThreadInUseViolationEdges) {
+			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
@@ -283,8 +277,7 @@ public class ThreadInstanceAdder {
 	 */
 	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot,
 			final String threadInstanceName, final IProgramNonOldVar[] threadIdVars,
-			final IIcfg<? extends IcfgLocation> icfg, final BlockEncodingBacktranslator backtranslator,
-			final boolean addThreadInUseViolationEdges) {
+			final IIcfg<? extends IcfgLocation> icfg, final BlockEncodingBacktranslator backtranslator) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(threadInstanceName);

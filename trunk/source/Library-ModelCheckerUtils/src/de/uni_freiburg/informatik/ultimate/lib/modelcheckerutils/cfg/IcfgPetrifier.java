@@ -117,9 +117,8 @@ public class IcfgPetrifier {
 				.entrySet()) {
 			mPetrifiedIcfg.addLocation(entry.getValue(), false, true, false, false, false);
 		}
-		final boolean addThreadInUseViolationEdges = true;
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads, threadInstanceMap,
-				inUseErrorNodeMap, backtranslator, addThreadInUseViolationEdges);
+				inUseErrorNodeMap, backtranslator);
 
 		final Set<Term> idVars = instances.stream().flatMap(x -> Arrays.stream(x.getIdVars())).map(IProgramVar::getTerm)
 				.collect(Collectors.toSet());
