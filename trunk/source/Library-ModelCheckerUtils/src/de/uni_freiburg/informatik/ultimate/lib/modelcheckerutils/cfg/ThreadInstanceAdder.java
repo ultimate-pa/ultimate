@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * Adds thread instances to an ICFG
  *
  * @author heizmann@informatik.uni-freiburg.de
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 
 public class ThreadInstanceAdder {
@@ -200,27 +201,13 @@ public class ThreadInstanceAdder {
 		final IcfgLocation callerNode = fct.getSource();
 		final IcfgLocation calleeEntryLoc = icfg.getProcedureEntryNodes().get(threadInstanceName);
 
-		final ForkSmtArguments fsa = fct.getForkSmtArguments();
-
 		final CfgSmtToolkit cfgSmtToolkit = icfg.getCfgSmtToolkit();
-		final IcfgEdgeFactory ef = cfgSmtToolkit.getIcfgEdgeFactory();
 
-		final ManagedScript managedScript = cfgSmtToolkit.getManagedScript();
-		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(
-				cfgSmtToolkit.getSymbolTable(), managedScript, cfgSmtToolkit.getInParams().get(threadInstanceName));
-		final UnmodifiableTransFormula threadIdAssignment = fsa.constructThreadIdAssignment(
-				cfgSmtToolkit.getSymbolTable(), managedScript, Arrays.asList(threadIdVars));
-		final Set<IProgramVar> localVarsWithoutInParams = cfgSmtToolkit.getSymbolTable().getLocals(threadInstanceName)
-				.stream().filter(x -> !cfgSmtToolkit.getInParams().get(threadInstanceName).contains(x))
-				.collect(Collectors.toSet());
-		final UnmodifiableTransFormula havocOfLocalVars =
-				TransFormulaUtils.constructHavoc(localVarsWithoutInParams, managedScript);
-		final List<UnmodifiableTransFormula> conjuncts =
-				List.of(parameterAssignment, threadIdAssignment, havocOfLocalVars);
-		final UnmodifiableTransFormula forkTransformula = constructSequentialComposition(managedScript, conjuncts);
+		final UnmodifiableTransFormula forkTransformula = constructForkTransFormula(fct.getForkSmtArguments(),
+				Arrays.asList(threadIdVars), threadInstanceName, cfgSmtToolkit);
 
-		final IcfgForkThreadOtherTransition forkThreadOther =
-				ef.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
+		final IcfgForkThreadOtherTransition forkThreadOther = cfgSmtToolkit.getIcfgEdgeFactory()
+				.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
 		integrateForkEdge(fct, backtranslator, callerNode, calleeEntryLoc, forkThreadOther);
 
 		// TODO Matthias 2018-09-15: Set overapproximations
@@ -234,6 +221,23 @@ public class ThreadInstanceAdder {
 		if (!overapproximations.isEmpty()) {
 			new Overapprox(overapproximations).annotate(fct);
 		}
+	}
+
+	private UnmodifiableTransFormula constructForkTransFormula(final ForkSmtArguments fsa,
+			final List<IProgramVar> threadIdVars, final String threadInstanceName, final CfgSmtToolkit cfgSmtToolkit) {
+		final ManagedScript managedScript = cfgSmtToolkit.getManagedScript();
+		final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(
+				cfgSmtToolkit.getSymbolTable(), managedScript, cfgSmtToolkit.getInParams().get(threadInstanceName));
+		final UnmodifiableTransFormula threadIdAssignment =
+				fsa.constructThreadIdAssignment(cfgSmtToolkit.getSymbolTable(), managedScript, threadIdVars);
+		final Set<IProgramVar> localVarsWithoutInParams = cfgSmtToolkit.getSymbolTable().getLocals(threadInstanceName)
+				.stream().filter(x -> !cfgSmtToolkit.getInParams().get(threadInstanceName).contains(x))
+				.collect(Collectors.toSet());
+		final UnmodifiableTransFormula havocOfLocalVars =
+				TransFormulaUtils.constructHavoc(localVarsWithoutInParams, managedScript);
+		final List<UnmodifiableTransFormula> conjuncts =
+				List.of(parameterAssignment, threadIdAssignment, havocOfLocalVars);
+		return constructSequentialComposition(managedScript, conjuncts);
 	}
 
 	private UnmodifiableTransFormula constructSequentialComposition(final ManagedScript managedScript,
@@ -287,28 +291,12 @@ public class ThreadInstanceAdder {
 		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(threadInstanceName);
 		final IcfgLocation callerNode = jot.getTarget();
 
-		final JoinSmtArguments jsa = jot.getJoinSmtArguments();
-
 		final CfgSmtToolkit cfgSmtToolkit = icfg.getCfgSmtToolkit();
-		final IcfgEdgeFactory ef = cfgSmtToolkit.getIcfgEdgeFactory();
+		final UnmodifiableTransFormula joinTransformula = constructJoinTransformula(jot.getJoinSmtArguments(),
+				Arrays.asList(threadIdVars), threadInstanceName, cfgSmtToolkit);
 
-		final ManagedScript managedScript = cfgSmtToolkit.getManagedScript();
-		final UnmodifiableTransFormula threadIdAssumption = jsa.constructThreadIdAssumption(
-				cfgSmtToolkit.getSymbolTable(), managedScript, Arrays.asList(threadIdVars));
-		final UnmodifiableTransFormula resultAssignment;
-		if (jsa.getAssignmentLhs().isEmpty()) {
-			// no result assignment
-			resultAssignment = TransFormulaBuilder.getTrivialTransFormula(managedScript);
-		} else {
-			resultAssignment =
-					jsa.constructResultAssignment(managedScript, cfgSmtToolkit.getOutParams().get(threadInstanceName));
-		}
-
-		final List<UnmodifiableTransFormula> conjuncts = List.of(resultAssignment, threadIdAssumption);
-		final UnmodifiableTransFormula joinTransformula = constructSequentialComposition(managedScript, conjuncts);
-
-		final IcfgJoinThreadOtherTransition joinThreadOther =
-				ef.createJoinThreadOtherTransition(exitNode, callerNode, null, joinTransformula, jot);
+		final IcfgJoinThreadOtherTransition joinThreadOther = cfgSmtToolkit.getIcfgEdgeFactory()
+				.createJoinThreadOtherTransition(exitNode, callerNode, null, joinTransformula, jot);
 		exitNode.addOutgoing(joinThreadOther);
 		callerNode.addIncoming(joinThreadOther);
 
@@ -320,6 +308,24 @@ public class ThreadInstanceAdder {
 		if (!overapproximations.isEmpty()) {
 			new Overapprox(overapproximations).annotate(jot);
 		}
+	}
+
+	private UnmodifiableTransFormula constructJoinTransformula(final JoinSmtArguments jsa,
+			final List<IProgramVar> threadIdVars, final String threadInstanceName, final CfgSmtToolkit cfgSmtToolkit) {
+		final ManagedScript managedScript = cfgSmtToolkit.getManagedScript();
+		final UnmodifiableTransFormula threadIdAssumption =
+				jsa.constructThreadIdAssumption(cfgSmtToolkit.getSymbolTable(), managedScript, threadIdVars);
+		final UnmodifiableTransFormula resultAssignment;
+		if (jsa.getAssignmentLhs().isEmpty()) {
+			// no result assignment
+			resultAssignment = TransFormulaBuilder.getTrivialTransFormula(managedScript);
+		} else {
+			resultAssignment =
+					jsa.constructResultAssignment(managedScript, cfgSmtToolkit.getOutParams().get(threadInstanceName));
+		}
+
+		final List<UnmodifiableTransFormula> conjuncts = List.of(resultAssignment, threadIdAssumption);
+		return constructSequentialComposition(managedScript, conjuncts);
 	}
 
 	/**
