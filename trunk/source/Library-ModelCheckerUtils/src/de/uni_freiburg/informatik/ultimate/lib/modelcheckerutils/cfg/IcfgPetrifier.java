@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IcfgDuplicator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -121,7 +121,9 @@ public class IcfgPetrifier {
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads, threadInstanceMap,
 				inUseErrorNodeMap, backtranslator, addThreadInUseViolationEdges);
 
-		backtranslator.setVariableBlacklist(collectAxiliaryThreadVariables(instances, addThreadInUseViolationEdges));
+		final Set<Term> idVars = instances.stream().flatMap(x -> Arrays.stream(x.getIdVars())).map(IProgramVar::getTerm)
+				.collect(Collectors.toSet());
+		backtranslator.setVariableBlacklist(idVars);
 		mBacktranslator = backtranslator;
 	}
 
@@ -133,17 +135,6 @@ public class IcfgPetrifier {
 			inUseErrorNodeMap.put(fork, errNode);
 			errorNodeId++;
 		}
-	}
-
-	private static Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values,
-			final boolean addThreadInUseViolationEdges) {
-		final Set<Term> result = new HashSet<>();
-		for (final ThreadInstance ti : values) {
-			for (final IProgramNonOldVar idVar : ti.getIdVars()) {
-				result.add(idVar.getTerm());
-			}
-		}
-		return result;
 	}
 
 	public IIcfg<IcfgLocation> getPetrifiedIcfg() {
