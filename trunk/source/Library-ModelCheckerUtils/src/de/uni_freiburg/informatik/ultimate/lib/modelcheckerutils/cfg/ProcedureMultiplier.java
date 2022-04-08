@@ -266,7 +266,7 @@ public class ProcedureMultiplier {
 		final MultiTermResult newThreadIdArguments =
 				copyMultiTermResult(joinSmtArguments.getThreadIdArguments(), defaultVariableMapping, managedScript);
 		final List<IProgramVar> newAssignmentLhs = joinSmtArguments.getAssignmentLhs().stream()
-				.map(x -> x instanceof ILocalProgramVar ? map.get(x) : x).collect(Collectors.toList());
+				.map(x -> x.isGlobal() ? x : map.get(x)).collect(Collectors.toList());
 		return new JoinSmtArguments(newThreadIdArguments, newAssignmentLhs);
 	}
 
