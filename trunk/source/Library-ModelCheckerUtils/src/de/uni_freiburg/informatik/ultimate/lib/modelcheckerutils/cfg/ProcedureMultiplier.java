@@ -71,8 +71,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * Modifies a given {@link IIcfg} by adding copies of existing procedures.
  * <p>
- * Copies are constructed according to the {@link HashRelation} argument "copyDirectives". If the relation contains the
- * pair (foo, bar) we construct a copy of the procedure "foo" and the identifier of the copy is "bar".
+ * Copies are constructed according to the {@link List} argument "instances". For each instance with the name "foo" and
+ * the template "bar" we construct a copy of the procedure "foo" and the identifier of the copy is "bar".
  * <p />
  * <p>
  * A {@link ProcedureMultiplier} replaces also all local variables accordingly and replaces the {@link CfgSmtToolkit}.
