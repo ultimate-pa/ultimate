@@ -91,7 +91,8 @@ public class ProcedureMultiplier {
 			final List<ThreadInstance> instances, final BlockEncodingBacktranslator backtranslator,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
-			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads, final Object lockOwner) {
+			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads) {
+		final Object lockOwner = ProcedureMultiplier.class;
 		final HashRelation<String, String> copyDirectives = generateCopyDirectives(instances);
 		final CfgSmtToolkit cfgSmtToolkit = icfg.getCfgSmtToolkit();
 		final IcfgEdgeFactory icfgEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();

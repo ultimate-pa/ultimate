@@ -111,7 +111,7 @@ public class IcfgPetrifier {
 		// IcfgForkThreadCurrentTransitions, namely in the case where
 		// a forked transition contains a fork.
 		ProcedureMultiplier.duplicateProcedures(mServices, mPetrifiedIcfg, instances, backtranslator, threadInstanceMap,
-				newForkCurrentThreads, newJoinCurrentThreads, this);
+				newForkCurrentThreads, newJoinCurrentThreads);
 		fillErrorNodeMap(threadInstanceMap.keySet(), inUseErrorNodeMap);
 		for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> entry : inUseErrorNodeMap
 				.entrySet()) {
