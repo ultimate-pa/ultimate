@@ -341,8 +341,7 @@ public class ThreadInstanceAdder {
 			for (int j = 1; j <= numberOfThreadInstances; j++) {
 				final String procedureName = fork.getNameOfForkedProcedure();
 				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, numberOfThreadInstances);
-				final ThreadInstance ti = constructThreadInstance(mgdScript,
-						fork, procedureName, threadInstanceId);
+				final ThreadInstance ti = constructThreadInstance(mgdScript, fork, procedureName, threadInstanceId);
 				threadInstances.add(ti);
 			}
 			result.put(fork, threadInstances);
@@ -362,14 +361,12 @@ public class ThreadInstanceAdder {
 		return errorLocation;
 	}
 
-	private static ThreadInstance constructThreadInstance(
-			final ManagedScript mgdScript, final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork,
-			final String procedureName, final String threadInstanceId) {
+	private static ThreadInstance constructThreadInstance(final ManagedScript mgdScript,
+			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork, final String procedureName,
+			final String threadInstanceId) {
 		final ProgramNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
 				fork.getForkSmtArguments().getThreadIdArguments().getTerms());
-
-		final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars);
-		return ti;
+		return new ThreadInstance(threadInstanceId, procedureName, threadIdVars);
 	}
 
 	private static String generateThreadInstanceId(final int forkNumber, final String procedureName,
