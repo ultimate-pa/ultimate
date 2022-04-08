@@ -58,9 +58,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 
 	@Override
 	public Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg) {
-		final IIcfg<IcfgLocation> petrified =
-				new IcfgPetrifier(mServices, icfg, 2)
-						.getPetrifiedIcfg();
+		final IIcfg<IcfgLocation> petrified = new IcfgPetrifier(mServices, icfg, 2).getPetrifiedIcfg();
 		final Map<String, Integer> numberOfThreads =
 				petrified.getInitialNodes().stream().collect(Collectors.toMap(IcfgLocation::getProcedure, x -> 1));
 		final Set<String> unboundedThreads = new HashSet<>();
