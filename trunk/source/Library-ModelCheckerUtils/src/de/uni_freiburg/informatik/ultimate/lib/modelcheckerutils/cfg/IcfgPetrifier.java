@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -113,10 +112,7 @@ public class IcfgPetrifier {
 		ProcedureMultiplier.duplicateProcedures(mServices, mPetrifiedIcfg, instances, backtranslator, threadInstanceMap,
 				newForkCurrentThreads, newJoinCurrentThreads);
 		fillErrorNodeMap(threadInstanceMap.keySet(), inUseErrorNodeMap);
-		for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> entry : inUseErrorNodeMap
-				.entrySet()) {
-			mPetrifiedIcfg.addLocation(entry.getValue(), false, true, false, false, false);
-		}
+		inUseErrorNodeMap.values().forEach(x -> mPetrifiedIcfg.addLocation(x, false, true, false, false, false));
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads, threadInstanceMap,
 				inUseErrorNodeMap, backtranslator);
 
