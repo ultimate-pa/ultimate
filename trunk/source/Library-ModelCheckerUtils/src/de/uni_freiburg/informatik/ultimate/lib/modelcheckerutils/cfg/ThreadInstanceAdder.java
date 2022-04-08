@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -333,7 +332,7 @@ public class ThreadInstanceAdder {
 	public static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> constructThreadInstances(
 			final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
-			final boolean addThreadInUseViolationVariablesAndErrorLocation, final int numberOfThreadInstances) {
+			final int numberOfThreadInstances) {
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> result = new HashMap<>();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;
@@ -342,8 +341,8 @@ public class ThreadInstanceAdder {
 			for (int j = 1; j <= numberOfThreadInstances; j++) {
 				final String procedureName = fork.getNameOfForkedProcedure();
 				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, numberOfThreadInstances);
-				final ThreadInstance ti = constructThreadInstance(addThreadInUseViolationVariablesAndErrorLocation,
-						mgdScript, fork, procedureName, threadInstanceId);
+				final ThreadInstance ti = constructThreadInstance(mgdScript,
+						fork, procedureName, threadInstanceId);
 				threadInstances.add(ti);
 			}
 			result.put(fork, threadInstances);
@@ -364,33 +363,18 @@ public class ThreadInstanceAdder {
 	}
 
 	private static ThreadInstance constructThreadInstance(
-			final boolean addThreadInUseViolationVariablesAndErrorLocation, final ManagedScript mgdScript,
-			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork, final String procedureName,
-			final String threadInstanceId) {
-		final ProgramNonOldVar threadInUseVar;
-		if (addThreadInUseViolationVariablesAndErrorLocation) {
-			threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
-		} else {
-			threadInUseVar = null;
-		}
+			final ManagedScript mgdScript, final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork,
+			final String procedureName, final String threadInstanceId) {
 		final ProgramNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
 				fork.getForkSmtArguments().getThreadIdArguments().getTerms());
 
-		final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar);
+		final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars);
 		return ti;
 	}
 
 	private static String generateThreadInstanceId(final int forkNumber, final String procedureName,
 			final int threadInstanceNumber, final int threadInstanceMax) {
 		return procedureName + "Thread" + threadInstanceNumber + "of" + threadInstanceMax + "ForFork" + forkNumber;
-	}
-
-	private static ProgramNonOldVar constructThreadInUseVariable(final String threadInstanceId,
-			final ManagedScript mgdScript) {
-		final Sort booleanSort = SmtSortUtils.getBoolSort(mgdScript);
-		final ProgramNonOldVar threadInUseVar =
-				constructThreadAuxiliaryVariable(threadInstanceId + "_inUse", booleanSort, mgdScript);
-		return threadInUseVar;
 	}
 
 	private static ProgramNonOldVar[] constructThreadIdVariable(final String threadInstanceId,
@@ -416,8 +400,7 @@ public class ThreadInstanceAdder {
 	CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap,
-			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions,
-			final boolean addThreadInUseViolationVariables) {
+			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions) {
 		final DefaultIcfgSymbolTable newSymbolTable =
 				new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		final HashRelation<String, IProgramNonOldVar> proc2Globals =
