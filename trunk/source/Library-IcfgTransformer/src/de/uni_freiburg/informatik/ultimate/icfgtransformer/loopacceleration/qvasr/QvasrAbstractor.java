@@ -102,8 +102,7 @@ public class QvasrAbstractor {
 	public static QvasrAbstraction computeAbstraction(final ManagedScript script,
 			final UnmodifiableTransFormula transitionFormula) {
 
-		if (!SmtUtils.containsArrayVariables(transitionFormula.getFormula())
-				|| !SmtUtils.isArrayFree(transitionFormula.getFormula())) {
+		if (!SmtUtils.isArrayFree(transitionFormula.getFormula())) {
 			throw new UnsupportedOperationException("Cannot deal with arrays.");
 		}
 

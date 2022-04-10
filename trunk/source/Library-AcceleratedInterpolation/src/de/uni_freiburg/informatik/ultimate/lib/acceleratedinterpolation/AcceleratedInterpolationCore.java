@@ -250,8 +250,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 					break;
 				}
 				accelerationFinishedCorrectly = true;
-				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), loop);
-				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, loop, false);
+				final Term t = mPredHelper.makeReflexive(acceleratedLoopRelation.getFormula(), acceleratedLoopRelation);
+				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, false);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Computed Acceleration: " + tf.getFormula().toStringDirect());
 					mLogger.debug("Simplified: " + SmtUtils
