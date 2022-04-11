@@ -35,7 +35,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -43,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fast
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -85,12 +84,10 @@ public class OctagonCalculatorTest {
 		mLogger.debug("SequentializeTest:");
 		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdZ3);
 		final OctConjunction example = new OctConjunction();
-		final BoogieVar x = new LocalBoogieVar("x", "x", BoogieType.createPlaceholderType(0),
-				mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
-				(ApplicationTerm) mZ3.term("false"));
-		final BoogieVar y = new LocalBoogieVar("y", "y", BoogieType.createPlaceholderType(0),
-				mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
-				(ApplicationTerm) mZ3.term("false"));
+		final ProgramVar x = new LocalProgramVar("x", "x", mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")),
+				(ApplicationTerm) mZ3.term("false"), (ApplicationTerm) mZ3.term("false"));
+		final ProgramVar y = new LocalProgramVar("y", "y", mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")),
+				(ApplicationTerm) mZ3.term("false"), (ApplicationTerm) mZ3.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 		final TermVariable inVarX = mMgdZ3.constructFreshTermVariable("xin", mZ3.sort("Int"));
@@ -119,12 +116,10 @@ public class OctagonCalculatorTest {
 		mLogger.debug("BinarySequentializeTest:");
 		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdZ3);
 		final OctConjunction example = new OctConjunction();
-		final BoogieVar x = new LocalBoogieVar("x", "x", BoogieType.createPlaceholderType(0),
-				mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
-				(ApplicationTerm) mZ3.term("false"));
-		final BoogieVar y = new LocalBoogieVar("y", "y", BoogieType.createPlaceholderType(0),
-				mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
-				(ApplicationTerm) mZ3.term("false"));
+		final ProgramVar x = new LocalProgramVar("x", "x", mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")),
+				(ApplicationTerm) mZ3.term("false"), (ApplicationTerm) mZ3.term("false"));
+		final ProgramVar y = new LocalProgramVar("y", "y", mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")),
+				(ApplicationTerm) mZ3.term("false"), (ApplicationTerm) mZ3.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 		final TermVariable inVarX = mMgdZ3.constructFreshTermVariable("xin", mZ3.sort("Int"));

@@ -25,47 +25,30 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Variable in a boogie program. The procedure field of global variables is null. Only global variables can be old
- * variables. Two BoogieVars are equivalent if they have the same identifier, same procedure, same old-flag. Equivalence
- * does not depend on the IType. We expect that two equivalent BoogieVars with different ITypes never occur in the same
- * program.
+ * Default implementation of {@link IProgramVar}.
  *
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public abstract class BoogieVar implements IProgramVar, Serializable {
+public abstract class ProgramVar implements IProgramVar, Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	protected final String mIdentifier;
-
-	/**
-	 * TermVariable which represents this BoogieVar in SMT terms.
-	 */
 	private final TermVariable mTermVariable;
-
-	/**
-	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in closed SMT terms.
-	 */
 	private final ApplicationTerm mDefaultConstant;
-
-	/**
-	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar if it occurs as next state variable in closed
-	 * SMT which describe a transition.
-	 */
 	private final ApplicationTerm mPrimedConstant;
 
-	public BoogieVar(final String identifier, final TermVariable tv, final ApplicationTerm defaultConstant,
+	public ProgramVar(final String identifier, final TermVariable tv, final ApplicationTerm defaultConstant,
 			final ApplicationTerm primedContant) {
 		mIdentifier = identifier;
 		mTermVariable = tv;
@@ -73,31 +56,50 @@ public abstract class BoogieVar implements IProgramVar, Serializable {
 		mPrimedConstant = primedContant;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public TermVariable getTermVariable() {
 		assert mTermVariable != null;
 		return mTermVariable;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public ApplicationTerm getDefaultConstant() {
 		return mDefaultConstant;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public ApplicationTerm getPrimedConstant() {
 		return mPrimedConstant;
 	}
 
 	@Override
+	/**
+	 * {@inheritDoc}
+	 */
 	public Term getTerm() {
 		return mTermVariable;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String toString() {
 		return getGloballyUniqueId();
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
 
 	@Override
 	public Sort getSort() {

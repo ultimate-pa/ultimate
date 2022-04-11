@@ -25,28 +25,27 @@
  * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * A GlobalBoogieVar is either a OldBoogieVar or a NonOldBoogieVar. The NonOldBoogieVar is a variable that can be
- * modified in the program. The OldBoogieVar is a variable that has always the value that the corresponding
- * NonOldBoogieVar had at the beginning of the last procedure call.
- * 
- * @author heizmann@informatik.uni-freiburg.de
+ * Default implementation of a global program variable.
+ *
+ * @see {@link IProgramVar}.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public abstract class GlobalBoogieVar extends BoogieVar implements Serializable {
+public abstract class GlobalProgramVar extends ProgramVar implements Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
 
-	public GlobalBoogieVar(final String identifier, final IBoogieType iType, final TermVariable tv,
-			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
+	public GlobalProgramVar(final String identifier, final TermVariable tv, final ApplicationTerm defaultConstant,
+			final ApplicationTerm primedContant) {
 		super(identifier, tv, defaultConstant, primedContant);
 	}
 

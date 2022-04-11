@@ -91,8 +91,7 @@ public class NestedStoreSequenceTest {
 
 		final String expectedResultAsString = "(= (_ bv5 8) val)";
 		final Term expectedResult = TermParseUtils.parseTerm(mScript, expectedResultAsString);
-		Assert.assertTrue(expectedResult.equals(result));
-
+		Assert.assertTrue(SmtTestUtils.areEquivalent(mScript, result, expectedResult));
 	}
 
 	@Test

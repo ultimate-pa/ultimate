@@ -25,56 +25,54 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * See comment in GlobalBoogieVar.
+ * Default implementation of a global program variable that does not represent
+ * the copy that refers to the value of global variable at the beginning of a
+ * procedure.
  *
- * @author heizmann@informatik.uni-freiburg.de
+ * @see {@link IProgramVar}.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class BoogieOldVar extends GlobalBoogieVar implements IProgramOldVar {
+public class ProgramNonOldVar extends GlobalProgramVar implements IProgramNonOldVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 
-	private IProgramNonOldVar mNonOldVar;
 	private final int mHashCode;
+	private final ProgramOldVar mOldVar;
 
-	public BoogieOldVar(final String identifier, final IBoogieType iType, final TermVariable tv,
-			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
-		super(identifier, iType, tv, defaultConstant, primedContant);
+	public ProgramNonOldVar(final String identifier, final TermVariable tv, final ApplicationTerm defaultConstant,
+			final ApplicationTerm primedConstant, final ProgramOldVar oldVar) {
+		super(identifier, tv, defaultConstant, primedConstant);
+		mOldVar = oldVar;
 		mHashCode = computeHashCode();
 	}
 
 	@Override
 	public String getGloballyUniqueId() {
-		return IProgramOldVar.super.getGloballyUniqueId();
+		return IProgramNonOldVar.super.getGloballyUniqueId();
 	}
 
 	@Override
-	public String getIdentifierOfNonOldVar() {
+	public String getIdentifier() {
 		return mIdentifier;
 	}
 
 	@Override
-	public IProgramNonOldVar getNonOldVar() {
-		return mNonOldVar;
-	}
-
-	public void setNonOldVar(final IProgramNonOldVar nonOldVar) {
-		mNonOldVar = nonOldVar;
+	public ProgramOldVar getOldVar() {
+		return mOldVar;
 	}
 
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((getIdentifierOfNonOldVar() == null) ? 0 : getIdentifierOfNonOldVar().hashCode());
+		result = prime * result + ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
 		result = prime * result + ((getProcedure() == null) ? 0 : getProcedure().hashCode());
 		return result;
 	}
@@ -95,12 +93,12 @@ public class BoogieOldVar extends GlobalBoogieVar implements IProgramOldVar {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final BoogieOldVar other = (BoogieOldVar) obj;
-		if (getIdentifierOfNonOldVar() == null) {
-			if (other.getIdentifierOfNonOldVar() != null) {
+		final IProgramNonOldVar other = (IProgramNonOldVar) obj;
+		if (getIdentifier() == null) {
+			if (other.getIdentifier() != null) {
 				return false;
 			}
-		} else if (!getIdentifierOfNonOldVar().equals(other.getIdentifierOfNonOldVar())) {
+		} else if (!getIdentifier().equals(other.getIdentifier())) {
 			return false;
 		}
 		if (isOldvar() != other.isOldvar()) {
