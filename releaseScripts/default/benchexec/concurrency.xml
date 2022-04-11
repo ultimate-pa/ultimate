@@ -177,9 +177,9 @@
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="MCR_with_DEPRANKS_LAZY">
+	<!--rundefinition name="MCR_with_DEPRANKS_LAZY">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy-NoForkJoinOpt-wrwc.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<rundefinition name="MCR_with_DEPRANKS_LAZY+OverapproxWrW">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-MCRwithDepranks-Lazy-NoForkJoinOpt.epf</option>
