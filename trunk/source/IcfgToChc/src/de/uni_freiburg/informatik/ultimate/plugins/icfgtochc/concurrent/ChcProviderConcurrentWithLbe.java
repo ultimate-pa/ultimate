@@ -128,7 +128,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 		// TODO: PredicateFactoryRefinement is part of TraceAbstraction, therefore we need to import it
 		// This should probably be changed!
 		final BoundedPetriNet<IcfgEdge, IPredicate> petriNet =
-				Cfg2Automaton.constructPetriNetWithSPredicates(services, icfg, errors, false, predicateFactory, true);
+				Cfg2Automaton.constructPetriNetWithSPredicates(services, icfg, errors, predicateFactory);
 		final PetriNetLargeBlockEncoding<IcfgEdge> lbe = new PetriNetLargeBlockEncoding<>(services, csToolkit,
 				new RemoveDead<>(new AutomataLibraryServices(services), petriNet, null, true).getResult(),
 				PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK, new IcfgCompositionFactory(services, csToolkit),

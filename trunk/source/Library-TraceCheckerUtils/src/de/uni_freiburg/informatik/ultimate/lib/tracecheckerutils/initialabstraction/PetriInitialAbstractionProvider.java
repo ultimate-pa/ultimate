@@ -53,8 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.C
 public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> {
 
-	private static final boolean ADD_THREAD_USAGE_MONITORS = true;
-	private static final boolean INTERPROCEDURAL = false;
 	private static final boolean KEEP_USELESS_SUCCESSOR_PLACES = true;
 
 	private final IUltimateServiceProvider mServices;
@@ -81,8 +79,8 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
-		final BoundedPetriNet<L, IPredicate> net = Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg,
-				errorLocs, INTERPROCEDURAL, mPredicateFactory, ADD_THREAD_USAGE_MONITORS);
+		final BoundedPetriNet<L, IPredicate> net =
+				Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
 		if (!mRemoveDeadEnds) {
 			return net;
 		}

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -120,16 +119,13 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 
 	public static <LETTER> BoundedPetriNet<LETTER, IPredicate> constructPetriNetWithSPredicates(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
-			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
-			final PredicateFactory predicateFactory, final boolean addThreadUsageMonitors) {
-		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
+			final Collection<? extends IcfgLocation> acceptingLocations, final PredicateFactory predicateFactory) {
+		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, true);
 
 		Function<IcfgLocation, IPredicate> predicateProvider;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		predicateProvider = constructSPredicateProvider(predicateFactory, mgdScript);
-		final Function<IIcfgTransition<?>, LETTER> transitionMapping = constructIdentityTransitionProvider();
-		return constructPetriNet(services, icfg, acceptingLocations, interprocedural, vpAlphabet, predicateProvider,
-				transitionMapping, predicateFactory, addThreadUsageMonitors);
+		return constructPetriNet(services, icfg, acceptingLocations, vpAlphabet, predicateProvider, predicateFactory);
 	}
 
 	private static Function<IcfgLocation, IPredicate>
@@ -240,10 +236,8 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 	@SuppressWarnings("unchecked")
 	private static <LETTER> BoundedPetriNet<LETTER, IPredicate> constructPetriNet(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
-			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
-			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider,
-			final Function<IIcfgTransition<?>, LETTER> letterProvider, final PredicateFactory predicateFactory,
-			final boolean addThreadUsageMonitors) {
+			final Collection<? extends IcfgLocation> acceptingLocations, final VpAlphabet<LETTER> vpAlphabet,
+			final Function<IcfgLocation, IPredicate> predicateProvider, final PredicateFactory predicateFactory) {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
@@ -272,7 +266,7 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 		final Map<String, IPredicate> threadInstance2notinUseState = new HashMap<>();
 		final Map<String, IPredicate> threadInstance2inUseState = new HashMap<>();
 		final Map<LETTER, IIcfgForkTransitionThreadCurrent<IcfgLocation>> errorEdge2fork = new HashMap<>();
-		if (addThreadUsageMonitors) {
+		{
 			for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> entry : icfg
 					.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet()) {
 				final List<ThreadInstance> threadInstances = entry.getValue();
@@ -307,7 +301,7 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 					final IcfgLocation succLoc = edge.getTarget();
 					final IPredicate succState = nodes2States.get(succLoc);
 					if (edge instanceof IIcfgInternalTransition<?>) {
-						if (addThreadUsageMonitors && errorEdge2fork.containsKey(edge)) {
+						if (errorEdge2fork.containsKey(edge)) {
 							final List<IPredicate> threadInUse = fork2inUseState.get(errorEdge2fork.get(edge));
 							final Set<IPredicate> predecessors = new HashSet<>(threadInUse);
 							final Set<IPredicate> successors = new HashSet<>(threadInUse);
@@ -330,7 +324,7 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 						final List<IPredicate> threadNotInUse = fork2notinUseState.get(current);
 						Set<IPredicate> predecessors;
 						Set<IPredicate> successors;
-						if (addThreadUsageMonitors) {
+						{
 							final int i = getThreadInstanceNumber(current, edge.getSucceedingProcedure(),
 									icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap());
 							predecessors = new HashSet<>(Arrays.asList(state, threadNotInUse.get(i)));
@@ -339,9 +333,6 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 								predecessors.add(threadInUse.get(j));
 								successors.add(threadInUse.get(j));
 							}
-						} else {
-							predecessors = Collections.singleton(state);
-							successors = new HashSet<>(Arrays.asList(succCurrentThread, succState));
 						}
 						net.addTransition((LETTER) edge, ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent) {
@@ -356,15 +347,12 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 						if (predCurrentThread != null) {
 							Set<IPredicate> predecessors;
 							Set<IPredicate> successors;
-							if (addThreadUsageMonitors) {
+							{
 								final String threadInstanceName = edge.getPrecedingProcedure();
 								final IPredicate threadNotInUse = threadInstance2notinUseState.get(threadInstanceName);
 								final IPredicate threadInUse = threadInstance2inUseState.get(threadInstanceName);
 								predecessors = new HashSet<>(Arrays.asList(predCurrentThread, state, threadInUse));
 								successors = new HashSet<>(Arrays.asList(succState, threadNotInUse));
-							} else {
-								predecessors = new HashSet<>(Arrays.asList(predCurrentThread, state));
-								successors = Collections.singleton(succState);
 							}
 							net.addTransition((LETTER) edge, ImmutableSet.of(predecessors),
 									ImmutableSet.of(successors));
