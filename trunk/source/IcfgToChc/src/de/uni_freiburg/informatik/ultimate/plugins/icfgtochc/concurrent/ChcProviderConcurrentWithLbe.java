@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -30,10 +29,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.IcfgCompositionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.IChcProvider;
 
 /**
@@ -129,10 +127,8 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 				new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		// TODO: PredicateFactoryRefinement is part of TraceAbstraction, therefore we need to import it
 		// This should probably be changed!
-		final IEmptyStackStateFactory<IPredicate> automataStateFactory = new PredicateFactoryRefinement(services,
-				csToolkit.getManagedScript(), predicateFactory, false, Set.of());
-		final BoundedPetriNet<IcfgEdge, IPredicate> petriNet = Cfg2Automaton.constructPetriNetWithSPredicates(services,
-				icfg, automataStateFactory, errors, false, predicateFactory, true);
+		final BoundedPetriNet<IcfgEdge, IPredicate> petriNet =
+				Cfg2Automaton.constructPetriNetWithSPredicates(services, icfg, errors, false, predicateFactory, true);
 		final PetriNetLargeBlockEncoding<IcfgEdge> lbe = new PetriNetLargeBlockEncoding<>(services, csToolkit,
 				new RemoveDead<>(new AutomataLibraryServices(services), petriNet, null, true).getResult(),
 				PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK, new IcfgCompositionFactory(services, csToolkit),
