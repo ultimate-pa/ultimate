@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -35,8 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -63,26 +60,18 @@ public class ParameterPartition {
 	private final boolean mIsPartitionTrivial;
 	private Term mTermWithPushedQuantifier;
 
-	public ParameterPartition(final Script script, final QuantifiedFormula quantifiedFormula) {
-		final int quantifier = quantifiedFormula.getQuantifier();
-		final Term subformula = quantifiedFormula.getSubformula();
-		if (!(subformula instanceof ApplicationTerm)) {
-			throw new IllegalArgumentException();
+	public ParameterPartition(final Script script, final EliminationTask et) {
+		final Term[] params = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		if (params.length == 1) {
+			throw new IllegalArgumentException("Expected dual finite junction");
 		}
-		final ApplicationTerm appTerm = (ApplicationTerm) subformula;
-		final String connective = appTerm.getFunction().getApplicationString();
-		if (!connective.equals(SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifier)))) {
-			throw new IllegalArgumentException("expecting and for exists and or for all");
-		}
-		final Term[] params = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
-		final Set<TermVariable> quantifiedVars = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
 
 		final LinkedHashRelation<TermVariable, Term> quantifiedVars2param = new LinkedHashRelation<>();
 		final LinkedHashRelation<Term, TermVariable> param2quantifiedVars = new LinkedHashRelation<>();
 		final UnionFind<Term> uf = new UnionFind<>();
 		for (final Term xjunct : params) {
 			for (final TermVariable tv : xjunct.getFreeVars()) {
-				if (quantifiedVars.contains(tv)) {
+				if (et.getEliminatees().contains(tv)) {
 					quantifiedVars2param.addPair(tv, xjunct);
 					param2quantifiedVars.addPair(xjunct, tv);
 				}
@@ -103,15 +92,15 @@ public class ParameterPartition {
 				for (final Term term : equivalenceClass) {
 					quantifiedVarsInClass.addAll(param2quantifiedVars.getImage(term));
 				}
-				final Term connectedEquivalenceClass = QuantifierUtils.applyDualFiniteConnective(
-						script, quantifier, equivalenceClass);
-				final Term quantified = SmtUtils.quantifier(script, quantifier, quantifiedVarsInClass, connectedEquivalenceClass);
+				final Term connectedEquivalenceClass = QuantifierUtils.applyDualFiniteConnective(script,
+						et.getQuantifier(), equivalenceClass);
+				final Term quantified = SmtUtils.quantifier(script, et.getQuantifier(), quantifiedVarsInClass,
+						connectedEquivalenceClass);
 				resultParams.add(quantified);
 			}
-			mTermWithPushedQuantifier = QuantifierUtils.applyDualFiniteConnective(script, quantifier, resultParams);
+			mTermWithPushedQuantifier = QuantifierUtils.applyDualFiniteConnective(script, et.getQuantifier(),
+					resultParams);
 		}
-
-
 	}
 
 	public boolean isIsPartitionTrivial() {

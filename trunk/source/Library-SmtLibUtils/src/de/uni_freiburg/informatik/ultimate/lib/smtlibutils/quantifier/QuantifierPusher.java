@@ -379,8 +379,7 @@ public class QuantifierPusher extends TermTransformer {
 		// do partition
 		// if you can push something, push and return
 		// if you cannot push, continue
-		final ParameterPartition pp =
-				new ParameterPartition(mgdScript.getScript(), (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
+		final ParameterPartition pp = new ParameterPartition(mgdScript.getScript(), et);
 		if (!pp.isIsPartitionTrivial()) {
 			return pp.getTermWithPushedQuantifier();
 		}
