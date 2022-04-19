@@ -272,25 +272,15 @@ public class QuantifierPushUtils {
 			}
 			final TermVariable eliminatee = QuantifierPusher.selectBestEliminatee(mgdScript.getScript(),
 					et.getQuantifier(), remainingEliminateesThatDoNotOccurInAllParams, currentDualFiniteParams);
-			final List<Term> finiteParamsWithEliminatee = new ArrayList<>();
-			final List<Term> finiteParamsWithoutEliminatee = new ArrayList<>();
-			for (final Term dualFiniteParam : currentDualFiniteParams) {
-				if (Arrays.asList(dualFiniteParam.getFreeVars()).contains(eliminatee)) {
-					finiteParamsWithEliminatee.add(dualFiniteParam);
-				} else {
-					finiteParamsWithoutEliminatee.add(dualFiniteParam);
-				}
-			}
-			if (finiteParamsWithoutEliminatee.isEmpty()) {
-				throw new AssertionError("Eliminatee cannot occur in all");
-			}
+			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteParams,
+					eliminatee);
 			final List<TermVariable> minionEliminatees = QuantifierPusher
-					.determineMinionEliminatees(remainingEliminatees, finiteParamsWithoutEliminatee);
+					.determineMinionEliminatees(remainingEliminatees, parti.getFiniteDualJunctsWithoutEliminatee());
 			if (!minionEliminatees.contains(eliminatee)) {
 				throw new AssertionError("Missing minion " + eliminatee);
 			}
 			final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-					et.getQuantifier(), finiteParamsWithEliminatee);
+					et.getQuantifier(), parti.getFiniteDualJunctsWithEliminatee());
 			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 					new HashSet<>(minionEliminatees), dualFiniteJunction);
 			Term pushed;
@@ -306,7 +296,7 @@ public class QuantifierPushUtils {
 							nonMinionEliminatees);
 				}
 				context = context.constructChildContextForConDis(services, mgdScript,
-						((ApplicationTerm) et.getTerm()).getFunction(), finiteParamsWithoutEliminatee);
+						((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
 				pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique,
 						context, quantified);
 				// special case if pushed formula is similar?
@@ -328,7 +318,7 @@ public class QuantifierPushUtils {
 				final List<Term> pushedFiniteParams = Arrays
 						.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), pushed));
 				currentDualFiniteParams = new ArrayList<>(pushedFiniteParams);
-				currentDualFiniteParams.addAll(finiteParamsWithoutEliminatee);
+				currentDualFiniteParams.addAll(parti.getFiniteDualJunctsWithoutEliminatee());
 			}
 			final Term currentDualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
 					et.getQuantifier(), currentDualFiniteParams);
@@ -414,6 +404,50 @@ public class QuantifierPushUtils {
 				.filter(eliminatee -> currentDualFiniteParams.stream()
 						.anyMatch(param -> !Arrays.asList(param.getFreeVars()).contains(eliminatee)))
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Class that partitions a list of terms into two lists. One list where a given
+	 * TermVariable occurs as a free variable and one list where the given
+	 * TermVariable does not occur as a free variable. Terminology and assertions
+	 * are fitted to the method {@link QuantifierPushUtils#sequentialSubsetPush} in
+	 * which this class is used.
+	 *
+	 */
+	private static class PartitionByEliminateeOccurrence {
+
+		private final List<Term> mFiniteDualJunctsWithEliminatee;
+		private final List<Term> mFiniteDualJunctsWithoutEliminatee;
+
+		public PartitionByEliminateeOccurrence(final List<Term> finiteDualJuncts, final TermVariable eliminatee) {
+			final List<Term> finiteDualJunctsWithEliminatee = new ArrayList<>();
+			final List<Term> finiteDualJunctsWithoutEliminatee = new ArrayList<>();
+			for (final Term dualFiniteJunct : finiteDualJuncts) {
+				if (Arrays.asList(dualFiniteJunct.getFreeVars()).contains(eliminatee)) {
+					finiteDualJunctsWithEliminatee.add(dualFiniteJunct);
+				} else {
+					finiteDualJunctsWithoutEliminatee.add(dualFiniteJunct);
+				}
+			}
+			if (finiteDualJunctsWithEliminatee.isEmpty()) {
+				throw new AssertionError("Eliminatee must occur in at least one dualfiniteJunct");
+			}
+			if (finiteDualJunctsWithoutEliminatee.isEmpty()) {
+				throw new AssertionError("Eliminatee must not occur all dualfiniteJuncts");
+			}
+
+			mFiniteDualJunctsWithEliminatee = finiteDualJunctsWithEliminatee;
+			mFiniteDualJunctsWithoutEliminatee = finiteDualJunctsWithoutEliminatee;
+		}
+
+		public List<Term> getFiniteDualJunctsWithEliminatee() {
+			return mFiniteDualJunctsWithEliminatee;
+		}
+
+		public List<Term> getFiniteDualJunctsWithoutEliminatee() {
+			return mFiniteDualJunctsWithoutEliminatee;
+		}
+
 	}
 
 }
