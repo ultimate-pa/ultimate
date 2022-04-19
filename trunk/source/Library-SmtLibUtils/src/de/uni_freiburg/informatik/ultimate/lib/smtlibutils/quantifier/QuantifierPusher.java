@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -448,8 +449,23 @@ public class QuantifierPusher extends TermTransformer {
 		}
 
 		if (et.getEliminatees().size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
-			final EliminationTaskSimple etSequentialization =
-					doit(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
+			final EliminationTaskSimple etSequentialization;
+			final Term seq = QuantifierPushUtils.sequentialSubsetPush(services, mgdScript, applyDistributivity,
+					pqeTechniques, simplificationTechnique, et, qe);
+			if (seq == null) {
+				etSequentialization = et;
+			} else {
+				final List<TermVariable> freeVarsBefore = Arrays.asList(et.toTerm(mgdScript.getScript()).getFreeVars());
+				final List<TermVariable> freeVarsAfter = Arrays.asList(seq.getFreeVars());
+				if (!freeVarsBefore.containsAll(freeVarsAfter)) {
+					throw new AssertionError("New free vars! Before " + freeVarsBefore + " After " + freeVarsAfter);
+				}
+				if (seq instanceof QuantifiedFormula) {
+					etSequentialization = new EliminationTaskSimple((QuantifiedFormula) seq);
+				} else {
+					return seq;
+				}
+			}
 			// return if something was eliminated
 			if (!etSequentialization.getEliminatees().containsAll(et.getEliminatees())) {
 				return etSequentialization.toTerm(mgdScript.getScript());
@@ -595,6 +611,14 @@ public class QuantifierPusher extends TermTransformer {
 		return result;
 	}
 
+
+
+
+
+
+
+
+
 	private static EliminationTask doit(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
@@ -602,11 +626,15 @@ public class QuantifierPusher extends TermTransformer {
 		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
 		final List<TermVariable> remainingEliminatees = new ArrayList<>(et.getEliminatees());
-		final List<TermVariable> failedEliminatees = new ArrayList<>(et.getEliminatees());
+		final List<TermVariable> failedEliminatees = new ArrayList<>();
 		List<Term> currentDualFiniteParams = new ArrayList<>(Arrays.asList(dualFiniteParams));
 		List<TermVariable> remainingEliminateesThatDoNotOccurInAllParams =
 				remaningEliminateeThatDoNotOccurInAllParams(remainingEliminatees, currentDualFiniteParams);
+		int i = 0;
 		while (!remainingEliminateesThatDoNotOccurInAllParams.isEmpty()) {
+			if (i > 20) {
+				throw new AssertionError("Probably an infinite loop");
+			}
 			final TermVariable eliminatee = selectBestEliminatee(mgdScript.getScript(), et.getQuantifier(),
 					remainingEliminateesThatDoNotOccurInAllParams, currentDualFiniteParams);
 			final List<Term> finiteParamsWithEliminatee = new ArrayList<>();
@@ -623,6 +651,9 @@ public class QuantifierPusher extends TermTransformer {
 			}
 			final List<TermVariable> minionEliminatees =
 					determineMinionEliminatees(et.getEliminatees(), finiteParamsWithoutEliminatee);
+			if (!minionEliminatees.contains(eliminatee)) {
+				throw new AssertionError("Missing minion " + eliminatee);
+			}
 			final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
 					et.getQuantifier(), finiteParamsWithEliminatee);
 			// FIXME: Bin other eliminatees in context.
@@ -658,6 +689,7 @@ public class QuantifierPusher extends TermTransformer {
 			currentDualFiniteParams.addAll(finiteParamsWithoutEliminatee);
 			remainingEliminateesThatDoNotOccurInAllParams =
 					remaningEliminateeThatDoNotOccurInAllParams(remainingEliminatees, currentDualFiniteParams);
+			i++;
 		}
 		remainingEliminatees.addAll(failedEliminatees);
 		return new EliminationTask(et.getQuantifier(), new HashSet<>(remainingEliminatees), QuantifierUtils
@@ -665,7 +697,8 @@ public class QuantifierPusher extends TermTransformer {
 				et.getContext());
 	}
 
-	private static TermVariable selectBestEliminatee(final Script script, final int quantifier,
+
+	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
 			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
 		if (eliminatees.size() == 1) {
 			return eliminatees.iterator().next();
@@ -722,7 +755,7 @@ public class QuantifierPusher extends TermTransformer {
 	/**
 	 * @return eliminatees that do not occur as free variable in any of the termsWithoutMasterEliminatee
 	 */
-	private static List<TermVariable> determineMinionEliminatees(final Set<TermVariable> eliminatees,
+	public static List<TermVariable> determineMinionEliminatees(final Collection<TermVariable> eliminatees,
 			final List<Term> termsWithoutMasterEliminatee) {
 		return eliminatees.stream()
 				.filter(eliminatee -> termsWithoutMasterEliminatee.stream()
