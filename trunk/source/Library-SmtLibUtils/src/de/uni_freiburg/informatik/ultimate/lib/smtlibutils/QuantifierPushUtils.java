@@ -279,39 +279,20 @@ public class QuantifierPushUtils {
 			if (!minionEliminatees.contains(eliminatee)) {
 				throw new AssertionError("Missing minion " + eliminatee);
 			}
-			final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-					et.getQuantifier(), parti.getFiniteDualJunctsWithEliminatee());
-			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
-					new HashSet<>(minionEliminatees), dualFiniteJunction);
-			Term pushed;
-			{
-				Context context;
-				{
-					final Context parentContext = et.getContext();
-					final List<TermVariable> nonMinionEliminatees = new ArrayList<>(remainingEliminatees);
-					nonMinionEliminatees.removeAll(new HashSet<>(minionEliminatees));
-					context = parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(),
-							failedEliminatees);
-					context = parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(),
-							nonMinionEliminatees);
-				}
-				context = context.constructChildContextForConDis(services, mgdScript,
-						((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
-				pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique,
-						context, quantified);
-				// special case if pushed formula is similar?
-				// eliminatee failed, all minions failed?
-				if (pushed instanceof QuantifiedFormula) {
-					final QuantifiedFormula qf = (QuantifiedFormula) pushed;
-					for (final TermVariable var : Arrays.asList(qf.getVariables())) {
-						if (minionEliminatees.contains(var)) {
-							failedEliminatees.add(var);
-						} else {
-							remainingEliminatees.add(var);
-						}
+			Term pushed = pushMinionEliminatees(services, mgdScript, applyDistributivity, pqeTechniques,
+					simplificationTechnique, et, qe, minionEliminatees, parti, remainingEliminatees, failedEliminatees);
+			// special case if pushed formula is similar?
+			// eliminatee failed, all minions failed?
+			if (pushed instanceof QuantifiedFormula) {
+				final QuantifiedFormula qf = (QuantifiedFormula) pushed;
+				for (final TermVariable var : Arrays.asList(qf.getVariables())) {
+					if (minionEliminatees.contains(var)) {
+						failedEliminatees.add(var);
+					} else {
+						remainingEliminatees.add(var);
 					}
-					pushed = qf.getSubformula();
 				}
+				pushed = qf.getSubformula();
 			}
 			remainingEliminatees.removeAll(minionEliminatees);
 			{
@@ -392,6 +373,28 @@ public class QuantifierPushUtils {
 		}
 	}
 
+	private static Term pushMinionEliminatees(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
+			final IQuantifierEliminator qe, final List<TermVariable> minionEliminatees,
+			final PartitionByEliminateeOccurrence parti, final List<TermVariable> remainingEliminatees,
+			final List<TermVariable> failedEliminatees) {
+		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
+				et.getQuantifier(), parti.getFiniteDualJunctsWithEliminatee());
+		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
+				new HashSet<>(minionEliminatees), dualFiniteJunction);
+		final List<TermVariable> nonMinionEliminatees = new ArrayList<>(remainingEliminatees);
+		nonMinionEliminatees.removeAll(new HashSet<>(minionEliminatees));
+		nonMinionEliminatees.addAll(failedEliminatees);
+		final Context parentContext = et.getContext();
+		Context context = parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(),
+						nonMinionEliminatees);
+		context = context.constructChildContextForConDis(services, mgdScript,
+					((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
+		return qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique,
+					context, quantified);
+	}
+
 	private static boolean isFlattened(final int quantifier, final Term[] currentDualFiniteJuncts) {
 		final Predicate<? super Term> notSameQuantifier = (x -> (QuantifierPusher.classify(quantifier,
 				x) != FormulaClassification.SAME_QUANTIFIER));
@@ -412,7 +415,6 @@ public class QuantifierPushUtils {
 	 * TermVariable does not occur as a free variable. Terminology and assertions
 	 * are fitted to the method {@link QuantifierPushUtils#sequentialSubsetPush} in
 	 * which this class is used.
-	 *
 	 */
 	private static class PartitionByEliminateeOccurrence {
 
