@@ -49,9 +49,16 @@ check_no_results () {
 }
 
 eval_dataraces () {
+  # run evaluation
   cd $(get_tool_path $1)
   run-benchexec.sh --numOfThreads=14 "$(get_datarace_xml $1)"
   mv results "$(get_results_dir $1)"
+
+  # extract overview
+  cd "$(get_results_dir $1)"
+  python3 "$DIR/../benchmark-processing/get-benchexec-overview.py" -i . > overview.txt
+
+  # reset directory
   cd "$DIR"
 }
 
@@ -73,7 +80,7 @@ do
 done
 
 echo
-echo "Packaging results in artifact..."
+echo "Packaging results in archive..."
 tar cJf results-dataraces.tar.xz results-tmp/
 
 echo "======================================================"

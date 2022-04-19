@@ -9,4 +9,6 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
+	<resultfiles></resultfiles>
+
 </benchmark>
