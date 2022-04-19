@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -74,7 +75,7 @@ public class EliminationTaskPlain extends EliminationTaskSimple {
 
 
 	@Override
-	public EliminationTaskPlain integrateNewEliminatees(final Set<TermVariable> additionalEliminatees) {
+	public EliminationTaskPlain integrateNewEliminatees(final Collection<TermVariable> additionalEliminatees) {
 		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
 				getTerm());
 		final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(getEliminatees());
