@@ -58,6 +58,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class QuantifierPushUtils {
 
+	/**
+	 * If set to true we check after applying distributivity if we were able to eliminate some quantified variables. If
+	 * elimination failed for all variables then we return the original term without applying distributivity.
+	 *
+	 */
+	public static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
+
 
 	/**
 	 * We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a

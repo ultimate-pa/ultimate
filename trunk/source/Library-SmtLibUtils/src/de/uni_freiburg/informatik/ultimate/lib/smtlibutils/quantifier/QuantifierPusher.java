@@ -131,12 +131,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	/**
-	 * If set to true we check after applying distributivity if we were able to eliminate some quantified variables. If
-	 * elimination failed for all variables then we return the original term without applying distributivity.
-	 *
-	 */
-	private static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
+
 
 	private static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
 	private static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
@@ -483,10 +478,10 @@ public class QuantifierPusher extends TermTransformer {
 		}
 		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, et, qe,
 				dualFiniteParams, DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
-				EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
+				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
 	}
 
-	private static Term applyDistributivityAndPush(final IUltimateServiceProvider services,
+	public static Term applyDistributivityAndPush(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe, final Term[] dualFiniteParams,
