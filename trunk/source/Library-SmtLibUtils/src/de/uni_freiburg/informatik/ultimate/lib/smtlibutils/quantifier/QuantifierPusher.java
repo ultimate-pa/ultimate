@@ -481,8 +481,18 @@ public class QuantifierPusher extends TermTransformer {
 				}
 			}
 		}
+		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, et, qe,
+				dualFiniteParams, DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
+				EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
+	}
 
-		if (DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION) {
+	private static Term applyDistributivityAndPush(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final PqeTechniques pqeTechniques,
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
+			final IQuantifierEliminator qe, final Term[] dualFiniteParams,
+			final boolean derBasedDistributivityParameterPreselection,
+			final boolean evaluateSuccessOfDistributivityApplication) {
+		if (derBasedDistributivityParameterPreselection) {
 			final int rec = DerScout.computeRecommendation(mgdScript.getScript(), et.getEliminatees(), dualFiniteParams,
 					et.getQuantifier());
 			if (rec != -1) {
@@ -491,12 +501,6 @@ public class QuantifierPusher extends TermTransformer {
 				return correspondingFinite;
 			}
 		}
-
-		// 2016-12-17 Matthias TODO:
-		// before applying distributivity bring each disjunct in
-		// NNF (with quantifier push)
-		// if afterwards some disjunct is disjunction then re-apply
-		// the tryToPushOverDualFiniteConnective method
 		for (int i = 0; i < dualFiniteParams.length; i++) {
 			// this loop just selects some
 			// correspondingFiniteJunction that we start with
@@ -505,16 +509,16 @@ public class QuantifierPusher extends TermTransformer {
 			// Hence, we do not continue to iterate
 			// after the first correspondingFiniteJunction
 			// was found.
-			// TODO: optimization: have a closer look at atoms
-			// inside to determine where we apply distributivity
-			// first (e.g., somewhere where some (dis)equality
-			// allows us to apply DER
 			if (isCorrespondingFinite(dualFiniteParams[i], et.getQuantifier())) {
 				final Term correspondingFinite = applyDistributivityAndPushOneStep(services, mgdScript,
 						et.getQuantifier(), et.getEliminatees(), et.getContext(), dualFiniteParams, i);
-				if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
+				if (!evaluateSuccessOfDistributivityApplication) {
 					return correspondingFinite;
 				}
+
+				// Since this is already the distributivity method, we assume that application
+				// of distributivity is desired for subsequent calls.
+				final boolean applyDistributivity = true;
 				final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
 						simplificationTechnique, et.getContext(), correspondingFinite);
 				if (allStillQuantified(et.getEliminatees(), pushed)) {
