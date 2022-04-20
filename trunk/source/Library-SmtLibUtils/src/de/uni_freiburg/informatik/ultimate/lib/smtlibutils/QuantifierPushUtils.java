@@ -238,8 +238,9 @@ public class QuantifierPushUtils {
 			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
-		Term[] currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
-		if (currentDualFiniteJuncts.length <= 1) {
+		List<Term> currentDualFiniteJuncts = Arrays
+				.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()));
+		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
 		}
 		{
@@ -257,30 +258,29 @@ public class QuantifierPushUtils {
 				throw new AssertionError("Is partitionable!");
 			}
 		}
-		final List<TermVariable> remainingEliminatees = new ArrayList<>(et.getEliminatees());
-		final List<TermVariable> failedEliminatees = new ArrayList<>();
-		List<Term> currentDualFiniteParams = new ArrayList<>(Arrays.asList(currentDualFiniteJuncts));
+		List<TermVariable> todoEliminatees = new ArrayList<>(et.getEliminatees());
+		List<TermVariable> failedEliminatees = new ArrayList<>();
 		// In fact these eliminatees occur also in at least one dualFiniteJunct
 		// otherwise the input would not be legal.
-		List<TermVariable> remainingEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
-				remainingEliminatees, currentDualFiniteParams);
+		List<TermVariable> todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
+				todoEliminatees, currentDualFiniteJuncts);
 		int i = 0;
-		while (!remainingEliminateesThatDoNotOccurInAllParams.isEmpty()) {
+		while (!todoEliminateesThatDoNotOccurInAllParams.isEmpty()) {
 			if (i > 20) {
-				currentDualFiniteParams.toString();
+				currentDualFiniteJuncts.toString();
 				throw new AssertionError("Maybe an infinite loop");
 			}
 			final TermVariable eliminatee = QuantifierPusher.selectBestEliminatee(mgdScript.getScript(),
-					et.getQuantifier(), remainingEliminateesThatDoNotOccurInAllParams, currentDualFiniteParams);
-			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteParams,
+					et.getQuantifier(), todoEliminateesThatDoNotOccurInAllParams, currentDualFiniteJuncts);
+			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteJuncts,
 					eliminatee);
-			final List<TermVariable> minionEliminatees = QuantifierPusher
-					.determineMinionEliminatees(remainingEliminatees, parti.getFiniteDualJunctsWithoutEliminatee());
+			final List<TermVariable> minionEliminatees = QuantifierPusher.determineMinionEliminatees(todoEliminatees,
+					parti.getFiniteDualJunctsWithoutEliminatee());
 			if (!minionEliminatees.contains(eliminatee)) {
 				throw new AssertionError("Missing minion " + eliminatee);
 			}
 			Term pushed = pushMinionEliminatees(services, mgdScript, applyDistributivity, pqeTechniques,
-					simplificationTechnique, et, qe, minionEliminatees, parti, remainingEliminatees, failedEliminatees);
+					simplificationTechnique, et, qe, minionEliminatees, parti, todoEliminatees, failedEliminatees);
 			// special case if pushed formula is similar?
 			// eliminatee failed, all minions failed?
 			if (pushed instanceof QuantifiedFormula) {
@@ -289,67 +289,102 @@ public class QuantifierPushUtils {
 					if (minionEliminatees.contains(var)) {
 						failedEliminatees.add(var);
 					} else {
-						remainingEliminatees.add(var);
+						todoEliminatees.add(var);
 					}
 				}
 				pushed = qf.getSubformula();
 			}
-			remainingEliminatees.removeAll(minionEliminatees);
+			todoEliminatees.removeAll(minionEliminatees);
+			Term currentDualFiniteJunction;
 			{
-				final List<Term> pushedFiniteParams = Arrays
-						.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), pushed));
-				currentDualFiniteParams = new ArrayList<>(pushedFiniteParams);
-				currentDualFiniteParams.addAll(parti.getFiniteDualJunctsWithoutEliminatee());
+				currentDualFiniteJuncts = new ArrayList<>(parti.getFiniteDualJunctsWithoutEliminatee());
+				currentDualFiniteJuncts.add(pushed);
+				// building the dualFiniteJunction may simplify the formula
+				currentDualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
+						et.getQuantifier(), currentDualFiniteJuncts);
 			}
-			final Term currentDualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-					et.getQuantifier(), currentDualFiniteParams);
 			{
+				// simplification may have removed other eliminatees
 				final List<TermVariable> freeVars = Arrays.asList(currentDualFiniteJunction.getFreeVars());
-				remainingEliminatees.retainAll(freeVars);
+				todoEliminatees.retainAll(freeVars);
 				failedEliminatees.retainAll(freeVars);
 			}
-			if (remainingEliminatees.isEmpty()) {
+			if (todoEliminatees.isEmpty()) {
 				return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), failedEliminatees,
 						currentDualFiniteJunction);
 			}
-			currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(),
-					currentDualFiniteJunction);
-			if (currentDualFiniteJuncts.length == 1) {
-				// in fact not a real dualFiniteJunction any more (possibly dualQuantifier,
-				// correspondingConnective, or atom)
-				remainingEliminatees.addAll(failedEliminatees);
-				return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), remainingEliminatees,
-						currentDualFiniteJunction);
-			}
+			currentDualFiniteJuncts = Arrays
+					.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), currentDualFiniteJunction));
 			if (!isFlattened(et.getQuantifier(), currentDualFiniteJuncts)) {
 				// can happen if due to simplification a quantified formula moves towards the
 				// root
+				// 20220420 TODO: Implement flattening
 				throw new UnsupportedOperationException("Unplanned introduction of non-flat quantified formula");
 			}
+			if (currentDualFiniteJuncts.size() == 1) {
+				// in fact not a real dualFiniteJunction any more (possibly dualQuantifier,
+				// correspondingConnective, or atom)
+				final List<TermVariable> currentEliminatees = new ArrayList<>(todoEliminatees);
+				currentEliminatees.addAll(failedEliminatees);
+				return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), currentEliminatees,
+						currentDualFiniteJunction);
+			}
+			// We deliberately leave out the ParameterPartition since elimination of locals
+			// also works also well for partitionable elimination tasks
+			final Term localsEliminated;
+			{
+				final List<TermVariable> currentEliminatees = new ArrayList<>(todoEliminatees);
+				currentEliminatees.addAll(failedEliminatees);
+				final EliminationTask etForLocalPush = new EliminationTask(et.getQuantifier(),
+						new HashSet<>(currentEliminatees), currentDualFiniteJunction, et.getContext());
+				localsEliminated = pushLocalEliminateesOverCorrespondingFiniteJunction(services, mgdScript,
+						applyDistributivity, pqeTechniques, simplificationTechnique, etForLocalPush, qe);
 
-			// we need a new context since we ignore the failed eliminatees
-			final Context currentContext = et.getContext()
-					.constructChildContextForQuantifiedFormula(mgdScript.getScript(), failedEliminatees);
-			EliminationTask currentEt = new EliminationTask(et.getQuantifier(), new HashSet<>(remainingEliminatees),
-					currentDualFiniteJunction, currentContext);
-			final Term res = pushLocalEliminateesOverCorrespondingFiniteJunction(services, mgdScript,
-					applyDistributivity, pqeTechniques, simplificationTechnique, currentEt, qe);
-			if (res != null) {
-				final FormulaClassification fc = QuantifierPusher.classify(res);
-				if (fc != FormulaClassification.DUAL_FINITE_CONNECTIVE) {
-					return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), failedEliminatees, res);
-				} else {
-					currentEt = new EliminationTask((QuantifiedFormula) res, currentContext);
-					if (currentEt.getQuantifier() != et.getQuantifier()) {
-						return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), failedEliminatees, res);
+			}
+			if (localsEliminated != null) {
+				if (localsEliminated instanceof QuantifiedFormula) {
+					final QuantifiedFormula qf = (QuantifiedFormula) localsEliminated;
+					if (qf.getQuantifier() != et.getQuantifier()) {
+						// We eliminated successful, coincidentally the result is also a quantified
+						// formula with a different quantifier.
+						return localsEliminated;
 					}
+					final List<TermVariable> oldFailedEliminatees = failedEliminatees;
+					todoEliminatees = new ArrayList<>();
+					failedEliminatees = new ArrayList<>();
+					for (final TermVariable v : qf.getVariables()) {
+						if (oldFailedEliminatees.contains(v)) {
+							failedEliminatees.add(v);
+						} else {
+							todoEliminatees.add(v);
+						}
+					}
+					currentDualFiniteJunction = qf.getSubformula();
+				} else {
+					currentDualFiniteJunction = localsEliminated;
+				}
+				currentDualFiniteJuncts = Arrays
+						.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), currentDualFiniteJunction));
+				if (!isFlattened(et.getQuantifier(), currentDualFiniteJuncts)) {
+					// can happen if due to simplification a quantified formula moves towards the
+					// root
+					// 20220420 TODO: Implement flattening
+					throw new UnsupportedOperationException("Unplanned introduction of non-flat quantified formula");
+				}
+				if (currentDualFiniteJuncts.size() == 1) {
+					// in fact not a real dualFiniteJunction any more (possibly dualQuantifier,
+					// correspondingConnective, or atom)
+					final List<TermVariable> currentEliminatees = new ArrayList<>(todoEliminatees);
+					currentEliminatees.addAll(failedEliminatees);
+					return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), currentEliminatees,
+							currentDualFiniteJunction);
 				}
 			}
-			remainingEliminatees.retainAll(currentEt.getEliminatees());
-			failedEliminatees.removeAll(currentEt.getEliminatees());
 			{
-				final EliminationTask etForParameterPartitionCheck = currentEt
-						.integrateNewEliminatees(failedEliminatees);
+				final List<TermVariable> currentEliminatees = new ArrayList<>(todoEliminatees);
+				currentEliminatees.addAll(failedEliminatees);
+				final EliminationTask etForParameterPartitionCheck = new EliminationTask(et.getQuantifier(),
+						new HashSet<>(currentEliminatees), currentDualFiniteJunction, et.getContext());
 				final ParameterPartition pp = new ParameterPartition(mgdScript.getScript(),
 						etForParameterPartitionCheck);
 				if (!pp.isIsPartitionTrivial()) {
@@ -357,19 +392,17 @@ public class QuantifierPushUtils {
 							pp.getTermWithPushedQuantifier());
 				}
 			}
-
-			currentDualFiniteParams = Arrays
-					.asList(QuantifierUtils.getCorrespondingFiniteJunction(et.getQuantifier(), currentEt.getTerm()));
-			remainingEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
-					remainingEliminatees, currentDualFiniteParams);
+			todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(todoEliminatees,
+					currentDualFiniteJuncts);
 			i++;
 		}
 		if (i == 0) {
 			return null;
 		} else {
-			remainingEliminatees.addAll(failedEliminatees);
-			return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), remainingEliminatees, QuantifierUtils
-					.applyDualFiniteConnective(mgdScript.getScript(), et.getQuantifier(), currentDualFiniteParams));
+			final List<TermVariable> currentEliminatees = new ArrayList<>(todoEliminatees);
+			currentEliminatees.addAll(failedEliminatees);
+			return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), currentEliminatees, QuantifierUtils
+					.applyDualFiniteConnective(mgdScript.getScript(), et.getQuantifier(), currentDualFiniteJuncts));
 		}
 	}
 
@@ -377,13 +410,13 @@ public class QuantifierPushUtils {
 			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe, final List<TermVariable> minionEliminatees,
-			final PartitionByEliminateeOccurrence parti, final List<TermVariable> remainingEliminatees,
+			final PartitionByEliminateeOccurrence parti, final List<TermVariable> todoEliminatees,
 			final List<TermVariable> failedEliminatees) {
 		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
 				et.getQuantifier(), parti.getFiniteDualJunctsWithEliminatee());
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 				new HashSet<>(minionEliminatees), dualFiniteJunction);
-		final List<TermVariable> nonMinionEliminatees = new ArrayList<>(remainingEliminatees);
+		final List<TermVariable> nonMinionEliminatees = new ArrayList<>(todoEliminatees);
 		nonMinionEliminatees.removeAll(new HashSet<>(minionEliminatees));
 		nonMinionEliminatees.addAll(failedEliminatees);
 		final Context parentContext = et.getContext();
@@ -395,15 +428,15 @@ public class QuantifierPushUtils {
 					context, quantified);
 	}
 
-	private static boolean isFlattened(final int quantifier, final Term[] currentDualFiniteJuncts) {
+	private static boolean isFlattened(final int quantifier, final List<Term> currentDualFiniteJuncts) {
 		final Predicate<? super Term> notSameQuantifier = (x -> (QuantifierPusher.classify(quantifier,
 				x) != FormulaClassification.SAME_QUANTIFIER));
-		return Arrays.stream(currentDualFiniteJuncts).allMatch(notSameQuantifier);
+		return currentDualFiniteJuncts.stream().allMatch(notSameQuantifier);
 	}
 
 	private static List<TermVariable> remaningEliminateeThatDoNotOccurInAllParams(
-			final List<TermVariable> remainingEliminatees, final List<Term> currentDualFiniteParams) {
-		return remainingEliminatees.stream()
+			final List<TermVariable> todoEliminatees, final List<Term> currentDualFiniteParams) {
+		return todoEliminatees.stream()
 				.filter(eliminatee -> currentDualFiniteParams.stream()
 						.anyMatch(param -> !Arrays.asList(param.getFreeVars()).contains(eliminatee)))
 				.collect(Collectors.toList());
