@@ -127,7 +127,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final LanguageOperation languageOperation = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
-		final PredicateFactory predicateFactory = getPredicateFactory(services, csToolkit);
+		final PredicateFactory predicateFactory = constructPredicateFactory(services, csToolkit);
 
 		final Set<IcfgLocation> hoareAnnotationLocs;
 		if (mComputeHoareAnnotation) {
@@ -199,7 +199,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static PredicateFactory getPredicateFactory(final IUltimateServiceProvider services,
+	private static PredicateFactory constructPredicateFactory(final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit) {
 		return new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
@@ -239,8 +239,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs, final PredicateFactory predicateFactory,
 			final PredicateFactoryRefinement stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
-		return construct(createAutomataAbstractionProvider(services, IcfgUtils.isConcurrent(icfg), predicateFactory,
-				stateFactory, witnessAutomaton), icfg, errorLocs);
+		return constructInitialAbstraction(createAutomataAbstractionProvider(services, IcfgUtils.isConcurrent(icfg),
+				predicateFactory, stateFactory, witnessAutomaton), icfg, errorLocs);
 	}
 
 	private IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>
@@ -288,7 +288,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	private BoundedPetriNet<L, IPredicate> createPetriAbstraction(final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory, final boolean removeDead, final IIcfg<IcfgLocation> icfg,
 			final Set<IcfgLocation> errorLocs) {
-		return construct(createPetriAbstractionProvider(services, predicateFactory, removeDead), icfg, errorLocs);
+		return constructInitialAbstraction(createPetriAbstractionProvider(services, predicateFactory, removeDead), icfg,
+				errorLocs);
 	}
 
 	private IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> createPetriAbstractionProvider(
@@ -306,8 +307,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory, final IIcfg<IcfgLocation> icfg,
 			final Set<IcfgLocation> errorLocs) {
-		return construct(createPartialOrderAbstractionProvider(services, predicateFactory, stateFactory), icfg,
-				errorLocs);
+		return constructInitialAbstraction(
+				createPartialOrderAbstractionProvider(services, predicateFactory, stateFactory), icfg, errorLocs);
 	}
 
 	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
@@ -319,8 +320,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				new AutomataLibraryServices(services));
 	}
 
-	private <A extends IAutomaton<L, IPredicate>> A construct(final IInitialAbstractionProvider<L, A> provider,
-			final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs) {
+	private <A extends IAutomaton<L, IPredicate>> A constructInitialAbstraction(
+			final IInitialAbstractionProvider<L, A> provider, final IIcfg<IcfgLocation> icfg,
+			final Set<IcfgLocation> errorLocs) {
 		// OverallTime should include InitialAbstractionConstructionTime. Hence we start and stop both stopwatches.
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
