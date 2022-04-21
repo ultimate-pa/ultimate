@@ -133,8 +133,7 @@ public class QuantifierPusher extends TermTransformer {
 
 
 
-	private static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
-	private static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
+
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private final Script mScript;
@@ -448,7 +447,7 @@ public class QuantifierPusher extends TermTransformer {
 //		}
 
 		final EliminationTask currentEt;
-		if (et.getEliminatees().size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
+		if (et.getEliminatees().size() > 1 && QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
 			final EliminationTaskSimple etSequentialization;
 			final Term seq = QuantifierPushUtils.sequentialSubsetPush(services, mgdScript, applyDistributivity,
 					pqeTechniques, simplificationTechnique, et, qe);
@@ -489,7 +488,7 @@ public class QuantifierPusher extends TermTransformer {
 			currentEt = et;
 		}
 		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, currentEt, qe,
-				DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
+				QuantifierPushUtils.DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
 				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
 	}
 

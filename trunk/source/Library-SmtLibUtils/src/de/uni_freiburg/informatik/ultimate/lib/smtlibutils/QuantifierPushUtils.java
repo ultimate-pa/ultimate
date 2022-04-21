@@ -64,6 +64,8 @@ public class QuantifierPushUtils {
 	 *
 	 */
 	public static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
+	public static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
+	public static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
 
 
 	/**
