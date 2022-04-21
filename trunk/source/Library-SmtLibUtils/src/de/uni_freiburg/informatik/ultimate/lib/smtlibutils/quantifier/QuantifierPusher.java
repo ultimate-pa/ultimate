@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtilsForLocalEliminatees;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtilsForSubsetPush;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils.IQuantifierEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -423,8 +425,8 @@ public class QuantifierPusher extends TermTransformer {
 				return eliminationResult;
 			}
 		}
-		final Term tmp = QuantifierPushUtils.pushLocalEliminateesOverCorrespondingFiniteJunction(services, mgdScript,
-				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
+		final Term tmp = QuantifierPushUtilsForLocalEliminatees.pushLocalEliminateesOverCorrespondingFiniteJunction(
+				services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
 		if (tmp != null) {
 			return tmp;
 		}
@@ -449,8 +451,8 @@ public class QuantifierPusher extends TermTransformer {
 		final EliminationTask currentEt;
 		if (et.getEliminatees().size() > 1 && QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
 			final EliminationTaskSimple etSequentialization;
-			final Term seq = QuantifierPushUtils.sequentialSubsetPush(services, mgdScript, applyDistributivity,
-					pqeTechniques, simplificationTechnique, et, qe);
+			final Term seq = QuantifierPushUtilsForSubsetPush.sequentialSubsetPush(services, mgdScript,
+					applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
 			if (seq == null) {
 				etSequentialization = et;
 			} else {
