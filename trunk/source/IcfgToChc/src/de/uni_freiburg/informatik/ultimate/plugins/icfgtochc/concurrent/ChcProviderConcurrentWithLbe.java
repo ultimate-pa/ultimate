@@ -8,13 +8,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -28,10 +25,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.IChcProvider;
 
 /**
@@ -72,13 +70,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 				numberOfThreads.put(instance, 1);
 			}
 		}
-		// TODO: Use the construction from the new API instead (when finished)
-		BoundedPetriNet<IcfgEdge, IPredicate> petriNet;
-		try {
-			petriNet = getPetriNetWithLbe(petrified, mServices);
-		} catch (AutomataOperationCanceledException | PetriNetNot1SafeException e) {
-			throw new AssertionError(e);
-		}
+		final BoundedPetriNet<IcfgEdge, IPredicate> petriNet = getPetriNetWithLbe(petrified, mServices);
 		final List<HornClause> result = new ArrayList<>();
 		final List<IcfgLocation> errorLocs = getLocations(petriNet.getAcceptingPlaces()).stream()
 				.filter(x -> numberOfThreads.containsKey(x.getProcedure())).collect(Collectors.toList());
@@ -116,23 +108,23 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 	}
 
 	private static BoundedPetriNet<IcfgEdge, IPredicate> getPetriNetWithLbe(final IIcfg<IcfgLocation> icfg,
-			final IUltimateServiceProvider services)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final IUltimateServiceProvider services) {
+		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
+		final PetriInitialAbstractionProvider<IcfgEdge> petriNetProvider =
+				new PetriInitialAbstractionProvider<>(services, predicateFactory, true);
+		final PetriLbeInitialAbstractionProvider<IcfgEdge> lbeProvider = new PetriLbeInitialAbstractionProvider<>(
+				petriNetProvider, services, IcfgEdge.class, PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK,
+				new IcfgCompositionFactory(services, csToolkit), Activator.PLUGIN_ID);
 		final Set<IcfgLocation> inUseLocs =
 				new HashSet<>(icfg.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());
 		final Set<IcfgLocation> errors = icfg.getProcedureErrorNodes().values().stream().flatMap(Collection::stream)
 				.filter(x -> !inUseLocs.contains(x)).collect(Collectors.toSet());
-		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
-		final PredicateFactory predicateFactory =
-				new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
-		// TODO: PredicateFactoryRefinement is part of TraceAbstraction, therefore we need to import it
-		// This should probably be changed!
-		final BoundedPetriNet<IcfgEdge, IPredicate> petriNet =
-				Cfg2Automaton.constructPetriNetWithSPredicates(services, icfg, errors, predicateFactory);
-		final PetriNetLargeBlockEncoding<IcfgEdge> lbe = new PetriNetLargeBlockEncoding<>(services, csToolkit,
-				new RemoveDead<>(new AutomataLibraryServices(services), petriNet, null, true).getResult(),
-				PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK, new IcfgCompositionFactory(services, csToolkit),
-				IcfgEdge.class);
-		return lbe.getResult();
+		try {
+			return lbeProvider.getInitialAbstraction(icfg, errors);
+		} catch (final AutomataLibraryException e) {
+			throw new AssertionError(e);
+		}
 	}
 }
