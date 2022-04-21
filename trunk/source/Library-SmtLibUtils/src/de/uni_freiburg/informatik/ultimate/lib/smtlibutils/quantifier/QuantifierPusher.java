@@ -442,7 +442,12 @@ public class QuantifierPusher extends TermTransformer {
 					"eliminating " + et.getEliminatees().size() + " quantified variables from "
 							+ dualFiniteParams.length + " " + QuantifierUtils.getNameOfDualJuncts(et.getQuantifier()));
 		}
+//		final boolean possiblityToDistribute = Arrays.stream(dualFiniteParams).anyMatch(x -> isCorrespondingFinite(x, et.getQuantifier()));
+//		if (!possiblityToDistribute) {
+//			return null;
+//		}
 
+		final EliminationTask currentEt;
 		if (et.getEliminatees().size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
 			final EliminationTaskSimple etSequentialization;
 			final Term seq = QuantifierPushUtils.sequentialSubsetPush(services, mgdScript, applyDistributivity,
@@ -473,20 +478,32 @@ public class QuantifierPusher extends TermTransformer {
 				} else {
 					dualFiniteParams = QuantifierUtils.getDualFiniteJunction(etSequentialization.getQuantifier(),
 							etSequentialization.getTerm());
+					currentEt = new EliminationTask(et.getQuantifier(), et.getEliminatees(),
+							etSequentialization.getTerm(), et.getContext());
 				}
 			}
+		} else {
+			if (!Arrays.equals(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()), dualFiniteParams)) {
+				throw new AssertionError("dual finite junction different!");
+			}
+			currentEt = et;
 		}
-		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, et, qe,
-				dualFiniteParams, DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
+		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, currentEt, qe,
+				DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
 				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
 	}
 
 	public static Term applyDistributivityAndPush(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
-			final IQuantifierEliminator qe, final Term[] dualFiniteParams,
+			final IQuantifierEliminator qe,
 			final boolean derBasedDistributivityParameterPreselection,
 			final boolean evaluateSuccessOfDistributivityApplication) {
+		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		if (dualFiniteParams.length == 1) {
+			throw new AssertionError("No dual finite junction");
+		}
+
 		if (derBasedDistributivityParameterPreselection) {
 			final int rec = DerScout.computeRecommendation(mgdScript.getScript(), et.getEliminatees(), dualFiniteParams,
 					et.getQuantifier());

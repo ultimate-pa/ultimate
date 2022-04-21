@@ -431,6 +431,8 @@ public class QuantifierPushUtils {
 						nonMinionEliminatees);
 		context = context.constructChildContextForConDis(services, mgdScript,
 					((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
+
+
 		return qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique,
 					context, quantified);
 	}
