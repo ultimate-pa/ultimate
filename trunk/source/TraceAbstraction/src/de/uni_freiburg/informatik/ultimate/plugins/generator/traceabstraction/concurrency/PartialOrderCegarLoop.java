@@ -74,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -210,10 +212,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
+		final IndependenceSettings settings = mPref.porIndependenceSettings();
+		if (settings.getIndependenceType() == IndependenceType.SYNTACTIC) {
+			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
+		}
+
+		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
 		return IndependenceBuilder
 				// Semantic independence forms the base.
 				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
-						mPref.getConditionalPor(), mPref.getSymmetricPor())
+						settings.useConditional(), !settings.useSemiCommutativity())
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
 				// Cache independence query results.

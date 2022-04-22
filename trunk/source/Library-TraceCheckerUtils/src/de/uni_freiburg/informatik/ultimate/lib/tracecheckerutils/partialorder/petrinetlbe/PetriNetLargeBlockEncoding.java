@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -99,7 +100,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 *             if Petri net is not 1-safe.
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final BoundedPetriNet<L, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings,
+			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
 			final IPLBECompositionFactory<L> compositionFactory, final Class<L> clazz)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -109,23 +110,22 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		final IIndependenceRelation<IPredicate, L> variableCheck = new SyntacticIndependenceRelation<>();
 		final IIndependenceRelation<IPredicate, L> semanticCheck;
 		final CachedIndependenceRelation<IPredicate, L> moverCheck;
-		switch (petriNetLbeSettings) {
-		case OFF:
-			throw new IllegalArgumentException("do not call LBE if you don't want to use it");
-		case SEMANTIC_BASED_MOVER_CHECK:
+		switch (independenceSettings.getIndependenceType()) {
+		case SEMANTIC:
 			mLogger.info("Petri net LBE is using semantic-based independence relation.");
-			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, false, false);
+			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript,
+					independenceSettings.useConditional(), !independenceSettings.useSemiCommutativity());
 			final IIndependenceRelation<IPredicate, L> unionCheck =
 					new UnionIndependenceRelation<>(Arrays.asList(variableCheck, semanticCheck));
 			moverCheck = new CachedIndependenceRelation<>(unionCheck);
 			break;
-		case VARIABLE_BASED_MOVER_CHECK:
+		case SYNTACTIC:
 			semanticCheck = null;
 			mLogger.info("Petri net LBE is using variable-based independence relation.");
 			moverCheck = new CachedIndependenceRelation<>(variableCheck);
 			break;
 		default:
-			throw new AssertionError("unknown value " + petriNetLbeSettings);
+			throw new AssertionError("unknown value " + independenceSettings.getIndependenceType());
 		}
 
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
@@ -195,18 +195,5 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public interface IPLBECompositionFactory<L> extends ICompositionFactory<L> {
 		Map<L, TermVariable> getBranchEncoders();
-	}
-
-	public enum PetriNetLbe {
-
-		OFF,
-		/**
-		 * TODO: documentation
-		 */
-		SEMANTIC_BASED_MOVER_CHECK,
-		/**
-		 * TODO: documentation
-		 */
-		VARIABLE_BASED_MOVER_CHECK,
 	}
 }

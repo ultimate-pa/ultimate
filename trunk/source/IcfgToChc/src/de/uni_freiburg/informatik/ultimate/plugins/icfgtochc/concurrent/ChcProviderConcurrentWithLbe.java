@@ -27,8 +27,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.IChcProvider;
 
@@ -115,7 +115,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 		final PetriInitialAbstractionProvider<IcfgEdge> petriNetProvider =
 				new PetriInitialAbstractionProvider<>(services, predicateFactory, true);
 		final PetriLbeInitialAbstractionProvider<IcfgEdge> lbeProvider = new PetriLbeInitialAbstractionProvider<>(
-				petriNetProvider, services, IcfgEdge.class, PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK,
+				petriNetProvider, services, IcfgEdge.class, new IndependenceSettings(),
 				new IcfgCompositionFactory(services, csToolkit), Activator.PLUGIN_ID);
 		final Set<IcfgLocation> inUseLocs =
 				new HashSet<>(icfg.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());

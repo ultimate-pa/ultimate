@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -296,11 +295,11 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final boolean removeDead) {
 		final var netProvider = new PetriInitialAbstractionProvider<L>(services, predicateFactory, removeDead);
-		if (mPrefs.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
+		if (!mPrefs.applyOneShotLbe()) {
 			return netProvider;
 		}
 		return new PetriLbeInitialAbstractionProvider<>(netProvider, services, mTransitionClazz,
-				mPrefs.useLbeInConcurrentAnalysis(), mCreateCompositionFactory.get(), Activator.PLUGIN_ID);
+				mPrefs.lbeIndependenceSettings(), mCreateCompositionFactory.get(), Activator.PLUGIN_ID);
 	}
 
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> createPartialOrderAbstraction(
