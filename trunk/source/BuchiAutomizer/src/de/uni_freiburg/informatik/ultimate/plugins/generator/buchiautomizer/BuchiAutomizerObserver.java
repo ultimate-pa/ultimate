@@ -77,7 +77,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.AbstractBuchiCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.AbstractBuchiCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.BuchiCegarLoopFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -137,9 +139,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 
-		final BuchiCegarLoop<IcfgEdge> bcl = new BuchiCegarLoop<>(icfg, rankVarConstructor, predicateFactory, taPrefs,
-				mServices, witnessAutomaton, IcfgEdge.class);
-		final Result result = bcl.iterate();
+		final BuchiCegarLoopFactory<IcfgEdge> factory = new BuchiCegarLoopFactory<>();
+		final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl = factory.constructCegarLoop(icfg, rankVarConstructor,
+				predicateFactory, taPrefs, mServices, witnessAutomaton, IcfgEdge.class);
+		final Result result = bcl.runCegarLoop();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
@@ -202,11 +205,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(result);
 	}
 
-	private void interpretAndReportResult(final BuchiCegarLoop<IcfgEdge> bcl, final Result result, final IIcfg<?> icfg)
-			throws AssertionError {
+	private void interpretAndReportResult(final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl, final Result result,
+			final IIcfg<?> icfg) throws AssertionError {
 		String whatToProve = "termination";
 
-		if (bcl.isInLTLMode()) {
+		if (LTLPropertyCheck.getAnnotation(icfg) != null) {
 			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(icfg);
 			switch (result) {
 			case NONTERMINATING:
@@ -297,13 +300,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportLTLPropertyHolds(final BuchiCegarLoop<?> bcl, final LTLPropertyCheck ltlAnnot) {
+	private void reportLTLPropertyHolds(final AbstractBuchiCegarLoop<?, ?> bcl, final LTLPropertyCheck ltlAnnot) {
 		final IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
 				"Buchi Automizer proved that the LTL property " + ltlAnnot.getUltimateLTLProperty() + " holds");
 		reportResult(result);
 	}
 
-	private void reportLTLPropertyIsViolated(final BuchiCegarLoop<IcfgEdge> bcl, final LTLPropertyCheck ltlAnnot) {
+	private void reportLTLPropertyIsViolated(final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl,
+			final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
 		final IcfgLocation position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not

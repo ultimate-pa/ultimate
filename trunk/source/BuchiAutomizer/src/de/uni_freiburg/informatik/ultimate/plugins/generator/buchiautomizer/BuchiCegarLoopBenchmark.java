@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.AbstractBuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
-public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements IStatisticsType {
+public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 
 	private static final BuchiCegarLoopBenchmark s_Instance = new BuchiCegarLoopBenchmark();
 
@@ -107,7 +107,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		case s_Result:
 			final Result result1 = (Result) value1;
 			final Result result2 = (Result) value2;
-			final Set<Result> results = new HashSet<Result>();
+			final Set<Result> results = new HashSet<>();
 			results.add(result1);
 			results.add(result2);
 			if (results.contains(Result.NONTERMINATING)) {
