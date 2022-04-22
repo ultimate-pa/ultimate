@@ -9,9 +9,9 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
 	</rundefinition>
 
-	<rundefinition name="Automizer FA.CANONICAL">
+	<!--rundefinition name="Automizer FA.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-CANONICAL.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.None">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-None-NoLbe.epf</option>
@@ -133,25 +133,33 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-LoopLockstep.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
+	</rundefinition-->
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.SYNTACTIC">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-SYNTACTIC.epf</option>
 	</rundefinition>
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-CANONICAL.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
+	</rundefinition-->
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-VarAbsGLOBAL.SYNTACTIC">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-SYNTACTIC.epf</option>
 	</rundefinition>
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL.CANONICAL">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-CANONICAL.epf</option>
 	</rundefinition>
 
 	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsSPECIFIC.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-specific-CANONICAL.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLockstep">
