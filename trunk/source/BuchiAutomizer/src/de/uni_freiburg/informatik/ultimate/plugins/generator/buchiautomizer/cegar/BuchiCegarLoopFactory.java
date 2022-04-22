@@ -27,47 +27,6 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
-	// private void getInitialAbstraction() {
-	// final Collection<IcfgLocation> acceptingNodes;
-	// final Collection<IcfgLocation> allNodes = new HashSet<>();
-	// for (final Map<DebugIdentifier, ? extends IcfgLocation> prog2pp : mIcfg.getProgramPoints().values()) {
-	// allNodes.addAll(prog2pp.values());
-	// }
-	//
-	// // check if we run in LTL mode and set accepting states accordingly
-	// if (LTLPropertyCheck.getAnnotation(mIcfg) != null) {
-	// mLTLMode = true;
-	// acceptingNodes =
-	// allNodes.stream().filter(a -> BuchiProgramAcceptingStateAnnotation.getAnnotation(a) != null)
-	// .collect(Collectors.toSet());
-	// } else {
-	// mLTLMode = false;
-	// acceptingNodes = allNodes;
-	// }
-	// mAbstraction = Cfg2Automaton.constructAutomatonWithSPredicates(mServices, mIcfg, mDefaultStateFactory,
-	// acceptingNodes, mPref.interprocedural(), mPredicateFactory);
-	// if (!ALLOW_CALLS && !mAbstraction.getVpAlphabet().getCallAlphabet().isEmpty()) {
-	// throw new AssertionError("Calls are not allowed in this debugging mode");
-	// }
-	// if (mWitnessAutomaton != null) {
-	// try {
-	// final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
-	// final NestedWordAutomatonReachableStates<WitnessEdge, WitnessNode> reach =
-	// new NestedWordAutomatonReachableStates<>(services, mWitnessAutomaton);
-	// final INestedWordAutomaton<WitnessEdge, WitnessNode> allAccepting =
-	// new NestedWordAutomatonFilteredStates<>(services, reach, mWitnessAutomaton.getStates(),
-	// mWitnessAutomaton.getInitialStates(), mWitnessAutomaton.getStates());
-	// mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(mServices, mAbstraction, allAccepting,
-	// mCsToolkitWithoutRankVars, mPredicateFactory, mStateFactoryForRefinement, mLogger,
-	// Property.TERMINATION);
-	// } catch (final AutomataOperationCanceledException e) {
-	// final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-	// "constructing product with witness of size " + mWitnessAutomaton.size());
-	// throw new ToolchainCanceledException(e, rti);
-	// }
-	// }
-	// }
-
 	public AbstractBuchiCegarLoop<L, ?> constructCegarLoop(final IIcfg<?> icfg,
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final IUltimateServiceProvider services,
