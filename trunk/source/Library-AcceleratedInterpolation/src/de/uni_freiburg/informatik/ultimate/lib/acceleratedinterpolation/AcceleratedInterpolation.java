@@ -75,14 +75,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
- * Class for the accelerated interpolation interpolant generation scheme.
- * Accelerated interpolation makes use of loop accelerations/summaries to speed
- * up interpolant computation.
+ * Class for the accelerated interpolation interpolant generation scheme. Accelerated interpolation makes use of loop
+ * accelerations/summaries to speed up interpolant computation.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  *
- * @param <L> A letter of a word.
+ * @param <L>
+ *            A letter of a word.
  */
 public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<L> {
 
@@ -105,16 +105,21 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	private final Class<L> mTransitionClazz;
 
 	/**
-	 * Interpolation using loop acceleration. By detecting loops in program traces,
-	 * we compute the reflexive transitive closure to capture all possible loop
-	 * iterations and interpolate of this meta-trace.
+	 * Interpolation using loop acceleration. By detecting loops in program traces, we compute the reflexive transitive
+	 * closure to capture all possible loop iterations and interpolate of this meta-trace.
 	 *
-	 * @param logger           A {@link ILogger}
-	 * @param prefs            Ultimate's preferences.
-	 * @param script           A {@link ManagedScript}
-	 * @param predicateUnifier A {@link PredicateTransformer}
-	 * @param counterexample   A possible counterexample.
-	 * @param transitionClazz  The letter clazz.
+	 * @param logger
+	 *            A {@link ILogger}
+	 * @param prefs
+	 *            Ultimate's preferences.
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param predicateUnifier
+	 *            A {@link PredicateTransformer}
+	 * @param counterexample
+	 *            A possible counterexample.
+	 * @param transitionClazz
+	 *            The letter clazz.
 	 * @param strategySupplier
 	 */
 	public AcceleratedInterpolation(final IUltimateServiceProvider services, final ILogger logger,
@@ -147,13 +152,13 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			final List<String> fastUPRPreprocessOptions = new ArrayList<>(Arrays.asList("ite", "mod", "!=", "not"));
 			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
 					mIcfg.getCfgSmtToolkit(), fastUPRPreprocessOptions);
-			loopAccelerator = new AcceleratorFastUPR(mLogger, mScript, mServices,
-					mIcfg.getCfgSmtToolkit().getSymbolTable());
+			loopAccelerator =
+					new AcceleratorFastUPR(mLogger, mScript, mServices, mIcfg.getCfgSmtToolkit().getSymbolTable());
 			break;
 		case JORDAN:
 			loopdetector = new Loopdetector<>(mCounterexample, mLogger);
 			loopPreprocessor = new LoopPreprocessor<>(mLogger, mScript, mServices, mPredUnifier, mPredHelper,
-					mIcfg.getCfgSmtToolkit(), new ArrayList<>(Arrays.asList("")));
+					mIcfg.getCfgSmtToolkit(), new ArrayList<>(Arrays.asList("ite")));
 			loopAccelerator = new AcceleratorJordan(mLogger, mScript, mServices);
 			break;
 		case QVASR:
@@ -181,9 +186,9 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			throw new UnsupportedOperationException("Unkown " + accelerationMethod);
 
 		}
-		final AcceleratedInterpolationCore<L> accelInterpolCore = new AcceleratedInterpolationCore<>(mServices, mLogger,
-				mScript, mPredUnifier, mPrefs, mCounterexampleTrace, mIcfg, loopdetector, loopPreprocessor,
-				loopAccelerator, strategySupplier);
+		final AcceleratedInterpolationCore<L> accelInterpolCore =
+				new AcceleratedInterpolationCore<>(mServices, mLogger, mScript, mPredUnifier, mPrefs,
+						mCounterexampleTrace, mIcfg, loopdetector, loopPreprocessor, loopAccelerator, strategySupplier);
 
 		try {
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);

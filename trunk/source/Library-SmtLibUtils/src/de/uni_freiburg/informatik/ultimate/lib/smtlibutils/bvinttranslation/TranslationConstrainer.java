@@ -63,13 +63,21 @@ public class TranslationConstrainer {
 		 * Overapproximation of all bit-wise functions by auxiliary variables
 		 */
 		NONE
+		/**
+		 * Overapproximation of all bit-wise functions by uninterpreted function symbol
+		 */
 	}
 
-	public final ConstraintsForBitwiseOperations mMode; // Default Mode
+	public final ConstraintsForBitwiseOperations mMode;
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
 	private final HashSet<Term> mTvConstraintSet; // Set of all constraints for quantified variables
 
+	/*
+	 * This Class contains of the methods to create constraints for the translation of bit-wise-AND and variables.
+	 * The constraints for uninterpreted constants and bit-wise-AND can be accessed via getConstraints().
+	 * The constraints for TermVariables can be accessed via getTvConstraints().
+	 */
 	public TranslationConstrainer(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations mode) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
@@ -93,10 +101,12 @@ public class TranslationConstrainer {
 		}
 	}
 
+	// returns the Set of constraints for uninterpreted constants and bit-wise-AND
 	public HashSet<Term> getConstraints() {
 		return mConstraintSet;
 	}
 
+	// returns the Set of constraints for TermVariables
 	public HashSet<Term> getTvConstraints() {
 		return mTvConstraintSet;
 	}
@@ -119,7 +129,7 @@ public class TranslationConstrainer {
 		final Term translatedVar = intTerm;
 		final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
 		final Rational twoPowWidthSubOne = twoPowWidth.sub(Rational.ONE);
-
+		// Strict upper Bound
 		final Term upperBoundPaper =
 				mScript.term("<", translatedVar, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
 		final Term upperBound =
@@ -139,6 +149,7 @@ public class TranslationConstrainer {
 		return mScript.term("and", lowerBound, upperBoundPaper);
 	}
 
+	// returns bounds for select terms, they are not added to the sets.
 	public Term getSelectConstraint(final Term bvterm, final Term intTerm) {
 		final Term lowerBound = getLowerVarBounds(bvterm, intTerm);
 		final Term upperBoundPaper = getUpperVarBounds(bvterm, intTerm);
@@ -272,6 +283,7 @@ public class TranslationConstrainer {
 		return mScript.term("and", lazyConstraints);
 	}
 
+	// Term that picks the bit at position "i" of integer term "term" interpreted as binary
 	private Term isel(final int i, final Term term) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 		final Term two =

@@ -47,14 +47,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.CegarRestartBehaviour;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -95,17 +95,39 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "amount of iterations occured. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
 
-	public static final String LABEL_LBE_CONCURRENCY = "Large block encoding in concurrent analysis";
-	private static final PetriNetLbe DEF_LBE_CONCURRENCY = PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK;
+	/*
+	 * Settings for Petri net Large Block Encoding (Lipton Reduction)
+	 */
+
+	public static final String LABEL_PETRI_LBE_ONESHOT = "Apply one-shot large block encoding in concurrent analysis";
+	private static final boolean DEF_PETRI_LBE_ONESHOT = true;
+
+	public static final String LABEL_INDEPENDENCE_PLBE =
+			"Independence relation used for large block encoding in concurrent analysis";
+	private static final IndependenceType DEF_INDEPENDENCE_PLBE = IndependenceType.SEMANTIC;
+
+	public static final String LABEL_SEMICOMM_PLBE =
+			"Use semi-commutativity for large block encoding in concurrent analysis";
+	private static final boolean DEF_SEMICOMM_PLBE = true;
+
+	/*
+	 * Settings for Partial Order Reduction
+	 */
+
+	public static final String LABEL_POR_ONESHOT = "Apply one-shot Partial Order Reduction to input program";
+	private static final boolean DEF_POR_ONESHOT = false;
 
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
+	public static final String LABEL_INDEPENDENCE_POR = "Independence relation used for POR in concurrent analysis";
+	private static final IndependenceType DEF_INDEPENDENCE_POR = IndependenceType.SEMANTIC;
+
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
 	private static final boolean DEF_COND_POR = true;
 
-	public static final String LABEL_SYMM_POR = "Limit POR to symmetric independence in concurrent analysis";
-	private static final boolean DEF_SYMM_POR = false;
+	public static final String LABEL_SEMICOMM_POR = "Use semi-commutativity for POR in concurrent analysis";
+	private static final boolean DEF_SEMICOMM_POR = true;
 
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
@@ -115,6 +137,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
 	private static final AbstractionType DEF_POR_ABSTRACTION = AbstractionType.NONE;
+
+	/* **************************************** */
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
@@ -512,18 +536,27 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
-						PetriNetLbe.values()),
+				/* Petri LBE settings */
+				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
+						IndependenceType.values()),
+				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean),
+				/* Partial Order Reduction settings */
+				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, DEF_INDEPENDENCE_POR, PreferenceType.Combo,
+						IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SYMM_POR, DEF_SYMM_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, DEF_SEMICOMM_POR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, DEF_POR_ABSTRACTION, PreferenceType.Combo,
 						AbstractionType.values()),
+
+				/* ********************************* */
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  * Class for applying the qvasr loop summarization technique in conjunction with IcfgTransformation.
@@ -103,6 +104,9 @@ public class QvasrIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Icf
 			if (oldEdge.getSource() == oldEdge.getTarget()) {
 				mLogger.debug("Found loop, starting Qvasr summarization.");
 				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
+				if (!SmtUtils.containsArrayVariables(oldTf.getFormula()) || !SmtUtils.isArrayFree(oldTf.getFormula())) {
+					return super.transform(oldEdge, tf);
+				}
 				final UnmodifiableTransFormula loopAccel = qvasrSummarizer.summarizeLoop(oldTf);
 				return new TransformulaTransformationResult(loopAccel);
 			} else {

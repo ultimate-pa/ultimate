@@ -39,14 +39,15 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckutils.petrinetlbe.PetriNetLargeBlockEncoding.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.AbstractionType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -89,6 +90,9 @@ public final class TAPreferences {
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
 	private final McrInterpolantMethod mMcrInterpolantMethod;
+
+	private final IndependenceSettings mPorIndependenceSettings;
+	private final IndependenceSettings mLbeIndependenceSettings;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -186,6 +190,15 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
 		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
 				McrInterpolantMethod.class);
+
+		mPorIndependenceSettings = new IndependenceSettings(
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_POR, IndependenceType.class),
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COND_POR),
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR));
+		mLbeIndependenceSettings = new IndependenceSettings(
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_PLBE, IndependenceType.class),
+				false /* currently hard-coded; will be changed for repeated Petri net LBE */,
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE));
 	}
 
 	/**
@@ -356,8 +369,12 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LOOPER_CHECK_PETRI, LooperCheck.class);
 	}
 
-	public PetriNetLbe useLbeInConcurrentAnalysis() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY, PetriNetLbe.class);
+	public boolean applyOneShotLbe() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PETRI_LBE_ONESHOT);
+	}
+
+	public boolean applyOneShotPOR() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_POR_ONESHOT);
 	}
 
 	public PartialOrderMode getPartialOrderMode() {
@@ -372,12 +389,12 @@ public final class TAPreferences {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
 	}
 
-	public boolean getConditionalPor() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COND_POR);
+	public IndependenceSettings porIndependenceSettings() {
+		return mPorIndependenceSettings;
 	}
 
-	public boolean getSymmetricPor() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SYMM_POR);
+	public IndependenceSettings lbeIndependenceSettings() {
+		return mLbeIndependenceSettings;
 	}
 
 	public AbstractionType getPorAbstraction() {
