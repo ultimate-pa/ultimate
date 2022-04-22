@@ -165,7 +165,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 	private int mIteration;
 
-	INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
+	public INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final NestedLassoRun<LETTER, IPredicate> mCounterexample, final int iteration,
 			final BuchiInterpolantAutomatonConstructionStyle setting, final BinaryStatePredicateManager bspm,
@@ -190,7 +190,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 		IPredicate[] stemInterpolants;
 		InterpolatingTraceCheck<LETTER> traceCheck;
-		if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
+		if (BuchiAutomizerUtils.isEmptyStem(mCounterexample)) {
 			stemInterpolants = null;
 		} else {
 
@@ -220,7 +220,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 			final String filename = mICfgContainer.getIdentifier() + "_" + "InterpolantAutomatonBuchi" + iteration;
 			final String message = setting.toString();
-			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomaton, mDumpPath, filename, mFormat, message);
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mInterpolAutomaton, mDumpPath, filename, mFormat,
+					message);
 		}
 
 		// BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(mCsToolkit));
@@ -336,7 +337,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			}
 			final String filename = mICfgContainer.getIdentifier() + "_" + automatonString + iteration + "after";
 			final String message = setting.toString();
-			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
 					mFormat, message);
 		}
 		final boolean tacasDump = false;
@@ -364,7 +365,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final String filename =
 					mICfgContainer.getIdentifier() + "_" + determinicity + automatonString + iteration + "after";
 			final String message = setting.toString();
-			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
 					mFormat, message);
 
 		}
@@ -398,7 +399,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case ScroogeNondeterminism:
 		case Deterministic:
 			Set<IPredicate> stemInterpolantsForRefinement;
-			if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
+			if (BuchiAutomizerUtils.isEmptyStem(mCounterexample)) {
 				stemInterpolantsForRefinement = Collections.emptySet();
 			} else if (biaConstructionStyle.cannibalizeLoop()) {
 				stemInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(stemInterpolants));
@@ -426,9 +427,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			}
 
 			buchiInterpolantAutomatonForOnDemandConstruction = new BuchiInterpolantAutomatonBouncer<>(mCsToolkit,
-					mPredicateFactory, bspm, bhtc, BuchiCegarLoop.isEmptyStem(mCounterexample),
+					mPredicateFactory, bspm, bhtc, BuchiAutomizerUtils.isEmptyStem(mCounterexample),
 					stemInterpolantsForRefinement, loopInterpolantsForRefinement,
-					BuchiCegarLoop.isEmptyStem(mCounterexample) ? null : stem.getSymbol(stem.length() - 1),
+					BuchiAutomizerUtils.isEmptyStem(mCounterexample) ? null : stem.getSymbol(stem.length() - 1),
 					loop.getSymbol(loop.length() - 1), biaConstructionStyle.isScroogeNondeterminismStem(),
 					biaConstructionStyle.isScroogeNondeterminismLoop(), biaConstructionStyle.isBouncerStem(),
 					biaConstructionStyle.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
@@ -732,9 +733,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 		if (pos >= predicates.length) {
 			return after;
-		} else {
-			return predicates[pos];
 		}
+		return predicates[pos];
 	}
 
 }
