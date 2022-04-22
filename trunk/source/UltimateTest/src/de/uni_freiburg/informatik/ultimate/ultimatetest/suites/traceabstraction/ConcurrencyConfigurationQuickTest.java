@@ -30,7 +30,10 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 /**
@@ -39,6 +42,11 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionTestSuite {
+
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
+	}
 
 	// @formatter:off
 	private static final String SETTINGS_DIR = "automizer/concurrent/";
@@ -60,7 +68,7 @@ public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionT
 
 	@Override
 	protected long getTimeout() {
-		return 60L;
+		return 30000L;
 	}
 
 	@Override
