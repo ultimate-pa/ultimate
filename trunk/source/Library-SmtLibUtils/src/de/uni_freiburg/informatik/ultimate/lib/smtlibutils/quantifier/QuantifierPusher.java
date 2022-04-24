@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtilsForLocalEliminatees;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtilsForSubsetPush;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils.IQuantifierEliminator;
@@ -329,39 +328,27 @@ public class QuantifierPusher extends TermTransformer {
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et, final IQuantifierEliminator qe) {
 
 		final Pair<Boolean, Term> pair = QuantifierPushUtils.preprocessDualFiniteJunction(services, mgdScript,
-				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
+				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe, true);
 
-		final EliminationTask res1Et;
-		if (pair.getFirst()) {
-			res1Et = new EliminationTask((QuantifiedFormula) pair.getSecond(), et.getContext());
-//			return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, newEt, qe);
-		} else {
+		if (!pair.getFirst()) {
 			return pair.getSecond();
 		}
+		final EliminationTask preprocessedEt = new EliminationTask((QuantifiedFormula) pair.getSecond(), et.getContext());
 
-		final Term flattened1 =
-				QuantifierPushUtils.flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
-		if (!(flattened1 instanceof QuantifiedFormula)) {
-			// some quantifiers could be removed for trivial reasons
-			return flattened1;
+		final Term eliminationResult = applyDualJunctionEliminationTechniques(preprocessedEt, mgdScript, services,
+				pqeTechniques);
+		if (eliminationResult != null) {
+			// quantifier was at least partially removed
+			return eliminationResult;
 		}
-//		final EliminationTask res1Et = new EliminationTask((QuantifiedFormula) flattened1, et.getContext());
-		final EliminationTask pushed = QuantifierPushUtils.pushDualQuantifiersInParams(services, mgdScript, applyDistributivity,
-				pqeTechniques, simplificationTechnique, res1Et, qe);
-		final Term pushedTerm = pushed.toTerm(mgdScript.getScript());
-		if (!(pushedTerm instanceof QuantifiedFormula)) {
-			// outer quantifiers removed for trivial reason after removal of inner quantifier
-			return pushedTerm;
+
+		if (applyDistributivity) {
+			return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques,
+					simplificationTechnique, preprocessedEt, qe);
+		} else {
+			// nothing eliminated
+			return null;
 		}
-		final Term flattened2 =
-				QuantifierPushUtils.flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) pushedTerm);
-		if (!(flattened2 instanceof QuantifiedFormula)) {
-			// some quantifiers could be removed for trivial reasons
-			return flattened2;
-		}
-		final EliminationTask res2Et = new EliminationTask((QuantifiedFormula) flattened2, et.getContext());
-		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques,
-				simplificationTechnique, res2Et, qe);
 	}
 
 	private static boolean isDualFiniteConnective(final EliminationTask et) {
@@ -382,69 +369,7 @@ public class QuantifierPusher extends TermTransformer {
 			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
 
-		// Step 1:
-		// do partition
-		// if you can push something, push and return
-		// if you cannot push, continue
-		final ParameterPartition pp = new ParameterPartition(mgdScript.getScript(), et);
-		if (!pp.isIsPartitionTrivial()) {
-			return pp.getTermWithPushedQuantifier();
-		}
 
-		// 2016-12-03 Matthias: plan for refactoring
-		//
-		// do partition
-		// if you can push something, push and return
-		// if you cannot push, continue
-		//
-		// apply sequence of eliminations
-		// after each, check topmost connector
-		// if 'other finite' continue
-		// else push (if possible) and return
-		//
-		// if all elimination processed (and still 'other finite')
-		// check for 'same finite' in one 'other finite'
-		// if exists, distribute, apply new pusher to result
-		// if less quantified return result
-		// if not less quantified return term after elimination
-		// if not exists return
-
-		// TODO 20200525 Matthias:
-		// (1) maybe elimination techniques should be applied before
-		// and after pushing params
-		// (2) Keep pushed params even if we do not (successfully) apply distribution
-		// TODO 20200724 Matthias:
-		// Future plan:
-		// (1) apply non-expensive elimination techniques
-		// (2) check if already corresponding connective
-		// (3) try to push all (not only quantified) params without distributivity
-		// (better with distributivity bu only for elimination guarantee)
-		// include single param eliminatees
-		// (4) pull corresponding quantifiers one step
-		// (4a) flatten connective if necessary
-		// (4b) apply iteratively if necessary
-		// (5) apply all elimination techniques
-		// (6) re-do until no change (probably suppported by caller of this method)
-		// (7) apply distributivity
-		{
-			;
-			final Term eliminationResult =
-					applyDualJunctionEliminationTechniques(et, mgdScript, services, pqeTechniques);
-			if (eliminationResult != null) {
-				// something was removed
-				return eliminationResult;
-			}
-		}
-		final Term tmp = QuantifierPushUtilsForLocalEliminatees.pushLocalEliminateesOverCorrespondingFiniteJunction(
-				services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
-		if (tmp != null) {
-			return tmp;
-		}
-
-		if (!applyDistributivity) {
-			// nothing eliminated
-			return null;
-		}
 		Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 		assert dualFiniteParams.length > 1 : QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE;
 
