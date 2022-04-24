@@ -69,7 +69,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 			final IQuantifierEliminator qe) {
 		Term[] currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 		if (currentDualFiniteJuncts.length <= 1) {
-			throw new AssertionError("No dual finite junction");
+			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
 		Pair<Term, Set<TermVariable>> qualifiedDualJunct2LocalEliminatees = findSomePushableLocalEliminateeSet(et);
 		EliminationTask currentEt = et;
@@ -119,7 +119,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 			final IQuantifierEliminator qe) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(quantifier, dualFiniteJunction);
 		if (dualFiniteJuncts.length <= 1) {
-			throw new AssertionError("Not a dual finite junction");
+			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
 		final int i = Arrays.asList(dualFiniteJuncts).indexOf(dualJunctEliminateesPair.getFirst());
 		final Term ithTermQuantified = SmtUtils.quantifier(mgdScript.getScript(), quantifier,
@@ -142,7 +142,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 	 */
 	static Pair<Term, Set<TermVariable>> findSomePushableLocalEliminateeSet(final EliminationTask et) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
-		assert dualFiniteJuncts.length > 1 : QuantifierPusher.NOT_DUAL_FINITE_CONNECTIVE;
+		assert dualFiniteJuncts.length > 1 : QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE;
 		final HashRelation<TermVariable, Term> eliminatee2DualJuncts = new HashRelation<>();
 		for (final Term dualJunct : dualFiniteJuncts) {
 			final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(dualJunct.getFreeVars()));
