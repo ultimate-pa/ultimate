@@ -226,11 +226,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, mInterpolation, mServices);
 		mConstructTermcompProof = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
-		if (mConstructTermcompProof) {
-			mTermcompProofBenchmark = new TermcompProofBenchmark(mServices);
-		} else {
-			mTermcompProofBenchmark = null;
-		}
+		mTermcompProofBenchmark = mConstructTermcompProof ? new TermcompProofBenchmark(mServices) : null;
 
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
@@ -288,10 +284,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				abstractionCorrect = isAbstractionEmpty();
 			} catch (final AutomataLibraryException e1) {
 				mLogger.warn("Verification cancelled");
-				mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
-				if (mConstructTermcompProof) {
-					mTermcompProofBenchmark.reportRemainderModule(false);
-				}
+				reportRemainderModule(false);
 				mToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
 				return Result.TIMEOUT;
 			}
@@ -386,25 +379,16 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
 					break;
 				case REPORT_UNKNOWN:
-					mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
-					if (mConstructTermcompProof) {
-						mTermcompProofBenchmark.reportRemainderModule(false);
-					}
+					reportRemainderModule(false);
 					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
 					final Map<String, ILocation> overapprox = lassoWasOverapproximated();
 					if (!overapprox.isEmpty()) {
-						mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
-						if (mConstructTermcompProof) {
-							mTermcompProofBenchmark.reportRemainderModule(false);
-						}
+						reportRemainderModule(false);
 						return Result.UNKNOWN;
 					}
 					mNonterminationArgument = lassoCheck.getNonTerminationArgument();
-					mMDBenchmark.reportRemainderModule(mAbstraction.size(), true);
-					if (mConstructTermcompProof) {
-						mTermcompProofBenchmark.reportRemainderModule(true);
-					}
+					reportRemainderModule(true);
 					return Result.NONTERMINATING;
 				default:
 					throw new AssertionError("impossible case");
@@ -431,6 +415,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			mInterpolAutomaton = null;
 		}
 		return Result.TIMEOUT;
+	}
+
+	private void reportRemainderModule(final boolean nonterminationKnown) {
+		mMDBenchmark.reportRemainderModule(mAbstraction.size(), nonterminationKnown);
+		if (mConstructTermcompProof) {
+			mTermcompProofBenchmark.reportRemainderModule(nonterminationKnown);
+		}
 	}
 
 	public Map<String, ILocation> lassoWasOverapproximated() {
