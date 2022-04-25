@@ -198,11 +198,11 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 		sb.append(". ");
 
 		sb.append("Minimization of det autom ");
-		sb.append(benchmarkData.getValue(MINIMIZATION_OF_DETERMINISTIC_AUTOMATA.toString()));
+		sb.append(benchmarkData.getValue(MINIMIZATION_OF_DETERMINISTIC_AUTOMATA));
 		sb.append(". ");
 
 		sb.append("Minimization of nondet autom ");
-		sb.append(benchmarkData.getValue(MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA.toString()));
+		sb.append(benchmarkData.getValue(MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA));
 		sb.append(". ");
 
 		sb.append("Automata minimization ");
@@ -291,6 +291,11 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 		sb.append(": ");
 		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(LASSO_NONTERMINATION_ANALYSIS_TIME)));
 		sb.append("\t");
+
+		final String initTime = CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString();
+		sb.append(initTime);
+		sb.append(": ");
+		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(initTime)));
 
 		return sb.toString();
 	}
