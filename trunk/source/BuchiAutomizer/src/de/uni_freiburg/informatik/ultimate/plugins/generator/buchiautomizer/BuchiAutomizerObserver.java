@@ -138,12 +138,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
+		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
 
-		final BuchiCegarLoopFactory<IcfgEdge> factory = new BuchiCegarLoopFactory<>();
+		final BuchiCegarLoopFactory<IcfgEdge> factory = new BuchiCegarLoopFactory<>(IcfgEdge.class, benchGen);
 		final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl = factory.constructCegarLoop(icfg, rankVarConstructor,
-				predicateFactory, taPrefs, mServices, witnessAutomaton, IcfgEdge.class);
+				predicateFactory, taPrefs, mServices, witnessAutomaton);
 		final Result result = bcl.runCegarLoop();
-		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 
 		final IResult benchDecomp = new StatisticsResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",

@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck;
@@ -106,8 +107,10 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final INestedWordAutomaton<L, IPredicate> initialAbstraction,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(icfg, rankVarConstructor, predicateFactory, taPrefs, services, transitionClazz, initialAbstraction);
+			final PredicateFactoryRefinement stateFactoryForRefinement,
+			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
+		super(icfg, rankVarConstructor, predicateFactory, taPrefs, services, transitionClazz, initialAbstraction,
+				benchmarkGenerator);
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(predicateFactory);
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);

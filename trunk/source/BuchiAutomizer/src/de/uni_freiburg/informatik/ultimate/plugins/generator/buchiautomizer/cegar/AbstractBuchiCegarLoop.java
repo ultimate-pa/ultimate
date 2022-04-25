@@ -199,7 +199,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	public AbstractBuchiCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz, final A initialAbstraction) {
+			final IUltimateServiceProvider services, final Class<L> transitionClazz, final A initialAbstraction,
+			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		assert services != null;
 		mIcfg = icfg;
 		mTransitionClazz = transitionClazz;
@@ -215,7 +216,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkitWithRankVars, predicateFactory,
 				mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
 				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TEQCHNIQUE);
-		mBenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
+		mBenchmarkGenerator = benchmarkGenerator;
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 		mPref = taPrefs;
@@ -532,10 +533,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 */
 	private String generateLassoCheckIdentifier() {
 		return mIcfg.getIdentifier() + "_Iteration" + mIteration;
-	}
-
-	public BuchiCegarLoopBenchmarkGenerator getBenchmarkGenerator() {
-		return mBenchmarkGenerator;
 	}
 
 	private static class SubtaskAdditionalLoopUnwinding extends TaskIdentifier {
