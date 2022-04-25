@@ -144,7 +144,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				predicateFactory, taPrefs, mServices, witnessAutomaton, IcfgEdge.class);
 		final Result result = bcl.runCegarLoop();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
-		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 
 		final IResult benchDecomp = new StatisticsResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",
 				bcl.getMDBenchmark());

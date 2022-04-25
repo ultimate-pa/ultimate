@@ -54,13 +54,13 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	private final List<PreprocessingBenchmark> mPreprocessingBenchmarks = new ArrayList<>();
 	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks = new ArrayList<>();
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
-	private int mLassoNonterminationAnalysisSATFixpoint = 0;
-	private int mLassoNonterminationAnalysisSATUnbounded = 0;
-	private int mLassoNonterminationAnalysisUNSAT = 0;
-	private int mLassoNonterminationAnalysisUNKOWN = 0;
-	private long mLassoNonterminationAnalysisTime = 0;
-	private int mMinimizationOfDetAutom = 0;
-	private int mMinimizationOfNondetAutom = 0;
+	private int mLassoNonterminationAnalysisSATFixpoint;
+	private int mLassoNonterminationAnalysisSATUnbounded;
+	private int mLassoNonterminationAnalysisUNSAT;
+	private int mLassoNonterminationAnalysisUNKOWN;
+	private long mLassoNonterminationAnalysisTime;
+	private int mMinimizationOfDetAutom;
+	private int mMinimizationOfNondetAutom;
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
@@ -164,17 +164,17 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 
 		case REFINE_BOTH:
 			if (lcr.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
-				mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_TERMINATING);
 			} else {
 				assert (lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE);
 				assert (lcr.getLoopTermination() == SynthesisResult.TERMINATING);
-				mLassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatInfeasibleLoopTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.CONCATENATION_INFEASIBLE_LOOP_TERMINATING);
 			}
 			break;
 		case REFINE_BUCHI:
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
 			if (lcr.getLoopTermination() == SynthesisResult.TERMINATING) {
-				mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
 			} else {
 				assert lcr.getLassoTermination() == SynthesisResult.TERMINATING;
 				mLassoAnalysisResults.increment(LassoAnalysisResults.s_LassoTerminating);
@@ -183,21 +183,21 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		case REFINE_FINITE:
 			if (lcr.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 				if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-					mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopInfeasible);
+					mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_INFEASIBLE);
 				} else if (lcr.getLoopTermination() == SynthesisResult.NONTERMINATING) {
-					mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopNonterminating);
+					mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_NONTERMINATING);
 				} else {
 					assert lcr.getLoopFeasibility() == TraceCheckResult.UNCHECKED
 							|| lcr.getLoopFeasibility() == TraceCheckResult.UNKNOWN
 							|| lcr.getLoopTermination() == SynthesisResult.UNCHECKED
 							|| lcr.getLoopTermination() == SynthesisResult.UNKNOWN : "lasso checking: illegal case";
-					mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopUnknown);
+					mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_UNKNOWN);
 				}
 			} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 				mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopInfeasible);
 			} else {
 				assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-				mLassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatenationInfeasible);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.CONCATENATION_INFEASIBLE);
 			}
 			break;
 		case REPORT_NONTERMINATION:
@@ -206,7 +206,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lassoCheck.getNonTerminationArgument() != null;
 			assert !lassoCheck.getBinaryStatePredicateManager().providesPredicates();
-			mLassoAnalysisResults.increment(LassoAnalysisResults.s_LassoNonterminating);
+			mLassoAnalysisResults.increment(LassoAnalysisResults.LASSO_NONTERMINATING);
 			break;
 		case REPORT_UNKNOWN:
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
@@ -214,7 +214,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lassoCheck.getNonTerminationArgument() == null;
 			assert !lassoCheck.getBinaryStatePredicateManager().providesPredicates();
-			mLassoAnalysisResults.increment(LassoAnalysisResults.s_TerminationUnknown);
+			mLassoAnalysisResults.increment(LassoAnalysisResults.TERMINATION_UNKNOWN);
 			break;
 		default:
 			throw new AssertionError("unknown case");

@@ -295,7 +295,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 		return sb.toString();
 	}
 
-	private String prettyPrintTerminationAnalysisBenchmark(final List<TerminationAnalysisBenchmark> benchmarks) {
+	private static String prettyPrintTerminationAnalysisBenchmark(final List<TerminationAnalysisBenchmark> benchmarks) {
 		if (benchmarks.isEmpty()) {
 			return "not available";
 		}
@@ -366,41 +366,41 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 	}
 
 	public static class LassoAnalysisResults implements IStatisticsDataProvider, IStatisticsType {
-		public static final String s_LassoNonterminating = "nont";
-		public static final String s_TerminationUnknown = "unkn";
+		public static final String LASSO_NONTERMINATING = "nont";
+		public static final String TERMINATION_UNKNOWN = "unkn";
 		/**
 		 * Cases where (already a single iteration of) the loop is infeasible.
 		 */
-		public static final String s_StemFeasibleLoopInfeasible = "SFLI";
+		public static final String STEM_FEASIBLE_LOOP_INFEASIBLE = "SFLI";
 		/**
 		 * Cases where the stem is feasible, (a single iteration of) the loop is feasible but the loop is terminating.
 		 */
-		public static final String s_StemFeasibleLoopTerminating = "SFLT";
+		public static final String STEM_FEASIBLE_LOOP_TERMINATING = "SFLT";
 		/**
 		 * Cases where stem and loop are feasible but the concatenation of stem and loop is infeasible.
 		 */
-		public static final String s_ConcatenationInfeasible = "conc";
+		public static final String CONCATENATION_INFEASIBLE = "conc";
 		/**
 		 * Cases where stem and loop are feasible but the concatenation of stem and loop is infeasible and the loop is
 		 * terminating.
 		 */
-		public static final String s_ConcatInfeasibleLoopTerminating = "concLT";
+		public static final String CONCATENATION_INFEASIBLE_LOOP_TERMINATING = "concLT";
 		/**
 		 * Cases where the stem is infeasible and the loop is nonterminating.
 		 */
-		public static final String s_StemInfeasibleLoopNonterminating = "SILN";
+		public static final String STEM_INFEASIBLE_LOOP_NONTERMINATING = "SILN";
 		/**
 		 * Cases where the stem is infeasible and the termination/feasibility of the loop is unknown.
 		 */
-		public static final String s_StemInfeasibleLoopUnknown = "SILU";
+		public static final String STEM_FEASIBLE_LOOP_UNKNOWN = "SILU";
 		/**
 		 * Cases where the stem is infeasible and the loop is infeasible.
 		 */
-		public static final String s_StemInfeasibleLoopInfeasible = "SILI";
+		public static final String STEM_INFEASIBLE_LOOP_INFEASIBLE = "SILI";
 		/**
 		 * Cases where both, stem and loop are infeasible.
 		 */
-		public static final String s_StemInfeasibleLoopTerminating = "SILT";
+		public static final String STEM_INFEASIBLE_LOOP_TERMINATING = "SILT";
 		/**
 		 * Cases where the stem and the loop are feasible, the loop itself is nonterminating but the lasso is
 		 * terminating.
@@ -411,16 +411,16 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 
 		public LassoAnalysisResults() {
 			mMap = new LinkedHashMap<>();
-			mMap.put(s_LassoNonterminating, 0);
-			mMap.put(s_TerminationUnknown, 0);
-			mMap.put(s_StemFeasibleLoopInfeasible, 0);
-			mMap.put(s_StemFeasibleLoopTerminating, 0);
-			mMap.put(s_ConcatenationInfeasible, 0);
-			mMap.put(s_ConcatInfeasibleLoopTerminating, 0);
-			mMap.put(s_StemInfeasibleLoopNonterminating, 0);
-			mMap.put(s_StemInfeasibleLoopUnknown, 0);
-			mMap.put(s_StemInfeasibleLoopInfeasible, 0);
-			mMap.put(s_StemInfeasibleLoopTerminating, 0);
+			mMap.put(LASSO_NONTERMINATING, 0);
+			mMap.put(TERMINATION_UNKNOWN, 0);
+			mMap.put(STEM_FEASIBLE_LOOP_INFEASIBLE, 0);
+			mMap.put(STEM_FEASIBLE_LOOP_TERMINATING, 0);
+			mMap.put(CONCATENATION_INFEASIBLE, 0);
+			mMap.put(CONCATENATION_INFEASIBLE_LOOP_TERMINATING, 0);
+			mMap.put(STEM_INFEASIBLE_LOOP_NONTERMINATING, 0);
+			mMap.put(STEM_FEASIBLE_LOOP_UNKNOWN, 0);
+			mMap.put(STEM_INFEASIBLE_LOOP_INFEASIBLE, 0);
+			mMap.put(STEM_INFEASIBLE_LOOP_TERMINATING, 0);
 			mMap.put(s_LassoTerminating, 0);
 		}
 
