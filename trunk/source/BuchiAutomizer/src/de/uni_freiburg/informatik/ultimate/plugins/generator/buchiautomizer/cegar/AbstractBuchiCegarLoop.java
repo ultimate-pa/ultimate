@@ -197,14 +197,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	private final Class<L> mTransitionClazz;
 
-	public ToolchainCanceledException getToolchainCancelledException() {
-		return mToolchainCancelledException;
-	}
-
-	public NonTerminationArgument getNonTerminationArgument() {
-		return mNonterminationArgument;
-	}
-
 	public AbstractBuchiCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz, final A initialAbstraction) {
@@ -323,7 +315,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			LassoCheck<L> lassoCheck;
 			try {
 				final TaskIdentifier taskIdentifier = new SubtaskIterationIdentifier(mTaskIdentifier, mIteration);
-				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
+				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.LASSO_ANALYSIS_TIME);
 				lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
@@ -361,7 +353,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mToolchainCancelledException = e;
 				return Result.TIMEOUT;
 			} finally {
-				mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
+				mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.LASSO_ANALYSIS_TIME);
 			}
 
 			final ContinueDirective cd = lassoCheck.getLassoCheckResult().getContinueDirective();
@@ -515,6 +507,14 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return new TerminationArgumentResult<>(honda, Activator.PLUGIN_NAME,
 				rf.asLexTerm(mCsToolkitWithRankVars.getManagedScript().getScript()), rf.getName(), supportingInvariants,
 				mServices.getBacktranslationService(), Term.class);
+	}
+
+	public ToolchainCanceledException getToolchainCancelledException() {
+		return mToolchainCancelledException;
+	}
+
+	public NonTerminationArgument getNonTerminationArgument() {
+		return mNonterminationArgument;
 	}
 
 	public BuchiAutomizerModuleDecompositionBenchmark getMDBenchmark() {

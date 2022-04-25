@@ -138,17 +138,17 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			return;
 		}
 
-		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
+		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.NON_LIVE_STATE_REMOVAL);
 		try {
 			mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
 		} finally {
-			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
+			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.NON_LIVE_STATE_REMOVAL);
 		}
-		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
+		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.BUCHI_CLOSURE);
 		try {
 			mAbstraction = new BuchiClosureNwa<>(new AutomataLibraryServices(mServices), mAbstraction);
 		} finally {
-			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
+			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.BUCHI_CLOSURE);
 		}
 		try {
 			final boolean isDeterministic =
