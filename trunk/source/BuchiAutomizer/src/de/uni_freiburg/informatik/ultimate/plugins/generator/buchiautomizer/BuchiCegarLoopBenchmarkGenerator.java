@@ -194,7 +194,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 					mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_UNKNOWN);
 				}
 			} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-				mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopInfeasible);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_INFEASIBLE);
 			} else {
 				assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
 				mLassoAnalysisResults.increment(LassoAnalysisResults.CONCATENATION_INFEASIBLE);
