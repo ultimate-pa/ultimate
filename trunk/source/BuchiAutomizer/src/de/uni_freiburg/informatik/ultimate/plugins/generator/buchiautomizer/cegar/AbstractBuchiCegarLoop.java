@@ -358,14 +358,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					reportRemainderModule(false);
 					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
-					final Map<String, ILocation> overapprox = lassoWasOverapproximated();
-					if (!overapprox.isEmpty()) {
-						reportRemainderModule(false);
-						return Result.UNKNOWN;
+					if (getOverapproximations().isEmpty()) {
+						mNonterminationArgument = lassoCheck.getNonTerminationArgument();
+						reportRemainderModule(true);
+						return Result.NONTERMINATING;
 					}
-					mNonterminationArgument = lassoCheck.getNonTerminationArgument();
-					reportRemainderModule(true);
-					return Result.NONTERMINATING;
+					reportRemainderModule(false);
+					return Result.UNKNOWN;
 				default:
 					throw new AssertionError("impossible case");
 				}
@@ -418,7 +417,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		}
 	}
 
-	public Map<String, ILocation> lassoWasOverapproximated() {
+	public Map<String, ILocation> getOverapproximations() {
 		final NestedWord<L> stem = mCounterexample.getStem().getWord();
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 		final Map<String, ILocation> overapproximations = new HashMap<>();

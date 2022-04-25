@@ -237,7 +237,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
 			final NestedLassoRun<?, IPredicate> counterexample = bcl.getCounterexample();
-			final Map<String, ILocation> overapprox = bcl.lassoWasOverapproximated();
+			final Map<String, ILocation> overapprox = bcl.getOverapproximations();
 			final StringBuilder longDescr = new StringBuilder();
 			if (overapprox.isEmpty()) {
 				longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
