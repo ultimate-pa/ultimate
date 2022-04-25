@@ -34,7 +34,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -113,10 +112,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected static final XnfConversionTechnique XNF_CONVERSION_TEQCHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
-
-	protected static final Format PRINT_AUTOMATA_LABELING = Format.ATS;
-
 	protected final ILogger mLogger;
 
 	/**
@@ -160,11 +155,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
 
 	protected A mArtifactAutomaton;
-
-	// used for the collection of statistics
-	private int mInfeasible;
-	private int mRankWithoutSi;
-	private int mRankWithSi;
 
 	protected final PredicateFactoryForInterpolantAutomata mDefaultStateFactory;
 
@@ -363,11 +353,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				switch (cd) {
 				case REFINE_BOTH: {
 					final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
-					if (bspm.isLoopWithoutStemTerminating()) {
-						mRankWithoutSi++;
-					} else {
-						mRankWithSi++;
-					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final IcfgLocation hondaPP = hondaISLP.getProgramPoint();
 					final TerminationArgumentResult<IIcfgElement, Term> tar =
@@ -380,23 +365,16 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
 
 					refineFinite(lassoCheck);
-					mInfeasible++;
 					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
 				}
 					break;
 				case REFINE_FINITE:
 					refineFinite(lassoCheck);
-					mInfeasible++;
 					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
 					break;
 
 				case REFINE_BUCHI:
 					final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
-					if (bspm.isLoopWithoutStemTerminating()) {
-						mRankWithoutSi++;
-					} else {
-						mRankWithSi++;
-					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final IcfgLocation hondaPP = hondaISLP.getProgramPoint();
 					final TerminationArgumentResult<IIcfgElement, Term> tar =
@@ -438,13 +416,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 				if (mPref.dumpAutomata()) {
 					final String filename = mIcfg.getIdentifier() + "_" + name + "Abstraction" + mIteration;
-					BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
-							mPref.getAutomataFormat(), "");
-				}
-				final boolean newMaximumReached =
-						mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);
-				if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-					final String filename = mIcfg.getIdentifier();
 					BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
 							mPref.getAutomataFormat(), "");
 				}
