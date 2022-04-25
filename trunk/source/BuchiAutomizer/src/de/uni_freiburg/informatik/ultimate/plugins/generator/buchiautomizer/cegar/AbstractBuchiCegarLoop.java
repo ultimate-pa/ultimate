@@ -344,39 +344,15 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			mBenchmarkGenerator.reportLassoAnalysis(lassoCheck);
 			try {
 				switch (cd) {
-				case REFINE_BOTH: {
-					final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
-					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
-					final IcfgLocation hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<IIcfgElement, Term> tar =
-							constructTAResult(bspm.getTerminationArgument(), hondaPP);
-					mMDBenchmark.reportRankingFunction(mIteration, tar);
-
-					refineBuchi(lassoCheck);
-					mBinaryStatePredicateManager.clearPredicates();
-
-					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
-
-					refineFinite(lassoCheck);
-					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
-				}
+				case REFINE_BOTH:
+					refineBuchiInternal(lassoCheck);
+					refineFiniteInternal(lassoCheck);
 					break;
 				case REFINE_FINITE:
-					refineFinite(lassoCheck);
-					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
+					refineFiniteInternal(lassoCheck);
 					break;
-
 				case REFINE_BUCHI:
-					final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
-					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
-					final IcfgLocation hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<IIcfgElement, Term> tar =
-							constructTAResult(bspm.getTerminationArgument(), hondaPP);
-					mMDBenchmark.reportRankingFunction(mIteration, tar);
-
-					refineBuchi(lassoCheck);
-					mBinaryStatePredicateManager.clearPredicates();
-					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
+					refineBuchiInternal(lassoCheck);
 					break;
 				case REPORT_UNKNOWN:
 					reportRemainderModule(false);
@@ -415,6 +391,24 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			mInterpolAutomaton = null;
 		}
 		return Result.TIMEOUT;
+	}
+
+	private void refineFiniteInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
+		refineFinite(lassoCheck);
+		reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
+	}
+
+	private void refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
+		final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
+		final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
+		final IcfgLocation hondaPP = hondaISLP.getProgramPoint();
+		final TerminationArgumentResult<IIcfgElement, Term> tar =
+				constructTAResult(bspm.getTerminationArgument(), hondaPP);
+		mMDBenchmark.reportRankingFunction(mIteration, tar);
+
+		refineBuchi(lassoCheck);
+		mBinaryStatePredicateManager.clearPredicates();
+		reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
 	}
 
 	private void reportRemainderModule(final boolean nonterminationKnown) {
