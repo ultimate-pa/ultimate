@@ -208,8 +208,8 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			INestedWordAutomaton<L, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, constructionStyle,
-						lassoCheck.getBinaryStatePredicateManager(), mCsToolkitWithRankVars.getModifiableGlobalsTable(),
-						mInterpolation, mBenchmarkGenerator, mComplementationConstruction);
+						lassoCheck.getBinaryStatePredicateManager(), mInterpolation, mBenchmarkGenerator,
+						mComplementationConstruction);
 			} catch (final AutomataOperationCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "applying stage " + stage);
