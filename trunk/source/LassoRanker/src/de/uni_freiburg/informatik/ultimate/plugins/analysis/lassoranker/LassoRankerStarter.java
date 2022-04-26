@@ -396,7 +396,7 @@ public class LassoRankerStarter {
 		}
 
 		// check ranking function
-		final boolean rfCorrect = bspm.checkRankDecrease(mLoop, mCsToolkit.getModifiableGlobalsTable());
+		final boolean rfCorrect = bspm.checkRankDecrease(mLoop);
 		if (siCorrect && rfCorrect) {
 			mLogger.info("Termination argument has been successfully verified.");
 		}
