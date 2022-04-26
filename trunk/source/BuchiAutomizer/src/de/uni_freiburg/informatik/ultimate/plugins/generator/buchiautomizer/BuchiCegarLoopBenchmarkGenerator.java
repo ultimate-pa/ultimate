@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.Nonterminatio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.SynthesisResult;
@@ -45,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerator {
 
-	int[] mNontrivialModuleStages = new int[5];
-	LassoAnalysisResults mLassoAnalysisResults = new LassoAnalysisResults();
+	private final int[] mNontrivialModuleStages = new int[5];
+	private final LassoAnalysisResults mLassoAnalysisResults = new LassoAnalysisResults();
 	private BackwardCoveringInformation mBciFinite = new BackwardCoveringInformation(0, 0);
 	private BackwardCoveringInformation mBciBuchi = new BackwardCoveringInformation(0, 0);
 	private int mHighestRank;
