@@ -374,6 +374,20 @@ public class QuantifierEliminationTodos {
 	}
 
 
+	/**
+	 * Does combination of flattening and partitioning lead to infinite loops?
+	 */
+	@Test
+	public void flattenPartitionProblem01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b", "c"),
+			};
+		final String formulaAsString = "(exists ((x Int) (y Int) (z Int)) (and (= (select a (+ x z)) 23) (= (select b (+ y z)) 1048) (= (select c z) 42)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
