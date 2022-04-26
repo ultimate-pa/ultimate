@@ -142,13 +142,13 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private InterpolatingTraceCheck getTraceCheck(final NestedWord<? extends IIcfgTransition<?>> shifted,
-			final InterpolationTechnique interpolation) {
-		InterpolatingTraceCheck traceCheck;
+	private InterpolatingTraceCheck<? extends IIcfgTransition<?>> getTraceCheck(
+			final NestedWord<? extends IIcfgTransition<?>> shifted, final InterpolationTechnique interpolation) {
+		InterpolatingTraceCheck<? extends IIcfgTransition<?>> traceCheck;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			traceCheck = new InterpolatingTraceCheckCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+			traceCheck = new InterpolatingTraceCheckCraig<>(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, null, mServices, mCsToolkit, mPredicateFactory,
 					mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
 					mXnfConversionTechnique, mSimplificationTechnique);
@@ -157,7 +157,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			traceCheck = new TraceCheckSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+			traceCheck = new TraceCheckSpWp<>(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier,
 					interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique,

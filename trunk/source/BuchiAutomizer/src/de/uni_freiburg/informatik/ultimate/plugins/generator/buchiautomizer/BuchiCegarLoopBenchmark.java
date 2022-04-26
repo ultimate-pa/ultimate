@@ -147,6 +147,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 		final StringBuilder sb = new StringBuilder();

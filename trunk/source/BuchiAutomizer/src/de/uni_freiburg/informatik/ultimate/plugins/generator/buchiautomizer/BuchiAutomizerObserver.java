@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLFiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLInfiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoResult;
@@ -218,7 +217,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				return;
 			case TERMINATING:
 				// the LTL property holds
-				reportLTLPropertyHolds(bcl, ltlAnnot);
+				reportLTLPropertyHolds(ltlAnnot);
 				return;
 			case TIMEOUT:
 			case UNKNOWN:
@@ -300,7 +299,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportLTLPropertyHolds(final AbstractBuchiCegarLoop<?, ?> bcl, final LTLPropertyCheck ltlAnnot) {
+	private void reportLTLPropertyHolds(final LTLPropertyCheck ltlAnnot) {
 		final IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
 				"Buchi Automizer proved that the LTL property " + ltlAnnot.getUltimateLTLProperty() + " holds");
 		reportResult(result);
@@ -315,56 +314,18 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final List<? extends IIcfgTransition<?>> stem = counterexample.getStem().getWord().asList();
 		final List<? extends IIcfgTransition<?>> loop = counterexample.getLoop().getWord().asList();
 
-		final boolean isFinite = isLTLCounterExampleFinite(loop);
+		// TODO: Make some attempt at getting the values
+		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 
-		if (isFinite) {
-			// TODO: Make some attempt at getting the values
-			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
-			final List<IIcfgTransition<?>> combined = new ArrayList<>();
-			combined.addAll(stem);
-
-			// TODO: It seems that the loop is not necessary if the trace is
-			// finite, but only contains things that have been inserted by
-			// BuchiProgramProduct
-			// combined.addAll(loop);
-
-			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution<IcfgEdge> cex =
-					IcfgProgramExecution.create(combined, partialProgramStateMapping, new Map[combined.size()]);
-			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), cex, ltlAnnot));
-		} else {
-			// TODO: Make some attempt at getting the values
-			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
-
-			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution<IcfgEdge> stemPE =
-					IcfgProgramExecution.create(stem, partialProgramStateMapping, new Map[stem.size()]);
-			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution<IcfgEdge> loopPE =
-					IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
-			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(position),
-					ltlAnnot.getUltimateLTLProperty()));
-		}
-	}
-
-	private boolean isLTLCounterExampleFinite(final List<?> loop) {
-		// TODO: does not work reliably
-		// boolean isFinite = true;
-		//
-		// // is the loop a real loop in the program?
-		// for (CodeBlock cb : loop) {
-		// if (mRootAnnot.getLoopLocations().keySet().contains(cb.getSource()))
-		// {
-		// isFinite = false;
-		// }
-		// }
-		//
-		// // TODO: is the loop part of a recursion? Then its also not finite
-		//
-		// return isFinite;
-		return false;
+		@SuppressWarnings("unchecked")
+		final IcfgProgramExecution<IcfgEdge> stemPE =
+				IcfgProgramExecution.create(stem, partialProgramStateMapping, new Map[stem.size()]);
+		@SuppressWarnings("unchecked")
+		final IcfgProgramExecution<IcfgEdge> loopPE =
+				IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
+		reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
+				mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(position),
+				ltlAnnot.getUltimateLTLProperty()));
 	}
 
 	/**
@@ -418,15 +379,4 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	public IElement getModel() {
 		return mRootOfNewModel;
 	}
-
-	// public static TransFormula sequentialComposition(int serialNumber,
-	// Boogie2SMT boogie2smt, TransFormula... transFormulas) {
-	// TransFormula result = transFormulas[0];
-	// for (int i=1; i<transFormulas.length; i++) {
-	// result = TransFormula.sequentialComposition(result, transFormulas[i],
-	// boogie2smt, serialNumber++);
-	// }
-	// return result;
-	// }
-
 }

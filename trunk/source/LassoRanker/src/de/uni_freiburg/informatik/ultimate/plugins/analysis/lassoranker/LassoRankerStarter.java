@@ -377,7 +377,7 @@ public class LassoRankerStarter {
 		final BinaryStatePredicateManager bspm =
 				new BinaryStatePredicateManager(mRankVarConstructor.getCsToolkitWithRankVariables(), mPredicateFactory,
 						mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
-						mSimplificationTechnique, mXnfConversionTechnique);
+						mSimplificationTechnique);
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);

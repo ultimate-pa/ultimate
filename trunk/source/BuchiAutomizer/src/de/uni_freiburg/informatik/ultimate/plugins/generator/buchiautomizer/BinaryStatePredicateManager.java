@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -81,7 +80,6 @@ public class BinaryStatePredicateManager {
 	private final IProgramNonOldVar[] mOldRankVariables;
 
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * True if predicates have been computed. False if predicates have been cleared or predicates have never been
@@ -113,12 +111,10 @@ public class BinaryStatePredicateManager {
 
 	public BinaryStatePredicateManager(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IProgramNonOldVar unseededVariable, final IProgramNonOldVar[] oldRankVariables,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mScript = csToolkit.getManagedScript().getScript();
 		mPredicateFactory = predicateFactory;
 		mManagedScript = csToolkit.getManagedScript();

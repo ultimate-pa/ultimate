@@ -123,7 +123,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		mRefineBuchi = new RefineBuchi<>(mIcfg, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
 				difference, mDefaultStateFactory, mStateFactoryForRefinement, useDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, SIMPLIFICATION_TECHNIQUE,
-				XNF_CONVERSION_TEQCHNIQUE, ncsbImplemntation);
+				XNF_CONVERSION_TECHNIQUE, ncsbImplemntation);
 		final BuchiInterpolantAutomatonConstructionStrategy biaConstructionStrategy =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class);

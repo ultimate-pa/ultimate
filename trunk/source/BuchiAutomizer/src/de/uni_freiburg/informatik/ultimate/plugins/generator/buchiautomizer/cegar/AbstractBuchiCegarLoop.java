@@ -109,7 +109,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	}
 
 	protected static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	protected static final XnfConversionTechnique XNF_CONVERSION_TEQCHNIQUE =
+	protected static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	protected final ILogger mLogger;
@@ -205,7 +205,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mCsToolkitWithRankVars = mRankVarConstructor.getCsToolkitWithRankVariables();
 		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkitWithRankVars, predicateFactory,
 				mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
-				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TEQCHNIQUE);
+				SIMPLIFICATION_TECHNIQUE);
 		mBenchmarkGenerator = benchmarkGenerator;
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
@@ -230,7 +230,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
-						XNF_CONVERSION_TEQCHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
+						XNF_CONVERSION_TECHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
 		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg,
 				mPredicateFactory, mDefaultStateFactory, mTransitionClazz);
 		mAbstraction = initialAbstraction;
@@ -304,7 +304,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
 						mCounterexample, generateLassoCheckIdentifier(), mServices, SIMPLIFICATION_TECHNIQUE,
-						XNF_CONVERSION_TEQCHNIQUE, mRefinementStrategyFactory, mAbstraction, taskIdentifier,
+						XNF_CONVERSION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, taskIdentifier,
 						mBenchmarkGenerator);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
@@ -321,8 +321,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 							mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
 							mCounterexample, generateLassoCheckIdentifier(), mServices, SIMPLIFICATION_TECHNIQUE,
-							XNF_CONVERSION_TEQCHNIQUE, mRefinementStrategyFactory, mAbstraction,
-							unwindingTaskIdentifier, mBenchmarkGenerator);
+							XNF_CONVERSION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,
+							mBenchmarkGenerator);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =
