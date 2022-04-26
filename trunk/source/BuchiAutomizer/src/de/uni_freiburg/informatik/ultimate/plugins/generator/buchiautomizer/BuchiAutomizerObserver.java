@@ -170,7 +170,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 *
 	 * @param nestedLassoWord
 	 */
-	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta,
+	private void reportNonTerminationResult(final NonTerminationArgument nta,
 			final NestedLassoWord<IcfgEdge> nestedLassoWord) {
 		final IcfgProgramExecution<IcfgEdge> stemExecution =
 				IcfgProgramExecution.create(nestedLassoWord.getStem().asList(), Collections.emptyMap(), IcfgEdge.class);
@@ -278,7 +278,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
-			reportNonTerminationResult(honda, nta, counterexample.getNestedLassoWord());
+			reportNonTerminationResult(nta, counterexample.getNestedLassoWord());
 			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
 					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
 

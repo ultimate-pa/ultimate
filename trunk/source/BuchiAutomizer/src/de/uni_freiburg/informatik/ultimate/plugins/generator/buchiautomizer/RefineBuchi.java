@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
@@ -169,8 +168,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final NestedLassoRun<LETTER, IPredicate> mCounterexample, final int iteration,
 			final BuchiInterpolantAutomatonConstructionStyle setting, final BinaryStatePredicateManager bspm,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
-			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
+			final InterpolationTechnique interpolation, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final BuchiComplementationConstruction complementationConstruction) throws AutomataLibraryException {
 		mIteration = iteration;
 		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
@@ -194,8 +192,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			stemInterpolants = null;
 		} else {
 
-			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem, mCsToolkit,
-					pu, mInterpolation);
+			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem, pu,
+					mInterpolation);
 			final LBool stemCheck = traceCheck.isCorrect();
 			if (stemCheck != LBool.UNSAT) {
 				throw new AssertionError("incorrect predicates - stem");
@@ -203,8 +201,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			stemInterpolants = traceCheck.getInterpolants();
 		}
 
-		traceCheck = constructTraceCheck(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit, pu,
-				mInterpolation);
+		traceCheck = constructTraceCheck(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, pu, mInterpolation);
 		final LBool loopCheck = traceCheck.isCorrect();
 		IPredicate[] loopInterpolants;
 		if (loopCheck != LBool.UNSAT) {
@@ -589,8 +586,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private InterpolatingTraceCheck<LETTER> constructTraceCheck(final IPredicate precond, final IPredicate postcond,
-			final NestedWord<LETTER> word, final CfgSmtToolkit csToolkit, final PredicateUnifier pu,
-			final InterpolationTechnique interpolation) {
+			final NestedWord<LETTER> word, final PredicateUnifier pu, final InterpolationTechnique interpolation) {
 		final InterpolatingTraceCheck<LETTER> itc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:

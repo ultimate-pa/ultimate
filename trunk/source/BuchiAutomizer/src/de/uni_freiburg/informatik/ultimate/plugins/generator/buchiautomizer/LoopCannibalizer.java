@@ -125,7 +125,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 					final NestedWord<LETTER> before = mLoop.getSubWord(0, i);
 					final NestedWord<LETTER> after = mLoop.getSubWord(i + 1, mLoop.length() - 1);
 					final NestedWord<LETTER> shifted = after.concatenate(before);
-					final InterpolatingTraceCheck traceCheck = getTraceCheck(shifted, interpolation);
+					final InterpolatingTraceCheck<?> traceCheck = getTraceCheck(shifted, interpolation);
 					final LBool loopCheck = traceCheck.isCorrect();
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;

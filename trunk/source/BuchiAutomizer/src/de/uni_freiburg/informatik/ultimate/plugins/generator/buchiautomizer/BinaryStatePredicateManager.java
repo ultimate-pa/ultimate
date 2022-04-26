@@ -521,12 +521,11 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 
-	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop,
-			final ModifiableGlobalsTable modifiableGlobalsTable) {
+	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop) {
 		return createTraceCheck(mRankEqualityAndSi, mRankDecreaseAndBound, loop).isCorrect() == LBool.UNSAT;
 	}
 
-	private ITraceCheck createTraceCheck(final IPredicate preCond, final IPredicate postCond,
+	private ITraceCheck<?> createTraceCheck(final IPredicate preCond, final IPredicate postCond,
 			final NestedWord<? extends IIcfgTransition<?>> trace) {
 		return new TraceCheck<>(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices, mCsToolkit,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
