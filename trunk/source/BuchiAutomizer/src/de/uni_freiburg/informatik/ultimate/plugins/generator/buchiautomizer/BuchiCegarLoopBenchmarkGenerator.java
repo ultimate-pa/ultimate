@@ -177,7 +177,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
 			} else {
 				assert lcr.getLassoTermination() == SynthesisResult.TERMINATING;
-				mLassoAnalysisResults.increment(LassoAnalysisResults.s_LassoTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.LASSO_TERMINATING);
 			}
 			break;
 		case REFINE_FINITE:
