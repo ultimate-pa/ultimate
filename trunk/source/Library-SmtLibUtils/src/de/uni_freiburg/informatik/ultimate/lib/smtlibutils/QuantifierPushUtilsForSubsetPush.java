@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -126,9 +127,10 @@ public class QuantifierPushUtilsForSubsetPush {
 		// otherwise the input would not be legal.
 		List<TermVariable> todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
 				currentEliminatees, failedEliminatees, currentDualFiniteJuncts);
-		int i = 0;
+		int iterations = 0;
+		int iterationsWithAtLeastOneElimination = 0;
 		while (!todoEliminateesThatDoNotOccurInAllParams.isEmpty()) {
-			if (i > 20) {
+			if (iterations > 20) {
 				currentDualFiniteJuncts.toString();
 				throw new AssertionError("Maybe an infinite loop");
 			}
@@ -144,24 +146,44 @@ public class QuantifierPushUtilsForSubsetPush {
 			}
 			final Term pushSubformula;
 			{
-				final Term pushed = pushMinionEliminatees(services, mgdScript, applyDistributivity, pqeTechniques,
-						simplificationTechnique, et, qe, minionEliminatees, parti, currentEliminatees);
+				Term pushedAndFlattened;
+				{
+					final Term pushed = pushMinionEliminatees(services, mgdScript, applyDistributivity, pqeTechniques,
+							simplificationTechnique, et, qe, minionEliminatees, parti, currentEliminatees);
+					pushedAndFlattened = QuantifierPushUtils.flattenQuantifiedFormulas(mgdScript, et.getQuantifier(),
+							pushed);
+				}
 				// special case if pushed formula is similar?
-				// eliminatee failed, all minions failed?
-				currentEliminatees.removeAll(minionEliminatees);
-				if (pushed instanceof QuantifiedFormula) {
-					final QuantifiedFormula qf = (QuantifiedFormula) pushed;
-					// TODO: make sure that order of variables does not change
-					for (final TermVariable var : Arrays.asList(qf.getVariables())) {
-						currentEliminatees.add(var);
-						if (minionEliminatees.contains(var)) {
-							failedEliminatees.add(var);
+				final Set<TermVariable> eliminatedMinions;
+				final List<TermVariable> newEliminatees = new LinkedList<>();
+				if (pushedAndFlattened instanceof QuantifiedFormula) {
+					final QuantifiedFormula qf = (QuantifiedFormula) pushedAndFlattened;
+					eliminatedMinions = new HashSet<>(minionEliminatees);
+					for (final TermVariable tv : Arrays.asList(qf.getVariables())) {
+						if (minionEliminatees.contains(tv)) {
+							eliminatedMinions.remove(tv);
+							if (tv == eliminatee) {
+								failedEliminatees.add(eliminatee);
+							}
+						} else {
+							newEliminatees.add(tv);
 						}
 					}
 					pushSubformula = qf.getSubformula();
 				} else {
-					pushSubformula = pushed;
+					eliminatedMinions = new HashSet<>(minionEliminatees);
+					pushSubformula = pushedAndFlattened;
 				}
+				if (!QuantifierPushUtils.isFlattened(et.getQuantifier(),
+						Arrays.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), pushSubformula)))) {
+					throw new AssertionError("Non-flattened results may lead to nonterminating loops.");
+				}
+				iterations++;
+				if (!eliminatedMinions.isEmpty()) {
+					iterationsWithAtLeastOneElimination++;
+				}
+				currentEliminatees.removeAll(eliminatedMinions);
+				currentEliminatees.addAll(newEliminatees);
 			}
 
 			final Term currentDualFiniteJunction;
@@ -191,9 +213,8 @@ public class QuantifierPushUtilsForSubsetPush {
 
 			todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(currentEliminatees,
 					failedEliminatees, currentDualFiniteJuncts);
-			i++;
 		}
-		if (i == 0) {
+		if (iterationsWithAtLeastOneElimination == 0) {
 			return null;
 		} else {
 			return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), currentEliminatees, QuantifierUtils
@@ -229,8 +250,8 @@ public class QuantifierPushUtilsForSubsetPush {
 //		} else {
 //			return res;
 //		}
-		return qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique,
-					context, quantified);
+		return qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, context,
+				quantified);
 	}
 
 	/**

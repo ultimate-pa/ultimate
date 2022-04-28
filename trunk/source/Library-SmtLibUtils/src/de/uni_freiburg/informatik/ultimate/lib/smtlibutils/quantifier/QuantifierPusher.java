@@ -361,68 +361,47 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
+	private static boolean isDualFiniteJunction(final int quantifier, final Term term) {
+		final boolean result;
+		if (term instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = (QuantifiedFormula) term;
+			if (qf.getQuantifier() == quantifier) {
+				result = classify(qf.getSubformula()) == FormulaClassification.DUAL_FINITE_CONNECTIVE;
+			} else {
+				result = false;
+			}
+		} else {
+			result = false;
+		}
+		return result;
+	}
+
 	private static Term tryToPushOverDualFiniteConnective2(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
-		if (!isDualFiniteConnective(et)) {
+		if (classify(et.getQuantifier(), et.getTerm()) != FormulaClassification.DUAL_FINITE_CONNECTIVE) {
 			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
-
-
-		Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
-		assert dualFiniteParams.length > 1 : QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE;
-
-		if (!services.getProgressMonitorService().continueProcessing()) {
-			throw new ToolchainCanceledException(QuantifierPusher.class,
-					"eliminating " + et.getEliminatees().size() + " quantified variables from "
-							+ dualFiniteParams.length + " " + QuantifierUtils.getNameOfDualJuncts(et.getQuantifier()));
-		}
-//		final boolean possiblityToDistribute = Arrays.stream(dualFiniteParams).anyMatch(x -> isCorrespondingFinite(x, et.getQuantifier()));
-//		if (!possiblityToDistribute) {
-//			return null;
-//		}
+		assert !et.getEliminatees().isEmpty();
 
 		final EliminationTask currentEt;
-		if (et.getEliminatees().size() > 1 && QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
-			final EliminationTaskSimple etSequentialization;
+		if (QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
 			final Term seq = QuantifierPushUtilsForSubsetPush.sequentialSubsetPush(services, mgdScript,
 					applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
 			if (seq == null) {
-				etSequentialization = et;
+				currentEt = et;
 			} else {
 				final List<TermVariable> freeVarsBefore = Arrays.asList(et.toTerm(mgdScript.getScript()).getFreeVars());
 				final List<TermVariable> freeVarsAfter = Arrays.asList(seq.getFreeVars());
 				if (!freeVarsBefore.containsAll(freeVarsAfter)) {
 					throw new AssertionError("New free vars! Before " + freeVarsBefore + " After " + freeVarsAfter);
 				}
-				if (seq instanceof QuantifiedFormula) {
-					etSequentialization = new EliminationTaskSimple((QuantifiedFormula) seq);
-				} else {
+				if (!isDualFiniteJunction(et.getQuantifier(), seq)) {
 					return seq;
 				}
+				currentEt = new EliminationTask((QuantifiedFormula) seq, et.getContext());
 			}
-			// return if something was eliminated
-			if (!etSequentialization.getEliminatees().containsAll(et.getEliminatees())) {
-				return etSequentialization.toTerm(mgdScript.getScript());
-			} else {
-				final Term[] correspondingFinite = QuantifierUtils.getCorrespondingFiniteJunction(
-						etSequentialization.getQuantifier(), etSequentialization.getTerm());
-				if (correspondingFinite.length > 1) {
-					return pushOverCorrespondingFiniteConnective(mgdScript.getScript(),
-							(QuantifiedFormula) etSequentialization.toTerm(mgdScript.getScript()));
-				} else {
-					dualFiniteParams = QuantifierUtils.getDualFiniteJunction(etSequentialization.getQuantifier(),
-							etSequentialization.getTerm());
-					currentEt = new EliminationTask(et.getQuantifier(), et.getEliminatees(),
-							etSequentialization.getTerm(), et.getContext());
-				}
-			}
-		} else {
-			if (!Arrays.equals(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()), dualFiniteParams)) {
-				throw new AssertionError("dual finite junction different!");
-			}
-			currentEt = et;
 		}
 		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, currentEt, qe,
 				QuantifierPushUtils.DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
