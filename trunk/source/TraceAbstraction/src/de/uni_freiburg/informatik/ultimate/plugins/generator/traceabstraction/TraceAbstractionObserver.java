@@ -123,7 +123,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		final TraceAbstractionStarter<IcfgEdge> tas =
 				new TraceAbstractionStarter<>(mServices, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile,
 						() -> new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit()),
-						() -> new IcfgCopyFactory(mServices, rcfgRootNode.getCfgSmtToolkit()), IcfgEdge.class);
+						new IcfgCopyFactory(mServices, rcfgRootNode.getCfgSmtToolkit()), IcfgEdge.class);
 		mRootOfNewModel = tas.getRootOfNewModel();
 	}
 

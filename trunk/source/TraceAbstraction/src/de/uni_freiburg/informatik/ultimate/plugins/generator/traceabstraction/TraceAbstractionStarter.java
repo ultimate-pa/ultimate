@@ -118,7 +118,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final List<INestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 	private final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomataFromErrorLocations =
 			new ArrayList<>();
-	private final Supplier<ICopyActionFactory<L>> mCreateCopyFactory;
 
 	// list has one entry per analysis restart with increased number of threads (only 1 entry if sequential)
 	private final Map<DebugIdentifier, List<TraceAbstractionBenchmarks>> mStatistics = new LinkedHashMap<>();
@@ -131,10 +130,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
-			final Supplier<ICopyActionFactory<L>> createCopyFactory, final Class<L> transitionClazz) {
+			final ICopyActionFactory<L> copyFactory, final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCreateCopyFactory = createCopyFactory;
 		mPrefs = new TAPreferences(mServices);
 		mResultsPerLocation = new LinkedHashMap<>();
 		mWitnessAutomaton = witnessAutomaton;
@@ -150,8 +148,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mComputeHoareAnnotation = mPrefs.computeHoareAnnotation();
 		}
 
-		mCegarFactory =
-				new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, mComputeHoareAnnotation);
+		mCegarFactory = new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, copyFactory,
+				mComputeHoareAnnotation);
 
 		runCegarLoops(icfg);
 	}
@@ -408,8 +406,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private CegarLoopResult<L> executeCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<IcfgLocation> icfg, final TraceAbstractionBenchmarks taBenchmark,
 			final Set<IcfgLocation> errorLocs) {
-		final CegarLoopResult<L> clres = mCegarFactory.constructCegarLoop(services, name, icfg, errorLocs,
-				mWitnessAutomaton, mRawFloydHoareAutomataFromFile, mCreateCopyFactory).runCegar();
+		final CegarLoopResult<L> clres = mCegarFactory
+				.constructCegarLoop(services, name, icfg, errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile)
+				.runCegar();
 
 		final StatisticsData cegarStatistics = new StatisticsData();
 		cegarStatistics.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
