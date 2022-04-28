@@ -125,8 +125,8 @@ public class QuantifierPushUtils {
 
 			// Step 2: Flatten quantifiers if possible
 			if (!isFlattened(et.getQuantifier(), currentDualFiniteJuncts)) {
-				final Term flattened = flattenQuantifiedFormulas(mgdScript,
-						(QuantifiedFormula) currentEt.toTerm(mgdScript.getScript()));
+				final Term flattened = flattenQuantifiedFormulas(mgdScript, et.getQuantifier(),
+						currentEt.toTerm(mgdScript.getScript()));
 				// some quantifiers could be removed for trivial reasons
 				if (flattened instanceof QuantifiedFormula) {
 					final QuantifiedFormula qf = (QuantifiedFormula) flattened;
@@ -241,14 +241,24 @@ public class QuantifierPushUtils {
 	 * TODO: Review and possibly revise.
 	 * TODO: return null if not changed, update callers of method
 	 */
-	public static Term flattenQuantifiedFormulas(final ManagedScript mgdScript,
-			final QuantifiedFormula quantifiedFormula) {
+	public static Term flattenQuantifiedFormulas(final ManagedScript mgdScript, final int quantifier,
+			final Term term) {
 		final Set<String> freeVarNames =
-				Arrays.stream(quantifiedFormula.getFreeVars()).map(x -> x.getName()).collect(Collectors.toSet());
-		final int quantifier = quantifiedFormula.getQuantifier();
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(quantifier, quantifiedFormula.getSubformula());
+				Arrays.stream(term.getFreeVars()).map(x -> x.getName()).collect(Collectors.toSet());
+		final Term inputDualJunction;
 		final LinkedHashMap<String, TermVariable> quantifiedVariables = new LinkedHashMap<>();
-		Arrays.stream(quantifiedFormula.getVariables()).forEach(x -> quantifiedVariables.put(x.getName(), x));
+		if (term instanceof QuantifiedFormula) {
+			final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
+			if (quantifiedFormula.getQuantifier() != quantifier) {
+				// different quantifier, do not handle
+				return null;
+			}
+			inputDualJunction = quantifiedFormula.getSubformula();
+			Arrays.stream(quantifiedFormula.getVariables()).forEach(x -> quantifiedVariables.put(x.getName(), x));
+		} else {
+			inputDualJunction = term;
+		}
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(quantifier, inputDualJunction);
 		final ArrayList<Term> resultDualJuncts = new ArrayList<>();
 		for (final Term dualJunct : dualJuncts) {
 			if (dualJunct instanceof QuantifiedFormula) {
