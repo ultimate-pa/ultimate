@@ -252,7 +252,7 @@ public class IcfgEdgeBuilder {
 		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof IIcfgSummaryTransition<?>);
 	}
 
-	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+	public IcfgEdge constructAndConnectInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final Term term) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final UnmodifiableTransFormula oldTf = IcfgUtils.getTransformula(oldTransition);
@@ -278,22 +278,21 @@ public class IcfgEdgeBuilder {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
 		final UnmodifiableTransFormula tf = tfb.finishConstruction(mManagedScript);
-		return constructInternalTransition(oldTransition, source, target, tf);
+		return constructAndConnectInternalTransition(oldTransition, source, target, tf);
+	}
+
+	public IcfgEdge constructAndConnectInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf) {
+		final IcfgEdge edge = constructInternalTransition(oldTransition, source, target, tf);
+		source.addOutgoing(edge);
+		target.addIncoming(edge);
+		return edge;
 	}
 
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
-		return constructInternalTransition(oldTransition, source, target, tf, false);
-	}
-
-	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
-			final IcfgLocation target, final UnmodifiableTransFormula tf, final boolean connect) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
-		if (connect) {
-			source.addOutgoing(rtr);
-			target.addIncoming(rtr);
-		}
 		ModelUtils.copyAnnotations(oldTransition, rtr);
 		return rtr;
 	}

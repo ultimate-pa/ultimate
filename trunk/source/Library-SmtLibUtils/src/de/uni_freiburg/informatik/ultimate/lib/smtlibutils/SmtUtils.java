@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
@@ -58,10 +59,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.Equivalence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStore3;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyDDAWithTimeout;
@@ -1505,22 +1509,46 @@ public final class SmtUtils {
 	public static Term select(final Script script, final Term array, final Term index) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for select-over-store
-				if (nestedIdx.equals(index)) {
-					// Found select-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					// => transform into value
-					result = appArray.getParameters()[2];
-				} else {
-					result = script.term("select", array, index);
-				}
+			final ArrayStore as = ArrayStore.convert(array);
+			if (as != null) {
+				result = selectOverStore(script, as, index);
 			} else {
 				result = script.term("select", array, index);
 			}
 		} else {
 			result = script.term("select", array, index);
+		}
+		return result;
+	}
+
+	private static Term selectOverStore(final Script script, final ArrayStore as, final Term index) {
+		final Term result;
+		// Check for select-over-store
+		if (as.getIndex().equals(index)) {
+			// Found select-over-store => ignore inner store
+			// => transform into value
+			result = as.getValue();
+		} else {
+			final IPolynomialTerm selectIndex = PolynomialTermTransformer.convert(script, index);
+			final IPolynomialTerm storeIndex = PolynomialTermTransformer.convert(script, as.getIndex());
+			if (selectIndex == null || storeIndex == null) {
+				result = script.term("select", as.asTerm(), index);
+			} else {
+				final Equivalence comparison = selectIndex.compare(storeIndex);
+				switch (comparison) {
+				case DISTINCT:
+					result = select(script, as.getArray(), index);
+					break;
+				case EQUALS:
+					result = as.getValue();
+					break;
+				case INCOMPARABLE:
+					result = script.term("select", as.asTerm(), index);
+					break;
+				default:
+					throw new AssertionError("unknown value " + comparison);
+				}
+			}
 		}
 		return result;
 	}

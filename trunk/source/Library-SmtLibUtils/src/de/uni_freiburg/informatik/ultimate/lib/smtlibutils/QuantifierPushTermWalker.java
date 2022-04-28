@@ -71,8 +71,11 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	 * now deprecated {@link QuantifierPusher}. The purpose of this class is to
 	 * traverse the formula and to call {@link DualJunctionQuantifierElimination}s
 	 * which to the explicit eliminations and to call simplifications. This class
-	 * does a stack-based traversal that uses {@link TermContextTransformationEngine}
-	 * instead of an explicit recursion based on java methods.
+	 * does a stack-based traversal that uses
+	 * {@link TermContextTransformationEngine} instead of an explicit recursion
+	 * based on java methods.
+	 *
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 *
 	 */
 	private QuantifierPushTermWalker(final IUltimateServiceProvider services, final boolean applyDistributivity,

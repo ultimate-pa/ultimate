@@ -546,6 +546,6 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
-		return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
+		return (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, term);
 	}
 }

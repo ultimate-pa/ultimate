@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -69,11 +68,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -484,8 +482,8 @@ public class VerificationResultTransformer {
 			final ManagedScript mgdScriptAux) {
 		final Map<TermVariable, Boolean>[] branchEncoders = pe.getBranchEncoders();
 		final List<IAction> rtr = new ArrayList<>();
-		final TermTransferrer tt = new TermTransferrer(mgdScriptAux.getScript(), mgdScriptTc.getScript());
-		final Map<IProgramVarOrConst, IProgramVarOrConst> programVarCache = new HashMap<>();
+
+		final TransferrerWithVariableCache tt = new TransferrerWithVariableCache(mgdScriptAux.getScript(), mgdScriptTc);
 		for (int i = 0; i < pe.getLength(); i++) {
 			final AtomicTraceElement<? extends IAction> ate = pe.getTraceElement(i);
 
@@ -507,10 +505,7 @@ public class VerificationResultTransformer {
 
 			// Transfer transformulas to new script
 			final List<UnmodifiableTransFormula> transFormulas = sequentialActions.stream()
-					.map(a -> TransFormulaBuilder
-							.transferTransformula(tt, mgdScriptTc, programVarCache, a.getTransformula())
-							.getTransformula())
-					.collect(Collectors.toList());
+					.map(a -> tt.transferTransFormula(a.getTransformula())).collect(Collectors.toList());
 
 			final UnmodifiableTransFormula sc;
 			if (transFormulas.size() == 1) {

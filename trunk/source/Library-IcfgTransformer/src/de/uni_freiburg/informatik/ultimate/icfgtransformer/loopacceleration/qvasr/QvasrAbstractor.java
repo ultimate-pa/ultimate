@@ -102,6 +102,10 @@ public class QvasrAbstractor {
 	public static QvasrAbstraction computeAbstraction(final ManagedScript script,
 			final UnmodifiableTransFormula transitionFormula) {
 
+		if (!SmtUtils.isArrayFree(transitionFormula.getFormula())) {
+			throw new UnsupportedOperationException("Cannot deal with arrays.");
+		}
+
 		final Map<TermVariable, Term> updatesInFormulaAdditions =
 				getUpdates(script, transitionFormula, BaseType.ADDITIONS);
 		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(script, transitionFormula, BaseType.RESETS);
@@ -351,17 +355,22 @@ public class QvasrAbstractor {
 			}
 		}
 		final int prunedLength = matrix.length - toBeEliminated.size();
-		final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
-		int cnt = 0;
-		for (int k = 0; k < matrix.length; k++) {
-			if (!toBeEliminated.contains(k)) {
-				for (int l = 0; l < matrix[0].length; l++) {
-					prunedMatrix[cnt][l] = matrix[k][l];
+		if (prunedLength > 0) {
+			final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
+			int cnt = 0;
+			for (int k = 0; k < matrix.length; k++) {
+				if (!toBeEliminated.contains(k)) {
+					for (int l = 0; l < matrix[0].length; l++) {
+						prunedMatrix[cnt][l] = matrix[k][l];
+					}
+					cnt++;
 				}
-				cnt++;
 			}
+			return prunedMatrix;
+		} else {
+			return matrix;
 		}
-		return prunedMatrix;
+
 	}
 
 	/**
@@ -396,17 +405,23 @@ public class QvasrAbstractor {
 			}
 		}
 		final int prunedLength = matrix.length - toBeEliminated.size();
-		final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
-		int cnt = 0;
-		for (int k = 0; k < prunedLength; k++) {
-			if (!toBeEliminated.contains(k)) {
-				for (int l = 0; l < matrix[0].length; l++) {
-					prunedMatrix[cnt][l] = matrix[k][l];
+		if (prunedLength > 0) {
+			final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
+			int cnt = 0;
+			for (int k = 0; k < matrix.length; k++) {
+				if (!toBeEliminated.contains(k)) {
+					for (int l = 0; l < matrix[0].length; l++) {
+						prunedMatrix[cnt][l] = matrix[k][l];
+					}
+					cnt++;
 				}
-				cnt++;
 			}
+			return prunedMatrix;
+		} else {
+			return matrix;
+
 		}
-		return prunedMatrix;
+
 	}
 
 	/**
@@ -649,7 +664,6 @@ public class QvasrAbstractor {
 			} else {
 				divisorDividend = divisorAppTerm;
 			}
-
 			if ("/".equals(divisorAppTerm.getFunction().getName())
 					|| "/".equals(dividendAppTerm.getFunction().getName())) {
 				final Term commonDividend = SmtUtils.mul(script.getScript(), "*", dividendDividend, divisorDivisor);
@@ -844,7 +858,6 @@ public class QvasrAbstractor {
 						SmtUtils.minus(script.getScript(), commonDenominatorSubtrahend, commonDenominatorMinuend);
 				result = QvasrAbstractor.simplifyRealDivision(script, simplifiedMinuend, divisorMinuend);
 				result.toStringDirect();
-
 			}
 		}
 		if (QvasrUtils.isApplicationTerm(subtrahend) && !(QvasrUtils.isApplicationTerm(minuend))) {
@@ -1091,7 +1104,6 @@ public class QvasrAbstractor {
 					final Term[] divisorArray =
 							simplifiedDivisorParamSet.toArray(new Term[simplifiedDivisorParamSet.size()]);
 					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
-
 				}
 			}
 			if (QvasrUtils.checkTermEquiv(script, simplifiedDividendPre, simplifiedDividend)) {
@@ -1215,6 +1227,12 @@ public class QvasrAbstractor {
 		 */
 		final Map<Term, Term> realTvs = new HashMap<>();
 		final Map<IProgramVar, Term> updates = su.getDeterministicAssignment();
+		/*
+		 * TODO: Look at havoced vars.
+		 */
+		for (final IProgramVar readOnlyVar : su.getReadonlyVars()) {
+			updates.put(readOnlyVar, readOnlyVar.getTermVariable());
+		}
 		for (final IProgramVar pv : updates.keySet()) {
 			final TermVariable inVar = script.constructFreshTermVariable(pv.getGloballyUniqueId() + "_real",
 					SmtSortUtils.getRealSort(script));
@@ -1265,12 +1283,13 @@ public class QvasrAbstractor {
 		final Map<Term, Term> subMap = new HashMap<>();
 		for (final Term param : appTerm.getParameters()) {
 			if (param.getSort() == SmtSortUtils.getRealSort(script)) {
-				continue;
-			}
-			if (param instanceof ConstantTerm) {
+			} else if (param instanceof ConstantTerm) {
 				final ConstantTerm paramConst = (ConstantTerm) param;
 				final Rational paramValue = (Rational) paramConst.getValue();
 				subMap.put(param, paramValue.toTerm(SmtSortUtils.getRealSort(script)));
+			} else if (param instanceof TermVariable) {
+				subMap.put(param, script.constructFreshTermVariable(((TermVariable) param).getName(),
+						SmtSortUtils.getRealSort(script)));
 			} else {
 				subMap.putAll(appTermToReal(script, (ApplicationTerm) param));
 			}

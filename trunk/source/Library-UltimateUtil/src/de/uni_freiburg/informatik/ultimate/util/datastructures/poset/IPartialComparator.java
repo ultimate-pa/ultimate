@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2022 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -58,7 +59,7 @@ public interface IPartialComparator<T> {
 			}
 		}
 
-		public static ComparisonResult fromNonPartialComparison(final int nonPartialComparisonResult) {
+		private static ComparisonResult fromNonPartialComparison(final int nonPartialComparisonResult) {
 			if (nonPartialComparisonResult == 0) {
 				return ComparisonResult.EQUAL;
 			} else if (nonPartialComparisonResult > 0) {
@@ -68,22 +69,32 @@ public interface IPartialComparator<T> {
 			}
 		}
 
+		/**
+		 * Combines two comparison results conjunctively.
+		 *
+		 * This resembles the idea of a product order: A pair {@code (x1, y1)} is less or equal another pair
+		 * {@code (x2, y2)} iff {@code x1} is less or equal {@code x2} and {@code y1} is less or equal {@code y2)}.
+		 * Comparing the components individually and combining the results with this method will yield the correct
+		 * result.
+		 *
+		 * @param cr1
+		 *            the first comparison result to aggregate
+		 * @param cr2
+		 *            the second comparison result to aggregate
+		 * @return the aggregated result
+		 */
 		public static ComparisonResult aggregate(final ComparisonResult cr1, final ComparisonResult cr2) {
 			switch (cr1) {
 			case EQUAL:
 				return cr2;
 			case INCOMPARABLE:
 				return INCOMPARABLE;
-			case STRICTLY_GREATER:
-				if (cr2 == INCOMPARABLE || cr2 == STRICTLY_SMALLER) {
-					return INCOMPARABLE;
-				}
-				return cr2;
 			case STRICTLY_SMALLER:
-				if (cr2 == INCOMPARABLE || cr2 == STRICTLY_GREATER) {
+			case STRICTLY_GREATER:
+				if (cr2 == INCOMPARABLE || cr2 == cr1.invert()) {
 					return INCOMPARABLE;
 				}
-				return cr2;
+				return cr1;
 			default:
 				throw new AssertionError("unknown value");
 			}
@@ -101,6 +112,15 @@ public interface IPartialComparator<T> {
 
 	/**
 	 * Converts a Java {@link Comparator} into a partial comparator.
+	 *
+	 * Java calls a {@link Comparator} "consistent with equals" if it only returns 0 for equal elements. A
+	 * {@link Comparator} that is not consistent with equals might also return 0 for incomparable elements. Since
+	 * {@link IPartialComparator} explicitly distinguishes incomparability from equality, the instance returned by this
+	 * method calls {@link #equals(Object)} if the given Java {@link Comparator} returns 0.
+	 *
+	 * To avoid such calls to {@link #equals(Object)} when the {@link Comparator} is consistent with equals, pass
+	 * {@code true} for the {@code isConsistent} parameter of this method. This corresponds to the underlying order
+	 * being total.
 	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 *

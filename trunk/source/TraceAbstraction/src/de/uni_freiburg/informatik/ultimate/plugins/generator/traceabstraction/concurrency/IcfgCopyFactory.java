@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.concurrency.ICopyActionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 
 /**
  * A factory that can create copies of {@link IcfgEdge} instances with new transition formulas.
@@ -82,7 +82,7 @@ public class IcfgCopyFactory implements ICopyActionFactory<IcfgEdge> {
 						newTransformula, false);
 			}
 			return mEdgeBuilder.constructInternalTransition(original, original.getSource(), original.getTarget(),
-					newTransformula, false);
+					newTransformula);
 		}
 
 		if (!(original instanceof IActionWithBranchEncoders)) {

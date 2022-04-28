@@ -81,9 +81,9 @@ public class InductivityCheck<LETTER extends IAction> {
 
 	private boolean checkInductivity(final INestedWordAutomaton<LETTER, IPredicate> nwa) {
 		if (mAntiInductivity) {
-			mLogger.info("Starting anti-indutivity check of a Floyd-Hoare automaton with " + nwa.sizeInformation());
+			mLogger.info("Starting anti-inductivity check of a Floyd-Hoare automaton with " + nwa.sizeInformation());
 		} else {
-			mLogger.info("Starting indutivity check of a Floyd-Hoare automaton with " + nwa.sizeInformation());
+			mLogger.info("Starting inductivity check of a Floyd-Hoare automaton with " + nwa.sizeInformation());
 		}
 
 		boolean result = true;

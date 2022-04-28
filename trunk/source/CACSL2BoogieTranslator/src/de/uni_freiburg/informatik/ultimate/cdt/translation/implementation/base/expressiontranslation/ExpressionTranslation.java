@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -46,9 +47,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -61,10 +65,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
@@ -241,7 +248,7 @@ public abstract class ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
+			final Attribute[] attributes = { attribute };
 			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
@@ -257,7 +264,7 @@ public abstract class ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
+			final Attribute[] attributes = { attribute };
 			final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type);
 			final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType,
@@ -272,7 +279,7 @@ public abstract class ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
+			final Attribute[] attributes = { attribute };
 			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 		}
@@ -285,7 +292,7 @@ public abstract class ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
+			final Attribute[] attributes = { attribute };
 			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 		}
@@ -407,6 +414,22 @@ public abstract class ExpressionTranslation {
 
 	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
 
+	public boolean shouldAbstractAssignWithBitwiseOp(final IASTBinaryExpression node) {
+		return false;
+	}
+
+	/**
+	 * @return
+	 * @deprecated do not use this method; it is a workaround
+	 */
+	@Deprecated
+	public Result abstractAssginWithBitwiseOp(final CHandler chandler, final ProcedureManager procedureManager,
+			final List<Declaration> declarations, final INameHandler nameHandler,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
+			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
+		throw new UnsupportedOperationException();
+	}
+
 	public ExpressionResult createNan(final ILocation loc, final CPrimitive cPrimitive) {
 		if (!cPrimitive.isFloatingType()) {
 			throw new IllegalArgumentException("can only create NaN for floating types");
@@ -451,7 +474,7 @@ public abstract class ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
+			final Attribute[] attributes = { attribute };
 			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
@@ -520,22 +543,19 @@ public abstract class ExpressionTranslation {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
 			attributes = new Attribute[] { attribute };
+		} else if (indices == null) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
+			attributes = new Attribute[] { attribute };
 		} else {
-			if (indices == null) {
-				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
-				attributes = new Attribute[] { attribute };
-			} else {
-				final Expression[] literalIndices = new IntegerLiteral[indices.length];
-				for (int i = 0; i < indices.length; ++i) {
-					literalIndices[i] = ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[i]));
-				}
-				final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
-				final Attribute attribute2 =
-						new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER, literalIndices);
-				attributes = new Attribute[] { attribute1, attribute2 };
+			final Expression[] literalIndices = new IntegerLiteral[indices.length];
+			for (int i = 0; i < indices.length; ++i) {
+				literalIndices[i] = ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[i]));
 			}
+			final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
+			final Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER, literalIndices);
+			attributes = new Attribute[] { attribute1, attribute2 };
 		}
 		return attributes;
 	}

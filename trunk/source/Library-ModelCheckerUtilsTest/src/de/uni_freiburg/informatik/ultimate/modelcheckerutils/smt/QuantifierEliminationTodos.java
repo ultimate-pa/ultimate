@@ -314,15 +314,6 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	@Test
-	public void hiddenArrayEquality_tilia() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "valid", "oldValid"),
-			};
-		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= oldValid (store a 1000 1001)) (= (store (store a 1000 1001) 23 42) valid) (= (select a 23) 42)))";
-		final String expectedResultAsString = "(and (= oldValid valid) (= (select valid 1000) 1001) (= (select valid 23) 42))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
 
 	@Test
 	public void endless2() {
@@ -335,6 +326,52 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void selfUpdateAraucaria() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "v_ArrVal_398", "v_ArrVal_400", "ULTIMATE.start_main_~l~0#1.base"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_#memory_$Pointer$.base_58"),
+			};
+		final String formulaAsString = "(forall ((v_ArrVal_391 (Array Int Int))) (let ((.cse0 (select (store (store v_ArrVal_391 8 v_ArrVal_398) 4 v_ArrVal_400) 0))) (or (not (= v_ArrVal_391 (store (select |v_#memory_$Pointer$.base_58| .cse0) 0 |ULTIMATE.start_main_~l~0#1.base|))) (not (= (select |#valid| .cse0) 0)))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void selfUpdateAraucariaSimplified() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "v1", "v2", "x"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (= a (store (select mem (select (store (store a 8 v1) 4 v2) 0)) 0 x)))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void minionEliminateesNonterminationBugNotReproducible() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "n1", "n2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "arrIntInt"),
+			};
+		final String formulaAsString = "(forall ((a (Array Int Int)) (val1 Int) (val2 Int) (val3 Int) (val4 Int) (x1 Int) (x2 Int) (a (Array Int Int)) (x3 Int) (x4 Int)) (or (not (<= val3 x3)) (let ((.cse1 (= x1 x4)) (.cse0 (store a 0 0))) (and (or (not (= a (store .cse0 x4 val4))) .cse1) (or (not .cse1) (not (= a (store .cse0 x4 val1)))))) (not (<= x1 x2)) (< 1 x4) (< (+ x3 1) n1) (< (+ x4 1) x3) (let ((.cse2 (= x2 x3))) (and (or (not .cse2) (not (= (store a x3 val2) arrIntInt))) (or (not (= (store a x3 val3) arrIntInt)) .cse2))) (< x1 7) (not (<= val4 x4)) (not (<= x2 n2))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void minionEliminateesNonterminationBugOriginal() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "False_hbv_False_3_Int", "False_hbv_False_4_Int"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "False_hbv_False_1_Array_Int_Int"),
+			};
+		final String formulaAsString = "(forall ((v_inv_hhv_inv_2_Int_242 Int) (v_inv_hbv_inv_1_Int_133 Int) (v_arrayElimArr_19 (Array Int Int)) (v_inv_hbv_inv_2_Array_Int_Int_124 (Array Int Int)) (v_arrayElimArr_20 (Array Int Int)) (v_inv_hhv_inv_2_Int_243 Int) (v_inv_hbv_inv_1_Int_131 Int) (v_arrayElimArr_18 (Array Int Int)) (v_arrayElimArr_17 (Array Int Int)) (v_ArrVal_265 Int) (v_inv_hbv_inv_1_Int_132 Int) (v_ArrVal_267 Int) (v_ArrVal_268 Int) (v_inv_hhv_inv_2_Int_246 Int) (v_ArrVal_264 Int)) (let ((.cse9 (select v_arrayElimArr_17 v_inv_hbv_inv_1_Int_133)) (.cse7 (select v_arrayElimArr_17 v_inv_hbv_inv_1_Int_131)) (.cse3 (select v_arrayElimArr_18 v_inv_hbv_inv_1_Int_131)) (.cse12 (select v_arrayElimArr_17 0)) (.cse0 (not (= v_inv_hbv_inv_1_Int_131 0))) (.cse1 (not (= v_inv_hbv_inv_1_Int_133 0))) (.cse10 (select v_arrayElimArr_18 0)) (.cse11 (select v_arrayElimArr_18 v_inv_hbv_inv_1_Int_133)) (.cse2 (select v_arrayElimArr_19 0)) (.cse13 (select v_arrayElimArr_19 v_inv_hbv_inv_1_Int_133)) (.cse14 (select v_arrayElimArr_19 v_inv_hbv_inv_1_Int_131)) (.cse8 (not (= v_inv_hbv_inv_1_Int_133 v_inv_hbv_inv_1_Int_131)))) (or (and .cse0 .cse1 (not (= .cse2 0))) (< 1 v_inv_hbv_inv_1_Int_133) (not (<= .cse3 v_inv_hbv_inv_1_Int_131)) (not (<= v_ArrVal_265 v_inv_hbv_inv_1_Int_132)) (not (<= v_inv_hhv_inv_2_Int_242 v_inv_hhv_inv_2_Int_243)) (let ((.cse4 (= v_inv_hhv_inv_2_Int_242 v_inv_hbv_inv_1_Int_133))) (let ((.cse5 (not .cse4)) (.cse6 (= v_inv_hhv_inv_2_Int_243 v_inv_hbv_inv_1_Int_131))) (and (or (and (or .cse4 (not (= v_arrayElimArr_19 v_inv_hbv_inv_2_Array_Int_Int_124))) (or .cse5 (not (= v_arrayElimArr_20 v_inv_hbv_inv_2_Array_Int_Int_124)))) (not .cse6)) (or (and (or .cse5 (not (= v_arrayElimArr_18 v_inv_hbv_inv_2_Array_Int_Int_124))) (or .cse4 (not (= v_arrayElimArr_17 v_inv_hbv_inv_2_Array_Int_Int_124)))) .cse6)))) (< (+ v_inv_hbv_inv_1_Int_132 1) False_hbv_False_4_Int) (< (+ v_inv_hbv_inv_1_Int_131 1) v_inv_hbv_inv_1_Int_132) (not (= .cse7 .cse3)) (and .cse8 (not (= v_ArrVal_267 .cse9))) (not (= (store (store (store (store (store (store v_arrayElimArr_20 0 .cse10) v_inv_hbv_inv_1_Int_133 .cse11) v_inv_hbv_inv_1_Int_131 .cse3) 0 .cse10) v_inv_hbv_inv_1_Int_133 .cse11) v_inv_hbv_inv_1_Int_131 .cse3) v_arrayElimArr_18)) (and .cse0 .cse1 (not (= (select v_arrayElimArr_20 0) 0))) (not (= (store (store (store (store (store (store v_arrayElimArr_20 0 .cse12) v_inv_hbv_inv_1_Int_133 .cse9) v_inv_hbv_inv_1_Int_131 .cse7) 0 .cse12) v_inv_hbv_inv_1_Int_133 .cse9) v_inv_hbv_inv_1_Int_131 .cse7) v_arrayElimArr_17)) (and .cse8 (not (= .cse13 v_ArrVal_267))) (not (<= v_ArrVal_267 v_inv_hbv_inv_1_Int_133)) (not (= (select v_arrayElimArr_20 v_inv_hbv_inv_1_Int_131) .cse14)) (not (= (store (store (store (store (store (store v_arrayElimArr_17 0 .cse10) v_inv_hbv_inv_1_Int_133 .cse11) v_inv_hbv_inv_1_Int_131 .cse3) 0 .cse10) v_inv_hbv_inv_1_Int_133 .cse11) v_inv_hbv_inv_1_Int_131 .cse3) v_arrayElimArr_18)) (and .cse0 .cse1 (not (= .cse12 0))) (and .cse0 .cse1 (not (= .cse10 0))) (and .cse8 (not (= v_ArrVal_268 .cse11))) (< v_inv_hhv_inv_2_Int_242 7) (not (= (store (store (store (store (store (store v_arrayElimArr_20 0 .cse2) v_inv_hbv_inv_1_Int_133 .cse13) v_inv_hbv_inv_1_Int_131 .cse14) 0 .cse2) v_inv_hbv_inv_1_Int_133 .cse13) v_inv_hbv_inv_1_Int_131 .cse14) v_arrayElimArr_19)) (not (= (store (store (store (store (store (store v_arrayElimArr_17 0 .cse2) v_inv_hbv_inv_1_Int_133 .cse13) v_inv_hbv_inv_1_Int_131 .cse14) 0 .cse2) v_inv_hbv_inv_1_Int_133 .cse13) v_inv_hbv_inv_1_Int_131 .cse14) v_arrayElimArr_19)) (not (= v_arrayElimArr_19 (store (store (store (store (store (store v_arrayElimArr_18 0 .cse2) v_inv_hbv_inv_1_Int_133 .cse13) v_inv_hbv_inv_1_Int_131 .cse14) 0 .cse2) v_inv_hbv_inv_1_Int_133 .cse13) v_inv_hbv_inv_1_Int_131 .cse14))) (let ((.cse15 (= v_inv_hhv_inv_2_Int_246 v_inv_hbv_inv_1_Int_132))) (and (or .cse15 (not (= (store v_inv_hbv_inv_2_Array_Int_Int_124 v_inv_hbv_inv_1_Int_132 v_ArrVal_265) False_hbv_False_1_Array_Int_Int))) (or (not .cse15) (not (= False_hbv_False_1_Array_Int_Int (store v_inv_hbv_inv_2_Array_Int_Int_124 v_inv_hbv_inv_1_Int_132 v_ArrVal_264)))))) (< (+ v_inv_hbv_inv_1_Int_133 1) v_inv_hbv_inv_1_Int_131) (not (<= v_inv_hhv_inv_2_Int_246 False_hbv_False_3_Int)) (not (<= v_inv_hhv_inv_2_Int_243 v_inv_hhv_inv_2_Int_246)) (and .cse8 (not (= v_ArrVal_268 (select v_arrayElimArr_20 v_inv_hbv_inv_1_Int_133)))))))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 
 

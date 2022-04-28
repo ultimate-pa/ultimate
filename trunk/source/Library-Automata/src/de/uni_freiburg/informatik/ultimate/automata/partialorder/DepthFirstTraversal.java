@@ -170,7 +170,7 @@ public class DepthFirstTraversal<L, S> {
 		}
 
 		backtrack();
-		mLogger.debug("search completed");
+		mLogger.debug("traversal completed");
 	}
 
 	private boolean backtrackUntil(final S state) {

@@ -52,8 +52,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -140,7 +142,7 @@ public class QvasrSummarizer {
 	}
 
 	/**
-	 * /** Compute a {@link UnmodifiableTransFormula} as loop summary. This version can deal with branching loops.
+	 * Compute a {@link UnmodifiableTransFormula} as loop summary. This version can deal with branching loops.
 	 *
 	 *
 	 * @param script
@@ -241,6 +243,8 @@ public class QvasrSummarizer {
 		Term loopSummary = SmtUtils.and(script.getScript(), qvasrDimensionConjunction);
 		loopSummary = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS, kToTransformer.values(),
 				SmtUtils.and(script.getScript(), loopSummary));
+		loopSummary =
+				PartialQuantifierElimination.eliminate(services, script, loopSummary, SimplificationTechnique.POLY_PAC);
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), true, null, true, null, true);
 		tfb.setFormula(loopSummary);

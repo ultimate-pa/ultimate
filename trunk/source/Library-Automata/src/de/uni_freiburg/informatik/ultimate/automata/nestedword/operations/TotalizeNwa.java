@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -59,6 +60,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	private final ISinkStateFactory<STATE> mStateFactory;
 	private STATE mSinkState;
 	private boolean mSinkStateWasConstructed;
+	private final boolean mSinkStateBelongsToOperand;
 	private boolean mNondeterministicTransitionsDetected;
 	private boolean mNondeterministicInitialsDetected;
 	private final boolean mStopIfNondeterminismWasDetected;
@@ -77,6 +79,22 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 		mOperand = operand;
 		mStateFactory = stateFactory;
 		mStopIfNondeterminismWasDetected = stopIfNondeterminismWasDetected;
+		mSinkStateBelongsToOperand = false;
+	}
+
+	public TotalizeNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final STATE sinkState,
+			final boolean stopIfNondeterminismWasDetected) {
+		mOperand = operand;
+		mStateFactory = null;
+		mStopIfNondeterminismWasDetected = stopIfNondeterminismWasDetected;
+		mSinkState = Objects.requireNonNull(sinkState);
+		mSinkStateBelongsToOperand = true;
+		mSinkStateWasConstructed = true;
+
+		if (mOperand instanceof INestedWordAutomaton
+				&& !((INestedWordAutomaton<?, ?>) mOperand).getStates().contains(mSinkState)) {
+			throw new UnsupportedOperationException("Operand must contain the state " + mSinkState);
+		}
 	}
 
 	private void requestSinkState() {
@@ -100,12 +118,13 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	/**
 	 * @param state
 	 *            The candidate state.
-	 * @return {@code true} iff the sink state was constructed and is equal to the given state
+	 * @return {@code true} iff the sink state was constructed and is equal to the given state. If the sink state was
+	 *         given in the constructor and belongs to the operand, returns false.
 	 */
 	@SuppressWarnings("squid:S1698")
 	private boolean isNewSinkState(final STATE state) {
-		// equality intended here
-		return mSinkStateWasConstructed && state == mSinkState;
+		// reference equality intended here
+		return !mSinkStateBelongsToOperand && mSinkStateWasConstructed && state == mSinkState;
 	}
 
 	/**

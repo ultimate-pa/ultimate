@@ -141,7 +141,7 @@ public class HornClauseHead {
 				final TermVariable pTv = (TermVariable) mHead.getParameters()[i];
 				final Sort sort = pTv.getSort();
 
-				final HcHeadVar headVar = symbolTable.getOrConstructHeadVar(headPredSymbolName, i, sort);
+				final HcHeadVar headVar = symbolTable.getOrConstructHeadVar(headPredSymbolName, i, sort, pTv);
 
 				subs.put(pTv, headVar.getTermVariable());
 			}
@@ -158,7 +158,8 @@ public class HornClauseHead {
 				continue;
 			}
 
-			final HcBodyVar bodyVar = symbolTable.getOrConstructBodyVar(headPredSymbolName, counter++, tv.getSort());
+			final HcBodyVar bodyVar =
+					symbolTable.getOrConstructBodyVar(headPredSymbolName, counter++, tv.getSort(), tv);
 
 			subs.put(tv, bodyVar.getTermVariable());
 			bodyVars.add(bodyVar);

@@ -29,6 +29,10 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Lifts a lattice structure on the value type to a lattice structure on maps.
@@ -44,6 +48,8 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 		implements ILattice<Map<K, V>> {
 
 	private final ILattice<V> mLattice;
+	private final Set<K> mKeyDomain;
+	private final Map<K, V> mTop;
 
 	/**
 	 * Creates a new map lattice.
@@ -54,6 +60,33 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 	public CanonicalLatticeForMaps(final ILattice<V> lattice) {
 		super(lattice);
 		mLattice = lattice;
+		mKeyDomain = null;
+		mTop = null;
+	}
+
+	/**
+	 * Creates a new map lattice, for maps whose keys fall into a finite domain.
+	 *
+	 * The finite key domain implies the existence of a top element in the lattice.
+	 *
+	 * @param lattice
+	 *            The underlying value lattice
+	 * @param keyDomain
+	 *            The domain of all possible keys.
+	 */
+	public CanonicalLatticeForMaps(final ILattice<V> lattice, final Set<K> keyDomain) {
+		super(lattice);
+		mLattice = lattice;
+		mKeyDomain = Objects.requireNonNull(keyDomain);
+		final V top = lattice.getTop();
+		mTop = mKeyDomain.stream().collect(Collectors.toMap(Function.identity(), x -> top));
+	}
+
+	@Override
+	public ComparisonResult compare(final Map<K, V> o1, final Map<K, V> o2) {
+		assert mKeyDomain == null || mKeyDomain.containsAll(o1.keySet()) : "map with unexpected keys";
+		assert mKeyDomain == null || mKeyDomain.containsAll(o2.keySet()) : "map with unexpected keys";
+		return super.compare(o1, o2);
 	}
 
 	@Override
@@ -63,12 +96,18 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 
 	@Override
 	public Map<K, V> getTop() {
-		throw new UnsupportedOperationException("Map lattice has no top element unless key domain is finite");
+		if (mTop == null) {
+			throw new UnsupportedOperationException("Map lattice has no top element unless key domain is finite");
+		}
+		return mTop;
 	}
 
 	@Override
 	public Map<K, V> supremum(final Map<K, V> h1, final Map<K, V> h2) {
 		final Map<K, V> result = new HashMap<>();
+
+		assert mKeyDomain == null || mKeyDomain.containsAll(h1.keySet()) : "map with unexpected keys";
+		assert mKeyDomain == null || mKeyDomain.containsAll(h2.keySet()) : "map with unexpected keys";
 
 		for (final Map.Entry<K, V> entry : h1.entrySet()) {
 			final V value;
@@ -91,6 +130,9 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 
 	@Override
 	public Map<K, V> infimum(final Map<K, V> h1, final Map<K, V> h2) {
+		assert mKeyDomain == null || mKeyDomain.containsAll(h1.keySet()) : "map with unexpected keys";
+		assert mKeyDomain == null || mKeyDomain.containsAll(h2.keySet()) : "map with unexpected keys";
+
 		final Map<K, V> smaller;
 		final Map<K, V> bigger;
 		if (h1.size() < h2.size()) {

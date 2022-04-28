@@ -837,7 +837,8 @@ public class MapEliminator {
 		final List<TermVariable> freeVarsFormula = Arrays.asList(transformula.getFormula().getFreeVars());
 		final Term inequality = Util.not(mScript, getEqualTerm(index, equal, invariants));
 		final List<TermVariable> freeVarsInequality = Arrays.asList(inequality.getFreeVars());
-		if (!freeVarsFormula.containsAll(freeVarsInequality) && mSettings.onlyArgumentsInFormula()) {
+		if (SmtUtils.isTrueLiteral(inequality)
+				|| (!freeVarsFormula.containsAll(freeVarsInequality) && mSettings.onlyArgumentsInFormula())) {
 			return mScript.term("true");
 		}
 		final List<Term> disjuncts = new ArrayList<>();
@@ -845,11 +846,14 @@ public class MapEliminator {
 		for (final ArrayIndex i : unequal) {
 			final Term equality = getEqualTerm(index, i, invariants);
 			final List<TermVariable> freeVarsEquality = Arrays.asList(equality.getFreeVars());
-			if (!freeVarsFormula.containsAll(freeVarsEquality) && mSettings.onlyArgumentsInFormula()) {
+			if (SmtUtils.isTrueLiteral(equality)
+					|| (!freeVarsFormula.containsAll(freeVarsEquality) && mSettings.onlyArgumentsInFormula())) {
 				return mScript.term("true");
 			}
 			disjuncts.add(equality);
 		}
+		// TODO: Allow combination of different sorts
+		// For example (select (select (store a x b) y) z) should be handled correctly
 		if (!value1.getSort().equals(value2.getSort())) {
 			throw new AssertionError(String.format("%s tries to combine %s and %s", this.getClass().getSimpleName(),
 					value1.getSort(), value2.getSort()));
