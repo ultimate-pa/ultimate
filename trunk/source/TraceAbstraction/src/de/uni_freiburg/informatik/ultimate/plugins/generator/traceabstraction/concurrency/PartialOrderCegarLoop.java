@@ -144,7 +144,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
-				mIndependenceContainer.currentIndependence());
+				mIndependenceContainer.getOrConstructIndependence());
 	}
 
 	@Override
@@ -193,7 +193,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		// update independence in case of abstract independence
 		mIndependenceContainer.refine(mRefinementResult);
-		mPOR.replaceIndependence(mIndependenceContainer.currentIndependence());
+		mPOR.replaceIndependence(mIndependenceContainer.getOrConstructIndependence());
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -507,7 +507,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		void refine(IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement);
 
-		IIndependenceRelation<IPredicate, L> currentIndependence();
+		IIndependenceRelation<IPredicate, L> getOrConstructIndependence();
 	}
 
 	/**
@@ -535,7 +535,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		@Override
-		public IIndependenceRelation<IPredicate, L> currentIndependence() {
+		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
 			return mIndependence;
 		}
 	}
@@ -576,7 +576,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		@Override
-		public IIndependenceRelation<IPredicate, L> currentIndependence() {
+		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
 			return IndependenceBuilder.fromPredicateActionIndependence(mUnderlyingIndependence)
 					// Apply abstraction to each letter before checking commutativity.
 					.withAbstraction(mRefinableAbstraction, mAbstractionLevel)
