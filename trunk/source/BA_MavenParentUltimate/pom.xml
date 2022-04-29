@@ -496,7 +496,6 @@
 		<module>../GUIGeneratedPreferencePages</module>
 		<module>../GUILoggingWindow</module>
 		<module>../GuiRCP</module>
-		<module>../HornVerifier</module>
 		<module>../IcfgToChc</module>
 		<module>../IcfgTransformation</module>
 		<module>../InvariantSynthesis</module>
