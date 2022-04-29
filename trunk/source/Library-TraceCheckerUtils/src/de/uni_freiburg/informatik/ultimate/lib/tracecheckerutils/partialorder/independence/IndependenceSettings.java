@@ -26,11 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+/**
+ * Bundles various settings specifying an independence relation to be used.
+ *
+ * @see de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public final class IndependenceSettings {
 
+	/**
+	 * Specifies the basic type of independence check.
+	 */
 	public enum IndependenceType {
 		/**
-		 * Use only syntactic criteria (accessed variables) to determine commutativity.
+		 * Use only syntactic criteria (e.g. accessed variables) to determine commutativity.
 		 */
 		SYNTACTIC,
 		/**
@@ -39,8 +49,27 @@ public final class IndependenceSettings {
 		SEMANTIC,
 	}
 
+	/**
+	 * Specifies a kind of abstraction to be integrated in the independence check.
+	 */
 	public enum AbstractionType {
-		NONE, VARIABLES_GLOBAL, VARIABLES_LOCAL
+		/**
+		 * Do not apply any abstraction.
+		 */
+		NONE,
+		/**
+		 * Apply an abstraction that eliminates variables not used in the current proof candidate.
+		 *
+		 * @see de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction
+		 */
+		VARIABLES_GLOBAL,
+		/**
+		 * Apply an abstraction that eliminates variables not used in Hoare triples for the abstracted statement in the
+		 * current proof candidate.
+		 *
+		 * @see de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction
+		 */
+		VARIABLES_LOCAL
 	}
 
 	private final IndependenceType mIndependenceType;
@@ -48,6 +77,9 @@ public final class IndependenceSettings {
 	private final boolean mUseConditional;
 	private final boolean mUseSemiCommutativity;
 
+	/**
+	 * Creates default settings for a simple independence relation.
+	 */
 	public IndependenceSettings() {
 		this(IndependenceType.SEMANTIC, AbstractionType.NONE, true, true);
 	}
