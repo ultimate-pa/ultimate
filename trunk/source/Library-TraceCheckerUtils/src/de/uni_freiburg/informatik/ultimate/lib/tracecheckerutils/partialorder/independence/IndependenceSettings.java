@@ -39,23 +39,33 @@ public final class IndependenceSettings {
 		SEMANTIC,
 	}
 
+	public enum AbstractionType {
+		NONE, VARIABLES_GLOBAL, VARIABLES_LOCAL
+	}
+
 	private final IndependenceType mIndependenceType;
+	private final AbstractionType mAbstractionType;
 	private final boolean mUseConditional;
 	private final boolean mUseSemiCommutativity;
 
 	public IndependenceSettings() {
-		this(IndependenceType.SEMANTIC, true, true);
+		this(IndependenceType.SEMANTIC, AbstractionType.NONE, true, true);
 	}
 
-	public IndependenceSettings(final IndependenceType independenceType, final boolean useConditional,
-			final boolean useSemiCommutativity) {
+	public IndependenceSettings(final IndependenceType independenceType, final AbstractionType abstractionType,
+			final boolean useConditional, final boolean useSemiCommutativity) {
 		mIndependenceType = independenceType;
+		mAbstractionType = abstractionType;
 		mUseConditional = useConditional;
 		mUseSemiCommutativity = useSemiCommutativity;
 	}
 
 	public IndependenceType getIndependenceType() {
 		return mIndependenceType;
+	}
+
+	public AbstractionType getAbstractionType() {
+		return mAbstractionType;
 	}
 
 	public boolean useConditional() {

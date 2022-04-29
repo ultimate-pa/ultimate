@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -193,10 +193,12 @@ public final class TAPreferences {
 
 		mPorIndependenceSettings = new IndependenceSettings(
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_POR, IndependenceType.class),
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, AbstractionType.class),
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COND_POR),
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR));
 		mLbeIndependenceSettings = new IndependenceSettings(
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_PLBE, IndependenceType.class),
+				AbstractionType.NONE /* currently hard-coded; will be changed for repeated Petri net LBE */,
 				false /* currently hard-coded; will be changed for repeated Petri net LBE */,
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE));
 	}

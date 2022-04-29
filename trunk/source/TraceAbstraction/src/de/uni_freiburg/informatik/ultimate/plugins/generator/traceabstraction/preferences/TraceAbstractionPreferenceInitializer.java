@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -129,14 +129,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_SEMICOMM_POR = "Use semi-commutativity for POR in concurrent analysis";
 	private static final boolean DEF_SEMICOMM_POR = true;
 
+	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
+	private static final AbstractionType DEF_POR_ABSTRACTION = AbstractionType.NONE;
+
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
 
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
 	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
-
-	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
-	private static final AbstractionType DEF_POR_ABSTRACTION = AbstractionType.NONE;
 
 	/* **************************************** */
 
@@ -549,12 +549,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, DEF_SEMICOMM_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, DEF_POR_ABSTRACTION, PreferenceType.Combo,
+						AbstractionType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
 						PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, DEF_POR_ABSTRACTION, PreferenceType.Combo,
-						AbstractionType.values()),
 
 				/* ********************************* */
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
