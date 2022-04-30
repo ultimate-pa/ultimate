@@ -33,12 +33,13 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context.CcTransformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -80,20 +81,21 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb, final List<Term> allParams,
-			final int selectedParam) {
+	protected Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
+			final List<Term> allParams, final int selectedParam) {
 		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam,
 				CcTransformation.TO_NNF);
 	}
 
 	@Override
-	Term constructContextForQuantifiedFormula(final Term context, final int quant, final List<TermVariable> vars) {
+	protected Term constructContextForQuantifiedFormula(final Term context, final int quant,
+			final List<TermVariable> vars) {
 		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars,
 				CcTransformation.TO_NNF);
 	}
 
 	@Override
-	DescendResult convert(final Term context, final Term term) {
+	protected DescendResult convert(final Term context, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
@@ -121,7 +123,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
+	protected Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			final CondisDepthCode contextCdc = CondisDepthCode.of(context);
@@ -148,12 +150,12 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		return result;
 	}
 
-	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term context,
-			final Term term) {
+	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term context, final Term term) {
 		final Term result;
 		try {
-			result = TermContextTransformationEngine
-			.transform(new PolyPacSimplificationTermWalker(services, mgdScript), context, term);
+			result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(services, mgdScript),
+					context, term);
 		} catch (final ToolchainCanceledException tce) {
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
@@ -164,19 +166,19 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructResultForQuantifiedFormula(final Term context, final QuantifiedFormula originalQuantifiedFormula,
-			final Term resultSubformula) {
+	protected Term constructResultForQuantifiedFormula(final Term context,
+			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
 				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
 	}
 
 	@Override
-	boolean applyRepeatedlyUntilNoChange() {
+	protected boolean applyRepeatedlyUntilNoChange() {
 		return true;
 	}
 
 	@Override
-	void checkIntermediateResult(final Term context, final Term input, final Term output) {
+	protected void checkIntermediateResult(final Term context, final Term input, final Term output) {
 		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context, mMgdScript.getScript());
 		switch (lBool) {
 		case SAT:

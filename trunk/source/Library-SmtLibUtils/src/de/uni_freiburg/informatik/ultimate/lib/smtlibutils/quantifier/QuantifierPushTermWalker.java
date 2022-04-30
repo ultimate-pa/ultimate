@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
+package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,14 +32,15 @@ import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PolyPacSimplificationTermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.SimplificationOccasion;
@@ -89,18 +90,19 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	Context constructContextForApplicationTerm(final Context context, final FunctionSymbol symb,
+	protected Context constructContextForApplicationTerm(final Context context, final FunctionSymbol symb,
 			final List<Term> allParams, final int selectedParam) {
 		return context.constructChildContextForConDis(mServices, mMgdScript, symb, allParams, selectedParam);
 	}
 
 	@Override
-	Context constructContextForQuantifiedFormula(final Context context, final int quant,
+	protected Context constructContextForQuantifiedFormula(final Context context, final int quant,
 			final List<TermVariable> vars) {
 		return context.constructChildContextForQuantifiedFormula(mMgdScript.getScript(), vars);
 	}
 
 	@Override
+	protected
 	DescendResult convert(final Context context, final Term term) {
 		FormulaClassification classification = null;
 		Term currentTerm =
@@ -208,8 +210,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	Term constructResultForApplicationTerm(final Context context, final ApplicationTerm originalApplicationTerm,
-			final Term[] resultParams) {
+	protected Term constructResultForApplicationTerm(final Context context,
+			final ApplicationTerm originalApplicationTerm, final Term[] resultParams) {
 		// TODO: Maybe full simplification with solver, maybe no simplification
 		if (originalApplicationTerm.getFunction().getName().equals("and")) {
 			return PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(),
@@ -229,14 +231,14 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	Term constructResultForQuantifiedFormula(final Context context, final QuantifiedFormula originalQuantifiedFormula,
-			final Term resultSubformula) {
+	protected Term constructResultForQuantifiedFormula(final Context context,
+			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
 				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
 	}
 
 	@Override
-	boolean applyRepeatedlyUntilNoChange() {
+	protected boolean applyRepeatedlyUntilNoChange() {
 		return false;
 	}
 
@@ -291,7 +293,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	void checkIntermediateResult(final Context context, final Term input, final Term output) {
+	protected void checkIntermediateResult(final Context context, final Term input, final Term output) {
 		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context.getCriticalConstraint(),
 				mMgdScript.getScript());
 		switch (lBool) {
