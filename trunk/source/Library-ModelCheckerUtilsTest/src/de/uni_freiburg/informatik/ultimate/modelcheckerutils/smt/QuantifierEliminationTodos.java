@@ -387,6 +387,20 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * Although bv4294967295 is -1, we cannot eliminate here (yet).
+	 */
+	@Test
+	public void somePreinerSchollBenchmarkSubformula() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "?lambda", "x5"),
+
+		};
+		final String formulaAsString = "(exists ((?lambdaprime (_ BitVec 32))) (and (bvsle ?lambdaprime ?lambda) (bvsle (bvadd (bvmul x5 (_ bv4294967295 32)) (bvmul (_ bv4294967295 32) ?lambdaprime)) (_ bv4294967286 32)) (bvsle (_ bv0 32) ?lambdaprime)))";
+		final String expectedResultAsString = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 
 //	// read_type_#64._token is function symbol with
