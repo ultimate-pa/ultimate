@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ParameterPartition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -102,6 +103,7 @@ public class QuantifierPushUtilsForSubsetPush {
 			final IQuantifierEliminator qe) {
 		List<Term> currentDualFiniteJuncts = Arrays
 				.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()));
+		// Reduce the following checks
 		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
 		}
@@ -126,12 +128,12 @@ public class QuantifierPushUtilsForSubsetPush {
 		// In fact these eliminatees occur also in at least one dualFiniteJunct
 		// otherwise the input would not be legal.
 		List<TermVariable> todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
-				currentEliminatees, failedEliminatees, currentDualFiniteJuncts);
+				currentEliminatees, failedEliminatees, currentDualFiniteJuncts, et.getQuantifier());
 		int iterations = 0;
-		int iterationsWithAtLeastOneElimination = 0;
+		int iterationsWithProgress = 0;
 		while (!todoEliminateesThatDoNotOccurInAllParams.isEmpty()) {
 			if (iterations > 20) {
-				currentDualFiniteJuncts.toString();
+				// TODO change to logging output
 				throw new AssertionError("Maybe an infinite loop");
 			}
 			final TermVariable eliminatee = QuantifierPusher.selectBestEliminatee(mgdScript.getScript(),
@@ -146,18 +148,20 @@ public class QuantifierPushUtilsForSubsetPush {
 			}
 			final Term pushSubformula;
 			{
-				Term pushedAndFlattened;
-				{
-					final Term pushed = pushMinionEliminatees(services, mgdScript, applyDistributivity, pqeTechniques,
+				final Term pushed = pushMinionEliminatees(services, mgdScript, applyDistributivity, pqeTechniques,
 							simplificationTechnique, et, qe, minionEliminatees, parti, currentEliminatees);
-					pushedAndFlattened = QuantifierPushUtils.flattenQuantifiedFormulas(mgdScript, et.getQuantifier(),
-							pushed);
+				iterations++;
+				if (pushed == null) {
+					// not pushable, mark eliminatee as failed an continue with the same dual juncts
+					failedEliminatees.add(eliminatee);
+					todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
+							currentEliminatees, failedEliminatees, currentDualFiniteJuncts, et.getQuantifier());
+					continue;
 				}
-				// special case if pushed formula is similar?
 				final Set<TermVariable> eliminatedMinions;
 				final List<TermVariable> newEliminatees = new LinkedList<>();
-				if (pushedAndFlattened instanceof QuantifiedFormula) {
-					final QuantifiedFormula qf = (QuantifiedFormula) pushedAndFlattened;
+				if (pushed instanceof QuantifiedFormula) {
+					final QuantifiedFormula qf = (QuantifiedFormula) pushed;
 					eliminatedMinions = new HashSet<>(minionEliminatees);
 					for (final TermVariable tv : Arrays.asList(qf.getVariables())) {
 						if (minionEliminatees.contains(tv)) {
@@ -172,15 +176,15 @@ public class QuantifierPushUtilsForSubsetPush {
 					pushSubformula = qf.getSubformula();
 				} else {
 					eliminatedMinions = new HashSet<>(minionEliminatees);
-					pushSubformula = pushedAndFlattened;
+					pushSubformula = pushed;
 				}
-				if (!QuantifierPushUtils.isFlattened(et.getQuantifier(),
-						Arrays.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), pushSubformula)))) {
-					throw new AssertionError("Non-flattened results may lead to nonterminating loops.");
-				}
-				iterations++;
+				// TODO: When is a push considered a success? (1) When the push changed the
+				// formula, e.g., existential quantification could be removed in one disjunct.
+				// (2) If at least one eliminatee is removed completely.
+				// I prefer (1) but QuantifierEliminationBenchmarks#fridgeDivCapture (with
+				// distributivity evaluation switched off) only successful if we use (2)
 				if (!eliminatedMinions.isEmpty()) {
-					iterationsWithAtLeastOneElimination++;
+					iterationsWithProgress++;
 				}
 				currentEliminatees.removeAll(eliminatedMinions);
 				currentEliminatees.addAll(newEliminatees);
@@ -212,9 +216,9 @@ public class QuantifierPushUtilsForSubsetPush {
 			}
 
 			todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(currentEliminatees,
-					failedEliminatees, currentDualFiniteJuncts);
+					failedEliminatees, currentDualFiniteJuncts, et.getQuantifier());
 		}
-		if (iterationsWithAtLeastOneElimination == 0) {
+		if (iterationsWithProgress == 0) {
 			return null;
 		} else {
 			return SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), currentEliminatees, QuantifierUtils
@@ -222,6 +226,14 @@ public class QuantifierPushUtilsForSubsetPush {
 		}
 	}
 
+	/**
+	 * Try to push minion eliminatees. Construct appropriate context (mind
+	 * non-minions and other dual juncts) for the push. Return null if push was not
+	 * considered successful. We say that the push is not successful if (1) the
+	 * result of the push is similar to the input or (2) the flattened result is
+	 * similar to the input.
+	 *
+	 */
 	private static Term pushMinionEliminatees(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
@@ -231,27 +243,35 @@ public class QuantifierPushUtilsForSubsetPush {
 				et.getQuantifier(), parti.getFiniteDualJunctsWithEliminatee());
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(),
 				new HashSet<>(minionEliminatees), dualFiniteJunction);
-//		if (parti.getFiniteDualJunctsWithEliminatee().size() == 1) {
-//			// TODO: Omit this check after we push minions if there is at least one corresponding connective
-//			return quantified;
-//		}
 		final List<TermVariable> nonMinionEliminatees = new ArrayList<>(currentEliminatees);
 		nonMinionEliminatees.removeAll(new HashSet<>(minionEliminatees));
 		final Context parentContext = et.getContext();
 		Context context = parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(),
-						nonMinionEliminatees);
+				nonMinionEliminatees);
 		context = context.constructChildContextForConDis(services, mgdScript,
-					((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
-//		final EliminationTask currentEt = new EliminationTask((QuantifiedFormula) quantified, context);
-//		final Term res = QuantifierPusher.applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique,
-//				currentEt, qe, DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION, EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
-//		if (res == null) {
-//			return quantified;
-//		} else {
-//			return res;
-//		}
-		return qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, context,
-				quantified);
+				((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
+		// Evaluate success: return null if there was not progress.
+		final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
+				simplificationTechnique, context, quantified);
+		final Term result;
+		if (pushed == quantified) {
+			// no elimination success
+			result = null;
+		} else {
+			final Term flattened = QuantifierPushUtils.flattenQuantifiedFormulas(mgdScript, et.getQuantifier(), pushed);
+			if (flattened == null) {
+				// elimination result was already flat
+				result = pushed;
+			} else {
+				if (flattened == quantified) {
+					// no elimination success either
+					result = null;
+				} else {
+					result = flattened;
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
