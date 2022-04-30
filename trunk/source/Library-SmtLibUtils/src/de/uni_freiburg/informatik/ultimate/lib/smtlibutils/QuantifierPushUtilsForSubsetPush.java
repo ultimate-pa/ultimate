@@ -61,7 +61,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class QuantifierPushUtilsForSubsetPush {
 
 	/**
-	 * Auxiliary method for quantifier elimination. <br />
+	 * TODO: Revise documentation Auxiliary method for quantifier elimination.
+	 * <br />
 	 * <ul>
 	 * <li>Motivation: One single application of distributivity doubles the size of
 	 * the current formula. If we can apply distributivity only to a subformula this
@@ -103,7 +104,7 @@ public class QuantifierPushUtilsForSubsetPush {
 			final IQuantifierEliminator qe) {
 		List<Term> currentDualFiniteJuncts = Arrays
 				.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()));
-		// Reduce the following checks
+		// TODO Reduce the following checks
 		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
 		}
@@ -127,17 +128,17 @@ public class QuantifierPushUtilsForSubsetPush {
 		final List<TermVariable> failedEliminatees = new ArrayList<>();
 		// In fact these eliminatees occur also in at least one dualFiniteJunct
 		// otherwise the input would not be legal.
-		List<TermVariable> todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
-				currentEliminatees, failedEliminatees, currentDualFiniteJuncts, et.getQuantifier());
+		List<TermVariable> currentSuitableEliminatees = findSuitableEliminatees(currentEliminatees, failedEliminatees,
+				currentDualFiniteJuncts, et.getQuantifier());
 		int iterations = 0;
 		int iterationsWithProgress = 0;
-		while (!todoEliminateesThatDoNotOccurInAllParams.isEmpty()) {
+		while (!currentSuitableEliminatees.isEmpty()) {
 			if (iterations > 20) {
 				// TODO change to logging output
 				throw new AssertionError("Maybe an infinite loop");
 			}
 			final TermVariable eliminatee = QuantifierPusher.selectBestEliminatee(mgdScript.getScript(),
-					et.getQuantifier(), todoEliminateesThatDoNotOccurInAllParams, currentDualFiniteJuncts);
+					et.getQuantifier(), currentSuitableEliminatees, currentDualFiniteJuncts);
 			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteJuncts,
 					eliminatee);
 			// may include failedEliminatees
@@ -149,13 +150,13 @@ public class QuantifierPushUtilsForSubsetPush {
 			final Term pushSubformula;
 			{
 				final Term pushed = pushMinionEliminatees(services, mgdScript, applyDistributivity, pqeTechniques,
-							simplificationTechnique, et, qe, minionEliminatees, parti, currentEliminatees);
+						simplificationTechnique, et, qe, minionEliminatees, parti, currentEliminatees);
 				iterations++;
 				if (pushed == null) {
 					// not pushable, mark eliminatee as failed an continue with the same dual juncts
 					failedEliminatees.add(eliminatee);
-					todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(
-							currentEliminatees, failedEliminatees, currentDualFiniteJuncts, et.getQuantifier());
+					currentSuitableEliminatees = findSuitableEliminatees(currentEliminatees, failedEliminatees,
+							currentDualFiniteJuncts, et.getQuantifier());
 					continue;
 				}
 				final Set<TermVariable> eliminatedMinions;
@@ -215,8 +216,8 @@ public class QuantifierPushUtilsForSubsetPush {
 						.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), qf.getSubformula()));
 			}
 
-			todoEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(currentEliminatees,
-					failedEliminatees, currentDualFiniteJuncts, et.getQuantifier());
+			currentSuitableEliminatees = findSuitableEliminatees(currentEliminatees, failedEliminatees,
+					currentDualFiniteJuncts, et.getQuantifier());
 		}
 		if (iterationsWithProgress == 0) {
 			return null;
@@ -275,19 +276,26 @@ public class QuantifierPushUtilsForSubsetPush {
 	}
 
 	/**
-	 * Returns the list of all `currentEliminatees` that
+	 * A currentEliminatee is suitable if
 	 * <ul>
-	 * <li>are not in the set of `bannedEliminatees` and
-	 * <li>do not occur in at least one of the `currentDualFiniteParams`
+	 * <li>it is not in the set of `bannedEliminatees`,
+	 * <li>occurs in at least two dualFiniteJuncts (not enforced here but ensured by
+	 * the input),
+	 * <li>does not occur in all dualFiniteJuncts, and
+	 * <li>occurs in at least on dualFiniteJunct that is a corresponding
+	 * finiteJunction (i.e., applying distributivity to a subset makes sense).
 	 * </ul>
 	 *
 	 */
-	private static List<TermVariable> remaningEliminateeThatDoNotOccurInAllParams(
-			final List<TermVariable> currentEliminatees, final List<TermVariable> bannedEliminatees,
-			final List<Term> currentDualFiniteParams) {
-		return currentEliminatees.stream()
-				.filter(eliminatee -> !bannedEliminatees.contains(eliminatee) && currentDualFiniteParams.stream()
-						.anyMatch(param -> !Arrays.asList(param.getFreeVars()).contains(eliminatee)))
+	private static List<TermVariable> findSuitableEliminatees(final List<TermVariable> currentEliminatees,
+			final List<TermVariable> bannedEliminatees, final List<Term> currentDualFiniteParams,
+			final int quantifier) {
+		return currentEliminatees.stream().filter(eliminatee -> !bannedEliminatees.contains(eliminatee)
+				&& currentDualFiniteParams.stream()
+						.anyMatch(param -> !Arrays.asList(param.getFreeVars()).contains(eliminatee))
+				&& currentDualFiniteParams.stream()
+						.anyMatch(param -> (Arrays.asList(param.getFreeVars()).contains(eliminatee) && QuantifierPusher
+								.classify(quantifier, param) == FormulaClassification.CORRESPONDING_FINITE_CONNECTIVE)))
 				.collect(Collectors.toList());
 	}
 
@@ -295,8 +303,9 @@ public class QuantifierPushUtilsForSubsetPush {
 	 * Class that partitions a list of terms into two lists. One list where a given
 	 * TermVariable occurs as a free variable and one list where the given
 	 * TermVariable does not occur as a free variable. Terminology and assertions
-	 * are fitted to the method {@link QuantifierPushUtilsForSubsetPush#sequentialSubsetPush} in
-	 * which this class is used.
+	 * are fitted to the method
+	 * {@link QuantifierPushUtilsForSubsetPush#sequentialSubsetPush} in which this
+	 * class is used.
 	 */
 	private static class PartitionByEliminateeOccurrence {
 
