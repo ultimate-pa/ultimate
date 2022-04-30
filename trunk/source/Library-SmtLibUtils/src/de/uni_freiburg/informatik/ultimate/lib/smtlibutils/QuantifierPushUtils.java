@@ -71,7 +71,20 @@ public class QuantifierPushUtils {
 	public static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
 	public static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
 
-
+	public static boolean isQuantifiedDualFiniteJunction(final int quantifier, final Term term) {
+		final boolean result;
+		if (term instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = (QuantifiedFormula) term;
+			if (qf.getQuantifier() == quantifier) {
+				result = QuantifierPusher.classify(qf.getSubformula()) == FormulaClassification.DUAL_FINITE_CONNECTIVE;
+			} else {
+				result = false;
+			}
+		} else {
+			result = false;
+		}
+		return result;
+	}
 
 	/**
 	 * If we have a dualFiniteJunction (i.e., existentially quantified conjunction
