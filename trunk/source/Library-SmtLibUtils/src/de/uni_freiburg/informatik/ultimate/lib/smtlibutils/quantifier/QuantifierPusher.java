@@ -325,7 +325,8 @@ public class QuantifierPusher extends TermTransformer {
 
 	public static Term tryToPushOverDualFiniteConnective(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final SimplificationTechnique simplificationTechnique, final EliminationTask et, final IQuantifierEliminator qe) {
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
+			final IQuantifierEliminator qe) {
 
 		final Pair<Boolean, Term> pair = QuantifierPushUtils.preprocessDualFiniteJunction(services, mgdScript,
 				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe, true);
@@ -333,7 +334,8 @@ public class QuantifierPusher extends TermTransformer {
 		if (!pair.getFirst()) {
 			return pair.getSecond();
 		}
-		final EliminationTask preprocessedEt = new EliminationTask((QuantifiedFormula) pair.getSecond(), et.getContext());
+		final EliminationTask preprocessedEt = new EliminationTask((QuantifiedFormula) pair.getSecond(),
+				et.getContext());
 
 		final Term eliminationResult = applyDualJunctionEliminationTechniques(preprocessedEt, mgdScript, services,
 				pqeTechniques);
@@ -341,14 +343,22 @@ public class QuantifierPusher extends TermTransformer {
 			// quantifier was at least partially removed
 			return eliminationResult;
 		}
-
-		if (applyDistributivity) {
-			return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques,
-					simplificationTechnique, preprocessedEt, qe);
-		} else {
-			// nothing eliminated
+		if (!applyDistributivity) {
+			// we applied everything that can bring some success without applying
+			// distributivity
 			return null;
 		}
+
+		if (QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
+			final Term seq = QuantifierPushUtilsForSubsetPush.sequentialSubsetPush(services, mgdScript,
+					applyDistributivity, pqeTechniques, simplificationTechnique, preprocessedEt, qe);
+			if (seq != null) {
+				return seq;
+			}
+		}
+		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, preprocessedEt,
+				qe, QuantifierPushUtils.DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
+				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
 	}
 
 	private static boolean isDualFiniteConnective(final EliminationTask et) {
@@ -361,52 +371,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	private static boolean isDualFiniteJunction(final int quantifier, final Term term) {
-		final boolean result;
-		if (term instanceof QuantifiedFormula) {
-			final QuantifiedFormula qf = (QuantifiedFormula) term;
-			if (qf.getQuantifier() == quantifier) {
-				result = classify(qf.getSubformula()) == FormulaClassification.DUAL_FINITE_CONNECTIVE;
-			} else {
-				result = false;
-			}
-		} else {
-			result = false;
-		}
-		return result;
-	}
 
-	private static Term tryToPushOverDualFiniteConnective2(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
-			final IQuantifierEliminator qe) {
-		if (classify(et.getQuantifier(), et.getTerm()) != FormulaClassification.DUAL_FINITE_CONNECTIVE) {
-			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
-		}
-		assert !et.getEliminatees().isEmpty();
-
-		final EliminationTask currentEt;
-		if (QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
-			final Term seq = QuantifierPushUtilsForSubsetPush.sequentialSubsetPush(services, mgdScript,
-					applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
-			if (seq == null) {
-				currentEt = et;
-			} else {
-				final List<TermVariable> freeVarsBefore = Arrays.asList(et.toTerm(mgdScript.getScript()).getFreeVars());
-				final List<TermVariable> freeVarsAfter = Arrays.asList(seq.getFreeVars());
-				if (!freeVarsBefore.containsAll(freeVarsAfter)) {
-					throw new AssertionError("New free vars! Before " + freeVarsBefore + " After " + freeVarsAfter);
-				}
-				if (!isDualFiniteJunction(et.getQuantifier(), seq)) {
-					return seq;
-				}
-				currentEt = new EliminationTask((QuantifiedFormula) seq, et.getContext());
-			}
-		}
-		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, currentEt, qe,
-				QuantifierPushUtils.DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
-				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
-	}
 
 	public static Term applyDistributivityAndPush(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final PqeTechniques pqeTechniques,
