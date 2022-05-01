@@ -1451,6 +1451,13 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, "(<= a b)", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void singleConjunctEliminatee() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "b") };
+		final String formulaAsString = "(exists ((x Int) (y Int)) (and (<= a x) (<= x b) (or (= (* x x) b) (= 1 y))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, "(<= a b)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	/**
 	 * Reveals conceptual bug in {@link QuantifierPusher}. We have to apply rules
@@ -1786,6 +1793,32 @@ public class QuantifierEliminationRegressionTest {
 		};
 		final String formulaAsString = "(exists ((|v_#valid_34| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string0.base| (_ BitVec 32)) (|#t~string3.base| (_ BitVec 32)) (|#t~string6.base| (_ BitVec 32)) (|#t~string9.base| (_ BitVec 32)) (|#t~string12.base| (_ BitVec 32)) (|#t~string15.base| (_ BitVec 32))) (= (store (store (store (store (store (store (store |v_#valid_34| (_ bv0 32) (_ bv0 1)) |#t~string0.base| (_ bv1 1)) |#t~string3.base| (_ bv1 1)) |#t~string6.base| (_ bv1 1)) |#t~string9.base| (_ bv1 1)) |#t~string12.base| (_ bv1 1)) |#t~string15.base| (_ bv1 1)) |#valid|))";
 		final String expectedResult = "(exists ((|#t~string12.base| (_ BitVec 32)) (|#t~string0.base| (_ BitVec 32)) (|#t~string15.base| (_ BitVec 32)) (|#t~string3.base| (_ BitVec 32)) (|#t~string6.base| (_ BitVec 32)) (|#t~string9.base| (_ BitVec 32))) (and (= (select |#valid| |#t~string15.base|) (_ bv1 1)) (= (bvadd (bvneg (select |#valid| |#t~string9.base|)) (_ bv1 1)) (_ bv0 1)) (or (= (_ bv0 32) |#t~string15.base|) (= (_ bv0 32) |#t~string0.base|) (= (_ bv0 32) |#t~string12.base|) (= (_ bv0 32) |#t~string3.base|) (= (_ bv0 32) |#t~string6.base|) (= (_ bv0 32) |#t~string9.base|) (= (_ bv0 1) (select |#valid| (_ bv0 32)))) (= (bvadd (_ bv1 1) (bvneg (select |#valid| |#t~string3.base|))) (_ bv0 1)) (= (bvadd (bvneg (select |#valid| |#t~string0.base|)) (_ bv1 1)) (_ bv0 1)) (= (_ bv0 1) (bvadd (_ bv1 1) (select |#valid| |#t~string12.base|))) (= (bvadd (bvneg (select |#valid| |#t~string6.base|)) (_ bv1 1)) (_ bv0 1))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void minionEliminateesNonterminationBugNotReproducible() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "n1", "n2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "arrIntInt"),
+			};
+		final String formulaAsString = "(forall ((a (Array Int Int)) (val1 Int) (val2 Int) (val3 Int) (val4 Int) (x1 Int) (x2 Int) (a (Array Int Int)) (x3 Int) (x4 Int)) (or (not (<= val3 x3)) (let ((.cse1 (= x1 x4)) (.cse0 (store a 0 0))) (and (or (not (= a (store .cse0 x4 val4))) .cse1) (or (not .cse1) (not (= a (store .cse0 x4 val1)))))) (not (<= x1 x2)) (< 1 x4) (< (+ x3 1) n1) (< (+ x4 1) x3) (let ((.cse2 (= x2 x3))) (and (or (not .cse2) (not (= (store a x3 val2) arrIntInt))) (or (not (= (store a x3 val3) arrIntInt)) .cse2))) (< x1 7) (not (<= val4 x4)) (not (<= x2 n2))))";
+		final String expectedResultAsString = "(or (let ((.cse0 (select arrIntInt 0))) (and (or (not (<= .cse0 0)) (forall ((x3 Int)) (or (< (+ x3 1) n1) (not (<= (select arrIntInt x3) x3)) (< 1 x3)))) (or (not (= .cse0 0)) (and (forall ((x3 Int)) (or (< (+ x3 1) n1) (not (<= (select arrIntInt x3) x3)) (forall ((x4 Int)) (or (< (+ x4 1) x3) (not (<= (select arrIntInt x4) x4)) (< 1 x4))))) (forall ((x3 Int)) (or (forall ((x4 Int)) (or (< (+ x4 1) x3) (not (= (select arrIntInt x4) (select arrIntInt 0))) (< 1 x4))) (< (+ x3 1) n1) (not (<= (select arrIntInt x3) x3)))))))) (< n2 7))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	/**
+	 * Does combination of flattening and partitioning lead to infinite loops?
+	 */
+	@Test
+	public void flattenPartitionProblem01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b", "c"),
+			};
+		final String formulaAsString = "(exists ((x Int) (y Int) (z Int)) (and (= (select a (+ x z)) 23) (= (select b (+ y z)) 1048) (= (select c z) 42)))";
+		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
