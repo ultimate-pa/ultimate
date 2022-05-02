@@ -134,7 +134,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
 				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
+
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
+		if (mPref.applyOneShotLbe()) {
+			throw new UnsupportedOperationException(
+					"Soundness is currently not guaranteed for this CEGAR loop if one-shot LBE is turned on.");
+		}
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
@@ -348,6 +353,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				throw new UnsupportedOperationException(
 						"specific variable abstraction is only supported with interpolant automaton enhancement NONE");
 			}
+
+			// TODO Should this be replaced with mAbstraction.getAlphabet()?
+			// Note that this would require changes to ThreadBasedPersistentSets, because it also considers
+			// commutativity of forkCurrent and joinCurrent transitions, which are not in the alphabet.
 			final Set<L> allLetters =
 					new IcfgEdgeIterator(mIcfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
 			return new SpecificVariableAbstraction<>(copyFactory, abstractionScript, transferrer, allVariables,
