@@ -351,11 +351,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (settings.getSolver() == ExternalSolver.SMTINTERPOL) {
 			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
 					.setSmtInterpolTimeout(settings.getSolverTimeout())
-					.setDumpSmtScriptToFile(true, "smtdump", "commutativity", false);
+					.setDumpSmtScriptToFile(true, ".", "commutativity", false);
 		} else {
 			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
 					.setUseExternalSolver(settings.getSolver(), settings.getSolverTimeout())
-					.setDumpSmtScriptToFile(true, "smtdump", "commutativity", false);
+					.setDumpSmtScriptToFile(true, ".", "commutativity", false);
 		}
 
 		return mCsToolkit.createFreshManagedScript(mServices, solverSettings, "SemanticIndependence");
