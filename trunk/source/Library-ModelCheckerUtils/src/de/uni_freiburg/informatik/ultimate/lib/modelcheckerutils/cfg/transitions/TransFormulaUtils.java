@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -1156,6 +1157,7 @@ public final class TransFormulaUtils {
 		mgdScript.assertTerm(lhs, SmtUtils.not(script, rhsFormula));
 
 		final LBool result = mgdScript.checkSat(lhs);
+		mgdScript.echo(lhs, new QuotedObject("Implication check result was " + result));
 
 		mgdScript.pop(lhs, 1);
 		mgdScript.unlock(lhs);
