@@ -231,12 +231,12 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				switch (constructionStyle.getInterpolantAutomaton()) {
 				case Deterministic:
 				case LassoAutomaton:
-					mMDBenchmark.reportDeterminsticModule(mIteration,
+					mMDBenchmark.reportDeterministicModule(mIteration,
 							mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
 					break;
 				case ScroogeNondeterminism:
 				case EagerNondeterminism:
-					mMDBenchmark.reportNonDeterminsticModule(mIteration,
+					mMDBenchmark.reportNonDeterministicModule(mIteration,
 							mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
 					break;
 				default:

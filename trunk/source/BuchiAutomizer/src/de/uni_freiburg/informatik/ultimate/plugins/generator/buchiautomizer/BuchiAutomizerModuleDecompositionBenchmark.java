@@ -63,11 +63,11 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		mModuleSizeTrivial.put(iteration, size);
 	}
 
-	public void reportDeterminsticModule(final Integer iteration, final Integer size) {
+	public void reportDeterministicModule(final Integer iteration, final Integer size) {
 		mModuleSizeDeterministic.put(iteration, size);
 	}
 
-	public void reportNonDeterminsticModule(final Integer iteration, final Integer size) {
+	public void reportNonDeterministicModule(final Integer iteration, final Integer size) {
 		mModuleSizeNondeterministic.put(iteration, size);
 	}
 
