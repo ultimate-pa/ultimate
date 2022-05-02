@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
@@ -195,12 +196,17 @@ public final class TAPreferences {
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_POR, IndependenceType.class),
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, AbstractionType.class),
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COND_POR),
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR));
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR),
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_POR,
+						ExternalSolver.class),
+				mPrefs.getLong(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR));
 		mLbeIndependenceSettings = new IndependenceSettings(
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_PLBE, IndependenceType.class),
 				AbstractionType.NONE /* currently hard-coded; will be changed for repeated Petri net LBE */,
 				false /* currently hard-coded; will be changed for repeated Petri net LBE */,
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE));
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
+				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
+				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 	}
 
 	/**

@@ -46,9 +46,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -121,16 +123,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
 	public static final String LABEL_INDEPENDENCE_POR = "Independence relation used for POR in concurrent analysis";
-	private static final IndependenceType DEF_INDEPENDENCE_POR = IndependenceType.SEMANTIC;
-
-	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
-	private static final boolean DEF_COND_POR = true;
-
-	public static final String LABEL_SEMICOMM_POR = "Use semi-commutativity for POR in concurrent analysis";
-	private static final boolean DEF_SEMICOMM_POR = true;
-
 	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
-	private static final AbstractionType DEF_POR_ABSTRACTION = AbstractionType.NONE;
+	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
+	public static final String LABEL_SEMICOMM_POR = "Use semi-commutativity for POR in concurrent analysis";
+	public static final String LABEL_INDEPENDENCE_SOLVER_POR = "SMT solver used for commutativity in POR";
+	public static final String LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR =
+			"SMT solver timeout for commutativity in POR (in ms)";
 
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
@@ -545,12 +543,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
-				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, DEF_INDEPENDENCE_POR, PreferenceType.Combo,
-						IndependenceType.values()),
-				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, DEF_SEMICOMM_POR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, DEF_POR_ABSTRACTION, PreferenceType.Combo,
-						AbstractionType.values()),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE,
+						PreferenceType.Combo, IndependenceType.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, IndependenceSettings.DEFAULT_ABSTRACTION_TYPE,
+						PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(LABEL_COND_POR, IndependenceSettings.DEFAULT_USE_CONDITIONAL,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_POR, IndependenceSettings.DEFAULT_SOLVER,
+						PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR,
+						IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,

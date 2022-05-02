@@ -331,9 +331,18 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private ManagedScript constructIndependenceScript() {
-		final SolverSettings settings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, 1000);
-		return mCsToolkit.createFreshManagedScript(mServices, settings, "SemanticIndependence");
+		final IndependenceSettings settings = mPref.porIndependenceSettings();
+
+		final SolverSettings solverSettings;
+		if (settings.getSolver() == ExternalSolver.SMTINTERPOL) {
+			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
+					.setSmtInterpolTimeout(settings.getSolverTimeout());
+		} else {
+			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
+					.setUseExternalSolver(settings.getSolver(), settings.getSolverTimeout());
+		}
+
+		return mCsToolkit.createFreshManagedScript(mServices, solverSettings, "SemanticIndependence");
 	}
 
 	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(
