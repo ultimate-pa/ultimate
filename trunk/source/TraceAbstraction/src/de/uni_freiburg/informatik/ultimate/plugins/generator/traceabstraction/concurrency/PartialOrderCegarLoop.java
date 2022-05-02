@@ -373,7 +373,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (mPref.porIndependenceSettings().getIndependenceType() == IndependenceType.SEMANTIC) {
 			// For semantic independence, eliminating auxiliary variables can ease the load on the SMT solver.
 			tfEliminator = (ms, fm, av) -> TransFormulaUtils.tryAuxVarElimination(mServices, ms,
-					SimplificationTechnique.SIMPLIFY_QUICK, fm, av);
+					SimplificationTechnique.POLY_PAC, fm, av);
 		} else {
 			// For syntactic independence, there is no point in eliminating auxiliary variables.
 			tfEliminator = null;
