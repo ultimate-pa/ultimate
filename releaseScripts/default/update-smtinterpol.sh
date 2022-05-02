@@ -38,10 +38,10 @@ function make_diff(){
 function update_tools(){
   echo "Updating $dir_smtinterpol..."
   pushd "$dir_smtinterpol" > /dev/null
-  exit_on_fail git checkout master
-  exit_on_fail git fetch
-  exit_on_fail git rebase
-  exit_on_fail git clean -f -d
+  #exit_on_fail git checkout e2d57d8446d5e1a6b7334fd1f1f6295863872032
+  #exit_on_fail git fetch
+  #exit_on_fail git rebase
+  #exit_on_fail git clean -f -d
   echo "Building SMTInterpol..."
   exit_on_fail ant > /dev/null
   smtinterpol_cur=$(git describe --tags)
@@ -67,10 +67,10 @@ function get_versions(){
   smtinterpol_cur="$smtinterpol_curnorm"
   smtinterpol_ver="$smtinterpol_vernorm"
 
-  if [ "$smtinterpol_ver" = "$smtinterpol_cur" ]; then 
-    echo "No update necessary, version is already the latest ($smtinterpol_cur)"
-    exit 0
-  fi
+  #if [ "$smtinterpol_ver" = "$smtinterpol_cur" ]; then 
+  #  echo "No update necessary, version is already the latest ($smtinterpol_cur)"
+  #  exit 0
+  #fi
 
   echo "Latest SMTInterpol version is $smtinterpol_cur, in Ultimate is $smtinterpol_ver, updating..."
 }

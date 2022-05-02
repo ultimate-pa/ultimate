@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedLinkedHashSet;
@@ -1004,44 +1005,111 @@ public class ArrayTheory implements ITheory {
 		mDiffs.add(diff);
 	}
 
-	static CCTerm getArrayFromSelect(final CCAppTerm select) {
-		return ((CCAppTerm) select.getFunc()).getArg();
+	public static boolean isStoreTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.STORE);
+		}
+		return false;
 	}
 
-	static CCTerm getIndexFromSelect(final CCAppTerm select) {
+	public static boolean isSelectTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.SELECT);
+		}
+		return false;
+	}
+
+	public static boolean isConstTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
+		}
+		return false;
+	}
+
+	public static boolean isDiffTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTInterpolConstants.DIFF);
+		}
+		return false;
+	}
+
+	public static CCTerm getArrayFromSelect(final CCAppTerm select) {
+		assert isSelectTerm(select);
+		return getSecondToLastArgument(select);
+	}
+
+	public static CCTerm getIndexFromSelect(final CCAppTerm select) {
+		assert isSelectTerm(select);
 		return select.getArg();
 	}
 
-	static CCTerm getArrayFromStore(final CCAppTerm store) {
-		return ((CCAppTerm) ((CCAppTerm) store.getFunc()).getFunc()).getArg();
+	public static CCTerm getArrayFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
+		return getThirdToLastArgument(store);
 	}
 
-	static CCTerm getIndexFromStore(final CCAppTerm store) {
-		return ((CCAppTerm) store.getFunc()).getArg();
+	public static CCTerm getIndexFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
+		return getSecondToLastArgument(store);
 	}
 
-	static CCTerm getValueFromStore(final CCAppTerm store) {
+	public static CCTerm getValueFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
 		return store.getArg();
 	}
 
-	static CCTerm getValueFromConst(final CCAppTerm term) {
-		return term.getArg();
+	public static CCTerm getValueFromConst(final CCAppTerm constArr) {
+		assert isConstTerm(constArr);
+		return constArr.getArg();
 	}
 
-	static CCTerm getLeftFromDiff(final CCAppTerm diff) {
-		return getIndexFromStore(diff);
+	public static CCTerm getLeftFromDiff(final CCAppTerm diff) {
+		assert isDiffTerm(diff);
+		return getSecondToLastArgument(diff);
 	}
 
-	static CCTerm getRightFromDiff(final CCAppTerm diff) {
+	public static CCTerm getRightFromDiff(final CCAppTerm diff) {
+		assert isDiffTerm(diff);
 		return diff.getArg();
 	}
 
-	static Sort getArraySortFromSelect(final CCAppTerm select) {
-		return ((CCBaseTerm) ((CCAppTerm) select.getFunc()).getFunc()).getFunctionSymbol().getParameterSorts()[0];
+	public static Sort getArraySortFromSelect(final CCAppTerm select) {
+		assert isSelectTerm(select);
+		return getBaseTerm(select).getFunctionSymbol().getParameterSorts()[0];
 	}
 
-	static Sort getArraySortFromStore(final CCAppTerm store) {
-		return getArraySortFromSelect((CCAppTerm) store.getFunc());
+	public static Sort getArraySortFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
+		return getBaseTerm(store).getFunctionSymbol().getParameterSorts()[0];
+	}
+
+	private static CCBaseTerm getBaseTerm(final CCTerm term) {
+		if (term instanceof CCBaseTerm) {
+			return (CCBaseTerm) term;
+		} else {
+			CCTerm func = term;
+			while (func instanceof CCAppTerm) {
+				func = ((CCAppTerm) func).getFunc();
+			}
+			assert func instanceof CCBaseTerm;
+			return (CCBaseTerm) func;
+		}
+	}
+
+	private static CCTerm getSecondToLastArgument(final CCTerm term) {
+		assert term instanceof CCAppTerm;
+		CCTerm func = ((CCAppTerm) term).getFunc();
+		assert func instanceof CCAppTerm;
+		return ((CCAppTerm) func).getArg();
+	}
+
+	private static CCTerm getThirdToLastArgument(final CCTerm term) {
+		assert term instanceof CCAppTerm;
+		return getSecondToLastArgument(((CCAppTerm) term).getFunc());
 	}
 
 	CCAppTerm findConst(final CCTerm value) {
@@ -1444,16 +1512,18 @@ public class ArrayTheory implements ITheory {
 		return mClausifier;
 	}
 
-	boolean isStore(final CCTerm term) {
-		return mStores.contains(term);
-	}
-
-	boolean isConst(final CCTerm term) {
-		return mConsts.contains(term);
-	}
-
 	public void cleanCaches() {
 		mCongRoots = null;
 		mPropClauses.clear();
+	}
+
+	public CCTerm getWeakRep(final CCTerm array) {
+		assert array != null && array.getFlatTerm().getSort().isArraySort();
+		if (mCongRoots == null) {
+			buildWeakEq();
+		}
+		final ArrayNode weakRep = mCongRoots.get(array.getRepresentative()).getWeakRepresentative();
+		assert weakRep != null;
+		return weakRep.mTerm;
 	}
 }

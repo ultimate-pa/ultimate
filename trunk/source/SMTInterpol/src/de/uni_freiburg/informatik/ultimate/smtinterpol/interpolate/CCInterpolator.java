@@ -285,6 +285,7 @@ public class CCInterpolator {
 				// the congruence is mixed.  In this case f must be shared and we need to find boundary
 				// terms for every parameter.
 				final Term[] boundaryTerms = new Term[leftParams.length];
+				final boolean isLeftAlocal = mInterpolator.getOccurrence(left).isALocal(part);
 				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
 					if (paramInfos[paramNr] == null) {
 						// term occurs left and right, so this is obviously shared
@@ -292,13 +293,15 @@ public class CCInterpolator {
 					} else if (paramInfos[paramNr].isMixed(part)) {
 						// mixed case: take mixed var
 						boundaryTerms[paramNr] = paramInfos[paramNr].getMixedVar();
-					} else if (mInterpolator.getOccurrence(leftParams[paramNr]).isAB(part)) {
-						// the left term is shared, use it
-						boundaryTerms[paramNr] = leftParams[paramNr];
+					} else if (paramInfos[paramNr].isAorShared(part)) {
+						// the argument of the B-local side of the congruence is shared
+						boundaryTerms[paramNr] = isLeftAlocal ? rightParams[paramNr] : leftParams[paramNr];
+						assert mInterpolator.getOccurrence(boundaryTerms[paramNr]).isAB(part);
 					} else {
-						// if it is not the left, the right must be shared, as the literal is not mixed.
-						assert mInterpolator.getOccurrence(rightParams[paramNr]).isAB(part);
-						boundaryTerms[paramNr] = rightParams[paramNr];
+						// the argument of the A-local side of the congruence is shared, as the argument equality is not
+						// mixed
+						boundaryTerms[paramNr] = isLeftAlocal ? leftParams[paramNr] : rightParams[paramNr];
+						assert mInterpolator.getOccurrence(boundaryTerms[paramNr]).isAB(part);
 					}
 				}
 				final Term sharedTerm = mTheory.term(left.getFunction(), boundaryTerms);

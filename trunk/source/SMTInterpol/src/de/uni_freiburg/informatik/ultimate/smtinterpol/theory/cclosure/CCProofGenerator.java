@@ -228,7 +228,7 @@ public class CCProofGenerator {
 		}
 
 		private void collectSelectIndexEquality(final CCTerm select, final CCTerm pathIndex) {
-			if (isSelectTerm(select)) {
+			if (ArrayTheory.isSelectTerm(select)) {
 				final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
 				if (index != pathIndex) {
 					if (!collectEquality(new SymmetricPair<>(pathIndex, index))) {
@@ -256,9 +256,10 @@ public class CCProofGenerator {
 				}
 				// Case (ii)
 				CCTerm storeTerm = null;
-				if (isStoreTerm(firstTerm) && ArrayTheory.getArrayFromStore((CCAppTerm) firstTerm) == secondTerm) {
+				if (ArrayTheory.isStoreTerm(firstTerm)
+						&& ArrayTheory.getArrayFromStore((CCAppTerm) firstTerm) == secondTerm) {
 					storeTerm = firstTerm;
-				} else if (isStoreTerm(secondTerm)
+				} else if (ArrayTheory.isStoreTerm(secondTerm)
 						&& ArrayTheory.getArrayFromStore((CCAppTerm) secondTerm) == firstTerm) {
 					storeTerm = secondTerm;
 				}
@@ -427,7 +428,8 @@ public class CCProofGenerator {
 		case READ_OVER_WEAKEQ: {
 			// collect index equality and the weak path
 			final SymmetricPair<CCTerm> selectEquality = mAnnot.mDiseq;
-			assert isSelectTerm(selectEquality.getFirst()) && isSelectTerm(selectEquality.getSecond());
+			assert ArrayTheory.isSelectTerm(selectEquality.getFirst())
+					&& ArrayTheory.isSelectTerm(selectEquality.getSecond());
 			// collect the index equality
 			final CCTerm idx1 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getFirst());
 			final CCTerm idx2 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getSecond());
@@ -658,53 +660,7 @@ public class CCProofGenerator {
 		return smtAffine.isAllIntSummands() && !smtAffine.getConstant().div(smtAffine.getGcd()).isIntegral();
 	}
 
-	private boolean isStoreTerm(CCTerm term) {
-		// term == store a i v
-		if (term instanceof CCAppTerm) {
-			term = ((CCAppTerm) term).getFunc();
-			// term == store a i
-			if (term instanceof CCAppTerm) {
-				term = ((CCAppTerm) term).getFunc();
-				// term == store a
-				if (term instanceof CCAppTerm) {
-					term = ((CCAppTerm) term).getFunc();
-					// term == store
-					if (term instanceof CCBaseTerm) {
-						return ((CCBaseTerm) term).getFunctionSymbol().getName().equals("store");
-					}
-				}
-			}
-		}
-		return false;
-	}
 
-	private boolean isSelectTerm(CCTerm term) {
-		// term == select a i
-		if (term instanceof CCAppTerm) {
-			term = ((CCAppTerm) term).getFunc();
-			// term == select a
-			if (term instanceof CCAppTerm) {
-				term = ((CCAppTerm) term).getFunc();
-				// term == select
-				if (term instanceof CCBaseTerm) {
-					return ((CCBaseTerm) term).getFunctionSymbol().getName().equals("select");
-				}
-			}
-		}
-		return false;
-	}
-
-	private boolean isConstTerm(CCTerm term) {
-		// term == const v
-		if (term instanceof CCAppTerm) {
-			term = ((CCAppTerm) term).getFunc();
-			// term == const
-			if (term instanceof CCBaseTerm) {
-				return ((CCBaseTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
-			}
-		}
-		return false;
-	}
 
 	/**
 	 * Find argument paths for a congruence. These may also be literals from the original clause. Note that a function
@@ -751,13 +707,13 @@ public class CCProofGenerator {
 	 */
 	private SelectEdge findSelectPath(final SymmetricPair<CCTerm> termPair, final CCTerm weakpathindex) {
 		// first check for trivial select-const edges, i.e., (const (select a j)) and a with j = weakpathindex.
-		if (isConstTerm(termPair.getFirst())) {
+		if (ArrayTheory.isConstTerm(termPair.getFirst())) {
 			final CCTerm value = ArrayTheory.getValueFromConst((CCAppTerm) termPair.getFirst());
 			if (isSelect(value, termPair.getSecond(), weakpathindex)) {
 				return new SelectEdge(value, value);
 			}
 		}
-		if (isConstTerm(termPair.getSecond())) {
+		if (ArrayTheory.isConstTerm(termPair.getSecond())) {
 			final CCTerm value = ArrayTheory.getValueFromConst((CCAppTerm) termPair.getSecond());
 			if (isSelect(value, termPair.getFirst(), weakpathindex)) {
 				return new SelectEdge(value, value);
@@ -791,7 +747,7 @@ public class CCProofGenerator {
 	 * Check if select is a select on array on weakpathindex or something equal to weakpathindex.
 	 */
 	private boolean isSelect(final CCTerm select, final CCTerm array, final CCTerm weakpathindex) {
-		if (!isSelectTerm(select) || ArrayTheory.getArrayFromSelect((CCAppTerm) select) != array) {
+		if (!ArrayTheory.isSelectTerm(select) || ArrayTheory.getArrayFromSelect((CCAppTerm) select) != array) {
 			return false;
 		}
 		final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
@@ -802,6 +758,6 @@ public class CCProofGenerator {
 	 * Check if array is an application of const on value
 	 */
 	private boolean isConst(final CCTerm array, final CCTerm value) {
-		return (isConstTerm(array) && ArrayTheory.getValueFromConst((CCAppTerm) array) == value);
+		return (ArrayTheory.isConstTerm(array) && ArrayTheory.getValueFromConst((CCAppTerm) array) == value);
 	}
 }

@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -39,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 
 /**
@@ -302,7 +305,7 @@ public class QuantClause {
 				} else {
 					for (final Term smd : ((QuantBoundConstraint) atom).getAffineTerm().getSummands().keySet()) {
 						if (smd instanceof ApplicationTerm && smd.getFreeVars().length != 0) {
-							addAllVarPos((ApplicationTerm) smd);
+							addVarArgInfo((ApplicationTerm) smd);
 						}
 					}
 				}
@@ -328,11 +331,11 @@ public class QuantClause {
 				} else {
 					if (!(lhs instanceof TermVariable) && lhs.getFreeVars().length != 0) {
 						assert lhs instanceof ApplicationTerm;
-						addAllVarPos((ApplicationTerm) lhs);
+						addVarArgInfo((ApplicationTerm) lhs);
 					}
 					if (!(rhs instanceof TermVariable) && rhs.getFreeVars().length != 0) {
 						assert rhs instanceof ApplicationTerm;
-						addAllVarPos((ApplicationTerm) rhs);
+						addVarArgInfo((ApplicationTerm) rhs);
 					}
 				}
 			}
@@ -340,15 +343,16 @@ public class QuantClause {
 	}
 
 	/**
-	 * For each variable in the given term, add the functions and positions where it appears as argument to the VarInfo.
+	 * For each variable in the given term, add the uninterpreted functions and positions where it appears as argument,
+	 * and the array select or store terms under which it appears to the VarInfo.
 	 *
 	 * @param qTerm
 	 *            a function application.
 	 */
-	private void addAllVarPos(final ApplicationTerm qTerm) {
+	private void addVarArgInfo(final ApplicationTerm qTerm) {
 		final FunctionSymbol func = qTerm.getFunction();
 		final Term[] args = qTerm.getParameters();
-		if (!func.isInterpreted() || func.getName() == "select") {
+		if (!func.isInterpreted()) {
 			for (int i = 0; i < args.length; i++) {
 				final Term arg = args[i];
 				if (arg instanceof TermVariable) {
@@ -357,14 +361,28 @@ public class QuantClause {
 					varInfo.addPosition(func, i);
 				} else if (arg.getFreeVars().length != 0) {
 					assert arg instanceof ApplicationTerm;
-					addAllVarPos((ApplicationTerm) arg);
+					addVarArgInfo((ApplicationTerm) arg);
+				}
+			}
+		} else if (func.getName() == "select" || func.getName() == "store") {
+			for (int i = 0; i < args.length; i++) {
+				final Term arg = args[i];
+				if (i == 0 && arg instanceof TermVariable) {
+					// TODO
+				} else if (i != 0 && arg instanceof TermVariable) {
+					final int index = getVarIndex((TermVariable) arg);
+					final VarInfo varInfo = mVarInfos[index];
+					varInfo.addArrayTerm(qTerm);
+				} else if (arg.getFreeVars().length != 0) {
+					assert arg instanceof ApplicationTerm;
+					addVarArgInfo((ApplicationTerm) arg);
 				}
 			}
 		} else if (func.getName() == "+" || func.getName() == "-" || func.getName() == "*") {
 			final SMTAffineTerm affine = new SMTAffineTerm(qTerm);
 			for (final Term smd : affine.getSummands().keySet()) {
 				if (smd instanceof ApplicationTerm) {
-					addAllVarPos((ApplicationTerm) smd);
+					addVarArgInfo((ApplicationTerm) smd);
 				}
 			}
 		}
@@ -437,27 +455,76 @@ public class QuantClause {
 					}
 				}
 			}
-			if (pos.get(1) && func.getName() == "select" && var.getSort().getName() == "Int") {
-				// Add all store indices +-1.
-				final Sort[] storeSorts = new Sort[3];
-				storeSorts[0] = func.getParameterSorts()[0];
-				storeSorts[1] = func.getParameterSorts()[1];
-				storeSorts[2] = func.getReturnSort();
-				final FunctionSymbol store = mQuantTheory.getTheory().getFunction("store", storeSorts);
-				final Collection<CCTerm> storeIndices = mQuantTheory.mCClosure.getArgTermsForFunc(store, 1);
-				if (storeIndices != null) {
-					for (final CCTerm idx : storeIndices) {
-						for (final Rational offset : new Rational[] { Rational.ONE, Rational.MONE }) {
-							final Term idxTerm = idx.getFlatTerm();
-							final SMTAffineTerm idxPlusMinusOneAff = new SMTAffineTerm(idxTerm);
-							idxPlusMinusOneAff.add(offset);
-							final Term shared = idxPlusMinusOneAff
-									.toTerm(mQuantTheory.getClausifier().getTermCompiler(), idxTerm.getSort());
-							interestingTerms.add(shared);
+		}
+		for (final ApplicationTerm arrayFuncTerm : info.mArrayTermsWithVar) {
+			final FunctionSymbol func = arrayFuncTerm.getFunction();
+			final String funcName = func.getName();
+			final Term[] args = arrayFuncTerm.getParameters();
+			final Term array = args[0];
+			if (array.getFreeVars().length == 0) {
+				final CCTerm arrayCC = mQuantTheory.getCClosure().getCCTermRep(array);
+				final CCTerm weakRep = mQuantTheory.getClausifier().getArrayTheory().getWeakRep(arrayCC);
+				if (args[1] == var) { // The variable is an array index
+					// Get all store terms of the appropriate sort
+					final Sort[] storeSorts;
+					if (funcName == "store") {
+						storeSorts = func.getParameterSorts();
+					} else {
+						storeSorts = new Sort[3];
+						storeSorts[0] = func.getParameterSorts()[0];
+						storeSorts[1] = func.getParameterSorts()[1];
+						storeSorts[2] = func.getReturnSort();
+					}
+					final FunctionSymbol storeFun = mQuantTheory.getTheory().getFunction("store", storeSorts);
+					final List<CCTerm> allStores = mQuantTheory.getCClosure().getAllFuncApps(storeFun);
+
+					// Add all indices of store terms in the weak equivalence class of this array
+					for (final CCTerm st : allStores) {
+						final CCTerm stArr = ArrayTheory.getArrayFromStore((CCAppTerm) st);
+						if (weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(stArr)) {
+							final Term indexTerm = ArrayTheory.getIndexFromStore((CCAppTerm) st).getFlatTerm();
+							interestingTerms.add(indexTerm);
+							if (funcName == "select" && var.getSort().getName() == "Int"
+									&& !QuantUtil.isLambda(indexTerm)) {
+								// For integers, add store indices +-1
+								for (final Rational offset : new Rational[] { Rational.ONE, Rational.MONE }) {
+									final SMTAffineTerm idxPlusMinusOneAff = new SMTAffineTerm(indexTerm);
+									idxPlusMinusOneAff.add(offset);
+									final Term shared = idxPlusMinusOneAff.toTerm(
+											mQuantTheory.getClausifier().getTermCompiler(), indexTerm.getSort());
+									interestingTerms.add(shared);
+								}
+							}
+						}
+					}
+					if (funcName == "select") {
+						// Get all select terms of the appropriate sort
+						final Sort[] selectSorts = func.getParameterSorts();
+						final FunctionSymbol selectFun = mQuantTheory.getTheory().getFunction("select", selectSorts);
+						final List<CCTerm> allSelects = mQuantTheory.getCClosure().getAllFuncApps(selectFun);
+						// Add all select indices of select terms on arrays in the weak equivalence class of this array
+						for (final CCTerm sel : allSelects) {
+							final CCTerm selArr = ArrayTheory.getArrayFromSelect((CCAppTerm) sel);
+							if (weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(selArr)) {
+								final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) sel);
+								interestingTerms.add(index.getFlatTerm());
+							}
+						}
+					}
+				} else if (funcName == "store" && args[2] == var) { // The variable is an array value
+					// Get all select terms of the appropriate sort
+					final Sort[] selectSorts = Arrays.copyOf(func.getParameterSorts(), 2);
+					final FunctionSymbol selectFun = mQuantTheory.getTheory().getFunction("select", selectSorts);
+					final List<CCTerm> allSelects = mQuantTheory.getCClosure().getAllFuncApps(selectFun);
+					// Add all select terms on arrays in the weak equivalence class of this array
+					for (final CCTerm sel : allSelects) {
+						final CCTerm selArr = ArrayTheory.getArrayFromSelect((CCAppTerm) sel);
+						if (weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(selArr)) {
+							interestingTerms.add(sel.getFlatTerm());
 						}
 					}
 				}
-			} // TODO: maybe for store(a,x,v) we need all i in select(b,i)
+			}
 		}
 		addAllInteresting(mInterestingTermsForVars[varNum], interestingTerms);
 	}
@@ -492,6 +559,7 @@ public class QuantClause {
 	 */
 	private class VarInfo {
 		private final Map<FunctionSymbol, BitSet> mFuncArgPositions;
+		private final Set<ApplicationTerm> mArrayTermsWithVar;
 		// TODO Do we need both lower and upper bounds?
 		private final Set<Term> mLowerGroundBounds;
 		private final Set<Term> mUpperGroundBounds;
@@ -504,6 +572,7 @@ public class QuantClause {
 		 */
 		VarInfo() {
 			mFuncArgPositions = new LinkedHashMap<>();
+			mArrayTermsWithVar = new LinkedHashSet<>();
 			mLowerGroundBounds = new LinkedHashSet<>();
 			mUpperGroundBounds = new LinkedHashSet<>();
 			mLowerVarBounds = new LinkedHashSet<>();
@@ -527,6 +596,10 @@ public class QuantClause {
 				occs.set(pos);
 				mFuncArgPositions.put(func, occs);
 			}
+		}
+
+		void addArrayTerm(final ApplicationTerm term) {
+			mArrayTermsWithVar.add(term);
 		}
 
 		void addLowerGroundBound(final Term lowerBound) {

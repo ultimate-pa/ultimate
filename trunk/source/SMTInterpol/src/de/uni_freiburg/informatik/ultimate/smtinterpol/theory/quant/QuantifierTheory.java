@@ -512,6 +512,7 @@ public class QuantifierTheory implements ITheory {
 		} else {
 			final SMTAffineTerm linAdded = SMTAffineTerm.create(lhs);
 			linAdded.add(Rational.MONE, SMTAffineTerm.create(rhs));
+			linAdded.div(linAdded.getGcd());
 			Rational fac = Rational.ONE;
 			final TermCompiler compiler = mClausifier.getTermCompiler();
 			for (final Term smd : linAdded.getSummands().keySet()) {
@@ -538,10 +539,15 @@ public class QuantifierTheory implements ITheory {
 				}
 			}
 		}
+
 		final Term newTerm = mTheory.term("=", newLhs, newRhs);
+		QuantLiteral atom = (QuantLiteral) mClausifier.getILiteral(newTerm);
+		if (atom != null) {
+			return atom;
+		}
 		addGroundCCTerms(newLhs, source);
 		addGroundCCTerms(newRhs, source);
-		final QuantLiteral atom = new QuantEquality(newTerm, newLhs, newRhs);
+		atom = new QuantEquality(newTerm, newLhs, newRhs);
 
 		// Check if the atom is almost uninterpreted or can be used for DER.
 		if (!(newLhs instanceof TermVariable)) { // (euEUTerm = euTerm) is essentially and almost uninterpreted
@@ -561,6 +567,7 @@ public class QuantifierTheory implements ITheory {
 		} else { // (var = var) is not almost uninterpreted, but the negated form can be used for DER
 			atom.negate().mIsDERUsable = true;
 		}
+		mClausifier.setLiteral(newTerm, atom);
 		return atom;
 	}
 
@@ -625,9 +632,13 @@ public class QuantifierTheory implements ITheory {
 
 		final TermCompiler compiler = mClausifier.getTermCompiler();
 		final Term newLhs = linTerm.toTerm(compiler, lhs.getSort());
-		addGroundCCTerms(newLhs, source);
 		final Term newTerm = mTheory.term("<=", newLhs, Rational.ZERO.toTerm(lhs.getSort()));
+		QuantLiteral literal = (QuantLiteral) mClausifier.getILiteral(newTerm);
+		if (literal != null) {
+			return literal;
+		}
 		final QuantLiteral atom = new QuantBoundConstraint(newTerm, linTerm);
+		addGroundCCTerms(newLhs, source);
 
 		// Check if the atom is almost uninterpreted.
 		if (var == null) { // (euTerm <= 0), pos. and neg., is essentially and almost uninterpreted.
@@ -650,7 +661,9 @@ public class QuantifierTheory implements ITheory {
 				atom.negate().mIsArithmetical = true;
 			}
 		}
-		return rewrite ? atom.negate() : atom;
+		literal = rewrite ? atom.negate() : atom;
+		mClausifier.setLiteral(newTerm, literal);
+		return literal;
 	}
 
 	/**

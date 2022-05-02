@@ -437,15 +437,16 @@ public class CClosure implements ITheory {
 		final CCTerm funcTerm = getFuncTerm(sym);
 		final int parentPosition = funcTerm.mParentPosition + argPos;
 		final CCParentInfo info = arg.getRepresentative().mCCPars.getInfo(parentPosition);
-
 		List<CCTerm> funcApps = new ArrayList<>();
-		for (final Parent parent : info.mCCParents) {
-			if (!parent.isMarked()) {
-				funcApps.add(parent.getData());
+		if (info != null) {
+			for (final Parent parent : info.mCCParents) {
+				if (!parent.isMarked()) {
+					funcApps.add(parent.getData());
+				}
 			}
-		}
-		for (int i = argPos + 1; i < sym.getParameterSorts().length; i++) {
-			funcApps = getApplications(funcApps);
+			for (int i = argPos + 1; i < sym.getParameterSorts().length; i++) {
+				funcApps = getApplications(funcApps);
+			}
 		}
 		return funcApps;
 	}

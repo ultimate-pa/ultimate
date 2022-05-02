@@ -63,7 +63,7 @@ public class Svcomp21FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/ldv-races/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		//new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.14-races/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-complex/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		//new DirectoryFileEndingsPair("examples/svcomp/pthread-complex/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		//new DirectoryFileEndingsPair("examples/svcomp/pthread-driver-races/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-C-DAC/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-divine/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),

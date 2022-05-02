@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.DataType;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
@@ -624,6 +625,8 @@ public class ProofRules {
 	}
 
 	public Term dtProject(final Term selConsTerm) {
+		assert ((ApplicationTerm) selConsTerm).getFunction().isSelector();
+		assert ((ApplicationTerm) ((ApplicationTerm) selConsTerm).getParameters()[0]).getFunction().isConstructor();
 		return mTheory.annotatedTerm(annotate(":" + DT_PROJECT, new Term[] { selConsTerm }), mAxiom);
 	}
 
@@ -633,20 +636,25 @@ public class ProofRules {
 	}
 
 	public Term dtTestI(final Term consTerm) {
+		assert ((ApplicationTerm) consTerm).getFunction().isConstructor();
 		return mTheory.annotatedTerm(annotate(":" + DT_TESTI, new Term[] { consTerm }), mAxiom);
 	}
 
 	public Term dtTestE(final String otherConstructor, final Term consTerm) {
+		assert ((ApplicationTerm) consTerm).getFunction().isConstructor();
+		assert !((ApplicationTerm) consTerm).getFunction().getName().equals(otherConstructor);
 		return mTheory.annotatedTerm(annotate(":" + DT_TESTE, new Object[] { otherConstructor, consTerm }), mAxiom);
 	}
 
 	public Term dtExhaust(final Term term) {
+		assert term.getSort().getSortSymbol() instanceof DataType;
 		return mTheory.annotatedTerm(annotate(":" + DT_EXHAUST, new Term[] { term }),
 				mAxiom);
 	}
 
-	public Term dtAcyclic(final Term nestedTerm, final Term subTerm) {
-		return mTheory.annotatedTerm(annotate(":" + DT_ACYCLIC, new Term[] { nestedTerm, subTerm }), mAxiom);
+	public Term dtAcyclic(final Term consTerm, final int[] positions) {
+		assert checkConstructorPath(consTerm, positions);
+		return mTheory.annotatedTerm(annotate(":" + DT_ACYCLIC, new Object[] { consTerm, positions }), mAxiom);
 	}
 
 	public Term dtMatch(final MatchTerm matchTerm) {
@@ -808,6 +816,16 @@ public class ProofRules {
 		return xorSum.isEmpty();
 	}
 
+	public static boolean checkConstructorPath(Term consTerm, final int[] positions) {
+		assert positions.length > 0;
+		for (final int pos : positions) {
+			final ApplicationTerm term = (ApplicationTerm) consTerm;
+			assert term.getFunction().isConstructor() && pos >= 0 && pos < term.getParameters().length;
+			consTerm = term.getParameters()[pos];
+		}
+		return true;
+	}
+
 	public static boolean isAxiom(final Term proof) {
 		return proof instanceof AnnotatedTerm && isApplication(PREFIX + AXIOM, ((AnnotatedTerm) proof).getSubterm());
 	}
@@ -926,7 +944,6 @@ public class ProofRules {
 					case ":" + DT_CONS:
 					case ":" + DT_TESTI:
 					case ":" + DT_EXHAUST:
-					case ":" + DT_ACYCLIC:
 					case ":" + DT_MATCH: {
 						assert annots.length == 1;
 						final Term[] params = (Term[]) annots[0].getValue();
@@ -1138,6 +1155,21 @@ public class ProofRules {
 						mTodo.add(")");
 						mTodo.add(params[1]);
 						mTodo.add(" ");
+						mTodo.add(params[0]);
+						mTodo.add("(" + DT_TESTE + " ");
+						return;
+					}
+					case ":" + DT_ACYCLIC: {
+						assert annots.length == 1;
+						final Object[] params = (Object[]) annots[0].getValue();
+						assert params.length == 2;
+						final int[] positions = (int[]) params[1];
+						assert positions.length > 0;
+						mTodo.add("))");
+						for (int i = positions.length - 1; i >= 1; i--) {
+							mTodo.add(" " + positions[i]);
+						}
+						mTodo.add(" (" + positions[0]);
 						mTodo.add(params[0]);
 						mTodo.add("(" + DT_TESTE + " ");
 						return;
