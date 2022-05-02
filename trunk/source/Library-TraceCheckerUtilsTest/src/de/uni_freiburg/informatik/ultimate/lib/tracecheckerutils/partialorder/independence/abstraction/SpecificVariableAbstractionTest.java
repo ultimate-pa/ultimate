@@ -48,7 +48,7 @@ public class SpecificVariableAbstractionTest
 	@Override
 	protected IAbstraction<VarAbsConstraints<BasicInternalAction>, BasicInternalAction> createAbstraction() {
 		final Set<IProgramVar> allVariables = new HashSet<>(mSymbolTable.getGlobals());
-		return new SpecificVariableAbstraction<>(this::copyAction, mMgdScript, null, allVariables,
+		return new SpecificVariableAbstraction<>(this::copyAction, mMgdScript, null, null, allVariables,
 				Collections.emptySet());
 	}
 

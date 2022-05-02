@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
@@ -75,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -93,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.RefinableCachedAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction.TransFormulaAuxVarEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -353,10 +356,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(mCsToolkit);
+		final TransFormulaAuxVarEliminator tfEliminator;
+		if (mPref.porIndependenceSettings().getIndependenceType() == IndependenceType.SEMANTIC) {
+			// For semantic independence, eliminating auxiliary variables can ease the load on the SMT solver.
+			tfEliminator = (ms, fm, av) -> TransFormulaUtils.tryAuxVarElimination(mServices, ms,
+					SimplificationTechnique.SIMPLIFY_QUICK, fm, av);
+		} else {
+			// For syntactic independence, there is no point in eliminating auxiliary variables.
+			tfEliminator = null;
+		}
 
 		switch (mPref.getPorAbstraction()) {
 		case VARIABLES_GLOBAL:
-			return new VariableAbstraction<>(copyFactory, abstractionScript, transferrer, allVariables);
+			return new VariableAbstraction<>(copyFactory, abstractionScript, transferrer, tfEliminator, allVariables);
 		case VARIABLES_LOCAL:
 			if (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE) {
 				throw new UnsupportedOperationException(
@@ -368,8 +380,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			// commutativity of forkCurrent and joinCurrent transitions, which are not in the alphabet.
 			final Set<L> allLetters =
 					new IcfgEdgeIterator(mIcfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
-			return new SpecificVariableAbstraction<>(copyFactory, abstractionScript, transferrer, allVariables,
-					allLetters);
+			return new SpecificVariableAbstraction<>(copyFactory, abstractionScript, transferrer, tfEliminator,
+					allVariables, allLetters);
 		default:
 			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
 		}

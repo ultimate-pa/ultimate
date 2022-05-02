@@ -42,7 +42,7 @@ public class VariableAbstractionTest extends AbstractAbstractionTestSuite<Set<IP
 	@Override
 	protected IAbstraction<Set<IProgramVar>, BasicInternalAction> createAbstraction() {
 		final Set<IProgramVar> allVariables = new HashSet<>(mSymbolTable.getGlobals());
-		return new VariableAbstraction<>(this::copyAction, mMgdScript, null, allVariables);
+		return new VariableAbstraction<>(this::copyAction, mMgdScript, null, null, allVariables);
 	}
 
 	/*
