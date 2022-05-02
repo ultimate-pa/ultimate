@@ -554,7 +554,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_POR, IndependenceSettings.DEFAULT_SOLVER,
 						PreferenceType.Combo, ExternalSolver.values()),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR,
-						IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
