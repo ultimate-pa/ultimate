@@ -32,10 +32,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -110,7 +113,23 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 			return provider;
 		}
 		return new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory, provider,
-				witnessAutomaton, Property.TERMINATION);
+				extendWitnessAutomaton(witnessAutomaton, services), Property.TERMINATION);
+	}
+
+	private INestedWordAutomaton<WitnessEdge, WitnessNode> extendWitnessAutomaton(
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final IUltimateServiceProvider services) {
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
+		NestedWordAutomatonReachableStates<WitnessEdge, WitnessNode> reach = null;
+		try {
+			reach = new NestedWordAutomatonReachableStates<>(automataServices, witnessAutomaton);
+		} catch (final AutomataOperationCanceledException ex) {
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(), "extending witness automaton");
+			ex.addRunningTaskInfo(runningTaskInfo);
+			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, ex);
+		}
+		return new NestedWordAutomatonFilteredStates<>(automataServices, reach, reach.getStates(),
+				reach.getInitialStates(), reach.getStates());
 	}
 
 	private <A extends IAutomaton<L, IPredicate>> A
