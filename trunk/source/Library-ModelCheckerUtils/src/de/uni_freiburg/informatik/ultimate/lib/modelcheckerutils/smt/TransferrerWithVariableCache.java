@@ -100,6 +100,4 @@ public class TransferrerWithVariableCache {
 	public TermTransferrer getTransferrer() {
 		return mTransferrer;
 	}
-
-
 }

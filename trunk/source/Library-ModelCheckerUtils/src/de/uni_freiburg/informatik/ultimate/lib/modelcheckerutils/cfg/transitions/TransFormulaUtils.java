@@ -1139,7 +1139,7 @@ public final class TransFormulaUtils {
 		final Term rhsQuantFormula = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 				DataStructureUtils.union(rhs.getAuxVars(), rhs.getBranchEncoders()), rhs.getFormula());
 		final Term rhsClosedFormula = UnmodifiableTransFormula.computeClosedFormula(rhsQuantFormula, rhs.getInVars(),
-				rhs.getOutVars(), new HashSet<>(), mgdScript);
+				rhs.getOutVars(), Collections.emptySet(), mgdScript);
 
 		// Add explicit equalities for variables mentioned in one, but not the other,
 		// transition formula.
