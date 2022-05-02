@@ -207,9 +207,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void interpretAndReportResult(final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl, final Result result,
 			final IIcfg<?> icfg) throws AssertionError {
 		String whatToProve = "termination";
-
-		if (LTLPropertyCheck.getAnnotation(icfg) != null) {
-			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(icfg);
+		
+		final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(icfg);
+		if (ltlAnnot != null) {
 			switch (result) {
 			case NONTERMINATING:
 				// there is a violation of the LTL property
