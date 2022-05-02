@@ -126,6 +126,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
 	private final PartialOrderReductionFacade<L> mPOR;
 	private final IRefinableIndependenceContainer<L> mIndependenceContainer;
+	private ManagedScript mIndependenceScript;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
@@ -231,6 +232,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
 		mPOR.reportStatistics(Activator.PLUGIN_ID);
+
+		if (mIndependenceScript != null) {
+			// Shutdown the script
+			// TODO Share independence script and independence relation (including cache) between CEGAR loop instances!
+			mIndependenceScript.getScript().exit();
+		}
+
 		super.finish();
 	}
 
@@ -269,27 +277,30 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final ICopyActionFactory<L> copyFactory) {
 		// Construct the script used for independence checks.
-		final ManagedScript independenceScript = constructIndependenceScript();
+		// TODO Only construct this if the independence relation actually needs a script!
+		// TODO problem: auxVar constants in abstraction can still not be created in the locked Icfg script.
+		mIndependenceScript = constructIndependenceScript();
 
 		// We need to transfer given transition formulas and condition predicates to the independenceScript.
+		// TODO Only construct this if we actually need to transfer to a different script!
 		final TransferrerWithVariableCache transferrer =
-				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), independenceScript);
+				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), mIndependenceScript);
 
 		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
 			// Construct the independence relation (without abstraction). It is the responsibility of the independence
 			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
-			final var independence = constructIndependence(independenceScript, transferrer, false);
+			final var independence = constructIndependence(mIndependenceScript, transferrer, false);
 			return new StaticIndependenceContainer<>(independence);
 		}
 
 		// Construct the abstraction function.
-		final var letterAbstraction = constructAbstraction(copyFactory, independenceScript, transferrer);
+		final var letterAbstraction = constructAbstraction(copyFactory, mIndependenceScript, transferrer);
 		final var cachedAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
 
 		// Construct the independence relation (still without abstraction).
 		// It is the responsibility of the abstraction function to transfer the transition formulas. But we leave it to
 		// the independence relation to transfer conditions.
-		final var independence = constructIndependence(independenceScript, transferrer, true);
+		final var independence = constructIndependence(mIndependenceScript, transferrer, true);
 
 		return new IndependenceContainerWithAbstraction<>(cachedAbstraction, independence);
 	}
