@@ -48,8 +48,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class IcfgToChcConcurrent {
 	private static final String FUNCTION_NAME = "Inv";
-	// TODO: Make symmetry a setting
-	// private static final boolean USE_SYMMETRY = false;
 
 	private final ManagedScript mManagedScript;
 
@@ -166,21 +164,13 @@ public class IcfgToChcConcurrent {
 		return SmtUtils.and(getScript(), constraints);
 	}
 
-	private int getMaxIndexToCheck(final String proc) {
-		// TODO: Make symmetry a setting
-		// if (USE_SYMMETRY) {
-		// return 0;
-		// }
-		return mNumberOfThreads.get(proc) - 1;
-	}
-
 	public Collection<HornClause> getSafetyClauses(final Collection<IcfgLocation> errorLocations) {
 		final List<HornClause> result = new ArrayList<>();
 		final Set<HcVar> vars = new HashSet<>(mDefaultHeadVars);
 		final List<Term> bodyArgs = getDefaultArgs();
 		for (final IcfgLocation loc : errorLocations) {
 			final String proc = loc.getProcedure();
-			for (int i = 0; i <= getMaxIndexToCheck(proc); i++) {
+			for (int i = 0; i < mNumberOfThreads.get(proc); i++) {
 				final NestedMap2<String, Integer, Term> locationMap = new NestedMap2<>();
 				locationMap.put(proc, i, getLocIndexTerm(loc, proc));
 				final Term constraint = getConstraintFromLocationMap(locationMap);
@@ -195,7 +185,7 @@ public class IcfgToChcConcurrent {
 		List<Map<String, Integer>> result = List.of(Map.of());
 		for (final String p : procs) {
 			final List<Map<String, Integer>> newResult = new ArrayList<>();
-			for (int i = 0; i <= getMaxIndexToCheck(p); i++) {
+			for (int i = 0; i < mNumberOfThreads.get(p); i++) {
 				for (final Map<String, Integer> map : result) {
 					final Map<String, Integer> newMap = new HashMap<>(map);
 					newMap.put(p, i);

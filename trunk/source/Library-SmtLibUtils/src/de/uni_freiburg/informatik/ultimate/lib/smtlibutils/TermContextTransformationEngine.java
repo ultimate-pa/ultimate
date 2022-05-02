@@ -268,19 +268,19 @@ public class TermContextTransformationEngine<C> {
 
 	public abstract static class TermWalker<C> {
 
-		abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> allParams,
+		protected abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> allParams,
 				int selectedParam);
 
-		abstract boolean applyRepeatedlyUntilNoChange();
+		protected abstract boolean applyRepeatedlyUntilNoChange();
 
-		abstract C constructContextForQuantifiedFormula(C context, int quant, List<TermVariable> vars);
+		protected abstract C constructContextForQuantifiedFormula(C context, int quant, List<TermVariable> vars);
 
-		abstract DescendResult convert(final C context, final Term term);
+		protected abstract DescendResult convert(final C context, final Term term);
 
-		abstract Term constructResultForApplicationTerm(C context, ApplicationTerm originalApplicationTerm,
+		protected abstract Term constructResultForApplicationTerm(C context, ApplicationTerm originalApplicationTerm,
 				Term[] result);
 
-		abstract Term constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
+		protected abstract Term constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
 				Term resultSubformula);
 
 		/**
@@ -288,7 +288,7 @@ public class TermContextTransformationEngine<C> {
 		 * {@link DEBUG_CHECK_INTERMEDIATE_RESULT} is set.
 		 *
 		 */
-		abstract void checkIntermediateResult(C context, Term input, Term output);
+		protected abstract void checkIntermediateResult(C context, Term input, Term output);
 	}
 
 	public interface DescendResult {

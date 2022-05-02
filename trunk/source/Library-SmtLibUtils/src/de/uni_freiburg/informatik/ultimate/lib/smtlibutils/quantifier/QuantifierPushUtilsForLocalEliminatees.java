@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
+package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,12 +34,12 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils.IQuantifierEliminator;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils.IQuantifierEliminator;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -69,7 +69,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 			final IQuantifierEliminator qe) {
 		Term[] currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 		if (currentDualFiniteJuncts.length <= 1) {
-			throw new AssertionError("No dual finite junction");
+			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
 		Pair<Term, Set<TermVariable>> qualifiedDualJunct2LocalEliminatees = findSomePushableLocalEliminateeSet(et);
 		EliminationTask currentEt = et;
@@ -119,7 +119,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 			final IQuantifierEliminator qe) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(quantifier, dualFiniteJunction);
 		if (dualFiniteJuncts.length <= 1) {
-			throw new AssertionError("Not a dual finite junction");
+			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
 		final int i = Arrays.asList(dualFiniteJuncts).indexOf(dualJunctEliminateesPair.getFirst());
 		final Term ithTermQuantified = SmtUtils.quantifier(mgdScript.getScript(), quantifier,
@@ -142,7 +142,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 	 */
 	static Pair<Term, Set<TermVariable>> findSomePushableLocalEliminateeSet(final EliminationTask et) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
-		assert dualFiniteJuncts.length > 1 : QuantifierPusher.NOT_DUAL_FINITE_CONNECTIVE;
+		assert dualFiniteJuncts.length > 1 : QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE;
 		final HashRelation<TermVariable, Term> eliminatee2DualJuncts = new HashRelation<>();
 		for (final Term dualJunct : dualFiniteJuncts) {
 			final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(dualJunct.getFreeVars()));

@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,23 +42,16 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtilsForLocalEliminatees;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushUtilsForSubsetPush;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils.IQuantifierEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DerScout.DerApplicability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination.EliminationResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils.IQuantifierEliminator;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -67,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
@@ -78,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  */
 public class QuantifierPusher extends TermTransformer {
 
-	public static final String NOT_DUAL_FINITE_CONNECTIVE = "not dual finite connective";
 
 	public enum PqeTechniques {
 		/**
@@ -328,30 +320,40 @@ public class QuantifierPusher extends TermTransformer {
 
 	public static Term tryToPushOverDualFiniteConnective(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final SimplificationTechnique simplificationTechnique, final EliminationTask et, final IQuantifierEliminator qe) {
-		final Term flattened1 =
-				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) et.toTerm(mgdScript.getScript()));
-		if (!(flattened1 instanceof QuantifiedFormula)) {
-			// some quantifiers could be removed for trivial reasons
-			return flattened1;
+			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
+			final IQuantifierEliminator qe) {
+
+		final Pair<Boolean, Term> pair = QuantifierPushUtils.preprocessDualFiniteJunction(services, mgdScript,
+				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe, true);
+
+		if (!pair.getFirst()) {
+			return pair.getSecond();
 		}
-		final EliminationTask res1Et = new EliminationTask((QuantifiedFormula) flattened1, et.getContext());
-		final EliminationTask pushed = pushDualQuantifiersInParams(services, mgdScript, applyDistributivity,
-				pqeTechniques, simplificationTechnique, res1Et, qe);
-		final Term pushedTerm = pushed.toTerm(mgdScript.getScript());
-		if (!(pushedTerm instanceof QuantifiedFormula)) {
-			// outer quantifiers removed for trivial reason after removal of inner quantifier
-			return pushedTerm;
+		final EliminationTask preprocessedEt = new EliminationTask((QuantifiedFormula) pair.getSecond(),
+				et.getContext());
+
+		final Term eliminationResult = applyDualJunctionEliminationTechniques(preprocessedEt, mgdScript, services,
+				pqeTechniques);
+		if (eliminationResult != null) {
+			// quantifier was at least partially removed
+			return eliminationResult;
 		}
-		final Term flattened2 =
-				flattenQuantifiedFormulas(mgdScript, (QuantifiedFormula) pushedTerm);
-		if (!(flattened2 instanceof QuantifiedFormula)) {
-			// some quantifiers could be removed for trivial reasons
-			return flattened2;
+		if (!applyDistributivity) {
+			// we applied everything that can bring some success without applying
+			// distributivity
+			return null;
 		}
-		final EliminationTask res2Et = new EliminationTask((QuantifiedFormula) flattened2, et.getContext());
-		return tryToPushOverDualFiniteConnective2(services, mgdScript, applyDistributivity, pqeTechniques,
-				simplificationTechnique, res2Et, qe);
+
+		if (QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
+			final Term seq = QuantifierPushUtilsForSubsetPush.sequentialSubsetPush(services, mgdScript,
+					applyDistributivity, pqeTechniques, simplificationTechnique, preprocessedEt, qe);
+			if (seq != null) {
+				return seq;
+			}
+		}
+		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, preprocessedEt,
+				qe, QuantifierPushUtils.DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
+				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
 	}
 
 	private static boolean isDualFiniteConnective(final EliminationTask et) {
@@ -364,135 +366,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	private static Term tryToPushOverDualFiniteConnective2(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
-			final IQuantifierEliminator qe) {
-		if (!isDualFiniteConnective(et)) {
-			throw new AssertionError(NOT_DUAL_FINITE_CONNECTIVE);
-		}
 
-		// Step 1:
-		// do partition
-		// if you can push something, push and return
-		// if you cannot push, continue
-		final ParameterPartition pp = new ParameterPartition(mgdScript.getScript(), et);
-		if (!pp.isIsPartitionTrivial()) {
-			return pp.getTermWithPushedQuantifier();
-		}
-
-		// 2016-12-03 Matthias: plan for refactoring
-		//
-		// do partition
-		// if you can push something, push and return
-		// if you cannot push, continue
-		//
-		// apply sequence of eliminations
-		// after each, check topmost connector
-		// if 'other finite' continue
-		// else push (if possible) and return
-		//
-		// if all elimination processed (and still 'other finite')
-		// check for 'same finite' in one 'other finite'
-		// if exists, distribute, apply new pusher to result
-		// if less quantified return result
-		// if not less quantified return term after elimination
-		// if not exists return
-
-		// TODO 20200525 Matthias:
-		// (1) maybe elimination techniques should be applied before
-		// and after pushing params
-		// (2) Keep pushed params even if we do not (successfully) apply distribution
-		// TODO 20200724 Matthias:
-		// Future plan:
-		// (1) apply non-expensive elimination techniques
-		// (2) check if already corresponding connective
-		// (3) try to push all (not only quantified) params without distributivity
-		// (better with distributivity bu only for elimination guarantee)
-		// include single param eliminatees
-		// (4) pull corresponding quantifiers one step
-		// (4a) flatten connective if necessary
-		// (4b) apply iteratively if necessary
-		// (5) apply all elimination techniques
-		// (6) re-do until no change (probably suppported by caller of this method)
-		// (7) apply distributivity
-		{
-			;
-			final Term eliminationResult =
-					applyDualJunctionEliminationTechniques(et, mgdScript, services, pqeTechniques);
-			if (eliminationResult != null) {
-				// something was removed
-				return eliminationResult;
-			}
-		}
-		final Term tmp = QuantifierPushUtilsForLocalEliminatees.pushLocalEliminateesOverCorrespondingFiniteJunction(
-				services, mgdScript, applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
-		if (tmp != null) {
-			return tmp;
-		}
-
-		if (!applyDistributivity) {
-			// nothing eliminated
-			return null;
-		}
-		Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
-		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
-
-		if (!services.getProgressMonitorService().continueProcessing()) {
-			throw new ToolchainCanceledException(QuantifierPusher.class,
-					"eliminating " + et.getEliminatees().size() + " quantified variables from "
-							+ dualFiniteParams.length + " " + QuantifierUtils.getNameOfDualJuncts(et.getQuantifier()));
-		}
-//		final boolean possiblityToDistribute = Arrays.stream(dualFiniteParams).anyMatch(x -> isCorrespondingFinite(x, et.getQuantifier()));
-//		if (!possiblityToDistribute) {
-//			return null;
-//		}
-
-		final EliminationTask currentEt;
-		if (et.getEliminatees().size() > 1 && QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
-			final EliminationTaskSimple etSequentialization;
-			final Term seq = QuantifierPushUtilsForSubsetPush.sequentialSubsetPush(services, mgdScript,
-					applyDistributivity, pqeTechniques, simplificationTechnique, et, qe);
-			if (seq == null) {
-				etSequentialization = et;
-			} else {
-				final List<TermVariable> freeVarsBefore = Arrays.asList(et.toTerm(mgdScript.getScript()).getFreeVars());
-				final List<TermVariable> freeVarsAfter = Arrays.asList(seq.getFreeVars());
-				if (!freeVarsBefore.containsAll(freeVarsAfter)) {
-					throw new AssertionError("New free vars! Before " + freeVarsBefore + " After " + freeVarsAfter);
-				}
-				if (seq instanceof QuantifiedFormula) {
-					etSequentialization = new EliminationTaskSimple((QuantifiedFormula) seq);
-				} else {
-					return seq;
-				}
-			}
-			// return if something was eliminated
-			if (!etSequentialization.getEliminatees().containsAll(et.getEliminatees())) {
-				return etSequentialization.toTerm(mgdScript.getScript());
-			} else {
-				final Term[] correspondingFinite = QuantifierUtils.getCorrespondingFiniteJunction(
-						etSequentialization.getQuantifier(), etSequentialization.getTerm());
-				if (correspondingFinite.length > 1) {
-					return pushOverCorrespondingFiniteConnective(mgdScript.getScript(),
-							(QuantifiedFormula) etSequentialization.toTerm(mgdScript.getScript()));
-				} else {
-					dualFiniteParams = QuantifierUtils.getDualFiniteJunction(etSequentialization.getQuantifier(),
-							etSequentialization.getTerm());
-					currentEt = new EliminationTask(et.getQuantifier(), et.getEliminatees(),
-							etSequentialization.getTerm(), et.getContext());
-				}
-			}
-		} else {
-			if (!Arrays.equals(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()), dualFiniteParams)) {
-				throw new AssertionError("dual finite junction different!");
-			}
-			currentEt = et;
-		}
-		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, currentEt, qe,
-				QuantifierPushUtils.DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
-				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
-	}
 
 	public static Term applyDistributivityAndPush(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final PqeTechniques pqeTechniques,
@@ -554,79 +428,9 @@ public class QuantifierPusher extends TermTransformer {
 		return null;
 	}
 
-	private static EliminationTask pushDualQuantifiersInParams(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
-			final SimplificationTechnique simplificationTechnique, final EliminationTask inputEt,
-			final IQuantifierEliminator qe) {
-		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(),
-				inputEt.getTerm());
-		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
-		final List<Term> resultDualFiniteParams = new ArrayList<Term>();
-		for (int i = 0; i < dualFiniteParams.length; i++) {
-			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
-				final Context childContext = inputEt.getContext().constructChildContextForConDis(services, mgdScript,
-						((ApplicationTerm) inputEt.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
-				final Term resultDualFiniteParamI = qe.eliminate(services, mgdScript, applyDistributivity,
-						pqeTechniques, simplificationTechnique, childContext, dualFiniteParams[i]);
-				resultDualFiniteParams.add(resultDualFiniteParamI);
-			} else {
-				resultDualFiniteParams.add(dualFiniteParams[i]);
-			}
-		}
-		final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-				inputEt.getQuantifier(), resultDualFiniteParams);
-		final EliminationTask et = new EliminationTask(inputEt.getQuantifier(), inputEt.getEliminatees(),
-				dualFiniteJunction, inputEt.getContext());
-		return et;
-	}
 
-	private static Term flattenQuantifiedFormulas(final ManagedScript mgdScript,
-			final QuantifiedFormula quantifiedFormula) {
-		final Set<String> freeVarNames =
-				Arrays.stream(quantifiedFormula.getFreeVars()).map(x -> x.getName()).collect(Collectors.toSet());
-		final int quantifier = quantifiedFormula.getQuantifier();
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(quantifier, quantifiedFormula.getSubformula());
-		final LinkedHashMap<String, TermVariable> quantifiedVariables = new LinkedHashMap<>();
-		Arrays.stream(quantifiedFormula.getVariables()).forEach(x -> quantifiedVariables.put(x.getName(), x));
-		final ArrayList<Term> resultDualJuncts = new ArrayList<>();
-		for (final Term dualJunct : dualJuncts) {
-			if (dualJunct instanceof QuantifiedFormula) {
-				final QuantifiedFormula innerQuantifiedFormula = (QuantifiedFormula) dualJunct;
-				if (innerQuantifiedFormula.getQuantifier() != quantifier) {
-					resultDualJuncts.add(dualJunct);
-				} else {
-					final Map<Term, Term> substitutionMapping = new HashMap<>();
-					for (final TermVariable innerVar : innerQuantifiedFormula.getVariables()) {
-						TermVariable resultVar;
-						if (quantifiedVariables.containsKey(innerVar.getName())
-								|| freeVarNames.contains(innerVar.getName())) {
-							resultVar = mgdScript.constructFreshCopy(innerVar);
-							substitutionMapping.put(innerVar, resultVar);
-						} else {
-							resultVar = innerVar;
-						}
-						quantifiedVariables.put(resultVar.getName(), resultVar);
-					}
-					Term resultSubformula;
-					if (substitutionMapping.isEmpty()) {
-						resultSubformula = innerQuantifiedFormula.getSubformula();
-					} else {
-						resultSubformula = Substitution.apply(mgdScript, substitutionMapping,
-								innerQuantifiedFormula.getSubformula());
-					}
-					resultDualJuncts.add(resultSubformula);
-				}
-			} else {
-				resultDualJuncts.add(dualJunct);
-			}
-		}
-		final Term resultDualJunction =
-				QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, resultDualJuncts);
-		final Term result = SmtUtils.quantifier(mgdScript.getScript(), quantifier,
-				quantifiedVariables.entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()),
-				resultDualJunction);
-		return result;
-	}
+
+
 
 
 
@@ -641,7 +445,7 @@ public class QuantifierPusher extends TermTransformer {
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
 		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
-		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
+		assert dualFiniteParams.length > 1 : QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE;
 		final List<TermVariable> remainingEliminatees = new ArrayList<>(et.getEliminatees());
 		final List<TermVariable> failedEliminatees = new ArrayList<>();
 		List<Term> currentDualFiniteParams = new ArrayList<>(Arrays.asList(dualFiniteParams));
