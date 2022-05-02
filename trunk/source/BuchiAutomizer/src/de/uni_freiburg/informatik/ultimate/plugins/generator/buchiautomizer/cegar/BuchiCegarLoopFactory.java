@@ -70,26 +70,29 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  * @param <L>
  */
 public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
+	private final IUltimateServiceProvider mServices;
+	private final TAPreferences mPrefs;
 	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
 	private final Class<L> mTransitionClazz;
 
-	public BuchiCegarLoopFactory(final Class<L> transitionClazz,
-			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
+	public BuchiCegarLoopFactory(final IUltimateServiceProvider services, final TAPreferences taPrefs,
+			final Class<L> transitionClazz, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
+		mServices = services;
+		mPrefs = taPrefs;
 		mTransitionClazz = transitionClazz;
 		mCegarLoopBenchmark = benchmarkGenerator;
 	}
 
 	public AbstractBuchiCegarLoop<L, ?> constructCegarLoop(final IIcfg<?> icfg,
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final IUltimateServiceProvider services,
 			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
-		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(services,
+		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				rankVarConstructor.getCsToolkitWithRankVariables().getManagedScript(), predicateFactory, false,
 				Collections.emptySet());
-		final var provider = createAutomataAbstractionProvider(services, predicateFactory, stateFactoryForRefinement,
-				witnessAutomaton);
+		final var provider =
+				createAutomataAbstractionProvider(predicateFactory, stateFactoryForRefinement, witnessAutomaton);
 		final var initialAbstraction = constructInitialAbstraction(provider, icfg);
-		return new BuchiAutomatonCegarLoop<>(icfg, rankVarConstructor, predicateFactory, taPrefs, services,
+		return new BuchiAutomatonCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
 				mTransitionClazz, initialAbstraction, stateFactoryForRefinement, mCegarLoopBenchmark);
 	}
 
@@ -104,22 +107,21 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>
-			createAutomataAbstractionProvider(final IUltimateServiceProvider services,
-					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
+			createAutomataAbstractionProvider(final PredicateFactory predicateFactory,
+					final PredicateFactoryRefinement stateFactory,
 					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> provider =
-				new NwaInitialAbstractionProvider<>(services, stateFactory, true, predicateFactory);
+				new NwaInitialAbstractionProvider<>(mServices, stateFactory, true, predicateFactory);
 		if (witnessAutomaton == null) {
 			return provider;
 		}
-		return new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory, provider,
-				extendWitnessAutomaton(witnessAutomaton, services), Property.TERMINATION);
+		return new WitnessAutomatonAbstractionProvider<>(mServices, predicateFactory, stateFactory, provider,
+				extendWitnessAutomaton(witnessAutomaton), Property.TERMINATION);
 	}
 
 	private INestedWordAutomaton<WitnessEdge, WitnessNode> extendWitnessAutomaton(
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final IUltimateServiceProvider services) {
-		final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		NestedWordAutomatonReachableStates<WitnessEdge, WitnessNode> reach = null;
 		try {
 			reach = new NestedWordAutomatonReachableStates<>(automataServices, witnessAutomaton);

@@ -139,9 +139,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
 
-		final BuchiCegarLoopFactory<IcfgEdge> factory = new BuchiCegarLoopFactory<>(IcfgEdge.class, benchGen);
-		final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl = factory.constructCegarLoop(icfg, rankVarConstructor,
-				predicateFactory, taPrefs, mServices, witnessAutomaton);
+		final BuchiCegarLoopFactory<IcfgEdge> factory =
+				new BuchiCegarLoopFactory<>(mServices, taPrefs, IcfgEdge.class, benchGen);
+		final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl =
+				factory.constructCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton);
 		final Result result = bcl.runCegarLoop();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 
@@ -207,7 +208,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void interpretAndReportResult(final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl, final Result result,
 			final IIcfg<?> icfg) throws AssertionError {
 		String whatToProve = "termination";
-		
+
 		final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(icfg);
 		if (ltlAnnot != null) {
 			switch (result) {
