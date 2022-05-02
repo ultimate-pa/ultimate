@@ -305,6 +305,13 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		return false;
 	}
 
+	/**
+	 * We construct the module with the same algorithm that we use in our safety analysis (there the Floyd-Hoare
+	 * automata also have a single accepting state that is labeled with "false" and that has a self-loop for every
+	 * letter). "Coincidentally" is holds that for these kind of automata the powerset-based complementation of finite
+	 * automata is also sound for Büchi automata, hence we use a difference operation that is based on this rather
+	 * inexpensive complementation algorithm.
+	 */
 	@Override
 	protected void refineFinite(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
