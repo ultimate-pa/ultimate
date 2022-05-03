@@ -231,7 +231,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				mInterpolAutomatonUsedInRefinement, mUseDoubleDeckers, mStateFactoryInterpolAutom);
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
 		if (mDifference) {
-			if (complementationConstruction == BuchiComplementationConstruction.Ncsb) {
+			if (complementationConstruction == BuchiComplementationConstruction.NCSB) {
 				if (setting.isAlwaysSemiDeterministic()) {
 					newAbstraction = nsbcDifference(abstraction, setting, benchmarkGenerator);
 				} else {
@@ -242,21 +242,21 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			} else {
 				final FkvOptimization optimization;
 				switch (complementationConstruction) {
-				case Elastic:
+				case ELASTIC:
 					optimization = FkvOptimization.ELASTIC;
 					break;
-				case Ncsb:
+				case NCSB:
 					throw new AssertionError("should be handled elsewhere");
-				case HeiMat2:
+				case HEIMAT2:
 					optimization = FkvOptimization.HEIMAT2;
 					break;
-				case TightBasic:
+				case TIGHT_BASIC:
 					optimization = FkvOptimization.TIGHT_LEVEL_RANKINGS;
 					break;
-				case TightHighEven:
+				case TIGHT_HIGH_EVEN:
 					optimization = FkvOptimization.HIGH_EVEN;
 					break;
-				case TightRO:
+				case TIGHT_RO:
 					optimization = FkvOptimization.SCHEWE;
 					break;
 				default:
@@ -340,9 +340,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 					final NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton,
 					final BuchiHoareTripleChecker bhtc) {
 		switch (biaConstructionStyle.getInterpolantAutomaton()) {
-		case LassoAutomaton:
+		case LASSO_AUTOMATON:
 			return interpolAutomaton;
-		case EagerNondeterminism:
+		case EAGER_NONDETERMINISM:
 			if (!interpolAutomaton.getStates().contains(pu.getTruePredicate())) {
 				interpolAutomaton.addState(false, false, pu.getTruePredicate());
 			}
@@ -351,8 +351,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			}
 			return new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, bhtc, interpolAutomaton, pu, false,
 					true);
-		case ScroogeNondeterminism:
-		case Deterministic:
+		case SCROOGE_NONDETERMINISM:
+		case DETERMINISTIC:
 			Set<IPredicate> stemInterpolantsForRefinement;
 			if (BuchiAutomizerUtils.isEmptyStem(mCounterexample)) {
 				stemInterpolantsForRefinement = Collections.emptySet();
@@ -599,14 +599,14 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
 			final BuchiInterpolantAutomatonConstructionStyle setting) {
 		switch (setting.getInterpolantAutomaton()) {
-		case LassoAutomaton:
+		case LASSO_AUTOMATON:
 			// do nothing
 			break;
-		case EagerNondeterminism:
+		case EAGER_NONDETERMINISM:
 			((NondeterministicInterpolantAutomaton<?>) interpolantAutomaton).switchToReadonlyMode();
 			break;
-		case ScroogeNondeterminism:
-		case Deterministic:
+		case SCROOGE_NONDETERMINISM:
+		case DETERMINISTIC:
 			((BuchiInterpolantAutomatonBouncer<?>) interpolantAutomaton).switchToReadonlyMode();
 			break;
 		default:
