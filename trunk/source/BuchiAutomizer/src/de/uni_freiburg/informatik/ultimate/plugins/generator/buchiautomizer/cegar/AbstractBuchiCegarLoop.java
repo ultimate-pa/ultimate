@@ -145,7 +145,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of of the program.
 	 */
-	protected A mAbstraction;
+	private A mAbstraction;
 
 	protected A mArtifactAutomaton;
 
@@ -248,7 +248,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		}
 		boolean initalAbstractionCorrect;
 		try {
-			initalAbstractionCorrect = isAbstractionEmpty();
+			initalAbstractionCorrect = isAbstractionEmpty(mAbstraction);
 		} catch (final AutomataLibraryException e1) {
 			mLogger.warn("Verification cancelled");
 			mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
@@ -265,7 +265,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			mBenchmarkGenerator.announceNextIteration();
 			boolean abstractionCorrect;
 			try {
-				abstractionCorrect = isAbstractionEmpty();
+				abstractionCorrect = isAbstractionEmpty(mAbstraction);
 			} catch (final AutomataLibraryException e1) {
 				mLogger.warn("Verification cancelled");
 				reportRemainderModule(false);
@@ -326,14 +326,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			try {
 				switch (cd) {
 				case REFINE_BOTH:
-					refineBuchiInternal(lassoCheck);
-					refineFinite(lassoCheck);
+					mAbstraction = refineFinite(refineBuchiInternal(lassoCheck), lassoCheck);
 					break;
 				case REFINE_FINITE:
-					refineFinite(lassoCheck);
+					mAbstraction = refineFinite(mAbstraction, lassoCheck);
 					break;
 				case REFINE_BUCHI:
-					refineBuchiInternal(lassoCheck);
+					mAbstraction = refineBuchiInternal(lassoCheck);
 					break;
 				case REPORT_UNKNOWN:
 					reportRemainderModule(false);
@@ -372,7 +371,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return Result.TIMEOUT;
 	}
 
-	private void refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
+	private A refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
 		final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
 		final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 		final IcfgLocation hondaPP = hondaISLP.getProgramPoint();
@@ -380,8 +379,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				constructTAResult(bspm.getTerminationArgument(), hondaPP);
 		mMDBenchmark.reportRankingFunction(mIteration, tar);
 
-		refineBuchi(lassoCheck);
+		final A result = refineBuchi(mAbstraction, lassoCheck);
 		mBinaryStatePredicateManager.clearPredicates();
+		return result;
 	}
 
 	private void reportRemainderModule(final boolean nonterminationKnown) {
@@ -401,26 +401,45 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	}
 
 	/**
-	 * Do a refinement (i.e., replace {@code mAbstraction} by a new difference) for the case where we detected that the
-	 * lasso from counterexample in {@code lassoCheck} can only be taken finitely often.
-	 */
-	protected abstract void refineBuchi(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException;
-
-	/**
-	 * Check if {@code mAbstraction} is empty.
+	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) w.r.t.
+	 * {@code lassoCheck} for the case where we detected that the lasso can only be taken finitely often.
 	 *
-	 * @return true iff {@code mAbstraction} does not accept any word
+	 * @param abstraction
+	 *            The abstraction to be refined
+	 * @param lassoCheck
+	 *            The lasso check for the infeasible lasso
+	 * @return The new refined abstraction
+	 * @throws AutomataOperationCanceledException
 	 */
-	protected abstract boolean isAbstractionEmpty() throws AutomataLibraryException;
+	protected abstract A refineBuchi(A abstraction, final LassoCheck<L> lassoCheck)
+			throws AutomataOperationCanceledException;
 
 	/**
-	 * Do a refinement (i.e., replace {@code mAbstraction} by a new difference) for the case where we detected that a
-	 * finite prefix of the lasso-shaped counterexample in {@code lassoCheck} is infeasible. In this case the module
-	 * (i.e., the subtrahend of the difference) will be a weak Büchi automaton (Büchi automaton where set of final
-	 * states is a trap). In fact, the module will have only a single accepting state that is labeled with "false" and
-	 * that has a self-loop for every letter.
+	 * Check if {@code abstraction} is empty (i.e. does not accept any word).
+	 *
+	 * @param abstraction
+	 *            The current abstract
+	 * @return true iff {@code abstraction} is empty
+	 * @throws AutomataLibraryException
 	 */
-	protected abstract void refineFinite(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException;
+	protected abstract boolean isAbstractionEmpty(A abstraction) throws AutomataLibraryException;
+
+	/**
+	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) for the case where we
+	 * detected that a finite prefix of the lasso-shaped counterexample in {@code lassoCheck} is infeasible. In this
+	 * case the module (i.e., the subtrahend of the difference) will be a weak Büchi automaton (Büchi automaton where
+	 * set of final states is a trap). In fact, the module will have only a single accepting state that is labeled with
+	 * "false" and that has a self-loop for every letter.
+	 *
+	 * @param abstraction
+	 *            The abstraction to be refined
+	 * @param lassoCheck
+	 *            The lasso check for the infeasible lasso
+	 * @return The new refined abstraction
+	 * @throws AutomataOperationCanceledException
+	 */
+	protected abstract A refineFinite(A abstraction, final LassoCheck<L> lassoCheck)
+			throws AutomataOperationCanceledException;
 
 	private TerminationArgumentResult<IIcfgElement, Term>
 			constructTAResult(final TerminationArgument terminationArgument, final IcfgLocation honda) {
