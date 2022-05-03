@@ -111,11 +111,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-	/**
-	 * Node of a recursive control flow graph which stores additional information about the
-	 */
-	protected final IIcfg<?> mIcfg;
-
+	protected final String mIdentifier;
 	protected final CfgSmtToolkit mCsToolkitWithRankVars;
 
 	/**
@@ -174,14 +170,14 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			final IUltimateServiceProvider services, final Class<L> transitionClazz, final A initialAbstraction,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		assert services != null;
-		mIcfg = icfg;
+		mIdentifier = icfg.getIdentifier();
 		// TODO: TaskIdentifier should probably be provided by caller
-		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier());
+		mTaskIdentifier = new SubtaskFileIdentifier(null, mIdentifier);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mPredicateFactory = predicateFactory;
-		mCsToolkitWithoutRankVars = mIcfg.getCfgSmtToolkit();
+		mCsToolkitWithoutRankVars = icfg.getCfgSmtToolkit();
 		mCsToolkitWithRankVars = rankVarConstructor.getCsToolkitWithRankVariables();
 		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkitWithRankVars, predicateFactory,
 				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), mServices,
@@ -204,8 +200,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
-						XNF_CONVERSION_TECHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
-		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg,
+						XNF_CONVERSION_TECHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, icfg);
+		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, icfg,
 				mPredicateFactory, mDefaultStateFactory, transitionClazz);
 		mAbstraction = initialAbstraction;
 	}
@@ -269,7 +265,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + name + "========");
 
 		if (mPref.dumpAutomata()) {
-			final String filename = mIcfg.getIdentifier() + "_" + name + "Abstraction" + mIteration;
+			final String filename = mIdentifier + "_" + name + "Abstraction" + mIteration;
 			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
 					mPref.getAutomataFormat(), "");
 		}
@@ -312,7 +308,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				final TaskIdentifier taskIdentifier = new SubtaskIterationIdentifier(mTaskIdentifier, mIteration);
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.LASSO_ANALYSIS_TIME);
 				lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
-						mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
+						mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
 						mCounterexample, generateLassoCheckIdentifier(), mServices, SIMPLIFICATION_TECHNIQUE,
 						XNF_CONVERSION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, taskIdentifier,
 						mBenchmarkGenerator);
@@ -327,7 +323,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 							mCounterexample.getStem().concatenate(mCounterexample.getLoop());
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
-							mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
+							mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
 							mCounterexample, generateLassoCheckIdentifier(), mServices, SIMPLIFICATION_TECHNIQUE,
 							XNF_CONVERSION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,
 							mBenchmarkGenerator);
@@ -378,7 +374,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 
 				if (mPref.dumpAutomata()) {
-					final String filename = mIcfg.getIdentifier() + "_" + name + "Abstraction" + mIteration;
+					final String filename = mIdentifier + "_" + name + "Abstraction" + mIteration;
 					BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
 							mPref.getAutomataFormat(), "");
 				}
@@ -455,7 +451,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 *
 	 */
 	private String generateLassoCheckIdentifier() {
-		return mIcfg.getIdentifier() + "_Iteration" + mIteration;
+		return mIdentifier + "_Iteration" + mIteration;
 	}
 
 	private static class SubtaskAdditionalLoopUnwinding extends TaskIdentifier {

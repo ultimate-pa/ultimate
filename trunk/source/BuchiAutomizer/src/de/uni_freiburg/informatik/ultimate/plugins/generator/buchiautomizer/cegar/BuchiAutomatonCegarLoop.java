@@ -124,7 +124,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		mRefineBuchi = new RefineBuchi<>(mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(), difference,
 				mDefaultStateFactory, mStateFactoryForRefinement, useDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, SIMPLIFICATION_TECHNIQUE,
-				XNF_CONVERSION_TECHNIQUE, ncsbImplementation, mIcfg.getIdentifier());
+				XNF_CONVERSION_TECHNIQUE, ncsbImplementation, mIdentifier);
 		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
@@ -142,7 +142,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty(final INestedWordAutomaton<L, IPredicate> abstraction)
 			throws AutomataLibraryException {
-		final String counterName = mIcfg.getIdentifier() + "_" + getClass().getName() + "Abstraction";
+		final String counterName = mIdentifier + "_" + getClass().getName() + "Abstraction";
 		final UtilFixedCounterexample<L, IPredicate> utilFixedCe = new UtilFixedCounterexample<>();
 		final NestedLassoRun<L, IPredicate> counterexample = utilFixedCe
 				.getNestedLassoRun(new AutomataLibraryServices(mServices), abstraction, counterName, mIteration);
@@ -245,8 +245,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		}
 		determinized.switchToReadonlyMode();
 		if (mPref.dumpAutomata()) {
-			final String filename =
-					mIcfg.getIdentifier() + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
+			final String filename = mIdentifier + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
 			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mPref.dumpPath(), filename,
 					mPref.getAutomataFormat(), "");
 		}
