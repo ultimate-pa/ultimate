@@ -102,6 +102,8 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	private final RefineBuchi<L> mRefineBuchi;
 	private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
 	private final BuchiComplementationConstruction mComplementationConstruction;
+	private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
+	private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
 
 	public BuchiAutomatonCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -131,11 +133,16 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		mComplementationConstruction =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 						BuchiComplementationConstruction.class);
+		mAutomataMinimizationAfterFeasbilityBasedRefinement = baPref.getEnum(
+				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
+				Minimization.class);
+		mAutomataMinimizationAfterRankBasedRefinement = baPref.getEnum(
+				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
+				Minimization.class);
 	}
 
-	@Override
-	protected void reduceAbstractionSize(final Minimization automataMinimization)
-			throws AutomataOperationCanceledException {
+	private void reduceAbstractionSize(final Minimization automataMinimization,
+			final NestedWordAutomaton<L, IPredicate> interpolAutomaton) throws AutomataOperationCanceledException {
 		if (mAbstraction instanceof IGeneralizedNestedWordAutomaton) {
 			// GBA does not have minimization support yet.
 			return;
@@ -168,7 +175,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				AutomataMinimization<IcfgLocation, ISLPredicate, L> am;
 				try {
 					am = new AutomataMinimization<>(mServices, mAbstraction, automataMinimization, false, mIteration,
-							mStateFactoryForRefinement, -1, null, mInterpolAutomaton, -1,
+							mStateFactoryForRefinement, -1, null, interpolAutomaton, -1,
 							mPredicateFactoryResultChecking, locProvider, false);
 				} catch (final AutomataMinimizationTimeout e) {
 					mBenchmarkGenerator.addAutomataMinimizationData(e.getStatistics());
@@ -223,6 +230,8 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 
 			if (newAbstraction != null) {
 				mAbstraction = newAbstraction;
+				// TODO: Calling this with null might be problematic with a particular setting (but was also before!)
+				reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement, null);
 				if (mConstructTermcompProof) {
 					mTermcompProofBenchmark.reportBuchiModule(mIteration,
 							mRefineBuchi.getInterpolAutomatonUsedInRefinement());
@@ -333,13 +342,13 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			traceCheck = lassoCheck.getConcatCheck();
 		}
 
-		mInterpolAutomaton = traceCheck.getInfeasibilityProof();
+		final NestedWordAutomaton<L, IPredicate> interpolAutomaton = traceCheck.getInfeasibilityProof();
 
 		final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceCheck.getPredicateUnifier());
 
 		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
-				mCsToolkitWithRankVars, htc, mInterpolAutomaton, traceCheck.getPredicateUnifier(), false, false);
+				mCsToolkitWithRankVars, htc, interpolAutomaton, traceCheck.getPredicateUnifier(), false, false);
 		final PowersetDeterminizer<L, IPredicate> psd =
 				new PowersetDeterminizer<>(determinized, true, mDefaultStateFactory);
 		Difference<L, IPredicate> diff = null;
@@ -367,20 +376,21 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		if (mPref.dumpAutomata()) {
 			final String filename =
 					mIcfg.getIdentifier() + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
-			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mInterpolAutomaton, mPref.dumpPath(), filename,
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mPref.dumpPath(), filename,
 					mPref.getAutomataFormat(), "");
 		}
 		if (mConstructTermcompProof) {
-			mTermcompProofBenchmark.reportFiniteModule(mIteration, mInterpolAutomaton);
+			mTermcompProofBenchmark.reportFiniteModule(mIteration, interpolAutomaton);
 		}
-		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
-		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+		mMDBenchmark.reportTrivialModule(mIteration, interpolAutomaton.size());
+		assert new InductivityCheck<>(mServices, interpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false)).getResult();
 		if (gbaDiff == null) {
 			mAbstraction = diff.getResult();
 		} else {
 			mAbstraction = gbaDiff.getResult();
 		}
+		reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement, interpolAutomaton);
 		assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());

@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -82,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
@@ -149,11 +147,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 */
 	protected A mAbstraction;
 
-	/**
-	 * Interpolant automaton of this iteration.
-	 */
-	protected NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
-
 	protected A mArtifactAutomaton;
 
 	protected final PredicateFactoryForInterpolantAutomata mDefaultStateFactory;
@@ -171,9 +164,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected final TermcompProofBenchmark mTermcompProofBenchmark;
 
 	protected final InterpolationTechnique mInterpolation;
-
-	private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
-	private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
 
 	private NonTerminationArgument mNonterminationArgument;
 
@@ -215,12 +205,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mAutomataMinimizationAfterFeasbilityBasedRefinement = baPref.getEnum(
-				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
-				Minimization.class);
-		mAutomataMinimizationAfterRankBasedRefinement = baPref.getEnum(
-				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
-				Minimization.class);
 		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
 
@@ -343,10 +327,10 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				switch (cd) {
 				case REFINE_BOTH:
 					refineBuchiInternal(lassoCheck);
-					refineFiniteInternal(lassoCheck);
+					refineFinite(lassoCheck);
 					break;
 				case REFINE_FINITE:
-					refineFiniteInternal(lassoCheck);
+					refineFinite(lassoCheck);
 					break;
 				case REFINE_BUCHI:
 					refineBuchiInternal(lassoCheck);
@@ -384,14 +368,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mToolchainCancelledException = e;
 				return Result.TIMEOUT;
 			}
-			mInterpolAutomaton = null;
 		}
 		return Result.TIMEOUT;
-	}
-
-	private void refineFiniteInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
-		refineFinite(lassoCheck);
-		reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
 	}
 
 	private void refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
@@ -404,7 +382,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		refineBuchi(lassoCheck);
 		mBinaryStatePredicateManager.clearPredicates();
-		reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
 	}
 
 	private void reportRemainderModule(final boolean nonterminationKnown) {
@@ -422,13 +399,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		overapproximations.putAll(Overapprox.getOverapproximations(loop.asList()));
 		return overapproximations;
 	}
-
-	/**
-	 * Reduce the size of {@code mAbstraction}. If the minimization is not supported (yet), one may just return without
-	 * doing any further action.
-	 */
-	protected abstract void reduceAbstractionSize(final Minimization automataMinimization)
-			throws AutomataOperationCanceledException;
 
 	/**
 	 * Do a refinement (i.e., replace {@code mAbstraction} by a new difference) for the case where we detected that the
