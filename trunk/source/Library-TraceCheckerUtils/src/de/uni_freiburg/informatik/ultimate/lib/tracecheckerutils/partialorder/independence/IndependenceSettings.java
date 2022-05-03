@@ -26,11 +26,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
+
+/**
+ * Bundles various settings specifying an independence relation to be used.
+ *
+ * @see de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public final class IndependenceSettings {
 
+	public static final IndependenceType DEFAULT_INDEPENDENCE_TYPE = IndependenceType.SEMANTIC;
+	public static final AbstractionType DEFAULT_ABSTRACTION_TYPE = AbstractionType.NONE;
+	public static final boolean DEFAULT_USE_CONDITIONAL = true;
+	public static final boolean DEFAULT_USE_SEMICOMMUTATIVITY = true;
+	public static final ExternalSolver DEFAULT_SOLVER = ExternalSolver.Z3;
+	public static final long DEFAULT_SOLVER_TIMEOUT = 1000;
+
+	/**
+	 * Specifies the basic type of independence check.
+	 */
 	public enum IndependenceType {
 		/**
-		 * Use only syntactic criteria (accessed variables) to determine commutativity.
+		 * Use only syntactic criteria (e.g. accessed variables) to determine commutativity.
 		 */
 		SYNTACTIC,
 		/**
@@ -39,23 +58,62 @@ public final class IndependenceSettings {
 		SEMANTIC,
 	}
 
+	/**
+	 * Specifies a kind of abstraction to be integrated in the independence check.
+	 */
+	public enum AbstractionType {
+		/**
+		 * Do not apply any abstraction.
+		 */
+		NONE,
+		/**
+		 * Apply an abstraction that eliminates variables not used in the current proof candidate.
+		 *
+		 * @see de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction
+		 */
+		VARIABLES_GLOBAL,
+		/**
+		 * Apply an abstraction that eliminates variables not used in Hoare triples for the abstracted statement in the
+		 * current proof candidate.
+		 *
+		 * @see de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction
+		 */
+		VARIABLES_LOCAL
+	}
+
 	private final IndependenceType mIndependenceType;
+	private final AbstractionType mAbstractionType;
 	private final boolean mUseConditional;
 	private final boolean mUseSemiCommutativity;
 
+	private final ExternalSolver mSolver;
+	private final long mSolverTimeout;
+
+	/**
+	 * Creates default settings for a simple independence relation.
+	 */
 	public IndependenceSettings() {
-		this(IndependenceType.SEMANTIC, true, true);
+		this(DEFAULT_INDEPENDENCE_TYPE, DEFAULT_ABSTRACTION_TYPE, DEFAULT_USE_CONDITIONAL,
+				DEFAULT_USE_SEMICOMMUTATIVITY, DEFAULT_SOLVER, DEFAULT_SOLVER_TIMEOUT);
 	}
 
-	public IndependenceSettings(final IndependenceType independenceType, final boolean useConditional,
-			final boolean useSemiCommutativity) {
+	public IndependenceSettings(final IndependenceType independenceType, final AbstractionType abstractionType,
+			final boolean useConditional, final boolean useSemiCommutativity, final ExternalSolver solver,
+			final long solverTimeout) {
 		mIndependenceType = independenceType;
+		mAbstractionType = abstractionType;
 		mUseConditional = useConditional;
 		mUseSemiCommutativity = useSemiCommutativity;
+		mSolver = solver;
+		mSolverTimeout = solverTimeout;
 	}
 
 	public IndependenceType getIndependenceType() {
 		return mIndependenceType;
+	}
+
+	public AbstractionType getAbstractionType() {
+		return mAbstractionType;
 	}
 
 	public boolean useConditional() {
@@ -64,5 +122,13 @@ public final class IndependenceSettings {
 
 	public boolean useSemiCommutativity() {
 		return mUseSemiCommutativity;
+	}
+
+	public ExternalSolver getSolver() {
+		return mSolver;
+	}
+
+	public long getSolverTimeout() {
+		return mSolverTimeout;
 	}
 }

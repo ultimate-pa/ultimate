@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
@@ -59,6 +60,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final ManagedScript mMgdScript;
 	private final TransferrerWithVariableCache mTransferrer;
+	private final TransFormulaAuxVarEliminator mEliminator;
 
 	private final Set<IProgramVar> mAllProgramVars;
 	private final Set<L> mAllLetters;
@@ -83,11 +85,12 @@ public class SpecificVariableAbstraction<L extends IAction>
 	 *            The set of all letters that may be given as input.
 	 */
 	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
-			final TransferrerWithVariableCache transferrer, final Set<IProgramVar> allProgramVars,
-			final Set<L> allLetters) {
+			final TransferrerWithVariableCache transferrer, final TransFormulaAuxVarEliminator tfAuxEliminator,
+			final Set<IProgramVar> allProgramVars, final Set<L> allLetters) {
 		mCopyFactory = copyFactory;
 		mMgdScript = mgdScript;
 		mTransferrer = transferrer;
+		mEliminator = tfAuxEliminator;
 
 		mAllProgramVars = allProgramVars;
 		mAllLetters = allLetters;
@@ -195,11 +198,20 @@ public class SpecificVariableAbstraction<L extends IAction>
 		final TransFormulaBuilder tfBuilder =
 				new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), ntc.isEmpty(), ntc, be.isEmpty(), be, false);
 
+		final Term substituted = Substitution.apply(mMgdScript, substitutionMap, utf.getFormula());
+		final Term formula;
+		if (newAuxVars.isEmpty() || mEliminator == null) {
+			formula = substituted;
+		} else {
+			// this call modifies newAuxVars!
+			formula = mEliminator.eliminate(mMgdScript, substituted, newAuxVars);
+		}
+
 		for (final TermVariable auxVar : newAuxVars) {
 			tfBuilder.addAuxVar(auxVar);
 		}
 
-		tfBuilder.setFormula(Substitution.apply(mMgdScript, substitutionMap, utf.getFormula()));
+		tfBuilder.setFormula(formula);
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.ensureInternalNormalForm();
 		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMgdScript);
@@ -261,5 +273,13 @@ public class SpecificVariableAbstraction<L extends IAction>
 	@Override
 	public ILattice<VarAbsConstraints<L>> getHierarchy() {
 		return mHierarchy;
+	}
+
+	public interface TransFormulaAuxVarEliminator {
+		/**
+		 * Eliminates auxiliary variables from formula, return new formula, and remove eliminated variables from the
+		 * (modifiable) set auxVars.
+		 */
+		Term eliminate(final ManagedScript mgdScript, final Term formula, final Set<TermVariable> auxVars);
 	}
 }

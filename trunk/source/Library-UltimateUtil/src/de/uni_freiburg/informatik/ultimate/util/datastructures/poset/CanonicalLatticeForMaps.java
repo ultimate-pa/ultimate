@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+
 /**
  * Lifts a lattice structure on the value type to a lattice structure on maps.
  *
@@ -84,8 +86,8 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 
 	@Override
 	public ComparisonResult compare(final Map<K, V> o1, final Map<K, V> o2) {
-		assert mKeyDomain == null || mKeyDomain.containsAll(o1.keySet()) : "map with unexpected keys";
-		assert mKeyDomain == null || mKeyDomain.containsAll(o2.keySet()) : "map with unexpected keys";
+		assert checkDomain(o1);
+		assert checkDomain(o2);
 		return super.compare(o1, o2);
 	}
 
@@ -104,11 +106,10 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 
 	@Override
 	public Map<K, V> supremum(final Map<K, V> h1, final Map<K, V> h2) {
+		assert checkDomain(h1);
+		assert checkDomain(h2);
+
 		final Map<K, V> result = new HashMap<>();
-
-		assert mKeyDomain == null || mKeyDomain.containsAll(h1.keySet()) : "map with unexpected keys";
-		assert mKeyDomain == null || mKeyDomain.containsAll(h2.keySet()) : "map with unexpected keys";
-
 		for (final Map.Entry<K, V> entry : h1.entrySet()) {
 			final V value;
 			if (h2.containsKey(entry.getKey())) {
@@ -130,8 +131,8 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 
 	@Override
 	public Map<K, V> infimum(final Map<K, V> h1, final Map<K, V> h2) {
-		assert mKeyDomain == null || mKeyDomain.containsAll(h1.keySet()) : "map with unexpected keys";
-		assert mKeyDomain == null || mKeyDomain.containsAll(h2.keySet()) : "map with unexpected keys";
+		assert checkDomain(h1);
+		assert checkDomain(h2);
 
 		final Map<K, V> smaller;
 		final Map<K, V> bigger;
@@ -151,6 +152,12 @@ public class CanonicalLatticeForMaps<K, V> extends CanonicalPartialComparatorFor
 			}
 		}
 
+		return result;
+	}
+
+	private boolean checkDomain(final Map<K, V> map) {
+		final boolean result = mKeyDomain == null || mKeyDomain.containsAll(map.keySet());
+		assert result : "map with unexpected keys: " + DataStructureUtils.difference(map.keySet(), mKeyDomain);
 		return result;
 	}
 }

@@ -88,15 +88,18 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	private final Class<L> mTransitionClazz;
 	private final TAPreferences mPrefs;
 	private final Supplier<IPLBECompositionFactory<L>> mCreateCompositionFactory;
+	private final ICopyActionFactory<L> mCopyFactory;
 	private final boolean mComputeHoareAnnotation;
 
 	private CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	public CegarLoopFactory(final Class<L> transitionClazz, final TAPreferences taPrefs,
-			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory, final boolean computeHoareAnnotation) {
+			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
+			final ICopyActionFactory<L> copyFactory, final boolean computeHoareAnnotation) {
 		mTransitionClazz = transitionClazz;
 		mPrefs = taPrefs;
 		mCreateCompositionFactory = createCompositionFactory;
+		mCopyFactory = copyFactory;
 		mComputeHoareAnnotation = computeHoareAnnotation;
 	}
 
@@ -121,8 +124,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	public BasicCegarLoop<L, ?> constructCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<IcfgLocation> root, final Set<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final Supplier<ICopyActionFactory<L>> copyFactorySupplier) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mCegarLoopBenchmark = new CegarLoopStatisticsGenerator();
 
 		final LanguageOperation languageOperation = services.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -174,7 +176,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
 							errorLocs),
 					root, csToolkit, predicateFactory, mPrefs, errorLocs, mPrefs.interpolation(), services,
-					copyFactorySupplier.get(), mTransitionClazz, stateFactoryForRefinement);
+					mCopyFactory, mTransitionClazz, stateFactoryForRefinement);
 		case PETRI_NET:
 			requireNoReuse("Petri net-based analysis");
 			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
@@ -282,7 +284,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
 			final PredicateFactory predicateFactory, final Class<L> transitionClazz, final TAPreferences pref,
 			final boolean removeDead, final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs) {
-		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, false)
+		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, null, false)
 				.createPetriAbstraction(services, predicateFactory, removeDead, icfg, errorLocs);
 	}
 

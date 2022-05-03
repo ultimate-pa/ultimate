@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -287,22 +288,8 @@ public final class TransFormulaUtils {
 		}
 
 		if (tryAuxVarElimination) {
-			final Term eliminated;
-			// eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
-			// formula, services, logger, simplificationTechnique, xnfConversionTechnique);
-			final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, formula);
-			auxVars.clear();
-			final Term partiallyEliminated =
-					PartialQuantifierElimination.eliminate(services, mgdScript, quantified, simplificationTechnique);
-			final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
-			if (pnf instanceof QuantifiedFormula
-					&& ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
-				final QuantifiedFormula qf = (QuantifiedFormula) pnf;
-				auxVars.addAll(Arrays.asList(qf.getVariables()));
-				eliminated = qf.getSubformula();
-			} else {
-				eliminated = pnf;
-			}
+			final Term eliminated =
+					tryAuxVarElimination(services, mgdScript, simplificationTechnique, formula, auxVars);
 			if (logger.isDebugEnabled()) {
 				logger.debug("DAG size before PQE %s, DAG size after PQE %s", new DagSizePrinter(formula),
 						new DagSizePrinter(eliminated));
@@ -337,6 +324,23 @@ public final class TransFormulaUtils {
 		}
 		tfb.ensureInternalNormalForm();
 		return tfb.finishConstruction(mgdScript);
+	}
+
+	public static Term tryAuxVarElimination(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final SimplificationTechnique simplificationTechnique, final Term formula,
+			final Set<TermVariable> auxVars) {
+		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, auxVars, formula);
+		auxVars.clear();
+
+		final Term partiallyEliminated =
+				PartialQuantifierElimination.eliminate(services, mgdScript, quantified, simplificationTechnique);
+		final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
+		if (pnf instanceof QuantifiedFormula && ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
+			final QuantifiedFormula qf = (QuantifiedFormula) pnf;
+			auxVars.addAll(Arrays.asList(qf.getVariables()));
+			return qf.getSubformula();
+		}
+		return pnf;
 	}
 
 	/**
@@ -1135,7 +1139,7 @@ public final class TransFormulaUtils {
 		final Term rhsQuantFormula = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 				DataStructureUtils.union(rhs.getAuxVars(), rhs.getBranchEncoders()), rhs.getFormula());
 		final Term rhsClosedFormula = UnmodifiableTransFormula.computeClosedFormula(rhsQuantFormula, rhs.getInVars(),
-				rhs.getOutVars(), new HashSet<>(), mgdScript);
+				rhs.getOutVars(), Collections.emptySet(), mgdScript);
 
 		// Add explicit equalities for variables mentioned in one, but not the other,
 		// transition formula.
@@ -1153,6 +1157,7 @@ public final class TransFormulaUtils {
 		mgdScript.assertTerm(lhs, SmtUtils.not(script, rhsFormula));
 
 		final LBool result = mgdScript.checkSat(lhs);
+		mgdScript.echo(lhs, new QuotedObject("Implication check result was " + result));
 
 		mgdScript.pop(lhs, 1);
 		mgdScript.unlock(lhs);

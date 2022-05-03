@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
+	<resultfiles>commutativity.smt2</resultfiles>
 
 	<!-- === No Partial Order Reduction === -->
 	<!-- ================================== -->
 
-	<rundefinition name="Automizer FA">
+	<!--rundefinition name="Automizer FA">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<!--rundefinition name="Automizer FA.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-CANONICAL.epf</option>
@@ -133,33 +134,58 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-LoopLockstep.epf</option>
 	</rundefinition-->
 
-	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_1000ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
-	</rundefinition-->
-
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.SYNTACTIC">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-SYNTACTIC.epf</option>
 	</rundefinition>
 
-	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-CANONICAL.epf</option>
-	</rundefinition-->
-
-	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
-	</rundefinition-->
-
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-VarAbsGLOBAL.SYNTACTIC">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-SYNTACTIC.epf</option>
 	</rundefinition>
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_300ms">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
+		<option name="--traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
+	</rundefinition>
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_SmtInterpol_1000ms">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
+		<option name="--traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
+	</rundefinition>
+
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.SYNTACTIC">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-SYNTACTIC.epf</option>
+	</rundefinition-->
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
+	</rundefinition>
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL_SmtInterpol_1000ms">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
+		<option name="--traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
+	</rundefinition>
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL_Z3_300ms">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
+		<option name="--traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
+	</rundefinition>
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL_Z3_6000ms">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
+		<option name="--traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">6000</option>
+	</rundefinition>
+
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-VarAbsGLOBAL.SYNTACTIC">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-SYNTACTIC.epf</option>
+	</rundefinition-->
 
 	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-CANONICAL.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsSPECIFIC.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-specific-CANONICAL.epf</option>
-	</rundefinition-->
+	</rundefinition>
 
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLockstep">
@@ -207,14 +233,21 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
-	<tasks name="Ultimate Repo: pthreads">
+	<tasks name="SVCOMP Concurrency-SafeDeref">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
+		<propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
+	</tasks>
+
+	<!--tasks name="Ultimate Repo: pthreads">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
 		<excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+	</tasks-->
 
-	<tasks name="Ultimate Repo: Boogie">
+	<!--tasks name="Ultimate Repo: Boogie">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
 		<includesfile>../../../trunk/examples/bench-concurrent-boogie.set</includesfile>
 		<excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
@@ -225,7 +258,7 @@
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
 		<includesfile>../../../trunk/examples/bench-mcr-synth.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+	</tasks-->
 
 	<tasks name="Weaver Benchmarks">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>

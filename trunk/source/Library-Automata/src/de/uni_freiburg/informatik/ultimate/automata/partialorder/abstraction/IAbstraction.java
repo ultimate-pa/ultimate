@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * A family of abstraction functions that take a letter as input and return an "abstracted" letter. Here we do not
@@ -76,5 +78,17 @@ public interface IAbstraction<H, L> {
 	 */
 	default H restrict(final L input, final H level) {
 		return level;
+	}
+
+	/**
+	 * An optional method that allows collecting statistics about the history of queries made to this independence
+	 * relation. The default implementation does not provide any statistics.
+	 *
+	 * @return a statistics provider with implementation-defined data
+	 */
+	default IStatisticsDataProvider getStatistics() {
+		return new AbstractStatisticsDataProvider() {
+			// By default, no statistics are collected.
+		};
 	}
 }

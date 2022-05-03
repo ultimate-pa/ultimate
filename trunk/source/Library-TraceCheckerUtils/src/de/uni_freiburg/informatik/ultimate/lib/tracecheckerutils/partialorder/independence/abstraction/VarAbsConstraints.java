@@ -36,20 +36,49 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
+/**
+ * Represents constrained variables for individual statements. Used as abstraction levels by
+ * {@link de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction}.
+ *
+ * @author Marcel Rogg
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of statements being constrained
+ */
 public class VarAbsConstraints<L extends IAction> {
+	private final LazyInt mHash;
 	private final Map<L, Set<IProgramVar>> mInConstr;
 	private final Map<L, Set<IProgramVar>> mOutConstr;
 
+	/**
+	 * Constructor.
+	 *
+	 * Use with care! The given maps as well as all sets stored within them are expected to never be modified! In many
+	 * cases, it is better to use the methods {@link Lattice#getBottom()}, {@link Lattice#getTop()} and
+	 * {{@link #withModifiedConstraints(IAction, Set, Set)} to create new constraints.
+	 *
+	 * @param in
+	 *            maps letters to the set of constrained inVars
+	 * @param out
+	 *            maps letters to the set of constrained outVars
+	 */
 	public VarAbsConstraints(final Map<L, Set<IProgramVar>> in, final Map<L, Set<IProgramVar>> out) {
 		mInConstr = in;
 		mOutConstr = out;
+		mHash = new LazyInt(() -> HashUtils.hashJenkins(17, mInConstr, mOutConstr));
 	}
 
+	/**
+	 * Returns an (unmodifiable) view of a letter's constrained inVars.
+	 */
 	public Set<IProgramVar> getInConstraints(final L letter) {
 		if (mInConstr.containsKey(letter)) {
 			return Collections.unmodifiableSet(mInConstr.get(letter));
@@ -57,6 +86,9 @@ public class VarAbsConstraints<L extends IAction> {
 		return Collections.emptySet();
 	}
 
+	/**
+	 * Returns an (unmodifiable) view of a letter's constrained outVars.
+	 */
 	public Set<IProgramVar> getOutConstraints(final L letter) {
 		if (mOutConstr.containsKey(letter)) {
 			return Collections.unmodifiableSet(mOutConstr.get(letter));
@@ -92,8 +124,7 @@ public class VarAbsConstraints<L extends IAction> {
 
 	@Override
 	public int hashCode() {
-		// TODO consider caching this
-		return Objects.hash(mInConstr, mOutConstr);
+		return mHash.get();
 	}
 
 	@Override
@@ -111,10 +142,27 @@ public class VarAbsConstraints<L extends IAction> {
 		return Objects.equals(mInConstr, other.mInConstr) && Objects.equals(mOutConstr, other.mOutConstr);
 	}
 
+	/**
+	 * The natural lattice structure for {@link VarAbsConstraints}.
+	 *
+	 * The ordering implemented here follows the idea of abstraction levels: A smaller {@link VarAbsConstraints}
+	 * instance represents a lower abstraction level, i.e., it is <em>more</em> constraining.
+	 *
+	 * @param <L>
+	 *            The type of constrained letters
+	 */
 	public static final class Lattice<L extends IAction> implements ILattice<VarAbsConstraints<L>> {
 		private final VarAbsConstraints<L> mBottom;
 		private final UpsideDownLattice<Map<L, Set<IProgramVar>>> mMapLattice;
 
+		/**
+		 * Creates a new lattice for {@link VarAbsConstraints} of a specific program.
+		 *
+		 * @param allVars
+		 *            The set of all variables occurring in the program
+		 * @param allLetters
+		 *            The set of all statements occurring in the program
+		 */
 		public Lattice(final Set<IProgramVar> allVars, final Set<L> allLetters) {
 			mMapLattice =
 					new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(new PowersetLattice<>(allVars), allLetters));

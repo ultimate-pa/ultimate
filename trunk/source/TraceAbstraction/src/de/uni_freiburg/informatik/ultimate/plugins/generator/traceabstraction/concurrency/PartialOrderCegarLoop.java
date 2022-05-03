@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
@@ -75,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -83,16 +85,17 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Be
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.RefinableCachedAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction.TransFormulaAuxVarEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -123,6 +126,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
 	private final PartialOrderReductionFacade<L> mPOR;
 	private final IRefinableIndependenceContainer<L> mIndependenceContainer;
+	private ManagedScript mIndependenceScript;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
@@ -134,7 +138,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
 				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
+
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
+		if (mPref.applyOneShotLbe()) {
+			throw new UnsupportedOperationException(
+					"Soundness is currently not guaranteed for this CEGAR loop if one-shot LBE is turned on.");
+		}
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
@@ -144,7 +153,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
-				mIndependenceContainer.currentIndependence());
+				mIndependenceContainer.getOrConstructIndependence());
 	}
 
 	@Override
@@ -193,7 +202,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		// update independence in case of abstract independence
 		mIndependenceContainer.refine(mRefinementResult);
-		mPOR.replaceIndependence(mIndependenceContainer.currentIndependence());
+		mPOR.replaceIndependence(mIndependenceContainer.getOrConstructIndependence());
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -223,6 +232,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
 		mPOR.reportStatistics(Activator.PLUGIN_ID);
+
+		if (mIndependenceScript != null) {
+			// Shutdown the script
+			// TODO Share independence script and independence relation (including cache) between CEGAR loop instances!
+			mIndependenceScript.getScript().exit();
+		}
+
 		super.finish();
 	}
 
@@ -261,27 +277,30 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final ICopyActionFactory<L> copyFactory) {
 		// Construct the script used for independence checks.
-		final ManagedScript independenceScript = constructIndependenceScript();
+		// TODO Only construct this if the independence relation actually needs a script!
+		// TODO problem: auxVar constants in abstraction can still not be created in the locked Icfg script.
+		mIndependenceScript = constructIndependenceScript();
 
 		// We need to transfer given transition formulas and condition predicates to the independenceScript.
+		// TODO Only construct this if we actually need to transfer to a different script!
 		final TransferrerWithVariableCache transferrer =
-				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), independenceScript);
+				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), mIndependenceScript);
 
 		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
 			// Construct the independence relation (without abstraction). It is the responsibility of the independence
 			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
-			final var independence = constructIndependence(independenceScript, transferrer, false);
+			final var independence = constructIndependence(mIndependenceScript, transferrer, false);
 			return new StaticIndependenceContainer<>(independence);
 		}
 
 		// Construct the abstraction function.
-		final var letterAbstraction = constructAbstraction(copyFactory, independenceScript, transferrer);
+		final var letterAbstraction = constructAbstraction(copyFactory, mIndependenceScript, transferrer);
 		final var cachedAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
 
 		// Construct the independence relation (still without abstraction).
 		// It is the responsibility of the abstraction function to transfer the transition formulas. But we leave it to
 		// the independence relation to transfer conditions.
-		final var independence = constructIndependence(independenceScript, transferrer, true);
+		final var independence = constructIndependence(mIndependenceScript, transferrer, true);
 
 		return new IndependenceContainerWithAbstraction<>(cachedAbstraction, independence);
 	}
@@ -326,9 +345,20 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private ManagedScript constructIndependenceScript() {
-		final SolverSettings settings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, 1000);
-		return mCsToolkit.createFreshManagedScript(mServices, settings, "SemanticIndependence");
+		final IndependenceSettings settings = mPref.porIndependenceSettings();
+
+		final SolverSettings solverSettings;
+		if (settings.getSolver() == ExternalSolver.SMTINTERPOL) {
+			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
+					.setSmtInterpolTimeout(settings.getSolverTimeout())
+					.setDumpSmtScriptToFile(true, ".", "commutativity", false);
+		} else {
+			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
+					.setUseExternalSolver(settings.getSolver(), settings.getSolverTimeout())
+					.setDumpSmtScriptToFile(true, ".", "commutativity", false);
+		}
+
+		return mCsToolkit.createFreshManagedScript(mServices, solverSettings, "SemanticIndependence");
 	}
 
 	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(
@@ -339,19 +369,32 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(mCsToolkit);
+		final TransFormulaAuxVarEliminator tfEliminator;
+		if (mPref.porIndependenceSettings().getIndependenceType() == IndependenceType.SEMANTIC) {
+			// For semantic independence, eliminating auxiliary variables can ease the load on the SMT solver.
+			tfEliminator = (ms, fm, av) -> TransFormulaUtils.tryAuxVarElimination(mServices, ms,
+					SimplificationTechnique.POLY_PAC, fm, av);
+		} else {
+			// For syntactic independence, there is no point in eliminating auxiliary variables.
+			tfEliminator = null;
+		}
 
 		switch (mPref.getPorAbstraction()) {
 		case VARIABLES_GLOBAL:
-			return new VariableAbstraction<>(copyFactory, abstractionScript, transferrer, allVariables);
+			return new VariableAbstraction<>(copyFactory, abstractionScript, transferrer, tfEliminator, allVariables);
 		case VARIABLES_LOCAL:
 			if (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE) {
 				throw new UnsupportedOperationException(
 						"specific variable abstraction is only supported with interpolant automaton enhancement NONE");
 			}
+
+			// TODO Should this be replaced with mAbstraction.getAlphabet()?
+			// Note that this would require changes to ThreadBasedPersistentSets, because it also considers
+			// commutativity of forkCurrent and joinCurrent transitions, which are not in the alphabet.
 			final Set<L> allLetters =
 					new IcfgEdgeIterator(mIcfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
-			return new SpecificVariableAbstraction<>(copyFactory, abstractionScript, transferrer, allVariables,
-					allLetters);
+			return new SpecificVariableAbstraction<>(copyFactory, abstractionScript, transferrer, tfEliminator,
+					allVariables, allLetters);
 		default:
 			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
 		}
@@ -507,7 +550,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		void refine(IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement);
 
-		IIndependenceRelation<IPredicate, L> currentIndependence();
+		IIndependenceRelation<IPredicate, L> getOrConstructIndependence();
 	}
 
 	/**
@@ -535,7 +578,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		@Override
-		public IIndependenceRelation<IPredicate, L> currentIndependence() {
+		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
 			return mIndependence;
 		}
 	}
@@ -576,7 +619,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		@Override
-		public IIndependenceRelation<IPredicate, L> currentIndependence() {
+		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
 			return IndependenceBuilder.fromPredicateActionIndependence(mUnderlyingIndependence)
 					// Apply abstraction to each letter before checking commutativity.
 					.withAbstraction(mRefinableAbstraction, mAbstractionLevel)

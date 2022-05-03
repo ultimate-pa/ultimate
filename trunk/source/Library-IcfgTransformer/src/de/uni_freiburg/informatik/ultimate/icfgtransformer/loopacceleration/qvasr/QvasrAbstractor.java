@@ -47,11 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermOperations;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -101,11 +96,10 @@ public class QvasrAbstractor {
 	 */
 	public static QvasrAbstraction computeAbstraction(final ManagedScript script,
 			final UnmodifiableTransFormula transitionFormula) {
-
-		if (!SmtUtils.isArrayFree(transitionFormula.getFormula())) {
+		if (!SmtUtils.isArrayFree(transitionFormula.getFormula())
+				|| !SmtUtils.containsArrayVariables(transitionFormula.getFormula())) {
 			throw new UnsupportedOperationException("Cannot deal with arrays.");
 		}
-
 		final Map<TermVariable, Term> updatesInFormulaAdditions =
 				getUpdates(script, transitionFormula, BaseType.ADDITIONS);
 		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(script, transitionFormula, BaseType.RESETS);
@@ -142,32 +136,6 @@ public class QvasrAbstractor {
 	}
 
 	/**
-	 * Convert a matrix in upper triangular form into row echelon form -> only leading 1s using Standard Real Division.
-	 *
-	 * @param matrix
-	 *            A matrix containing terms in upper triangular form.
-	 * @return A matrix in row echelon form.
-	 *
-	 */
-	private static Term[][] gaussRowEchelonForm(final ManagedScript script, final Term[][] matrix) {
-		for (int i = 0; i < matrix.length; i++) {
-			for (int j = 0; j < matrix[0].length; j++) {
-				if (!QvasrUtils.checkTermEquiv(script, script.getScript().decimal("0"), matrix[i][j])) {
-					final Term dividerInverse = getDivisionInverse(script, matrix[i][j]);
-					for (int k = j; k < matrix[0].length; k++) {
-						final Term toBeDivided = matrix[i][k];
-						final Term mult =
-								QvasrAbstractor.simplifyRealMultiplication(script, toBeDivided, dividerInverse);
-						matrix[i][k] = mult;
-					}
-					break;
-				}
-			}
-		}
-		return matrix;
-	}
-
-	/**
 	 * Bring a given matrix, containing logical terms, into upper triangle form using the gaussian partial pivot method.
 	 *
 	 * @param matrix
@@ -200,44 +168,6 @@ public class QvasrAbstractor {
 					final Term newMul = QvasrAbstractor.simplifyRealMultiplication(script, newDiv, currentColumn);
 					final Term newSub = QvasrAbstractor.simplifyRealSubtraction(script, currentEntry, newMul);
 					matrix[i][j] = newSub;
-				}
-			}
-		}
-		return matrix;
-	}
-
-	/**
-	 * Bring a given matrix, containing logical terms, into upper triangle form using the gaussian partial pivot method
-	 * by making use of Ultimate's {@link PolynomialTerm}.
-	 *
-	 * @param script
-	 *            A {@link ManagedScript}
-	 *
-	 * @param matrix
-	 *            A matrix in non-upper triangle form.
-	 * @return A matrix in upper-triangle form
-	 */
-	private Term[][] gaussRowEchelonFormPolynomial(final ManagedScript script, final Term[][] matrix) {
-		final Term zero = script.getScript().decimal("0");
-		for (int i = 0; i < matrix.length; i++) {
-			for (int j = 0; j < matrix[0].length; j++) {
-				if (!QvasrUtils.checkTermEquiv(script, matrix[i][j], zero)) {
-					final IPolynomialTerm divider = PolynomialTermOperations.convert(script.getScript(), matrix[i][j]);
-					for (int k = j; k < matrix[0].length; k++) {
-						final IPolynomialTerm[] polyArr = new IPolynomialTerm[2];
-						final IPolynomialTerm toBeDivided =
-								PolynomialTermOperations.convert(script.getScript(), matrix[i][k]);
-						polyArr[0] = toBeDivided;
-						polyArr[1] = divider;
-						final IPolynomialTerm polyDiv;
-						if (PolynomialTerm.divisionPossible(polyArr)) {
-							polyDiv = AffineTerm.divide(polyArr, script.getScript());
-						} else {
-							polyDiv = PolynomialTermUtils.simplifyImpossibleDivision("/", polyArr, script.getScript());
-						}
-						matrix[i][k] = polyDiv.toTerm(script.getScript());
-					}
-					break;
 				}
 			}
 		}
@@ -305,34 +235,6 @@ public class QvasrAbstractor {
 			result = SmtUtils.divReal(script.getScript(), script.getScript().decimal("1"), term);
 		}
 		return result;
-	}
-
-	/**
-	 * Use back substitution to compute solutions for a matrix in row echelon form.
-	 *
-	 * @param matrix
-	 *            A matrix in row echelon form.
-	 * @return Solutions to unknowns
-	 */
-	private Term[] backSub(final ManagedScript script, final Term[][] matrix) {
-		final Term one = script.getScript().decimal("1");
-		final Term zero = script.getScript().decimal("0");
-		final Term[] solutions = new Term[matrix[0].length - 1];
-		for (int k = 0; k < matrix[0].length - 1; k++) {
-			solutions[k] = zero;
-		}
-		final int columns = matrix[0].length - 1;
-		int solCounter = matrix[0].length - 2;
-		for (int i = matrix.length - 1; 0 <= i; i--) {
-			solutions[solCounter] = matrix[i][columns];
-			for (int j = solCounter + 1; j <= columns - 1; j++) {
-				final Term mul = QvasrAbstractor.simplifyRealMultiplication(script, matrix[i][j], solutions[j]);
-				final Term sub = QvasrAbstractor.simplifyRealSubtraction(script, solutions[solCounter], mul);
-				solutions[solCounter] = sub;
-			}
-			solCounter--;
-		}
-		return solutions;
 	}
 
 	/**

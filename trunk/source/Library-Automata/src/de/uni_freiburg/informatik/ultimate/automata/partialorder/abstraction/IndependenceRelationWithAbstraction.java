@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -43,25 +44,24 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <S>
  *            The type of states on which independence may be conditional
  */
-// TODO In the future, this should be extended with a more abstraction-aware interface.
-// TODO e.g. allow the relation to *find* an abstraction level (within a given range) where the given letters commute.
 public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependenceRelation<S, L> {
 
 	private final IIndependenceRelation<S, L> mUnderlying;
 	private final IAbstraction<H, L> mAbstraction;
 	private final H mLevel;
+	private final IndependenceStatisticsDataProvider mStatistics;
 
 	public IndependenceRelationWithAbstraction(final IIndependenceRelation<S, L> underlying,
 			final IAbstraction<H, L> abstraction, final H level) {
 		mUnderlying = underlying;
 		mAbstraction = abstraction;
 		mLevel = level;
+		mStatistics = new AbstractingStatistics();
 	}
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		// TODO Auto-generated method stub
-		return mUnderlying.getStatistics();
+		return mStatistics;
 	}
 
 	@Override
@@ -87,5 +87,14 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 
 	public H getLevel() {
 		return mLevel;
+	}
+
+	private class AbstractingStatistics extends IndependenceStatisticsDataProvider {
+		public static final String ABSTRACTION_STATISTICS = "Statistics for Abstraction";
+
+		public AbstractingStatistics() {
+			super(IndependenceRelationWithAbstraction.class, mUnderlying);
+			forward(ABSTRACTION_STATISTICS, mAbstraction::getStatistics);
+		}
 	}
 }

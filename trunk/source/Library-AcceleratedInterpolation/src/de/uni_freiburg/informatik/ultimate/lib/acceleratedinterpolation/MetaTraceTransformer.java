@@ -274,7 +274,8 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 						mPredTransformer.strongestPostconditionCall(loopPostTerm, localAss, globalAss, oldAss, modGlob);
 				mCallPred.put(callTrans, mPredUnifier.getOrConstructPredicate(postTfPred));
 				mLogger.debug("Dealt with Call");
-			} else if (l instanceof IIcfgReturnTransition<?, ?>) {
+			}
+			if (l instanceof IIcfgReturnTransition<?, ?>) {
 				final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) l;
 				final UnmodifiableTransFormula oldAss =
 						mToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(returnTrans.getPrecedingProcedure());
