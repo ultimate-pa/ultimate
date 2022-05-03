@@ -35,11 +35,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -52,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -106,7 +105,7 @@ public class HoareTripleCheckerTest {
 		mFalse = mScript.term("false");
 
 		mScript.declareFun("c", new Sort[0], SmtSortUtils.getIntSort(mScript));
-		c = new BoogieConst("c", BoogieType.TYPE_INT, (ApplicationTerm) mScript.term("c"), false);
+		c = new ProgramConst("c", (ApplicationTerm) mScript.term("c"), false);
 
 		final DefaultIcfgSymbolTable symbolTable = new DefaultIcfgSymbolTable();
 		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, symbolTable);

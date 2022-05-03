@@ -33,12 +33,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
@@ -172,7 +172,7 @@ public class SubArrayManager {
 			return freshVar;
 		} else if (arrayPv instanceof IntraproceduralReplacementVar) {
 			throw new AssertionError("TODO: implement");
-		} else if (arrayPv instanceof BoogieConst) {
+		} else if (arrayPv instanceof ProgramConst) {
 			throw new AssertionError("TODO: implement");
 		} else {
 			throw new AssertionError("case missing --> add it?");

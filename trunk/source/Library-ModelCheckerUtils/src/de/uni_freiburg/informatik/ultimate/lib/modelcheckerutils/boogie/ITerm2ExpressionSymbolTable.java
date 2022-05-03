@@ -5,12 +5,13 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public interface ITerm2ExpressionSymbolTable {
 
-	BoogieConst getProgramConst(ApplicationTerm term);
+	ProgramConst getProgramConst(ApplicationTerm term);
 
 	IProgramVar getProgramVar(TermVariable term);
 

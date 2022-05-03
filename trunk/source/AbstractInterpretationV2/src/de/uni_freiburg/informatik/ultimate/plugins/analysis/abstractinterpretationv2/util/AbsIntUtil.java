@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -377,7 +377,7 @@ public final class AbsIntUtil {
 	public static boolean isGlobal(final IProgramVarOrConst ibv) {
 		if (ibv instanceof IProgramVar) {
 			return ibv.isGlobal();
-		} else if (ibv instanceof BoogieConst) {
+		} else if (ibv instanceof ProgramConst) {
 			return true;
 		} else {
 			throw new AssertionError("Unknown IProgramVar type: " + ibv.getClass().getName());

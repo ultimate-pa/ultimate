@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
 
 /**
@@ -70,11 +71,11 @@ public interface IBoogieSymbolTableVariableProvider {
 	IProgramVar getBoogieVar(final String varId, final String procedure, final boolean isInParam);
 
 	/**
-	 * Returns a {@link BoogieConst} for a given contant name.
+	 * Returns a {@link ProgramConst} for a given contant name.
 	 *
 	 * @param constId
 	 *            The name of the constant.
-	 * @return The corresponding {@link BoogieConst}.
+	 * @return The corresponding {@link ProgramConst}.
 	 */
 	IProgramConst getBoogieConst(final String constId);
 }

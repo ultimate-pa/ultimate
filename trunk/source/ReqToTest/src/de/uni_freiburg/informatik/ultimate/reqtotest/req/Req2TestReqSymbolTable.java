@@ -27,9 +27,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
@@ -272,7 +272,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public BoogieConst getProgramConst(final ApplicationTerm term) {
+	public ProgramConst getProgramConst(final ApplicationTerm term) {
 		throw new UnsupportedOperationException();
 	}
 

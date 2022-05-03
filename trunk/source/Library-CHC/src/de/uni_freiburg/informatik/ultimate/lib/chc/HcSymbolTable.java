@@ -13,11 +13,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.Storage
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseDontCarePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseTruePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -348,7 +348,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	// }
 
 	@Override
-	public BoogieConst getProgramConst(final ApplicationTerm term) {
+	public ProgramConst getProgramConst(final ApplicationTerm term) {
 		throw new AssertionError();
 	}
 
