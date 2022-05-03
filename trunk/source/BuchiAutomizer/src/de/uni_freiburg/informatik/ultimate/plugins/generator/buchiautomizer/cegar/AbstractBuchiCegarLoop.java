@@ -220,6 +220,47 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mAbstraction = initialAbstraction;
 	}
 
+	/**
+	 * Check if {@code abstraction} is empty (i.e. does not accept any word).
+	 *
+	 * @param abstraction
+	 *            The current abstract
+	 * @return true iff {@code abstraction} is empty
+	 * @throws AutomataLibraryException
+	 */
+	protected abstract boolean isAbstractionEmpty(A abstraction) throws AutomataLibraryException;
+
+	/**
+	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) for the case where we
+	 * detected that a finite prefix of the lasso-shaped counterexample in {@code lassoCheck} is infeasible. In this
+	 * case the module (i.e., the subtrahend of the difference) will be a weak Büchi automaton (Büchi automaton where
+	 * set of final states is a trap). In fact, the module will have only a single accepting state that is labeled with
+	 * "false" and that has a self-loop for every letter.
+	 *
+	 * @param abstraction
+	 *            The abstraction to be refined
+	 * @param lassoCheck
+	 *            The lasso check for the infeasible lasso
+	 * @return The new refined abstraction
+	 * @throws AutomataOperationCanceledException
+	 */
+	protected abstract A refineFinite(A abstraction, final LassoCheck<L> lassoCheck)
+			throws AutomataOperationCanceledException;
+
+	/**
+	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) w.r.t.
+	 * {@code lassoCheck} for the case where we detected that the lasso can only be taken finitely often.
+	 *
+	 * @param abstraction
+	 *            The abstraction to be refined
+	 * @param lassoCheck
+	 *            The lasso check for the infeasible lasso
+	 * @return The new refined abstraction
+	 * @throws AutomataOperationCanceledException
+	 */
+	protected abstract A refineBuchi(A abstraction, final LassoCheck<L> lassoCheck)
+			throws AutomataOperationCanceledException;
+
 	public NestedLassoRun<L, IPredicate> getCounterexample() {
 		return mCounterexample;
 	}
@@ -383,6 +424,16 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return result;
 	}
 
+	private TerminationArgumentResult<IIcfgElement, Term>
+			constructTAResult(final TerminationArgument terminationArgument, final IcfgLocation honda) {
+		final RankingFunction rf = terminationArgument.getRankingFunction();
+		final Term[] supportingInvariants = terminationArgument.getSupportingInvariants().stream()
+				.map(si -> si.asTerm(mCsToolkitWithRankVars.getManagedScript().getScript())).toArray(Term[]::new);
+		return new TerminationArgumentResult<>(honda, Activator.PLUGIN_NAME,
+				rf.asLexTerm(mCsToolkitWithRankVars.getManagedScript().getScript()), rf.getName(), supportingInvariants,
+				mServices.getBacktranslationService(), Term.class);
+	}
+
 	private void reportRemainderModule(final boolean nonterminationKnown) {
 		mMDBenchmark.reportRemainderModule(mAbstraction.size(), nonterminationKnown);
 		if (mConstructTermcompProof) {
@@ -397,57 +448,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		overapproximations.putAll(Overapprox.getOverapproximations(stem.asList()));
 		overapproximations.putAll(Overapprox.getOverapproximations(loop.asList()));
 		return overapproximations;
-	}
-
-	/**
-	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) w.r.t.
-	 * {@code lassoCheck} for the case where we detected that the lasso can only be taken finitely often.
-	 *
-	 * @param abstraction
-	 *            The abstraction to be refined
-	 * @param lassoCheck
-	 *            The lasso check for the infeasible lasso
-	 * @return The new refined abstraction
-	 * @throws AutomataOperationCanceledException
-	 */
-	protected abstract A refineBuchi(A abstraction, final LassoCheck<L> lassoCheck)
-			throws AutomataOperationCanceledException;
-
-	/**
-	 * Check if {@code abstraction} is empty (i.e. does not accept any word).
-	 *
-	 * @param abstraction
-	 *            The current abstract
-	 * @return true iff {@code abstraction} is empty
-	 * @throws AutomataLibraryException
-	 */
-	protected abstract boolean isAbstractionEmpty(A abstraction) throws AutomataLibraryException;
-
-	/**
-	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) for the case where we
-	 * detected that a finite prefix of the lasso-shaped counterexample in {@code lassoCheck} is infeasible. In this
-	 * case the module (i.e., the subtrahend of the difference) will be a weak Büchi automaton (Büchi automaton where
-	 * set of final states is a trap). In fact, the module will have only a single accepting state that is labeled with
-	 * "false" and that has a self-loop for every letter.
-	 *
-	 * @param abstraction
-	 *            The abstraction to be refined
-	 * @param lassoCheck
-	 *            The lasso check for the infeasible lasso
-	 * @return The new refined abstraction
-	 * @throws AutomataOperationCanceledException
-	 */
-	protected abstract A refineFinite(A abstraction, final LassoCheck<L> lassoCheck)
-			throws AutomataOperationCanceledException;
-
-	private TerminationArgumentResult<IIcfgElement, Term>
-			constructTAResult(final TerminationArgument terminationArgument, final IcfgLocation honda) {
-		final RankingFunction rf = terminationArgument.getRankingFunction();
-		final Term[] supportingInvariants = terminationArgument.getSupportingInvariants().stream()
-				.map(si -> si.asTerm(mCsToolkitWithRankVars.getManagedScript().getScript())).toArray(Term[]::new);
-		return new TerminationArgumentResult<>(honda, Activator.PLUGIN_NAME,
-				rf.asLexTerm(mCsToolkitWithRankVars.getManagedScript().getScript()), rf.getName(), supportingInvariants,
-				mServices.getBacktranslationService(), Term.class);
 	}
 
 	public ToolchainCanceledException getToolchainCancelledException() {
