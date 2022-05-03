@@ -79,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
@@ -110,19 +109,14 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
+	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-
 	/**
 	 * Node of a recursive control flow graph which stores additional information about the
 	 */
 	protected final IIcfg<?> mIcfg;
 
-	protected final CfgSmtToolkit mCsToolkitWithoutRankVars;
 	protected final CfgSmtToolkit mCsToolkitWithRankVars;
-
-	private final PredicateFactory mPredicateFactory;
-
-	protected final BinaryStatePredicateManager mBinaryStatePredicateManager;
 
 	/**
 	 * Intermediate layer to encapsulate preferences.
@@ -138,16 +132,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
 	protected NestedLassoRun<L, IPredicate> mCounterexample;
-
-	/**
-	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
-	 * <ul>
-	 * <li>a superset of the feasible program traces.
-	 * <li>a subset of the traces which respect the control flow of of the program.
-	 */
-	private A mAbstraction;
-
-	protected A mArtifactAutomaton;
 
 	protected final PredicateFactoryForInterpolantAutomata mDefaultStateFactory;
 
@@ -165,17 +149,25 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	protected final InterpolationTechnique mInterpolation;
 
+	private final CfgSmtToolkit mCsToolkitWithoutRankVars;
+
+	private final PredicateFactory mPredicateFactory;
+
+	private final BinaryStatePredicateManager mBinaryStatePredicateManager;
+	/**
+	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
+	 * <ul>
+	 * <li>a superset of the feasible program traces.
+	 * <li>a subset of the traces which respect the control flow of of the program.
+	 */
+	private A mAbstraction;
+
 	private NonTerminationArgument mNonterminationArgument;
 
-	protected final IUltimateServiceProvider mServices;
-
 	private ToolchainCanceledException mToolchainCancelledException;
-	private final RankVarConstructor mRankVarConstructor;
 
 	private final StrategyFactory<L> mRefinementStrategyFactory;
 	private final TaskIdentifier mTaskIdentifier;
-
-	private final Class<L> mTransitionClazz;
 
 	public AbstractBuchiCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -183,18 +175,16 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		assert services != null;
 		mIcfg = icfg;
-		mTransitionClazz = transitionClazz;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier());
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mPredicateFactory = predicateFactory;
-		mRankVarConstructor = rankVarConstructor;
 		mCsToolkitWithoutRankVars = mIcfg.getCfgSmtToolkit();
-		mCsToolkitWithRankVars = mRankVarConstructor.getCsToolkitWithRankVariables();
+		mCsToolkitWithRankVars = rankVarConstructor.getCsToolkitWithRankVariables();
 		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkitWithRankVars, predicateFactory,
-				mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
+				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), mServices,
 				SIMPLIFICATION_TECHNIQUE);
 		mBenchmarkGenerator = benchmarkGenerator;
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
@@ -216,7 +206,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
 						XNF_CONVERSION_TECHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
 		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg,
-				mPredicateFactory, mDefaultStateFactory, mTransitionClazz);
+				mPredicateFactory, mDefaultStateFactory, transitionClazz);
 		mAbstraction = initialAbstraction;
 	}
 
@@ -278,10 +268,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		final String name = getClass().getName();
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + name + "========");
 
-		if (mIteration <= mPref.watchIteration()
-				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
-			mArtifactAutomaton = mAbstraction;
-		}
 		if (mPref.dumpAutomata()) {
 			final String filename = mIcfg.getIdentifier() + "_" + name + "Abstraction" + mIteration;
 			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
@@ -390,9 +376,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					throw new AssertionError("impossible case");
 				}
 				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
-					mArtifactAutomaton = mAbstraction;
-				}
 
 				if (mPref.dumpAutomata()) {
 					final String filename = mIcfg.getIdentifier() + "_" + name + "Abstraction" + mIteration;

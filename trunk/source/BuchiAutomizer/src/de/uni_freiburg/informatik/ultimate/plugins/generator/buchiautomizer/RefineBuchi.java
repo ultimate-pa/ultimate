@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
@@ -109,8 +108,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 
-	private final IIcfg<?> mICfgContainer;
-
 	private final boolean mDumpAutomata;
 	private final boolean mDifference;
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryInterpolAutom;
@@ -121,6 +118,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private final InterpolationTechnique mInterpolation;
 	private BackwardCoveringInformation mBci;
 	private final NcsbImplementation mNcsbImplementation;
+	private final String mIdentifier;
+
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
@@ -128,17 +127,16 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 
-	public RefineBuchi(final IIcfg<?> icfgContainer, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
+	public RefineBuchi(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final boolean dumpAutomata, final boolean difference,
 			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean useDoubleDeckers,
 			final String dumpPath, final Format format, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final NcsbImplementation ncsbImplementation) {
+			final NcsbImplementation ncsbImplementation, final String identifier) {
 		mServices = services;
 		mLogger = logger;
-		mICfgContainer = icfgContainer;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mDumpAutomata = dumpAutomata;
@@ -152,6 +150,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mNcsbImplementation = ncsbImplementation;
+		mIdentifier = identifier;
 	}
 
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getInterpolAutomatonUsedInRefinement() {
@@ -211,7 +210,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 						(IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
 		if (mDumpAutomata) {
 
-			final String filename = mICfgContainer.getIdentifier() + "_" + "InterpolantAutomatonBuchi" + iteration;
+			final String filename = mIdentifier + "_" + "InterpolantAutomatonBuchi" + iteration;
 			final String message = setting.toString();
 			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mDumpPath, filename, mFormat,
 					message);
@@ -293,7 +292,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			} else {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
 			}
-			final String filename = mICfgContainer.getIdentifier() + "_" + automatonString + iteration + "after";
+			final String filename = mIdentifier + "_" + automatonString + iteration + "after";
 			final String message = setting.toString();
 			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
 					mFormat, message);
@@ -320,8 +319,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			} else {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
 			}
-			final String filename =
-					mICfgContainer.getIdentifier() + "_" + determinicity + automatonString + iteration + "after";
+			final String filename = mIdentifier + "_" + determinicity + automatonString + iteration + "after";
 			final String message = setting.toString();
 			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
 					mFormat, message);

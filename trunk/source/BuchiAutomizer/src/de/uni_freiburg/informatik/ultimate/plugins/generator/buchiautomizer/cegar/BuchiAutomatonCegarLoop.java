@@ -121,10 +121,10 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				!baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
 		final boolean difference =
 				baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
-		mRefineBuchi = new RefineBuchi<>(mIcfg, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
-				difference, mDefaultStateFactory, mStateFactoryForRefinement, useDoubleDeckers, mPref.dumpPath(),
+		mRefineBuchi = new RefineBuchi<>(mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(), difference,
+				mDefaultStateFactory, mStateFactoryForRefinement, useDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, SIMPLIFICATION_TECHNIQUE,
-				XNF_CONVERSION_TECHNIQUE, ncsbImplementation);
+				XNF_CONVERSION_TECHNIQUE, ncsbImplementation, mIcfg.getIdentifier());
 		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
