@@ -172,11 +172,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiComplementationConstruction complementationConstruction) throws AutomataLibraryException {
 		mIteration = iteration;
 		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
-		// if (emptyStem(mCounterexample)) {
-		// stem = mCounterexample.getLoop().getWord();
-		// } else {
-		// stem = mCounterexample.getStem().getWord();
-		// }
 		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 
 		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
@@ -210,29 +205,28 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		loopInterpolants = traceCheck.getInterpolants();
 		mBci = TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
 
-		NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton =
-				constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem, stemInterpolants,
-						bspm.getHondaPredicate(), loop, loopInterpolants, abstraction);
+		NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton =
+				BuchiAutomizerUtils.constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem,
+						stemInterpolants, bspm.getHondaPredicate(), loop, loopInterpolants, abstraction, mServices,
+						(IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
 		if (mDumpAutomata) {
 
 			final String filename = mICfgContainer.getIdentifier() + "_" + "InterpolantAutomatonBuchi" + iteration;
 			final String message = setting.toString();
-			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mInterpolAutomaton, mDumpPath, filename, mFormat,
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mDumpPath, filename, mFormat,
 					message);
 		}
-
-		// BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(mCsToolkit));
 		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, pu);
 		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
-		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true, bhtc).getResult();
-		assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton,
+		assert new InductivityCheck<>(mServices, interpolAutomaton, false, true, bhtc).getResult();
+		assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), interpolAutomaton,
 				mCounterexample.getNestedLassoWord()).getResult();
 
 		mInterpolAutomatonUsedInRefinement =
 				buildBuchiInterpolantAutomatonForOnDemandConstruction(mCounterexample, setting, bspm, interpolation,
-						stem, loop, pu, stemInterpolants, loopInterpolants, mInterpolAutomaton, bhtc);
+						stem, loop, pu, stemInterpolants, loopInterpolants, interpolAutomaton, bhtc);
 		final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer = new PowersetDeterminizer<>(
 				mInterpolAutomatonUsedInRefinement, mUseDoubleDeckers, mStateFactoryInterpolAutom);
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
@@ -271,29 +265,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				newAbstraction = rankBasedOptimization(abstraction, setting, benchmarkGenerator, stateDeterminizer,
 						optimization);
 			}
-
-			// s_Logger.warn("START: minimization test");
-			// BuchiComplementFKVNwa<LETTER, IPredicate> compl1 =
-			// diff.getSndComplemented();
-			// INestedWordAutomatonOldApi<LETTER, IPredicate> compl = (new
-			// RemoveNonLiveStates<LETTER, IPredicate>(compl1)).getResult();
-			// BuchiClosureNwa<LETTER, IPredicate> bc = (new
-			// BuchiClosureNwa<LETTER, IPredicate>(compl));
-			// MinimizeSevpa<LETTER, IPredicate> minimizeOp =
-			// new MinimizeSevpa<LETTER,
-			// IPredicate>(bc,null,false,false,mStateFactoryInterpolAutom);
-			// s_Logger.warn("END: minimization test");
-			// INestedWordAutomatonOldApi<LETTER, IPredicate> minimizedOp =
-			// minimizeOp.getResult();
-			//
-			// BuchiIntersect<LETTER, IPredicate> newDiff =
-			// new BuchiIntersect<LETTER, IPredicate>(
-			// mAbstraction, minimizedOp, mStateFactoryForRefinement);
-			// s_Logger.warn("oldDiff size" +
-			// diff.getResult().sizeInformation());
-			// s_Logger.warn("newDiff size" +
-			// (newDiff.getResult()).sizeInformation());
-
 		} else {
 			final BuchiComplementFKV<LETTER, IPredicate> complNwa =
 					new BuchiComplementFKV<>(new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
@@ -309,22 +280,12 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			assert interNwa.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = interNwa.getResult();
 		}
-		// INestedWordAutomatonOldApi<LETTER, IPredicate> oldApi = (new
-		// RemoveUnreachable<LETTER,
-		// IPredicate>(mInterpolAutomatonUsedInRefinement)).getResult();
 		benchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
-		mInterpolAutomaton = null;
+		interpolAutomaton = null;
 		final boolean isUseful = isUsefulInterpolantAutomaton(mInterpolAutomatonUsedInRefinement, mCounterexample);
 		if (!isUseful) {
 			return null;
 		}
-
-		// assert (new BuchiAccepts<LETTER,
-		// IPredicate>(oldApi,mCounterexample.getNestedLassoWord())).getResult()
-		// : "interpolant automaton does not accept lasso.";
-		// assert !(new BuchiAccepts<LETTER,
-		// IPredicate>(newAbstraction,mCounterexample.getNestedLassoWord())).getResult()
-		// : "no progress";
 		if (mDumpAutomata) {
 			final String automatonString;
 			if (mInterpolAutomatonUsedInRefinement.getVpAlphabet().getCallAlphabet().isEmpty()) {
@@ -376,23 +337,20 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 					final BinaryStatePredicateManager bspm, final InterpolationTechnique interpolation,
 					final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final PredicateUnifier pu,
 					final IPredicate[] stemInterpolants, final IPredicate[] loopInterpolants,
-					final NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton,
+					final NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton,
 					final BuchiHoareTripleChecker bhtc) {
-		INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> buchiInterpolantAutomatonForOnDemandConstruction;
 		switch (biaConstructionStyle.getInterpolantAutomaton()) {
 		case LassoAutomaton:
-			buchiInterpolantAutomatonForOnDemandConstruction = mInterpolAutomaton;
-			break;
+			return interpolAutomaton;
 		case EagerNondeterminism:
-			if (!mInterpolAutomaton.getStates().contains(pu.getTruePredicate())) {
-				mInterpolAutomaton.addState(false, false, pu.getTruePredicate());
+			if (!interpolAutomaton.getStates().contains(pu.getTruePredicate())) {
+				interpolAutomaton.addState(false, false, pu.getTruePredicate());
 			}
-			if (!mInterpolAutomaton.getStates().contains(pu.getFalsePredicate())) {
-				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
+			if (!interpolAutomaton.getStates().contains(pu.getFalsePredicate())) {
+				interpolAutomaton.addState(false, true, pu.getFalsePredicate());
 			}
-			buchiInterpolantAutomatonForOnDemandConstruction = new NondeterministicInterpolantAutomaton<>(mServices,
-					mCsToolkit, bhtc, mInterpolAutomaton, pu, false, true);
-			break;
+			return new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, bhtc, interpolAutomaton, pu, false,
+					true);
 		case ScroogeNondeterminism:
 		case Deterministic:
 			Set<IPredicate> stemInterpolantsForRefinement;
@@ -423,19 +381,17 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
 			}
 
-			buchiInterpolantAutomatonForOnDemandConstruction = new BuchiInterpolantAutomatonBouncer<>(mCsToolkit,
-					mPredicateFactory, bspm, bhtc, BuchiAutomizerUtils.isEmptyStem(mCounterexample),
-					stemInterpolantsForRefinement, loopInterpolantsForRefinement,
+			return new BuchiInterpolantAutomatonBouncer<>(mCsToolkit, mPredicateFactory, bspm, bhtc,
+					BuchiAutomizerUtils.isEmptyStem(mCounterexample), stemInterpolantsForRefinement,
+					loopInterpolantsForRefinement,
 					BuchiAutomizerUtils.isEmptyStem(mCounterexample) ? null : stem.getSymbol(stem.length() - 1),
 					loop.getSymbol(loop.length() - 1), biaConstructionStyle.isScroogeNondeterminismStem(),
 					biaConstructionStyle.isScroogeNondeterminismLoop(), biaConstructionStyle.isBouncerStem(),
 					biaConstructionStyle.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
-					mServices, mInterpolAutomaton);
-			break;
+					mServices, interpolAutomaton);
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
 		}
-		return buchiInterpolantAutomatonForOnDemandConstruction;
 	}
 
 	private INestedWordAutomaton<LETTER, IPredicate> nsbcDifference(
@@ -559,7 +515,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer, final FkvOptimization optimization)
 			throws AutomataLibraryException {
-		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
 		GeneralizedBuchiDifferenceFKV<LETTER, IPredicate> gbaDiff = null;
 		BuchiDifferenceFKV<LETTER, IPredicate> diff = null;
 		if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
@@ -577,39 +532,32 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		if (gbaDiff == null) {
 			benchmarkGenerator.reportHighestRank(diff.getHighestRank());
 			assert diff.checkResult(mStateFactoryInterpolAutom);
-			newAbstraction = diff.getResult();
-		} else {
-			newAbstraction = gbaDiff.getResult();
+			return diff.getResult();
 		}
-
-		return newAbstraction;
+		return gbaDiff.getResult();
 	}
 
 	private InterpolatingTraceCheck<LETTER> constructTraceCheck(final IPredicate precond, final IPredicate postcond,
 			final NestedWord<LETTER> word, final PredicateUnifier pu, final InterpolationTechnique interpolation) {
-		final InterpolatingTraceCheck<LETTER> itc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
-			itc = new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, null,
+			return new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, null,
 					mServices, mCsToolkit, mPredicateFactory, pu, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
 					interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
-			break;
 		}
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect: {
-			itc = new TraceCheckSpWp<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
+			return new TraceCheckSpWp<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, pu, interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
 					mSimplificationTechnique, null, false);
-			break;
 		}
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		return itc;
 	}
 
 	private boolean isUsefulInterpolantAutomaton(
@@ -638,15 +586,11 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				new BuchiAccepts<>(new AutomataLibraryServices(mServices), oldApi, stemExtension).getResult();
 		if (!stemExtensionAccepted) {
 			throw new AssertionError("Bad chosen interpolant automaton: stem extension not accepted");
-			// mLogger.info("Bad chosen interpolant automaton: stem extension not accepted");
-			// return false;
 		}
 		final boolean loopExtensionAccepted =
 				new BuchiAccepts<>(new AutomataLibraryServices(mServices), oldApi, loopExtension).getResult();
 		if (!loopExtensionAccepted) {
 			throw new AssertionError("Bad chosen interpolant automaton: loop extension not accepted");
-			// mLogger.info("Bad chosen interpolant automaton: loop extension not accepted");
-			// return false;
 		}
 		return true;
 	}
@@ -669,68 +613,4 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			throw new UnsupportedOperationException("unknown automaton");
 		}
 	}
-
-	private NestedWordAutomaton<LETTER, IPredicate> constructBuchiInterpolantAutomaton(final IPredicate precondition,
-			final NestedWord<LETTER> stem, final IPredicate[] stemInterpolants, final IPredicate honda,
-			final NestedWord<LETTER> loop, final IPredicate[] loopInterpolants,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction) {
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(),
-						(IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
-		final boolean emptyStem = stem.length() == 0;
-		if (emptyStem) {
-			result.addState(true, true, honda);
-		} else {
-			result.addState(true, false, precondition);
-			for (int i = 0; i < stemInterpolants.length; i++) {
-				addState(stemInterpolants[i], result);
-				addTransition(i, precondition, stemInterpolants, honda, stem, result);
-			}
-			result.addState(false, true, honda);
-			addTransition(stemInterpolants.length, precondition, stemInterpolants, honda, stem, result);
-		}
-		for (int i = 0; i < loopInterpolants.length; i++) {
-			addState(loopInterpolants[i], result);
-			addTransition(i, honda, loopInterpolants, honda, loop, result);
-		}
-		addTransition(loopInterpolants.length, honda, loopInterpolants, honda, loop, result);
-		return result;
-	}
-
-	private void addState(final IPredicate pred, final NestedWordAutomaton<LETTER, IPredicate> nwa) {
-		if (!nwa.getStates().contains(pred)) {
-			nwa.addState(false, false, pred);
-		}
-	}
-
-	private void addTransition(final int pos, final IPredicate pre, final IPredicate[] predicates,
-			final IPredicate post, final NestedWord<LETTER> nw, final NestedWordAutomaton<LETTER, IPredicate> nwa) {
-		final IPredicate pred = getPredicateAtPosition(pos - 1, pre, predicates, post);
-		final IPredicate succ = getPredicateAtPosition(pos, pre, predicates, post);
-		final LETTER cb = nw.getSymbol(pos);
-		if (nw.isInternalPosition(pos)) {
-			nwa.addInternalTransition(pred, cb, succ);
-		} else if (nw.isCallPosition(pos)) {
-			nwa.addCallTransition(pred, cb, succ);
-		} else if (nw.isReturnPosition(pos)) {
-			assert !nw.isPendingReturn(pos);
-			final int k = nw.getCallPosition(pos);
-			final IPredicate hier = getPredicateAtPosition(k - 1, pre, predicates, post);
-			nwa.addReturnTransition(pred, hier, cb, succ);
-		}
-	}
-
-	private static IPredicate getPredicateAtPosition(final int pos, final IPredicate before,
-			final IPredicate[] predicates, final IPredicate after) {
-		assert pos >= -1;
-		assert pos <= predicates.length;
-		if (pos < 0) {
-			return before;
-		}
-		if (pos >= predicates.length) {
-			return after;
-		}
-		return predicates[pos];
-	}
-
 }
