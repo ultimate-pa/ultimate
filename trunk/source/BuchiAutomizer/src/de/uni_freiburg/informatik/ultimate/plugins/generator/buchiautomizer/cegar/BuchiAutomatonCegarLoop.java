@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiClosureNwa;
@@ -116,7 +115,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(predicateFactory);
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final NcsbImplementation ncsbImplemntation =
+		final NcsbImplementation ncsbImplementation =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_NCSB_IMPLEMENTATION, NcsbImplementation.class);
 		final boolean useDoubleDeckers =
 				!baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
@@ -125,11 +124,10 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		mRefineBuchi = new RefineBuchi<>(mIcfg, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
 				difference, mDefaultStateFactory, mStateFactoryForRefinement, useDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, SIMPLIFICATION_TECHNIQUE,
-				XNF_CONVERSION_TECHNIQUE, ncsbImplemntation);
-		final BuchiInterpolantAutomatonConstructionStrategy biaConstructionStrategy =
+				XNF_CONVERSION_TECHNIQUE, ncsbImplementation);
+		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
-						BuchiInterpolantAutomatonConstructionStrategy.class);
-		mBiaConstructionStyleSequence = biaConstructionStrategy.getBiaConstrucionStyleSequence(baPref);
+						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
 		mComplementationConstruction =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 						BuchiComplementationConstruction.class);
@@ -169,20 +167,20 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			}
 			utilFixedCe.writeNestedLassoRun(abstraction, mCounterexample, counterName, mIteration);
 		}
-	
+
 		final HistogramOfIterable<L> traceHistogramStem =
 				new HistogramOfIterable<>(mCounterexample.getStem().getWord());
 		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogramStem.getMax());
 		final HistogramOfIterable<L> traceHistogramLoop =
 				new HistogramOfIterable<>(mCounterexample.getLoop().getWord());
 		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogramLoop.getMax());
-	
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Counterexample stem histogram " + traceHistogramStem);
 			mLogger.info("Counterexample loop histogram " + traceHistogramLoop);
 		}
 		assert mCounterexample.getLoop().getLength() > 1;
-	
+
 		return false;
 	}
 
@@ -214,24 +212,22 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
 			traceCheck = lassoCheck.getConcatCheck();
 		}
-	
+
 		final NestedWordAutomaton<L, IPredicate> interpolAutomaton = traceCheck.getInfeasibilityProof();
-	
+
 		final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceCheck.getPredicateUnifier());
-	
+
 		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
 				mCsToolkitWithRankVars, htc, interpolAutomaton, traceCheck.getPredicateUnifier(), false, false);
 		final PowersetDeterminizer<L, IPredicate> psd =
 				new PowersetDeterminizer<>(determinized, true, mDefaultStateFactory);
 		final INestedWordAutomaton<L, IPredicate> result;
 		try {
-			IGeneralizedNwaOutgoingLetterAndTransitionProvider<L, IPredicate> gbaAbstraction;
 			if (abstraction instanceof IGeneralizedNestedWordAutomaton) {
-				gbaAbstraction = (IGeneralizedNestedWordAutomaton<L, IPredicate>) abstraction;
 				final GeneralizedDifference<L, IPredicate> gbaDiff =
 						new GeneralizedDifference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-								gbaAbstraction, determinized, psd);
+								(IGeneralizedNestedWordAutomaton<L, IPredicate>) abstraction, determinized, psd);
 				result = gbaDiff.getResult();
 			} else {
 				final Difference<L, IPredicate> diff = new Difference<>(new AutomataLibraryServices(mServices),
@@ -271,7 +267,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
-	
+
 		/*
 		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles Each construction style defines how
 		 * an interpolant automaton is constructed. Constructions that provide simpler (less nondeterministic) automata
@@ -300,7 +296,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			} catch (final AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
 			}
-	
+
 			if (result != null) {
 				if (mConstructTermcompProof) {
 					mTermcompProofBenchmark.reportBuchiModule(mIteration,
