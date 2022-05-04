@@ -261,8 +261,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mLogger.info("Minimize is " + mPref.getMinimization());
 
 		mIteration = 0;
-		final String name = getClass().getName();
-		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + name + "========");
+		final String name = getClass().getSimpleName();
+		mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, name);
 
 		if (mPref.dumpAutomata()) {
 			final String filename = mIdentifier + "_" + name + "Abstraction" + mIteration;
@@ -284,7 +284,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		}
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
-			mLogger.info("======== Iteration " + mIteration + "============");
+			mLogger.info("======== Iteration %s ============", mIteration);
 			mBenchmarkGenerator.announceNextIteration();
 			boolean abstractionCorrect;
 			try {
