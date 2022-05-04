@@ -258,7 +258,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		assert automatonUsesISLPredicates(abstraction) : "used wrong StateFactory";
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		return reduceAbstractionSize(result, mAutomataMinimizationAfterFeasbilityBasedRefinement, interpolAutomaton);
+		return reduceAbstractionSize(result, mAutomataMinimizationAfterFeasbilityBasedRefinement);
 	}
 
 	@Override
@@ -318,8 +318,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				}
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mRefineBuchi.getBci());
-				// TODO: Calling this with null might be problematic with a particular setting (but was also before!)
-				return reduceAbstractionSize(result, mAutomataMinimizationAfterRankBasedRefinement, null);
+				return reduceAbstractionSize(result, mAutomataMinimizationAfterRankBasedRefinement);
 			}
 			stage++;
 		}
@@ -336,11 +335,14 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private INestedWordAutomaton<L, IPredicate> reduceAbstractionSize(
-			final INestedWordAutomaton<L, IPredicate> abstraction, final Minimization automataMinimization,
-			final NestedWordAutomaton<L, IPredicate> interpolAutomaton) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<L, IPredicate> abstraction, final Minimization automataMinimization)
+			throws AutomataOperationCanceledException {
 		if (abstraction instanceof IGeneralizedNestedWordAutomaton) {
 			// GBA does not have minimization support yet.
 			return abstraction;
+		}
+		if (automataMinimization == Minimization.NWA_OVERAPPROXIMATION) {
+			throw new UnsupportedOperationException("Setting currently not supported");
 		}
 
 		INestedWordAutomaton<L, IPredicate> result;
@@ -371,8 +373,8 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				AutomataMinimization<IcfgLocation, ISLPredicate, L> am;
 				try {
 					am = new AutomataMinimization<>(mServices, result, automataMinimization, false, mIteration,
-							mStateFactoryForRefinement, -1, null, interpolAutomaton, -1,
-							mPredicateFactoryResultChecking, locProvider, false);
+							mStateFactoryForRefinement, -1, null, null, -1, mPredicateFactoryResultChecking,
+							locProvider, false);
 				} catch (final AutomataMinimizationTimeout e) {
 					mBenchmarkGenerator.addAutomataMinimizationData(e.getStatistics());
 					throw e.getAutomataOperationCanceledException();
