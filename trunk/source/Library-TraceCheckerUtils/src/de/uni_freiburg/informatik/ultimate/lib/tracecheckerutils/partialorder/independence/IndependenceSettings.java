@@ -131,4 +131,16 @@ public final class IndependenceSettings {
 	public long getSolverTimeout() {
 		return mSolverTimeout;
 	}
+
+	@Override
+	public String toString() {
+		if (mIndependenceType == IndependenceType.SYNTACTIC) {
+			return "[IndependenceType=" + mIndependenceType + ", AbstractionType=" + mAbstractionType
+					+ ", UseConditional=<UNSUPPORTED>, UseSemiCommutativity=<UNSUPPORTED>, "
+					+ "Solver=<NOT_USED>, SolverTimeout=<NOT_USED>]";
+		}
+		return "[IndependenceType=" + mIndependenceType + ", AbstractionType=" + mAbstractionType + ", UseConditional="
+				+ mUseConditional + ", UseSemiCommutativity=" + mUseSemiCommutativity + ", Solver=" + mSolver
+				+ ", SolverTimeout=" + mSolverTimeout + "ms]";
+	}
 }

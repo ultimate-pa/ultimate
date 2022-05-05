@@ -150,8 +150,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
 		// Setup management of abstraction levels and corresponding independence relations.
-		mIndependenceContainers = new ArrayList<>(mPref.getNumberOfIndependenceRelations());
-		for (int i = 0; i < mPref.getNumberOfIndependenceRelations(); ++i) {
+		final int numIndependenceRelations = mPref.getNumberOfIndependenceRelations();
+		mIndependenceContainers = new ArrayList<>(numIndependenceRelations);
+		mLogger.info("Running %s with %d independence relations.", PartialOrderCegarLoop.class.getSimpleName(),
+				numIndependenceRelations);
+		if (numIndependenceRelations > 1) {
+			mLogger.warn("Attention: Unsuitable combinations of independence relations may be unsound!");
+			mLogger.warn("Only combine independence relations if you are sure the combination is sound.");
+		}
+		for (int i = 0; i < numIndependenceRelations; ++i) {
 			final IRefinableIndependenceContainer<L> container = constructIndependenceContainer(i, copyFactory);
 			container.initialize();
 			mIndependenceContainers.add(container);
@@ -293,6 +300,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final int index,
 			final ICopyActionFactory<L> copyFactory) {
 		final IndependenceSettings settings = mPref.porIndependenceSettings(index);
+		mLogger.info("Independence Relation #%d: %s", index + 1, settings);
 
 		// Construct the script used for independence checks.
 		// TODO Only construct this if an independence relation actually needs a script!
