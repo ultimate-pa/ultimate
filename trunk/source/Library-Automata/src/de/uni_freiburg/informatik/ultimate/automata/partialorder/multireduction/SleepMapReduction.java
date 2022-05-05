@@ -151,7 +151,7 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 				.filter(b -> comp.compare(b, letter) < 0 && !isPruned(state, b))
 				.map(b -> new Pair<>(b, mBudgetFunction.applyAsInt(state, b)))
 				.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
-		final SleepMap<L, S> succSleepMap = currentSleepMap.computeSuccessor(currentState, letter, explored);
+		final SleepMap<L, S> succSleepMap = currentSleepMap.computeSuccessor(currentState, letter, explored, budget);
 		return mStateFactory.createSleepMapState(currentTransitionOpt.get().getSucc(), succSleepMap, budget);
 	}
 

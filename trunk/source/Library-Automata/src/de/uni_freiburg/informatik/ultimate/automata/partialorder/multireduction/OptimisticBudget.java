@@ -95,6 +95,7 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements T
 			// Never return a budget higher than the price in the sleep map.
 			// Because the reduction considers the minimum of the two values, this would be pointless.
 			maximumBudget = sleepMap.getPrice(letter);
+			assert maximumBudget <= mStateFactory.getBudget(state) : "invalid state: " + state;
 		} else {
 			// Ensure invariant for budget functions: Must never exceed budget of the current state.
 			maximumBudget = mStateFactory.getBudget(state);

@@ -118,13 +118,14 @@ public final class SleepMap<L, S> {
 	 *            A map associating all letters less than the given letter with their price
 	 * @return A sleep map for the successor state after the given transition.
 	 */
-	public SleepMap<L, S> computeSuccessor(final S state, final L letter, final Map<L, Integer> lesserLetters) {
+	public SleepMap<L, S> computeSuccessor(final S state, final L letter, final Map<L, Integer> lesserLetters,
+			final int budget) {
 		final Map<L, Integer> successorMap = new HashMap<>();
 
 		// transfer elements of current set
 		for (final Map.Entry<L, Integer> entry : mSleepMap.entrySet()) {
 			final Integer level = minimumRelation(state, letter, entry.getKey(), entry.getValue());
-			if (level != null) {
+			if (level != null && level <= budget) {
 				successorMap.put(entry.getKey(), level);
 			}
 		}
@@ -135,7 +136,7 @@ public final class SleepMap<L, S> {
 			final Integer oldLevel = successorMap.get(letter);
 			final Integer minLevel = oldLevel == null ? entry.getValue() : Integer.min(oldLevel, entry.getValue());
 			final Integer level = minimumRelation(state, letter, entry.getKey(), minLevel);
-			if (level != null) {
+			if (level != null && level <= budget) {
 				successorMap.put(entry.getKey(), level);
 			}
 		}
