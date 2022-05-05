@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 
-	private final Map<IPredicate, IPredicate> mRankDecrease2RankEquality = new HashMap<IPredicate, IPredicate>();
+	private final Map<IPredicate, IPredicate> mRankDecrease2RankEquality = new HashMap<>();
 	private final IHoareTripleChecker mIHoareTripleChecker;
 
 	public BuchiHoareTripleChecker(final IHoareTripleChecker iHoareTripleChecker) {
