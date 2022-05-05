@@ -118,7 +118,11 @@ public class DepthFirstTraversal<L, S> {
 	}
 
 	private void traverse() throws AutomataOperationCanceledException {
-		visitState(mStartState);
+		final boolean abortImmediately = visitState(mStartState);
+		if (abortImmediately) {
+			mLogger.debug("visitor aborted search");
+			return;
+		}
 
 		while (!mWorklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
