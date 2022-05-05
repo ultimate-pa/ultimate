@@ -92,7 +92,7 @@ public final class TAPreferences {
 	private final boolean mOverrideInterpolantAutomaton;
 	private final McrInterpolantMethod mMcrInterpolantMethod;
 
-	private final IndependenceSettings mPorIndependenceSettings;
+	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
 
 	public enum Artifact {
@@ -192,14 +192,7 @@ public final class TAPreferences {
 		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
 				McrInterpolantMethod.class);
 
-		mPorIndependenceSettings = new IndependenceSettings(
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_POR, IndependenceType.class),
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, AbstractionType.class),
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COND_POR),
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR),
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_POR,
-						ExternalSolver.class),
-				mPrefs.getLong(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR));
+		mPorIndependenceSettings = new IndependenceSettings[getNumberOfIndependenceRelations()];
 		mLbeIndependenceSettings = new IndependenceSettings(
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_PLBE, IndependenceType.class),
 				AbstractionType.NONE /* currently hard-coded; will be changed for repeated Petri net LBE */,
@@ -397,8 +390,38 @@ public final class TAPreferences {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
 	}
 
-	public IndependenceSettings porIndependenceSettings() {
-		return mPorIndependenceSettings;
+	public int getNumberOfIndependenceRelations() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_NUM_INDEPENDENCE);
+	}
+
+	public IndependenceSettings porIndependenceSettings(final int index) {
+		if (index < 0 || index >= getNumberOfIndependenceRelations()) {
+			throw new IllegalArgumentException(
+					"Index out of range: " + index + " not between 0 and " + getNumberOfIndependenceRelations());
+		}
+		if (mPorIndependenceSettings[index] == null) {
+			mPorIndependenceSettings[index] = new IndependenceSettings(
+					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_POR, index),
+							IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, IndependenceType.class),
+					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, index),
+							IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, AbstractionType.class),
+					mPrefs.getBoolean(getLabel(TraceAbstractionPreferenceInitializer.LABEL_COND_POR, index),
+							IndependenceSettings.DEFAULT_USE_CONDITIONAL),
+					mPrefs.getBoolean(getLabel(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR, index),
+							IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY),
+					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_POR, index),
+							IndependenceSettings.DEFAULT_SOLVER, ExternalSolver.class),
+					mPrefs.getLong(getLabel(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR,
+							index), IndependenceSettings.DEFAULT_SOLVER_TIMEOUT));
+		}
+		return mPorIndependenceSettings[index];
+	}
+
+	private static String getLabel(final String label, final int index) {
+		if (index == 0) {
+			return label;
+		}
+		return label + "_" + (index + 1);
 	}
 
 	public IndependenceSettings lbeIndependenceSettings() {

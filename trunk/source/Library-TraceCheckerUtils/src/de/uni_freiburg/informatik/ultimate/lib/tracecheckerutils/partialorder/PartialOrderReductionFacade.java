@@ -26,12 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.ToIntBiFunction;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -56,6 +59,10 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSet
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMap;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -63,11 +70,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -95,49 +105,66 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final PartialOrderMode mMode;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
+	private final ISleepMapStateFactory<L, IPredicate, IPredicate> mSleepMapFactory;
+
 	private StateSplitter<IPredicate> mStateSplitter;
 	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
 	private final IIcfg<?> mIcfg;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
 
-	private IIndependenceRelation<IPredicate, L> mIndependence;
+	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations;
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
+	private ToIntBiFunction<IPredicate, L> mBudget;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
-			final IIndependenceRelation<IPredicate, L> independence) {
+			final List<IIndependenceRelation<IPredicate, L>> independenceRelations) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
 		mMode = mode;
+		if (independenceRelations.isEmpty() && mMode != PartialOrderMode.NONE) {
+			throw new IllegalArgumentException("Need at least one independence relation");
+		}
+		if (independenceRelations.size() > 1 && mMode != PartialOrderMode.SLEEP_NEW_STATES) {
+			throw new IllegalArgumentException("This mode does not support multiple independence relations");
+		}
+		mIndependenceRelations = new ArrayList<>(independenceRelations);
+
 		mSleepFactory = createSleepFactory(predicateFactory);
+		mSleepMapFactory = createSleepMapFactory(predicateFactory);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mDeadEndStore = createDeadEndStore();
 
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
 
-		mIndependence = independence;
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
-	public void replaceIndependence(final IIndependenceRelation<IPredicate, L> independence) {
-		if (Objects.equals(independence, mIndependence)) {
+	public void replaceIndependence(final int index, final IIndependenceRelation<IPredicate, L> independence) {
+		assert 0 <= index && index < mIndependenceRelations.size() : "Unsupported index";
+		final IIndependenceRelation<IPredicate, L> oldRelation = mIndependenceRelations.get(index);
+		if (Objects.equals(independence, oldRelation)) {
 			return;
 		}
-		mIndependence = independence;
+		mIndependenceRelations.set(index, independence);
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
-	public IIndependenceRelation<IPredicate, L> getIndependence() {
-		return mIndependence;
+	public IIndependenceRelation<IPredicate, L> getIndependence(final int index) {
+		return mIndependenceRelations.get(index);
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
 			createSleepFactory(final PredicateFactory predicateFactory) {
 		if (!mMode.hasSleepSets()) {
+			return null;
+		}
+		if (mIndependenceRelations.size() > 1) {
+			// We need a sleep map factory instead, see #createSleepMapFactory
 			return null;
 		}
 		if (mMode.doesUnrolling()) {
@@ -148,8 +175,23 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return new ISleepSetStateFactory.NoUnrolling<>();
 	}
 
+	private ISleepMapStateFactory<L, IPredicate, IPredicate>
+			createSleepMapFactory(final PredicateFactory predicateFactory) {
+		if (mIndependenceRelations.size() <= 1) {
+			return null;
+		}
+		final var factory = new SleepMapStateFactory<L>(predicateFactory);
+		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState,
+				p -> new Pair<>(factory.getSleepMap(p), factory.getBudget(p)));
+		return factory;
+	}
+
 	public ISleepSetStateFactory<L, IPredicate, IPredicate> getSleepFactory() {
 		return mSleepFactory;
+	}
+
+	public ISleepMapStateFactory<L, IPredicate, IPredicate> getSleepMapFactory() {
+		return mSleepMapFactory;
 	}
 
 	private IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType, final long randomOrderSeed,
@@ -184,8 +226,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return null;
 		}
 
+		// TODO Persistent sets currently only supported for single independence relation
 		final IIndependenceRelation<IPredicate, L> independence =
-				IndependenceBuilder.fromIndependence(mIndependence).ensureUnconditional().build();
+				IndependenceBuilder.fromIndependence(mIndependenceRelations.get(0)).ensureUnconditional().build();
 		final IDfsOrder<IcfgEdge, IPredicate> relevantOrder =
 				mMode.hasFixedOrder() ? (IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder : null;
 
@@ -212,6 +255,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return mDfsOrder;
 	}
 
+	public void setBudget(final ToIntBiFunction<IPredicate, L> budget) {
+		mBudget = budget;
+	}
+
 	/**
 	 * Apply POR to a given automaton.
 	 *
@@ -230,25 +277,35 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
 		}
 
+		final IIndependenceRelation<IPredicate, L> independence =
+				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
 		switch (mMode) {
 		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, mIndependence, mDfsOrder, visitor);
+			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
 			break;
 		case SLEEP_NEW_STATES:
-			new DepthFirstTraversal<>(mAutomataServices,
-					new MinimalSleepSetReduction<>(input, mSleepFactory, mIndependence, mDfsOrder), mDfsOrder, visitor);
+			if (mIndependenceRelations.size() == 1) {
+				new DepthFirstTraversal<>(mAutomataServices,
+						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
+						visitor);
+			} else {
+				final var red =
+						new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory, mBudget);
+				((OptimisticBudget<L, IPredicate, IPredicate, ?>) mBudget).setReduction(red);
+				new DepthFirstTraversal<>(mAutomataServices, red, mDfsOrder, visitor);
+			}
 			break;
 		case PERSISTENT_SETS:
 			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
 			break;
 		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
 		case PERSISTENT_SLEEP_DELAY_SET:
-			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, mIndependence, mDfsOrder,
+			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, independence, mDfsOrder,
 					mPersistent, visitor);
 			break;
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES:
-			PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, mIndependence, mDfsOrder,
+			PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
 					mSleepFactory, mPersistent, visitor);
 			break;
 		case NONE:
@@ -330,10 +387,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	public void reportStatistics(final String pluginId) {
-		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(mIndependence.getStatistics());
-		mServices.getResultService().reportResult(pluginId,
-				new StatisticsResult<>(pluginId, "Independence relation benchmarks", data));
+		for (int i = 0; i < mIndependenceRelations.size(); ++i) {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(mIndependenceRelations.get(i).getStatistics());
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Independence relation #" + i + " benchmarks", data));
+		}
 
 		if (mPersistent != null) {
 			final StatisticsData persistentData = new StatisticsData();
@@ -345,6 +404,129 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	public StateSplitter<IPredicate> getStateSplitter() {
 		return mStateSplitter;
+	}
+
+	private static class SleepMapStateFactory<L> implements ISleepMapStateFactory<L, IPredicate, IPredicate> {
+
+		private final IPredicate mEmptyStack;
+
+		private final NestedMap3<IPredicate, SleepMap<L, IPredicate>, Integer, SleepMapPredicate<L>> mMap =
+				new NestedMap3<>();
+
+		public SleepMapStateFactory(final PredicateFactory predicateFactory) {
+			mEmptyStack = predicateFactory.newEmptyStackPredicate();
+		}
+
+		@Override
+		public IPredicate createEmptyStackState() {
+			return mEmptyStack;
+		}
+
+		@Override
+		public IPredicate createSleepMapState(final IPredicate state, final SleepMap<L, IPredicate> sleepMap,
+				final int budget) {
+			final SleepMapPredicate<L> existing = mMap.get(state, sleepMap, budget);
+			if (existing != null) {
+				return existing;
+			}
+
+			final SleepMapPredicate<L> predicate = new SleepMapPredicate<>((IMLPredicate) state, sleepMap, budget);
+			mMap.put(state, sleepMap, budget, predicate);
+			return predicate;
+		}
+
+		@Override
+		public IPredicate getOriginalState(final IPredicate sleepMapState) {
+			return ((SleepMapPredicate<?>) sleepMapState).getUnderlying();
+		}
+
+		@Override
+		public SleepMap<L, IPredicate> getSleepMap(final IPredicate sleepMapState) {
+			return ((SleepMapPredicate<L>) sleepMapState).getSleepMap();
+		}
+
+		@Override
+		public int getBudget(final IPredicate sleepMapState) {
+			return ((SleepMapPredicate<?>) sleepMapState).getBudget();
+		}
+
+	}
+
+	public static class SleepMapPredicate<L> implements IMLPredicate {
+		private final IMLPredicate mUnderlying;
+		private final SleepMap<L, IPredicate> mSleepMap;
+		private final int mBudget;
+
+		public SleepMapPredicate(final IMLPredicate underlying, final SleepMap<L, IPredicate> sleepMap,
+				final int budget) {
+			mUnderlying = underlying;
+			mSleepMap = sleepMap;
+			mBudget = budget;
+		}
+
+		@Override
+		public Term getFormula() {
+			return mUnderlying.getFormula();
+		}
+
+		@Override
+		public Term getClosedFormula() {
+			return mUnderlying.getClosedFormula();
+		}
+
+		@Override
+		public String[] getProcedures() {
+			return mUnderlying.getProcedures();
+		}
+
+		@Override
+		public Set<IProgramVar> getVars() {
+			return mUnderlying.getVars();
+		}
+
+		@Override
+		public IcfgLocation[] getProgramPoints() {
+			return mUnderlying.getProgramPoints();
+		}
+
+		public IMLPredicate getUnderlying() {
+			return mUnderlying;
+		}
+
+		public SleepMap<L, IPredicate> getSleepMap() {
+			return mSleepMap;
+		}
+
+		public int getBudget() {
+			return mBudget;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(mBudget, mSleepMap, mUnderlying);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final SleepMapPredicate<?> other = (SleepMapPredicate<?>) obj;
+			return mBudget == other.mBudget && Objects.equals(mSleepMap, other.mSleepMap)
+					&& Objects.equals(mUnderlying, other.mUnderlying);
+		}
+
+		@Override
+		public String toString() {
+			return "SleepMapPredicate [underlying: " + mUnderlying + ", budget: " + mBudget + ", map: " + mSleepMap
+					+ "]";
+		}
 	}
 
 	/**

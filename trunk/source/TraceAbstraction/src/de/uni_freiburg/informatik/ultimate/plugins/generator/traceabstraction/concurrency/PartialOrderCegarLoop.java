@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -125,7 +127,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
 	private final PartialOrderReductionFacade<L> mPOR;
-	private final IRefinableIndependenceContainer<L> mIndependenceContainer;
+	private final List<IRefinableIndependenceContainer<L>> mIndependenceContainers;
 	private ManagedScript mIndependenceScript;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
@@ -148,12 +150,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mPartialOrderMode = mPref.getPartialOrderMode();
 
 		// Setup management of abstraction levels and corresponding independence relations.
-		mIndependenceContainer = constructIndependenceContainer(copyFactory);
-		mIndependenceContainer.initialize();
+		mIndependenceContainers = new ArrayList<>(mPref.getNumberOfIndependenceRelations());
+		for (int i = 0; i < mPref.getNumberOfIndependenceRelations(); ++i) {
+			final IRefinableIndependenceContainer<L> container = constructIndependenceContainer(i, copyFactory);
+			container.initialize();
+			mIndependenceContainers.add(container);
+		}
 
+		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceContainers.stream()
+				.map(IRefinableIndependenceContainer::getOrConstructIndependence).collect(Collectors.toList());
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
-				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
-				mIndependenceContainer.getOrConstructIndependence());
+				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations);
 	}
 
 	@Override
@@ -200,9 +207,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		// Actual refinement step
 		mAbstraction = new InformationStorage<>(mAbstraction, determinized, mFactory, false);
 
-		// update independence in case of abstract independence
-		mIndependenceContainer.refine(mRefinementResult);
-		mPOR.replaceIndependence(mIndependenceContainer.getOrConstructIndependence());
+		// update independence relations (in case of abstract independence)
+		for (int i = 0; i < mIndependenceContainers.size(); ++i) {
+			final var container = mIndependenceContainers.get(i);
+			container.refine(mRefinementResult);
+			mPOR.replaceIndependence(i, container.getOrConstructIndependence());
+		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -211,9 +221,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		switchToOnDemandConstructionMode();
+
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
-		final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 		try {
+			final var budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices), mPOR.getDfsOrder(),
+					mPOR.getSleepMapFactory(), this::createVisitor, v -> getCounterexample(v) == null);
+			mPOR.setBudget(budget);
+
+			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
@@ -275,11 +290,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), false);
 	}
 
-	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final ICopyActionFactory<L> copyFactory) {
+	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final int index,
+			final ICopyActionFactory<L> copyFactory) {
+		final IndependenceSettings settings = mPref.porIndependenceSettings(index);
+
 		// Construct the script used for independence checks.
-		// TODO Only construct this if the independence relation actually needs a script!
+		// TODO Only construct this if an independence relation actually needs a script!
 		// TODO problem: auxVar constants in abstraction can still not be created in the locked Icfg script.
-		mIndependenceScript = constructIndependenceScript();
+		if (mIndependenceScript == null) {
+			mIndependenceScript = constructIndependenceScript(settings);
+		}
 
 		// We need to transfer given transition formulas and condition predicates to the independenceScript.
 		// TODO Only construct this if we actually need to transfer to a different script!
@@ -289,25 +309,26 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
 			// Construct the independence relation (without abstraction). It is the responsibility of the independence
 			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
-			final var independence = constructIndependence(mIndependenceScript, transferrer, false);
+			final var independence = constructIndependence(settings, mIndependenceScript, transferrer, false);
 			return new StaticIndependenceContainer<>(independence);
 		}
 
 		// Construct the abstraction function.
-		final var letterAbstraction = constructAbstraction(copyFactory, mIndependenceScript, transferrer);
+		final var letterAbstraction = constructAbstraction(copyFactory, mIndependenceScript, transferrer,
+				settings.getIndependenceType() == IndependenceType.SEMANTIC);
 		final var cachedAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
 
 		// Construct the independence relation (still without abstraction).
 		// It is the responsibility of the abstraction function to transfer the transition formulas. But we leave it to
 		// the independence relation to transfer conditions.
-		final var independence = constructIndependence(mIndependenceScript, transferrer, true);
+		final var independence = constructIndependence(settings, mIndependenceScript, transferrer, true);
 
 		return new IndependenceContainerWithAbstraction<>(cachedAbstraction, independence);
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructIndependence(final ManagedScript independenceScript,
-			final TransferrerWithVariableCache transferrer, final boolean tfsAlreadyTransferred) {
-		final IndependenceSettings settings = mPref.porIndependenceSettings();
+	private IIndependenceRelation<IPredicate, L> constructIndependence(final IndependenceSettings settings,
+			final ManagedScript independenceScript, final TransferrerWithVariableCache transferrer,
+			final boolean tfsAlreadyTransferred) {
 		if (settings.getIndependenceType() == IndependenceType.SYNTACTIC) {
 			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
 		}
@@ -344,9 +365,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				.build();
 	}
 
-	private ManagedScript constructIndependenceScript() {
-		final IndependenceSettings settings = mPref.porIndependenceSettings();
-
+	private ManagedScript constructIndependenceScript(final IndependenceSettings settings) {
 		final SolverSettings solverSettings;
 		if (settings.getSolver() == ExternalSolver.SMTINTERPOL) {
 			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
@@ -363,14 +382,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(
 			final ICopyActionFactory<L> copyFactory, final ManagedScript abstractionScript,
-			final TransferrerWithVariableCache transferrer) {
+			final TransferrerWithVariableCache transferrer, final boolean simplify) {
 		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
 			return null;
 		}
 
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(mCsToolkit);
 		final TransFormulaAuxVarEliminator tfEliminator;
-		if (mPref.porIndependenceSettings().getIndependenceType() == IndependenceType.SEMANTIC) {
+		if (simplify) {
 			// For semantic independence, eliminating auxiliary variables can ease the load on the SMT solver.
 			tfEliminator = (ms, fm, av) -> TransFormulaUtils.tryAuxVarElimination(mServices, ms,
 					SimplificationTechnique.POLY_PAC, fm, av);

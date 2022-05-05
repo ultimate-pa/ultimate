@@ -122,6 +122,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
+	public static final String LABEL_POR_NUM_INDEPENDENCE = "Number of independence relations to use for POR";
+	private static final int DEF_POR_NUM_INDEPENDENCE = 1;
+
 	public static final String LABEL_INDEPENDENCE_POR = "Independence relation used for POR in concurrent analysis";
 	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
@@ -543,6 +546,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_NUM_INDEPENDENCE, DEF_POR_NUM_INDEPENDENCE,
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE,
 						PreferenceType.Combo, IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, IndependenceSettings.DEFAULT_ABSTRACTION_TYPE,

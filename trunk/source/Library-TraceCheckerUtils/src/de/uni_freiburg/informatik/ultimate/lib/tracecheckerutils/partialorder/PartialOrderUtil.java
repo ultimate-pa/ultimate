@@ -145,7 +145,7 @@ public final class PartialOrderUtil {
 		logger.warn("computing representative of feasible ctex");
 		final Word<L> feasCtex = makeWord(clazz, abstraction.getAlphabet(), hashes);
 		final Word<L> repr =
-				computeRepresentative(feasCtex, clazz, abstraction, por.getIndependence(), por.getDfsOrder());
+				computeRepresentative(feasCtex, clazz, abstraction, por.getIndependence(0), por.getDfsOrder());
 		logger.warn("Representative of feasible ctex is: " + PartialOrderUtil.printWordHashes(repr));
 
 		logger.warn("building reduced automaton");

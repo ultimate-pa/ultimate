@@ -68,7 +68,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 *            The predicate factory used to create new MLPredicates.
 	 */
 	public SleepSetStateFactoryForRefinement(final PredicateFactory predicateFactory) {
-		super();
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
 	}
 
