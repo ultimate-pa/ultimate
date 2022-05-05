@@ -78,7 +78,9 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 	public boolean contains(final S state, final L a, final L b) {
 		final L abstractA = mAbstraction.abstractLetter(a, mLevel);
 		final L abstractB = mAbstraction.abstractLetter(b, mLevel);
-		return mUnderlying.contains(state, abstractA, abstractB);
+		final boolean result = mUnderlying.contains(state, abstractA, abstractB);
+		mStatistics.reportQuery(result, state != null);
+		return result;
 	}
 
 	public ILattice<H> getHierarchy() {
