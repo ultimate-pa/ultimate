@@ -306,7 +306,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final TransferrerWithVariableCache transferrer =
 				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), mIndependenceScript);
 
-		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
+		if (settings.getAbstractionType() == AbstractionType.NONE) {
 			// Construct the independence relation (without abstraction). It is the responsibility of the independence
 			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
 			final var independence = constructIndependence(settings, mIndependenceScript, transferrer, false);
@@ -314,7 +314,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// Construct the abstraction function.
-		final var letterAbstraction = constructAbstraction(copyFactory, mIndependenceScript, transferrer,
+		final var letterAbstraction = constructAbstraction(settings, copyFactory, mIndependenceScript, transferrer,
 				settings.getIndependenceType() == IndependenceType.SEMANTIC);
 		final var cachedAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
 
@@ -381,9 +381,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(
-			final ICopyActionFactory<L> copyFactory, final ManagedScript abstractionScript,
-			final TransferrerWithVariableCache transferrer, final boolean simplify) {
-		if (mPref.getPorAbstraction() == AbstractionType.NONE) {
+			final IndependenceSettings settings, final ICopyActionFactory<L> copyFactory,
+			final ManagedScript abstractionScript, final TransferrerWithVariableCache transferrer,
+			final boolean simplify) {
+		if (settings.getAbstractionType() == AbstractionType.NONE) {
 			return null;
 		}
 
@@ -398,7 +399,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			tfEliminator = null;
 		}
 
-		switch (mPref.getPorAbstraction()) {
+		switch (settings.getAbstractionType()) {
 		case VARIABLES_GLOBAL:
 			return new VariableAbstraction<>(copyFactory, abstractionScript, transferrer, tfEliminator, allVariables);
 		case VARIABLES_LOCAL:
@@ -415,7 +416,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			return new SpecificVariableAbstraction<>(copyFactory, abstractionScript, transferrer, tfEliminator,
 					allVariables, allLetters);
 		default:
-			throw new UnsupportedOperationException("Unknown abstraction type: " + mPref.getPorAbstraction());
+			throw new UnsupportedOperationException("Unknown abstraction type: " + settings.getAbstractionType());
 		}
 	}
 

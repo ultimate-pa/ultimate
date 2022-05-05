@@ -428,10 +428,6 @@ public final class TAPreferences {
 		return mLbeIndependenceSettings;
 	}
 
-	public AbstractionType getPorAbstraction() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, AbstractionType.class);
-	}
-
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_SIMPLIFICATION_TECHNIQUE,
 				SimplificationTechnique.class);
