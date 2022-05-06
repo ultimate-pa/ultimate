@@ -150,6 +150,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (Objects.equals(independence, oldRelation)) {
 			return;
 		}
+		// TODO save statistics!
 		mIndependenceRelations.set(index, independence);
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
@@ -391,7 +392,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final StatisticsData data = new StatisticsData();
 			data.aggregateBenchmarkData(mIndependenceRelations.get(i).getStatistics());
 			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Independence relation #" + i + " benchmarks", data));
+					new StatisticsResult<>(pluginId, "Independence relation #" + (i + 1) + " benchmarks", data));
 		}
 
 		if (mPersistent != null) {
