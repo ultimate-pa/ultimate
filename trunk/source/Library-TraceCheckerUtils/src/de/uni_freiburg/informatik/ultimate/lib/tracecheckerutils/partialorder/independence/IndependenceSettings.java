@@ -78,7 +78,14 @@ public final class IndependenceSettings {
 		 *
 		 * @see de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction
 		 */
-		VARIABLES_LOCAL
+		VARIABLES_LOCAL,
+		/**
+		 * Represents abstract independence that considers statements independent if one of them is a "looper" in the
+		 * current proof candidate.
+		 *
+		 * @see de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.LooperIndependenceRelation
+		 */
+		LOOPER
 	}
 
 	private final IndependenceType mIndependenceType;

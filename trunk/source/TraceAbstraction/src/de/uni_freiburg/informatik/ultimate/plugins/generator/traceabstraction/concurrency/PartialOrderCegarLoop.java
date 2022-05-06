@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -67,6 +69,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -75,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnionPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -83,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
@@ -93,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.LooperIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.RefinableCachedAbstraction;
@@ -301,6 +309,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final ICopyActionFactory<L> copyFactory) {
 		final IndependenceSettings settings = mPref.porIndependenceSettings(index);
 		mLogger.info("Independence Relation #%d: %s", index + 1, settings);
+
+		if (settings.getAbstractionType() == AbstractionType.LOOPER) {
+			return new IndependenceContainerForLoopers<>(mServices, mCsToolkit, settings.getIndependenceType());
+		}
 
 		// Construct the script used for independence checks.
 		// TODO Only construct this if an independence relation actually needs a script!
@@ -653,6 +665,75 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					.withAbstraction(mRefinableAbstraction, mAbstractionLevel)
 					// Retrieve the constructed relation.
 					.build();
+		}
+	}
+
+	private static class IndependenceContainerForLoopers<L extends IIcfgTransition<?>>
+			implements IRefinableIndependenceContainer<L> {
+
+		private final IUltimateServiceProvider mServices;
+		private final ILogger mLogger;
+		private final CfgSmtToolkit mCsToolkit;
+		private final IndependenceSettings.IndependenceType mType;
+
+		private Set<IPredicate> mAbstractionLevel;
+
+		private ChainingHoareTripleChecker mHtc;
+		private UnionPredicateCoverageChecker mCoverage;
+
+		public IndependenceContainerForLoopers(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+				final IndependenceSettings.IndependenceType type) {
+			mServices = services;
+			mLogger = services.getLoggingService().getLogger(IndependenceContainerForLoopers.class);
+			mCsToolkit = csToolkit;
+			mType = type;
+		}
+
+		@Override
+		public void initialize() {
+			mAbstractionLevel = Collections.emptySet();
+			if (mType != IndependenceType.SYNTACTIC) {
+				mHtc = ChainingHoareTripleChecker.empty(mLogger);
+				mCoverage = UnionPredicateCoverageChecker.empty();
+			}
+		}
+
+		@Override
+		public void refine(final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
+			mAbstractionLevel = LooperIndependenceRelation.refine(mAbstractionLevel, refinement);
+			if (mType != IndependenceType.SYNTACTIC) {
+				final Predicate<IPredicate> protection = p -> !refinement.getPredicateUnifier().isRepresentative(p);
+				mHtc = mHtc.andThen(getHoareTripleChecker(refinement)).predicatesProtectedBy(protection);
+				mCoverage = mCoverage.with(refinement.getPredicateUnifier().getCoverageRelation(), protection);
+			}
+		}
+
+		@Override
+		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
+			return IndependenceBuilder
+					.fromPredicateActionIndependence(
+							new LooperIndependenceRelation<>(mAbstractionLevel, constructCheck()))
+					.threadSeparated().build();
+		}
+
+		private IHoareTripleChecker getHoareTripleChecker(final IRefinementEngineResult<L, ?> refinement) {
+			final IHoareTripleChecker refinementHtc = refinement.getHoareTripleChecker();
+			if (refinementHtc != null) {
+				return refinementHtc;
+			}
+			return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+					HoareTripleChecks.MONOLITHIC, mCsToolkit, refinement.getPredicateUnifier());
+		}
+
+		private ILooperCheck<L> constructCheck() {
+			switch (mType) {
+			case SEMANTIC:
+				return new ILooperCheck.HoareLooperCheck<>(mHtc, mCoverage);
+			case SYNTACTIC:
+				return new ILooperCheck.IndependentLooperCheck<>();
+			default:
+				throw new UnsupportedOperationException("Unknown independence type " + mType);
+			}
 		}
 	}
 }

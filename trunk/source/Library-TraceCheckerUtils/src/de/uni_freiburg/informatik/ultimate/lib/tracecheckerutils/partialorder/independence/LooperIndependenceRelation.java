@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
@@ -72,7 +73,8 @@ public class LooperIndependenceRelation<L extends IAction, S> implements IIndepe
 		return mHierarchy.getTop();
 	}
 
-	public Set<IPredicate> refine(final Set<IPredicate> current, final IRefinementEngineResult<L, ?> refinement) {
+	public static <L extends IIcfgTransition<?>> Set<IPredicate> refine(final Set<IPredicate> current,
+			final IRefinementEngineResult<L, ?> refinement) {
 		final Set<IPredicate> newPredicates = refinement.getUsedTracePredicates().stream()
 				.flatMap(tp -> tp.getPredicates().stream()).collect(Collectors.toSet());
 		return DataStructureUtils.union(current, newPredicates);

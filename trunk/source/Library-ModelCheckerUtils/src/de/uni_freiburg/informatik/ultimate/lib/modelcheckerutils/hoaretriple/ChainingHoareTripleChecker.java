@@ -163,6 +163,10 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		return new ChainingHoareTripleChecker(logger).andThen(htc);
 	}
 
+	public static ChainingHoareTripleChecker empty(final ILogger logger) {
+		return new ChainingHoareTripleChecker(logger);
+	}
+
 	/**
 	 * Add another {@link IHoareTripleChecker} to the {@link ChainingHoareTripleChecker}. The added
 	 * {@link IHoareTripleChecker} will be queried when all the {@link IHoareTripleChecker}s before answered
