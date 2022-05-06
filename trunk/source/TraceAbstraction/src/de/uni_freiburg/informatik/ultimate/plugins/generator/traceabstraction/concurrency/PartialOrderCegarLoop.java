@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2020 Marcel Ebbinghaus
- * Copyright (C) 2020 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2020-2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2020-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
