@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.BackwardFixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
@@ -98,15 +100,18 @@ public final class AbstractInterpreter {
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
-		final FixpointEngineParameterFactory domFac =
+		final FixpointEngineParameterFactory domFac = 
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
 
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				domFac.createParams(timer, transProvider, loopDetector);
 
-		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
-		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
+		// to test the new implementation
+		//final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
+		final FixpointEngineConcurrent<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = 
+				new FixpointEngineConcurrent<>(params);
+		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getProcedureEntryNodes() , script);
 
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return postProcessResult(services, logger, false, result, root);
