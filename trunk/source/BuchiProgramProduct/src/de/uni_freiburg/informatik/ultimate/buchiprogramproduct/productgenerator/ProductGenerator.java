@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -52,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktransl
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -765,8 +768,13 @@ public final class ProductGenerator {
 
 	private BoogieIcfgLocation createProductProgramPoint(final DebugIdentifier debugIdentifier,
 			final BoogieIcfgLocation originalState) {
-		final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, originalState.getProcedure(), false,
-				originalState.getBoogieASTNode());
+		final Predicate<IAnnotations> omitLTLStepAnnotations = (a -> !(a instanceof LTLStepAnnotation));
+
+		final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier,
+				originalState.getProcedure(),
+				false,
+				originalState.getBoogieASTNode(),
+				omitLTLStepAnnotations);
 
 		// update metadata
 		Map<DebugIdentifier, BoogieIcfgLocation> prog2programPoints = mProductRoot.getProgramPoints()

@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.util.function.Predicate;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -36,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
@@ -69,10 +72,25 @@ public class BoogieIcfgLocation extends IcfgLocation {
 	 */
 	public BoogieIcfgLocation(final DebugIdentifier debugIdentifier, final String procedure, final boolean isErrorLoc,
 			final BoogieASTNode boogieASTNode) {
+		this(debugIdentifier, procedure, isErrorLoc, boogieASTNode, a -> true);
+	}
+
+	/**
+	 *
+	 * @param debugIdentifier
+	 *            see {@link IcfgLocation} (must be unique inside its procedure among all the nodes!)
+	 * @param procedure
+	 * @param isErrorLoc
+	 * @param boogieASTNode
+	 * @param annotationFilter Predicate to determine which annotations to copy over from boogieAstNode
+	 */
+	public BoogieIcfgLocation(final DebugIdentifier debugIdentifier, final String procedure, final boolean isErrorLoc,
+			final BoogieASTNode boogieASTNode,
+			final Predicate<IAnnotations> annotationFilter) {
 		super(debugIdentifier, procedure);
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
-		ModelUtils.copyAnnotations(boogieASTNode, this);
+		ModelUtils.copyAnnotationsFiltered(boogieASTNode, this, annotationFilter);
 		final ILocation loc = getLocationFromASTNode(boogieASTNode);
 		if (loc != null) {
 			loc.annotate(this);
