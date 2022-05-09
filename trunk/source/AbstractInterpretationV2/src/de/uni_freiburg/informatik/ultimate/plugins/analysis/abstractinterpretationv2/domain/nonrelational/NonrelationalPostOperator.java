@@ -78,6 +78,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TemporaryBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -142,6 +144,9 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			return handleCallTransition(oldstate, oldstate, (Call) transitionLabel);
 		} else if (transitionLabel instanceof Return) {
 			return handleReturnTransition(oldstate, oldstate, transitionLabel);
+		} else if (transitionLabel instanceof ForkThreadCurrent || transitionLabel instanceof JoinThreadCurrent) {
+			// TODO: Should we handle this or simply ignore it?
+			return List.of(oldstate);
 		} else {
 			throw new UnsupportedOperationException("Unknown transition type: " + transitionLabel.getClass());
 		}
