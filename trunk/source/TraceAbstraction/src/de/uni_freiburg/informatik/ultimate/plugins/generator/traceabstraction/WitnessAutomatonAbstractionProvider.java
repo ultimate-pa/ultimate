@@ -65,16 +65,19 @@ public class WitnessAutomatonAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mUnderlying;
 
 	private final ILogger mLogger;
+	private final Property mProperty;
 
 	public WitnessAutomatonAbstractionProvider(final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final Property property) {
 		mServices = services;
 		mPredicateFactory = predicateFactory;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		mWitnessAutomaton = witnessAutomaton;
 		mUnderlying = underlying;
+		mProperty = property;
 
 		mLogger = services.getLoggingService().getLogger(WitnessAutomatonAbstractionProvider.class);
 	}
@@ -84,8 +87,7 @@ public class WitnessAutomatonAbstractionProvider<L extends IIcfgTransition<?>>
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		final var abstraction = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 		return WitnessUtils.constructIcfgAndWitnessProduct(mServices, abstraction, mWitnessAutomaton,
-				icfg.getCfgSmtToolkit(), mPredicateFactory, mStateFactoryForRefinement, mLogger,
-				Property.NON_REACHABILITY);
+				icfg.getCfgSmtToolkit(), mPredicateFactory, mStateFactoryForRefinement, mLogger, mProperty);
 	}
 
 }

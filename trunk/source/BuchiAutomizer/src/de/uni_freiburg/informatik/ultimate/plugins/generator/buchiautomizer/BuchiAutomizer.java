@@ -127,7 +127,7 @@ public class BuchiAutomizer implements IGenerator {
 		return new BuchiAutomizerPreferenceInitializer();
 	}
 
-	private boolean programContainsErrors(final IResultService service) {
+	private static boolean programContainsErrors(final IResultService service) {
 		for (final Entry<String, List<IResult>> entry : service.getResults().entrySet()) {
 			for (final IResult resul : entry.getValue()) {
 				if (resul instanceof CounterExampleResult) {
