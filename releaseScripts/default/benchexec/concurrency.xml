@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
-	<resultfiles>commutativity.smt2</resultfiles>
+	<resultfiles></resultfiles>
 
 	<!-- === No Partial Order Reduction === -->
 	<!-- ================================== -->
@@ -138,54 +138,59 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
 	</rundefinition>
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-CANONICAL.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_300ms">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_300ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
-		<option name="--traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
+		<option name="- -traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
 	</rundefinition>
 
 	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_SmtInterpol_1000ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
-		<option name="--traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
-	</rundefinition>
+		<option name="- -traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
+	</rundefinition-->
 
 	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.SYNTACTIC">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-SYNTACTIC.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL_SmtInterpol_1000ms">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL_SmtInterpol_1000ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
-		<option name="--traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
+		<option name="- -traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
 	</rundefinition>
 
 	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL_Z3_300ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
-		<option name="--traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
+		<option name="- -traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
 	</rundefinition>
 
 	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL_Z3_6000ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global.epf</option>
-		<option name="--traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">6000</option>
+		<option name="- -traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">6000</option>
+	</rundefinition-->
+
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-VarAbsGLOBAL.SYNTACTIC">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-SYNTACTIC.epf</option>
 	</rundefinition>
 
-	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-VarAbsGLOBAL.SYNTACTIC">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-SYNTACTIC.epf</option>
-	</rundefinition-->
+	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-LooperAbs">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
+		<option name="--traceabstraction.abstraction.used.for.commutativity.in.por">LOOPER</option>
+	</rundefinition>
 
 	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-CANONICAL.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsSPECIFIC.CANONICAL">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsSPECIFIC.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-specific-CANONICAL.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 
 	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLockstep">
@@ -218,23 +223,33 @@
 
 	<!-- =============================================================================================================== -->
 
-	<tasks name="SVCOMP ConcurrencySafety-Main">
+	<!--tasks name="SVCOMP ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
+		<!- -excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile- ->
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+	</tasks-->
 
-	<tasks name="SVCOMP NoDataRace">
+	<!--tasks name="SVCOMP NoDataRace">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
-		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="- -cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+		<option name="- -cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
 		<includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
-	</tasks>
+	</tasks-->
 
 	<tasks name="SVCOMP Concurrency-SafeDeref">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+		<option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
 		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
 		<propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
@@ -260,11 +275,11 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks-->
 
-	<tasks name="Weaver Benchmarks">
+	<!--tasks name="Weaver Benchmarks">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
 		<includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+	</tasks-->
 
 	<!--tasks name="POPL2022 Benchmarks">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
