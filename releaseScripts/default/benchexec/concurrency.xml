@@ -260,7 +260,7 @@
 		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
 
 		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-		<option name="- -cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
 		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
