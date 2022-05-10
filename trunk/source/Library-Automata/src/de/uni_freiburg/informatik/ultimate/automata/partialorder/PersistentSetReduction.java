@@ -51,7 +51,7 @@ public final class PersistentSetReduction {
 			throws AutomataOperationCanceledException {
 		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-		new DepthFirstTraversal<>(services, operand, combinedOrder, combinedVisitor);
+		DepthFirstTraversal.traverse(services, operand, combinedOrder, combinedVisitor);
 	}
 
 	public static <L, S, R> void applyNewStateReduction(final AutomataLibraryServices services,
@@ -61,7 +61,7 @@ public final class PersistentSetReduction {
 			final IDfsVisitor<L, R> visitor) throws AutomataOperationCanceledException {
 		final IDfsOrder<L, R> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-		new DepthFirstTraversal<>(services,
+		DepthFirstTraversal.traverse(services,
 				new MinimalSleepSetReduction<>(operand, factory, independenceRelation, combinedOrder), combinedOrder,
 				combinedVisitor);
 	}

@@ -72,8 +72,13 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 		mOrder = order;
 		mIndependence = independenceRelation;
 
-		final S oldInitial = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
-		mInitial = mStateFactory.createSleepSetState(oldInitial, ImmutableSet.empty());
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			mInitial = mStateFactory.createSleepSetState(initial.get(), ImmutableSet.empty());
+		} else {
+			mInitial = null;
+		}
 	}
 
 	@Override
@@ -93,7 +98,7 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public Iterable<R> getInitialStates() {
-		return Set.of(mInitial);
+		return mInitial == null ? Collections.emptySet() : Set.of(mInitial);
 	}
 
 	@Override

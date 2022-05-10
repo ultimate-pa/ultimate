@@ -65,8 +65,8 @@ public class DepthFirstTraversal<L, S> {
 	private int mIndentLevel = -1;
 
 	/**
-	 * Performs a depth-first traversal starting from the operand's initial state. This constructor is called purely for
-	 * its side-effects.
+	 * Performs a depth-first traversal starting from the operand's initial state. This method is called purely for its
+	 * side-effects.
 	 *
 	 * @param services
 	 *            automata services used for logging and timeout management
@@ -79,11 +79,17 @@ public class DepthFirstTraversal<L, S> {
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
-	public DepthFirstTraversal(final AutomataLibraryServices services,
+	public static <L, S> void traverse(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
 			final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
-		this(services, operand, order, visitor,
-				DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state"));
+		final var logger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			new DepthFirstTraversal<>(services, operand, order, visitor, initial.get(), logger);
+		} else {
+			logger.warn("Depth first traversal did not find any initial state. Returning directly.");
+		}
 	}
 
 	/**
@@ -105,10 +111,18 @@ public class DepthFirstTraversal<L, S> {
 	public DepthFirstTraversal(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
 			final IDfsVisitor<L, S> visitor, final S startingState) throws AutomataOperationCanceledException {
+		this(services, operand, order, visitor, startingState,
+				services.getLoggingService().getLogger(DepthFirstTraversal.class));
+	}
+
+	private DepthFirstTraversal(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final IDfsVisitor<L, S> visitor, final S startingState, final ILogger logger)
+			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
 
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
+		mLogger = logger;
 		mOperand = operand;
 		mStartState = startingState;
 		mOrder = order;

@@ -286,14 +286,14 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			break;
 		case SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
-				new DepthFirstTraversal<>(mAutomataServices,
+				DepthFirstTraversal.traverse(mAutomataServices,
 						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
 						visitor);
 			} else {
 				final var red =
 						new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory, mBudget);
 				((OptimisticBudget<L, IPredicate, IPredicate, ?>) mBudget).setReduction(red);
-				new DepthFirstTraversal<>(mAutomataServices, red, mDfsOrder, visitor);
+				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
 			}
 			break;
 		case PERSISTENT_SETS:
@@ -310,7 +310,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 					mSleepFactory, mPersistent, visitor);
 			break;
 		case NONE:
-			new DepthFirstTraversal<>(mAutomataServices, input, mDfsOrder, visitor);
+			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
