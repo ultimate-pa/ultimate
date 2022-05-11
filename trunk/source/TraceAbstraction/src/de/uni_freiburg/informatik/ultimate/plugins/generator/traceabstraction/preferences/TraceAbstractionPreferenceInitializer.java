@@ -739,6 +739,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		CAMEL_SMT_AM,
 		/**
+		 * Like {@link #CAMEL}, but only uses WP.
+		 */
+		CAMEL_BP_ONLY,
+		/**
 		 * Like {@link #CAMEL_NO_AM}, but continues as soon as some interpolants are available.
 		 */
 		LIZARD,
