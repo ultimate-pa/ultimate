@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -103,7 +104,7 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public boolean isInitial(final R state) {
-		return mInitial.equals(state);
+		return Objects.equals(mInitial, state);
 	}
 
 	@Override

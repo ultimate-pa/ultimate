@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToIntBiFunction;
 import java.util.stream.Collectors;
@@ -64,8 +65,13 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 		mStateFactory = stateFactory;
 		mBudgetFunction = budget;
 
-		final S oldInitial = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
-		mInitial = mStateFactory.createSleepMapState(oldInitial, SleepMap.empty(mRelations), maximumBudget());
+		final var oldInitial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (oldInitial.isPresent()) {
+			mInitial = mStateFactory.createSleepMapState(oldInitial.get(), SleepMap.empty(mRelations), maximumBudget());
+		} else {
+			mInitial = null;
+		}
 	}
 
 	@Override
@@ -85,12 +91,12 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 	@Override
 	public Iterable<R> getInitialStates() {
-		return Set.of(mInitial);
+		return mInitial == null ? Collections.emptySet() : Set.of(mInitial);
 	}
 
 	@Override
 	public boolean isInitial(final R state) {
-		return mInitial.equals(state);
+		return Objects.equals(mInitial, state);
 	}
 
 	@Override
