@@ -134,9 +134,21 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-LoopLockstep.epf</option>
 	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_1000ms">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
+	<rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic">
+	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
 	</rundefinition>
+
+	<rundefinition name="NewStatesSleep_Concrete-Smt">
+	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+	</rundefinition>
+
+	<rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+	</rundefinition>
+
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_1000ms">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
+	</rundefinition-->
 
 	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-CANONICAL.epf</option>
@@ -175,14 +187,14 @@
 		<option name="- -traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">6000</option>
 	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-VarAbsGLOBAL.SYNTACTIC">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-VarAbsGLOBAL.SYNTACTIC">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-SYNTACTIC.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-LooperAbs">
+	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder-LooperAbs">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
-		<option name="--traceabstraction.abstraction.used.for.commutativity.in.por">LOOPER</option>
-	</rundefinition>
+		<option name="- -traceabstraction.abstraction.used.for.commutativity.in.por">LOOPER</option>
+	</rundefinition-->
 
 	<!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL.CANONICAL">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-varabs-global-CANONICAL.epf</option>
@@ -238,21 +250,33 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks-->
 
-	<!--tasks name="SVCOMP Concurrency-SafeDeref">
+	<tasks name="SVCOMP Concurrency-SafeDeref">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-		<option name="- -traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
 
-		<option name="- -cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-		<option name="- -cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
-		<option name="- -cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
-		<option name="- -cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
-		<option name="- -cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
-		<option name="- -cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+		<option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
 
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
-	</tasks-->
+	</tasks>
+
+	<tasks name="SVCOMP Concurrency-NoOverflow">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
+
+		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
+	</tasks>
 
 	<tasks name="SVCOMP Concurrency-NoDataRace">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
@@ -263,7 +287,6 @@
 		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
