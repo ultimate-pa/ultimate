@@ -55,8 +55,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +72,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 /**
@@ -98,6 +103,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private AbsIntResult<STATE, ACTION, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, LOC> mSummaryMap;
 	private final boolean mUseHierachicalPre;
+	
+	private Map<String, ? extends IcfgLocation> mInterferenceLocations;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params) {
 		if (params == null || !params.isValid()) {
@@ -132,6 +139,35 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 	
 	private void calculateFixpoint(final Map<String, ? extends IcfgLocation> entryNodes) {
+		computeInterferenceLocations(entryNodes);
+	}
+	
+	private void computeInterferenceLocations(final Map<String, ? extends IcfgLocation> entryNodes){
+		/*
+		 *  Idea: procedures don't use the same local variables
+		 *  0. compute set of all variables
+		 *  1. filter global variables 
+		 *  2. create Map key[procedure name], value[LinkedList of InterferenceLocations]
+		 */
 		
+		Map<String, Set<IProgramVar>> variables = new HashMap<String, Set<IProgramVar>>();
+		entryNodes.forEach((k,v) -> variables.put(k, getVariables(v, k, null, new HashSet<String>())));
+		// here filter for global variables
+		mInterferenceLocations = null;
+	}
+	
+	private Set<IProgramVar> getVariables(IcfgLocation entryNode, String start, Set<IProgramVar> setVar, Set<String> control) {
+		if (!control.contains(entryNode.toString())) {
+			control.add(entryNode.toString());
+			// line is commented because else it throws the weird bug
+			// entryNode.getOutgoingEdges().forEach(e -> setVar.addAll(e.getTransformula().getAssignedVars()));
+			entryNode.getOutgoingNodes().forEach(n -> getVariables(n, start, setVar, control));
+		}
+		return setVar;
+	}
+	
+	private Map<String, ? extends IcfgLocation> computeInterferences(final IcfgLocation entryNode) {
+		Map<String, ? extends IcfgLocation> interferences = null;
+		return interferences;
 	}
 }

@@ -111,8 +111,9 @@ public final class AbstractInterpreter {
 		//final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
 		final FixpointEngineConcurrent<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = 
 				new FixpointEngineConcurrent<>(params);
+		// final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes() , script);
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getProcedureEntryNodes() , script);
-
+		
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return postProcessResult(services, logger, false, result, root);
 	}
