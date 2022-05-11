@@ -250,7 +250,7 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks-->
 
-	<tasks name="SVCOMP Concurrency-SafeDeref">
+	<tasks name="SVCOMP-Concurrency-SafeDeref">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
 		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
@@ -266,7 +266,7 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
 	</tasks>
 
-	<tasks name="SVCOMP Concurrency-NoOverflow">
+	<tasks name="SVCOMP-Concurrency-NoOverflow">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
 		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
@@ -278,7 +278,7 @@
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
 	</tasks>
 
-	<tasks name="SVCOMP Concurrency-NoDataRace">
+	<tasks name="SVCOMP-Concurrency-NoDataRace">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
 		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
