@@ -92,7 +92,7 @@ public final class SleepMap<L, S> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mRelations, mSleepMap);
+		return Objects.hash(mSleepMap);
 	}
 
 	@Override
