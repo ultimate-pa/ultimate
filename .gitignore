@@ -14,8 +14,8 @@
 /trunk/examples/svcomp/*
 /trunk/examples/ultbench
 /trunk/examples/ultbench/*
-trunk/examples/concurrent/bpl/POPL2022/*.bpl
-trunk/examples/concurrent/bpl/POPL2022/*.yml
+trunk/examples/concurrent/bpl/PLDI2022/*.bpl
+trunk/examples/concurrent/bpl/PLDI2022/*.yml
 trunk/examples/concurrent/bpl/VMCAI2021/generated/*.bpl
 trunk/examples/concurrent/bpl/VMCAI2021/generated/*.yml
 trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.bpl
