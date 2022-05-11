@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="620" cpuCores="2">
   <resultfiles></resultfiles>
 
   <option name="--force-no-wrapper" />
   <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 
   <rundefinition name="HeavyConcrete_CAMEL">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
