@@ -2075,9 +2075,10 @@ public class StandardFunctionHandler {
 
 	private static Result handleLtlStep(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
-		final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
-		final AssumeStatement assumeStmt = new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true));
-		ltlStep.annotate(assumeStmt);
+		final NamedAttribute ltlAttribute = new NamedAttribute(loc, "ltl_step", new Expression[]{ });
+		final AssumeStatement assumeStmt = new AssumeStatement(loc, 
+				new NamedAttribute[] { ltlAttribute }, 
+				ExpressionFactory.createBooleanLiteral(loc, true))  ;
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
 	}
 
