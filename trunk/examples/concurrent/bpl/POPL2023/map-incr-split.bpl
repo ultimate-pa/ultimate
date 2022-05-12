@@ -8,14 +8,14 @@ modifies A;
   var x : int;
 
   assume 0 <= k && k < 2*N;
-  x := A[0];
+  x := A[k];
 
   fork 1   thread1();
   fork 2,2 thread2();
   join 1;
   join 2,2;
 
-  assert A[0] == x + 1;
+  assert A[k] == x + 1;
 }
 
 procedure thread1()
