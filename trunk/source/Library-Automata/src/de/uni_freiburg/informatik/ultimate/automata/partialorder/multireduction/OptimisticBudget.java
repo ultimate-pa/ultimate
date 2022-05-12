@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 
 /**
  * Optimistic budget function for {@link SleepMapReduction}: First tries allocating a low budget, and checks if this
@@ -128,7 +129,8 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements T
 		try {
 			new DepthFirstTraversal<>(mServices, mReduction, mOrder, visitor, state);
 		} catch (final AutomataOperationCanceledException e) {
-			throw new IllegalStateException("Could not determine optimistic budget: ", e);
+			// TODO turn budget function into an interface that is allowed to throw automata exceptions
+			throw new ToolchainCanceledException(getClass());
 		}
 		return mIsSuccessful.test(visitor);
 	}
