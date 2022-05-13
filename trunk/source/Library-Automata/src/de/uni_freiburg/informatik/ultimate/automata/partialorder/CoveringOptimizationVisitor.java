@@ -87,14 +87,12 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 
 	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
-		final boolean result;
+		final S cover = getCoveringState(target);
 		switch (mMode) {
 		case REDIRECT:
-			final S old = getCoveringState(target);
-			result = super.discoverTransition(source, letter, old == null ? target : old);
-			return result || old != null;
+			final boolean result = super.discoverTransition(source, letter, cover == null ? target : cover);
+			return result || cover != null;
 		case PRUNE:
-			final S cover = getCoveringState(target);
 			if (cover != null) {
 				return true;
 			}
