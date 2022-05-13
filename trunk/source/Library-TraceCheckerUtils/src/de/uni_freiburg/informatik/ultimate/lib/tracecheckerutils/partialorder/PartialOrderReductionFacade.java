@@ -34,7 +34,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.ToIntBiFunction;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -63,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMap;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -115,7 +115,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations;
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
-	private ToIntBiFunction<IPredicate, L> mBudget;
+	private IBudgetFunction<L, IPredicate> mBudget;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -256,7 +256,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return mDfsOrder;
 	}
 
-	public void setBudget(final ToIntBiFunction<IPredicate, L> budget) {
+	public void setBudget(final IBudgetFunction<L, IPredicate> budget) {
 		mBudget = budget;
 	}
 

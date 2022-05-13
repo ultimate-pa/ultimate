@@ -30,13 +30,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.ToIntBiFunction;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 
 /**
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
  * @param <V>
  *            The type of visitor used to determine if a possible budget choice is desirable
  */
-public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements ToIntBiFunction<R, L> {
+public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements IBudgetFunction<L, R> {
 	private final AutomataLibraryServices mServices;
 	private final IDfsOrder<L, R> mOrder;
 	private final ISleepMapStateFactory<L, S, R> mStateFactory;
@@ -84,7 +84,7 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements T
 	}
 
 	@Override
-	public int applyAsInt(final R state, final L letter) {
+	public int computeBudget(final R state, final L letter) {
 		if (mReduction == null) {
 			throw new UnsupportedOperationException(
 					"Optimistic budget cannot be used without setting reduction automaton");
@@ -107,6 +107,7 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements T
 			final R successor = mReduction.computeSuccessorWithBudget(state, letter, budget);
 			if (successor == null) {
 				// should not happen in practice
+				// (only possible if budget exceeds price in sleep map, but we defined maximumBudget so it would not)
 				break;
 			}
 
