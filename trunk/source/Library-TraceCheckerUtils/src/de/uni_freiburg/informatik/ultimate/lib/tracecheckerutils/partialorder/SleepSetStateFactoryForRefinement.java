@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.ICoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
@@ -196,25 +195,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		@Override
 		public String toString() {
 			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mSleepSet + "]";
-		}
-	}
-
-	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {
-		private final SleepSetStateFactoryForRefinement<L> mFactory;
-
-		public FactoryCoveringRelation(final SleepSetStateFactoryForRefinement<L> factory) {
-			mFactory = factory;
-		}
-
-		@Override
-		public boolean covers(final IPredicate oldState, final IPredicate newState) {
-			assert getKey(oldState) == getKey(newState);
-			return mFactory.getSleepSet(newState).containsAll(mFactory.getSleepSet(oldState));
-		}
-
-		@Override
-		public Object getKey(final IPredicate state) {
-			return mFactory.getOriginalState(state);
 		}
 	}
 }

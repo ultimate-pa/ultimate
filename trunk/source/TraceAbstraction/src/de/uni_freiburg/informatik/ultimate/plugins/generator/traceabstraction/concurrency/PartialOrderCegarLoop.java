@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimiz
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
@@ -94,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Be
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
@@ -297,9 +297,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		if (PartialOrderReductionFacade.ENABLE_COVERING_OPTIMIZATION) {
-			visitor = new CoveringOptimizationVisitor<>(visitor,
-					new SleepSetStateFactoryForRefinement.FactoryCoveringRelation<>(
-							(SleepSetStateFactoryForRefinement<L>) mPOR.getSleepFactory()),
+			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
 		}
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), false);

@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetC
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
@@ -379,9 +380,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 
 		if (ENABLE_COVERING_OPTIMIZATION) {
-			visitor = new CoveringOptimizationVisitor<>(visitor,
-					new SleepSetStateFactoryForRefinement.FactoryCoveringRelation<>(
-							(SleepSetStateFactoryForRefinement<L>) mSleepFactory),
+			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mSleepFactory),
 					CoveringMode.PRUNE);
 		}
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, true);

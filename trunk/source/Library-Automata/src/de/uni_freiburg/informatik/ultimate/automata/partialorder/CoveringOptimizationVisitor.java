@@ -129,6 +129,13 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 	/**
 	 * A covering relation between states.
 	 *
+	 * The meaning of covering in an automaton is this: If state <code>q</code> covers state <code>p</code>, then the
+	 * language of all words accepted from <code>q</code> must be a superset of the states accepted from <code>p</code>.
+	 * (The reverse implication need not hold.)
+	 *
+	 * As such, a trivial covering relation is given by <code>Objects::equals</code>. However, depending on the
+	 * particular automaton, larger and thus more useful covering relations can often be computed.
+	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 *
 	 * @param <S>
