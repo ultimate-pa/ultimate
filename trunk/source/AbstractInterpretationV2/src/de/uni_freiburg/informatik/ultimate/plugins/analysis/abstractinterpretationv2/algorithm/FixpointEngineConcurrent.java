@@ -63,6 +63,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -72,8 +73,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -86,7 +91,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 
 public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC>
-	implements IFixpointEngineConcurrent<STATE, ACTION, VARDECL, LOC> {
+	implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
 	
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
@@ -104,9 +109,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final SummaryMap<STATE, ACTION, LOC> mSummaryMap;
 	private final boolean mUseHierachicalPre;
 	
-	private Map<String, ? extends IcfgLocation> mInterferenceLocations;
+	private Map<String, Set<IcfgLocation>> mInterferenceLocations;
+	private IIcfg<?> mIcfg;
 
-	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params) {
+	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params, IIcfg<?> icfg) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -122,15 +128,17 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mMaxParallelStates = params.getMaxParallelStates();
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 		mUseHierachicalPre = mDomain.useHierachicalPre();
+		mIcfg = icfg;
+		mInterferenceLocations = new HashMap<>();
 	}
 	
 	@Override
-	public AbsIntResult<STATE, ACTION, LOC> run(final Map<String, ? extends IcfgLocation> entryNodes, final Script script) {
+	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation(mResult.getBenchmark());
-		calculateFixpoint(entryNodes);
+		calculateFixpoint(mIcfg.getProcedureEntryNodes());
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
@@ -140,34 +148,29 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	
 	private void calculateFixpoint(final Map<String, ? extends IcfgLocation> entryNodes) {
 		computeInterferenceLocations(entryNodes);
+		Map<IProgramNonOldVar, STATE> interferences = new HashMap<>();
 	}
 	
-	private void computeInterferenceLocations(final Map<String, ? extends IcfgLocation> entryNodes){
-		/*
-		 *  Idea: procedures don't use the same local variables
-		 *  0. compute set of all variables
-		 *  1. filter global variables 
-		 *  2. create Map key[procedure name], value[LinkedList of InterferenceLocations]
-		 */
+	private void computeInterferenceLocations(final Map<String, ? extends IcfgLocation> entryNodes) {
+		Set<IProgramNonOldVar> variables = new HashSet<>();
+		entryNodes.forEach((procedure,location) -> variables.addAll(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure)));
 		
-		Map<String, Set<IProgramVar>> variables = new HashMap<String, Set<IProgramVar>>();
-		entryNodes.forEach((k,v) -> variables.put(k, getVariables(v, k, null, new HashSet<String>())));
-		// here filter for global variables
-		mInterferenceLocations = null;
+		entryNodes.forEach((procedure,location) -> {
+			mInterferenceLocations.put(procedure, new HashSet<>());
+			IcfgEdgeIterator iterator = new IcfgEdgeIterator(location.getOutgoingEdges());
+			
+			Set<IcfgEdge> tempInterferenceEdges = iterator.asStream().filter(edge -> 
+				checkSet(edge.getTransformula().getAssignedVars(), variables)).collect(Collectors.toSet());
+			tempInterferenceEdges.forEach(edge -> mInterferenceLocations.get(procedure).add(edge.getSource()));
+		});
 	}
 	
-	private Set<IProgramVar> getVariables(IcfgLocation entryNode, String start, Set<IProgramVar> setVar, Set<String> control) {
-		if (!control.contains(entryNode.toString())) {
-			control.add(entryNode.toString());
-			// line is commented because else it throws the weird bug
-			// entryNode.getOutgoingEdges().forEach(e -> setVar.addAll(e.getTransformula().getAssignedVars()));
-			entryNode.getOutgoingNodes().forEach(n -> getVariables(n, start, setVar, control));
-		}
-		return setVar;
+	private boolean checkSet(Set<IProgramVar> assignedVars, Set<IProgramNonOldVar> variables) {
+		return !assignedVars.stream().filter(x -> variables.contains(x)).collect(Collectors.toSet()).isEmpty();
 	}
 	
-	private Map<String, ? extends IcfgLocation> computeInterferences(final IcfgLocation entryNode) {
-		Map<String, ? extends IcfgLocation> interferences = null;
+	private Map<IProgramNonOldVar, STATE> computeInterferences(final IcfgLocation entryNode) {
+		Map<IProgramNonOldVar, STATE> interferences = null;
 		return interferences;
 	}
 }

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -69,9 +70,12 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG)) {
 			AbstractInterpreter.runFuture(root, timer, mServices, false, mLogger);
+		} else if (IcfgUtils.isConcurrent(root)){
+			AbstractInterpreter.runConcurrent(root, timer, mServices);
 		} else {
 			AbstractInterpreter.run(root, timer, mServices);
 		}
+		
 
 		// do not descend, this is already the root
 		return false;

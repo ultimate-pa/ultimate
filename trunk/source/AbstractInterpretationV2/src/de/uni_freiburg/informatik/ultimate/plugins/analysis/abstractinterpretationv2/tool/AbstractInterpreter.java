@@ -107,12 +107,34 @@ public final class AbstractInterpreter {
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				domFac.createParams(timer, transProvider, loopDetector);
 
-		// to test the new implementation
-		//final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
+		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
+		
+		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes() , script);
+		
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		return postProcessResult(services, logger, false, result, root);
+	}
+	
+	public static <STATE extends IAbstractState<STATE>> IAbstractInterpretationResult<STATE, IcfgEdge, IcfgLocation>
+	runConcurrent(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
+			final IUltimateServiceProvider services) {
+		if (timer == null) {
+			throw new IllegalArgumentException("timer is null");
+		}
+		
+		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
+		
+		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
+		final FixpointEngineParameterFactory domFac = 
+				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
+		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
+		
+		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+				domFac.createParams(timer, transProvider, loopDetector);
+		
 		final FixpointEngineConcurrent<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = 
-				new FixpointEngineConcurrent<>(params);
-		// final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes() , script);
-		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getProcedureEntryNodes() , script);
+				new FixpointEngineConcurrent<>(params, root);
+		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes() , script);
 		
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return postProcessResult(services, logger, false, result, root);
