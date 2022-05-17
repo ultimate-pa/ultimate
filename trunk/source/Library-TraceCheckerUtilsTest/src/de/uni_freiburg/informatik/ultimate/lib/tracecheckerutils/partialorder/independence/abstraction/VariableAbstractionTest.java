@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,13 +35,18 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 
-public class VariableAbstractionTest extends AbstractAbstractionTestSuite<Set<IProgramVar>> {
+public class VariableAbstractionTest extends AbstractAbstractionTestSuite<BitSubSet<IProgramVar>> {
+
+	private BitSubSet.Factory<IProgramVar> mFactory;
 
 	@Override
-	protected IAbstraction<Set<IProgramVar>, BasicInternalAction> createAbstraction() {
+	protected IAbstraction<BitSubSet<IProgramVar>, BasicInternalAction> createAbstraction() {
 		final Set<IProgramVar> allVariables = new HashSet<>(mSymbolTable.getGlobals());
-		return new VariableAbstraction<>(this::copyAction, mMgdScript, null, null, allVariables);
+		final var abstraction = new VariableAbstraction<>(this::copyAction, mMgdScript, null, null, allVariables);
+		mFactory = abstraction.getFactory();
+		return abstraction;
 	}
 
 	/*
@@ -53,38 +57,42 @@ public class VariableAbstractionTest extends AbstractAbstractionTestSuite<Set<IP
 
 	@Test
 	public void sharedInOutVar() {
-		testAbstraction(yIsXPlusY(), Set.of(y));
+		testAbstraction(yIsXPlusY(), set(y));
 	}
 
 	@Test
 	public void rightSideAbstracted() {
 		// abstract variable on right side, but not left side
-		testAbstraction(yIsXTimesTwo(), Set.of(y));
+		testAbstraction(yIsXTimesTwo(), set(y));
 	}
 
 	@Test
 	public void leftSideAbstraction() {
-		testAbstraction(yIsXTimesTwo(), Set.of(x));
+		testAbstraction(yIsXTimesTwo(), set(x));
 	}
 
 	@Test
 	public void bothSidesDifferentVariablesEmptyConstrVars() {
-		testAbstraction(yIsXTimesTwo(), Collections.emptySet());
+		testAbstraction(yIsXTimesTwo(), set());
 	}
 
 	@Test
 	public void doNothingFullConstrVars() {
-		testAbstractionDoesNothing(yIsXTimesTwo(), Set.of(x, y));
-		testAbstractionDoesNothing(xIsXPlusOne(), Set.of(x, y));
+		testAbstractionDoesNothing(yIsXTimesTwo(), set(x, y));
+		testAbstractionDoesNothing(xIsXPlusOne(), set(x, y));
 	}
 
 	@Test
 	public void bothSidesSameVariable() {
-		testAbstraction(xIsXPlusOne(), Collections.emptySet());
+		testAbstraction(xIsXPlusOne(), set());
 	}
 
 	@Test
 	public void withAuxVar() {
-		testAbstraction(jointHavocXandY(), Set.of(x));
+		testAbstraction(jointHavocXandY(), set(x));
+	}
+
+	private BitSubSet<IProgramVar> set(final IProgramVar... vars) {
+		return mFactory.valueOf(Set.of(vars));
 	}
 }

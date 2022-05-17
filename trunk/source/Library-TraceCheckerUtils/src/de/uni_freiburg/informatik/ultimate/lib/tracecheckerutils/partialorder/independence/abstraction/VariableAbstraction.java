@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction.TransFormulaAuxVarEliminator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
 /**
@@ -62,15 +62,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownL
  *            The type of actions
  */
 public class VariableAbstraction<L extends IAction>
-		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, Set<IProgramVar>, L> {
+		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, BitSubSet<IProgramVar>, L> {
 
-	private final ILattice<Set<IProgramVar>> mHierarchy;
+	private final BitSubSet.Factory<IProgramVar> mFactory;
+	private final ILattice<BitSubSet<IProgramVar>> mHierarchy;
 	private final SpecificVariableAbstraction<L> mSpecific;
 
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
 			final TransferrerWithVariableCache transferrer, final TransFormulaAuxVarEliminator tfAuxEliminator,
 			final Set<IProgramVar> allProgramVars) {
-		mHierarchy = new UpsideDownLattice<>(new PowersetLattice<>(allProgramVars));
+		mFactory = new BitSubSet.Factory<>(allProgramVars);
+		mHierarchy = new UpsideDownLattice<>(mFactory);
 		mSpecific = new SpecificVariableAbstraction<>(copyFactory, mgdScript, transferrer, tfAuxEliminator,
 				allProgramVars, Collections.emptySet());
 	}
@@ -84,7 +86,7 @@ public class VariableAbstraction<L extends IAction>
 	 * @return new letter with all variables abstracted that have no occurrence in any constraining variables
 	 */
 	@Override
-	public L abstractLetter(final L inLetter, final Set<IProgramVar> constrainingVariables) {
+	public L abstractLetter(final L inLetter, final BitSubSet<IProgramVar> constrainingVariables) {
 		// We implement this simply be delegating to SpecificVariableAbstraction with a suitable constraint.
 		final VarAbsConstraints<L> constraint = mSpecific.getHierarchy().getTop().withModifiedConstraints(inLetter,
 				constrainingVariables, constrainingVariables);
@@ -94,26 +96,25 @@ public class VariableAbstraction<L extends IAction>
 	// Verband - Lattice
 
 	@Override
-	public ILattice<Set<IProgramVar>> getHierarchy() {
+	public ILattice<BitSubSet<IProgramVar>> getHierarchy() {
 		return mHierarchy;
 	}
 
 	@Override
-	public Set<IProgramVar> restrict(final L input, final Set<IProgramVar> constrainingVars) {
+	public BitSubSet<IProgramVar> restrict(final L input, final BitSubSet<IProgramVar> constrainingVars) {
 		// We do not abstract infeasible letters, even if all variables are constraining.
 		if (input.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return mHierarchy.getBottom();
 		}
 
-		final Set<IProgramVar> nLevel = new HashSet<>(mHierarchy.getBottom());
-		nLevel.removeAll(input.getTransformula().getOutVars().keySet());
-		nLevel.removeAll(input.getTransformula().getInVars().keySet());
-		nLevel.addAll(constrainingVars);
-		return nLevel;
+		final BitSubSet<IProgramVar> usedVariables =
+				mFactory.union(mFactory.valueOf(input.getTransformula().getInVars().keySet()),
+						mFactory.valueOf(input.getTransformula().getOutVars().keySet()));
+		return mFactory.union(constrainingVars, mFactory.complement(usedVariables));
 	}
 
 	@Override
-	public Set<IProgramVar> refine(final Set<IProgramVar> current,
+	public BitSubSet<IProgramVar> refine(final BitSubSet<IProgramVar> current,
 			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
 		final List<QualifiedTracePredicates> usedTracePredicates = refinement.getUsedTracePredicates();
 		final Set<IProgramVar> constrainingVars = new HashSet<>();
@@ -123,7 +124,10 @@ public class VariableAbstraction<L extends IAction>
 				constrainingVars.addAll(ip.getVars());
 			}
 		}
-		constrainingVars.addAll(current);
-		return constrainingVars;
+		return mFactory.union(current, mFactory.valueOf(constrainingVars));
+	}
+
+	BitSubSet.Factory<IProgramVar> getFactory() {
+		return mFactory;
 	}
 }
