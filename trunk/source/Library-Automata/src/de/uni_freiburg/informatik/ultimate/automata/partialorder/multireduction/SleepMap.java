@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
 /**
@@ -55,11 +56,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
 public final class SleepMap<L, S> {
 	private final List<IIndependenceRelation<S, L>> mRelations;
 	private final Map<L, Integer> mSleepMap;
+	private final LazyInt mHash;
 
 	private SleepMap(final List<IIndependenceRelation<S, L>> relations, final Map<L, Integer> sleepMap) {
 		assert !relations.isEmpty() : "Sleep maps must have at least one independence relation.";
 		mRelations = relations;
 		mSleepMap = sleepMap;
+		mHash = new LazyInt(mSleepMap::hashCode);
 	}
 
 	/**
@@ -92,7 +95,7 @@ public final class SleepMap<L, S> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mSleepMap);
+		return mHash.get();
 	}
 
 	@Override
