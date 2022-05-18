@@ -26,18 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Predicate;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ReachabilityCheckVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Optimistic budget function for {@link SleepMapReduction}: First tries allocating a low budget, and checks if this
@@ -52,28 +55,36 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
  *            The type of states in the unreduced automaton
  * @param <R>
  *            The type of states in the reduced automaton
- * @param <V>
- *            The type of visitor used to determine if a possible budget choice is desirable
  */
-public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements IBudgetFunction<L, R> {
+public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	private final IDfsOrder<L, R> mOrder;
 	private final ISleepMapStateFactory<L, S, R> mStateFactory;
-	private final Supplier<V> mMakeVisitor;
-	private final Predicate<V> mIsSuccessful;
+	private final Supplier<IDfsVisitor<L, R>> mMakeVisitor;
 
 	private SleepMapReduction<L, S, R> mReduction;
 
-	private final Map<R, Boolean> mSuccessCache = new HashMap<>();
+	private final Set<R> mSuccessful = new HashSet<>();
+	private final Set<R> mUnsuccessful = new HashSet<>();
 
+	/**
+	 *
+	 * @param services
+	 * @param order
+	 * @param stateFactory
+	 * @param makeVisitor
+	 *            Create a new visitor to determine reachability of "bad states" (the definition of bad states is up to
+	 *            the caller). The visitor must either be an {@link AcceptingRunSearchVisitor} or a wrapper visitor such
+	 *            that the underlying base visitor is an {@link AcceptingRunSearchVisitor}.
+	 */
 	public OptimisticBudget(final AutomataLibraryServices services, final IDfsOrder<L, R> order,
-			final ISleepMapStateFactory<L, S, R> stateFactory, final Supplier<V> makeVisitor,
-			final Predicate<V> isSuccessful) {
+			final ISleepMapStateFactory<L, S, R> stateFactory, final Supplier<IDfsVisitor<L, R>> makeVisitor) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(OptimisticBudget.class);
 		mOrder = order;
 		mStateFactory = stateFactory;
 		mMakeVisitor = makeVisitor;
-		mIsSuccessful = isSuccessful;
 	}
 
 	public void setReduction(final SleepMapReduction<L, S, R> reduction) {
@@ -90,6 +101,8 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements I
 					"Optimistic budget cannot be used without setting reduction automaton");
 		}
 
+		mLogger.debug("Determining budget for %s under input %s", state, letter);
+
 		final SleepMap<L, S> sleepMap = mStateFactory.getSleepMap(state);
 		int maximumBudget;
 		if (sleepMap.contains(letter)) {
@@ -101,38 +114,72 @@ public class OptimisticBudget<L, S, R, V extends IDfsVisitor<L, R>> implements I
 			// Ensure invariant for budget functions: Must never exceed budget of the current state.
 			maximumBudget = mStateFactory.getBudget(state);
 		}
+		mLogger.debug("maximum budget: %d", maximumBudget);
 
 		// Find the least budget that is successful.
 		for (int budget = 0; budget < maximumBudget; ++budget) {
+			mLogger.debug("trying with budget %d", budget);
 			final R successor = mReduction.computeSuccessorWithBudget(state, letter, budget);
 			if (successor == null) {
 				// should not happen in practice
 				// (only possible if budget exceeds price in sleep map, but we defined maximumBudget so it would not)
-				break;
+				throw new AssertionError();
 			}
 
+			mLogger.debug("running nested DFS from %s under input %s with assumed budget %d", state, letter, budget);
 			if (isSuccessful(successor)) {
+				mLogger.debug("determined budget %d for %s under input %s", budget, state, letter);
 				return budget;
 			}
 		}
 
 		// We fall back to returning the maximum budget.
+		mLogger.debug("determined budget %d (max) for %s under input %s", maximumBudget, state, letter);
 		return maximumBudget;
 	}
 
 	private boolean isSuccessful(final R state) {
 		// TODO Caching should take into account monotonicity (if it holds); perhaps use covering to achieve this
-		return mSuccessCache.computeIfAbsent(state, this::checkIsSuccessful);
+
+		if (mSuccessful.contains(state)) {
+			return true;
+		}
+		if (mUnsuccessful.contains(state)) {
+			return false;
+		}
+
+		final boolean result = checkIsSuccessful(state);
+		assert (result && mSuccessful.contains(state)) || (!result && mUnsuccessful.contains(state));
+		return result;
 	}
 
+	// We call a state "successful" if it can NOT reach a bad state.
 	private boolean checkIsSuccessful(final R state) {
-		final V visitor = mMakeVisitor.get();
+		// If we can reach a known unsuccessful state, the given state is definitely unsuccessful.
+		// Hence we can abort the search. To this end, we use a ReachabilityCheckVisitor.
+		final var visitor = new ReachabilityCheckVisitor<>(mMakeVisitor.get(), mUnsuccessful);
+
 		try {
 			new DepthFirstTraversal<>(mServices, mReduction, mOrder, visitor, state);
 		} catch (final AutomataOperationCanceledException e) {
-			// TODO turn budget function into an interface that is allowed to throw automata exceptions
 			throw new ToolchainCanceledException(getClass());
 		}
-		return mIsSuccessful.test(visitor);
+
+		final IRun<L, R> run = ((AcceptingRunSearchVisitor<L, R>) visitor.getBaseVisitor()).getAcceptingRun();
+		if (run != null) {
+			// We found an entire accepting run. Hence we are not successful, and neither is any state on this run.
+			mUnsuccessful.addAll(run.getStateSequence());
+			return false;
+		}
+
+		// We did not find an accepting run. Hence we are successful iff we did not reach a known unsuccessful state.
+		final boolean result = !visitor.reachabilityConfirmed();
+		if (result) {
+			mSuccessful.add(state);
+		} else {
+			// The visitor is expected to add all states on the stack to this set.
+			assert mUnsuccessful.contains(state);
+		}
+		return result;
 	}
 }

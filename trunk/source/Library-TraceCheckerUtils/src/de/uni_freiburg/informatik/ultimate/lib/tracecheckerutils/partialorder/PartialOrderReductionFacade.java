@@ -294,7 +294,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			} else {
 				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
 						new CachedBudget<>(mBudget));
-				((OptimisticBudget<L, IPredicate, IPredicate, ?>) mBudget).setReduction(red);
+				((OptimisticBudget<L, IPredicate, IPredicate>) mBudget).setReduction(red);
 				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
 			}
 			break;

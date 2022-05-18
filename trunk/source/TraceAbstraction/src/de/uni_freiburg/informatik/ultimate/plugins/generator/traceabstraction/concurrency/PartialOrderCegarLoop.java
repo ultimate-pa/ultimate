@@ -244,7 +244,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
 			final var budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices), mPOR.getDfsOrder(),
-					mPOR.getSleepMapFactory(), this::createVisitor, v -> getCounterexample(v) == null);
+					mPOR.getSleepMapFactory(), this::createVisitor);
 			mPOR.setBudget(budget);
 
 			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
