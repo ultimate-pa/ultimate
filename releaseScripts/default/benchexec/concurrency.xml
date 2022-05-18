@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
+	<option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
 	<resultfiles></resultfiles>
 
 	<!-- === No Partial Order Reduction === -->
@@ -146,6 +147,21 @@
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
 	</rundefinition>
 
+	<rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
+	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	</rundefinition>
+
+	<rundefinition name="NewStatesSleep_Concrete-Smt_LOOPLOCKSTEP">
+	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	</rundefinition>
+
+	<rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	</rundefinition>
+
 	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_1000ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
 	</rundefinition-->
@@ -235,20 +251,28 @@
 
 	<!-- =============================================================================================================== -->
 
-	<!--tasks name="SVCOMP ConcurrencySafety-Main">
+	<tasks name="SVCOMP-ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<!- -excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile- ->
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks-->
 
-	<!--tasks name="SVCOMP NoDataRace">
+		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+
+		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks>
+
+	<tasks name="SVCOMP-NoDataRace">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+		<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+
 		<option name="- -cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 		<option name="- -cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+
 		<includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
-	</tasks-->
+	</tasks>
 
 	<tasks name="SVCOMP-Concurrency-SafeDeref">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
@@ -263,6 +287,7 @@
 		<option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
 
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
 	</tasks>
 
@@ -275,6 +300,7 @@
 		<option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
 
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
 	</tasks>
 
@@ -287,6 +313,7 @@
 		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
 	</tasks>
 
