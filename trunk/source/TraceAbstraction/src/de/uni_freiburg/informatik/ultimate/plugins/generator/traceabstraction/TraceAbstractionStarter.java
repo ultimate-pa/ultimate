@@ -322,6 +322,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				// TODO: Report for all remaining errorLocs an unknown result
 				break;
 			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				// TODO: Report for all remaining errorLocs a timeout result
+				break;
+			}
 		}
 
 		return results;
