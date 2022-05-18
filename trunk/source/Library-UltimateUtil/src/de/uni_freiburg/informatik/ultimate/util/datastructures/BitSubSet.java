@@ -56,7 +56,8 @@ public class BitSubSet<E> extends AbstractSet<E> {
 	private BitSubSet(final Factory<E> factory, final BitSet bitset) {
 		mFactory = factory;
 		mBitSet = bitset;
-		mHash = new LazyInt(super::hashCode);
+		// TODO This violates the Set#hashCode contract, but it is much more efficient. Find a solution to this.
+		mHash = new LazyInt(mBitSet::hashCode);
 	}
 
 	@Override
@@ -86,6 +87,11 @@ public class BitSubSet<E> extends AbstractSet<E> {
 	@Override
 	public int size() {
 		return mBitSet.cardinality();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return mBitSet.isEmpty();
 	}
 
 	@Override
