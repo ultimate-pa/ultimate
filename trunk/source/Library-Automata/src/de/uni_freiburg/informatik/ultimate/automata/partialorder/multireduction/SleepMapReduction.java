@@ -115,8 +115,8 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 	@Override
 	public Set<L> lettersInternal(final R state) {
-		return mOperand.lettersInternal(mStateFactory.getOriginalState(state)).stream().filter(x -> !isPruned(state, x))
-				.collect(Collectors.toSet());
+		return mOperand.lettersInternal(mStateFactory.getOriginalState(state)).stream().sorted(mOrder.getOrder(state))
+				.filter(x -> !isPruned(state, x)).collect(Collectors.toSet());
 	}
 
 	@Override
