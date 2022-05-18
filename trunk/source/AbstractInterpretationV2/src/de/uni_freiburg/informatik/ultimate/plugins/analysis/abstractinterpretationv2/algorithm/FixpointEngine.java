@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -46,11 +47,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -97,20 +100,21 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	}
 
 	@Override
-	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
+	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
+			final Script script, final Map<IProgramNonOldVar, STATE> interferences) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation(mResult.getBenchmark());
-		calculateFixpoint(initialNodes);
+		calculateFixpoint(initialNodes, interferences);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
 		mDomain.afterFixpointComputation(mResult);
 		return mResult;
 	}
-
-	private void calculateFixpoint(final Collection<? extends LOC> start) {
+	
+	private void calculateFixpoint(final Collection<? extends LOC> start, final Map<IProgramNonOldVar, STATE> interferences) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -131,7 +135,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp);
+			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp, interferences);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
 				continue;
@@ -222,9 +226,17 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	private DisjunctiveAbstractState<STATE> calculateAbstractPost(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final IAbstractPostOperator<STATE, ACTION> postOp) {
+			final IAbstractPostOperator<STATE, ACTION> postOp,
+			final Map<IProgramNonOldVar, STATE> interferences) {
 
+		/* 
+		 * TODO: 
+		 * 	Check wheter shared write or not:
+		 * 	interferences hier verwenden
+		 * 	und die beiden States beschrieben durch die Interferences und  currentitem "mergen"
+		 */
 		final DisjunctiveAbstractState<STATE> preState = currentItem.getState();
+		
 		final DisjunctiveAbstractState<STATE> hierachicalPreState = currentItem.getHierachicalState();
 		final ACTION currentAction = currentItem.getAction();
 

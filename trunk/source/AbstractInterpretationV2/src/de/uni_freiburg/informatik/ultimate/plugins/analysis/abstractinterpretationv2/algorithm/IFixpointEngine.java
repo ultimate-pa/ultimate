@@ -27,9 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -42,7 +46,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
  */
 @FunctionalInterface
 public interface IFixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> {
-
-	AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start,
-			final Script script);
+	
+	default AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start,
+			final Script script) {
+		return runWithInterferences(start, script, new HashMap<>());
+	}
+	
+	AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
+			final Script script, final Map<IProgramNonOldVar, STATE> interferences);
 }
