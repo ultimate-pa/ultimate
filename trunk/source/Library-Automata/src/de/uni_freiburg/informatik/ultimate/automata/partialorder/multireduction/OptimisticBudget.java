@@ -121,9 +121,8 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 			mLogger.debug("trying with budget %d", budget);
 			final R successor = mReduction.computeSuccessorWithBudget(state, letter, budget);
 			if (successor == null) {
-				// should not happen in practice
-				// (only possible if budget exceeds price in sleep map, but we defined maximumBudget so it would not)
-				throw new AssertionError();
+				mLogger.debug("No successor for given letter exists");
+				break;
 			}
 
 			mLogger.debug("running nested DFS from %s under input %s with assumed budget %d", state, letter, budget);
