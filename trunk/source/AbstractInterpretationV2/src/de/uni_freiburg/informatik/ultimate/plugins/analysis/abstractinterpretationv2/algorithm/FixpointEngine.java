@@ -229,10 +229,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			final Map<IProgramNonOldVar, STATE> interferences) {
 
 		/* 
-		 * TODO: 
-		 * 	Check wheter shared write or not:
-		 * 	interferences hier verwenden
-		 * 	und die beiden States beschrieben durch die Interferences und  currentitem "mergen"
+		 * TODO:
+		 * 	if Action is interferences -> patch zu preState dazu
 		 */
 		final DisjunctiveAbstractState<STATE> preState = currentItem.getState();
 		

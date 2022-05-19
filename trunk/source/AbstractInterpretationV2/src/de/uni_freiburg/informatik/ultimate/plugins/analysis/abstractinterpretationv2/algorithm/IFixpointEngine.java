@@ -49,7 +49,7 @@ public interface IFixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VA
 	
 	default AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start,
 			final Script script) {
-		return runWithInterferences(start, script, new HashMap<>());
+		return runWithInterferences(start, script, Map.of());
 	}
 	
 	AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
