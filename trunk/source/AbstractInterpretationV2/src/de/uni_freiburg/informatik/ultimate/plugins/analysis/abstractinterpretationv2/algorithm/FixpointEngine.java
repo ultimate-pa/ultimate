@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariabl
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
