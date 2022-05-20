@@ -61,10 +61,6 @@ public class IcfgCopyFactory implements ICopyActionFactory<IcfgEdge> {
 	public IcfgEdge copy(final IcfgEdge original, final UnmodifiableTransFormula newTransformula,
 			final UnmodifiableTransFormula newTransformulaWithBE) {
 		if (newTransformulaWithBE == null) {
-			if (original instanceof IActionWithBranchEncoders) {
-				throw new IllegalArgumentException(
-						"Action with branch encoders given, but no TF with branch encoders: " + original);
-			}
 			if (original instanceof IcfgForkThreadCurrentTransition) {
 				return mEdgeBuilder.constructForkCurrentTransition((IcfgForkThreadCurrentTransition) original,
 						newTransformula, false);

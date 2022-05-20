@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 public class SpecificVariableAbstraction<L extends IAction>
 		implements IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, VarAbsConstraints<L>, L> {
 
+	private static final boolean ABSTRACT_TF_WITH_BRANCH_ENCODERS = false;
+
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final ManagedScript mMgdScript;
 	private final TransferrerWithVariableCache mTransferrer;
@@ -116,7 +118,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private L copy(final L inLetter, final UnaryOperator<UnmodifiableTransFormula> transform) {
 		final UnmodifiableTransFormula newFormula = transform.apply(inLetter.getTransformula());
 		final UnmodifiableTransFormula newFormulaBE;
-		if (inLetter instanceof IActionWithBranchEncoders) {
+		if (ABSTRACT_TF_WITH_BRANCH_ENCODERS && inLetter instanceof IActionWithBranchEncoders) {
 			newFormulaBE =
 					transform.apply(((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders());
 		} else {

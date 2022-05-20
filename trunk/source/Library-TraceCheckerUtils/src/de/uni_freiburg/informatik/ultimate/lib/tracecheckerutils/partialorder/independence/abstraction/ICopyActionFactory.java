@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -47,12 +46,8 @@ public interface ICopyActionFactory<L extends IAction> {
 	 * @param newTransformula
 	 *            A new transition formula to use for the copied action.
 	 * @param newTransformulaWithBE
-	 *            A new transition formula with branch encoders for the copied action. This parameter should be non-null
-	 *            iff the original action implements {@link IActionWithBranchEncoders}.
+	 *            A new transition formula with branch encoders for the copied action.
 	 * @return A copied action using the new transition formulas.
-	 * @throws IllegalArgumentException
-	 *             if the given original is not an {@link IActionWithBranchEncoders} and the last parameter is non-null,
-	 *             or if the given original is an {@link IActionWithBranchEncoders} but the last parameter is null.
 	 */
 	L copy(L original, UnmodifiableTransFormula newTransformula, UnmodifiableTransFormula newTransformulaWithBE);
 }
