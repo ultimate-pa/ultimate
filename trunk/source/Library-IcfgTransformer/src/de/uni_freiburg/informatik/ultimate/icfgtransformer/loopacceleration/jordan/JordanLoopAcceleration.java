@@ -120,10 +120,7 @@ public class JordanLoopAcceleration {
 					errorMessage, null, jlasg);
 		}
 
-		final Map<TermVariable, IProgramVar> inVarsReverseMapping = TransFormulaUtils
-				.constructReverseMapping(loopTransFormula.getInVars());
-
-		final Pair<LinearUpdate, String> pair = extractLinearUpdate(mgdScript, su, inVarsReverseMapping);
+		final Pair<LinearUpdate, String> pair = extractLinearUpdate(mgdScript, su);
 		if (pair.getFirst() == null) {
 			assert pair.getSecond() != null;
 			final JordanLoopAccelerationStatisticsGenerator jlasg =
@@ -173,7 +170,7 @@ public class JordanLoopAcceleration {
 	}
 
 	private static Pair<LinearUpdate, String> extractLinearUpdate(final ManagedScript mgdScript,
-			final SimultaneousUpdate su, final Map<TermVariable, IProgramVar> inVarsReverseMapping) {
+			final SimultaneousUpdate su) {
 		final Set<TermVariable> termVariablesOfModified = new HashSet<>();
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
 			termVariablesOfModified.add(update.getKey().getTermVariable());
@@ -181,14 +178,11 @@ public class JordanLoopAcceleration {
 		for (final IProgramVar pv : su.getHavocedVars()) {
 			termVariablesOfModified.add(pv.getTermVariable());
 		}
-
 		final Set<Term> readonlyVariables = new HashSet<>();
 		final Map<TermVariable, AffineTerm> updateMap = new HashMap<>();
-
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
-
 			final Triple<AffineTerm, Set<Term>, String> triple = extractLinearUpdate(mgdScript, termVariablesOfModified,
-					inVarsReverseMapping, update);
+					update);
 			if (triple.getFirst() == null) {
 				assert triple.getSecond() == null;
 				assert triple.getThird() != null;
@@ -204,8 +198,7 @@ public class JordanLoopAcceleration {
 	}
 
 	private static Triple<AffineTerm, Set<Term>, String> extractLinearUpdate(final ManagedScript mgdScript,
-			final Set<TermVariable> termVariablesOfModified, final Map<TermVariable, IProgramVar> inVarsReverseMapping,
-			final Entry<IProgramVar, Term> update) {
+			final Set<TermVariable> termVariablesOfModified, final Entry<IProgramVar, Term> update) {
 		final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 				.transform(update.getValue());
 		final Map<Term, Rational> variables2coeffcient = new HashMap<>();
@@ -213,8 +206,8 @@ public class JordanLoopAcceleration {
 		for (final Entry<Monomial, Rational> entry : polyRhs.getMonomial2Coefficient().entrySet()) {
 			final Term monomialAsTerm = entry.getKey().toTerm(mgdScript.getScript());
 			if (!termVariablesOfModified.contains(monomialAsTerm)) {
-				final TermVariable termVariableOfModified = containsTermVariableOfModified(inVarsReverseMapping,
-						termVariablesOfModified, monomialAsTerm);
+				final TermVariable termVariableOfModified = containsTermVariableOfModified(termVariablesOfModified,
+						monomialAsTerm);
 				if (termVariableOfModified != null) {
 					final String errorMessage = String.format(
 							"Monomial contains modified variable. Monomial %s, Variable %s", monomialAsTerm,
@@ -230,8 +223,8 @@ public class JordanLoopAcceleration {
 		return new Triple<AffineTerm, Set<Term>, String>(affineTerm, readonlyVariables, null);
 	}
 
-	private static TermVariable containsTermVariableOfModified(final Map<TermVariable, IProgramVar> inVarsReverseMapping,
-			final Set<TermVariable> termVariablesOfModified, final Term monomialAsTerm) {
+	private static TermVariable containsTermVariableOfModified(final Set<TermVariable> termVariablesOfModified,
+			final Term monomialAsTerm) {
 		for (final TermVariable tv : monomialAsTerm.getFreeVars()) {
 			if (termVariablesOfModified.contains(tv)) {
 				return tv;
