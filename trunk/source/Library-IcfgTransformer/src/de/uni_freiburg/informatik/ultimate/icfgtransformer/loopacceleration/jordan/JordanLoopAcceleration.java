@@ -359,8 +359,8 @@ public class JordanLoopAcceleration {
 		}
 		final int n = closedFormMatrix.getDimension();
 		final HashMap<IProgramVar, Term> closedForm = new HashMap<>();
-		for (final IProgramVar iVar : su.getDeterministicAssignment().keySet()) {
-			final int varIndex = varMatrixIndexMap.get(iVar.getTermVariable());
+		for (final IProgramVar pv : su.getDeterministicAssignment().keySet()) {
+			final int varIndex = varMatrixIndexMap.get(pv.getTermVariable());
 			final Term[] summands = new Term[n];
 			int current = 0;
 			for (int j = 0; j < n - 1; j++) {
@@ -406,7 +406,7 @@ public class JordanLoopAcceleration {
 				sum = mgdScript.getScript().term("+", Arrays.copyOfRange(summands, 0, current));
 			}
 			sum = Substitution.apply(mgdScript, substitutionMapping, sum);
-			closedForm.put(iVar, sum);
+			closedForm.put(pv, sum);
 		}
 		return closedForm;
 	}
