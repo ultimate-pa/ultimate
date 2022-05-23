@@ -61,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomi
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -183,7 +183,7 @@ public class JordanLoopAcceleration {
 		}
 
 		final Set<Term> readonlyVariables = new HashSet<>();
-		final Map<IProgramVar, AffineTerm> updateMap = new HashMap<>();
+		final Map<TermVariable, AffineTerm> updateMap = new HashMap<>();
 
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
 
@@ -196,7 +196,7 @@ public class JordanLoopAcceleration {
 			} else {
 				assert triple.getSecond() != null;
 				assert triple.getThird() == null;
-				updateMap.put(update.getKey(), triple.getFirst());
+				updateMap.put(update.getKey().getTermVariable(), triple.getFirst());
 				readonlyVariables.addAll(triple.getSecond());
 			}
 		}
@@ -281,9 +281,9 @@ public class JordanLoopAcceleration {
 		final HashMap<Term, Integer> varMatrixIndex = new HashMap<>();
 		int i = 0;
 		// add all updated variables.
-		for (final IProgramVar updatedVar : linearUpdate.getUpdateMap().keySet()) {
-			assert !varMatrixIndex.containsKey(updatedVar.getTermVariable()) : "cannot add same variable twice";
-			varMatrixIndex.put(updatedVar.getTermVariable(), i);
+		for (final TermVariable updatedVar : linearUpdate.getUpdateMap().keySet()) {
+			assert !varMatrixIndex.containsKey(updatedVar) : "cannot add same variable twice";
+			varMatrixIndex.put(updatedVar, i);
 			i++;
 		}
 		// add all variables that are only read in updates
@@ -299,27 +299,24 @@ public class JordanLoopAcceleration {
 	 * Fills the row corresponding to variable of the updateMatrix where variable is updated with polyRhs.
 	 */
 	private static void fillMatrixRow(final QuadraticMatrix updateMatrix,
-			final HashMap<Term, Integer> varMatrixIndexMap, final AffineTerm affineRhs,
-			final IProgramVar variable) {
+			final HashMap<Term, Integer> varMatrixIndexMap, final AffineTerm affineRhs, final TermVariable tv) {
 
 		final int n = updateMatrix.getDimension() - 1;
 		updateMatrix.setEntry(n, n, BigInteger.valueOf(1));
 		// Set diagonal entry to 0 for case variable assignment does not depend on
 		// variable itself
 		// (matrix was initialized as identity matrix).
-		updateMatrix.setEntry(varMatrixIndexMap.get(variable.getTermVariable()),
-				varMatrixIndexMap.get(variable.getTermVariable()), BigInteger.valueOf(0));
+		updateMatrix.setEntry(varMatrixIndexMap.get(tv), varMatrixIndexMap.get(tv), BigInteger.valueOf(0));
 
 		// Fill row.
 		for (final Term termVar : varMatrixIndexMap.keySet()) {
-			updateMatrix.setEntry(varMatrixIndexMap.get(variable.getTermVariable()), varMatrixIndexMap.get(termVar),
+			updateMatrix.setEntry(varMatrixIndexMap.get(tv), varMatrixIndexMap.get(termVar),
 					determineCoefficient(affineRhs, termVar));
-			if (updateMatrix.getEntry(varMatrixIndexMap.get(variable.getTermVariable()),
-					varMatrixIndexMap.get(termVar)) == null) {
+			if (updateMatrix.getEntry(varMatrixIndexMap.get(tv), varMatrixIndexMap.get(termVar)) == null) {
 				// not a linear term.
 				break;
 			}
-			updateMatrix.setEntry(varMatrixIndexMap.get(variable.getTermVariable()), n, determineConstant(affineRhs));
+			updateMatrix.setEntry(varMatrixIndexMap.get(tv), n, determineConstant(affineRhs));
 		}
 	}
 
@@ -433,10 +430,10 @@ public class JordanLoopAcceleration {
 		final QuadraticMatrix updateMatrix = QuadraticMatrix.constructIdentityMatrix(n);
 
 		// Fill update matrix.
-		for (final Entry<IProgramVar, AffineTerm> update : linearUpdate.getUpdateMap().entrySet()) {
+		for (final Entry<TermVariable, AffineTerm> update : linearUpdate.getUpdateMap().entrySet()) {
 			fillMatrixRow(updateMatrix, varMatrixIndexMap, update.getValue(), update.getKey());
 			for (int j = 0; j < n; j++) {
-				if (updateMatrix.getEntry(varMatrixIndexMap.get(update.getKey().getTermVariable()), j) == null) {
+				if (updateMatrix.getEntry(varMatrixIndexMap.get(update.getKey()), j) == null) {
 					return null;
 				}
 			}
@@ -1094,14 +1091,14 @@ public class JordanLoopAcceleration {
 	}
 
 	private static class LinearUpdate {
-		Map<IProgramVar, AffineTerm> mUpdateMap;
+		Map<TermVariable, AffineTerm> mUpdateMap;
 		Set<Term> mReadonlyVariables;
-		public LinearUpdate(final Map<IProgramVar, AffineTerm> updateMap, final Set<Term> readonlyVariables) {
+		public LinearUpdate(final Map<TermVariable, AffineTerm> updateMap, final Set<Term> readonlyVariables) {
 			super();
 			mUpdateMap = updateMap;
 			mReadonlyVariables = readonlyVariables;
 		}
-		public Map<IProgramVar, AffineTerm> getUpdateMap() {
+		public Map<TermVariable, AffineTerm> getUpdateMap() {
 			return mUpdateMap;
 		}
 		public Set<Term> getReadonlyVariables() {
