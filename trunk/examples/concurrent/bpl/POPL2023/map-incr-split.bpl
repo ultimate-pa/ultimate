@@ -1,3 +1,4 @@
+//#Safe
 var A: [int]int;
 var k : int;
 var N : int;

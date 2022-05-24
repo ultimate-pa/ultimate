@@ -1,3 +1,4 @@
+//#Safe
 var lock : int;
 var A : [int]int;
 
