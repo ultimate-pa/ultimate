@@ -345,7 +345,7 @@ public class JordanLoopAcceleration {
 	 * form matrix.
 	 */
 	private static HashMap<IProgramVar, Term> matrix2ClosedFormOfUpdate(final ManagedScript mgdScript,
-			final PolynomialTermMatrix closedFormMatrix, final HashMap<Term, Integer> varMatrixIndexMap,
+			final PolynomialTermMatrix closedFormMatrix, final HashMap<Term, Integer> var2MatrixIndex,
 			final SimultaneousUpdate su, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
 		final HashMap<Term, Term> substitutionMapping = new HashMap<>();
@@ -353,62 +353,69 @@ public class JordanLoopAcceleration {
 			substitutionMapping.put(entry.getKey().getTermVariable(), entry.getValue());
 		}
 		// Array to get TermVariable from matrix index.
-		final Term[] updatedVars = new Term[varMatrixIndexMap.size()];
-		for (final Term var : varMatrixIndexMap.keySet()) {
-			updatedVars[varMatrixIndexMap.get(var)] = var;
+		final Term[] matrixIndex2Var = new Term[var2MatrixIndex.size()];
+		for (final Term var : var2MatrixIndex.keySet()) {
+			matrixIndex2Var[var2MatrixIndex.get(var)] = var;
 		}
-		final int n = closedFormMatrix.getDimension();
 		final HashMap<IProgramVar, Term> closedForm = new HashMap<>();
 		for (final IProgramVar pv : su.getDeterministicAssignment().keySet()) {
-			final int varIndex = varMatrixIndexMap.get(pv.getTermVariable());
-			final Term[] summands = new Term[n];
-			int current = 0;
-			for (int j = 0; j < n - 1; j++) {
-				// Ignore if matrix entry is 0.
-				if (closedFormMatrix.getEntry(varIndex, j).isConstant()) {
-					final Rational entryRational = closedFormMatrix.getEntry(varIndex, j).getConstant();
-					if (entryRational.numerator().intValue() == 0) {
-						continue;
-					}
-				}
-				// If matrix entry is 1, only add variable.
-				if (closedFormMatrix.getEntry(varIndex, j).isConstant()) {
-					final Rational entryRational = closedFormMatrix.getEntry(varIndex, j).getConstant();
-					if (entryRational.numerator().intValue() == 1 && entryRational.denominator().intValue() == 1) {
-						summands[current] = updatedVars[j];
-					} else {
-						summands[current] = mgdScript.getScript().term("*", closedFormMatrix.getEntry(varIndex, j).toTerm(mgdScript.getScript()),
-								updatedVars[j]);
-					}
-				} else {
-					summands[current] = mgdScript.getScript().term("*", closedFormMatrix.getEntry(varIndex, j).toTerm(mgdScript.getScript()),
-							updatedVars[j]);
-				}
-				current = current + 1;
-			}
-			// Add constant term if it is not zero.
-			if (closedFormMatrix.getEntry(varIndex, n - 1).isConstant()) {
-				final Rational entryRational = closedFormMatrix.getEntry(varIndex, n - 1).getConstant();
-				if (entryRational.numerator().intValue() != 0) {
-					summands[current] = closedFormMatrix.getEntry(varIndex, n - 1).toTerm(mgdScript.getScript());
-					current = current + 1;
-				}
-			} else {
-				summands[current] = closedFormMatrix.getEntry(varIndex, n - 1).toTerm(mgdScript.getScript());
-				current = current + 1;
-			}
-			Term sum = mgdScript.getScript().numeral(BigInteger.ZERO);
-			if (current == 0) {
-				sum = mgdScript.getScript().numeral(BigInteger.ZERO);
-			} else if (current == 1) {
-				sum = summands[0];
-			} else {
-				sum = mgdScript.getScript().term("+", Arrays.copyOfRange(summands, 0, current));
-			}
+			final TermVariable tv = pv.getTermVariable();
+			Term sum = constructClosedForm(mgdScript, closedFormMatrix, var2MatrixIndex, matrixIndex2Var, tv);
 			sum = Substitution.apply(mgdScript, substitutionMapping, sum);
 			closedForm.put(pv, sum);
 		}
 		return closedForm;
+	}
+
+	private static Term constructClosedForm(final ManagedScript mgdScript, final PolynomialTermMatrix closedFormMatrix,
+			final HashMap<Term, Integer> var2MatrixIndex, final Term[] matrixIndex2Var, final TermVariable tv) {
+		final int varIndex = var2MatrixIndex.get(tv);
+		final int n = closedFormMatrix.getDimension();
+		final Term[] summands = new Term[n];
+		int current = 0;
+		for (int j = 0; j < n - 1; j++) {
+			// Ignore if matrix entry is 0.
+			if (closedFormMatrix.getEntry(varIndex, j).isConstant()) {
+				final Rational entryRational = closedFormMatrix.getEntry(varIndex, j).getConstant();
+				if (entryRational.numerator().intValue() == 0) {
+					continue;
+				}
+			}
+			// If matrix entry is 1, only add variable.
+			if (closedFormMatrix.getEntry(varIndex, j).isConstant()) {
+				final Rational entryRational = closedFormMatrix.getEntry(varIndex, j).getConstant();
+				if (entryRational.numerator().intValue() == 1 && entryRational.denominator().intValue() == 1) {
+					summands[current] = matrixIndex2Var[j];
+				} else {
+					summands[current] = mgdScript.getScript().term("*", closedFormMatrix.getEntry(varIndex, j).toTerm(mgdScript.getScript()),
+							matrixIndex2Var[j]);
+				}
+			} else {
+				summands[current] = mgdScript.getScript().term("*", closedFormMatrix.getEntry(varIndex, j).toTerm(mgdScript.getScript()),
+						matrixIndex2Var[j]);
+			}
+			current = current + 1;
+		}
+		// Add constant term if it is not zero.
+		if (closedFormMatrix.getEntry(varIndex, n - 1).isConstant()) {
+			final Rational entryRational = closedFormMatrix.getEntry(varIndex, n - 1).getConstant();
+			if (entryRational.numerator().intValue() != 0) {
+				summands[current] = closedFormMatrix.getEntry(varIndex, n - 1).toTerm(mgdScript.getScript());
+				current = current + 1;
+			}
+		} else {
+			summands[current] = closedFormMatrix.getEntry(varIndex, n - 1).toTerm(mgdScript.getScript());
+			current = current + 1;
+		}
+		Term sum = mgdScript.getScript().numeral(BigInteger.ZERO);
+		if (current == 0) {
+			sum = mgdScript.getScript().numeral(BigInteger.ZERO);
+		} else if (current == 1) {
+			sum = summands[0];
+		} else {
+			sum = mgdScript.getScript().term("+", Arrays.copyOfRange(summands, 0, current));
+		}
+		return sum;
 	}
 
 	/**
