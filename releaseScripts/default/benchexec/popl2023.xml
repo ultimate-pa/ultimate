@@ -314,7 +314,6 @@
     <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
     <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
   </rundefinition>
-  </rundefinition>
   
   <!-- ===================================================================== -->
 
