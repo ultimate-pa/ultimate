@@ -65,6 +65,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.naming.OperationNotSupportedException;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -115,8 +117,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	
 	private Map<String, Set<IcfgLocation>> mInterferenceLocations;
 	private IIcfg<?> mIcfg;
+	
+	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
 
-	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params, IIcfg<?> icfg) {
+	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params, IIcfg<?> icfg, 
+			final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -134,6 +139,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mUseHierachicalPre = mDomain.useHierachicalPre();
 		mIcfg = icfg;
 		mInterferenceLocations = new HashMap<>();
+		mFixpointEngine = fxpe;
 	}
 	
 	@Override
@@ -152,48 +158,44 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes, final Script script, 
-			final Map<IProgramNonOldVar, STATE> interferences) {
-		/*
-		 * TODO:
-		 * 	Throw Exception
-		 * 	Unsupported Operation
-		 */
-		return null;
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+		throw new UnsupportedOperationException("Operation not supported for FixpointEngineConcurrent");
 	}
 	
 	private void calculateFixpoint(final Map<String, ? extends IcfgLocation> entryNodes, final Script script) {
 		computeInterferenceLocations(entryNodes);
-		// case for empty InterferenceLocations: can be analyzed as normal
+		/*
+		 *  TODO: case for empty InterferenceLocations
+		 *  	can be analyzed as normal
+		 */
+		
+		// Check for correct type to use for interferences
 		NestedMap2<String, IProgramNonOldVar, STATE> interferences = new NestedMap2<>();
 		NestedMap2<String, IProgramNonOldVar, STATE> interferencesOld = new NestedMap2<>();
-		
 
-		// create FixpointEngine once for each procedure, reusable?
-		// Falls nicht, dann einfach in der While Schleife erzeugen
-		Map<String, FixpointEngine<STATE, ACTION, VARDECL, LOC>> fixpointEngineMap = createFixpointEngines();
-		
 		while (!interferences.equals(interferencesOld) || interferences.isEmpty()) {
 			// save current interferences to check if something changed
 			interferencesOld = interferences;
 			
 			entryNodes.forEach((procedure, entry) -> {
-				Map<IProgramNonOldVar, STATE> procedureInterferences = computeInterferences(entry, interferences);
+				Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = computeInterferences(entry, interferences);
 				
 				/*
-				 * TODO:
-				 * 	compute AbsInt für procedure mit gefilterten interferences
+				 * TODO: compute AbsInt
+				 * 	 via mFixpointEngine für procedure mit gefilterten interferences
 				 */
 				
+				// create Collection<? extends LOC> for runWithInterferences()
+				// mFixpointEngine.runWithInterferences(entry, script, procedureInterferences);
+				
 				/*
-				 * TODO:
-				 * 	combine result with overall mResult
+				 * TODO: combine result with overall mResult
 				 */				
 			});
 			
 			mInterferenceLocations.forEach((procedure, location) -> {
 				/*
-				 * TODO:
-				 * 	compute neues Interferences Set
+				 * TODO: compute neues Interferences Set
 				 * 		im ersten Schritt ist das die "Union" 
 				 * 		über alle Abstract States der shared writes eines procedures
 				 */
@@ -222,9 +224,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return !assignedVars.stream().filter(x -> variables.contains(x)).collect(Collectors.toSet()).isEmpty();
 	}
 	
-	private Map<IProgramNonOldVar, STATE> computeInterferences(final IcfgLocation entryNode, NestedMap2<String, IProgramNonOldVar, STATE> interferences) {
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeInterferences(final IcfgLocation entryNode, 
+			NestedMap2<String, IProgramNonOldVar, STATE> interferences) {
 		/*
-		 * TODO:
+		 * TODO: implement the different versions
+		 *  filter = filter out interferences from own procedure
 		 * 	Version 1:
 		 * 		filter + union
 		 * 	Version 2:
@@ -234,9 +238,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		 */
 		
 		// Filter
-		Set<String> keys = interferences.keySet().stream().filter(k -> entryNode.getProcedure().equals(k)).collect(Collectors.toSet());
-		Map<IProgramNonOldVar, STATE> procedureInterferences = new HashMap<>();
-		keys.forEach(k -> procedureInterferences.putAll(interferences.get(k)));
+		// Set<String> keys = interferences.keySet().stream().filter(k -> entryNode.getProcedure().equals(k)).collect(Collectors.toSet());
+		Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
 		
 		// Union der States einer Variable
 		

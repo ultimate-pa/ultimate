@@ -108,12 +108,8 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 	
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
-			final Script script, final Map<IProgramNonOldVar, STATE> interferences) {
-		/*
-		 * TODO:
-		 * 	throw Exception if in here
-		 */
-		return null;
+			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+		throw new UnsupportedOperationException("Operation not supported for BackwardFixpointEngine");
 	}
 
 	private void calculateFixpoint(final Collection<? extends LOC> sinks) {

@@ -30,6 +30,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.naming.OperationNotSupportedException;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -47,11 +50,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 @FunctionalInterface
 public interface IFixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> {
 	
-	default AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start,
-			final Script script) {
+	default AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start,	final Script script) {
 		return runWithInterferences(start, script, Map.of());
 	}
 	
 	AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
-			final Script script, final Map<IProgramNonOldVar, STATE> interferences);
+			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences);
 }

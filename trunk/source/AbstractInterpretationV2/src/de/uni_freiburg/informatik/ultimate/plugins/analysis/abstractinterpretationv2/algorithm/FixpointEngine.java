@@ -97,10 +97,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 		mUseHierachicalPre = mDomain.useHierachicalPre();
 	}
-
+	
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
-			final Script script, final Map<IProgramNonOldVar, STATE> interferences) {
+			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
@@ -113,7 +113,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		return mResult;
 	}
 	
-	private void calculateFixpoint(final Collection<? extends LOC> start, final Map<IProgramNonOldVar, STATE> interferences) {
+	private void calculateFixpoint(final Collection<? extends LOC> start, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -140,10 +140,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 				continue;
 			}
 
-			// TODO: Fix summary calculation
-			// if (useSummaryInstead(currentItem, postState, worklist)) {
-			// continue;
-			// }
+			/*
+			 * TODO: Fix summary calculation
+			 * 	if (useSummaryInstead(currentItem, postState, worklist)) {
+			 * 	continue;
+			 *  }
+			 */
 
 			checkLoopState(currentItem);
 			checkReachedError(currentItem, postState, reachedErrors);
@@ -226,13 +228,20 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	private DisjunctiveAbstractState<STATE> calculateAbstractPost(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
-			final Map<IProgramNonOldVar, STATE> interferences) {
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+		
+		final DisjunctiveAbstractState<STATE> preState;
 
 		/* 
-		 * TODO:
-		 * 	if Action is interferences -> patch zu preState dazu
+		 * TODO: merge States
+		 * 	interferences: Map<Action, DisjunctiveAbstractState> 
 		 */
-		final DisjunctiveAbstractState<STATE> preState = currentItem.getState();
+		if (interferences.containsKey(currentItem.getAction())) {
+			preState = currentItem.getState().patch(interferences.get(currentItem.getAction()));
+		}
+		else {
+			preState = currentItem.getState();
+		}
 		
 		final DisjunctiveAbstractState<STATE> hierachicalPreState = currentItem.getHierachicalState();
 		final ACTION currentAction = currentItem.getAction();
