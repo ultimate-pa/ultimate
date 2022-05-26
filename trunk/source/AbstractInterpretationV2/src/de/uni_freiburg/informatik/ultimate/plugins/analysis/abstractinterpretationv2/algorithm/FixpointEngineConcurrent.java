@@ -54,18 +54,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.naming.OperationNotSupportedException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -116,6 +111,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final boolean mUseHierachicalPre;
 	
 	private Map<String, Set<IcfgLocation>> mInterferenceLocations;
+	private Map<ACTION, Set<IProgramVar>> mSharedReads;
 	private IIcfg<?> mIcfg;
 	
 	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
@@ -139,6 +135,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mUseHierachicalPre = mDomain.useHierachicalPre();
 		mIcfg = icfg;
 		mInterferenceLocations = new HashMap<>();
+		mSharedReads = new HashMap<>();
 		mFixpointEngine = fxpe;
 	}
 	
@@ -163,15 +160,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 	
 	private void calculateFixpoint(final Map<String, ? extends IcfgLocation> entryNodes, final Script script) {
-		computeInterferenceLocations(entryNodes);
+		preComputations(entryNodes);
 		/*
 		 *  TODO: case for empty InterferenceLocations
 		 *  	can be analyzed as normal
+		 *  	-> compute AbsInt for each procedure separately and combine the results to one overall result
 		 */
 		
 		// Check for correct type to use for interferences
-		NestedMap2<String, IProgramNonOldVar, STATE> interferences = new NestedMap2<>();
-		NestedMap2<String, IProgramNonOldVar, STATE> interferencesOld = new NestedMap2<>();
+		NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences = new NestedMap2<>();
+		NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferencesOld = new NestedMap2<>();
 
 		while (!interferences.equals(interferencesOld) || interferences.isEmpty()) {
 			// save current interferences to check if something changed
@@ -180,25 +178,26 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			entryNodes.forEach((procedure, entry) -> {
 				Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = computeInterferences(entry, interferences);
 				
+				Collection<LOC> collection = new ArrayList<>();
+				// ugly conversion !!!
+				collection.add((LOC) entry);
+				AbsIntResult<STATE, ACTION, LOC> result = mFixpointEngine.runWithInterferences(collection, script, procedureInterferences);
+				
 				/*
-				 * TODO: compute AbsInt
-				 * 	 via mFixpointEngine für procedure mit gefilterten interferences
+				 * TODO: merge result with overall mResult
+				 * 		compute getLoc2States over both AbsIntResult possible
+				 * 		but how do we compute a new AbsIntResult out of the Map
+				 * 		-> write merge function for AbsIntResult???
 				 */
-				
-				// create Collection<? extends LOC> for runWithInterferences()
-				// mFixpointEngine.runWithInterferences(entry, script, procedureInterferences);
-				
-				/*
-				 * TODO: combine result with overall mResult
-				 */				
 			});
 			
 			mInterferenceLocations.forEach((procedure, location) -> {
 				/*
-				 * TODO: compute neues Interferences Set
-				 * 		im ersten Schritt ist das die "Union" 
-				 * 		über alle Abstract States der shared writes eines procedures
+				 * TODO: compute new Interferences Set
+				 * 		iterate over all shared writes:
+				 * 		new State <= State in mResult ("+" old State)
 				 */
+				
 			});
 			
 			// not implemented yet
@@ -206,26 +205,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		}
 	}
 	
-	private void computeInterferenceLocations(final Map<String, ? extends IcfgLocation> entryNodes) {
-		Set<IProgramNonOldVar> variables = new HashSet<>();
-		entryNodes.forEach((procedure,location) -> variables.addAll(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure)));
-		
-		entryNodes.forEach((procedure,location) -> {
-			mInterferenceLocations.put(procedure, new HashSet<>());
-			IcfgEdgeIterator iterator = new IcfgEdgeIterator(location.getOutgoingEdges());
-			
-			Set<IcfgEdge> tempInterferenceEdges = iterator.asStream().filter(edge -> 
-				checkSet(edge.getTransformula().getAssignedVars(), variables)).collect(Collectors.toSet());
-			tempInterferenceEdges.forEach(edge -> mInterferenceLocations.get(procedure).add(edge.getSource()));
-		});
-	}
-	
-	private boolean checkSet(Set<IProgramVar> assignedVars, Set<IProgramNonOldVar> variables) {
-		return !assignedVars.stream().filter(x -> variables.contains(x)).collect(Collectors.toSet()).isEmpty();
-	}
-	
+	/**
+	 * 
+	 * @param entryNode
+	 * @param interferences
+	 * @return Map of shared reads to the DisjunctiveAbstractStates this read should read from in this iteration.
+	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeInterferences(final IcfgLocation entryNode, 
-			NestedMap2<String, IProgramNonOldVar, STATE> interferences) {
+			NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences) {
+		Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
+		
 		/*
 		 * TODO: implement the different versions
 		 *  filter = filter out interferences from own procedure
@@ -238,16 +227,66 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		 */
 		
 		// Filter
-		// Set<String> keys = interferences.keySet().stream().filter(k -> entryNode.getProcedure().equals(k)).collect(Collectors.toSet());
-		Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
+		Set<String> keys = interferences.keySet().stream().filter(k -> 
+			entryNode.getProcedure().equals(k)).collect(Collectors.toSet());
 		
-		// Union der States einer Variable
+		// Union
+		mSharedReads.forEach((action, vars) -> {
+			procedureInterferences.put(action, new DisjunctiveAbstractState<>());
+			keys.forEach(procedure -> {
+				interferences.get(procedure).forEach((var, state) -> {
+					if (vars.contains(var)) {
+						procedureInterferences.get(action).union(state);
+					}
+				});
+			});
+		});
 		
+		/*
+		 * TODO: add writes from own procedure
+		 * 	add shared write if there is a way from the shared write to the share read with no other share write on it
+		 * 	-> does not change, is possible to precompute
+		 */	
 		
 		return procedureInterferences;
 	}
 	
-	private Map<String, FixpointEngine<STATE, ACTION, VARDECL, LOC>> createFixpointEngines() {
-		return null;
+	/**
+	 * 
+	 * @param entryNodes
+	 */
+	private void preComputations(final Map<String, ? extends IcfgLocation> entryNodes) {
+		Set<IProgramNonOldVar> variables = new HashSet<>();
+		entryNodes.forEach((procedure,location) -> 
+			variables.addAll(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure)));
+		
+		entryNodes.forEach((procedure,location) -> {
+			IcfgEdgeIterator iterator = new IcfgEdgeIterator(location.getOutgoingEdges());
+			
+			// compute SharedWrites
+			mInterferenceLocations.put(procedure, new HashSet<>());
+			Set<IcfgEdge> tempInterferenceEdges = iterator.asStream().filter(edge -> 
+				intersectionEmpty(edge.getTransformula().getAssignedVars(), variables)).collect(Collectors.toSet());
+			tempInterferenceEdges.forEach(edge -> mInterferenceLocations.get(procedure).add(edge.getSource()));
+			
+			// compute SharedReads			
+			Set<IcfgEdge> tempSharedReads = iterator.asStream().filter(edge -> 
+				intersectionEmpty(edge.getTransformula().getInVars().keySet(), variables)).collect(Collectors.toSet());
+			tempSharedReads.forEach(edge -> {
+				// ugly conversion!!!
+			 	mSharedReads.put((ACTION) edge, new HashSet<>());
+				edge.getTransformula().getInVars().keySet().forEach(var -> mSharedReads.get(edge).add(var));
+			});
+		});
+	}
+	
+	/**
+	 * 
+	 * @param set1
+	 * @param set2
+	 * @return true if the intersection of set1 and set2 is not emtpy
+	 */
+	private boolean intersectionEmpty(Set<IProgramVar> set1, Set<IProgramNonOldVar> set2) {
+		return !set1.stream().filter(x -> set2.contains(x)).collect(Collectors.toSet()).isEmpty();
 	}
 }
