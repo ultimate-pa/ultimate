@@ -346,8 +346,7 @@ public class JordanLoopAcceleration {
 	 */
 	private static HashMap<IProgramVar, Term> matrix2ClosedFormOfUpdate(final ManagedScript mgdScript,
 			final PolynomialTermMatrix closedFormMatrix, final HashMap<Term, Integer> var2MatrixIndex,
-			final SimultaneousUpdate su, final Map<IProgramVar, TermVariable> inVars,
-			final Map<IProgramVar, TermVariable> outVars) {
+			final SimultaneousUpdate su, final Map<IProgramVar, TermVariable> inVars) {
 		final HashMap<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : inVars.entrySet()) {
 			substitutionMapping.put(entry.getKey().getTermVariable(), entry.getValue());
@@ -450,19 +449,16 @@ public class JordanLoopAcceleration {
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
 			final boolean itEven, final boolean restrictedVersionPossible) {
 
-		final RationalMatrix modalUpdate = jordanUpdate.getModal();
-		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
 
 		// Compute matrix that represents closed form.
-		final Pair<PolynomialTermMatrix, Boolean> closedFormMatrix =
-				PolynomialTermMatrix.computeClosedFormMatrix(mgdScript, modalUpdate, jordanUpdate, inverseModalUpdate,
-						it, itHalf, itEven, restrictedVersionPossible);
+		final Pair<PolynomialTermMatrix, Boolean> closedFormMatrix = PolynomialTermMatrix
+				.computeClosedFormMatrix(mgdScript, jordanUpdate, it, itHalf, itEven, restrictedVersionPossible);
 		if (!closedFormMatrix.getValue()) {
 			final Pair<HashMap<IProgramVar, Term>, Boolean> result = new Pair<>(null, false);
 			return result;
 		}
 		final HashMap<IProgramVar, Term> closedForm = matrix2ClosedFormOfUpdate(mgdScript,
-				closedFormMatrix.getKey(), varMatrixIndexMap, su, inVars, outVars);
+				closedFormMatrix.getKey(), varMatrixIndexMap, su, inVars);
 		final Pair<HashMap<IProgramVar, Term>, Boolean> result = new Pair<>(closedForm, true);
 		return result;
 	}
