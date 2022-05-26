@@ -282,13 +282,14 @@ public class PolynomialTermMatrix {
 	 * @return a pair consisting of the matrix and a boolean which is true iff the computation
 	 * of the matrix was successful.
 	 */
-	public static Pair<PolynomialTermMatrix, Boolean> computeClosedFormMatrix(
-			final ManagedScript mgdScript, final RationalMatrix modalUpdate, final JordanTransformationResult jordanUpdate,
-			final RationalMatrix inverseModalUpdate, final TermVariable it,
-			final TermVariable itHalf, final boolean itEven, boolean restrictedVersionPossible) {
+	public static Pair<PolynomialTermMatrix, Boolean> computeClosedFormMatrix(final ManagedScript mgdScript,
+			final JordanTransformationResult jordanUpdate, final TermVariable it, final TermVariable itHalf,
+			final boolean itEven, boolean restrictedVersionPossible) {
 		final int n = jordanUpdate.getJnf().getDimension();
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
+		final RationalMatrix modalUpdate = jordanUpdate.getModal();
+		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
 		PolynomialTermMatrix closedFormMatrix = constructConstantZeroMatrix(mgdScript, n);
 		if (restrictedVersionPossible) {
 			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, it, itHalf, itEven, jordanUpdate,
