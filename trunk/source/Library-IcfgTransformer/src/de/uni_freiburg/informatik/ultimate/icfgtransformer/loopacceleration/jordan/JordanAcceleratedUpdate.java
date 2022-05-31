@@ -259,16 +259,16 @@ public class JordanAcceleratedUpdate {
 
 	/**
 	 * The sum of the sizes of all block is the sum of the number of assigned
-	 * variables, the number of unmodified variables and one (one is for the numbers
-	 * that are added in the loop).
+	 * variables (scalar and array), the number of readonly variables and one (one
+	 * is for the numbers that are added in the loop).
 	 */
-	static boolean isBlockSizeConsistent(final int numberOfAssignedVariables, final int numberOfUnmodifiedVariables,
-			final JordanTransformationResult jordanUpdate) {
+	static boolean isBlockSizeConsistent(final int numberOfAssignedVariables, final int numberOfArrayWrites,
+			final int numberOfReadonlyVariables, final JordanTransformationResult jordanUpdate) {
 		int blockSizeSum = 0;
 		for (final Triple<Integer, Integer, Integer> triple : jordanUpdate.getJordanBlockSizes().entrySet()) {
 			blockSizeSum += triple.getSecond() * triple.getThird();
 		}
-		return (numberOfAssignedVariables + numberOfUnmodifiedVariables + 1 == blockSizeSum);
+		return (numberOfAssignedVariables + numberOfArrayWrites + numberOfReadonlyVariables + 1 == blockSizeSum);
 	}
 
 	public static class LinearUpdate {
