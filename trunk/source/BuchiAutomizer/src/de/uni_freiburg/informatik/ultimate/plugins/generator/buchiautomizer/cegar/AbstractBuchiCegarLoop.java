@@ -35,8 +35,10 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -54,12 +56,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -72,11 +79,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Buch
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TermcompProofBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -218,19 +228,20 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	/**
 	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) for the case where we
-	 * detected that a finite prefix of the lasso-shaped counterexample in {@code lassoCheck} is infeasible. In this
-	 * case the module (i.e., the subtrahend of the difference) will be a weak Büchi automaton (Büchi automaton where
-	 * set of final states is a trap). In fact, the module will have only a single accepting state that is labeled with
-	 * "false" and that has a self-loop for every letter.
+	 * detected that a finite prefix of the lasso-shaped counterexample is infeasible. In this case the module (i.e.,
+	 * the subtrahend {@code interpolantAutomaton} of the difference) will be a weak Büchi automaton (Büchi automaton
+	 * where set of final states is a trap). In fact, the module will have only a single accepting state that is labeled
+	 * with "false" and that has a self-loop for every letter.
 	 *
 	 * @param abstraction
 	 *            The abstraction to be refined
-	 * @param lassoCheck
-	 *            The lasso check for the infeasible lasso
+	 * @param interpolantAutomaton
+	 *            The automaton check for the infeasible lasso
 	 * @return The new refined abstraction
 	 * @throws AutomataOperationCanceledException
 	 */
-	protected abstract A refineFinite(A abstraction, final LassoCheck<L> lassoCheck)
+	protected abstract A refineFinite(A abstraction,
+			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataOperationCanceledException;
 
 	/**
@@ -349,10 +360,10 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			try {
 				switch (cd) {
 				case REFINE_BOTH:
-					mAbstraction = refineFinite(refineBuchiAndReportRankingFunction(lassoCheck), lassoCheck);
+					mAbstraction = refineFiniteInternal(refineBuchiAndReportRankingFunction(lassoCheck), lassoCheck);
 					break;
 				case REFINE_FINITE:
-					mAbstraction = refineFinite(mAbstraction, lassoCheck);
+					mAbstraction = refineFiniteInternal(mAbstraction, lassoCheck);
 					break;
 				case REFINE_BUCHI:
 					mAbstraction = refineBuchiAndReportRankingFunction(lassoCheck);
@@ -389,6 +400,61 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			}
 		}
 		return Result.TIMEOUT;
+	}
+
+	private A refineFiniteInternal(final A abstraction, final LassoCheck<L> lassoCheck)
+			throws AutomataOperationCanceledException {
+		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> traceCheck;
+		final LassoCheck<L>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
+		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
+			// if both (stem and loop) are infeasible we take the smaller one.
+			final int stemSize = mCounterexample.getStem().getLength();
+			final int loopSize = mCounterexample.getLoop().getLength();
+			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
+				traceCheck = lassoCheck.getLoopCheck();
+			} else {
+				traceCheck = lassoCheck.getStemCheck();
+			}
+		} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
+			traceCheck = lassoCheck.getLoopCheck();
+		} else {
+			assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
+			traceCheck = lassoCheck.getConcatCheck();
+		}
+
+		final NestedWordAutomaton<L, IPredicate> interpolAutomaton = traceCheck.getInfeasibilityProof();
+
+		final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
+				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceCheck.getPredicateUnifier());
+
+		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
+				mCsToolkitWithRankVars, htc, interpolAutomaton, traceCheck.getPredicateUnifier(), false, false);
+		final A result;
+		try {
+			result = refineFinite(abstraction, determinized);
+		} catch (final AutomataOperationCanceledException e) {
+			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+			throw e;
+		} catch (final ToolchainCanceledException e) {
+			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+			throw e;
+		}
+		determinized.switchToReadonlyMode();
+		if (mPref.dumpAutomata()) {
+			final String filename = mIdentifier + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mPref.dumpPath(), filename,
+					mPref.getAutomataFormat(), "");
+		}
+		if (mConstructTermcompProof) {
+			mTermcompProofBenchmark.reportFiniteModule(mIteration, interpolAutomaton);
+		}
+		mMDBenchmark.reportTrivialModule(mIteration, interpolAutomaton.size());
+		assert new InductivityCheck<>(mServices, interpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false)).getResult();
+		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
+		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		return result;
 	}
 
 	private A refineBuchiAndReportRankingFunction(final LassoCheck<L> lassoCheck)

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiIsEmpty;
@@ -56,22 +56,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
@@ -82,8 +75,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
@@ -193,71 +184,26 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	 */
 	@Override
 	protected INestedWordAutomaton<L, IPredicate> refineFinite(final INestedWordAutomaton<L, IPredicate> abstraction,
-			final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
-		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> traceCheck;
-		final LassoCheck<L>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
-		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
-			// if both (stem and loop) are infeasible we take the smaller one.
-			final int stemSize = mCounterexample.getStem().getLength();
-			final int loopSize = mCounterexample.getLoop().getLength();
-			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
-				traceCheck = lassoCheck.getLoopCheck();
-			} else {
-				traceCheck = lassoCheck.getStemCheck();
-			}
-		} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-			traceCheck = lassoCheck.getLoopCheck();
-		} else {
-			assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-			traceCheck = lassoCheck.getConcatCheck();
-		}
-
-		final NestedWordAutomaton<L, IPredicate> interpolAutomaton = traceCheck.getInfeasibilityProof();
-
-		final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
-				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceCheck.getPredicateUnifier());
-
-		final DeterministicInterpolantAutomaton<L> determinized = new DeterministicInterpolantAutomaton<>(mServices,
-				mCsToolkitWithRankVars, htc, interpolAutomaton, traceCheck.getPredicateUnifier(), false, false);
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
+			throws AutomataOperationCanceledException {
 		final PowersetDeterminizer<L, IPredicate> psd =
-				new PowersetDeterminizer<>(determinized, true, mDefaultStateFactory);
+				new PowersetDeterminizer<>(interpolantAutomaton, true, mDefaultStateFactory);
 		final INestedWordAutomaton<L, IPredicate> result;
 		try {
 			if (abstraction instanceof IGeneralizedNestedWordAutomaton) {
-				final GeneralizedDifference<L, IPredicate> gbaDiff =
-						new GeneralizedDifference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-								(IGeneralizedNestedWordAutomaton<L, IPredicate>) abstraction, determinized, psd);
+				final GeneralizedDifference<L, IPredicate> gbaDiff = new GeneralizedDifference<>(
+						new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+						(IGeneralizedNestedWordAutomaton<L, IPredicate>) abstraction, interpolantAutomaton, psd);
 				result = gbaDiff.getResult();
 			} else {
 				final Difference<L, IPredicate> diff = new Difference<>(new AutomataLibraryServices(mServices),
-						mStateFactoryForRefinement, abstraction, determinized, psd, true);
+						mStateFactoryForRefinement, abstraction, interpolantAutomaton, psd, true);
 				result = diff.getResult();
 			}
-		} catch (final AutomataOperationCanceledException e) {
-			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-			throw e;
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError();
-		} catch (final ToolchainCanceledException e) {
-			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-			throw e;
 		}
-		determinized.switchToReadonlyMode();
-		if (mPref.dumpAutomata()) {
-			final String filename = mIdentifier + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
-			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mPref.dumpPath(), filename,
-					mPref.getAutomataFormat(), "");
-		}
-		if (mConstructTermcompProof) {
-			mTermcompProofBenchmark.reportFiniteModule(mIteration, interpolAutomaton);
-		}
-		mMDBenchmark.reportTrivialModule(mIteration, interpolAutomaton.size());
-		assert new InductivityCheck<>(mServices, interpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false)).getResult();
 		assert automatonUsesISLPredicates(abstraction) : "used wrong StateFactory";
-		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
-		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		return reduceAbstractionSize(result, mAutomataMinimizationAfterFeasbilityBasedRefinement);
 	}
 
