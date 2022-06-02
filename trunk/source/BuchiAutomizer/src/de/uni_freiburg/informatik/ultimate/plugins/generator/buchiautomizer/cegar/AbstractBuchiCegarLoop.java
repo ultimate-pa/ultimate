@@ -157,7 +157,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	private final CfgSmtToolkit mCsToolkitWithoutRankVars;
 
-	private final PredicateFactory mPredicateFactory;
+	protected final PredicateFactory mPredicateFactory;
 
 	private final BinaryStatePredicateManager mBinaryStatePredicateManager;
 	/**

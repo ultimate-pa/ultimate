@@ -33,9 +33,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -66,12 +66,11 @@ public final class BuchiAutomizerUtils {
 	public static <LETTER extends IIcfgTransition<?>> NestedWordAutomaton<LETTER, IPredicate>
 			constructBuchiInterpolantAutomaton(final IPredicate precondition, final NestedWord<LETTER> stem,
 					final IPredicate[] stemInterpolants, final IPredicate honda, final NestedWord<LETTER> loop,
-					final IPredicate[] loopInterpolants,
-					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
+					final IPredicate[] loopInterpolants, final VpAlphabet<LETTER> vpAlphabet,
 					final IUltimateServiceProvider services,
 					final IEmptyStackStateFactory<IPredicate> emptyStateFactory) {
-		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(services), abstraction.getVpAlphabet(), emptyStateFactory);
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(services), vpAlphabet, emptyStateFactory);
 		if (stem.length() == 0) {
 			result.addState(true, true, honda);
 		} else {

@@ -206,8 +206,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 		NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton =
 				BuchiAutomizerUtils.constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem,
-						stemInterpolants, bspm.getHondaPredicate(), loop, loopInterpolants, abstraction, mServices,
-						(IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
+						stemInterpolants, bspm.getHondaPredicate(), loop, loopInterpolants, abstraction.getVpAlphabet(),
+						mServices, (IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
 		if (mDumpAutomata) {
 
 			final String filename = mIdentifier + "_" + "InterpolantAutomatonBuchi" + iteration;
