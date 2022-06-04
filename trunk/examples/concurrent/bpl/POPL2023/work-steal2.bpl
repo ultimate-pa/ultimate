@@ -26,8 +26,23 @@ modifies cnt, A;
   assume cnt == 0;
   assume N >= 0;
 
-  fork 1   worker();
+  fork 1   workerWithAssert();
   fork 2,2 worker();
+}
+
+procedure workerWithAssert()
+modifies cnt, A;
+{
+  var i, sz : int;
+
+  while (*) {
+    call i, sz := steal(1);
+    if (sz <= 0) {
+      break;
+    }
+    assert 0 <= i && i < N; // index-out-of-bounds check
+    A[i] := A[i] + 1;
+  }
 }
 
 procedure worker()
@@ -40,7 +55,7 @@ modifies cnt, A;
     if (sz <= 0) {
       break;
     }
-    assert 0 <= i && i < N; // index-out-of-bounds check
+    assume 0 <= i && i < N; // index within bounds
     A[i] := A[i] + 1;
   }
 }

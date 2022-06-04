@@ -10,12 +10,12 @@ modifies lock, A;
   //A := zero();
 
   fork 1       writer();
-  fork 2,2     myreader(2);
+  fork 2,2     readerWithAssert(2);
   fork 3,3,3   reader(2);
 //  fork 4,4,4,4 reader(2);
 }
 
-procedure myreader(step : int)
+procedure readerWithAssert(step : int)
 modifies lock;
 {
   var x, y : int;

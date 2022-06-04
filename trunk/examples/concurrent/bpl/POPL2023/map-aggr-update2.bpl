@@ -60,11 +60,13 @@ procedure thread2() returns (pos : int)
 
   j := 0;
   while (j < N) {
+    atomic{
     if (A[j] > 0) {
       pos := j;
     }
     if (B[j] > 0) {
       pos := j;
+    }
     }
 
     j := j + 1;

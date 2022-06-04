@@ -26,7 +26,7 @@ procedure reader(start : int, end : int) returns (sum : int)
   sum := 0;
   i := start;
   while (i < end) {
-    assert 0 <= i && i <= N; // index-out-of-bounds check
+    assume 0 <= i && i <= N; // index within bounds
     sum := sum + A[i];
     i := i + 1;
   }
@@ -39,7 +39,7 @@ modifies A;
 
   j := start;
   while (j < end) {
-    assume 0 <= j && j <= N; // index within bounds
+    assert 0 <= j && j <= N; // index-out-of-bounds check
     A[j] := 0;
     j := j + 1;
   }
