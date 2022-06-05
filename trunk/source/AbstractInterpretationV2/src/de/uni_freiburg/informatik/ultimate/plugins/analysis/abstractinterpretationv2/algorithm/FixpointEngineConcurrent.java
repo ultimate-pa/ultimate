@@ -164,7 +164,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		/*
 		 *  TODO: case for empty InterferenceLocations
 		 *  	can be analyzed as normal
-		 *  	-> compute AbsInt for each procedure separately and combine the results to one overall result
 		 */
 		
 		// Check for correct type to use for interferences
@@ -172,15 +171,17 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferencesOld = new NestedMap2<>();
 
 		while (!interferences.equals(interferencesOld) || interferences.isEmpty()) {
-			// save current interferences to check if something changed
 			interferencesOld = interferences;
 			
 			entryNodes.forEach((procedure, entry) -> {
 				Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = computeInterferences(entry, interferences);
 				
 				Collection<LOC> collection = new ArrayList<>();
-				// ugly conversion !!!
+				
+				
+				// ugly cast !!!
 				collection.add((LOC) entry);
+				
 				AbsIntResult<STATE, ACTION, LOC> result = mFixpointEngine.runWithInterferences(collection, script, procedureInterferences);
 				
 				/*
@@ -243,7 +244,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		});
 		
 		/*
-		 * TODO: add writes from own procedure
+		 * TODO: add writes from own procedure & remove variables from State that are not read in the read Statement
 		 * 	add shared write if there is a way from the shared write to the share read with no other share write on it
 		 * 	-> does not change, is possible to precompute
 		 */	
@@ -273,7 +274,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			Set<IcfgEdge> tempSharedReads = iterator.asStream().filter(edge -> 
 				intersectionEmpty(edge.getTransformula().getInVars().keySet(), variables)).collect(Collectors.toSet());
 			tempSharedReads.forEach(edge -> {
-				// ugly conversion!!!
+				
+				// ugly cast!!!
 			 	mSharedReads.put((ACTION) edge, new HashSet<>());
 				edge.getTransformula().getInVars().keySet().forEach(var -> mSharedReads.get(edge).add(var));
 			});

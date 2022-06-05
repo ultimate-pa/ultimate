@@ -95,7 +95,7 @@ public final class AbstractInterpreter {
 	 *  @param concurrent
 	 */
 	private static <STATE extends IAbstractState<STATE>> IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation>
-	BuildEngine(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
+	buildEngine(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
 			final IUltimateServiceProvider services, boolean useFuture, boolean concurrent) {
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
@@ -133,7 +133,7 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = BuildEngine(root, timer, services, false, false);
+		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = buildEngine(root, timer, services, false, false);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -150,7 +150,7 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec = BuildEngine(root, timer, services, false, true);
+		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec = buildEngine(root, timer, services, false, true);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpec.run(root.getInitialNodes(), script);
 		
@@ -175,7 +175,7 @@ public final class AbstractInterpreter {
 			final boolean useFuture = services.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG);
 
-			final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = BuildEngine(root, timer, services, useFuture, false);
+			final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = buildEngine(root, timer, services, useFuture, false);
 			final Set<? extends IcfgLocation> initial = root.getInitialNodes();
 
 			final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
