@@ -177,5 +177,9 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 	public interface IBudgetFunction<L, R> {
 		int computeBudget(R state, L letter);
+
+		default void setReduction(final SleepMapReduction<L, ?, R> reduction) {
+			// do nothing
+		}
 	}
 }

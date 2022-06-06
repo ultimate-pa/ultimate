@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMap;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
@@ -294,7 +293,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			} else {
 				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
 						new CachedBudget<>(mBudget));
-				((OptimisticBudget<L, IPredicate, IPredicate>) mBudget).setReduction(red);
+				mBudget.setReduction(red);
 				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
 			}
 			break;

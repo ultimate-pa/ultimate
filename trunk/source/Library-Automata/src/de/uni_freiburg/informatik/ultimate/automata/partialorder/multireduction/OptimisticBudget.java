@@ -63,7 +63,7 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	private final ISleepMapStateFactory<L, S, R> mStateFactory;
 	private final Supplier<IDfsVisitor<L, R>> mMakeVisitor;
 
-	private SleepMapReduction<L, S, R> mReduction;
+	private SleepMapReduction<L, ?, R> mReduction;
 
 	private final Set<R> mSuccessful = new HashSet<>();
 	private final Set<R> mUnsuccessful = new HashSet<>();
@@ -87,7 +87,8 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 		mMakeVisitor = makeVisitor;
 	}
 
-	public void setReduction(final SleepMapReduction<L, S, R> reduction) {
+	@Override
+	public void setReduction(final SleepMapReduction<L, ?, R> reduction) {
 		if (mReduction != null) {
 			throw new UnsupportedOperationException("Reduction automaton already set");
 		}
