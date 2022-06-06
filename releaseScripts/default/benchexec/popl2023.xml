@@ -4,547 +4,118 @@
 
   <option name="--force-no-wrapper" />
   <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  <option name="--traceabstraction.coinflip.budget.determination.mode">FIXED</option>
 
-  <rundefinition name="HeavyConcrete_LoopLockstep_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_LoopLockstep_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger">
+  <rundefinition name="Combination_LoopLockstep_Badger_25">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.25</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_LoopLockstep_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_LoopLockstep_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Camel">
+  <rundefinition name="Combination_LoopLockstep_Badger_50">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.5</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_LoopLockstep_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_LoopLockstep_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_CamelNoAm">
+  <rundefinition name="Combination_LoopLockstep_Badger_75">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_LoopLockstep_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_LoopLockstep_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_LoopLockstep_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_LoopLockstep_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_LoopLockstep_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_LoopLockstep_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.75</option>
   </rundefinition>
   
   <!-- ===================================================================== -->
 
-  <rundefinition name="HeavyConcrete_Seq_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Seq_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="Combination_Seq_Badger">
+  <rundefinition name="Combination_Seq_Badger_25">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.25</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Seq_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Seq_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Seq_Camel">
+  <rundefinition name="Combination_Seq_Badger_50">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.5</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Seq_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Seq_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="Combination_Seq_CamelNoAm">
+  <rundefinition name="Combination_Seq_Badger_75">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Seq_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Seq_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="Combination_Seq_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Seq_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Seq_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="Combination_Seq_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Seq_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Seq_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Seq_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.75</option>
   </rundefinition>
   
   <!-- ===================================================================== -->
 
-  <rundefinition name="HeavyConcrete_Random42_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random42_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random42_Badger">
+  <rundefinition name="Combination_Random42_Badger_25">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
     <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.25</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random42_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random42_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random42_Camel">
+  <rundefinition name="Combination_Random42_Badger_50">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
     <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.5</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random42_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random42_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random42_CamelNoAm">
+  <rundefinition name="Combination_Random42_Badger_75">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
     <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.75</option>
   </rundefinition>
 
-  <rundefinition name="HeavyConcrete_Random42_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random42_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random42_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
+  <!-- ===================================================================== -->
 
-  <rundefinition name="HeavyConcrete_Random42_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random42_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random42_Mammoth">
+  <rundefinition name="Combination_Random520_Badger_25">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.25</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random42_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random42_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random42_SmtInterpol">
+  <rundefinition name="Combination_Random520_Badger_50">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
+    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.5</option>
+  </rundefinition>
+  <rundefinition name="Combination_Random520_Badger_75">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.75</option>
   </rundefinition>
   
   <!-- ===================================================================== -->
 
-  <rundefinition name="HeavyConcrete_Random520_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random520_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random520_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random520_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random520_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random520_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random520_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random520_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random520_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random520_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random520_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random520_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  
-  <!-- ===================================================================== -->
-
-  <rundefinition name="HeavyConcrete_Random7777_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random7777_Badger">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_Badger">
+  <rundefinition name="Combination_Random7777_Badger_25">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
     <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.25</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random7777_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random7777_Camel">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_Camel">
+  <rundefinition name="Combination_Random7777_Badger_50">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
     <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.5</option>
   </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random7777_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random7777_CamelNoAm">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_CamelNoAm">
+  <rundefinition name="Combination_Random7777_Badger_75">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
     <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_NO_AM</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random7777_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random7777_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_CamelBpOnly">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random7777_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random7777_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_Mammoth">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
-  </rundefinition>
-
-  <rundefinition name="HeavyConcrete_Random7777_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="LightAbstract_Random7777_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_SmtInterpol">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.coinflip.probability.value">0.75</option>
   </rundefinition>
 
   <tasks name="POPL2023">
