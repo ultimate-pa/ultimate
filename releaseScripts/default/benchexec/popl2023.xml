@@ -551,6 +551,7 @@
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
 
     <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
+    <excludesfile>../../../trunk/examples/concurrent/bpl/POPL2023/exclude.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 </benchmark>

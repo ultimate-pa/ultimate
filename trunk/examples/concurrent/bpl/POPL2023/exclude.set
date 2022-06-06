@@ -1,0 +1,6 @@
+acq-work-4threads.bpl
+acq-work-5threads.bpl
+acq-work-6threads.bpl
+array-sum-with-log-6threads.bpl
+map-aggr-update1-3modifiers.bpl
+map-aggr-update1-4modifiers.bpl
