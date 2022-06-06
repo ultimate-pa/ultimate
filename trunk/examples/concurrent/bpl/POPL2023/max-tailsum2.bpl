@@ -49,7 +49,7 @@ modifies stdout, stdout_ptr;
   var k1 : int;
   var s1, m1, s2, m2 : int;
   
-  assume 0 <= k1 && k1 <= k2 && k2 <= N;
+  assume 0 <= k1 && k1 <= N;
 
   fork 1 sum(0, k1);
   fork 2,2 sum(k1+1, N);
