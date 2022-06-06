@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CoinflipMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -388,6 +389,26 @@ public final class TAPreferences {
 
 	public long getDfsOrderSeed() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
+	}
+
+	public boolean useCoinflip() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE,
+				CoinflipMode.class) != CoinflipMode.OFF;
+	}
+
+	public double getCoinflipProbability(final int iteration) {
+		final double prob = mPrefs.getDouble(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_PROB);
+		final CoinflipMode mode =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE, CoinflipMode.class);
+		switch (mode) {
+		case OFF:
+			return 0;
+		case FIXED:
+			return prob;
+		case LINEAR:
+		default:
+			throw new IllegalStateException();
+		}
 	}
 
 	public int getNumberOfIndependenceRelations() {

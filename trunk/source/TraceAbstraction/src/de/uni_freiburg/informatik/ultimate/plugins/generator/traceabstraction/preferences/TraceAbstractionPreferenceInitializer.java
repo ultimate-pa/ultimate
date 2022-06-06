@@ -139,6 +139,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
 	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
 
+	public static final String LABEL_POR_COINFLIP_MODE = "Coinflip budget determination mode";
+	private static final CoinflipMode DEF_POR_COINFLIP_MODE = CoinflipMode.OFF;
+
+	public static final String LABEL_POR_COINFLIP_PROB = "Coinflip probability value";
+	private static final double DEF_POR_COINFLIP_PROB = 0.25;
+
+	public enum CoinflipMode {
+		OFF, FIXED, LINEAR
+	}
+
 	/* **************************************** */
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
@@ -564,6 +574,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE, PreferenceType.Combo,
+						CoinflipMode.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_PROB, DEF_POR_COINFLIP_PROB, PreferenceType.Double),
 
 				/* ********************************* */
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,

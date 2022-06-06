@@ -58,7 +58,9 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CoinFlipBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -243,8 +245,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
-			final var budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices), mPOR.getDfsOrder(),
-					mPOR.getSleepMapFactory(), this::createVisitor);
+			IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
+					mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor);
+			if (mPref.useCoinflip()) {
+				budget = new CoinFlipBudget<>(true, 0, mPref.getCoinflipProbability(mIteration), budget);
+			}
 			mPOR.setBudget(budget);
 
 			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
