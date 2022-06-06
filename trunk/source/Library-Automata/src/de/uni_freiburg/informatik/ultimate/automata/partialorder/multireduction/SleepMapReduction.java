@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -43,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransitionProvider<L, R> {
 
@@ -154,8 +154,7 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 		final Map<L, Integer> explored = mOperand.lettersInternal(currentState).stream()
 				.filter(b -> comp.compare(b, letter) < 0 && !isPruned(state, b))
-				.map(b -> new Pair<>(b, mBudgetFunction.computeBudget(state, b)))
-				.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+				.collect(Collectors.toMap(Function.identity(), b -> mBudgetFunction.computeBudget(state, b)));
 		final SleepMap<L, S> succSleepMap = currentSleepMap.computeSuccessor(currentState, letter, explored, budget);
 		return mStateFactory.createSleepMapState(currentTransitionOpt.get().getSucc(), succSleepMap, budget);
 	}
