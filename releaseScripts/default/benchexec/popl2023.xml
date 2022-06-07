@@ -6,116 +6,53 @@
   <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
   <option name="--traceabstraction.coinflip.budget.determination.mode">FIXED</option>
 
-  <rundefinition name="Combination_LoopLockstep_Badger_25">
+  <rundefinition name="Combination_LoopLockstep_Badger_55">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">25</option>
+    <option name="--traceabstraction.coinflip.probability.value">55</option>
   </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_50">
+  <rundefinition name="Combination_LoopLockstep_Badger_60">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">50</option>
+    <option name="--traceabstraction.coinflip.probability.value">60</option>
   </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_75">
+  <rundefinition name="Combination_LoopLockstep_Badger_65">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">75</option>
+    <option name="--traceabstraction.coinflip.probability.value">65</option>
   </rundefinition>
-  
-  <!-- ===================================================================== -->
-
-  <rundefinition name="Combination_Seq_Badger_25">
+  <rundefinition name="Combination_LoopLockstep_Badger_70">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">25</option>
+    <option name="--traceabstraction.coinflip.probability.value">70</option>
   </rundefinition>
-  <rundefinition name="Combination_Seq_Badger_50">
+  <rundefinition name="Combination_LoopLockstep_Badger_80">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">50</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
   </rundefinition>
-  <rundefinition name="Combination_Seq_Badger_75">
+  <rundefinition name="Combination_LoopLockstep_Badger_85">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">75</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
   </rundefinition>
-  
-  <!-- ===================================================================== -->
-
-  <rundefinition name="Combination_Random42_Badger_25">
+  <rundefinition name="Combination_LoopLockstep_Badger_90">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">25</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
   </rundefinition>
-  <rundefinition name="Combination_Random42_Badger_50">
+  <rundefinition name="Combination_LoopLockstep_Badger_95">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
     <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">50</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random42_Badger_75">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">42</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">75</option>
-  </rundefinition>
-
-  <!-- ===================================================================== -->
-
-  <rundefinition name="Combination_Random520_Badger_25">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">25</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_Badger_50">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">50</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random520_Badger_75">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">520</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">75</option>
-  </rundefinition>
-  
-  <!-- ===================================================================== -->
-
-  <rundefinition name="Combination_Random7777_Badger_25">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">25</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_Badger_50">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">50</option>
-  </rundefinition>
-  <rundefinition name="Combination_Random7777_Badger_75">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
-    <option name="--traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">75</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
   </rundefinition>
 
   <tasks name="POPL2023">
