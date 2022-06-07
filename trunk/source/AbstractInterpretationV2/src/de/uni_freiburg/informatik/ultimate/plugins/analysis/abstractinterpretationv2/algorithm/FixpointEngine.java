@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -97,7 +96,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 		mUseHierachicalPre = mDomain.useHierachicalPre();
 	}
-	
+
+	@Override
+	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
+		throw new UnsupportedOperationException("Operation not supported for FixpointEngine");
+	}
+
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
 			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
@@ -112,8 +116,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mDomain.afterFixpointComputation(mResult);
 		return mResult;
 	}
-	
-	private void calculateFixpoint(final Collection<? extends LOC> start, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+
+	private void calculateFixpoint(final Collection<? extends LOC> start,
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -141,10 +146,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			}
 
 			/*
-			 * TODO: Fix summary calculation
-			 * 	if (useSummaryInstead(currentItem, postState, worklist)) {
-			 * 	continue;
-			 *  }
+			 * TODO: Fix summary calculation if (useSummaryInstead(currentItem, postState, worklist)) { continue; }
 			 */
 
 			checkLoopState(currentItem);
@@ -229,20 +231,18 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		
+
 		final DisjunctiveAbstractState<STATE> preState;
 
-		/* 
-		 * TODO: merge States
-		 * 	interferences: Map<Action, DisjunctiveAbstractState> 
+		/*
+		 * TODO: merge States interferences: Map<Action, DisjunctiveAbstractState>
 		 */
 		if (interferences.containsKey(currentItem.getAction())) {
 			preState = currentItem.getState().patch(interferences.get(currentItem.getAction()));
-		}
-		else {
+		} else {
 			preState = currentItem.getState();
 		}
-		
+
 		final DisjunctiveAbstractState<STATE> hierachicalPreState = currentItem.getHierachicalState();
 		final ACTION currentAction = currentItem.getAction();
 

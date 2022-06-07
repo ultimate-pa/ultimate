@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -85,18 +84,19 @@ public final class AbstractInterpreter {
 	private AbstractInterpreter() {
 		// do not instantiate AbstractInterpreter; its a facade
 	}
-	
+
 	/**
-	 * 
-	 *  @param root
-	 *  @param timer
-	 *  @param services
-	 *  @param useFuture
-	 *  @param concurrent
+	 *
+	 * @param root
+	 * @param timer
+	 * @param services
+	 * @param useFuture
+	 * @param concurrent
 	 */
-	private static <STATE extends IAbstractState<STATE>> IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation>
-	buildEngine(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services, boolean useFuture, boolean concurrent) {
+	private static <STATE extends IAbstractState<STATE>>
+			FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation>
+			buildParameters(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
+					final IUltimateServiceProvider services, final boolean useFuture) {
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params;
@@ -110,17 +110,9 @@ public final class AbstractInterpreter {
 					new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 			params = domFac.createParams(timer, transProvider, loopDetector);
 		}
+		return params;
 
-		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
-		
 		// comes from runWithoutTimeoutAndResults()
-		services.getLoggingService().getLogger(Activator.PLUGIN_ID).info("Using domain " + params.getAbstractDomain().domainDescription());
-		
-		if (concurrent) {
-			return new FixpointEngineConcurrent<>(params, root, fxpe);
-		} else {
-			return fxpe;
-		}
 	}
 
 	/**
@@ -133,27 +125,33 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = buildEngine(root, timer, services, false, false);
+		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+				buildParameters(root, timer, services, false);
+		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return postProcessResult(services, logger, false, result, root);
 	}
-	
+
 	/**
-	 * Run abstract interpretation as independent analysis for a concurrent program on every procedure of a {@link IIcfg}.
+	 * Run abstract interpretation as independent analysis for a concurrent program on every procedure of a
+	 * {@link IIcfg}.
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE>> IAbstractInterpretationResult<STATE, IcfgEdge, IcfgLocation>
-	runConcurrent(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services) {
+			runConcurrent(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,
+					final IUltimateServiceProvider services) {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec = buildEngine(root, timer, services, false, true);
+		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+				buildParameters(root, timer, services, false);
+		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec =
+				new FixpointEngineConcurrent<>(params, root, new FixpointEngine<>(params));
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpec.run(root.getInitialNodes(), script);
-		
+
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return postProcessResult(services, logger, false, result, root);
 	}
@@ -172,13 +170,16 @@ public final class AbstractInterpreter {
 
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
+			final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 			final boolean useFuture = services.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG);
 
-			final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = buildEngine(root, timer, services, useFuture, false);
+			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+					buildParameters(root, timer, services, useFuture);
+			final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe =
+					new FixpointEngine<>(params);
 			final Set<? extends IcfgLocation> initial = root.getInitialNodes();
-
-			final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
+			logger.info("Using domain " + params.getAbstractDomain().domainDescription());
 			final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(initial, script);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Found the following predicates:");
@@ -240,10 +241,8 @@ public final class AbstractInterpreter {
 			final List<String> trackedArrays) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
-		return runFuture(root, services, logger, isSilent,
-				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(
-						logger, root, services, additionalLiterals, trackedArrays))
-						.setTimer(timer),
+		return runFuture(root, services, logger, isSilent, params.setDomain(FixpointEngineFutureParameterFactory
+				.createEqualityDomain(logger, root, services, additionalLiterals, trackedArrays)).setTimer(timer),
 				FixpointEngine::new);
 	}
 
