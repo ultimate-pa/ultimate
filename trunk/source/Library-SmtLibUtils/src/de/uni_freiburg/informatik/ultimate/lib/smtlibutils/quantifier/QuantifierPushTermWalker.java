@@ -297,13 +297,14 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 				mMgdScript.getScript());
 		switch (lBool) {
 		case SAT:
-			throw new AssertionError(String.format(
-					"Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input, output, context));
+			throw new AssertionError(
+					String.format("Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input,
+							output, context.getCriticalConstraint()));
 		case UNKNOWN:
 			final ILogger logger = mServices.getLoggingService().getLogger(this.getClass());
 			logger.warn(String.format(
 					"Insufficient ressources to check equivalence of intermediate result. Input: %s Output: %s Assumption: %s",
-					input, output, context));
+					input, output, context.getCriticalConstraint()));
 			break;
 		case UNSAT:
 			break;
