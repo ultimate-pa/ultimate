@@ -157,7 +157,7 @@ public class QuantifierPushUtils {
 				}
 			}
 
-			// Step 3: Partition dual juncts according to eliminatees and try to push
+			// Step 3: Partition dualFiniteJuncts according to eliminatees and try to push
 			{
 				final ParameterPartition pp = new ParameterPartition(mgdScript.getScript(), currentEt);
 				if (!pp.isIsPartitionTrivial()) {
@@ -182,6 +182,7 @@ public class QuantifierPushUtils {
 			}
 
 			// Step 4: Push local eliminatees over corresponding connective if applicable
+			// See #innerAlternatingFirst
 			{
 				final Term localsEliminated = QuantifierPushUtilsForLocalEliminatees
 						.pushLocalEliminateesOverCorrespondingFiniteJunction(services, mgdScript, applyDistributivity,
