@@ -248,7 +248,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
 					mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor);
 			if (mPref.useCoinflip()) {
-				budget = new CoinFlipBudget<>(true, 0, mPref.getCoinflipProbability(mIteration), budget);
+				budget = new CoinFlipBudget<>(true, (int) (mPref.getCoinflipProbability(0) * 100),
+						mPref.getCoinflipProbability(mIteration), budget);
 			}
 			mPOR.setBudget(budget);
 
