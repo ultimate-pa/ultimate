@@ -95,8 +95,8 @@ modifies i1, i2, i3, i4, array_min, array_max, min_samples, max_samples;
 {
   assume 0 <= k && k <= N;
 
-  array_min := 0;
-  array_max := 0;
+  array_min := A[0];
+  array_max := A[0];
 
   fork 1         computeMin1();
   fork 2,2       computeMin2();

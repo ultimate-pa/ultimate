@@ -65,22 +65,30 @@ procedure sample() returns (diff : int)
 {
   var min_l, max_l : int;
 
+  while (*) {
   min_l := array_min;
   max_l := array_max;
 
   diff := max_l - min_l;
+  }
 }
 
 procedure ULTIMATE.start()
 modifies array_min, array_max, A;
 {
+  var m : int;
+
+  assume 0 <= m && m < N;
+
   fork 1       computeMin();
   fork 2,2     computeMax();
   fork 3,3,3   sample();
   fork 4,4,4,4 mapAbs();
   join 1;
   join 2,2;
+  join 3,3,3;
+  join 4,4,4,4;
 
-  assert array_min <= array_max;
+  assert array_min <= A[m] && A[m] <= array_max;
 }
 

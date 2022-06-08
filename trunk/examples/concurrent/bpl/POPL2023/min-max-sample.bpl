@@ -29,7 +29,7 @@ function max(a : int, b : int) returns (int) {
 procedure computeMin()
 modifies i1, array_min;
 {
-  array_min := 0;
+  array_min := A[0];
   i1 := 0;
 
   while (i1 < N) {
@@ -43,7 +43,7 @@ modifies i1, array_min;
 procedure computeMax()
 modifies i2, array_max;
 {
-  array_max := 0;
+  array_max := A[0];
   i2 := 0;
 
   while (i2 < N) {

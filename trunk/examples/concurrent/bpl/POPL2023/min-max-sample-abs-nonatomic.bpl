@@ -13,10 +13,6 @@ function min(a : int, b : int) returns (int) {
   if (a < b) then a else b
 }
 
-function max(a : int, b : int) returns (int) {
-  if (a < b) then b else a
-}
-
 function abs(a : int) returns (int) {
   if (a < 0) then -a else a
 }
@@ -30,7 +26,9 @@ modifies array_min;
   i1 := 0;
 
   while (i1 < N) {
-    array_min := min(array_min, abs(A[i1]));
+    if (abs(A[i1]) < array_min) {
+      array_min := abs(A[i1]);
+    }
     i1 := i1 + 1;
   }
 }
@@ -44,7 +42,9 @@ modifies array_max;
   i2 := 0;
 
   while (i2 < N) {
-    array_max := max(array_max, abs(A[i2]));
+    if (abs(A[i2]) > array_max) {
+      array_max := abs(A[i2]);
+    }
     i2 := i2 + 1;
   }
 }
@@ -65,10 +65,12 @@ procedure sample() returns (diff : int)
 {
   var min_l, max_l : int;
 
+  while (*) {
   min_l := array_min;
   max_l := array_max;
 
   diff := max_l - min_l;
+  }
 }
 
 procedure ULTIMATE.start()
@@ -80,6 +82,8 @@ modifies array_min, array_max, A;
   fork 4,4,4,4 mapAbs();
   join 1;
   join 2,2;
+  join 3,3,3;
+  join 4,4,4,4;
 
   assert array_min <= array_max;
 }
