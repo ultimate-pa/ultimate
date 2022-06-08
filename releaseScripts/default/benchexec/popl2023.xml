@@ -4,55 +4,18 @@
 
   <option name="--force-no-wrapper" />
   <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
-  <option name="--traceabstraction.coinflip.budget.determination.mode">FIXED</option>
+  <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 
-  <rundefinition name="Combination_LoopLockstep_Badger_55">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">55</option>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Uncond">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic-Uncond.epf</option>
   </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_60">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">60</option>
+  <rundefinition name="LightAbstract_LoopLockstep_Badger_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
   </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_65">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">65</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_70">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">70</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_80">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">80</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_85">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">85</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_90">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">90</option>
-  </rundefinition>
-  <rundefinition name="Combination_LoopLockstep_Badger_95">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-    <option name="--traceabstraction.coinflip.probability.value">95</option>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Badger_NoDead_Uncond">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.use.conditional.por.in.concurrent.analysis">false</option>
   </rundefinition>
 
   <tasks name="POPL2023">
