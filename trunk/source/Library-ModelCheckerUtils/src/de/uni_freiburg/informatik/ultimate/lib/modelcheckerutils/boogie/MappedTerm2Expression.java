@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
@@ -177,7 +178,7 @@ public final class MappedTerm2Expression implements Serializable {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
+			final ProgramConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
 			if (boogieConst != null) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
 						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
@@ -481,9 +482,9 @@ public final class MappedTerm2Expression implements Serializable {
 					final Expression nonOldExpression = new IdentifierExpression(loc, type,
 							translateIdentifier(((ProgramOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 					result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
-				} else if (pv instanceof BoogieConst) {
+				} else if (pv instanceof ProgramConst) {
 					result = new IdentifierExpression(loc, type,
-							translateIdentifier(((BoogieConst) pv).getIdentifier()), declInfo);
+							translateIdentifier(((ProgramConst) pv).getIdentifier()), declInfo);
 				} else {
 					throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 				}

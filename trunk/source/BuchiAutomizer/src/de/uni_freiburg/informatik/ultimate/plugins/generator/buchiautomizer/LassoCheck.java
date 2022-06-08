@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -71,8 +71,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Pie
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -88,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -104,11 +101,11 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<L extends IIcfgTransition<?>> {
 
-	enum ContinueDirective {
+	public enum ContinueDirective {
 		REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN, REFINE_BOTH
 	}
 
-	enum TraceCheckResult {
+	public enum TraceCheckResult {
 		FEASIBLE, INFEASIBLE, UNKNOWN, UNCHECKED
 	}
 
@@ -199,7 +196,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final StrategyFactory<L> mRefinementStrategyFactory;
 
-	private final INestedWordAutomaton<L, IPredicate> mAbstraction;
+	private final IAutomaton<L, IPredicate> mAbstraction;
 
 	private final TaskIdentifier mTaskIdentifier;
 
@@ -210,15 +207,13 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryForInterpolantAutomaton;
 
-	public LassoCheck(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final SmtFunctionsAndAxioms smtSymbols,
-			final BinaryStatePredicateManager bspm, final NestedLassoRun<L, IPredicate> counterexample,
-			final String lassoCheckIdentifier, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final StrategyFactory<L> refinementStrategyFactory, final INestedWordAutomaton<L, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics)
-			throws IOException {
+	public LassoCheck(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final SmtFunctionsAndAxioms smtSymbols, final BinaryStatePredicateManager bspm,
+			final NestedLassoRun<L, IPredicate> counterexample, final String lassoCheckIdentifier,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final StrategyFactory<L> refinementStrategyFactory,
+			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
+			final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -387,7 +382,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private boolean isRankingFunctionCorrect() {
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 		mLogger.info("Loop: " + loop);
-		return mBspm.checkRankDecrease(loop, mCsToolkit.getModifiableGlobalsTable());
+		return mBspm.checkRankDecrease(loop);
 	}
 
 	private String generateFileBasenamePrefix(final boolean withStem) {
@@ -688,8 +683,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass(),
-							generateRunningTaskInfo(stemTF, loopTF, withStem, rft));
+					throw new ToolchainCanceledException(this.getClass(), generateRunningTaskInfo(stemTF, loopTF, rft));
 				}
 				final List<TerminationAnalysisBenchmark> benchs = la.getTerminationAnalysisBenchmarks();
 				mTerminationAnalysisBenchmarks.addAll(benchs);
@@ -733,44 +727,16 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	private static String generateRunningTaskInfo(final UnmodifiableTransFormula stemTF,
-			final UnmodifiableTransFormula loopTF, final boolean withStem, final RankingTemplate rft) {
+			final UnmodifiableTransFormula loopTF, final RankingTemplate rft) {
 		return "applying " + rft.getName() + " template (degree " + rft.getDegree() + "), stem dagsize "
 				+ new DagSizePrinter(stemTF.getFormula()) + ", loop dagsize " + new DagSizePrinter(loopTF.getFormula());
 	}
-
-	// private List<LassoRankerParam> getLassoRankerParameters() {
-	// List<LassoRankerParam> lassoRankerParams = new
-	// ArrayList<LassoRankerParam>();
-	// Preferences pref = new Preferences();
-	// pref.numnon_strict_invariants = 2;
-	// pref.numstrict_invariants = 0;
-	// pref.only_nondecreasing_invariants = false;
-	// lassoRankerParams.add(new LassoRankerParam(new AffineTemplate(), pref));
-	// return lassoRankerParams;
-	// }
-
-	// private class LassoRankerParam {
-	// private final RankingFunctionTemplate mRankingFunctionTemplate;
-	// private final Preferences mPreferences;
-	// public LassoRankerParam(RankingFunctionTemplate rankingFunctionTemplate,
-	// Preferences preferences) {
-	// super();
-	// this.mRankingFunctionTemplate = rankingFunctionTemplate;
-	// this.mPreferences = preferences;
-	// }
-	// public RankingFunctionTemplate getRankingFunctionTemplate() {
-	// return mRankingFunctionTemplate;
-	// }
-	// public Preferences getPreferences() {
-	// return mPreferences;
-	// }
-	// }
 
 	/**
 	 * Object for that does computation of lasso check and stores the result. Note that the methods used for the
 	 * computation also modify member variables of the superclass.
 	 */
-	class LassoCheckResult {
+	public class LassoCheckResult {
 
 		private final TraceCheckResult mStemFeasibility;
 		private final TraceCheckResult mLoopFeasibility;
@@ -868,7 +834,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		private TraceCheckResult checkStemFeasibility() {
 			final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
-			if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
+			if (BuchiAutomizerUtils.isEmptyStem(mCounterexample)) {
 				return TraceCheckResult.FEASIBLE;
 			}
 			mStemCheck = checkFeasibilityAndComputeInterpolants(stem,

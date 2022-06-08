@@ -105,9 +105,10 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	protected
 	DescendResult convert(final Context context, final Term term) {
 		FormulaClassification classification = null;
-		Term currentTerm =
-				PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context.getCriticalConstraint(), term);
-		// PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(), Collections.singleton(term));
+		// 20220502 Matthias: If you remove the PolyPac simplification here, it should
+		// be at least done for atoms (which are handled in one of the cases below)
+		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
+				context.getCriticalConstraint(), term);
 		int iterations = 0;
 		while (true) {
 			classification = QuantifierPusher.classify(currentTerm);
@@ -115,16 +116,14 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			case NOT_QUANTIFIED: {
 				// let's recurse, there may be quantifiers in subformulas
 				if (SmtUtils.isAtomicFormula(currentTerm)) {
-					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
-							SimplificationTechnique.POLY_PAC, context, currentTerm);
-					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
-							mSimplificationTechnique, context, currentTerm);
+					if (!SmtUtils.isTrueLiteral(currentTerm) && !SmtUtils.isFalseLiteral(currentTerm)) {
+						currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
+								mSimplificationTechnique, context, currentTerm);
+					}
 					return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
 				}
 				final Term negated = SmtUtils.unzipNot(currentTerm);
 				if (negated != null && SmtUtils.isAtomicFormula(negated)) {
-					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
-							SimplificationTechnique.POLY_PAC, context, currentTerm);
 					currentTerm = QuantifierPusher.simplify(mServices, mMgdScript, SimplificationOccasion.ATOM,
 							mSimplificationTechnique, context, currentTerm);
 					return new TermContextTransformationEngine.FinalResultForAscend(currentTerm);
@@ -298,13 +297,14 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 				mMgdScript.getScript());
 		switch (lBool) {
 		case SAT:
-			throw new AssertionError(String.format(
-					"Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input, output, context));
+			throw new AssertionError(
+					String.format("Intermediate result not equivalent. Input: %s Output: %s Assumption: %s", input,
+							output, context.getCriticalConstraint()));
 		case UNKNOWN:
 			final ILogger logger = mServices.getLoggingService().getLogger(this.getClass());
 			logger.warn(String.format(
 					"Insufficient ressources to check equivalence of intermediate result. Input: %s Output: %s Assumption: %s",
-					input, output, context));
+					input, output, context.getCriticalConstraint()));
 			break;
 		case UNSAT:
 			break;

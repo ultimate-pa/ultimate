@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
@@ -210,11 +210,11 @@ public class RtInconcistencyConditionGenerator {
 	private static Map<Term, Term> createConst2Value(final Script script, final IReqSymbolTable reqSymboltable,
 			final Boogie2SMT boogieToSmt) {
 		final Map<String, Expression> constToValue = reqSymboltable.getConstToValue();
-		final Map<String, BoogieConst> boogieConsts = boogieToSmt.getBoogie2SmtSymbolTable().getConstsMap();
+		final Map<String, ProgramConst> boogieConsts = boogieToSmt.getBoogie2SmtSymbolTable().getConstsMap();
 
 		final Map<Term, Term> rtr = new HashMap<>();
 		for (final Entry<String, Expression> constEntry : constToValue.entrySet()) {
-			final BoogieConst programConst = boogieConsts.get(constEntry.getKey());
+			final ProgramConst programConst = boogieConsts.get(constEntry.getKey());
 			final Optional<Term> value = LiteralUtils.toTerm(constEntry.getValue(), script);
 			if (!value.isPresent()) {
 				throw new IllegalArgumentException(BoogiePrettyPrinter.print(constEntry.getValue()) + " is no literal");

@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -258,7 +259,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				return provider;
 			}
 			return new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory, provider,
-					witnessAutomaton);
+					witnessAutomaton, Property.NON_REACHABILITY);
 		}
 
 		if (witnessAutomaton != null) {

@@ -24,29 +24,26 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Constant in a Boogie program.
+ * Default implementation of {@link IProgramConst}.
  *
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieConst implements IProgramConst {
+public class ProgramConst implements IProgramConst {
 	private static final long serialVersionUID = 2529175722580437047L;
 
 	private final String mIdentifier;
-	private final IBoogieType mIType;
 	private final boolean mBelongsToSmtTheory;
 
 	/**
-	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in closed SMT terms.
+	 * Constant (0-ary ApplicationTerm) which represents this ProgramConst in closed SMT terms.
 	 */
 	private final ApplicationTerm mSmtConstant;
 
@@ -55,10 +52,8 @@ public class BoogieConst implements IProgramConst {
 	 * @param belongsToSmtTheory
 	 *            iff constant belongs to SMT theory
 	 */
-	public BoogieConst(final String identifier, final IBoogieType iType, final ApplicationTerm smtConstant,
-			final boolean belongsToSmtTheory) {
+	public ProgramConst(final String identifier, final ApplicationTerm smtConstant, final boolean belongsToSmtTheory) {
 		mIdentifier = identifier;
-		mIType = iType;
 		mSmtConstant = smtConstant;
 		mBelongsToSmtTheory = belongsToSmtTheory;
 	}
@@ -103,19 +98,12 @@ public class BoogieConst implements IProgramConst {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final BoogieConst other = (BoogieConst) obj;
+		final ProgramConst other = (ProgramConst) obj;
 		if (mSmtConstant == null) {
 			if (other.mSmtConstant != null) {
 				return false;
 			}
 		} else if (!mSmtConstant.equals(other.mSmtConstant)) {
-			return false;
-		}
-		if (mIType == null) {
-			if (other.mIType != null) {
-				return false;
-			}
-		} else if (!mIType.equals(other.mIType)) {
 			return false;
 		}
 		if (mIdentifier == null) {

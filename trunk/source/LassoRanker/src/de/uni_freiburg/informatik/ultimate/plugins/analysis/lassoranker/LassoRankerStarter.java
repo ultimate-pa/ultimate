@@ -377,7 +377,7 @@ public class LassoRankerStarter {
 		final BinaryStatePredicateManager bspm =
 				new BinaryStatePredicateManager(mRankVarConstructor.getCsToolkitWithRankVariables(), mPredicateFactory,
 						mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
-						mSimplificationTechnique, mXnfConversionTechnique);
+						mSimplificationTechnique);
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
@@ -396,7 +396,7 @@ public class LassoRankerStarter {
 		}
 
 		// check ranking function
-		final boolean rfCorrect = bspm.checkRankDecrease(mLoop, mCsToolkit.getModifiableGlobalsTable());
+		final boolean rfCorrect = bspm.checkRankDecrease(mLoop);
 		if (siCorrect && rfCorrect) {
 			mLogger.info("Termination argument has been successfully verified.");
 		}
