@@ -7,7 +7,6 @@ svcomp/pthread-ext/18_read_write_lock.yml
 svcomp/pthread-lit/qw2004_variant.yml
 svcomp/pthread-wmm/mix028_power.oepc_pso.oepc_rmo.oepc.yml
 svcomp/pthread-wmm/mix043.oepc.yml
-svcomp/pthread-wmm/safe002_power.opt_pso.oepc_pso.opt_rmo.opt.yml
 svcomp/weaver/bench-exp3x3-opt.wvr.yml
 svcomp/weaver/bench-exp3x3.wvr.yml
 
