@@ -31,26 +31,26 @@ modifies A, B;
 procedure thread1(x : int)
 modifies A, B;
 {
-  var i : int;
+  var j : int;
   var b : bool;
 
-  i := 0;
+  j := 0;
   while (true) {
-    call b := acquire(i);
+    call b := acquire(j);
     if (b) {
-      A[i] := x;
+      A[j] := x;
     }
-    i := i + 1;
+    j := j + 1;
   }
 }
 
-procedure acquire(i : int) returns (b : bool)
+procedure acquire(k : int) returns (b : bool)
 modifies B;
 {
   atomic {
-    b := B[i];
+    b := B[k];
     if (b) {
-      B[i] := false;
+      B[k] := false;
     }
   }
 }
