@@ -145,6 +145,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_COINFLIP_PROB = "Coinflip probability value";
 	private static final int DEF_POR_COINFLIP_PROB = 25;
 
+	public static final String LABEL_POR_COINFLIP_SEED = "Coinflip random seed";
+	private static final int DEF_POR_COINFLIP_SEED = 0;
+
 	public enum CoinflipMode {
 		OFF, FIXED, LINEAR
 	}
@@ -578,6 +581,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						CoinflipMode.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_PROB, DEF_POR_COINFLIP_PROB, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 100)),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_SEED, DEF_POR_COINFLIP_SEED, PreferenceType.Integer),
 
 				/* ********************************* */
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,

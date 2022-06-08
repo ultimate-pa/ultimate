@@ -411,6 +411,10 @@ public final class TAPreferences {
 		}
 	}
 
+	public int coinflipSeed() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_SEED);
+	}
+
 	public int getNumberOfIndependenceRelations() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_NUM_INDEPENDENCE);
 	}
