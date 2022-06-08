@@ -310,7 +310,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
 		}
-		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), false);
+		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), true);
 	}
 
 	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final int index,
