@@ -155,43 +155,43 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private void calculateFixpoint(final Map<String, ? extends IcfgLocation> entryNodes, final Script script) {
 		preComputations(entryNodes);
+
 		/*
 		 * TODO: case for empty InterferenceLocations can be analyzed as normal
 		 */
 
 		// Check for correct type to use for interferences
-		final NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences = new NestedMap2<>();
+		NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences = new NestedMap2<>();
 		NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferencesOld = new NestedMap2<>();
 
-		while (!interferences.equals(interferencesOld) || interferences.isEmpty()) {
+		// started assures that while loop will be completed at least once
+		boolean started = false;
+		while (!interferences.equals(interferencesOld) || !started) {
+			started = true;
 			interferencesOld = interferences;
 
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
 				final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences =
-						computeInterferences(entry.getValue(), interferences);
+						computeProcedureInterferences(entry.getValue(), interferences);
 
 				// runWithInterferences needs a Collection
 				final Collection<LOC> collection = new ArrayList<>();
 				collection.add((LOC) entry.getValue());
-
 				final AbsIntResult<STATE, ACTION, LOC> result =
 						mFixpointEngine.runWithInterferences(collection, script, procedureInterferences);
 
-				/*
-				 * TODO: merge result with overall mResult compute getLoc2States over both AbsIntResult possible but how
-				 * do we compute a new AbsIntResult out of the Map -> write merge function for AbsIntResult???
-				 */
+				// merge mStateStorage and result.getLoc2States
+				for (final var locAndStates : result.getLoc2States().entrySet()) {
+					final DisjunctiveAbstractState<STATE> state =
+							DisjunctiveAbstractState.createDisjunction(locAndStates.getValue());
+					mStateStorage.addAbstractState(locAndStates.getKey(), state);
+				}
 			}
 
-			for (final Map.Entry<String, Set<IcfgLocation>> entry : mInterferenceLocations.entrySet()) {
-				/*
-				 * TODO: compute new Interferences Set iterate over all shared writes: new State <= State in mResult
-				 * ("+" old State)
-				 */
-			}
+			interferences = computeNewInterferences(interferences);
 
 			// not implemented yet
-			break;
+			// break;
 		}
 	}
 
@@ -202,7 +202,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @param interferences
 	 * @return Map of shared reads to the DisjunctiveAbstractStates the read should read from in this iteration.
 	 */
-	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeInterferences(final IcfgLocation entryNode,
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeProcedureInterferences(final IcfgLocation entryNode,
 			final NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences) {
 
 		return versionOne(entryNode, interferences);
@@ -273,20 +273,26 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return procedureInterferences;
 	}
 
+	/**
+	 * Checks whether the key of pos(sible)Interferences is read. And then adds only the read variable to the
+	 * interferences
+	 *
+	 * @param read
+	 * @param posInterferences
+	 * @param procedureInterferences
+	 */
 	private void computePossibleUnion(final Entry<ACTION, Set<IProgramVar>> read,
-			final Entry<IProgramNonOldVar, DisjunctiveAbstractState<STATE>> state,
+			final Entry<IProgramNonOldVar, DisjunctiveAbstractState<STATE>> posInterferences,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences) {
-		if (read.getValue().contains(state.getKey())) {
-			/*
-			 * TODO: check whether filtering should be done here
-			 */
-			final DisjunctiveAbstractState<STATE> result = state.getValue();
-			for (final var variable : state.getValue().getVariables()) {
+		if (read.getValue().contains(posInterferences.getKey())) {
+			// filter out not shared variables
+			final DisjunctiveAbstractState<STATE> reducedState = posInterferences.getValue();
+			for (final var variable : posInterferences.getValue().getVariables()) {
 				if (!read.getValue().contains(variable)) {
-					result.removeVariable(variable);
+					reducedState.removeVariable(variable);
 				}
 			}
-			procedureInterferences.get(read.getKey()).union(state.getValue());
+			procedureInterferences.get(read.getKey()).union(reducedState);
 		}
 	}
 
@@ -309,14 +315,39 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
-		// compute SharedWrites
+		// SharedWrites
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
 			mInterferenceLocations.get(procedure).add(edge.getSource());
 		}
-
+		// SharedReads
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getInVars().keySet(), variables)) {
 			mSharedReads.put((ACTION) edge, new HashSet<>());
 			edge.getTransformula().getInVars().keySet().forEach(var -> mSharedReads.get(edge).add(var));
 		}
+	}
+
+	private NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> computeNewInterferences(
+			final NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences) {
+		// TODO: build new interferences out of mStateStorage
+
+		final NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> result = new NestedMap2<>();
+		// TODO: mStateStorage into interferences
+
+		for (final var entry : mInterferenceLocations.entrySet()) {
+			final Map<IProgramNonOldVar, DisjunctiveAbstractState<STATE>> tempInterferences =
+					interferences.get(entry.getKey());
+			final Set<IProgramNonOldVar> variables = tempInterferences.keySet();
+			final DisjunctiveAbstractState<STATE> state = mStateStorage.getAbstractState((LOC) entry.getValue());
+			for (final var variable : state.getVariables()) {
+				if (variables.contains(variable)) {
+					// check if this step can be done nicer
+					final DisjunctiveAbstractState<STATE> tempState =
+							interferences.get(entry.getKey(), (IProgramNonOldVar) variable);
+					tempState.union(state);
+					interferences.put(entry.getKey(), (IProgramNonOldVar) variable, tempState);
+				}
+			}
+		}
+		return interferences;
 	}
 }
