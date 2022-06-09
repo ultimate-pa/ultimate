@@ -1792,7 +1792,7 @@ public class QuantifierEliminationRegressionTest {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
 		final String formulaAsString = "(exists ((|v_#valid_34| (Array (_ BitVec 32) (_ BitVec 1))) (|#t~string0.base| (_ BitVec 32)) (|#t~string3.base| (_ BitVec 32)) (|#t~string6.base| (_ BitVec 32)) (|#t~string9.base| (_ BitVec 32)) (|#t~string12.base| (_ BitVec 32)) (|#t~string15.base| (_ BitVec 32))) (= (store (store (store (store (store (store (store |v_#valid_34| (_ bv0 32) (_ bv0 1)) |#t~string0.base| (_ bv1 1)) |#t~string3.base| (_ bv1 1)) |#t~string6.base| (_ bv1 1)) |#t~string9.base| (_ bv1 1)) |#t~string12.base| (_ bv1 1)) |#t~string15.base| (_ bv1 1)) |#valid|))";
-		final String expectedResult = "(exists ((|#t~string12.base| (_ BitVec 32)) (|#t~string0.base| (_ BitVec 32)) (|#t~string15.base| (_ BitVec 32)) (|#t~string3.base| (_ BitVec 32)) (|#t~string6.base| (_ BitVec 32)) (|#t~string9.base| (_ BitVec 32))) (and (= (select |#valid| |#t~string15.base|) (_ bv1 1)) (= (bvadd (bvneg (select |#valid| |#t~string9.base|)) (_ bv1 1)) (_ bv0 1)) (or (= (_ bv0 32) |#t~string15.base|) (= (_ bv0 32) |#t~string0.base|) (= (_ bv0 32) |#t~string12.base|) (= (_ bv0 32) |#t~string3.base|) (= (_ bv0 32) |#t~string6.base|) (= (_ bv0 32) |#t~string9.base|) (= (_ bv0 1) (select |#valid| (_ bv0 32)))) (= (bvadd (_ bv1 1) (bvneg (select |#valid| |#t~string3.base|))) (_ bv0 1)) (= (bvadd (bvneg (select |#valid| |#t~string0.base|)) (_ bv1 1)) (_ bv0 1)) (= (_ bv0 1) (bvadd (_ bv1 1) (select |#valid| |#t~string12.base|))) (= (bvadd (bvneg (select |#valid| |#t~string6.base|)) (_ bv1 1)) (_ bv0 1))))";
+		final String expectedResult = "(let ((.cse4 (select |#valid| (_ bv0 32)))) (let ((.cse5 (exists ((|#t~string3.base| (_ BitVec 32))) (= (bvadd (_ bv1 1) (bvneg (select |#valid| |#t~string3.base|))) (_ bv0 1)))) (.cse0 (exists ((|#t~string12.base| (_ BitVec 32))) (= (_ bv0 1) (bvadd (_ bv1 1) (select |#valid| |#t~string12.base|))))) (.cse6 (exists ((|#t~string15.base| (_ BitVec 32))) (= (select |#valid| |#t~string15.base|) (_ bv1 1)))) (.cse1 (exists ((|#t~string0.base| (_ BitVec 32))) (= (bvadd (bvneg (select |#valid| |#t~string0.base|)) (_ bv1 1)) (_ bv0 1)))) (.cse2 (exists ((|#t~string9.base| (_ BitVec 32))) (= (bvadd (bvneg (select |#valid| |#t~string9.base|)) (_ bv1 1)) (_ bv0 1)))) (.cse3 (exists ((|#t~string6.base| (_ BitVec 32))) (= (bvadd (bvneg (select |#valid| |#t~string6.base|)) (_ bv1 1)) (_ bv0 1)))) (.cse7 (= (_ bv0 1) (bvadd (bvneg .cse4) (_ bv1 1))))) (or (and .cse0 .cse1 .cse2 .cse3 (= (_ bv1 1) .cse4) .cse5) (and .cse0 .cse6 .cse1 .cse3 .cse7 .cse5) (and .cse0 .cse6 .cse1 .cse2 .cse7 .cse5) (and .cse6 .cse1 (= (bvadd (_ bv1 1) .cse4) (_ bv0 1)) .cse2 .cse3 .cse5) (and .cse0 .cse6 .cse2 .cse3 .cse7 .cse5) (and .cse0 .cse6 .cse1 .cse2 .cse3 (= (_ bv0 1) .cse4) .cse5) (and .cse0 .cse6 .cse1 .cse2 .cse3 .cse7))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -1818,8 +1818,58 @@ public class QuantifierEliminationRegressionTest {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b", "c"),
 			};
 		final String formulaAsString = "(exists ((x Int) (y Int) (z Int)) (and (= (select a (+ x z)) 23) (= (select b (+ y z)) 1048) (= (select c z) 42)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(exists ((z Int) (x Int) (y Int)) (and (= 23 (select a (+ z x))) (= (select b (+ z y)) 1048) (= 42 (select c z))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void riwne01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i"),
+			};
+		final String formulaAsString = "(forall ((a (Array Int Int)) (v_a_9 (Array Int Int)) (v_i_9 Int)) (or (= (select v_a_9 1048) 0) (< v_i_9 1000000) (let ((.cse0 (not (= a v_a_9)))) (and (or (not (< v_i_9 1000001)) .cse0 (not (< i v_i_9)) (exists ((v_idx_1 Int)) (and (<= i (+ v_idx_1 1)) (<= (+ 2 v_idx_1) v_i_9) (not (= (select v_a_9 v_idx_1) 0))))) (or .cse0 (not (<= 1000000 i)) (not (= i v_i_9)))))))";
+		final String expectedResult = "(<= i 1049)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void riwne02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i"),
+			};
+		final String formulaAsString = "(forall ((a (Array Int Int))) (or (= (select a 1048) 0) (and (forall ((k Int)) (or (not (< k 1000001)) (exists ((idx Int)) (and (<= i (+ idx 1)) (<= (+ 2 idx) k) (not (= (select a idx) 0)))) (< k 1000000))) (not (<= 1000000 i)))))";
+		final String expectedResult = "(<= i 1049)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void riwne03() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (distinct (select a 1048) 0) (or (exists ((k Int)) (and (< k 1000001) (forall ((idx Int)) (or (> i (+ idx 1)) (> (+ 2 idx) k) (= (select a idx) 0))) (>= k 1000000))) (<= 1000000 i))))";
+		final String expectedResult = "(< 1049 i)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void suse01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "s"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (forall ((k Int)) (= (select a k) k)) (= (select a s) 5)))";
+		final String expectedResult = "(= s 5)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void suse02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "s"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (forall ((k Int)) (=> (>= k 0) (= (select a k) k))) (= (select a s) 5)))";
+		final String expectedResult = "(or (< s 0) (= 5 s))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	//@formatter:on

@@ -982,6 +982,11 @@ public final class TransFormulaUtils {
 				.collect(Collectors.toMap(Entry::getValue, x -> x.getKey().getTermVariable()));
 	}
 
+	public static Map<TermVariable, TermVariable> constructDefaultvarsToInvarsMap(final TransFormula tf) {
+		return tf.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(x -> x.getKey().getTermVariable(), Entry::getValue));
+	}
+
 	public static Map<TermVariable, TermVariable> constructOutvarsToDefaultvarsMap(final TransFormula tf) {
 		return tf.getOutVars().entrySet().stream()
 				.collect(Collectors.toMap(Entry::getValue, x -> x.getKey().getTermVariable()));
