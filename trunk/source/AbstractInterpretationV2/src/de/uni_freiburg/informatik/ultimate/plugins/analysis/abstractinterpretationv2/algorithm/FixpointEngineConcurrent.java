@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -105,9 +106,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final SummaryMap<STATE, ACTION, LOC> mSummaryMap;
 	private final boolean mUseHierachicalPre;
 
-	private final Map<LOC, Set<IProgramVar>> mSharedWrites;
-	private final Map<ACTION, Set<IProgramVar>> mSharedReads;
 	private final IIcfg<?> mIcfg;
+	private final Map<LOC, Set<IProgramVar>> mSharedWrites;
+	private final Map<LOC, Set<IProgramVar>> mSharedReads;
+	private final Map<LOC, String> mProcedures;
+	private final Map<LOC, ACTION> mActions;
 
 	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
 
@@ -129,9 +132,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 		mUseHierachicalPre = mDomain.useHierachicalPre();
 		mIcfg = icfg;
+		mFixpointEngine = fxpe;
 		mSharedWrites = new HashMap<>();
 		mSharedReads = new HashMap<>();
-		mFixpointEngine = fxpe;
+		mProcedures = new HashMap<>();
+		mActions = new HashMap<>();
 	}
 
 	@Override
@@ -189,10 +194,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				}
 			}
 
-			interferences = computeNewInterferences();
-
-			// not implemented yet
-			// break;
+			interferences = computeNewInterferences(interferences);
 		}
 	}
 
@@ -219,13 +221,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> versionOne(final IcfgLocation entryNode,
 			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
-		for (final Map.Entry<ACTION, Set<IProgramVar>> read : mSharedReads.entrySet()) {
-			procedureInterferences.put(read.getKey(), new DisjunctiveAbstractState<>());
+		for (final Map.Entry<LOC, Set<IProgramVar>> read : mSharedReads.entrySet()) {
+			procedureInterferences.put(mActions.get(read.getKey()), new DisjunctiveAbstractState<>());
 			for (final Map.Entry<LOC, DisjunctiveAbstractState<STATE>> interference : interferences.entrySet()) {
 				final Set<IProgramVar> variables = mSharedWrites.get(interference.getKey());
 				if (DataStructureUtils.haveNonEmptyIntersection(variables, read.getValue())) {
 					final DisjunctiveAbstractState<STATE> tempState = procedureInterferences.get(read.getKey());
-					procedureInterferences.put(read.getKey(),
+					procedureInterferences.put(mActions.get(read.getKey()),
 							tempState.union(reduce(interference.getValue(), read.getValue())));
 				}
 			}
@@ -301,34 +303,46 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				.addAll(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure)));
 
 		for (final var entry : entryNodes.entrySet()) {
-
 			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
 			iterator.asStream().forEach(edge -> computationsPerEdge(entry.getKey(), edge, variables));
 		}
 	}
 
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
-		// SharedWrites
+		boolean accepted = false;
+		// SharedWrites & mProcedures
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
+			accepted = true;
 			mSharedWrites.put((LOC) edge.getSource(), new HashSet<>());
 			edge.getTransformula().getAssignedVars().forEach(var -> mSharedWrites.get(edge.getSource()).add(var));
+			mProcedures.put((LOC) edge.getSource(), edge.getPrecedingProcedure());
 		}
 		// SharedReads
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getInVars().keySet(), variables)) {
-			mSharedReads.put((ACTION) edge, new HashSet<>());
+			accepted = true;
+			mSharedReads.put((LOC) edge.getSource(), new HashSet<>());
 			edge.getTransformula().getInVars().keySet().forEach(var -> mSharedReads.get(edge).add(var));
+		}
+
+		// mActions
+		if (accepted) {
+			mActions.put((LOC) edge.getSource(), (ACTION) edge);
 		}
 	}
 
-	private Map<LOC, DisjunctiveAbstractState<STATE>> computeNewInterferences() {
-		// TODO: build new interferences out of mStateStorage
-		final Map<LOC, DisjunctiveAbstractState<STATE>> interferences = new HashMap<>();
-
+	private Map<LOC, DisjunctiveAbstractState<STATE>>
+			computeNewInterferences(final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
 		for (final Entry<LOC, Set<DisjunctiveAbstractState<STATE>>> entry : mStateStorage.computeLoc2States()
 				.entrySet()) {
 			if (mSharedWrites.containsKey(entry.getKey())) {
-				interferences.put(entry.getKey(),
-						flattenAndReduceAbstractState(entry.getValue(), mSharedWrites.get(entry.getKey())));
+				final DisjunctiveAbstractState<STATE> oldInterferences = interferences.get(entry.getKey());
+
+				final DisjunctiveAbstractState<STATE> preState =
+						flattenAndReduceAbstractState(entry.getValue(), mSharedWrites.get(entry.getKey()));
+
+				final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
+				final DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, mActions.get(entry.getKey()));
+				interferences.put(entry.getKey(), oldInterferences.union(postState));
 			}
 		}
 		return interferences;
