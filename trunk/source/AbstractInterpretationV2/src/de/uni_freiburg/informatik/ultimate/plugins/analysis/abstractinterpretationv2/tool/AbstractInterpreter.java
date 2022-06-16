@@ -149,8 +149,10 @@ public final class AbstractInterpreter {
 				buildParameters(root, timer, services, false);
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpe =
 				buildParameters(root, timer, services, false);
+		final FixpointEngineParameterFactory domFac =
+				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec =
-				new FixpointEngineConcurrent<>(pfxpec, root, new FixpointEngine<>(pfxpe));
+				new FixpointEngineConcurrent<>(pfxpec, root, new FixpointEngine<>(pfxpe), domFac);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpec.run(root.getInitialNodes(), script);
 
