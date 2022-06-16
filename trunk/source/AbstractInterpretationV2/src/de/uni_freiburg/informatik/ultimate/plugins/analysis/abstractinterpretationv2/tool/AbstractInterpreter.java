@@ -145,10 +145,12 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpec =
+				buildParameters(root, timer, services, false);
+		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpe =
 				buildParameters(root, timer, services, false);
 		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec =
-				new FixpointEngineConcurrent<>(params, root, new FixpointEngine<>(params));
+				new FixpointEngineConcurrent<>(pfxpec, root, new FixpointEngine<>(pfxpe));
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpec.run(root.getInitialNodes(), script);
 

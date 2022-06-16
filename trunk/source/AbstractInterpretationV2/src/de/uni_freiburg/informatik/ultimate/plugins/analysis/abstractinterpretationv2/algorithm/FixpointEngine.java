@@ -237,7 +237,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		/*
 		 * TODO: merge States interferences: Map<Action, DisjunctiveAbstractState>
 		 */
-		if (interferences.containsKey(currentItem.getAction())) {
+		if (interferences.containsKey(currentItem.getAction())
+				&& !interferences.get(currentItem.getAction()).getStates().isEmpty()) {
 			preState = currentItem.getState().patch(interferences.get(currentItem.getAction()));
 		} else {
 			preState = currentItem.getState();
