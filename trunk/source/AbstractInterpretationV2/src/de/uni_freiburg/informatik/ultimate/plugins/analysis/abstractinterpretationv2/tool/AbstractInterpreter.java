@@ -127,7 +127,7 @@ public final class AbstractInterpreter {
 		}
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				buildParameters(root, timer, services, false);
-		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
+		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -151,8 +151,8 @@ public final class AbstractInterpreter {
 				buildParameters(root, timer, services, false);
 		final FixpointEngineParameterFactory domFac =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
-		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec =
-				new FixpointEngineConcurrent<>(pfxpec, root, new FixpointEngine<>(pfxpe), domFac);
+		final FixpointEngineConcurrent<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec =
+				new FixpointEngineConcurrent<>(pfxpec, root, new FixpointEngine<>(pfxpe));
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpec.run(root.getInitialNodes(), script);
 

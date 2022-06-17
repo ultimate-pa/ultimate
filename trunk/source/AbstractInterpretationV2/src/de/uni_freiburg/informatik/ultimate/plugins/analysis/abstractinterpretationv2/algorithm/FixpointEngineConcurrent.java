@@ -87,11 +87,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
 
-	private final FixpointEngineFactory<STATE, ACTION, VARDECL, LOC> mFixpointEngineFactory;
-
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
-			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe,
-			final FixpointEngineFactory factory) {
+			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -113,8 +110,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mSharedReads = new HashMap<>();
 		mProcedures = new HashMap<>();
 		mActions = new HashMap<>();
-
-		mFixpointEngineFactory = factory;
 	}
 
 	@Override
@@ -202,7 +197,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			// procedureInterference.put(mActions.get(read.getKey()), new DisjunctiveAbstractState<>());
 			for (final Map.Entry<LOC, DisjunctiveAbstractState<STATE>> interference : interferences.entrySet()) {
 				// mSharedWrites.get(interference.getKey()) should be equal to interference.getValue().getVariables()
-				// except for different type
+				// except for different types ->
 				final Set<IProgramVar> variables = mSharedWrites.get(interference.getKey());
 				if (DataStructureUtils.haveNonEmptyIntersection(variables, read.getValue())) {
 					if (procedureInterference.containsKey(mActions.get(read.getKey()))) {

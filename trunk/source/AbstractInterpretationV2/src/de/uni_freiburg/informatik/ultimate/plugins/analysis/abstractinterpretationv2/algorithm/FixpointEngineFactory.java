@@ -57,9 +57,11 @@ public class FixpointEngineFactory<STATE extends IAbstractState<STATE>, ACTION, 
 
 	@Override
 	public FixpointEngine<STATE, ACTION, VARDECL, LOC> buildEngine() {
-		final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params =
-				mFactory.createParams(mTimer, mTransitionProvider, mLoopDetector);
-		return new FixpointEngine<>(params);
+		/*
+		 * final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params = mFactory.createParams(mTimer,
+		 * mTransitionProvider, mLoopDetector); return new FixpointEngine<>(params);
+		 */
+		return null;
 	}
 
 }
