@@ -130,6 +130,7 @@ public final class AbstractInterpreter {
 		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
+		;
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return postProcessResult(services, logger, false, result, root);
 	}

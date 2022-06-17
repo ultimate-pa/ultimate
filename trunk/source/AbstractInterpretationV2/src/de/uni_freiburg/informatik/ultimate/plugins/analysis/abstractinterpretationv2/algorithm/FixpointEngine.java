@@ -99,7 +99,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
-		throw new UnsupportedOperationException("Operation not supported for FixpointEngine");
+		return runWithInterferences(initialNodes, script, Map.of());
 	}
 
 	@Override

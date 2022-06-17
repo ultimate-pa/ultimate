@@ -152,7 +152,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				final Collection<LOC> entryCollection = new ArrayList<>();
 				entryCollection.add((LOC) entry.getValue());
 				final AbsIntResult<STATE, ACTION, LOC> result =
-						mFixpointEngine.runWithInterferences(entryCollection, script, procedureInterferences);
+						mFixpointEngine.runWithInterferences(entryCollection, script, new HashMap<>());
 
 				// merge mStateStorage and result.getLoc2States
 				for (final var locAndStates : result.getLoc2States().entrySet()) {
