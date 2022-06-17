@@ -30,12 +30,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 
 /**
  *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  *
- * @param <STATE>
- * @param <ACTION>
- * @param <VARDECL>
- * @param <LOC>
  */
 
 public interface IFixpointEngineFactory<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> {
