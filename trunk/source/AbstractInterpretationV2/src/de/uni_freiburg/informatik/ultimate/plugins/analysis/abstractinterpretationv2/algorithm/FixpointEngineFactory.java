@@ -27,8 +27,39 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
+
 /**
  *
  * @author Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  *
  */
+
+public class FixpointEngineFactory<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC>
+		implements IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> {
+
+	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
+	private final ILoopDetector<ACTION> mLoopDetector;
+	private final IProgressAwareTimer mTimer;
+
+	private final FixpointEngineParameterFactory mFactory;
+
+	public FixpointEngineFactory(final ITransitionProvider<ACTION, LOC> transitionProvider,
+			final ILoopDetector<ACTION> loopDetector, final IProgressAwareTimer timer,
+			final FixpointEngineParameterFactory factory) {
+		mTransitionProvider = transitionProvider;
+		mLoopDetector = loopDetector;
+		mTimer = timer;
+		mFactory = factory;
+	}
+
+	@Override
+	public FixpointEngine<STATE, ACTION, VARDECL, LOC> buildEngine() {
+		final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params =
+				mFactory.createParams(mTimer, mTransitionProvider, mLoopDetector);
+		return new FixpointEngine<>(params);
+	}
+
+}

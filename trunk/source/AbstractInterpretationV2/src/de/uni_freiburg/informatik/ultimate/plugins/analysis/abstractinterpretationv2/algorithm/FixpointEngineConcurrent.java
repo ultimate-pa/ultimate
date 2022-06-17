@@ -52,9 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -88,11 +86,12 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final Map<LOC, ACTION> mActions;
 
 	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
-	private final FixpointEngineParameterFactory mFixpointEngineParameterFactory;
+
+	private final FixpointEngineFactory<STATE, ACTION, VARDECL, LOC> mFixpointEngineFactory;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe,
-			final FixpointEngineParameterFactory fxpeFactory) {
+			final FixpointEngineFactory factory) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -114,7 +113,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mSharedReads = new HashMap<>();
 		mProcedures = new HashMap<>();
 		mActions = new HashMap<>();
-		mFixpointEngineParameterFactory = fxpeFactory;
+
+		mFixpointEngineFactory = factory;
 	}
 
 	@Override
@@ -139,7 +139,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private void calculateFixpoint(final Map<String, ? extends IcfgLocation> entryNodes, final Script script) {
 		preComputations(entryNodes);
-
 		/*
 		 * TODO: case for empty InterferenceLocations can be analyzed as normal
 		 */
@@ -147,7 +146,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		Map<LOC, DisjunctiveAbstractState<STATE>> interferences = new HashMap<>();
 
 		while (true) {
-			// TODO: create new FixpointEngine
+			// TODO: implement buildEngine Method
+			// mFixpointEngine = mFixpointEngineFactory.buildEngine();
+
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
 				final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences =
 						computeProcedureInterferences(entry.getValue(), interferences);
@@ -159,7 +160,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						mFixpointEngine.runWithInterferences(entryCollection, script, procedureInterferences);
 
 				// merge mStateStorage and result.getLoc2States
-
 				for (final var locAndStates : result.getLoc2States().entrySet()) {
 					final DisjunctiveAbstractState<STATE> state =
 							DisjunctiveAbstractState.createDisjunction(locAndStates.getValue());
@@ -185,7 +185,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeProcedureInterferences(final IcfgLocation entryNode,
 			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
-
 		return versionOne(entryNode, interferences);
 	}
 
@@ -202,6 +201,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		for (final Map.Entry<LOC, Set<IProgramVar>> read : mSharedReads.entrySet()) {
 			// procedureInterference.put(mActions.get(read.getKey()), new DisjunctiveAbstractState<>());
 			for (final Map.Entry<LOC, DisjunctiveAbstractState<STATE>> interference : interferences.entrySet()) {
+				// mSharedWrites.get(interference.getKey()) should be equal to interference.getValue().getVariables()
+				// except for different type
 				final Set<IProgramVar> variables = mSharedWrites.get(interference.getKey());
 				if (DataStructureUtils.haveNonEmptyIntersection(variables, read.getValue())) {
 					if (procedureInterference.containsKey(mActions.get(read.getKey()))) {
@@ -226,12 +227,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @return
 	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> versionTwo(final IcfgLocation entryNode,
-			final NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences) {
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
-
-		// Filter procedures
-		final Set<String> keys = interferences.keySet().stream().filter(k -> !entryNode.getProcedure().equals(k))
-				.collect(Collectors.toSet());
 		return procedureInterferences;
 	}
 
@@ -243,12 +240,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @return
 	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> versionThree(final IcfgLocation entryNode,
-			final NestedMap2<String, IProgramNonOldVar, DisjunctiveAbstractState<STATE>> interferences) {
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
-
-		// Filter procedures
-		final Set<String> keys = interferences.keySet().stream().filter(k -> !entryNode.getProcedure().equals(k))
-				.collect(Collectors.toSet());
 		return procedureInterferences;
 	}
 
@@ -378,6 +371,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			}
 		}
 		return tempState;
+	}
+
+	private Map<LOC, DisjunctiveAbstractState<STATE>> filterProcedures(final String name,
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+		// TODO: check nicer way via .collect ???
+		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
+		interferences.entrySet().stream().filter(a -> mProcedures.get(a.getKey()) == (name))
+				.forEach(b -> result.put(b.getKey(), b.getValue()));
+		return result;
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
