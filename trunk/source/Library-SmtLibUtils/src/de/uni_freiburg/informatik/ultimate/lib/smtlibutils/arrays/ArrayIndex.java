@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -55,6 +56,10 @@ public class ArrayIndex implements List<Term> {
 
 	public ArrayIndex() {
 		mIndexEntries = Collections.emptyList();
+	}
+
+	public ArrayIndex(final Term... indexEntries) {
+		mIndexEntries = Arrays.asList(indexEntries);
 	}
 
 	public ArrayIndex(final List<Term> indexEntries) {
