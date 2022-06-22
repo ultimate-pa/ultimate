@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 
-public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC extends IcfgLocation>
+public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC>
 		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
 
 	private final int mMaxUnwindings;
@@ -154,7 +154,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				final Collection<LOC> entryCollection = new ArrayList<>();
 				entryCollection.add((LOC) entry.getValue());
 				final AbsIntResult<STATE, ACTION, LOC> result =
-						mFixpointEngine.runWithInterferences(entryCollection, script, new HashMap<>());
+						mFixpointEngine.runWithInterferences(entryCollection, script, procedureInterferences);
 
 				// merge mStateStorage and result.getLoc2States
 				for (final var locAndStates : result.getLoc2States().entrySet()) {
@@ -316,8 +316,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			if (loc2States.containsKey(entry.getKey())) {
 				preState = flattenAndReduceAbstractState(loc2States.get(entry.getKey()), entry.getValue());
 			} else {
-				preState = removeNonSharedVariables(new DisjunctiveAbstractState<>(mDomain.createTopState()),
-						entry.getValue());
+				preState = new DisjunctiveAbstractState<>(mDomain.createTopState());
+				entry.getValue().forEach(var -> preState.addVariable(var));
+				if (preState.containsVariable(entry.getValue().iterator().next())) {
+					final boolean a = true;
+				}
 			}
 			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 			final DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, mActions.get(entry.getKey()));

@@ -87,8 +87,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mTimer = params.getTimer();
 		mLogger = params.getLogger();
 		mTransitionProvider = params.getTransitionProvider();
+
 		mDefaultStateStorage = params.getStorage();
-		mStateStorage = params.getStorage();
+		mStateStorage = null;
 		mDomain = params.getAbstractDomain();
 		mVarProvider = params.getVariableProvider();
 		mLoopDetector = params.getLoopDetector();
@@ -107,7 +108,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
 			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		// initializeFixpointEngine();
+		initializeFixpointEngine();
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
@@ -674,7 +675,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	}
 
 	private void initializeFixpointEngine() {
-		// = is not working, cause same object ->
-		mStateStorage = mDefaultStateStorage;
+		mStateStorage = mDefaultStateStorage.copy();
 	}
 }

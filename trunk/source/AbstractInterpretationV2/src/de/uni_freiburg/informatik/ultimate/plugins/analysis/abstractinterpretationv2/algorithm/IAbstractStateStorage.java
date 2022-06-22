@@ -94,4 +94,10 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE>, ACTI
 	 *         location.
 	 */
 	Set<STATE> computeContextSensitiveAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
+
+	/**
+	 *
+	 * @return A copy of this {@link IAbstractStateStorage} instance.
+	 */
+	IAbstractStateStorage<STATE, ACTION, LOC> copy();
 }

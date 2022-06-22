@@ -88,6 +88,10 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		mUsedSummary = usedSummary;
 	}
 
+	public IAbstractStateStorage<STATE, ACTION, LOC> copy() {
+		return new IcfgAbstractStateStorageProvider<>(mServices, mTransProvider, mScope, mParent, mUsedSummary);
+	}
+
 	@Override
 	public DisjunctiveAbstractState<STATE> addAbstractState(final LOC loc,
 			final DisjunctiveAbstractState<STATE> state) {
