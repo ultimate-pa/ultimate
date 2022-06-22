@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -60,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 
-public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC>
+public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC extends IcfgLocation>
 		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
 
 	private final int mMaxUnwindings;
@@ -82,6 +83,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final IIcfg<?> mIcfg;
 	private final Map<LOC, Set<IProgramVar>> mSharedWrites;
 	private final Map<LOC, Set<IProgramVar>> mSharedReads;
+	// TODO: neue Infos von LOC in Code verarbeiten
 	private final Map<LOC, String> mProcedures;
 	private final Map<LOC, ACTION> mActions;
 
@@ -308,18 +310,20 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
 			computeNewInterferences(final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
 		Map<LOC, DisjunctiveAbstractState<STATE>> result = copy(interferences);
-		for (final Entry<LOC, Set<DisjunctiveAbstractState<STATE>>> entry : mStateStorage.computeLoc2States()
-				.entrySet()) {
-			if (mSharedWrites.containsKey(entry.getKey())) {
-				final DisjunctiveAbstractState<STATE> preState =
-						flattenAndReduceAbstractState(entry.getValue(), mSharedWrites.get(entry.getKey()));
-
-				final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
-				final DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, mActions.get(entry.getKey()));
-				// result = combineInterferences(result, entry.getKey(),
-				// removeNonSharedVariables(postState, mSharedWrites.get(entry.getKey())));
-				result = combineInterferences(result, entry.getKey(), postState);
+		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
+		for (final Entry<LOC, Set<IProgramVar>> entry : mSharedWrites.entrySet()) {
+			final DisjunctiveAbstractState<STATE> preState;
+			if (loc2States.containsKey(entry.getKey())) {
+				preState = flattenAndReduceAbstractState(loc2States.get(entry.getKey()), entry.getValue());
+			} else {
+				preState = removeNonSharedVariables(new DisjunctiveAbstractState<>(mDomain.createTopState()),
+						entry.getValue());
 			}
+			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
+			final DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, mActions.get(entry.getKey()));
+			// result = combineInterferences(result, entry.getKey(),
+			// removeNonSharedVariables(postState, mSharedWrites.get(entry.getKey())));
+			result = combineInterferences(result, entry.getKey(), postState);
 		}
 		return result;
 	}
@@ -339,12 +343,17 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> flattenAndReduceAbstractState(
 			final Set<DisjunctiveAbstractState<STATE>> setOfStates, final Set<IProgramVar> variables) {
-		DisjunctiveAbstractState<STATE> result = new DisjunctiveAbstractState<>();
-
-		for (final var state : setOfStates) {
-			result = unionIfNonEmpty(result, removeNonSharedVariables(state, variables));
+		if (!setOfStates.isEmpty()) {
+			// iterate over them all
+			final Iterator<DisjunctiveAbstractState<STATE>> iterator = setOfStates.iterator();
+			DisjunctiveAbstractState<STATE> result = removeNonSharedVariables(iterator.next(), variables);
+			while (iterator.hasNext()) {
+				result = unionIfNonEmpty(result, removeNonSharedVariables(iterator.next(), variables));
+			}
+			return result;
 		}
-		return result;
+		// return empty State
+		return new DisjunctiveAbstractState<>();
 	}
 
 	/**

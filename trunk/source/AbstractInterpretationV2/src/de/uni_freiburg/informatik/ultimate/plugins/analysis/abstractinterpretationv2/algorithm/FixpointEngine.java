@@ -67,7 +67,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
+	private final IAbstractStateStorage<STATE, ACTION, LOC> mDefaultStateStorage;
+	private IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
 	private final IAbstractDomain<STATE, ACTION> mDomain;
 	private final IVariableProvider<STATE, ACTION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
@@ -86,6 +87,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mTimer = params.getTimer();
 		mLogger = params.getLogger();
 		mTransitionProvider = params.getTransitionProvider();
+		mDefaultStateStorage = params.getStorage();
 		mStateStorage = params.getStorage();
 		mDomain = params.getAbstractDomain();
 		mVarProvider = params.getVariableProvider();
@@ -105,6 +107,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
 			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+		// initializeFixpointEngine();
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
@@ -668,5 +671,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding [")
 				.append(item.getState().hashCode()).append("]").append(" --[").append(item.getAction().hashCode())
 				.append("]->");
+	}
+
+	private void initializeFixpointEngine() {
+		// = is not working, cause same object ->
+		mStateStorage = mDefaultStateStorage;
 	}
 }
