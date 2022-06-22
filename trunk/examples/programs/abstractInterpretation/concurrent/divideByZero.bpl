@@ -13,15 +13,15 @@ modifies x;
   var i : int;
   i := 4;
   x := 0;
-  i := i/2;
+  x := x-2;
 }
 
 procedure division() returns()
 modifies x;
 {
  var i : int;
- i := 4;
- x := 2;
+ i := 6;
+ x := 3;
  i := i/x;
 }
 

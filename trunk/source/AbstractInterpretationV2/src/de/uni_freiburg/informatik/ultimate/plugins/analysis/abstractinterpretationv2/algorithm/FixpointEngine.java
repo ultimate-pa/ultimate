@@ -241,12 +241,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		/*
 		 * TODO: merge States interferences: Map<Action, DisjunctiveAbstractState>
 		 */
-		if (interferences.containsKey(currentItem.getAction())
-				&& !interferences.get(currentItem.getAction()).getStates().isEmpty()) {
-			preState = currentItem.getState().patch(interferences.get(currentItem.getAction()));
-		} else {
-			preState = currentItem.getState();
-		}
+		// Commented for Testing
+		/*
+		 * if (interferences.containsKey(currentItem.getAction()) &&
+		 * !interferences.get(currentItem.getAction()).getStates().isEmpty()) { preState =
+		 * currentItem.getState().patch(interferences.get(currentItem.getAction())); } else { preState =
+		 * currentItem.getState(); }
+		 */
+		preState = currentItem.getState();
 
 		final DisjunctiveAbstractState<STATE> hierachicalPreState = currentItem.getHierachicalState();
 		final ACTION currentAction = currentItem.getAction();
@@ -271,6 +273,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			preStateWithFreshVariables = preState;
 			postState = preState.apply(postOp, currentAction);
 		}
+
+		if (interferences.containsKey(currentItem.getAction())
+				&& !interferences.get(currentItem.getAction()).getStates().isEmpty()) {
+			postState = postState.patch(interferences.get(currentItem.getAction()));
+		}
+
 		mResult.getBenchmark().countPostApplication();
 
 		assert postState != null;

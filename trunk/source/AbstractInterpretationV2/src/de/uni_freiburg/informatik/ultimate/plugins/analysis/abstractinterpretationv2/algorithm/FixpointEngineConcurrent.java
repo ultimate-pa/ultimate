@@ -89,6 +89,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
 
+	private ACTION mLastAction;
+	private final Map<ACTION, ACTION> mActionBeforeRead;
+
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe) {
 		if (params == null || !params.isValid()) {
@@ -112,6 +115,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mSharedReads = new HashMap<>();
 		mProcedures = new HashMap<>();
 		mActions = new HashMap<>();
+
+		mLastAction = null;
+		mActionBeforeRead = new HashMap<>();
 	}
 
 	@Override
@@ -145,7 +151,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		while (true) {
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
 				// lediglich zum Testen
-				computeNewInterferences(interferences);
+				// computeNewInterferences(interferences);
 
 				final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences =
 						computeProcedureInterferences(entry.getValue(), interferences);
@@ -202,13 +208,12 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				// except for different types ->
 				final Set<IProgramVar> variables = mSharedWrites.get(interference.getKey());
 				if (DataStructureUtils.haveNonEmptyIntersection(variables, read.getValue())) {
-					if (procedureInterference.containsKey(mActions.get(read.getKey()))) {
-						final DisjunctiveAbstractState<STATE> tempState =
-								procedureInterference.get(mActions.get(read.getKey()));
-						procedureInterference.put(mActions.get(read.getKey()),
-								unionIfNonEmpty(tempState, interference.getValue()));
+					final ACTION key = mActionBeforeRead.get(mActions.get(read.getKey()));
+					if (procedureInterference.containsKey(key)) {
+						final DisjunctiveAbstractState<STATE> tempState = procedureInterference.get(key);
+						procedureInterference.put(key, unionIfNonEmpty(tempState, interference.getValue()));
 					} else {
-						procedureInterference.put(mActions.get(read.getKey()), interference.getValue());
+						procedureInterference.put(key, interference.getValue());
 					}
 				}
 			}
@@ -284,7 +289,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
 		boolean accepted = false;
-		// TODO: mSharedReads & mSharedReads only add global variables
 
 		// SharedWrites & mProcedures
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
@@ -299,12 +303,14 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			mSharedReads.put((LOC) edge.getSource(), new HashSet<>());
 			DataStructureUtils.intersection(edge.getTransformula().getInVars().keySet(), variables)
 					.forEach(var -> mSharedReads.get(edge.getSource()).add(var));
+			mActionBeforeRead.put((ACTION) edge, mLastAction);
 		}
 
 		// mActions
 		if (accepted) {
 			mActions.put((LOC) edge.getSource(), (ACTION) edge);
 		}
+		mLastAction = (ACTION) edge;
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
@@ -317,7 +323,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				preState = flattenAndReduceAbstractState(loc2States.get(entry.getKey()), entry.getValue());
 			} else {
 				// TODO: build TOP State for variables in entry.getValue()
-				preState = new DisjunctiveAbstractState<>(mDomain.createTopState());
+				preState = new DisjunctiveAbstractState<>(mDomain.createBottomState());
 				entry.getValue().forEach(var -> preState.addVariable(var));
 			}
 			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
