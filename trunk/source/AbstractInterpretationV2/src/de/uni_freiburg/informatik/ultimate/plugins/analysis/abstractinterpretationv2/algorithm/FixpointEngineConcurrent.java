@@ -81,9 +81,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final boolean mUseHierachicalPre;
 
 	private final IIcfg<?> mIcfg;
+	// maybe auslagern in Extra-Objekt
 	private final Map<LOC, Set<IProgramVar>> mSharedWrites;
 	private final Map<LOC, Set<IProgramVar>> mSharedReads;
-	// TODO: neue Infos von LOC in Code verarbeiten
 	private final Map<LOC, String> mProcedures;
 	private final Map<LOC, ACTION> mActions;
 
@@ -143,9 +143,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		Map<LOC, DisjunctiveAbstractState<STATE>> interferences = new HashMap<>();
 
 		while (true) {
-			// TODO: implement buildEngine Method
-			// mFixpointEngine = mFixpointEngineFactory.buildEngine();
-
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
 				final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences =
 						computeProcedureInterferences(entry.getValue(), interferences);
@@ -316,16 +313,12 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			if (loc2States.containsKey(entry.getKey())) {
 				preState = flattenAndReduceAbstractState(loc2States.get(entry.getKey()), entry.getValue());
 			} else {
-				preState = new DisjunctiveAbstractState<>(mDomain.createTopState());
+				// TODO: build TOP State for variables in entry.getValue()
+				preState = new DisjunctiveAbstractState<>(mDomain.createBottomState());
 				entry.getValue().forEach(var -> preState.addVariable(var));
-				if (preState.containsVariable(entry.getValue().iterator().next())) {
-					final boolean a = true;
-				}
 			}
 			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 			final DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, mActions.get(entry.getKey()));
-			// result = combineInterferences(result, entry.getKey(),
-			// removeNonSharedVariables(postState, mSharedWrites.get(entry.getKey())));
 			result = combineInterferences(result, entry.getKey(), postState);
 		}
 		return result;
