@@ -144,6 +144,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 		while (true) {
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
+				// lediglich zum Testen
+				computeNewInterferences(interferences);
+
 				final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences =
 						computeProcedureInterferences(entry.getValue(), interferences);
 
@@ -314,7 +317,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				preState = flattenAndReduceAbstractState(loc2States.get(entry.getKey()), entry.getValue());
 			} else {
 				// TODO: build TOP State for variables in entry.getValue()
-				preState = new DisjunctiveAbstractState<>(mDomain.createBottomState());
+				preState = new DisjunctiveAbstractState<>(mDomain.createTopState());
 				entry.getValue().forEach(var -> preState.addVariable(var));
 			}
 			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
