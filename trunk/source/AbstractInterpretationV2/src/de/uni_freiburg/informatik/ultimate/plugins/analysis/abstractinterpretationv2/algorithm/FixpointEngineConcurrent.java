@@ -150,9 +150,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 		while (true) {
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
-				// lediglich zum Testen
-				// computeNewInterferences(interferences);
-
 				final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences =
 						computeProcedureInterferences(entry.getValue(), interferences);
 
@@ -318,13 +315,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		Map<LOC, DisjunctiveAbstractState<STATE>> result = copy(interferences);
 		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
 		for (final Entry<LOC, Set<IProgramVar>> entry : mSharedWrites.entrySet()) {
-			final DisjunctiveAbstractState<STATE> preState;
+			DisjunctiveAbstractState<STATE> preState;
 			if (loc2States.containsKey(entry.getKey())) {
 				preState = flattenAndReduceAbstractState(loc2States.get(entry.getKey()), entry.getValue());
 			} else {
 				// TODO: build TOP State for variables in entry.getValue()
-				preState = new DisjunctiveAbstractState<>(mDomain.createBottomState());
-				entry.getValue().forEach(var -> preState.addVariable(var));
+				preState = new DisjunctiveAbstractState<>(mDomain.createTopState());
+				for (final IProgramVar variable : entry.getValue()) {
+					preState = preState.addVariable(variable);
+				}
 			}
 			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 			final DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, mActions.get(entry.getKey()));
