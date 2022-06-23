@@ -13,7 +13,7 @@ modifies x;
   var i : int;
   i := 4;
   x := 0;
-  x := x-2;
+  x := x-2; // division + ultimate
 }
 
 procedure division() returns()
@@ -21,13 +21,18 @@ modifies x;
 {
  var i : int;
  i := 6;
+ i := x; // ultimate
+ fork 3 setZero();
  x := 3;
- i := i/x;
+ i := i/x; // ultimate + setZero
 }
 
 procedure ULTIMATE.start() returns()
 modifies x;
 {
- fork 1 division();
- fork 2 setZero();
+ var i : int;
+ i := x; // ---
+ fork 1 division(); 
+ i := x: // division + setZero
+ i := x; // division + setZero
 }
