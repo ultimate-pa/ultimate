@@ -28,16 +28,12 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	private final Set<String> mThreads = new HashSet<>();
 	private final Set<IPredicate> mInitialStates = new HashSet<>();
 	private static Integer mParameter;
-	private final Boolean mIsLoop;
-	private Set<L> mAlphabet;
 	private String mInitialThread;
 
 	
-	public ParameterizedOrderAutomaton(final Integer parameter, final Boolean isLoop, final Set<String> threads, final VpAlphabet<L> alphabet) {
+	public ParameterizedOrderAutomaton(final Integer parameter, final Set<String> threads) {
 		mParameter = parameter;
-		mIsLoop = isLoop;
 		mThreads.addAll(threads);
-		mAlphabet = alphabet.getInternalAlphabet();
 		
 	}
 
@@ -72,7 +68,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	}
 
 
-	private Object getOrCreateState(String thread, Integer counter) {
+	private Predicate getOrCreateState(String thread, Integer counter) {
 		Predicate state = new Predicate(thread, counter);
 		mCreatedStates.put(state, state);
 		return state;
@@ -103,20 +99,32 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	@Override
 	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(IPredicate state, L letter) {
 		Predicate pState = (Predicate) state;
-		if (mIsLoop) {
-			return null;
-		}
-		else if (pState.getCounter()==mParameter) {
-			return getOrCreateState(nextThread(pState.getThread()),0);
+		if (isStep()) { //oder wird das in ParameterizedOrder abgefangen?
+			if(letter.getPrecedingProcedure() != pState.getThread()) {
+				return getOrCreateState(letter.getPrecedingProcedure(),0); //das hier ist nur der successor state. Wir müssen aber glaube ich die transition returnen oder?
+			}
+			else if (pState.getCounter()==mParameter) {
+				return getOrCreateState(nextThread(pState.getThread()),0);
+			}
+			else {
+				return getOrCreateState(nextThread(pState.getThread()),pState.getCounter()+1);
+			}
+			
 		}
 		else {
-			return getOrCreateState(pState.getThread(),pState.getCounter()+1);
+			return pState;
 		}
-		//missing: distinction for letters of threads that are different to the most priorized
+	}
+
+	private boolean isStep() {
+		// wenn Teil dieser Klasse, dann muss sie von ParameterizedOrder übergeben werden
+		return true;
 	}
 
 	private String nextThread(String thread) {
-		// How can we compute the thread that should come next?
+		// Welcher Thread kommt als nächstes?
+		// Sollte das überhaupt im Automaten ermittelt werden oder in ParameterizedOrder?
+		// Sollte der Automat überhaupt die Order kennen?
 		return null;
 	}
 
