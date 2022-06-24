@@ -101,13 +101,14 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 		Predicate pState = (Predicate) state;
 		if (isStep()) { //oder wird das in ParameterizedOrder abgefangen?
 			if(letter.getPrecedingProcedure() != pState.getThread()) {
-				return getOrCreateState(letter.getPrecedingProcedure(),0); //das hier ist nur der successor state. Wir müssen aber glaube ich die transition returnen oder?
+				//wir haben ja einen deterministischen Automaten, kann man hier einfach einen cast auf Iterable machen?
+				return new OutgoingInternalTransition<L, IPredicate>(letter, getOrCreateState(letter.getPrecedingProcedure(),0));
 			}
 			else if (pState.getCounter()==mParameter) {
-				return getOrCreateState(nextThread(pState.getThread()),0);
+				return new OutgoingInternalTransition<L, IPredicate>(letter, getOrCreateState(nextThread(pState.getThread()),0));
 			}
 			else {
-				return getOrCreateState(nextThread(pState.getThread()),pState.getCounter()+1);
+				return new OutgoingInternalTransition<L, IPredicate>(letter, getOrCreateState(nextThread(pState.getThread()),pState.getCounter()+1));
 			}
 			
 		}
