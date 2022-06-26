@@ -3,6 +3,8 @@
  * Author: Dominik Klumpp
  * Date: 2022-06-08
  */
+ 
+ // invariant: (i1 <= m \/ array_min <= A[m]) /\ (i2 <= m \/ A[m] <= array_max)
 
 var A : [int]int;
 var N : int;
