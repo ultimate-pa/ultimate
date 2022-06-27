@@ -136,9 +136,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		// TODO: Separate concurrent and sequential analysis and increment the thread-number incrementally
-		final IIcfg<?> icfgForAnalysis =
-				IcfgUtils.isConcurrent(icfg) ? new IcfgPetrifier(mServices, icfg, 1).getPetrifiedIcfg() : icfg;
-
+		final IIcfg<?> icfgForAnalysis;
+		if (IcfgUtils.isConcurrent(icfg)) {
+			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, 1);
+			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+			icfgForAnalysis = icfgPetrifier.getPetrifiedIcfg();
+		} else {
+			icfgForAnalysis = icfg;
+		}
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfgForAnalysis.getCfgSmtToolkit());
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, icfgForAnalysis.getCfgSmtToolkit().getManagedScript(),
