@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -52,8 +53,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.AutomatonTypeConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -89,11 +93,43 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				rankVarConstructor.getCsToolkitWithRankVariables().getManagedScript(), predicateFactory, false,
 				Collections.emptySet());
-		final var provider =
-				createAutomataAbstractionProvider(predicateFactory, stateFactoryForRefinement, witnessAutomaton);
-		final var initialAbstraction = constructInitialAbstraction(provider, icfg);
+		if (!IcfgUtils.isConcurrent(icfg)) {
+			final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> automatonProvider =
+					new NwaInitialAbstractionProvider<>(mServices, stateFactoryForRefinement, true, predicateFactory);
+			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
+					stateFactoryForRefinement, automatonProvider);
+		}
+		final var petriNetProvider = new PetriInitialAbstractionProvider<L>(mServices, predicateFactory, true);
+		// TODO: Read this from the preferences
+		final AutomatonTypeConcurrent automatonTypeConcurrent = AutomatonTypeConcurrent.BUCHI_AUTOMATON;
+		switch (automatonTypeConcurrent) {
+		case BUCHI_AUTOMATON:
+			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> automatonProvider =
+					new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider, stateFactoryForRefinement,
+							new AutomataLibraryServices(mServices));
+			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
+					stateFactoryForRefinement, automatonProvider);
+		case BUCHI_PETRI_NET:
+			return new BuchiPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
+					mTransitionClazz, constructInitialAbstraction(petriNetProvider, icfg), mCegarLoopBenchmark);
+		default:
+			throw new UnsupportedOperationException(automatonTypeConcurrent + " is not supported.");
+		}
+	}
+
+	private BuchiAutomatonCegarLoop<L> createBuchiAutomatonCegarLoop(final IIcfg<?> icfg,
+			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
+			final PredicateFactoryRefinement stateFactory,
+			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> initialAbstractionProvider) {
+		if (witnessAutomaton != null) {
+			initialAbstractionProvider =
+					new WitnessAutomatonAbstractionProvider<>(mServices, predicateFactory, stateFactory,
+							initialAbstractionProvider, extendWitnessAutomaton(witnessAutomaton), Property.TERMINATION);
+		}
 		return new BuchiAutomatonCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
-				mTransitionClazz, initialAbstraction, stateFactoryForRefinement, mCegarLoopBenchmark);
+				mTransitionClazz, constructInitialAbstraction(initialAbstractionProvider, icfg), stateFactory,
+				mCegarLoopBenchmark);
 	}
 
 	private static Set<IcfgLocation> getAcceptingStates(final IIcfg<?> icfg) {
@@ -104,19 +140,6 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 		return allStates.stream().filter(a -> BuchiProgramAcceptingStateAnnotation.getAnnotation(a) != null)
 				.collect(Collectors.toSet());
-	}
-
-	private IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>
-			createAutomataAbstractionProvider(final PredicateFactory predicateFactory,
-					final PredicateFactoryRefinement stateFactory,
-					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
-		final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> provider =
-				new NwaInitialAbstractionProvider<>(mServices, stateFactory, true, predicateFactory);
-		if (witnessAutomaton == null) {
-			return provider;
-		}
-		return new WitnessAutomatonAbstractionProvider<>(mServices, predicateFactory, stateFactory, provider,
-				extendWitnessAutomaton(witnessAutomaton), Property.TERMINATION);
 	}
 
 	private INestedWordAutomaton<WitnessEdge, WitnessNode> extendWitnessAutomaton(

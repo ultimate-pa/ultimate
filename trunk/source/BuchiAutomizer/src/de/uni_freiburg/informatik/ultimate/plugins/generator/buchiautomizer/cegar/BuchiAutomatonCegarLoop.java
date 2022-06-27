@@ -29,8 +29,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
-		extends AbstractBuchiCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
+		extends AbstractBuchiCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
 	private final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
@@ -98,7 +98,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	public BuchiAutomatonCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
 			final PredicateFactoryRefinement stateFactoryForRefinement,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		super(icfg, rankVarConstructor, predicateFactory, taPrefs, services, transitionClazz, initialAbstraction,
@@ -131,7 +131,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected boolean isAbstractionEmpty(final INestedWordAutomaton<L, IPredicate> abstraction)
+	protected boolean isAbstractionEmpty(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction)
 			throws AutomataLibraryException {
 		final String counterName = mIdentifier + "_" + getClass().getName() + "Abstraction";
 		final UtilFixedCounterexample<L, IPredicate> utilFixedCe = new UtilFixedCounterexample<>();
@@ -183,7 +183,8 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	 * inexpensive complementation algorithm.
 	 */
 	@Override
-	protected INestedWordAutomaton<L, IPredicate> refineFinite(final INestedWordAutomaton<L, IPredicate> abstraction,
+	protected INestedWordAutomaton<L, IPredicate> refineFinite(
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataOperationCanceledException {
 		final PowersetDeterminizer<L, IPredicate> psd =
@@ -208,8 +209,9 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected INestedWordAutomaton<L, IPredicate> refineBuchi(final INestedWordAutomaton<L, IPredicate> abstraction,
-			final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
+	protected INestedWordAutomaton<L, IPredicate> refineBuchi(
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction, final LassoCheck<L> lassoCheck)
+			throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
 
@@ -271,13 +273,12 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		throw new AssertionError("no settings was sufficient");
 	}
 
-	private boolean automatonUsesISLPredicates(final INestedWordAutomaton<L, IPredicate> nwa) {
-		final Set<IPredicate> states = nwa.getStates();
-		if (states.isEmpty()) {
+	private boolean automatonUsesISLPredicates(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nwa) {
+		final Iterator<IPredicate> initialStates = nwa.getInitialStates().iterator();
+		if (!initialStates.hasNext()) {
 			return true;
 		}
-		final IPredicate someState = states.iterator().next();
-		return someState instanceof ISLPredicate;
+		return initialStates.next() instanceof ISLPredicate;
 	}
 
 	private INestedWordAutomaton<L, IPredicate> reduceAbstractionSize(
