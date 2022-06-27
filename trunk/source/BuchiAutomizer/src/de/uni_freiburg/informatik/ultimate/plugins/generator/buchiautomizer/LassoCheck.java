@@ -29,8 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -73,9 +76,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -531,10 +536,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
-		final String proc =
-				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
-		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda =
-				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(proc);
+		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = getModifiableGlobalsAtHonda();
 
 		if (!withStem) {
 			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
@@ -658,6 +660,21 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return SynthesisResult.UNKNOWN;
 	}
 
+	private Set<IProgramNonOldVar> getModifiableGlobalsAtHonda() {
+		Stream<IcfgLocation> locations;
+		final IPredicate pred = mCounterexample.getLoop().getStateAtPosition(0);
+		if (pred instanceof ISLPredicate) {
+			locations = Stream.of(((ISLPredicate) pred).getProgramPoint());
+		} else if (pred instanceof IMLPredicate) {
+			locations = Arrays.stream(((IMLPredicate) pred).getProgramPoints());
+		} else {
+			throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+		}
+		return locations.map(IcfgLocation::getProcedure)
+				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x).stream())
+				.collect(Collectors.toSet());
+	}
+
 	/**
 	 * @param withStem
 	 * @param lrta
@@ -671,11 +688,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, final LassoAnalysis la,
 			final List<RankingTemplate> rankingFunctionTemplates, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF) throws AssertionError, IOException {
-		final String hondaProcedure =
-				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
-		final Set<IProgramNonOldVar> modifiableGlobals =
-				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(hondaProcedure);
-
+		final Set<IProgramNonOldVar> modifiableGlobals = getModifiableGlobalsAtHonda();
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
