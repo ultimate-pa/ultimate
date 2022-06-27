@@ -135,17 +135,18 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) throws IOException, AssertionError {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
+		// TODO: Separate concurrent and sequential analysis and increment the thread-number incrementally
+		final IIcfg<?> icfgForAnalysis =
+				IcfgUtils.isConcurrent(icfg) ? new IcfgPetrifier(mServices, icfg, 1).getPetrifiedIcfg() : icfg;
+
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfgForAnalysis.getCfgSmtToolkit());
 		final PredicateFactory predicateFactory =
-				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
+				new PredicateFactory(mServices, icfgForAnalysis.getCfgSmtToolkit().getManagedScript(),
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
 
 		final BuchiCegarLoopFactory<IcfgEdge> factory =
 				new BuchiCegarLoopFactory<>(mServices, taPrefs, IcfgEdge.class, benchGen);
-		// TODO: Separate concurrent and sequential analysis and increment the thread-number incrementally
-		final IIcfg<?> icfgForAnalysis =
-				IcfgUtils.isConcurrent(icfg) ? new IcfgPetrifier(mServices, icfg, 1).getPetrifiedIcfg() : icfg;
 		final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl =
 				factory.constructCegarLoop(icfgForAnalysis, rankVarConstructor, predicateFactory, witnessAutomaton);
 		final Result result = bcl.runCegarLoop();
