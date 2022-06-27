@@ -64,7 +64,9 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.NonterminationArgumentSta
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -141,8 +143,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		final BuchiCegarLoopFactory<IcfgEdge> factory =
 				new BuchiCegarLoopFactory<>(mServices, taPrefs, IcfgEdge.class, benchGen);
+		// TODO: Separate concurrent and sequential analysis and increment the thread-number incrementally
+		final IIcfg<?> icfgForAnalysis =
+				IcfgUtils.isConcurrent(icfg) ? new IcfgPetrifier(mServices, icfg, 1).getPetrifiedIcfg() : icfg;
 		final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl =
-				factory.constructCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton);
+				factory.constructCegarLoop(icfgForAnalysis, rankVarConstructor, predicateFactory, witnessAutomaton);
 		final Result result = bcl.runCegarLoop();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 
