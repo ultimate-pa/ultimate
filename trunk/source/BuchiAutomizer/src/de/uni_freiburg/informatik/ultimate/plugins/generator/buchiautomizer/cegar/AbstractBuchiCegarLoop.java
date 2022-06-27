@@ -43,25 +43,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
@@ -70,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
@@ -460,23 +455,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	private A refineBuchiAndReportRankingFunction(final LassoCheck<L> lassoCheck)
 			throws AutomataOperationCanceledException {
 		final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
-		final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
-		final IcfgLocation hondaPP = hondaISLP.getProgramPoint();
-		mMDBenchmark.reportRankingFunction(mIteration, constructTAResult(bspm.getTerminationArgument(), hondaPP));
+		final RankingFunction rankingFunction = bspm.getTerminationArgument().getRankingFunction();
+		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();
+		mMDBenchmark.reportRankingFunction(mIteration, rankingFunction, script);
 
 		final A result = refineBuchi(mAbstraction, lassoCheck);
 		mBinaryStatePredicateManager.clearPredicates();
 		return result;
-	}
-
-	private TerminationArgumentResult<IIcfgElement, Term>
-			constructTAResult(final TerminationArgument terminationArgument, final IcfgLocation honda) {
-		final RankingFunction rf = terminationArgument.getRankingFunction();
-		final Term[] supportingInvariants = terminationArgument.getSupportingInvariants().stream()
-				.map(si -> si.asTerm(mCsToolkitWithRankVars.getManagedScript().getScript())).toArray(Term[]::new);
-		return new TerminationArgumentResult<>(honda, Activator.PLUGIN_NAME,
-				rf.asLexTerm(mCsToolkitWithRankVars.getManagedScript().getScript()), rf.getName(), supportingInvariants,
-				mServices.getBacktranslationService(), Term.class);
 	}
 
 	private void reportRemainderModule(final boolean nonterminationKnown) {

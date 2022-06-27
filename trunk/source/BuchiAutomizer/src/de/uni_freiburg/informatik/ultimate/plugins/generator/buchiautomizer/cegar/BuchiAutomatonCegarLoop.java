@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ceg
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
@@ -316,12 +317,11 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			mLogger.info("Abstraction has " + result.sizeInformation());
 
 			if (result.size() > 0) {
-				final Function<ISLPredicate, IcfgLocation> locProvider = ISLPredicate::getProgramPoint;
-				AutomataMinimization<IcfgLocation, ISLPredicate, L> am;
+				AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 				try {
 					am = new AutomataMinimization<>(mServices, result, automataMinimization, false, mIteration,
 							mStateFactoryForRefinement, -1, null, null, -1, mPredicateFactoryResultChecking,
-							locProvider, false);
+							BuchiAutomizerUtils::getLocations, false);
 				} catch (final AutomataMinimizationTimeout e) {
 					mBenchmarkGenerator.addAutomataMinimizationData(e.getStatistics());
 					throw e.getAutomataOperationCanceledException();
