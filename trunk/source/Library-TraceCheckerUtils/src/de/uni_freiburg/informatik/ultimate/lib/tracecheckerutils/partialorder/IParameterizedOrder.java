@@ -2,11 +2,15 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.Comparator;
 
-public interface IParameterizedOrder<L,S> {
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
-	Comparator<L> getOrder(S state);
+public interface IParameterizedOrder<L,State,S2> {
+
+	Comparator<L> getOrder(State stateParameterized, S2 stateProgram);
 	
 	boolean isPositional();
 	
-	boolean isStep();
+	public INwaOutgoingLetterAndTransitionProvider<L, State> getParameterizedOrderAutomaton();
+
 }

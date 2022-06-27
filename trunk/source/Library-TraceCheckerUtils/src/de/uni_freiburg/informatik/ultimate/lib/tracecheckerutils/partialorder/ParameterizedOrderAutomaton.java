@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -13,32 +12,30 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrder.Predicate;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
-implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
-	private final Map<Predicate, Predicate> mCreatedStates = new HashMap<>();
+
+public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>,S>
+implements INwaOutgoingLetterAndTransitionProvider<L, S>{
+	private final Map<String, Map<Integer, State>> mCreatedStates = new HashMap<>();
 	private final Set<String> mThreads = new HashSet<>();
-	private final Set<IPredicate> mInitialStates = new HashSet<>();
 	private static Integer mParameter;
 	private String mInitialThread;
+	private java.util.function.Predicate<L> mIsStep;
 
 	
-	public ParameterizedOrderAutomaton(final Integer parameter, final Set<String> threads) {
+	public ParameterizedOrderAutomaton(final Integer parameter, final Set<String> threads, java.util.function.Predicate<L> isStep) {
 		mParameter = parameter;
 		mThreads.addAll(threads);
+		mIsStep = isStep;
+		for (String thread : mThreads) {
+			mCreatedStates.put(thread, new HashMap<>());
+		}
 		
 	}
 
 	@Override
-	public IStateFactory<IPredicate> getStateFactory() {
+	public IStateFactory<S> getStateFactory() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -49,40 +46,37 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	}
 
 	@Override
-	public IPredicate getEmptyStackState() {
+	public S getEmptyStackState() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Iterable<IPredicate> getInitialStates() {
-		return getOrCreateInitialStates();
+	public Iterable<S> getInitialStates() {
+		Set<S> initialSet = new HashSet<>();
+		initialSet.add(getOrCreateState(mInitialThread,0));
+		return initialSet;
 	}
 
-	private Iterable<IPredicate> getOrCreateInitialStates() {
-		if (mInitialStates.isEmpty()) {
-			for (String thread : mThreads) {
-				mInitialStates.add((IPredicate) getOrCreateState(thread, 0));
-			}
+
+	private S getOrCreateState(String thread, Integer counter) {
+		Map<Integer, State> counterMap = mCreatedStates.get(thread);
+		if (counterMap.get(counter)==null) {
+			State state = new State(thread, counter);
+			counterMap.put(counter, state);
+			mCreatedStates.put(thread, counterMap);
 		}
-		return mInitialStates;
-	}
-
-
-	private Predicate getOrCreateState(String thread, Integer counter) {
-		Predicate state = new Predicate(thread, counter);
-		mCreatedStates.put(state, state);
-		return state;
+		return (S) counterMap.get(counter);
 		
 	}
 
 	@Override
-	public boolean isInitial(IPredicate state) {
-		Predicate pState = (Predicate) state;
+	public boolean isInitial(S state) {
+		State pState = (State) state;
 		return (pState.getThread()==mInitialThread && pState.getCounter()==0);
 	}
 
 	@Override
-	public boolean isFinal(IPredicate state) {
+	public boolean isFinal(S state) {
 		return true;
 	}
 
@@ -97,29 +91,24 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(IPredicate state, L letter) {
-		Predicate pState = (Predicate) state;
-		if (isStep()) { //oder wird das in ParameterizedOrder abgefangen?
+	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(S state, L letter) {
+		State pState = (State) state;
+		HashSet<OutgoingInternalTransition<L, S>> transitionSet = new HashSet<>();
+		if (mIsStep.test(letter)) {
 			if(letter.getPrecedingProcedure() != pState.getThread()) {
-				//wir haben ja einen deterministischen Automaten, kann man hier einfach einen cast auf Iterable machen?
-				return new OutgoingInternalTransition<L, IPredicate>(letter, getOrCreateState(letter.getPrecedingProcedure(),0));
+				transitionSet.add(new OutgoingInternalTransition<>(letter, getOrCreateState(letter.getPrecedingProcedure(),0)));
 			}
 			else if (pState.getCounter()==mParameter) {
-				return new OutgoingInternalTransition<L, IPredicate>(letter, getOrCreateState(nextThread(pState.getThread()),0));
+				transitionSet.add(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread(pState.getThread()),0)));
 			}
 			else {
-				return new OutgoingInternalTransition<L, IPredicate>(letter, getOrCreateState(nextThread(pState.getThread()),pState.getCounter()+1));
+				transitionSet.add(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread(pState.getThread()),pState.getCounter()+1)));
 			}
-			
 		}
 		else {
-			return pState;
+			transitionSet.add(new OutgoingInternalTransition<>(letter, state));
 		}
-	}
-
-	private boolean isStep() {
-		// wenn Teil dieser Klasse, dann muss sie von ParameterizedOrder übergeben werden
-		return true;
+		return transitionSet;
 	}
 
 	private String nextThread(String thread) {
@@ -130,22 +119,21 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(IPredicate state, L letter) {
+	public Iterable<OutgoingCallTransition<L, S>> callSuccessors(S state, L letter) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(IPredicate state, IPredicate hier,
+	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(S state, S hier,
 			L letter) {
 		throw new UnsupportedOperationException();
 	}
 	
-	public static final class Predicate implements IPredicate {
-		
+	public static final class State{
 		private final String mThread;
 		private final Integer mCounter;
 		
-		public Predicate(final String thread, final Integer counter) {
+		public State(final String thread, final Integer counter) {
 			mThread = thread;
 			mCounter = counter;
 		}
@@ -169,34 +157,14 @@ implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			final Predicate other = (Predicate) obj;
+			final State other = (State) obj;
 			return Objects.equals(mThread, other.mThread) && Objects.equals(mCounter, other.mCounter);
 		}
-
-		@Override
-		public String[] getProcedures() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Set<IProgramVar> getVars() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Term getFormula() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Term getClosedFormula() {
-			// TODO Auto-generated method stub
-			return null;
-		}
 		
+		@Override
+		public int hashCode() {
+			return Objects.hash(mThread, mCounter);
+		}
 	}
 
 }
