@@ -471,7 +471,7 @@ public class QuantifierEliminationBenchmarks {
 	/**
 	 * Maybe rather a test for the simplification. Simplification of formula from
 	 * {@link SimplificationTest#pthread_atomic_gcd_subformula_mod_true} with
-	 * respect to critial constraint takes a lot of time, although the formula
+	 * respect to critical constraint takes a lot of time, although the formula
 	 * itself can be simplified quickly.
 	 */
 	public void pthread_atomic_gcd_2() {
