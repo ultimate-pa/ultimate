@@ -139,6 +139,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		// TODO: Separate concurrent and sequential analysis and increment the thread-number incrementally
 		final IIcfg<?> icfgForAnalysis;
 		if (IcfgUtils.isConcurrent(icfg)) {
+			if (!IcfgUtils.getForksInLoop(icfg).isEmpty()) {
+				// TODO: Handle this properly
+				throw new UnsupportedOperationException(
+						"Unbounded threads are currently not supported for termination analysis.");
+			}
 			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, 1);
 			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 			icfgForAnalysis = icfgPetrifier.getPetrifiedIcfg();

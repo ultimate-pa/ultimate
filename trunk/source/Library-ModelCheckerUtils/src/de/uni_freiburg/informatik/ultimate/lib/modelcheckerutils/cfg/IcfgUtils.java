@@ -396,9 +396,9 @@ public class IcfgUtils {
 		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
 	}
 
-	public static Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> getForksInLoop(final IIcfg<IcfgLocation> icfg) {
+	public static Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> getForksInLoop(final IIcfg<?> icfg) {
 		final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> result = new HashSet<>();
-		final Map<String, IcfgLocation> entryLocs = icfg.getProcedureEntryNodes();
+		final Map<String, ? extends IcfgLocation> entryLocs = icfg.getProcedureEntryNodes();
 		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
 			final ArrayDeque<IcfgLocation> queue = new ArrayDeque<>();
 			final Set<IcfgLocation> visited = new HashSet<>();
