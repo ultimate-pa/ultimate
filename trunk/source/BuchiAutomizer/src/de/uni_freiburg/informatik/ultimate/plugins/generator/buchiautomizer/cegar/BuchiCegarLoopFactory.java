@@ -55,10 +55,11 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.AutomatonTypeConcurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessAutomatonAbstractionProvider;
@@ -100,8 +101,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement, automatonProvider);
 		}
 		final var petriNetProvider = new PetriInitialAbstractionProvider<L>(mServices, predicateFactory, true);
-		// TODO: Read this from the preferences
-		final AutomatonTypeConcurrent automatonTypeConcurrent = AutomatonTypeConcurrent.BUCHI_AUTOMATON;
+		final AutomatonTypeConcurrent automatonTypeConcurrent = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATON_TYPE, AutomatonTypeConcurrent.class);
 		switch (automatonTypeConcurrent) {
 		case BUCHI_AUTOMATON:
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> automatonProvider =
