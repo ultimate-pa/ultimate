@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -287,8 +288,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(reportRes);
 
 			final NestedLassoRun<IcfgEdge, IPredicate> counterexample = bcl.getCounterexample();
-			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
-			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(nta, counterexample.getNestedLassoWord());
 			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
@@ -303,8 +302,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IcfgProgramExecution<IcfgEdge> loopPE =
 					IcfgProgramExecution.create(counterexample.getLoop().getWord().asList(), partialProgramStateMapping,
 							new Map[counterexample.getLoop().getLength()], IcfgEdge.class);
-			final IResult ntreportRes = new NonterminatingLassoResult<>(honda, Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
+			final IResult ntreportRes = new NonterminatingLassoResult<>(getProgramPoint(counterexample),
+					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE);
 			reportResult(ntreportRes);
 		} else {
 			throw new AssertionError();
@@ -320,7 +319,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void reportLTLPropertyIsViolated(final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl,
 			final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
-		final IcfgLocation position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
 		final List<? extends IIcfgTransition<?>> stem = counterexample.getStem().getWord().asList();
@@ -335,9 +333,21 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		@SuppressWarnings("unchecked")
 		final IcfgProgramExecution<IcfgEdge> loopPE =
 				IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
-		reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
-				mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(position),
-				ltlAnnot.getUltimateLTLProperty()));
+		reportResult(new LTLInfiniteCounterExampleResult<>(getProgramPoint(counterexample), Activator.PLUGIN_ID,
+				mServices.getBacktranslationService(), stemPE, loopPE, ltlAnnot.getUltimateLTLProperty()));
+	}
+
+	private static IcfgLocation
+			getProgramPoint(final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample) {
+		final IPredicate pred = counterexample.getLoop().getStateAtPosition(0);
+		if (pred instanceof ISLPredicate) {
+			return ((ISLPredicate) pred).getProgramPoint();
+		}
+		if (pred instanceof IMLPredicate) {
+			// TODO: This is just a workaround. What is the proper way here?
+			return ((IMLPredicate) pred).getProgramPoints()[0];
+		}
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
 	}
 
 	/**
@@ -347,7 +357,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		return mServices.getBacktranslationService();
 	}
 
-	void reportResult(final IResult res) {
+	private void reportResult(final IResult res) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
