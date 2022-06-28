@@ -173,7 +173,6 @@ public class QuantifierPushUtilsForLocalEliminatees {
 					throw new AssertionError("Dual finite connective not flattened");
 				case DUAL_QUANTIFIER:
 					// do nothing, no chance to push
-					break;
 				case NOT_QUANTIFIED:
 					throw new AssertionError("Illegal for the call above");
 				case SAME_QUANTIFIER:

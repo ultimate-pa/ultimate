@@ -579,17 +579,6 @@ public class SimplificationTest {
 		runSimplificationTest(funDecls, formulaAsString, simplified, mServices, mLogger, mMgdScript);
 	}
 
-	@Test
-	public void pthread_atomic_gcd_subformula_mod_true() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "b"),};
-		final String formulaAsString = "(= (mod (let ((.cse0 (mod b 4294967296))) (mod (mod (+ b .cse0) 4294967296) .cse0)) 4294967296) 0)";
-		final String simplified = "true";
-		runSimplificationTest(funDecls, formulaAsString, simplified, mServices, mLogger, mMgdScript);
-	}
-
-
-
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript) {

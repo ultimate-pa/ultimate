@@ -466,22 +466,5 @@ public class QuantifierEliminationBenchmarks {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-	@Test
-	/**
-	 * Maybe rather a test for the simplification. Simplification of formula from
-	 * {@link SimplificationTest#pthread_atomic_gcd_subformula_mod_true} with
-	 * respect to critical constraint takes a lot of time, although the formula
-	 * itself can be simplified quickly.
-	 */
-	public void pthread_atomic_gcd_2() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "b"),
-		};
-		final String formulaAsString = "(or (= (mod (let ((.cse0 (mod b 4294967296))) (mod (mod (+ b .cse0) 4294967296) .cse0)) 4294967296) 0) (forall ((a Int)) (let ((.cse4 (mod b 4294967296))) (let ((.cse1 (* 4294967295 .cse4)) (.cse3 (* 4294967296 a)) (.cse2 (* b 4294967295))) (or (<= (+ 4294967296 .cse1 .cse2) .cse3) (< .cse3 (+ .cse1 .cse2)) (<= .cse3 (+ (* .cse4 4294967296) .cse2)))))))";
-		final String expectedResultAsString = "true";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
 	//@formatter:on
 }

@@ -882,27 +882,27 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	public static FormulaClassification classify(final int quantifier, final Term subformula) {
-		final FormulaClassification result;
 		if (subformula instanceof QuantifiedFormula) {
 			final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) subformula;
 			if (quantifiedSubFormula.getQuantifier() == quantifier) {
-				result = FormulaClassification.SAME_QUANTIFIER;
-			} else {
-				result = FormulaClassification.DUAL_QUANTIFIER;
+				return FormulaClassification.SAME_QUANTIFIER;
 			}
+			return FormulaClassification.DUAL_QUANTIFIER;
 		} else if (subformula instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) subformula;
-			if (QuantifierUtils.isDualFiniteJunction(quantifier, appTerm)) {
-				result = FormulaClassification.DUAL_FINITE_CONNECTIVE;
-			} else if (QuantifierUtils.isCorrespondingFiniteJunction(quantifier, appTerm)) {
-				result = FormulaClassification.CORRESPONDING_FINITE_CONNECTIVE;
-			} else {
-				result = FormulaClassification.ATOM;
+			final String correspondingFiniteConnective = SmtUtils.getCorrespondingFiniteConnective(quantifier);
+			if (appTerm.getFunction().getApplicationString().equals(correspondingFiniteConnective)) {
+				return FormulaClassification.CORRESPONDING_FINITE_CONNECTIVE;
 			}
+			final String dualFiniteConnective =
+					SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifier));
+			if (appTerm.getFunction().getApplicationString().equals(dualFiniteConnective)) {
+				return FormulaClassification.DUAL_FINITE_CONNECTIVE;
+			}
+			return FormulaClassification.ATOM;
 		} else {
-			result = FormulaClassification.ATOM;
+			return FormulaClassification.ATOM;
 		}
-		return result;
 	}
 
 	public static Term processDualQuantifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
