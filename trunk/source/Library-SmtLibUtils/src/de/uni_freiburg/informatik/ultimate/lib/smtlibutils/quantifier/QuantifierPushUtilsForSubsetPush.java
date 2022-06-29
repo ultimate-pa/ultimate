@@ -140,7 +140,10 @@ public class QuantifierPushUtilsForSubsetPush {
 					et.getQuantifier(), currentSuitableEliminatees, currentDualFiniteJuncts);
 			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteJuncts,
 					eliminatee);
-			// may include failedEliminatees
+			// Note 1: minionEliminatees may include failedEliminatees
+			// Note 2: in subsequent calls the selected eliminatee may occur in all params
+			// hence we have to recurse on proper minions even if they have a smaller
+			// expected chance for getting eliminated #overtakingMinionProblem
 			final List<TermVariable> minionEliminatees = QuantifierPusher.determineMinionEliminatees(currentEliminatees,
 					parti.getFiniteDualJunctsWithoutEliminatee());
 			if (!minionEliminatees.contains(eliminatee)) {
@@ -284,6 +287,11 @@ public class QuantifierPushUtilsForSubsetPush {
 	 * <li>occurs in at least on dualFiniteJunct that is a corresponding
 	 * finiteJunction (i.e., applying distributivity to a subset makes sense).
 	 * </ul>
+	 * Note: If we would allow eliminatees that occur in all subformulas we can run
+	 * into an infinite loop (of subset pushes). If we however allow eliminatees to
+	 * be not suitable for that reason a selected eliminatee with good score (wrt.
+	 * expected eliminatability) may be be replaced by one of its minion with lower
+	 * score in subsequent calls. #overtakingMinionProblem
 	 *
 	 */
 	private static List<TermVariable> findSuitableEliminatees(final List<TermVariable> currentEliminatees,
