@@ -10,17 +10,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
-public class ParameterizedOrder<L extends IIcfgTransition<?>, State, S2> implements IParameterizedOrder<L, State, S2>{
+public class ParameterizedOrder<L extends IIcfgTransition<?>, S2> implements IPreferenceOrder<L, State, S2>{
 	private final Set<String> mThreads = new HashSet<>();
 	private static Integer mParameter;
 	private Set<L> mAlphabet;
-	private INwaOutgoingLetterAndTransitionProvider<L, State> mParameterizedOrderAutomaton;
+	private INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
 	public ParameterizedOrder(Integer parameter) {
 		mParameter = parameter;
-		mParameterizedOrderAutomaton = new ParameterizedOrderAutomaton(mParameter, mThreads, null); //hier muss dann isStep übergeben werden
+		mMonitor = new ParameterizedOrderAutomaton(mParameter, mThreads, null); //hier muss dann isStep übergeben werden
 	}
 	
 	@Override
@@ -93,8 +93,8 @@ public class ParameterizedOrder<L extends IIcfgTransition<?>, State, S2> impleme
 	}
 	
 	@Override
-	public INwaOutgoingLetterAndTransitionProvider<L, State> getParameterizedOrderAutomaton() {
-		return mParameterizedOrderAutomaton;
+	public INwaOutgoingLetterAndTransitionProvider<L, State> getMonitor() {
+		return mMonitor;
 	}
 
 }

@@ -15,8 +15,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 
-public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>,S>
-implements INwaOutgoingLetterAndTransitionProvider<L, S>{
+public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
+implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State>{
 	private final Map<String, Map<Integer, State>> mCreatedStates = new HashMap<>();
 	private final Set<String> mThreads = new HashSet<>();
 	private static Integer mParameter;
@@ -35,7 +35,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, S>{
 	}
 
 	@Override
-	public IStateFactory<S> getStateFactory() {
+	public IStateFactory<State> getStateFactory() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -46,37 +46,36 @@ implements INwaOutgoingLetterAndTransitionProvider<L, S>{
 	}
 
 	@Override
-	public S getEmptyStackState() {
+	public State getEmptyStackState() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Iterable<S> getInitialStates() {
-		Set<S> initialSet = new HashSet<>();
+	public Iterable<State> getInitialStates() {
+		Set<State> initialSet = new HashSet<>();
 		initialSet.add(getOrCreateState(mInitialThread,0));
 		return initialSet;
 	}
 
 
-	private S getOrCreateState(String thread, Integer counter) {
+	private State getOrCreateState(String thread, Integer counter) {
 		Map<Integer, State> counterMap = mCreatedStates.get(thread);
 		if (counterMap.get(counter)==null) {
 			State state = new State(thread, counter);
 			counterMap.put(counter, state);
 			mCreatedStates.put(thread, counterMap);
 		}
-		return (S) counterMap.get(counter);
+		return counterMap.get(counter);
 		
 	}
 
 	@Override
-	public boolean isInitial(S state) {
-		State pState = (State) state;
-		return (pState.getThread()==mInitialThread && pState.getCounter()==0);
+	public boolean isInitial(State state) {
+		return (state.getThread()==mInitialThread && state.getCounter()==0);
 	}
 
 	@Override
-	public boolean isFinal(S state) {
+	public boolean isFinal(State state) {
 		return true;
 	}
 
@@ -91,24 +90,21 @@ implements INwaOutgoingLetterAndTransitionProvider<L, S>{
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(S state, L letter) {
-		State pState = (State) state;
-		HashSet<OutgoingInternalTransition<L, S>> transitionSet = new HashSet<>();
+	public Iterable<OutgoingInternalTransition<L, State>> internalSuccessors(State state, L letter) {
 		if (mIsStep.test(letter)) {
-			if(letter.getPrecedingProcedure() != pState.getThread()) {
-				transitionSet.add(new OutgoingInternalTransition<>(letter, getOrCreateState(letter.getPrecedingProcedure(),0)));
+			if(letter.getPrecedingProcedure() != state.getThread()) {
+				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(letter.getPrecedingProcedure(),0)));
 			}
-			else if (pState.getCounter()==mParameter) {
-				transitionSet.add(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread(pState.getThread()),0)));
+			else if (state.getCounter()==mParameter) {
+				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread(state.getThread()),0)));
 			}
 			else {
-				transitionSet.add(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread(pState.getThread()),pState.getCounter()+1)));
+				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(state.getThread(),state.getCounter()+1)));
 			}
 		}
 		else {
-			transitionSet.add(new OutgoingInternalTransition<>(letter, state));
+			return Set.of(new OutgoingInternalTransition<>(letter, state));
 		}
-		return transitionSet;
 	}
 
 	private String nextThread(String thread) {
@@ -119,12 +115,12 @@ implements INwaOutgoingLetterAndTransitionProvider<L, S>{
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<L, S>> callSuccessors(S state, L letter) {
+	public Iterable<OutgoingCallTransition<L, State>> callSuccessors(State state, L letter) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(S state, S hier,
+	public Iterable<OutgoingReturnTransition<L, State>> returnSuccessors(State state, State hier,
 			L letter) {
 		throw new UnsupportedOperationException();
 	}
