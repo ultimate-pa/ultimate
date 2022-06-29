@@ -29,8 +29,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -57,22 +55,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
@@ -92,10 +84,10 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
 	private final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 	private final RefineBuchi<L> mRefineBuchi;
-	private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
+	// private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
 	private final BuchiComplementationConstruction mComplementationConstruction;
-	private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
-	private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
+	// private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
+	// private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
 
 	public BuchiAutomatonCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -114,22 +106,11 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				!baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
 		final boolean difference =
 				baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
-		mRefineBuchi = new RefineBuchi<>(mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(), difference,
-				mDefaultStateFactory, mStateFactoryForRefinement, useDoubleDeckers, mPref.dumpPath(),
-				mPref.getAutomataFormat(), mServices, mLogger, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
-				ncsbImplementation, mIdentifier);
-		mBiaConstructionStyleSequence =
-				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
-						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
+		mRefineBuchi = new RefineBuchi<>(difference, stateFactoryForRefinement, stateFactoryForRefinement,
+				useDoubleDeckers, services, mLogger, ncsbImplementation);
 		mComplementationConstruction =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 						BuchiComplementationConstruction.class);
-		mAutomataMinimizationAfterFeasbilityBasedRefinement = baPref.getEnum(
-				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
-				Minimization.class);
-		mAutomataMinimizationAfterRankBasedRefinement = baPref.getEnum(
-				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
-				Minimization.class);
 	}
 
 	@Override
@@ -185,110 +166,99 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	 * inexpensive complementation algorithm.
 	 */
 	@Override
-	protected INestedWordAutomaton<L, IPredicate> refineFinite(
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> refineFinite(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataOperationCanceledException {
 		final PowersetDeterminizer<L, IPredicate> psd =
 				new PowersetDeterminizer<>(interpolantAutomaton, true, mDefaultStateFactory);
-		final INestedWordAutomaton<L, IPredicate> result;
 		try {
 			if (abstraction instanceof IGeneralizedNestedWordAutomaton) {
 				final GeneralizedDifference<L, IPredicate> gbaDiff = new GeneralizedDifference<>(
 						new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 						(IGeneralizedNestedWordAutomaton<L, IPredicate>) abstraction, interpolantAutomaton, psd);
-				result = gbaDiff.getResult();
-			} else {
-				final Difference<L, IPredicate> diff = new Difference<>(new AutomataLibraryServices(mServices),
-						mStateFactoryForRefinement, abstraction, interpolantAutomaton, psd, true);
-				result = diff.getResult();
+				return gbaDiff.getResult();
 			}
+			final Difference<L, IPredicate> diff = new Difference<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, abstraction, interpolantAutomaton, psd, true);
+			return diff.getResult();
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError();
 		}
-		assert automatonUsesISLPredicates(abstraction) : "used wrong StateFactory";
-		return reduceAbstractionSize(result, mAutomataMinimizationAfterFeasbilityBasedRefinement);
 	}
+
+	// @Override
+	// protected INestedWordAutomaton<L, IPredicate> refineBuchi(
+	// final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
+	// final BinaryStatePredicateManager bspm) throws AutomataOperationCanceledException {
+	// mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+	// int stage = 0;
+	//
+	// /*
+	// * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles Each construction style defines how
+	// * an interpolant automaton is constructed. Constructions that provide simpler (less nondeterministic) automata
+	// * should come first. In each iteration we compute the difference which causes an on-demand construciton of the
+	// * automaton and evaluate the automaton afterwards. If the automaton is "good" we keep the difference and
+	// * continued with the termination analysis. If the automaton is "bad" we construct the next automaton. Currently
+	// * an automaton is "good" iff the counterexample of the current CEGAR iteration is accepted by the automaton
+	// * (otherwise the counterexample would not be excluded and we might get it again in the next iteration of the
+	// * CEGAR loop).
+	// *
+	// */
+	// for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
+	// assert automatonUsesISLPredicates(abstraction) : "used wrong StateFactory";
+	// final INestedWordAutomaton<L, IPredicate> result;
+	// try {
+	// final PredicateUnifier pu = createPredicateUnifier(bspm);
+	// final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(), bspm, pu);
+	// final IPredicate[] loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), bspm, pu);
+	// result = mRefineBuchi.refineBuchi(abstraction, mCounterexample, mIteration, constructionStyle, bspm,
+	// mInterpolation, mBenchmarkGenerator, mComplementationConstruction, stemInterpolants,
+	// loopInterpolants, pu);
+	// } catch (final AutomataOperationCanceledException e) {
+	// mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+	// final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "applying stage " + stage);
+	// throw new ToolchainCanceledException(e, rti);
+	// } catch (final ToolchainCanceledException e) {
+	// mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+	// throw e;
+	// } catch (final AutomataLibraryException e) {
+	// throw new AssertionError(e.getMessage());
+	// }
+	//
+	// if (result != null) {
+	// if (mConstructTermcompProof) {
+	// mTermcompProofBenchmark.reportBuchiModule(mIteration,
+	// mRefineBuchi.getInterpolAutomatonUsedInRefinement());
+	// }
+	// mBenchmarkGenerator.announceSuccessfullRefinementStage(stage);
+	// switch (constructionStyle.getInterpolantAutomaton()) {
+	// case DETERMINISTIC:
+	// case LASSO_AUTOMATON:
+	// mMDBenchmark.reportDeterministicModule(mIteration,
+	// mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+	// break;
+	// case SCROOGE_NONDETERMINISM:
+	// case EAGER_NONDETERMINISM:
+	// mMDBenchmark.reportNonDeterministicModule(mIteration,
+	// mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+	// break;
+	// default:
+	// throw new AssertionError("unsupported");
+	// }
+	// mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+	// mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mBci);
+	// return reduceAbstractionSize(result, mAutomataMinimizationAfterRankBasedRefinement);
+	// }
+	// stage++;
+	// }
+	// throw new AssertionError("no settings was sufficient");
+	// }
 
 	@Override
-	protected INestedWordAutomaton<L, IPredicate> refineBuchi(
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> reduceAbstractionSize(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final BinaryStatePredicateManager bspm) throws AutomataOperationCanceledException {
-		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		int stage = 0;
-
-		/*
-		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles Each construction style defines how
-		 * an interpolant automaton is constructed. Constructions that provide simpler (less nondeterministic) automata
-		 * should come first. In each iteration we compute the difference which causes an on-demand construciton of the
-		 * automaton and evaluate the automaton afterwards. If the automaton is "good" we keep the difference and
-		 * continued with the termination analysis. If the automaton is "bad" we construct the next automaton. Currently
-		 * an automaton is "good" iff the counterexample of the current CEGAR iteration is accepted by the automaton
-		 * (otherwise the counterexample would not be excluded and we might get it again in the next iteration of the
-		 * CEGAR loop).
-		 *
-		 */
-		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
-			assert automatonUsesISLPredicates(abstraction) : "used wrong StateFactory";
-			INestedWordAutomaton<L, IPredicate> result;
-			try {
-				final PredicateUnifier pu = createPredicateUnifier(bspm);
-				final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(), bspm, pu);
-				final IPredicate[] loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), bspm, pu);
-				result = mRefineBuchi.refineBuchi(abstraction, mCounterexample, mIteration, constructionStyle, bspm,
-						mInterpolation, mBenchmarkGenerator, mComplementationConstruction, stemInterpolants,
-						loopInterpolants, pu);
-			} catch (final AutomataOperationCanceledException e) {
-				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "applying stage " + stage);
-				throw new ToolchainCanceledException(e, rti);
-			} catch (final ToolchainCanceledException e) {
-				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				throw e;
-			} catch (final AutomataLibraryException e) {
-				throw new AssertionError(e.getMessage());
-			}
-
-			if (result != null) {
-				if (mConstructTermcompProof) {
-					mTermcompProofBenchmark.reportBuchiModule(mIteration,
-							mRefineBuchi.getInterpolAutomatonUsedInRefinement());
-				}
-				mBenchmarkGenerator.announceSuccessfullRefinementStage(stage);
-				switch (constructionStyle.getInterpolantAutomaton()) {
-				case DETERMINISTIC:
-				case LASSO_AUTOMATON:
-					mMDBenchmark.reportDeterministicModule(mIteration,
-							mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
-					break;
-				case SCROOGE_NONDETERMINISM:
-				case EAGER_NONDETERMINISM:
-					mMDBenchmark.reportNonDeterministicModule(mIteration,
-							mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
-					break;
-				default:
-					throw new AssertionError("unsupported");
-				}
-				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mBci);
-				return reduceAbstractionSize(result, mAutomataMinimizationAfterRankBasedRefinement);
-			}
-			stage++;
-		}
-		throw new AssertionError("no settings was sufficient");
-	}
-
-	private boolean automatonUsesISLPredicates(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nwa) {
-		final Iterator<IPredicate> initialStates = nwa.getInitialStates().iterator();
-		if (!initialStates.hasNext()) {
-			return true;
-		}
-		return initialStates.next() instanceof ISLPredicate;
-	}
-
-	private INestedWordAutomaton<L, IPredicate> reduceAbstractionSize(
-			final INestedWordAutomaton<L, IPredicate> abstraction, final Minimization automataMinimization)
-			throws AutomataOperationCanceledException {
+			final Minimization automataMinimization) throws AutomataOperationCanceledException {
 		if (abstraction instanceof IGeneralizedNestedWordAutomaton) {
 			// GBA does not have minimization support yet.
 			return abstraction;
@@ -342,5 +312,14 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		}
 		mLogger.info("Abstraction has " + result.sizeInformation());
 		return result;
+	}
+
+	@Override
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> refineBuchi(
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
+			throws AutomataLibraryException {
+		return mRefineBuchi.refineBuchi(abstraction, interpolantAutomaton, mCounterexample, mIteration,
+				mIsSemiDeterministic, mBenchmarkGenerator, mComplementationConstruction);
 	}
 }

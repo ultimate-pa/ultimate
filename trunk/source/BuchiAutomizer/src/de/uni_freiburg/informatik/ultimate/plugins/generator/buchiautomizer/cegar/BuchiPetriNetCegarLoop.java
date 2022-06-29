@@ -30,32 +30,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ceg
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		extends AbstractBuchiCegarLoop<L, IPetriNet<L, IPredicate>> {
+
+	private final BuchiInterpolantAutomatonBuilder<L> mInterpolantAutomatonBuilder;
 
 	public BuchiPetriNetCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -64,6 +57,8 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		super(icfg, rankVarConstructor, predicateFactory, taPrefs, services, transitionClazz, initialAbstraction,
 				benchmarkGenerator);
+		mInterpolantAutomatonBuilder = new BuchiInterpolantAutomatonBuilder<>(mServices, mCsToolkitWithRankVars,
+				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE, mPredicateFactory, mDefaultStateFactory);
 	}
 
 	@Override
@@ -72,35 +67,36 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		return false;
 	}
 
-	@Override
-	protected IPetriNet<L, IPredicate> refineBuchi(final IPetriNet<L, IPredicate> abstraction,
-			final BinaryStatePredicateManager bspm) throws AutomataOperationCanceledException {
-		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton =
-				constructInterpolantAutomaton(bspm, new VpAlphabet<>(abstraction.getAlphabet()));
-		// TODO: Insert actual difference (when finished)
-		return null;
-	}
-
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate>
-			constructInterpolantAutomaton(final BinaryStatePredicateManager bspm, final VpAlphabet<L> alphabet) {
-		final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
-		final NestedRun<L, IPredicate> loop = mCounterexample.getLoop();
-		final PredicateUnifier pu = createPredicateUnifier(bspm);
-		final IPredicate[] stemInterpolants = getStemInterpolants(stem, bspm, pu);
-		final IPredicate[] loopInterpolants = getLoopInterpolants(loop, bspm, pu);
-
-		final NestedWordAutomaton<L, IPredicate> interpolAutomaton =
-				BuchiAutomizerUtils.constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem.getWord(),
-						stemInterpolants, bspm.getHondaPredicate(), loop.getWord(), loopInterpolants, alphabet,
-						mServices, mDefaultStateFactory);
-		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
-				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
-		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
-		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
-		assert new InductivityCheck<>(mServices, interpolAutomaton, false, true, bhtc).getResult();
-		// TOOD: Enhance interpolAutomaton first (using which technique?)
-		return interpolAutomaton;
-	}
+	// @Override
+	// protected IPetriNet<L, IPredicate> refineBuchi(final IPetriNet<L, IPredicate> abstraction,
+	// final BinaryStatePredicateManager bspm) throws AutomataOperationCanceledException {
+	// final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton =
+	// constructInterpolantAutomaton(bspm, new VpAlphabet<>(abstraction.getAlphabet()));
+	// // TODO: Insert actual difference (when finished)
+	// return null;
+	// }
+	//
+	// private INwaOutgoingLetterAndTransitionProvider<L, IPredicate>
+	// constructInterpolantAutomaton(final BinaryStatePredicateManager bspm, final VpAlphabet<L> alphabet) {
+	// final PredicateUnifier pu = createPredicateUnifier(bspm);
+	// final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(), bspm, pu);
+	// final IPredicate[] loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), bspm, pu);
+	//
+	// final NestedWordAutomaton<L, IPredicate> interpolAutomaton = mInterpolantAutomatonBuilder
+	// .constructInterpolantAutomaton(bspm.getStemPrecondition(), mCounterexample, stemInterpolants,
+	// bspm.getHondaPredicate(), loopInterpolants, alphabet, mDefaultStateFactory);
+	// final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
+	// mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
+	// final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
+	// bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
+	// assert new InductivityCheck<>(mServices, interpolAutomaton, false, true, bhtc).getResult();
+	// // TOOD: We should read this from the settings!
+	// final BuchiInterpolantAutomatonConstructionStyle constructionStyle =
+	// new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.DETERMINISTIC, true, false,
+	// false, false, false);
+	// return mInterpolantAutomatonBuilder.constructGeneralizedAutomaton(mCounterexample, constructionStyle, bspm,
+	// mInterpolation, pu, stemInterpolants, loopInterpolants, interpolAutomaton, bhtc);
+	// }
 
 	@Override
 	protected IPetriNet<L, IPredicate> refineFinite(final IPetriNet<L, IPredicate> abstraction,
@@ -108,6 +104,21 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			throws AutomataOperationCanceledException {
 		// TODO: Insert actual difference (when finished). Is there a special case for finite automata?
 		return null;
+	}
+
+	@Override
+	protected IPetriNet<L, IPredicate> refineBuchi(final IPetriNet<L, IPredicate> abstraction,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
+			throws AutomataOperationCanceledException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected IPetriNet<L, IPredicate> reduceAbstractionSize(final IPetriNet<L, IPredicate> abstraction,
+			final Minimization automataMinimization) throws AutomataOperationCanceledException {
+		// TODO Auto-generated method stub
+		return abstraction;
 	}
 
 }
