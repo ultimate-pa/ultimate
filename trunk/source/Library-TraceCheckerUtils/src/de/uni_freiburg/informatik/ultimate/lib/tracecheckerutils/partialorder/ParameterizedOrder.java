@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -20,50 +21,46 @@ public class ParameterizedOrder<L extends IIcfgTransition<?>, S2> implements IPr
 
 	public ParameterizedOrder(Integer parameter) {
 		mParameter = parameter;
-		mMonitor = new ParameterizedOrderAutomaton(mParameter, mThreads, null); //hier muss dann isStep übergeben werden
+		mMonitor = new ParameterizedOrderAutomaton<L>(mParameter, mThreads, isStep);
 	}
 	
+	private Predicate<L> isStep = new Predicate<L>() {
+
+		@Override
+		public boolean test(L t) {
+			return true;
+		}
+	};
+
 	@Override
 	public Comparator<L> getOrder(State stateParameterized, S2 stateProgram) {
-		// TODO vom Prinzip genau wie der RoundRobinComparator
 		final String lastThread = ((de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State) stateParameterized).getThread();
-		final Integer lastCounter = ((de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State) stateParameterized).getCounter();
-		return new ParameterizedComparator<>(lastThread, mDefaultComparator, lastCounter);
+		return new ParameterizedComparator<>(lastThread, mDefaultComparator);
 	}
 	
 	public static final class ParameterizedComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final Comparator<L> mFallback;
-		private final Integer mLastCounter;
 
-		public ParameterizedComparator(final String lastThread, final Comparator<L> fallback, final Integer lastCounter) {
+		public ParameterizedComparator(final String lastThread, final Comparator<L> fallback) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mFallback = fallback;
-			mLastCounter = lastCounter;
 		}
 
 		@Override
 		public int compare(final L x, final L y) {
 			final String xThread = x.getPrecedingProcedure();
-			final boolean xBefore = mLastThread.compareTo(xThread) > 0;
-			final boolean xEqual = mLastThread.compareTo(xThread) == 0;
+			final boolean xBefore = mLastThread.compareTo(xThread) >= 0;
 			final String yThread = y.getPrecedingProcedure();
-			final boolean yBefore = mLastThread.compareTo(yThread) > 0;
-			final boolean yEqual = mLastThread.compareTo(yThread) == 0;
+			final boolean yBefore = mLastThread.compareTo(yThread) >= 0;
 			
-			if (xEqual && mLastCounter < mParameter) {
-				return 1;
-			}
-			if (yEqual && mLastCounter < mParameter) {
-				return -1;
-			}
 			if (xBefore && !yBefore) {
 				return 1;
 			}
 			if (yBefore && !xBefore) {
 				return -1;
 			}
-			return mFallback.compare(x, y); //also captures the case were xEqual or yEqual, but mLastCOunter reached mParameter
+			return mFallback.compare(x, y);
 		}
 
 		@Override
