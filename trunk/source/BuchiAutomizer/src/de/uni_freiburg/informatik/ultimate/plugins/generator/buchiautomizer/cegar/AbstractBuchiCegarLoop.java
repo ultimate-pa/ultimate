@@ -448,24 +448,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	private A refineFiniteInternal(final A abstraction, final LassoCheck<L> lassoCheck)
 			throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> traceCheck;
-		final LassoCheck<L>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
-		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
-			// if both (stem and loop) are infeasible we take the smaller one.
-			final int stemSize = mCounterexample.getStem().getLength();
-			final int loopSize = mCounterexample.getLoop().getLength();
-			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
-				traceCheck = lassoCheck.getLoopCheck();
-			} else {
-				traceCheck = lassoCheck.getStemCheck();
-			}
-		} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-			traceCheck = lassoCheck.getLoopCheck();
-		} else {
-			assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-			traceCheck = lassoCheck.getConcatCheck();
-		}
-
+		final var traceCheck = constructRefinementEngineResult(lassoCheck);
 		final NestedWordAutomaton<L, IPredicate> interpolAutomaton = traceCheck.getInfeasibilityProof();
 
 		final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
@@ -499,6 +482,25 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		return result;
+	}
+
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+			constructRefinementEngineResult(final LassoCheck<L> lassoCheck) {
+		final LassoCheck<L>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
+		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
+			// if both (stem and loop) are infeasible we take the smaller one.
+			final int stemSize = mCounterexample.getStem().getLength();
+			final int loopSize = mCounterexample.getLoop().getLength();
+			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
+				return lassoCheck.getLoopCheck();
+			}
+			return lassoCheck.getStemCheck();
+		}
+		if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
+			return lassoCheck.getLoopCheck();
+		}
+		assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
+		return lassoCheck.getConcatCheck();
 	}
 
 	private A refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
