@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ceg
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -58,14 +59,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
@@ -150,9 +161,11 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	protected final InterpolationTechnique mInterpolation;
 
-	private final CfgSmtToolkit mCsToolkitWithoutRankVars;
-
 	protected final PredicateFactory mPredicateFactory;
+
+	protected BackwardCoveringInformation mBci;
+
+	private final CfgSmtToolkit mCsToolkitWithoutRankVars;
 
 	private final BinaryStatePredicateManager mBinaryStatePredicateManager;
 	/**
@@ -240,17 +253,17 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			throws AutomataOperationCanceledException;
 
 	/**
-	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) w.r.t.
-	 * {@code lassoCheck} for the case where we detected that the lasso can only be taken finitely often.
+	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) w.r.t. {@code bspm} for
+	 * the case where we detected that the lasso can only be taken finitely often.
 	 *
 	 * @param abstraction
 	 *            The abstraction to be refined
-	 * @param lassoCheck
-	 *            The lasso check for the infeasible lasso
+	 * @param bspm
+	 *            The {@code BinaryStatePredicateManager} representing the infeasible lasso
 	 * @return The new refined abstraction
 	 * @throws AutomataOperationCanceledException
 	 */
-	protected abstract A refineBuchi(A abstraction, final LassoCheck<L> lassoCheck)
+	protected abstract A refineBuchi(A abstraction, final BinaryStatePredicateManager bspm)
 			throws AutomataOperationCanceledException;
 
 	public NestedLassoRun<L, IPredicate> getCounterexample() {
@@ -455,13 +468,72 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	private A refineBuchiAndReportRankingFunction(final LassoCheck<L> lassoCheck)
 			throws AutomataOperationCanceledException {
 		final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
+		assert !SmtUtils.isFalseLiteral(bspm.getStemPrecondition().getFormula());
+		assert !SmtUtils.isFalseLiteral(bspm.getHondaPredicate().getFormula());
+		assert !SmtUtils.isFalseLiteral(bspm.getRankEqAndSi().getFormula());
 		final RankingFunction rankingFunction = bspm.getTerminationArgument().getRankingFunction();
 		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();
 		mMDBenchmark.reportRankingFunction(mIteration, rankingFunction, script);
 
-		final A result = refineBuchi(mAbstraction, lassoCheck);
+		final A result = refineBuchi(mAbstraction, bspm);
 		mBinaryStatePredicateManager.clearPredicates();
 		return result;
+	}
+
+	protected IPredicate[] getStemInterpolants(final NestedRun<L, IPredicate> stem,
+			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier) {
+		if (BuchiAutomizerUtils.isEmptyStem(stem)) {
+			return null;
+		}
+		final InterpolatingTraceCheck<L> traceCheck =
+				constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem, predicateUnifier);
+		if (traceCheck.isCorrect() != LBool.UNSAT) {
+			throw new AssertionError("incorrect predicates - stem");
+		}
+		return traceCheck.getInterpolants();
+	}
+
+	protected IPredicate[] getLoopInterpolants(final NestedRun<L, IPredicate> loop,
+			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier) {
+		final InterpolatingTraceCheck<L> traceCheck =
+				constructTraceCheck(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, predicateUnifier);
+		if (traceCheck.isCorrect() != LBool.UNSAT) {
+			throw new AssertionError("incorrect predicates - loop");
+		}
+		mBci = TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
+		return traceCheck.getInterpolants();
+	}
+
+	private InterpolatingTraceCheck<L> constructTraceCheck(final IPredicate precond, final IPredicate postcond,
+			final NestedRun<L, IPredicate> run, final PredicateUnifier predicateUnifier) {
+		switch (mInterpolation) {
+		case Craig_NestedInterpolation:
+		case Craig_TreeInterpolation: {
+			return new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<Integer, IPredicate>(),
+					run.getWord(), null, mServices, mCsToolkitWithRankVars, mPredicateFactory, predicateUnifier,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, mInterpolation, true,
+					XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE);
+		}
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandBP:
+		case FPandBPonlyIfFpWasNotPerfect: {
+			return new TraceCheckSpWp<>(precond, postcond, new TreeMap<Integer, IPredicate>(), run.getWord(),
+					mCsToolkitWithRankVars, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
+					mServices, false, mPredicateFactory, predicateUnifier, mInterpolation,
+					mCsToolkitWithRankVars.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, null,
+					false);
+		}
+		default:
+			throw new UnsupportedOperationException("unsupported interpolation");
+		}
+	}
+
+	protected PredicateUnifier createPredicateUnifier(final BinaryStatePredicateManager bspm) {
+		return new PredicateUnifier(mLogger, mServices, mCsToolkitWithRankVars.getManagedScript(), mPredicateFactory,
+				mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
+				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
+				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 	}
 
 	private void reportRemainderModule(final boolean nonterminationKnown) {

@@ -59,13 +59,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
@@ -115,8 +116,8 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
 		mRefineBuchi = new RefineBuchi<>(mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(), difference,
 				mDefaultStateFactory, mStateFactoryForRefinement, useDoubleDeckers, mPref.dumpPath(),
-				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, SIMPLIFICATION_TECHNIQUE,
-				XNF_CONVERSION_TECHNIQUE, ncsbImplementation, mIdentifier);
+				mPref.getAutomataFormat(), mServices, mLogger, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
+				ncsbImplementation, mIdentifier);
 		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
@@ -211,8 +212,8 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected INestedWordAutomaton<L, IPredicate> refineBuchi(
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction, final LassoCheck<L> lassoCheck)
-			throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
+			final BinaryStatePredicateManager bspm) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
 
@@ -231,9 +232,12 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			assert automatonUsesISLPredicates(abstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<L, IPredicate> result;
 			try {
-				result = mRefineBuchi.refineBuchi(abstraction, mCounterexample, mIteration, constructionStyle,
-						lassoCheck.getBinaryStatePredicateManager(), mInterpolation, mBenchmarkGenerator,
-						mComplementationConstruction);
+				final PredicateUnifier pu = createPredicateUnifier(bspm);
+				final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(), bspm, pu);
+				final IPredicate[] loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), bspm, pu);
+				result = mRefineBuchi.refineBuchi(abstraction, mCounterexample, mIteration, constructionStyle, bspm,
+						mInterpolation, mBenchmarkGenerator, mComplementationConstruction, stemInterpolants,
+						loopInterpolants, pu);
 			} catch (final AutomataOperationCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "applying stage " + stage);
@@ -266,7 +270,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 					throw new AssertionError("unsupported");
 				}
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mRefineBuchi.getBci());
+				mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mBci);
 				return reduceAbstractionSize(result, mAutomataMinimizationAfterRankBasedRefinement);
 			}
 			stage++;

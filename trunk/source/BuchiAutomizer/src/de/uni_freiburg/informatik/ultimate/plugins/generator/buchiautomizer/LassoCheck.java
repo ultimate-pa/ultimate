@@ -835,7 +835,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		private TraceCheckResult checkStemFeasibility() {
 			final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
-			if (BuchiAutomizerUtils.isEmptyStem(mCounterexample)) {
+			if (BuchiAutomizerUtils.isEmptyStem(stem)) {
 				return TraceCheckResult.FEASIBLE;
 			}
 			mStemCheck = checkFeasibilityAndComputeInterpolants(stem,

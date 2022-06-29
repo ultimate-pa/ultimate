@@ -37,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -65,9 +65,9 @@ public final class BuchiAutomizerUtils {
 				path + "/" + filename, format, message, automaton);
 	}
 
-	public static boolean isEmptyStem(final NestedLassoRun<?, IPredicate> nlr) {
-		assert nlr.getStem().getLength() > 0;
-		return nlr.getStem().getLength() == 1;
+	public static boolean isEmptyStem(final NestedRun<?, ?> stem) {
+		assert stem.getLength() > 0;
+		return stem.getLength() == 1;
 	}
 
 	public static <LETTER extends IIcfgTransition<?>> NestedWordAutomaton<LETTER, IPredicate>

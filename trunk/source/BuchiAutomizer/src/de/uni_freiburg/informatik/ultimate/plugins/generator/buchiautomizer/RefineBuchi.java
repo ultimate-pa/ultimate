@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -78,17 +77,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -115,8 +106,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private final boolean mUseDoubleDeckers;
 	private final String mDumpPath;
 	private final Format mFormat;
-	private final InterpolationTechnique mInterpolation;
-	private BackwardCoveringInformation mBci;
 	private final NcsbImplementation mNcsbImplementation;
 	private final String mIdentifier;
 
@@ -131,8 +120,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final boolean dumpAutomata, final boolean difference,
 			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean useDoubleDeckers,
-			final String dumpPath, final Format format, final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services, final ILogger logger,
+			final String dumpPath, final Format format, final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final NcsbImplementation ncsbImplementation, final String identifier) {
 		mServices = services;
@@ -146,7 +134,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		mUseDoubleDeckers = useDoubleDeckers;
 		mDumpPath = dumpPath;
 		mFormat = format;
-		mInterpolation = interpolation;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mNcsbImplementation = ncsbImplementation;
@@ -157,53 +144,18 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return mInterpolAutomatonUsedInRefinement;
 	}
 
-	public BackwardCoveringInformation getBci() {
-		return mBci;
-	}
-
 	private int mIteration;
 
 	public INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
-			final NestedLassoRun<LETTER, IPredicate> mCounterexample, final int iteration,
+			final NestedLassoRun<LETTER, IPredicate> counterexample, final int iteration,
 			final BuchiInterpolantAutomatonConstructionStyle setting, final BinaryStatePredicateManager bspm,
 			final InterpolationTechnique interpolation, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
-			final BuchiComplementationConstruction complementationConstruction) throws AutomataLibraryException {
+			final BuchiComplementationConstruction complementationConstruction, final IPredicate[] stemInterpolants,
+			final IPredicate[] loopInterpolants, final PredicateUnifier pu) throws AutomataLibraryException {
 		mIteration = iteration;
-		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
-		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
-
-		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
-		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
-		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
-		final PredicateUnifier pu = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
-				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
-				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
-		IPredicate[] stemInterpolants;
-		InterpolatingTraceCheck<LETTER> traceCheck;
-		if (BuchiAutomizerUtils.isEmptyStem(mCounterexample)) {
-			stemInterpolants = null;
-		} else {
-
-			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem, pu,
-					mInterpolation);
-			final LBool stemCheck = traceCheck.isCorrect();
-			if (stemCheck != LBool.UNSAT) {
-				throw new AssertionError("incorrect predicates - stem");
-			}
-			stemInterpolants = traceCheck.getInterpolants();
-		}
-
-		traceCheck = constructTraceCheck(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, pu, mInterpolation);
-		final LBool loopCheck = traceCheck.isCorrect();
-		IPredicate[] loopInterpolants;
-		if (loopCheck != LBool.UNSAT) {
-			throw new AssertionError("incorrect predicates - loop");
-		}
-		loopInterpolants = traceCheck.getInterpolants();
-		mBci = TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
-
+		final NestedWord<LETTER> stem = counterexample.getStem().getWord();
+		final NestedWord<LETTER> loop = counterexample.getLoop().getWord();
 		NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton =
 				BuchiAutomizerUtils.constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem,
 						stemInterpolants, bspm.getHondaPredicate(), loop, loopInterpolants, abstraction.getVpAlphabet(),
@@ -221,10 +173,10 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert new InductivityCheck<>(mServices, interpolAutomaton, false, true, bhtc).getResult();
 		assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), interpolAutomaton,
-				mCounterexample.getNestedLassoWord()).getResult();
+				counterexample.getNestedLassoWord()).getResult();
 
 		mInterpolAutomatonUsedInRefinement =
-				buildBuchiInterpolantAutomatonForOnDemandConstruction(mCounterexample, setting, bspm, interpolation,
+				buildBuchiInterpolantAutomatonForOnDemandConstruction(counterexample, setting, bspm, interpolation,
 						stem, loop, pu, stemInterpolants, loopInterpolants, interpolAutomaton, bhtc);
 		final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer = new PowersetDeterminizer<>(
 				mInterpolAutomatonUsedInRefinement, mUseDoubleDeckers, mStateFactoryInterpolAutom);
@@ -273,7 +225,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			assert complNwa.checkResult(mStateFactoryInterpolAutom);
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> complement = complNwa.getResult();
 			assert !new BuchiAccepts<>(new AutomataLibraryServices(mServices), complement,
-					mCounterexample.getNestedLassoWord()).getResult();
+					counterexample.getNestedLassoWord()).getResult();
 			final BuchiIntersect<LETTER, IPredicate> interNwa = new BuchiIntersect<>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, abstraction, complement);
 			assert interNwa.checkResult(mStateFactoryInterpolAutom);
@@ -281,7 +233,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 		benchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
 		interpolAutomaton = null;
-		final boolean isUseful = isUsefulInterpolantAutomaton(mInterpolAutomatonUsedInRefinement, mCounterexample);
+		final boolean isUseful = isUsefulInterpolantAutomaton(mInterpolAutomatonUsedInRefinement, counterexample);
 		if (!isUseful) {
 			return null;
 		}
@@ -330,7 +282,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>
 			buildBuchiInterpolantAutomatonForOnDemandConstruction(
-					final NestedLassoRun<LETTER, IPredicate> mCounterexample,
+					final NestedLassoRun<LETTER, IPredicate> counterexample,
 					final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle,
 					final BinaryStatePredicateManager bspm, final InterpolationTechnique interpolation,
 					final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final PredicateUnifier pu,
@@ -352,7 +304,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case SCROOGE_NONDETERMINISM:
 		case DETERMINISTIC:
 			Set<IPredicate> stemInterpolantsForRefinement;
-			if (BuchiAutomizerUtils.isEmptyStem(mCounterexample)) {
+			final boolean emptyStem = BuchiAutomizerUtils.isEmptyStem(counterexample.getStem());
+			if (emptyStem) {
 				stemInterpolantsForRefinement = Collections.emptySet();
 			} else if (biaConstructionStyle.cannibalizeLoop()) {
 				stemInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(stemInterpolants));
@@ -366,7 +319,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
 
 					final LoopCannibalizer<LETTER> lc =
-							new LoopCannibalizer<>(mCounterexample, loopInterpolantsForRefinement, bspm, pu, mCsToolkit,
+							new LoopCannibalizer<>(counterexample, loopInterpolantsForRefinement, bspm, pu, mCsToolkit,
 									interpolation, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
@@ -379,11 +332,10 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
 			}
 
-			return new BuchiInterpolantAutomatonBouncer<>(mCsToolkit, mPredicateFactory, bspm, bhtc,
-					BuchiAutomizerUtils.isEmptyStem(mCounterexample), stemInterpolantsForRefinement,
-					loopInterpolantsForRefinement,
-					BuchiAutomizerUtils.isEmptyStem(mCounterexample) ? null : stem.getSymbol(stem.length() - 1),
-					loop.getSymbol(loop.length() - 1), biaConstructionStyle.isScroogeNondeterminismStem(),
+			return new BuchiInterpolantAutomatonBouncer<>(mCsToolkit, mPredicateFactory, bspm, bhtc, emptyStem,
+					stemInterpolantsForRefinement, loopInterpolantsForRefinement,
+					emptyStem ? null : stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1),
+					biaConstructionStyle.isScroogeNondeterminismStem(),
 					biaConstructionStyle.isScroogeNondeterminismLoop(), biaConstructionStyle.isBouncerStem(),
 					biaConstructionStyle.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
 					mServices, interpolAutomaton);
@@ -533,29 +485,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			return diff.getResult();
 		}
 		return gbaDiff.getResult();
-	}
-
-	private InterpolatingTraceCheck<LETTER> constructTraceCheck(final IPredicate precond, final IPredicate postcond,
-			final NestedWord<LETTER> word, final PredicateUnifier pu, final InterpolationTechnique interpolation) {
-		switch (mInterpolation) {
-		case Craig_NestedInterpolation:
-		case Craig_TreeInterpolation: {
-			return new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, null,
-					mServices, mCsToolkit, mPredicateFactory, pu, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
-					interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
-		}
-		case ForwardPredicates:
-		case BackwardPredicates:
-		case FPandBP:
-		case FPandBPonlyIfFpWasNotPerfect: {
-			return new TraceCheckSpWp<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-					mPredicateFactory, pu, interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
-					mSimplificationTechnique, null, false);
-		}
-		default:
-			throw new UnsupportedOperationException("unsupported interpolation");
-		}
 	}
 
 	private boolean isUsefulInterpolantAutomaton(
