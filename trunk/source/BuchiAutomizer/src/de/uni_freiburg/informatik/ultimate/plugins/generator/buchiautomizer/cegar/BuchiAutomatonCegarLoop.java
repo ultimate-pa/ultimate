@@ -84,10 +84,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
 	private final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 	private final RefineBuchi<L> mRefineBuchi;
-	// private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
 	private final BuchiComplementationConstruction mComplementationConstruction;
-	// private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
-	// private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
 
 	public BuchiAutomatonCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -186,74 +183,6 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			throw new AssertionError();
 		}
 	}
-
-	// @Override
-	// protected INestedWordAutomaton<L, IPredicate> refineBuchi(
-	// final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-	// final BinaryStatePredicateManager bspm) throws AutomataOperationCanceledException {
-	// mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-	// int stage = 0;
-	//
-	// /*
-	// * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles Each construction style defines how
-	// * an interpolant automaton is constructed. Constructions that provide simpler (less nondeterministic) automata
-	// * should come first. In each iteration we compute the difference which causes an on-demand construciton of the
-	// * automaton and evaluate the automaton afterwards. If the automaton is "good" we keep the difference and
-	// * continued with the termination analysis. If the automaton is "bad" we construct the next automaton. Currently
-	// * an automaton is "good" iff the counterexample of the current CEGAR iteration is accepted by the automaton
-	// * (otherwise the counterexample would not be excluded and we might get it again in the next iteration of the
-	// * CEGAR loop).
-	// *
-	// */
-	// for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
-	// assert automatonUsesISLPredicates(abstraction) : "used wrong StateFactory";
-	// final INestedWordAutomaton<L, IPredicate> result;
-	// try {
-	// final PredicateUnifier pu = createPredicateUnifier(bspm);
-	// final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(), bspm, pu);
-	// final IPredicate[] loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), bspm, pu);
-	// result = mRefineBuchi.refineBuchi(abstraction, mCounterexample, mIteration, constructionStyle, bspm,
-	// mInterpolation, mBenchmarkGenerator, mComplementationConstruction, stemInterpolants,
-	// loopInterpolants, pu);
-	// } catch (final AutomataOperationCanceledException e) {
-	// mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-	// final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "applying stage " + stage);
-	// throw new ToolchainCanceledException(e, rti);
-	// } catch (final ToolchainCanceledException e) {
-	// mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-	// throw e;
-	// } catch (final AutomataLibraryException e) {
-	// throw new AssertionError(e.getMessage());
-	// }
-	//
-	// if (result != null) {
-	// if (mConstructTermcompProof) {
-	// mTermcompProofBenchmark.reportBuchiModule(mIteration,
-	// mRefineBuchi.getInterpolAutomatonUsedInRefinement());
-	// }
-	// mBenchmarkGenerator.announceSuccessfullRefinementStage(stage);
-	// switch (constructionStyle.getInterpolantAutomaton()) {
-	// case DETERMINISTIC:
-	// case LASSO_AUTOMATON:
-	// mMDBenchmark.reportDeterministicModule(mIteration,
-	// mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
-	// break;
-	// case SCROOGE_NONDETERMINISM:
-	// case EAGER_NONDETERMINISM:
-	// mMDBenchmark.reportNonDeterministicModule(mIteration,
-	// mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
-	// break;
-	// default:
-	// throw new AssertionError("unsupported");
-	// }
-	// mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-	// mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mBci);
-	// return reduceAbstractionSize(result, mAutomataMinimizationAfterRankBasedRefinement);
-	// }
-	// stage++;
-	// }
-	// throw new AssertionError("no settings was sufficient");
-	// }
 
 	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> reduceAbstractionSize(
