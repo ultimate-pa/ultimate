@@ -339,8 +339,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// Construct the abstraction function.
-		final var letterAbstraction = constructAbstraction(settings, copyFactory, mIndependenceScript, transferrer,
-				settings.getIndependenceType() == IndependenceType.SEMANTIC);
+		final var letterAbstraction = constructAbstraction(settings, copyFactory, mIndependenceScript, transferrer);
 		final var cachedAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
 
 		// Construct the independence relation (still without abstraction).
@@ -408,22 +407,18 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(
 			final IndependenceSettings settings, final ICopyActionFactory<L> copyFactory,
-			final ManagedScript abstractionScript, final TransferrerWithVariableCache transferrer,
-			final boolean simplify) {
+			final ManagedScript abstractionScript, final TransferrerWithVariableCache transferrer) {
 		if (settings.getAbstractionType() == AbstractionType.NONE) {
 			return null;
 		}
 
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(mCsToolkit);
-		final TransFormulaAuxVarEliminator tfEliminator;
-		if (simplify) {
-			// For semantic independence, eliminating auxiliary variables can ease the load on the SMT solver.
-			tfEliminator = (ms, fm, av) -> TransFormulaUtils.tryAuxVarElimination(mServices, ms,
-					SimplificationTechnique.POLY_PAC, fm, av);
-		} else {
-			// For syntactic independence, there is no point in eliminating auxiliary variables.
-			tfEliminator = null;
-		}
+
+		// We eliminate auxiliary variables.
+		// This is useful both for semantic independence (ease the load on the SMT solver),
+		// but even more so for syntactic independence (often allows shrinking the set of "read" variables).
+		final TransFormulaAuxVarEliminator tfEliminator = (ms, fm, av) -> TransFormulaUtils
+				.tryAuxVarElimination(mServices, ms, SimplificationTechnique.POLY_PAC, fm, av);
 
 		switch (settings.getAbstractionType()) {
 		case VARIABLES_GLOBAL:
