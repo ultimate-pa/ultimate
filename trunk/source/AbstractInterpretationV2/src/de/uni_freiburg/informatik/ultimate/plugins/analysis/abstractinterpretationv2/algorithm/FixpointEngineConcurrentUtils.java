@@ -28,10 +28,12 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,33 +56,37 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, ACTION, LOC> {
 
 	private final IIcfg<?> mIcfg;
-	private final Map<LOC, Set<IProgramVar>> mWrittenSharedVars;
+	private final Map<ACTION, Set<IProgramVar>> mWrittenSharedVars;
 	private final Map<ACTION, Set<IProgramVar>> mReadSharedVars;
-	private final Map<LOC, String> mLoc2Procedure;
 	private final Map<ACTION, String> mAction2Procedure;
-	private final Map<LOC, ACTION> mLoc2Action;
+	private final Map<ACTION, LOC> mAction2Loc;
 	private final Map<String, Set<String>> mForks;
-	private final Map<String, Set<String>> mParallelProcedures;
 	private final Map<ACTION, Set<ACTION>> mActionsToPatch;
-	private final Map<ACTION, Set<String>> mReadProcedures;
+	private final Map<ACTION, Set<String>> mReadsFromProcedures;
+
+	private final Map<ACTION, LOC> mTest;
 
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg) {
 		mIcfg = icfg;
 		mWrittenSharedVars = new HashMap<>();
 		mReadSharedVars = new HashMap<>();
-		mLoc2Procedure = new HashMap<>();
-		mLoc2Action = new HashMap<>();
+		mAction2Loc = new HashMap<>();
 		mAction2Procedure = new HashMap<>();
 		mActionsToPatch = new HashMap<>();
 		mForks = new HashMap<>();
-		mParallelProcedures = new HashMap<>();
-		mReadProcedures = new HashMap<>();
+		mReadsFromProcedures = new HashMap<>();
+
+		mTest = new HashMap<>();
 
 		initialize(mIcfg.getProcedureEntryNodes());
 	}
 
-	public Set<IProgramVar> getWrittenVars(final LOC loc) {
-		return mWrittenSharedVars.get(loc);
+	public LOC computeTest(final ACTION action) {
+		return mTest.get(action);
+	}
+
+	public Set<IProgramVar> getWrittenVars(final ACTION action) {
+		return mWrittenSharedVars.get(action);
 	}
 
 	public Set<IProgramVar> getReadVars(final ACTION action) {
@@ -91,15 +97,12 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mAction2Procedure.get(action);
 	}
 
-	public String getProcedureFromLoc(final LOC loc) {
-		return mLoc2Procedure.get(loc);
+	public ACTION getActionsToPatchInto(final ACTION readAction) {
+		return readAction;
+		// return mActionsToPatch.get(readAction);
 	}
 
-	public Set<ACTION> getActionsToPatchInto(final ACTION readAction) {
-		return mActionsToPatch.get(readAction);
-	}
-
-	public Set<Entry<LOC, Set<IProgramVar>>> getSharedWriteIterable() {
+	public Set<Entry<ACTION, Set<IProgramVar>>> getSharedWriteIterable() {
 		return mWrittenSharedVars.entrySet();
 	}
 
@@ -107,27 +110,28 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mReadSharedVars.entrySet();
 	}
 
-	public ACTION computeLoc2Action(final LOC loc) {
-		return mLoc2Action.get(loc);
+	public LOC computeAction2Loc(final ACTION action) {
+		return mAction2Loc.get(action);
 	}
 
-	public boolean canReadFromInterference(final ACTION readAction, final LOC write) {
-		final String intProcedure = mLoc2Procedure.get(write);
-		return intProcedure.equals(getProcedureFromAction(readAction))
-				|| mReadProcedures.get(readAction).contains(intProcedure);
+	public boolean canReadFromInterference(final ACTION readAction, final ACTION write) {
+		final String intProcedure = mAction2Procedure.get(write);
+		return true;
+		// return intProcedure.equals(getProcedureFromAction(readAction))
+		// || mReadsFromProcedures.get(readAction).contains(intProcedure);
 	}
 
-	public Map<LOC, DisjunctiveAbstractState<STATE>> filterProcedures(final String name,
-			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+	public Map<ACTION, DisjunctiveAbstractState<STATE>> filterProcedures(final String name,
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
 		// TODO: check nicer way via .collect ???
-		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
-		interferences.entrySet().stream().filter(a -> mLoc2Procedure.get(a.getKey()) == (name))
+		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
+		interferences.entrySet().stream().filter(a -> mAction2Procedure.get(a.getKey()) != (name))
 				.forEach(b -> result.put(b.getKey(), b.getValue()));
 		return result;
 	}
 
-	public Map<LOC, DisjunctiveAbstractState<STATE>> copyMap(final Map<LOC, DisjunctiveAbstractState<STATE>> map) {
-		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
+	public static <K, V> Map<K, V> copyMap(final Map<K, V> map) {
+		final Map<K, V> result = new HashMap<>();
 		map.forEach((a, b) -> result.put(a, b));
 		return result;
 	}
@@ -148,94 +152,124 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		for (final var entry : mReadSharedVars.entrySet()) {
-			mReadProcedures.put(entry.getKey(), new HashSet<>());
+			mReadsFromProcedures.put(entry.getKey(), new HashSet<>());
 		}
 
-		// TODO: combine both iterations later
 		for (final Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
 			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
 			for (final var edge : iterator.asStream().collect(Collectors.toSet())) {
 				if (edge instanceof IForkActionThreadCurrent) {
 					final IForkActionThreadCurrent fork = (IForkActionThreadCurrent) edge;
 					addFork(entry.getValue().getProcedure(), fork.getNameOfForkedProcedure());
-					addParallel(fork.getNameOfForkedProcedure(), entry.getValue().getProcedure());
 
-					final IcfgEdgeIterator forkIterator = new IcfgEdgeIterator(edge);
-					// skip first, as it is the fork Statement
-					forkIterator.next();
+					final IcfgEdgeIterator forkIterator = new IcfgEdgeIterator(edge.getTarget().getOutgoingEdges());
 					forkIterator.asStream().forEach(a -> checkforInterferences(a, fork.getNameOfForkedProcedure()));
 				}
 			}
 		}
 
-		closure(mForks);
+		final Map<String, Set<String>> closureForks = closure(mForks);
+		final Map<String, Set<String>> dependingOn = computeDependingProcedures(closureForks);
 
-		for (final var entry : mParallelProcedures.entrySet()) {
-			final Set<String> tempSet = new HashSet<>();
-			for (final var procedure : entry.getValue()) {
-				//
-				if (mForks.containsKey(procedure) && !procedure.equals("ULTIMATE.start")) {
-					tempSet.addAll(mForks.get(procedure));
-				}
-			}
-			tempSet.remove(entry.getKey());
-			mParallelProcedures.get(entry.getKey()).addAll(tempSet);
-		}
-
-		for (final Entry<ACTION, Set<String>> entry : mReadProcedures.entrySet()) {
-			// every Read that has xy in mReadProcedures gets all mForks.get(xy) added
+		for (final Entry<ACTION, Set<String>> entry : mReadsFromProcedures.entrySet()) {
+			// every Read that has xy in mReadsFromProcedures gets all mForks.get(xy) added
 			final Set<String> tempSet = new HashSet<>();
 			for (final String procedure : entry.getValue()) {
-				if (mForks.containsKey(procedure)) {
-					tempSet.addAll(mForks.get(procedure));
+				if (closureForks.containsKey(procedure)) {
+					tempSet.addAll(closureForks.get(procedure));
 				}
 			}
-			mReadProcedures.get(entry.getKey()).addAll(tempSet);
+			mReadsFromProcedures.get(entry.getKey()).addAll(tempSet);
 
 			// every Read in the procedure xy gets all mParallelProcedures.get(xy) added
-			if (mParallelProcedures.containsKey(getProcedureFromAction(entry.getKey()))) {
-				mReadProcedures.get(entry.getKey())
-						.addAll(mParallelProcedures.get(getProcedureFromAction(entry.getKey())));
+			if (dependingOn.containsKey(getProcedureFromAction(entry.getKey()))) {
+				mReadsFromProcedures.get(entry.getKey())
+						.addAll(dependingOn.get(getProcedureFromAction(entry.getKey())));
 			}
 		}
 
 		final boolean timestop = true;
 	}
 
-	private static void closure(final Map<String, Set<String>> map) {
+	private static Map<String, Set<String>> closure(final Map<String, Set<String>> map) {
+		// create deep copy of mForks
+		final Map<String, Set<String>> result = new HashMap<>();
+		for (final Entry<String, Set<String>> entry : map.entrySet()) {
+			result.put(entry.getKey(), new HashSet<>());
+			for (final String value : entry.getValue()) {
+				result.get(entry.getKey()).add(value);
+			}
+		}
 		boolean changes = true;
 		while (changes) {
 			changes = false;
-			for (final Entry<String, Set<String>> entry : map.entrySet()) {
+			for (final Entry<String, Set<String>> entry : result.entrySet()) {
 				final Set<String> tempSet = new HashSet<>();
 				for (final String forked : entry.getValue()) {
-					if (map.containsKey(forked)
-							&& !DataStructureUtils.difference(map.get(forked), map.get(entry.getKey())).isEmpty()) {
-						tempSet.addAll(map.get(forked));
+					if (result.containsKey(forked) && !DataStructureUtils
+							.difference(result.get(forked), result.get(entry.getKey())).isEmpty()) {
+						tempSet.addAll(result.get(forked));
 						changes = true;
 					}
 				}
-				map.get(entry.getKey()).addAll(tempSet);
+				result.get(entry.getKey()).addAll(tempSet);
 			}
 		}
+		return result;
 	}
 
-	private void readHandling(final IcfgEdge edge, final String forkProcedure) {
-		if (mReadSharedVars.containsKey(edge)) {
-			final Set<String> tempSet = mReadProcedures.get(edge);
-			tempSet.add(forkProcedure);
-			mReadProcedures.put((ACTION) edge, tempSet);
+	private Map<String, Set<String>> computeDependingProcedures(final Map<String, Set<String>> closureForks) {
+		// TODO: Compute mDependingOn Map<String, String>
+		final Map<String, Set<String>> result = new HashMap<>();
+		final Queue<String> worklist = new ArrayDeque<>();
+		final Set<String> added = new HashSet<>();
+		final String startitem = "ULTIMATE.start";
+		worklist.add(startitem);
+		added.add(startitem);
+		// initialize for every procedure the empty set
+		mIcfg.getCfgSmtToolkit().getProcedures().forEach(p -> result.put(p, new HashSet<>()));
+		while (!worklist.isEmpty()) {
+			final String currentItem = worklist.poll();
+			if (!mForks.containsKey(currentItem)) {
+				continue;
+			}
+			for (final String forked : mForks.get(currentItem)) {
+				// copy all entries von item into child
+				result.get(forked).addAll(result.get(currentItem));
+				// add parent
+				result.get(forked).add(currentItem);
+				// add all other children
+				final Set<String> otherChildren =
+						mForks.get(currentItem).stream().filter(a -> !a.equals(forked)).collect(Collectors.toSet());
+				result.get(forked).addAll(otherChildren);
+				// add closure over all other children
+				for (final String child : otherChildren) {
+					if (closureForks.containsKey(child)) {
+						result.get(forked).addAll(closureForks.get(child));
+					}
+				}
+
+				if (!added.contains(forked)) {
+					worklist.add(forked);
+					added.add(forked);
+				}
+			}
 		}
+		return result;
 	}
 
 	private void checkforInterferences(final IcfgEdge edge, final String currentProcedure) {
-		readHandling(edge, currentProcedure);
+		if (mReadSharedVars.containsKey(edge)) {
+			mReadsFromProcedures.get(edge).add(currentProcedure);
+		}
 
-		if (edge instanceof IForkActionThreadCurrent) {
+		if (edge instanceof IForkActionThreadCurrent
+				&& ((IForkActionThreadCurrent) edge).getNameOfForkedProcedure().equals(currentProcedure)) {
 			// Procedures running parallel -> co-dependent
+			// TODO: if fork from same procedure -> add selfloop
+			// does maybe already happen
 			final IForkActionThreadCurrent fork = (IForkActionThreadCurrent) edge;
-			addParallel(currentProcedure, fork.getNameOfForkedProcedure());
-			addParallel(fork.getNameOfForkedProcedure(), currentProcedure);
+			addFork(currentProcedure, fork.getNameOfForkedProcedure());
 		}
 	}
 
@@ -250,26 +284,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mForks.put(forks, tempSet);
 	}
 
-	private void addParallel(final String p1, final String p2) {
-		final Set<String> tempSet;
-		if (mParallelProcedures.containsKey(p1)) {
-			tempSet = mParallelProcedures.get(p1);
-		} else {
-			tempSet = new HashSet<>();
-		}
-		tempSet.add(p2);
-		mParallelProcedures.put(p1, tempSet);
-	}
-
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
 		// SharedWrites & mProcedures
 		boolean accepted = false;
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
 			accepted = true;
-			mWrittenSharedVars.put((LOC) edge.getSource(), new HashSet<>());
-			edge.getTransformula().getAssignedVars().forEach(var -> mWrittenSharedVars.get(edge.getSource()).add(var));
-			mLoc2Procedure.put((LOC) edge.getSource(), edge.getPrecedingProcedure());
-			mLoc2Action.put((LOC) edge.getSource(), (ACTION) edge);
+			mWrittenSharedVars.put((ACTION) edge, new HashSet<>());
+			edge.getTransformula().getAssignedVars().forEach(var -> mWrittenSharedVars.get(edge).add(var));
+			mTest.put((ACTION) edge, (LOC) edge.getTarget());
 		}
 		// SharedReads
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getInVars().keySet(), variables)) {
@@ -279,6 +301,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			DataStructureUtils.intersection(edge.getTransformula().getInVars().keySet(), variables)
 					.forEach(var -> mReadSharedVars.get(edge).add(var));
 			edge.getSource().getIncomingEdges().forEach(a -> mActionsToPatch.get(edge).add((ACTION) a));
+		}
+
+		if (accepted) {
+			mAction2Loc.put((ACTION) edge, (LOC) edge.getSource());
 			mAction2Procedure.put((ACTION) edge, edge.getSource().getProcedure());
 		}
 	}

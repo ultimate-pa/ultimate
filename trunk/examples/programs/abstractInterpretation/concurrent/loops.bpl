@@ -15,6 +15,8 @@ modifies x,y;
   i := 2;
   y := 3;
   x := y - (x * i);
+  fork 3 whileloop();
+  fork 4 ifstatement();
   while (i < 5) {
      i := i + 1;
      x := i;
@@ -43,4 +45,5 @@ modifies x,y;
  y := 2;
  fork 1 whileloop();
  fork 2 ifstatement();
+ x := y;
 }

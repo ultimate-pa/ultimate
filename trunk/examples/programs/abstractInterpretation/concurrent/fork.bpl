@@ -30,12 +30,12 @@ modifies x,y;
  x := 3;
  if (i < 5) {
      i := i + 1;
-     y := x; // ultimate, thread1, thread3 +
+     y := x; // ultimate, thread2, thread1, thread3 +
  } else {
      x := i;
      i := i - 1;
  }
- i := i/x; //ultimate, thread1, thread3 ???
+ i := i/x; //ultimate, thread1, thread2, thread3 +
 }
 
 procedure thread3() returns()
