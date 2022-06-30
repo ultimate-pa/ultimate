@@ -204,6 +204,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 					errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
 			return new ConstantDfsOrder<>(
 					Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
+							.thenComparing(Comparator.comparing(x -> x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparingInt(Object::hashCode)));
 		case PSEUDO_LOCKSTEP:
 			return new BetterLockstepOrder<>(this::normalizePredicate);
