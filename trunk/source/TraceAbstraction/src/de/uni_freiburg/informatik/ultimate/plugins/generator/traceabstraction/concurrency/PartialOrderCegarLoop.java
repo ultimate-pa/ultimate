@@ -27,12 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -62,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -77,15 +82,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Cha
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnionPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -111,6 +123,10 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction.TransFormulaAuxVarEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -119,6 +135,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
@@ -134,6 +152,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
+
+	public static boolean READ_PROOF = true;
 
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
@@ -179,6 +199,67 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				.map(IRefinableIndependenceContainer::getOrConstructIndependence).collect(Collectors.toList());
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations);
+
+		if (READ_PROOF) {
+			mLogger.warn("=== Iteration -1 : Refine with given proof ===");
+			final String filename = ILocation.getAnnotation(rootNode).getFileName() + ".proof.smt2";
+			final String path = Paths.get(filename).toAbsolutePath().toString();
+			final List<IPredicate> predicates = new ArrayList<>();
+			try {
+				final File myObj = new File(path);
+				final Scanner myReader = new Scanner(myObj);
+				while (myReader.hasNextLine()) {
+					final String data = myReader.nextLine();
+					if (data.isBlank() || data.stripLeading().startsWith("#")) {
+						continue;
+					}
+					final Term term = parseWithVariables(data);
+					final IPredicate pred = mPredicateFactory.newPredicate(term);
+					predicates.add(pred);
+				}
+				myReader.close();
+			} catch (final FileNotFoundException e) {
+				throw new IllegalStateException("could not find proof: " + path);
+			}
+
+			final IPredicateUnifier unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
+					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
+					predicates.toArray(IPredicate[]::new));
+
+			final NestedWordAutomaton<L, IPredicate> nwa = new NestedWordAutomaton<>(
+					new AutomataLibraryServices(services), mAbstraction.getVpAlphabet(), mStateFactoryForRefinement);
+			final IPredicate truePred = unifier.getTruePredicate();
+			nwa.addState(true, false, truePred);
+			final IPredicate falsePred = unifier.getFalsePredicate();
+			nwa.addState(false, true, falsePred);
+			for (final IPredicate pred : predicates) {
+				nwa.addState(false, false, pred);
+			}
+
+			mRefinementResult = new BasicRefinementEngineResult<>(LBool.UNSAT, nwa, null, false,
+					List.of(new QualifiedTracePredicates(new TracePredicates(truePred, falsePred, predicates),
+							getClass(), false)),
+					new Lazy<>(() -> new MonolithicHoareTripleChecker(mCsToolkit)), new Lazy<>(() -> unifier));
+			mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
+
+			try {
+				refineAbstraction();
+			} catch (final AutomataLibraryException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	}
+
+	private Term parseWithVariables(final String syntax) {
+		final String declarations = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals().stream()
+				.map(pv -> "(" + pv.getTermVariable().getName() + " " + pv.getSort() + ")")
+				.collect(Collectors.joining(" "));
+		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
+		final var script = mCsToolkit.getManagedScript().getScript();
+		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(script, fullSyntax);
+		final Term noLet = new FormulaUnLet().transform(quant.getSubformula());
+		final Term noIte = new IteRemover(mCsToolkit.getManagedScript()).transform(noLet);
+		return new CommuhashNormalForm(mServices, script).transform(noIte);
 	}
 
 	@Override
