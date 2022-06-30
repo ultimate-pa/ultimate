@@ -97,9 +97,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mAction2Procedure.get(action);
 	}
 
-	public ACTION getActionsToPatchInto(final ACTION readAction) {
-		return readAction;
-		// return mActionsToPatch.get(readAction);
+	public Set<ACTION> getActionsToPatchInto(final ACTION readAction) {
+		// return readAction;
+		return mActionsToPatch.get(readAction);
 	}
 
 	public Set<Entry<ACTION, Set<IProgramVar>>> getSharedWriteIterable() {

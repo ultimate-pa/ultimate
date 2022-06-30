@@ -153,7 +153,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			// Check if Fixpoint is reached
 			iteration++;
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> tempInterferences =
-					computeNewInterferences2(interferences, iteration);
+					computeNewInterferences(interferences, iteration);
 			if (interferences.equals(tempInterferences)) {
 				break;
 			}
@@ -201,16 +201,17 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> addInterference(
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterference,
 			final DisjunctiveAbstractState<STATE> interference, final ACTION action) {
-		final ACTION key = mFecUtils.getActionsToPatchInto(action);
-		if (procedureInterference.containsKey(key)) {
-			DisjunctiveAbstractState<STATE> currentState = procedureInterference.get(key);
-			final Set<IProgramVarOrConst> sharedVars =
-					DataStructureUtils.intersection(interference.getVariables(), currentState.getVariables());
-			currentState = currentState.patch(interference.removeVariables(sharedVars));
-			final DisjunctiveAbstractState<STATE> tempState = currentState.patch(interference);
-			procedureInterference.put(key, unionIfNonEmpty(currentState, tempState));
-		} else {
-			procedureInterference.put(key, interference);
+		for (final ACTION key : mFecUtils.getActionsToPatchInto(action)) {
+			if (procedureInterference.containsKey(key)) {
+				DisjunctiveAbstractState<STATE> currentState = procedureInterference.get(key);
+				final Set<IProgramVarOrConst> sharedVars =
+						DataStructureUtils.intersection(interference.getVariables(), currentState.getVariables());
+				currentState = currentState.patch(interference.removeVariables(sharedVars));
+				final DisjunctiveAbstractState<STATE> tempState = currentState.patch(interference);
+				procedureInterference.put(key, unionIfNonEmpty(currentState, tempState));
+			} else {
+				procedureInterference.put(key, interference);
+			}
 		}
 		return procedureInterference;
 	}
