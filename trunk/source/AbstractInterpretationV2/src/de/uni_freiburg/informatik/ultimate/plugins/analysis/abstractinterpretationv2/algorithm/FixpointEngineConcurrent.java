@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -106,7 +105,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 		mMaxIterations = 3;
 
-		mFecUtils = new FixpointEngineConcurrentUtils<>(mIcfg);
+		mFecUtils = new FixpointEngineConcurrentUtils<>(mIcfg, mTransitionProvider);
 	}
 
 	@Override
@@ -148,6 +147,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 					final DisjunctiveAbstractState<STATE> state =
 							DisjunctiveAbstractState.createDisjunction(locAndStates.getValue());
 					mStateStorage.addAbstractState(locAndStates.getKey(), state);
+
 				}
 			}
 			// Check if Fixpoint is reached
@@ -161,6 +161,19 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		}
 	}
 
+	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
+			final DisjunctiveAbstractState<STATE> postState, final Set<ACTION> reachedErrors) {
+		final ACTION currentAction = currentItem.getAction();
+		final LOC postLoc = mTransitionProvider.getTarget(currentAction);
+		if (!mTransitionProvider.isErrorLocation(postLoc) || postState.isBottom()
+				|| !reachedErrors.add(currentAction)) {
+			// no new error reached
+			return;
+		}
+		// TODO: Find a way to add reached Errors
+		// mResult.reachedError(mTransitionProvider, currentItem, postState);
+	}
+
 	/**
 	 *
 	 * @param entryNode
@@ -171,7 +184,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeProcedureInterferences(final IcfgLocation entryNode,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		return versionOne(mFecUtils.filterProcedures(entryNode.getProcedure(), interferences));
+		return versionOne(mFecUtils.filterProcedures(entryNode.getProcedure(), interferences),
+				entryNode.getProcedure());
 	}
 
 	/**
@@ -181,12 +195,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @param interferences
 	 * @return
 	 */
-	private Map<ACTION, DisjunctiveAbstractState<STATE>>
-			versionOne(final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> versionOne(
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final String currentProcedure) {
 		Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterference = new HashMap<>();
 		for (final Map.Entry<ACTION, Set<IProgramVar>> read : mFecUtils.getSharedReadIterable()) {
+			if (!mTransitionProvider.getProcedureName(read.getKey()).equals(currentProcedure)) {
+				continue;
+			}
 			for (final Map.Entry<ACTION, DisjunctiveAbstractState<STATE>> interference : interferences.entrySet()) {
-				if (mFecUtils.canReadFromInterference(read.getKey(), interference.getKey())) {
+				if (canReadFrom(read.getKey(), interference.getKey())) {
 					final Set<IProgramVar> variables = mFecUtils.getWrittenVars(interference.getKey());
 					if (DataStructureUtils.haveNonEmptyIntersection(variables, read.getValue())) {
 						procedureInterference =
@@ -242,58 +259,12 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return procedureInterferences;
 	}
 
-	/**
-	 * Checks whether the key of pos(sible)Interferences is read. And then adds only the read variable to the
-	 * interferences
-	 *
-	 * @param read
-	 * @param posInterferences
-	 * @param procedureInterferences
-	 */
-	private void computePossibleUnion(final Entry<ACTION, Set<IProgramVar>> read,
-			final Entry<IProgramNonOldVar, DisjunctiveAbstractState<STATE>> posInterferences,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences) {
-		if (read.getValue().contains(posInterferences.getKey())) {
-			// filter out not shared variables
-			final DisjunctiveAbstractState<STATE> reducedState = posInterferences.getValue();
-			for (final var variable : posInterferences.getValue().getVariables()) {
-				if (!read.getValue().contains(variable)) {
-					reducedState.removeVariable(variable);
-				}
-			}
-			procedureInterferences.put(read.getKey(),
-					unionIfNonEmpty(procedureInterferences.get(read.getKey()), reducedState));
-		}
-	}
-
-	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeNewInterferences2(
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final int iteration) {
-		Map<ACTION, DisjunctiveAbstractState<STATE>> result = FixpointEngineConcurrentUtils.copyMap(interferences);
-		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
-		for (final Entry<ACTION, Set<IProgramVar>> entry : mFecUtils.getSharedWriteIterable()) {
-			final LOC loc = mFecUtils.computeTest(entry.getKey());
-			DisjunctiveAbstractState<STATE> postState;
-			if (loc2States.containsKey(loc)) {
-				postState = flattenAbstractState(loc2States.get(loc));
-			} else {
-				postState = new DisjunctiveAbstractState<>(mDomain.createTopState());
-				// TODO: maybe I have to add all variable from the procedure
-				for (final IProgramVar variable : entry.getValue()) {
-					postState = postState.addVariable(variable);
-				}
-			}
-			postState = removeNonSharedVariables(postState, entry.getValue());
-			result = combineInterferences(result, entry.getKey(), postState);
-		}
-		return result;
-	}
-
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> computeNewInterferences(
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final int iteration) {
 		Map<ACTION, DisjunctiveAbstractState<STATE>> result = FixpointEngineConcurrentUtils.copyMap(interferences);
 		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
 		for (final Entry<ACTION, Set<IProgramVar>> entry : mFecUtils.getSharedWriteIterable()) {
-			final LOC loc = mFecUtils.computeAction2Loc(entry.getKey());
+			final LOC loc = mTransitionProvider.getSource(entry.getKey());
 			DisjunctiveAbstractState<STATE> preState;
 			if (loc2States.containsKey(loc)) {
 				preState = flattenAbstractState(loc2States.get(loc));
@@ -331,7 +302,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private DisjunctiveAbstractState<STATE>
 			flattenAbstractState(final Set<DisjunctiveAbstractState<STATE>> setOfStates) {
 		if (!setOfStates.isEmpty()) {
-			// iterate over them all
 			final Iterator<DisjunctiveAbstractState<STATE>> iterator = setOfStates.iterator();
 			DisjunctiveAbstractState<STATE> result = iterator.next();
 			while (iterator.hasNext()) {
@@ -339,7 +309,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			}
 			return result;
 		}
-		// return empty State
 		return new DisjunctiveAbstractState<>();
 	}
 
@@ -373,5 +342,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			return stateOne;
 		}
 		return stateOne.union(stateTwo);
+	}
+
+	private boolean canReadFrom(final ACTION read, final ACTION write) {
+		// same procedure or prcedures running parallel
+		return mTransitionProvider.getProcedureName(read).equals(mTransitionProvider.getProcedureName(write))
+				|| mFecUtils.canReadFromInterference(read, mTransitionProvider.getProcedureName(write));
 	}
 }

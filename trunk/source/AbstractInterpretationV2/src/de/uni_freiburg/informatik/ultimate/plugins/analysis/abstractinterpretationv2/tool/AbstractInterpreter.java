@@ -111,8 +111,6 @@ public final class AbstractInterpreter {
 			params = domFac.createParams(timer, transProvider, loopDetector);
 		}
 		return params;
-
-		// comes from runWithoutTimeoutAndResults()
 	}
 
 	/**
