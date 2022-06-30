@@ -16,10 +16,10 @@ modifies i1, sum1;
   sum1 := 0;
 
   i1 := 0;
-  while (i1 < N) { atomic {
+  while (i1 < N) {
     sum1 := sum1 + abs(A[i1]);
     i1 := i1 + 1;
-  }}
+  }
 }
 
 procedure sum2() returns (y : int)
@@ -28,19 +28,19 @@ modifies i2, sum2;
   sum2 := 0;
 
   i2 := 0;
-  while (i2 < N) { atomic {
+  while (i2 < N) {
     sum2 := sum2 + abs(A[i2]);
     i2 := i2 + 1;
-  }}
+  }
 }
 
 procedure bank()
 modifies B;
 {
-  while (*) { atomic {
+  //while (*) {
     B[i1-1] := sum1;
     B[i2-1] := sum2;
-  }}
+  //}
 }
 
 
@@ -50,18 +50,20 @@ modifies A;
   var j : int;
 
   j := 0;
-  while (j < N) { atomic {
+  while (j < N) {
     A[j] := abs(A[j]);
     j := j + 1;
-  }}
+  }
 }
 
 procedure ULTIMATE.start()
 modifies A, B, i1, i2, sum1, sum2;
 {
-  fork 1 bank();
-  fork 2,2 sum1();
-  fork 3,3,3 sum2();
+  var x, y : int;
+
+  fork 1       bank();
+  fork 2,2     sum1();
+  fork 3,3,3   sum2();
   fork 4,4,4,4 mapAbs();
   join 2,2;
   join 3,3,3;
