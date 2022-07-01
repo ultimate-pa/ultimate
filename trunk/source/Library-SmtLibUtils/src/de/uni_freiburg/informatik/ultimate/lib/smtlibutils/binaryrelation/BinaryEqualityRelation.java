@@ -31,13 +31,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Objects of this class represent binary equals relations (i.e. terms of the
- * form (= a b)) and their negations (i.e. terms of the form
- * (not (= a b)) resp. (distinct a b)).
- * @author Matthias Heizmann
+ * form (= a b)) and their negations (i.e. terms of the form (not (= a b)) resp.
+ * (distinct a b)).
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class BinaryEqualityRelation extends BinaryRelation {
-
 
 	private BinaryEqualityRelation(final RelationSymbol relSymb, final Term lhs, final Term rhs) {
 		super(relSymb, lhs, rhs);

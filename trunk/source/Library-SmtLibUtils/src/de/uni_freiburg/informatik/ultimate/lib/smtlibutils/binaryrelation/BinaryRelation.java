@@ -63,8 +63,9 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a greater-than relation symbol.
-	 * Otherwise returns an equivalent term where relation symbol and parameters are swapped.
+	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a
+	 * greater-than relation symbol. Otherwise returns an equivalent term where
+	 * relation symbol and parameters are swapped.
 	 */
 	public static Term constructLessNormalForm(final Script script, final RelationSymbol relationSymbol,
 			final Term lhsTerm, final Term rhsTerm) throws AssertionError {

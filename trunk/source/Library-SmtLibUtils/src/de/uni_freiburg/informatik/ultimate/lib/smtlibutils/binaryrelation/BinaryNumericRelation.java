@@ -32,11 +32,12 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Represents a relation of the form ψ ▷ φ, where the terms ψ and φ have numeric sort and ▷ is one of the following
- * relation symbols {=, <=, >=, <, >, !=, distinct }. This class is only a helper that can be used to detect if a
+ * Represents a relation of the form ψ ▷ φ, where the terms ψ and φ have numeric
+ * sort and ▷ is one of the following relation symbols {=, <=, >=, <, >, !=,
+ * distinct }. This class is only a helper that can be used to detect if a
  * relation has this form.
  *
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class BinaryNumericRelation extends BinaryRelation {
 
@@ -45,13 +46,12 @@ public class BinaryNumericRelation extends BinaryRelation {
 	}
 
 	/**
-	 * Returns a new BinaryNumericRelation that has the RelationSymbol relSymb and the same lhs and rhs as this
-	 * BinaryNumericRelation.
+	 * Returns a new BinaryNumericRelation that has the RelationSymbol relSymb and
+	 * the same lhs and rhs as this BinaryNumericRelation.
 	 */
 	public BinaryNumericRelation changeRelationSymbol(final RelationSymbol relSymb) {
 		return new BinaryNumericRelation(relSymb, getLhs(), getRhs());
 	}
-
 
 	/**
 	 * Return a representation of a given {@link Term} as a
