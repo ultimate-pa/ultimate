@@ -51,7 +51,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		mRhs = rhs;
 	}
 
-	public BinaryRelation(final Term term) throws NoRelationOfThisKindException {
+	protected BinaryRelation(final Term term) throws NoRelationOfThisKindException {
 		if (!(term instanceof ApplicationTerm)) {
 			throw new NoRelationOfThisKindException("no ApplicationTerm");
 		}
