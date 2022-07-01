@@ -31,9 +31,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -73,9 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -89,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -134,44 +135,47 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg,
 			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) throws IOException, AssertionError {
-		final TAPreferences taPrefs = new TAPreferences(mServices);
-
-		// TODO: Separate concurrent and sequential analysis and increment the thread-number incrementally
-		final IIcfg<?> icfgForAnalysis;
-		if (IcfgUtils.isConcurrent(icfg)) {
-			if (!IcfgUtils.getForksInLoop(icfg).isEmpty()) {
-				// TODO: Handle this properly
-				throw new UnsupportedOperationException(
-						"Unbounded threads are currently not supported for termination analysis.");
-			}
-			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, 1);
-			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
-			icfgForAnalysis = icfgPetrifier.getPetrifiedIcfg();
-		} else {
-			icfgForAnalysis = icfg;
-		}
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfgForAnalysis.getCfgSmtToolkit());
-		final PredicateFactory predicateFactory =
-				new PredicateFactory(mServices, icfgForAnalysis.getCfgSmtToolkit().getManagedScript(),
-						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
-
 		final BuchiCegarLoopFactory<IcfgEdge> factory =
-				new BuchiCegarLoopFactory<>(mServices, taPrefs, IcfgEdge.class, benchGen);
-		final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl =
-				factory.constructCegarLoop(icfgForAnalysis, rankVarConstructor, predicateFactory, witnessAutomaton);
-		final Result result = bcl.runCegarLoop();
+				new BuchiCegarLoopFactory<>(mServices, new TAPreferences(mServices), IcfgEdge.class, benchGen);
+		final AbstractBuchiCegarLoop<IcfgEdge, ?> cegarLoop;
+		final Result result;
+		if (IcfgUtils.isConcurrent(icfg)) {
+			int numberOfThreads = 1;
+			while (true) {
+				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreads);
+				mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+				final IIcfg<IcfgLocation> petrified = icfgPetrifier.getPetrifiedIcfg();
+				final Set<IcfgLocation> insufficientThreadLocs = new HashSet<>(
+						petrified.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());
+				final AbstractBuchiCegarLoop<IcfgEdge, ?> currentCegarLoop =
+						constructCegarLoop(petrified, witnessAutomaton, factory);
+				final Result currentResult = currentCegarLoop.runCegarLoop();
+				if (currentResult != Result.NONTERMINATING
+						|| !containsInsufficientThreadLocation(currentCegarLoop.getCounterexample(),
+								insufficientThreadLocs)) {
+					cegarLoop = currentCegarLoop;
+					result = currentResult;
+					break;
+				}
+				numberOfThreads++;
+			}
+		} else {
+			cegarLoop = constructCegarLoop(icfg, witnessAutomaton, factory);
+			result = cegarLoop.runCegarLoop();
+		}
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 
 		final IResult benchDecomp = new StatisticsResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",
-				bcl.getMDBenchmark());
+				cegarLoop.getMDBenchmark());
 		reportResult(benchDecomp);
 
 		final boolean constructTermcompProof = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
 		if (constructTermcompProof) {
 			final IResult termcompProof = new StatisticsResult<>(Activator.PLUGIN_ID,
-					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());
+					"Constructed termination proof in form of nested word automata",
+					cegarLoop.getTermcompProofBenchmark());
 			reportResult(termcompProof);
 		}
 
@@ -179,8 +183,29 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 
-		interpretAndReportResult(bcl, result, icfg);
+		interpretAndReportResult(cegarLoop, result, icfg);
 		return icfg;
+	}
+
+	private static boolean containsInsufficientThreadLocation(final NestedLassoRun<IcfgEdge, IPredicate> counterexample,
+			final Set<IcfgLocation> insufficientThreadLocs) {
+		for (final IPredicate pred : counterexample.getLoop().getStateSequence()) {
+			final Set<IcfgLocation> locs = BuchiAutomizerUtils.getLocations(pred);
+			if (DataStructureUtils.haveNonEmptyIntersection(locs, insufficientThreadLocs)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private AbstractBuchiCegarLoop<IcfgEdge, ?> constructCegarLoop(final IIcfg<?> icfg,
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
+			final BuchiCegarLoopFactory<IcfgEdge> factory) {
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
+						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
+		return factory.constructCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton);
 	}
 
 	/**
@@ -345,14 +370,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private static IcfgLocation
 			getProgramPoint(final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample) {
 		final IPredicate pred = counterexample.getLoop().getStateAtPosition(0);
-		if (pred instanceof ISLPredicate) {
-			return ((ISLPredicate) pred).getProgramPoint();
-		}
-		if (pred instanceof IMLPredicate) {
-			// TODO: This is just a workaround. What is the proper way here?
-			return ((IMLPredicate) pred).getProgramPoints()[0];
-		}
-		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+		// Return any program point from the predicate
+		// There is not really a "correct" answer here for concurrent programs
+		return BuchiAutomizerUtils.getLocations(pred).iterator().next();
 	}
 
 	/**
