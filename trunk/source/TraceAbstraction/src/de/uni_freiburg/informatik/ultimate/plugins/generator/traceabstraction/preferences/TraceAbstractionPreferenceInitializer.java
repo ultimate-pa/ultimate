@@ -149,7 +149,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final int DEF_POR_COINFLIP_SEED = 0;
 
 	public enum CoinflipMode {
-		OFF, FIXED, LINEAR
+		OFF, FALLBACK, PURE
 	}
 
 	/* **************************************** */

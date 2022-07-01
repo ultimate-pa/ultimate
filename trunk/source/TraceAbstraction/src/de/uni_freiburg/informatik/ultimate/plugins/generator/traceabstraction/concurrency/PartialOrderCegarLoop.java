@@ -135,6 +135,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CoinflipMode;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -325,9 +326,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		try {
 			IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
 					mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor);
-			if (mPref.useCoinflip()) {
+			if (mPref.useCoinflip() == CoinflipMode.FALLBACK) {
 				budget = new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration),
 						budget);
+			} else if (mPref.useCoinflip() == CoinflipMode.PURE) {
+				budget = new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration),
+						(s, l) -> 1);
 			}
 			mPOR.setBudget(budget);
 
