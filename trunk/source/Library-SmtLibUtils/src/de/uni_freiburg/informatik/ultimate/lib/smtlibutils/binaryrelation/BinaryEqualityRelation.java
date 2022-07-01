@@ -43,30 +43,10 @@ public class BinaryEqualityRelation extends BinaryRelation {
 		super(relSymb, lhs, rhs);
 	}
 
-	@Override
-	protected void checkSort(final Term[] params)
-			throws NoRelationOfThisKindException {
-		// do nothing, every Sort is ok
-	}
-
-	@Override
-	protected RelationSymbol getRelationSymbol(final String functionSymbolName,
-			final boolean isNegated) throws NoRelationOfThisKindException {
-		RelationSymbol symb = null;
-		if (functionSymbolName.equals("=")) {
-			symb = RelationSymbol.valueOf("EQ");
-		} else if (functionSymbolName.equals("distinct")) {
-			symb = RelationSymbol.valueOf("DISTINCT");
-		} else {
-			throw new NoRelationOfThisKindException(
-					"no equality relation symbol");
-		}
-		final RelationSymbol symb1 = symb;
-		symb = isNegated ? symb1.negate() : symb;
-		return symb;
-	}
-
-
+	/**
+	 * Return a representation of a given {@link Term} as a
+	 * {@link BinaryEqualityRelation}, return null if no such representation exists.
+	 */
 	public static BinaryEqualityRelation convert(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;

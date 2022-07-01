@@ -50,25 +50,6 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		mRhs = rhs;
 	}
 
-	/**
-	 * Check if Sort of parameters is compatible. Throw Exception if not.
-	 *
-	 * @throws NoRelationOfThisKindException
-	 */
-	abstract protected void checkSort(Term[] params) throws NoRelationOfThisKindException;
-
-	/**
-	 * Return the RelationSymbol for this relation resolve negation
-	 *
-	 * @param functionSymbolName
-	 *            function symbol name of the original term
-	 * @param isNegated
-	 *            true iff the original term is negated
-	 * @throws NoRelationOfThisKindException
-	 */
-	abstract protected RelationSymbol getRelationSymbol(String functionSymbolName, boolean isNegated)
-			throws NoRelationOfThisKindException;
-
 	public RelationSymbol getRelationSymbol() {
 		return mRelationSymbol;
 	}
@@ -168,15 +149,6 @@ public abstract class BinaryRelation implements IBinaryRelation {
 			}
 		} else {
 			return null;
-		}
-	}
-
-	public static class NoRelationOfThisKindException extends Exception {
-
-		private static final long serialVersionUID = 1L;
-
-		public NoRelationOfThisKindException(final String message) {
-			super(message);
 		}
 	}
 

@@ -44,30 +44,6 @@ public class BinaryNumericRelation extends BinaryRelation {
 		super(relationSymbol, lhs, rhs);
 	}
 
-	@Override
-	protected void checkSort(final Term[] params) throws NoRelationOfThisKindException {
-		if (!params[0].getSort().isNumericSort() && !SmtSortUtils.isBitvecSort(params[0].getSort())) {
-			throw new NoRelationOfThisKindException("not numeric");
-		}
-		assert params[1].getSort().isNumericSort() || SmtSortUtils.isBitvecSort(params[1].getSort());
-	}
-
-	@Override
-	protected RelationSymbol getRelationSymbol(final String functionSymbolName, final boolean isNegated)
-			throws NoRelationOfThisKindException {
-		RelationSymbol relSymb = null;
-		for (final RelationSymbol symb : RelationSymbol.values()) {
-			if (symb.toString().equals(functionSymbolName)) {
-				relSymb = isNegated ? symb.negate() : symb;
-				break;
-			}
-		}
-		if (relSymb == null) {
-			throw new NoRelationOfThisKindException("no binary numberic relation symbol");
-		}
-		return relSymb;
-	}
-
 	/**
 	 * Returns a new BinaryNumericRelation that has the RelationSymbol relSymb and the same lhs and rhs as this
 	 * BinaryNumericRelation.
@@ -77,6 +53,10 @@ public class BinaryNumericRelation extends BinaryRelation {
 	}
 
 
+	/**
+	 * Return a representation of a given {@link Term} as a
+	 * {@link BinaryNumericRelation}, return null if no such representation exists.
+	 */
 	public static BinaryNumericRelation convert(final Term term) {
 		Term afterPreprocessing;
 		boolean isNegated;
