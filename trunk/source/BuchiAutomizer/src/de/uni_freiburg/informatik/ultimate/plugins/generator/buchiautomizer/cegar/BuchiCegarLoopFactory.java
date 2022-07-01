@@ -79,6 +79,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	private final TAPreferences mPrefs;
 	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
 	private final Class<L> mTransitionClazz;
+	private int mNumberOfConstructions;
 
 	public BuchiCegarLoopFactory(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final Class<L> transitionClazz, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
@@ -86,11 +87,14 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		mPrefs = taPrefs;
 		mTransitionClazz = transitionClazz;
 		mCegarLoopBenchmark = benchmarkGenerator;
+		mNumberOfConstructions = 0;
 	}
 
 	public AbstractBuchiCegarLoop<L, ?> constructCegarLoop(final IIcfg<?> icfg,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton, final Object identifier) {
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit(), identifier);
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+		final String variableSuffix = mNumberOfConstructions > 0 ? Integer.toString(mNumberOfConstructions) : "";
+		mNumberOfConstructions++;
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit(), variableSuffix);
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());

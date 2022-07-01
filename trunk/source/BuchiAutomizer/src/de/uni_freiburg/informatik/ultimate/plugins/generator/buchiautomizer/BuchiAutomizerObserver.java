@@ -148,7 +148,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				final Set<IcfgLocation> insufficientThreadLocs = new HashSet<>(
 						petrified.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());
 				final AbstractBuchiCegarLoop<IcfgEdge, ?> currentCegarLoop =
-						factory.constructCegarLoop(petrified, witnessAutomaton, numberOfThreadInstances);
+						factory.constructCegarLoop(petrified, witnessAutomaton);
 				final Result currentResult = currentCegarLoop.runCegarLoop();
 				if (currentResult != Result.NONTERMINATING
 						|| !containsInsufficientThreadLocation(currentCegarLoop.getCounterexample(),
@@ -162,7 +162,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				numberOfThreadInstances++;
 			}
 		} else {
-			cegarLoop = factory.constructCegarLoop(icfg, witnessAutomaton, "");
+			cegarLoop = factory.constructCegarLoop(icfg, witnessAutomaton);
 			result = cegarLoop.runCegarLoop();
 		}
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
