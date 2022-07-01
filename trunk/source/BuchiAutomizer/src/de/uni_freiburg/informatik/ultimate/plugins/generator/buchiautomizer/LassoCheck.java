@@ -74,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -208,6 +207,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryForInterpolantAutomaton;
 
+	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
+
 	public LassoCheck(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final SmtFunctionsAndAxioms smtSymbols, final BinaryStatePredicateManager bspm,
 			final NestedLassoRun<L, IPredicate> counterexample, final String lassoCheckIdentifier,
@@ -232,6 +233,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mCsToolkit = csToolkit;
 		mBspm = bspm;
 		mCounterexample = counterexample;
+		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
+		mModifiableGlobalsAtHonda = BuchiAutomizerUtils.getLocations(honda).stream()
+				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
+				.collect(Collectors.toSet());
 		mLassoCheckIdentifier = lassoCheckIdentifier;
 		mSmtSymbols = smtSymbols;
 		mRefinementStrategyFactory = refinementStrategyFactory;
@@ -532,8 +537,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
-		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = getModifiableGlobalsAtHonda();
-
 		if (!withStem) {
 			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
 		}
@@ -548,7 +551,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// }
 
 		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
-				modifiableGlobalsAtHonda, stemTF, loopTF);
+				mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem) {
 				mNonterminationArgument = fixpointCheck.getTerminationArgument();
@@ -564,7 +567,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
+				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
 						mServices, mSimplificationTechnique, mXnfConversionTechnique);
@@ -596,7 +599,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
+			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
 					mServices, mSimplificationTechnique, mXnfConversionTechnique);
@@ -656,13 +659,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return SynthesisResult.UNKNOWN;
 	}
 
-	private Set<IProgramNonOldVar> getModifiableGlobalsAtHonda() {
-		final IPredicate pred = mCounterexample.getLoop().getStateAtPosition(0);
-		return BuchiAutomizerUtils.getLocations(pred).stream().map(IcfgLocation::getProcedure)
-				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x).stream())
-				.collect(Collectors.toSet());
-	}
-
 	/**
 	 * @param withStem
 	 * @param lrta
@@ -676,7 +672,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, final LassoAnalysis la,
 			final List<RankingTemplate> rankingFunctionTemplates, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF) throws AssertionError, IOException {
-		final Set<IProgramNonOldVar> modifiableGlobals = getModifiableGlobalsAtHonda();
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
@@ -702,7 +697,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				assert termArg.getRankingFunction() != null;
 				assert termArg.getSupportingInvariants() != null;
 				mBspm.computePredicates(!withStem, termArg, mRemoveSuperfluousSupportingInvariants, stemTF, loopTF,
-						modifiableGlobals);
+						mModifiableGlobalsAtHonda);
 				assert mBspm.providesPredicates();
 				// assert areSupportingInvariantsCorrect() : "incorrect supporting invariant with"
 				// + rft.getClass().getSimpleName();
@@ -720,7 +715,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			assert firstTerminationArgument.getRankingFunction() != null;
 			assert firstTerminationArgument.getSupportingInvariants() != null;
 			mBspm.computePredicates(!withStem, firstTerminationArgument, mRemoveSuperfluousSupportingInvariants, stemTF,
-					loopTF, modifiableGlobals);
+					loopTF, mModifiableGlobalsAtHonda);
 			assert mBspm.providesPredicates();
 			return firstTerminationArgument;
 		}

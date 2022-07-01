@@ -79,8 +79,7 @@ public final class BuchiAutomizerUtils {
 
 	public static <LETTER> VpAlphabet<LETTER> getVpAlphabet(final IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INwaBasis) {
-			final INwaBasis<LETTER, ?> nwa = (INwaBasis<LETTER, ?>) automaton;
-			return nwa.getVpAlphabet();
+			return ((INwaBasis<LETTER, ?>) automaton).getVpAlphabet();
 		}
 		return new VpAlphabet<>(automaton.getAlphabet());
 	}

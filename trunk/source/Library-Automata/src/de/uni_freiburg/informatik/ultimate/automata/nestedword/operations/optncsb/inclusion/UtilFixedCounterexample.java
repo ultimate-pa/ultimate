@@ -135,9 +135,7 @@ public class UtilFixedCounterexample<LETTER extends IIcfgTransition<?>, STATE> {
 		if (word == null) {
 			return null;
 		}
-		final GetLassoRunFromLassoWord<LETTER, STATE> getter =
-				new GetLassoRunFromLassoWord<>(services, automaton, word);
-		return getter.getNestedLassoRun();
+		return new GetLassoRunFromLassoWord<>(services, automaton, word).getNestedLassoRun();
 	}
 
 	private final void addLettersToStringMap(final Map<String, LETTER> map, final Set<LETTER> letters) {
