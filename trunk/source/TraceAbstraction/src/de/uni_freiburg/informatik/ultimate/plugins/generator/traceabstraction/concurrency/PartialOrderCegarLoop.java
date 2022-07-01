@@ -154,7 +154,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 
-	public static boolean READ_PROOF = true;
+	public static boolean READ_PROOF = false;
 
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
