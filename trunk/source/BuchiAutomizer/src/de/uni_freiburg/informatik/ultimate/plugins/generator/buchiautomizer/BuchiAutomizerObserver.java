@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.AbstractBuchiCegarLoop;
@@ -149,7 +148,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				final Set<IcfgLocation> insufficientThreadLocs = new HashSet<>(
 						petrified.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());
 				final AbstractBuchiCegarLoop<IcfgEdge, ?> currentCegarLoop =
-						constructCegarLoop(petrified, witnessAutomaton, factory, numberOfThreadInstances);
+						factory.constructCegarLoop(petrified, witnessAutomaton, numberOfThreadInstances);
 				final Result currentResult = currentCegarLoop.runCegarLoop();
 				if (currentResult != Result.NONTERMINATING
 						|| !containsInsufficientThreadLocation(currentCegarLoop.getCounterexample(),
@@ -163,7 +162,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				numberOfThreadInstances++;
 			}
 		} else {
-			cegarLoop = constructCegarLoop(icfg, witnessAutomaton, factory, "");
+			cegarLoop = factory.constructCegarLoop(icfg, witnessAutomaton, "");
 			result = cegarLoop.runCegarLoop();
 		}
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
@@ -198,16 +197,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			}
 		}
 		return false;
-	}
-
-	private AbstractBuchiCegarLoop<IcfgEdge, ?> constructCegarLoop(final IIcfg<?> icfg,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
-			final BuchiCegarLoopFactory<IcfgEdge> factory, final Object identifier) {
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
-		final PredicateFactory predicateFactory =
-				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
-						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
-		return factory.constructCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton);
 	}
 
 	/**

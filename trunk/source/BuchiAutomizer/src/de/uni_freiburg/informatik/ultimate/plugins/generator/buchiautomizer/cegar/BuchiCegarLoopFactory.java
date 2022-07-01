@@ -89,8 +89,11 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	}
 
 	public AbstractBuchiCegarLoop<L, ?> constructCegarLoop(final IIcfg<?> icfg,
-			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton, final Object identifier) {
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit(), identifier);
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
+						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				rankVarConstructor.getCsToolkitWithRankVariables().getManagedScript(), predicateFactory, false,
 				Collections.emptySet());
