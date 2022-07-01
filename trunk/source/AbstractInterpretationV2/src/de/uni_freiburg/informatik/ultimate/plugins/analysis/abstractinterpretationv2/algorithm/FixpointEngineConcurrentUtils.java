@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -57,41 +58,47 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private final IIcfg<?> mIcfg;
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final Map<ACTION, Set<IProgramVar>> mWrittenSharedVars;
-	private final Map<ACTION, Set<IProgramVar>> mReadSharedVars;
+	private final Map<ACTION, Set<IProgramVarOrConst>> mWrittenSharedVars;
+	private final Map<ACTION, Set<IProgramVarOrConst>> mReadSharedVars;
 	private final Map<String, Set<String>> mForks;
-	private final Map<ACTION, Set<ACTION>> mActionsToPatch;
 	private final Map<ACTION, Set<String>> mReadsFromProcedures;
+	private final Map<String, Set<ACTION>> mWritesPerProcedure;
+	private final Map<String, Set<ACTION>> mReadsPerProcedure;
 
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider) {
 		mIcfg = icfg;
 		mTransitionProvider = transProvider;
 		mWrittenSharedVars = new HashMap<>();
 		mReadSharedVars = new HashMap<>();
-		mActionsToPatch = new HashMap<>();
 		mForks = new HashMap<>();
 		mReadsFromProcedures = new HashMap<>();
+		mWritesPerProcedure = new HashMap<>();
+		mReadsPerProcedure = new HashMap<>();
 
 		initialize(mIcfg.getProcedureEntryNodes());
 	}
 
-	public Set<IProgramVar> getWrittenVars(final ACTION action) {
+	public Set<ACTION> getWrites(final String procedure) {
+		return mWritesPerProcedure.get(procedure);
+	}
+
+	public Set<ACTION> getReads(final String procedure) {
+		return mReadsPerProcedure.get(procedure);
+	}
+
+	public Set<IProgramVarOrConst> getWrittenVars(final ACTION action) {
 		return mWrittenSharedVars.get(action);
 	}
 
-	public Set<IProgramVar> getReadVars(final ACTION action) {
+	public Set<IProgramVarOrConst> getReadVars(final ACTION action) {
 		return mReadSharedVars.get(action);
 	}
 
-	public Set<ACTION> getActionsToPatchInto(final ACTION readAction) {
-		return mActionsToPatch.get(readAction);
-	}
-
-	public Set<Entry<ACTION, Set<IProgramVar>>> getSharedWriteIterable() {
+	public Set<Entry<ACTION, Set<IProgramVarOrConst>>> getSharedWriteIterable() {
 		return mWrittenSharedVars.entrySet();
 	}
 
-	public Set<Entry<ACTION, Set<IProgramVar>>> getSharedReadIterable() {
+	public Set<Entry<ACTION, Set<IProgramVarOrConst>>> getSharedReadIterable() {
 		return mReadSharedVars.entrySet();
 	}
 
@@ -263,16 +270,31 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
 		// SharedWrites
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
+			mReadSharedVars.put((ACTION) edge, new HashSet<>());
+			edge.getTransformula().getInVars().keySet().forEach(var -> mReadSharedVars.get(edge).add(var));
+
 			mWrittenSharedVars.put((ACTION) edge, new HashSet<>());
 			edge.getTransformula().getAssignedVars().forEach(var -> mWrittenSharedVars.get(edge).add(var));
+			if (mWritesPerProcedure.containsKey(procedure)) {
+				mWritesPerProcedure.get(procedure).add((ACTION) edge);
+			} else {
+				final Set<ACTION> tempSet = new HashSet<>();
+				tempSet.add((ACTION) edge);
+				mWritesPerProcedure.put(procedure, tempSet);
+			}
 		}
 		// SharedReads
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getInVars().keySet(), variables)) {
 			mReadSharedVars.put((ACTION) edge, new HashSet<>());
-			mActionsToPatch.put((ACTION) edge, new HashSet<>());
 			DataStructureUtils.intersection(edge.getTransformula().getInVars().keySet(), variables)
 					.forEach(var -> mReadSharedVars.get(edge).add(var));
-			edge.getSource().getIncomingEdges().forEach(a -> mActionsToPatch.get(edge).add((ACTION) a));
+			if (mReadsPerProcedure.containsKey(procedure)) {
+				mReadsPerProcedure.get(procedure).add((ACTION) edge);
+			} else {
+				final Set<ACTION> tempSet = new HashSet<>();
+				tempSet.add((ACTION) edge);
+				mReadsPerProcedure.put(procedure, tempSet);
+			}
 		}
 	}
 }
