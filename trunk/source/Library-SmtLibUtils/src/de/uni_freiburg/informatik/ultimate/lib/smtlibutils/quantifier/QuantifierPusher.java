@@ -537,7 +537,7 @@ public class QuantifierPusher extends TermTransformer {
 	private static Map<TermVariable, Long> computeDerApplicabilityScore(final Script script, final int quantifier,
 			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
 		final Term correspondingFiniteJunction =
-				QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, currentDualFiniteParams);
+				QuantifierUtils.applyDualFiniteConnective(script, quantifier, currentDualFiniteParams);
 		final Map<TermVariable, Long> result = new HashMap<>();
 		for (final TermVariable eliminatee : eliminatees) {
 			final DerApplicability da =
