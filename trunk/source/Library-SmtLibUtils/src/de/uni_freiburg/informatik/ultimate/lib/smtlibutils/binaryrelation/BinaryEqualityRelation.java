@@ -38,10 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class BinaryEqualityRelation extends BinaryRelation {
 
-	public BinaryEqualityRelation(final Term term)
-			throws NoRelationOfThisKindException {
-		super(term);
-	}
 
 	private BinaryEqualityRelation(final RelationSymbol relSymb, final Term lhs, final Term rhs) {
 		super(relSymb, lhs, rhs);

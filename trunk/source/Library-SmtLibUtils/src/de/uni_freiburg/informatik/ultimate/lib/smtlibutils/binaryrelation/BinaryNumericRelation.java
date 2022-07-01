@@ -40,10 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class BinaryNumericRelation extends BinaryRelation {
 
-	private BinaryNumericRelation(final Term term) throws NoRelationOfThisKindException {
-		super(term);
-	}
-
 	private BinaryNumericRelation(final RelationSymbol relationSymbol, final Term lhs, final Term rhs) {
 		super(relationSymbol, lhs, rhs);
 	}
