@@ -274,7 +274,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 		if (interferences.containsKey(currentItem.getAction())
 				&& !interferences.get(currentItem.getAction()).getStates().isEmpty()) {
-			postState = postState.patch(interferences.get(currentItem.getAction()));
+			final DisjunctiveAbstractState<STATE> tempState =
+					postState.patch(interferences.get(currentItem.getAction()));
+			postState = postState.union(tempState);
 		}
 
 		mResult.getBenchmark().countPostApplication();

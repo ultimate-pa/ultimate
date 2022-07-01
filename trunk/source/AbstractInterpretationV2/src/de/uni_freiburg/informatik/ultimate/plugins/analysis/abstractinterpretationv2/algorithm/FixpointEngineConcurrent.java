@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.Disjunct
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -83,6 +84,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final int mMaxIterations;
 	private final FixpointEngineConcurrentUtils<STATE, ACTION, LOC> mFecUtils;
 
+	private final Map<LOC, DisjunctiveAbstractState<STATE>> mErrors;
+
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe) {
 		if (params == null || !params.isValid()) {
@@ -106,6 +109,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mMaxIterations = 3;
 
 		mFecUtils = new FixpointEngineConcurrentUtils<>(mIcfg, mTransitionProvider);
+
+		mErrors = new HashMap<>();
 	}
 
 	@Override
@@ -149,6 +154,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 					mStateStorage.addAbstractState(locAndStates.getKey(), state);
 
 				}
+				// hier hin
 			}
 			// Check if Fixpoint is reached
 			iteration++;
@@ -159,6 +165,31 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			}
 			interferences = tempInterferences;
 		}
+		final var loc2States = mStateStorage.computeLoc2States();
+		// add Errors
+		for (final Entry<LOC, Set<DisjunctiveAbstractState<STATE>>> entry : loc2States.entrySet()) {
+			if (mTransitionProvider.isErrorLocation(entry.getKey())) {
+				mErrors.put(entry.getKey(), flattenAbstractStates(entry.getValue()));
+			}
+		}
+		areAbStractStatesSound(loc2States);
+	}
+
+	private boolean areAbStractStatesSound(final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States) {
+		for (final Entry<LOC, Set<DisjunctiveAbstractState<STATE>>> entry : loc2States.entrySet()) {
+			final Collection<ACTION> actions = mTransitionProvider.getSuccessorActions(entry.getKey());
+			for (final ACTION action : actions) {
+				final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
+				final DisjunctiveAbstractState<STATE> postState =
+						flattenAbstractStates(entry.getValue()).apply(postOp, action);
+				final var states = loc2States.get(mTransitionProvider.getTarget(action));
+				final DisjunctiveAbstractState<STATE> temp = flattenAbstractStates(states);
+				if (states != null && temp.isSubsetOf(postState) == SubsetResult.NONE) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
@@ -170,8 +201,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			// no new error reached
 			return;
 		}
-		// TODO: Find a way to add reached Errors
-		// mResult.reachedError(mTransitionProvider, currentItem, postState);
+
+		mResult.reachedError(mTransitionProvider, currentItem, postState);
 	}
 
 	/**
@@ -267,7 +298,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final LOC loc = mTransitionProvider.getSource(entry.getKey());
 			DisjunctiveAbstractState<STATE> preState;
 			if (loc2States.containsKey(loc)) {
-				preState = flattenAbstractState(loc2States.get(loc));
+				preState = flattenAbstractStates(loc2States.get(loc));
 			} else {
 				preState = new DisjunctiveAbstractState<>(mDomain.createTopState());
 				// TODO: maybe I have to add all variable from the procedure
@@ -300,7 +331,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private DisjunctiveAbstractState<STATE>
-			flattenAbstractState(final Set<DisjunctiveAbstractState<STATE>> setOfStates) {
+			flattenAbstractStates(final Set<DisjunctiveAbstractState<STATE>> setOfStates) {
 		if (!setOfStates.isEmpty()) {
 			final Iterator<DisjunctiveAbstractState<STATE>> iterator = setOfStates.iterator();
 			DisjunctiveAbstractState<STATE> result = iterator.next();
