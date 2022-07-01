@@ -56,6 +56,10 @@ public class RankVarConstructor {
 	private final CfgSmtToolkit mCfgSmtToolkitWithRankVariables;
 
 	public RankVarConstructor(final CfgSmtToolkit csToolkit) {
+		this(csToolkit, "");
+	}
+
+	public RankVarConstructor(final CfgSmtToolkit csToolkit, final Object identifier) {
 		mManagedScript = csToolkit.getManagedScript();
 
 		final DefaultIcfgSymbolTable newSymbolTable =
@@ -64,14 +68,14 @@ public class RankVarConstructor {
 		mManagedScript.lock(newSymbolTable);
 
 		final Sort boolSort = SmtSortUtils.getBoolSort(csToolkit.getManagedScript());
-		mUnseededVariable = ProgramVarUtils.constructGlobalProgramVarPair(UNSEEDED_IDENTIFIER, boolSort,
+		mUnseededVariable = ProgramVarUtils.constructGlobalProgramVarPair(UNSEEDED_IDENTIFIER + identifier, boolSort,
 				csToolkit.getManagedScript(), newSymbolTable);
 		newSymbolTable.add(mUnseededVariable);
 
 		mOldRankVariables = new IProgramNonOldVar[MAX_LEX_COMPONENTS];
 		final Sort intSort = SmtSortUtils.getIntSort(csToolkit.getManagedScript());
 		for (int i = 0; i < MAX_LEX_COMPONENTS; i++) {
-			final String name = OLD_RANK_IDENTIFIER + i;
+			final String name = OLD_RANK_IDENTIFIER + identifier + i;
 			mOldRankVariables[i] = ProgramVarUtils.constructGlobalProgramVarPair(name, intSort,
 					csToolkit.getManagedScript(), newSymbolTable);
 			newSymbolTable.add(mOldRankVariables[i]);

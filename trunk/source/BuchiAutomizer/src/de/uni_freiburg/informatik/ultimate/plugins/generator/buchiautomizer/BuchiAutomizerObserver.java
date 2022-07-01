@@ -141,15 +141,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final AbstractBuchiCegarLoop<IcfgEdge, ?> cegarLoop;
 		final Result result;
 		if (IcfgUtils.isConcurrent(icfg)) {
-			int numberOfThreads = 1;
+			int numberOfThreadInstances = 1;
 			while (true) {
-				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreads);
+				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances);
 				mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 				final IIcfg<IcfgLocation> petrified = icfgPetrifier.getPetrifiedIcfg();
 				final Set<IcfgLocation> insufficientThreadLocs = new HashSet<>(
 						petrified.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());
 				final AbstractBuchiCegarLoop<IcfgEdge, ?> currentCegarLoop =
-						constructCegarLoop(petrified, witnessAutomaton, factory);
+						constructCegarLoop(petrified, witnessAutomaton, factory, numberOfThreadInstances);
 				final Result currentResult = currentCegarLoop.runCegarLoop();
 				if (currentResult != Result.NONTERMINATING
 						|| !containsInsufficientThreadLocation(currentCegarLoop.getCounterexample(),
@@ -158,10 +158,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					result = currentResult;
 					break;
 				}
-				numberOfThreads++;
+				mLogger.warn(numberOfThreadInstances
+						+ " thread instances were not sufficient, I will increase this number and restart the analysis");
+				numberOfThreadInstances++;
 			}
 		} else {
-			cegarLoop = constructCegarLoop(icfg, witnessAutomaton, factory);
+			cegarLoop = constructCegarLoop(icfg, witnessAutomaton, factory, "");
 			result = cegarLoop.runCegarLoop();
 		}
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
@@ -200,7 +202,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private AbstractBuchiCegarLoop<IcfgEdge, ?> constructCegarLoop(final IIcfg<?> icfg,
 			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
-			final BuchiCegarLoopFactory<IcfgEdge> factory) {
+			final BuchiCegarLoopFactory<IcfgEdge> factory, final Object identifier) {
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
