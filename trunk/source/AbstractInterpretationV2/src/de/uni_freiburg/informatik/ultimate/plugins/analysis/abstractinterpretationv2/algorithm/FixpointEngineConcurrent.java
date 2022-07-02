@@ -172,7 +172,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			interferences = tempInterferences;
 		}
 		final var loc2States = mStateStorage.computeLoc2States();
-		// add Errors
+		// add Errors (just for convenience -> not final solution for showing results of analysis)
 		for (final Entry<LOC, Set<DisjunctiveAbstractState<STATE>>> entry : loc2States.entrySet()) {
 			if (mTransitionProvider.isErrorLocation(entry.getKey())) {
 				mErrors.put(entry.getKey(), flattenAbstractStates(entry.getValue()));
@@ -259,25 +259,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result;
 	}
 
-	private Map<ACTION, DisjunctiveAbstractState<STATE>> addInterference(
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterference,
-			final DisjunctiveAbstractState<STATE> interference, final ACTION action) {
-		final DisjunctiveAbstractState<STATE> currentInterferences = procedureInterference.get(action);
-		if (currentInterferences != null) {
-			// variable should already be filtered out
-			// final Set<IProgramVarOrConst> sharedVars =
-			// DataStructureUtils.intersection(interference.getVariables(), currentInterferences.getVariables());
-			// currentInterferences = currentInterferences.patch(interference.removeVariables(sharedVars));
-			final DisjunctiveAbstractState<STATE> tempState = currentInterferences.patch(interference);
-			procedureInterference.put(action, unionIfNonEmpty(currentInterferences, tempState));
-		} else {
-			// get current State from StateStorage and put interference with in there
-			// final DisjunctiveAbstractState<STATE> tempState = mStateStorage.computeLoc2States()
-			procedureInterference.put(action, interference);
-		}
-		return procedureInterference;
-	}
-
 	/**
 	 * Version 2: filter procedures + special cross product
 	 *
@@ -287,6 +268,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> versionTwo(final IcfgLocation entryNode,
 			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+		// get crossproduct from mFecUtils
+		// if not computed already, compute it now -> mFecUtils.computeCrossProduct(Predicate)
+		// Then go through every entry and match every read with the to the write corresponding state in interferences
+
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
 		return procedureInterferences;
 	}
