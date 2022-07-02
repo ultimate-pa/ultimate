@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -445,25 +446,25 @@ public class QuantifierPusher extends TermTransformer {
 		if (eliminatees.size() == 1) {
 			return eliminatees.iterator().next();
 		}
-		final Map<TermVariable, Long> score =
+		final Map<TermVariable, BigInteger> score =
 				computeDerApplicabilityScore(script, quantifier, eliminatees, currentDualFiniteParams);
 		// final Map<TermVariable, Long> inhabitedParamTreesizes = computeTreesizeOfInhabitedParams(eliminatees,
 		// currentDualFiniteParams);
-		final TreeHashRelation<Long, TermVariable> tr = new TreeHashRelation<>();
+		final TreeHashRelation<BigInteger, TermVariable> tr = new TreeHashRelation<>();
 		tr.reverseAddAll(score);
-		final Entry<Long, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
+		final Entry<BigInteger, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
 		return best.getValue().iterator().next();
 	}
 
-	private static Map<TermVariable, Long> computeDerApplicabilityScore(final Script script, final int quantifier,
+	private static Map<TermVariable, BigInteger> computeDerApplicabilityScore(final Script script, final int quantifier,
 			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
 		final Term correspondingFiniteJunction =
 				QuantifierUtils.applyDualFiniteConnective(script, quantifier, currentDualFiniteParams);
-		final Map<TermVariable, Long> result = new HashMap<>();
+		final Map<TermVariable, BigInteger> result = new HashMap<>();
 		for (final TermVariable eliminatee : eliminatees) {
 			final DerApplicability da =
 					new DerScout(eliminatee, script, quantifier).transduce(correspondingFiniteJunction);
-			final long score = da.getWithoutDerCases().subtract(da.getWithoutVarCases()).longValueExact();
+			final BigInteger score = da.getWithoutDerCases().subtract(da.getWithoutVarCases());
 			result.put(eliminatee, score);
 		}
 		return result;
