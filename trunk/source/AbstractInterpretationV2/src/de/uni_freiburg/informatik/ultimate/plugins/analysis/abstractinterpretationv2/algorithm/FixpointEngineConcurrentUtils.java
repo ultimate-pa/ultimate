@@ -58,20 +58,22 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private final IIcfg<?> mIcfg;
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final Map<ACTION, Set<IProgramVarOrConst>> mWrittenSharedVars;
-	private final Map<ACTION, Set<IProgramVarOrConst>> mReadSharedVars;
+	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedWriteWrittenVars;
+	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedWriteReadVars;
+	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedReadReadVars;
 	private final Map<String, Set<String>> mForks;
-	private final Map<ACTION, Set<String>> mReadsFromProcedures;
+	private final Map<ACTION, Set<ACTION>> mWritesPerRead;
 	private final Map<String, Set<ACTION>> mWritesPerProcedure;
 	private final Map<String, Set<ACTION>> mReadsPerProcedure;
 
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider) {
 		mIcfg = icfg;
 		mTransitionProvider = transProvider;
-		mWrittenSharedVars = new HashMap<>();
-		mReadSharedVars = new HashMap<>();
+		mSharedWriteWrittenVars = new HashMap<>();
+		mSharedWriteReadVars = new HashMap<>();
+		mSharedReadReadVars = new HashMap<>();
 		mForks = new HashMap<>();
-		mReadsFromProcedures = new HashMap<>();
+		mWritesPerRead = new HashMap<>();
 		mWritesPerProcedure = new HashMap<>();
 		mReadsPerProcedure = new HashMap<>();
 
@@ -86,24 +88,20 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mReadsPerProcedure.get(procedure);
 	}
 
+	public Set<IProgramVarOrConst> getVarsForBuildingState(final ACTION action) {
+		return DataStructureUtils.union(mSharedWriteWrittenVars.get(action), mSharedWriteReadVars.get(action));
+	}
+
 	public Set<IProgramVarOrConst> getWrittenVars(final ACTION action) {
-		return mWrittenSharedVars.get(action);
+		return mSharedWriteWrittenVars.get(action);
 	}
 
 	public Set<IProgramVarOrConst> getReadVars(final ACTION action) {
-		return mReadSharedVars.get(action);
+		return mSharedReadReadVars.get(action);
 	}
 
-	public Set<Entry<ACTION, Set<IProgramVarOrConst>>> getSharedWriteIterable() {
-		return mWrittenSharedVars.entrySet();
-	}
-
-	public Set<Entry<ACTION, Set<IProgramVarOrConst>>> getSharedReadIterable() {
-		return mReadSharedVars.entrySet();
-	}
-
-	public boolean canReadFromInterference(final ACTION read, final String writeProcedure) {
-		return mReadsFromProcedures.get(read).contains(writeProcedure);
+	public boolean canReadFromInterference(final ACTION read, final ACTION write) {
+		return mWritesPerRead.get(read).contains(write);
 	}
 
 	public Map<ACTION, DisjunctiveAbstractState<STATE>> filterProcedures(final String name,
@@ -135,9 +133,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
 			iterator.asStream().forEach(edge -> computationsPerEdge(entry.getKey(), edge, variables));
 		}
+		// calculated until here: mReadSharedVars, mWrittenSharedVars, mWritesPerProcedure, mReadsPerProcedure
 
-		for (final var entry : mReadSharedVars.entrySet()) {
-			mReadsFromProcedures.put(entry.getKey(), new HashSet<>());
+		final Map<ACTION, Set<String>> readsFromProcedures = new HashMap<>();
+
+		for (final var entry : mReadsPerProcedure.entrySet()) {
+			for (final ACTION action : entry.getValue()) {
+				readsFromProcedures.put(action, new HashSet<>());
+			}
 		}
 
 		for (final Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
@@ -148,7 +151,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					addFork(entry.getValue().getProcedure(), fork.getNameOfForkedProcedure());
 
 					final IcfgEdgeIterator forkIterator = new IcfgEdgeIterator(edge.getTarget().getOutgoingEdges());
-					forkIterator.asStream().forEach(a -> checkforInterferences(a, fork.getNameOfForkedProcedure()));
+					forkIterator.asStream().forEach(
+							a -> checkforInterferences(a, fork.getNameOfForkedProcedure(), readsFromProcedures));
 				}
 			}
 		}
@@ -156,24 +160,38 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		final Map<String, Set<String>> closureForks = closure(mForks);
 		final Map<String, Set<String>> dependingOn = computeDependingProcedures(closureForks);
 
-		for (final Entry<ACTION, Set<String>> entry : mReadsFromProcedures.entrySet()) {
-			// every Read that has xy in mReadsFromProcedures gets all mForks.get(xy) added
-			final Set<String> tempSet = new HashSet<>();
-			for (final String procedure : entry.getValue()) {
-				if (closureForks.containsKey(procedure)) {
-					tempSet.addAll(closureForks.get(procedure));
+		for (final Entry<ACTION, Set<String>> entry : readsFromProcedures.entrySet()) {
+			mWritesPerRead.put(entry.getKey(), new HashSet<>());
+			for (final String p1 : entry.getValue()) {
+				// add all writes from procedure
+				final Set<ACTION> writesP1 = mWritesPerProcedure.get(p1);
+				if (writesP1 != null) {
+					mWritesPerRead.get(entry.getKey()).addAll(writesP1);
+				}
+				// add all writes from closure(procedure)
+				final Set<String> forkedByP1 = closureForks.get(p1);
+				if (forkedByP1 == null) {
+					continue;
+				}
+				for (final String p2 : forkedByP1) {
+					final Set<ACTION> writesP2 = mWritesPerProcedure.get(p2);
+					if (writesP2 != null) {
+						mWritesPerRead.get(entry.getKey()).addAll(writesP2);
+					}
 				}
 			}
-			mReadsFromProcedures.get(entry.getKey()).addAll(tempSet);
-
-			// every Read in the procedure xy gets all mParallelProcedures.get(xy) added
-			if (dependingOn.containsKey(mTransitionProvider.getProcedureName(entry.getKey()))) {
-				mReadsFromProcedures.get(entry.getKey())
-						.addAll(dependingOn.get(mTransitionProvider.getProcedureName(entry.getKey())));
+			// every Read in the procedure xy gets all procedure it depends on
+			final Set<String> readDependsOn = dependingOn.get(mTransitionProvider.getProcedureName(entry.getKey()));
+			if (readDependsOn == null) {
+				continue;
+			}
+			for (final String p : readDependsOn) {
+				final Set<ACTION> writesP = mWritesPerProcedure.get(p);
+				if (writesP != null) {
+					mWritesPerRead.get(entry.getKey()).addAll(writesP);
+				}
 			}
 		}
-
-		final boolean timestop = true;
 	}
 
 	private static Map<String, Set<String>> closure(final Map<String, Set<String>> map) {
@@ -243,9 +261,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
-	private void checkforInterferences(final IcfgEdge edge, final String currentProcedure) {
-		if (mReadSharedVars.containsKey(edge)) {
-			mReadsFromProcedures.get(edge).add(currentProcedure);
+	private void checkforInterferences(final IcfgEdge edge, final String currentProcedure,
+			final Map<ACTION, Set<String>> map) {
+		// check if edge is sharedRead
+		if (mSharedReadReadVars.containsKey(edge)) {
+			map.get(edge).add(currentProcedure);
 		}
 
 		if (edge instanceof IForkActionThreadCurrent
@@ -270,11 +290,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
 		// SharedWrites
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
-			mReadSharedVars.put((ACTION) edge, new HashSet<>());
-			edge.getTransformula().getInVars().keySet().forEach(var -> mReadSharedVars.get(edge).add(var));
+			mSharedWriteReadVars.put((ACTION) edge, new HashSet<>());
+			mSharedWriteReadVars.get(edge).addAll(edge.getTransformula().getInVars().keySet());
 
-			mWrittenSharedVars.put((ACTION) edge, new HashSet<>());
-			edge.getTransformula().getAssignedVars().forEach(var -> mWrittenSharedVars.get(edge).add(var));
+			mSharedWriteWrittenVars.put((ACTION) edge, new HashSet<>());
+			mSharedWriteWrittenVars.get(edge).addAll(edge.getTransformula().getAssignedVars());
 			if (mWritesPerProcedure.containsKey(procedure)) {
 				mWritesPerProcedure.get(procedure).add((ACTION) edge);
 			} else {
@@ -285,9 +305,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 		// SharedReads
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getInVars().keySet(), variables)) {
-			mReadSharedVars.put((ACTION) edge, new HashSet<>());
+			mSharedReadReadVars.put((ACTION) edge, new HashSet<>());
 			DataStructureUtils.intersection(edge.getTransformula().getInVars().keySet(), variables)
-					.forEach(var -> mReadSharedVars.get(edge).add(var));
+					.forEach(var -> mSharedReadReadVars.get(edge).add(var));
 			if (mReadsPerProcedure.containsKey(procedure)) {
 				mReadsPerProcedure.get(procedure).add((ACTION) edge);
 			} else {

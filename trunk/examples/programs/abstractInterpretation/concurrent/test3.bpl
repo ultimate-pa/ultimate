@@ -32,7 +32,7 @@ modifies x;
     x := 3;
   } 
   fork 1 thread1();
-  assert x == 0; // ERROR
+  assert 0 <= x && x <= 10;
   while(i<3) {
     i := i + 1;
     x := x + 1;
