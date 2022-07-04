@@ -340,15 +340,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE>
 			flattenAbstractStates(final Set<DisjunctiveAbstractState<STATE>> setOfStates) {
-		if (!setOfStates.isEmpty()) {
-			final Iterator<DisjunctiveAbstractState<STATE>> iterator = setOfStates.iterator();
-			DisjunctiveAbstractState<STATE> result = iterator.next();
-			while (iterator.hasNext()) {
-				result = unionIfNonEmpty(result, iterator.next());
-			}
-			return result;
+		if (setOfStates == null || setOfStates.isEmpty()) {
+			return new DisjunctiveAbstractState<>();
 		}
-		return new DisjunctiveAbstractState<>();
+
+		final Iterator<DisjunctiveAbstractState<STATE>> iterator = setOfStates.iterator();
+		DisjunctiveAbstractState<STATE> result = iterator.next();
+		while (iterator.hasNext()) {
+			result = unionIfNonEmpty(result, iterator.next());
+		}
+		return result;
 	}
 
 	/**
