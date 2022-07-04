@@ -139,28 +139,41 @@
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
 	</rundefinition>
 
-	<rundefinition name="NewStatesSleep_Concrete-Smt">
+	<!--rundefinition name="NewStatesSleep_Concrete-Smt">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
-	<rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic">
+	<!--rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-	</rundefinition>
+	</rundefinition-->
 
 	<rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
 	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 	</rundefinition>
+	
+	<rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
 
-	<rundefinition name="NewStatesSleep_Concrete-Smt_LOOPLOCKSTEP">
+	<!--rundefinition name="NewStatesSleep_Concrete-Smt_LOOPLOCKSTEP">
 	  <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-	</rundefinition>
+	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	</rundefinition-->
 
-	<rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
+	<!--rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
-	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-	</rundefinition>
+	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	</rundefinition-->
 
 	<!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder_Z3_1000ms">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
