@@ -259,23 +259,23 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 * Check if {@code abstraction} is empty (i.e. does not accept any word).
 	 *
 	 * @param abstraction
-	 *            The current abstract
+	 *            The current abstraction
 	 * @return true iff {@code abstraction} is empty
 	 * @throws AutomataLibraryException
 	 */
 	protected abstract boolean isAbstractionEmpty(A abstraction) throws AutomataLibraryException;
 
 	/**
-	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) for the case where we
-	 * detected that a finite prefix of the lasso-shaped counterexample is infeasible. In this case the module (i.e.,
-	 * the subtrahend {@code interpolantAutomaton} of the difference) will be a weak Büchi automaton (Büchi automaton
-	 * where set of final states is a trap). In fact, the module will have only a single accepting state that is labeled
-	 * with "false" and that has a self-loop for every letter.
+	 * Refine the given {@code abstraction} i.e. calculate the difference with the given {@code interpolantAutomaton}
+	 * for the case where we detected that a finite prefix of the lasso-shaped counterexample is infeasible. In this
+	 * case the module (i.e., the subtrahend {@code interpolantAutomaton} of the difference) will be a weak Büchi
+	 * automaton (Büchi automaton where set of final states is a trap). In fact, the module will have only a single
+	 * accepting state that is labeled with "false" and that has a self-loop for every letter.
 	 *
 	 * @param abstraction
 	 *            The abstraction to be refined
 	 * @param interpolantAutomaton
-	 *            The automaton check for the infeasible lasso
+	 *            The subtrahend of the difference, a weak Büchi automaton
 	 * @return The new refined abstraction
 	 * @throws AutomataOperationCanceledException
 	 */
@@ -284,13 +284,14 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			throws AutomataOperationCanceledException;
 
 	/**
-	 * Refine the given {@code abstraction} (i.e. calculate the difference with some automaton) w.r.t. {@code bspm} for
-	 * the case where we detected that the lasso can only be taken finitely often.
+	 * Refine the given {@code abstraction} i.e. calculate the difference with the given {@code interpolantAutomaton}
+	 * for the case where we detected that the lasso that is represented by the automaton can only be taken finitely
+	 * often.
 	 *
 	 * @param abstraction
 	 *            The abstraction to be refined
-	 * @param bspm
-	 *            The {@code BinaryStatePredicateManager} representing the infeasible lasso
+	 * @param interpolantAutomaton
+	 *            The subtrahend of the difference
 	 * @return The new refined abstraction
 	 * @throws AutomataOperationCanceledException
 	 */
@@ -298,6 +299,17 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException;
 
+	/**
+	 * Reduce the size of the given {@code abstraction} w.r.t the given minimization technique
+	 * {@code automataMinimization}.
+	 *
+	 * @param abstraction
+	 *            The current abstraction
+	 * @param automataMinimization
+	 *            The minimization technique
+	 * @return A new potentially smaller automaton than {@code abstraction} that still recognizes the same language
+	 * @throws AutomataOperationCanceledException
+	 */
 	protected abstract A reduceAbstractionSize(final A abstraction, final Minimization automataMinimization)
 			throws AutomataOperationCanceledException;
 
