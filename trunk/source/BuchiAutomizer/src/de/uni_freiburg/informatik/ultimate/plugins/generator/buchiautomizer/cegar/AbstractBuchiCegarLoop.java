@@ -531,11 +531,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
-		// final BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
-		// lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
-		// lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
-		// mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
-
 		/*
 		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles Each construction style defines how
 		 * an interpolant automaton is constructed. Constructions that provide simpler (less nondeterministic) automata
