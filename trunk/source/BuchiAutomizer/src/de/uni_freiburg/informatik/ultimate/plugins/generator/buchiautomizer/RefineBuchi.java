@@ -141,6 +141,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		benchmarkGenerator.reportHighestRank(3);
 		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
+		final boolean noCallAndReturn = abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
+				&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty();
 		switch (mNcsbImplementation) {
 		case INTSET:
 			return new BuchiDifferenceNCSBSimple<>(automataServices, mStateFactoryForRefinement, abstraction,
@@ -149,32 +151,28 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			return new BuchiDifferenceNCSBLazy<>(automataServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA:
-			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
-					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+			if (noCallAndReturn) {
 				return new GeneralizedBuchiDifferenceNCSBSimple<>(automataServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, false).getResult();
 			}
 			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA_LAZY:
-			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
-					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+			if (noCallAndReturn) {
 				return new GeneralizedBuchiDifferenceNCSBSimple<>(automataServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, true).getResult();
 			}
 			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA_ANTICHAIN:
-			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
-					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+			if (noCallAndReturn) {
 				return new GeneralizedBuchiDifferenceNCSBAntichain<>(automataServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, false).getResult();
 			}
 			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA_LAZY_ANTICHAIN:
-			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
-					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+			if (noCallAndReturn) {
 				return new GeneralizedBuchiDifferenceNCSBAntichain<>(automataServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, true).getResult();
 			}
@@ -208,23 +206,16 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer, final FkvOptimization optimization)
 			throws AutomataLibraryException {
-		GeneralizedBuchiDifferenceFKV<LETTER, IPredicate> gbaDiff = null;
-		BuchiDifferenceFKV<LETTER, IPredicate> diff = null;
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction =
-					(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction;
-			gbaDiff = new GeneralizedBuchiDifferenceFKV<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement, gbaAbstraction, interpolantAutomaton, stateDeterminizer, optimization,
-					Integer.MAX_VALUE);
-		} else {
-			diff = new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					abstraction, interpolantAutomaton, stateDeterminizer, optimization, Integer.MAX_VALUE);
+			return new GeneralizedBuchiDifferenceFKV<>(automataServices, mStateFactoryForRefinement,
+					(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction,
+					interpolantAutomaton, stateDeterminizer, optimization, Integer.MAX_VALUE).getResult();
 		}
-		if (gbaDiff == null) {
-			benchmarkGenerator.reportHighestRank(diff.getHighestRank());
-			assert diff.checkResult(mStateFactoryInterpolAutom);
-			return diff.getResult();
-		}
-		return gbaDiff.getResult();
+		final var diff = new BuchiDifferenceFKV<>(automataServices, mStateFactoryForRefinement, abstraction,
+				interpolantAutomaton, stateDeterminizer, optimization, Integer.MAX_VALUE);
+		benchmarkGenerator.reportHighestRank(diff.getHighestRank());
+		assert diff.checkResult(mStateFactoryInterpolAutom);
+		return diff.getResult();
 	}
 }
