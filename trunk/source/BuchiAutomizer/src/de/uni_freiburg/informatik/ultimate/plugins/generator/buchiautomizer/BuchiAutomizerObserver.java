@@ -2,7 +2,8 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
  *
@@ -93,7 +94,10 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
- * Auto-Generated Stub for the plug-in's Observer
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Jan Leike (leike@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 

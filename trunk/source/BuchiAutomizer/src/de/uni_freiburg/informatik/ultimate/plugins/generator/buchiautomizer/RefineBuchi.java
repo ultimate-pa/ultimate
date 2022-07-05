@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
  *
@@ -56,6 +57,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 
+/**
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ */
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private final boolean mDifference;
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryInterpolAutom;
