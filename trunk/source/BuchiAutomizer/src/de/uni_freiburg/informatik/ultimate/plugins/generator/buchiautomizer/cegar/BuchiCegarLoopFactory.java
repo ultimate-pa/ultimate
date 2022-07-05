@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -55,6 +56,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
@@ -107,14 +111,13 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
 		}
-		final var petriNetProvider = new PetriInitialAbstractionProvider<L>(mServices, predicateFactory, true);
+		final var petriNetProvider = constructPetriNetProvider(predicateFactory, icfg);
 		final AutomatonTypeConcurrent automatonTypeConcurrent = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATON_TYPE, AutomatonTypeConcurrent.class);
 		switch (automatonTypeConcurrent) {
 		case BUCHI_AUTOMATON:
-			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> automatonProvider =
-					new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider, stateFactoryForRefinement,
-							new AutomataLibraryServices(mServices));
+			final var automatonProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider,
+					stateFactoryForRefinement, new AutomataLibraryServices(mServices));
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
 		default:
@@ -123,19 +126,31 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	private IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>>
+			constructPetriNetProvider(final PredicateFactory predicateFactory, final IIcfg<?> icfg) {
+		final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> petriNetProvider =
+				new PetriInitialAbstractionProvider<>(mServices, predicateFactory, true);
+		if (!mPrefs.applyOneShotLbe()) {
+			return petriNetProvider;
+		}
+		return new PetriLbeInitialAbstractionProvider<>(petriNetProvider, mServices, mTransitionClazz,
+				mPrefs.lbeIndependenceSettings(),
+				(IPLBECompositionFactory<L>) new IcfgCompositionFactory(mServices, icfg.getCfgSmtToolkit()),
+				Activator.PLUGIN_ID);
+	}
+
 	private BuchiAutomatonCegarLoop<L> createBuchiAutomatonCegarLoop(final IIcfg<?> icfg,
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
 			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
 			final PredicateFactoryRefinement stateFactory,
-			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> initialAbstractionProvider) {
+			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> provider) {
 		if (witnessAutomaton != null) {
-			initialAbstractionProvider =
-					new WitnessAutomatonAbstractionProvider<>(mServices, predicateFactory, stateFactory,
-							initialAbstractionProvider, extendWitnessAutomaton(witnessAutomaton), Property.TERMINATION);
+			provider = new WitnessAutomatonAbstractionProvider<>(mServices, predicateFactory, stateFactory, provider,
+					extendWitnessAutomaton(witnessAutomaton), Property.TERMINATION);
 		}
 		return new BuchiAutomatonCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
-				mTransitionClazz, constructInitialAbstraction(initialAbstractionProvider, icfg), stateFactory,
-				mCegarLoopBenchmark);
+				mTransitionClazz, constructInitialAbstraction(provider, icfg), stateFactory, mCegarLoopBenchmark);
 	}
 
 	private static Set<IcfgLocation> getAcceptingStates(final IIcfg<?> icfg) {
