@@ -49,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
@@ -59,22 +57,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
-
-	protected final ILogger mLogger;
 	private final boolean mDifference;
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryInterpolAutom;
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
 	private final boolean mUseDoubleDeckers;
 	private final NcsbImplementation mNcsbImplementation;
-
-	private final IUltimateServiceProvider mServices;
+	private final AutomataLibraryServices mServices;
 
 	public RefineBuchi(final boolean difference, final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean useDoubleDeckers,
-			final IUltimateServiceProvider services, final ILogger logger,
-			final NcsbImplementation ncsbImplementation) {
+			final AutomataLibraryServices services, final NcsbImplementation ncsbImplementation) {
 		mServices = services;
-		mLogger = logger;
 		mDifference = difference;
 		mStateFactoryInterpolAutom = stateFactoryInterpolAutom;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
@@ -121,16 +114,14 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 					optimization);
 		}
 
-		final BuchiComplementFKV<LETTER, IPredicate> complNwa =
-				new BuchiComplementFKV<>(new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
-						interpolantAutomaton, stateDeterminizer);
+		final BuchiComplementFKV<LETTER, IPredicate> complNwa = new BuchiComplementFKV<>(mServices,
+				mStateFactoryInterpolAutom, interpolantAutomaton, stateDeterminizer);
 		benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 		assert complNwa.checkResult(mStateFactoryInterpolAutom);
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> complement = complNwa.getResult();
-		assert !new BuchiAccepts<>(new AutomataLibraryServices(mServices), complement,
-				counterexample.getNestedLassoWord()).getResult();
-		final BuchiIntersect<LETTER, IPredicate> interNwa = new BuchiIntersect<>(new AutomataLibraryServices(mServices),
-				mStateFactoryForRefinement, abstraction, complement);
+		assert !new BuchiAccepts<>(mServices, complement, counterexample.getNestedLassoWord()).getResult();
+		final BuchiIntersect<LETTER, IPredicate> interNwa =
+				new BuchiIntersect<>(mServices, mStateFactoryForRefinement, abstraction, complement);
 		assert interNwa.checkResult(mStateFactoryInterpolAutom);
 		return interNwa.getResult();
 	}
@@ -140,53 +131,52 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		benchmarkGenerator.reportHighestRank(3);
-		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		final boolean noCallAndReturn = abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
 				&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty();
 		switch (mNcsbImplementation) {
 		case INTSET:
-			return new BuchiDifferenceNCSBSimple<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBSimple<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_LAZY:
-			return new BuchiDifferenceNCSBLazy<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBLazy<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA:
 			if (noCallAndReturn) {
-				return new GeneralizedBuchiDifferenceNCSBSimple<>(automataServices, mStateFactoryForRefinement,
+				return new GeneralizedBuchiDifferenceNCSBSimple<>(mServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, false).getResult();
 			}
-			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBLazy3<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA_LAZY:
 			if (noCallAndReturn) {
-				return new GeneralizedBuchiDifferenceNCSBSimple<>(automataServices, mStateFactoryForRefinement,
+				return new GeneralizedBuchiDifferenceNCSBSimple<>(mServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, true).getResult();
 			}
-			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBLazy3<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA_ANTICHAIN:
 			if (noCallAndReturn) {
-				return new GeneralizedBuchiDifferenceNCSBAntichain<>(automataServices, mStateFactoryForRefinement,
+				return new GeneralizedBuchiDifferenceNCSBAntichain<>(mServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, false).getResult();
 			}
-			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBLazy3<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_GBA_LAZY_ANTICHAIN:
 			if (noCallAndReturn) {
-				return new GeneralizedBuchiDifferenceNCSBAntichain<>(automataServices, mStateFactoryForRefinement,
+				return new GeneralizedBuchiDifferenceNCSBAntichain<>(mServices, mStateFactoryForRefinement,
 						getGeneralizedBuchiAutomaton(abstraction), interpolantAutomaton, true).getResult();
 			}
-			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBLazy3<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_LAZY2:
-			return new BuchiDifferenceNCSBLazy2<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBLazy2<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case INTSET_LAZY3:
-			return new BuchiDifferenceNCSBLazy3<>(automataServices, mStateFactoryForRefinement, abstraction,
+			return new BuchiDifferenceNCSBLazy3<>(mServices, mStateFactoryForRefinement, abstraction,
 					interpolantAutomaton).getResult();
 		case ORIGINAL:
-			return new BuchiDifferenceNCSB<>(automataServices, mStateFactoryForRefinement, abstraction,
-					interpolantAutomaton).getResult();
+			return new BuchiDifferenceNCSB<>(mServices, mStateFactoryForRefinement, abstraction, interpolantAutomaton)
+					.getResult();
 		default:
 			throw new AssertionError("illegal value");
 		}
@@ -206,13 +196,12 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer, final FkvOptimization optimization)
 			throws AutomataLibraryException {
-		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
 		if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-			return new GeneralizedBuchiDifferenceFKV<>(automataServices, mStateFactoryForRefinement,
+			return new GeneralizedBuchiDifferenceFKV<>(mServices, mStateFactoryForRefinement,
 					(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction,
 					interpolantAutomaton, stateDeterminizer, optimization, Integer.MAX_VALUE).getResult();
 		}
-		final var diff = new BuchiDifferenceFKV<>(automataServices, mStateFactoryForRefinement, abstraction,
+		final var diff = new BuchiDifferenceFKV<>(mServices, mStateFactoryForRefinement, abstraction,
 				interpolantAutomaton, stateDeterminizer, optimization, Integer.MAX_VALUE);
 		benchmarkGenerator.reportHighestRank(diff.getHighestRank());
 		assert diff.checkResult(mStateFactoryInterpolAutom);

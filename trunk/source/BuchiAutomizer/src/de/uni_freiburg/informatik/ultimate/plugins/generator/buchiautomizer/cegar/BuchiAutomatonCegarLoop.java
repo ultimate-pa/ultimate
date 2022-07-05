@@ -104,7 +104,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		final boolean difference =
 				baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
 		mRefineBuchi = new RefineBuchi<>(difference, stateFactoryForRefinement, stateFactoryForRefinement,
-				useDoubleDeckers, services, mLogger, ncsbImplementation);
+				useDoubleDeckers, new AutomataLibraryServices(services), ncsbImplementation);
 		mComplementationConstruction =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 						BuchiComplementationConstruction.class);
