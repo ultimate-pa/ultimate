@@ -248,7 +248,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException {
-		return mRefineBuchi.refineBuchi(abstraction, interpolantAutomaton, mCounterexample, mIsSemiDeterministic,
-				mBenchmarkGenerator, mComplementationConstruction);
+		return mRefineBuchi.refineBuchi(abstraction, interpolantAutomaton, mIsSemiDeterministic, mBenchmarkGenerator,
+				mComplementationConstruction);
 	}
 }

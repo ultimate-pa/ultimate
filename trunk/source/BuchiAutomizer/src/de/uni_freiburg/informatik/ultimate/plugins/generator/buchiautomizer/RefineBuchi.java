@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSB;
@@ -47,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.Generalized
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceNCSBAntichain;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -86,8 +84,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	public INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
-			final NestedLassoRun<LETTER, IPredicate> counterexample, final boolean semiDeterministic,
-			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
+			final boolean semiDeterministic, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final BuchiComplementationConstruction complementationConstruction) throws AutomataLibraryException {
 		final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer =
 				new PowersetDeterminizer<>(interpolantAutomaton, mUseDoubleDeckers, mStateFactoryInterpolAutom);
@@ -126,10 +123,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				mStateFactoryInterpolAutom, interpolantAutomaton, stateDeterminizer);
 		benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 		assert complNwa.checkResult(mStateFactoryInterpolAutom);
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> complement = complNwa.getResult();
-		assert !new BuchiAccepts<>(mServices, complement, counterexample.getNestedLassoWord()).getResult();
 		final BuchiIntersect<LETTER, IPredicate> interNwa =
-				new BuchiIntersect<>(mServices, mStateFactoryForRefinement, abstraction, complement);
+				new BuchiIntersect<>(mServices, mStateFactoryForRefinement, abstraction, complNwa.getResult());
 		assert interNwa.checkResult(mStateFactoryInterpolAutom);
 		return interNwa.getResult();
 	}
