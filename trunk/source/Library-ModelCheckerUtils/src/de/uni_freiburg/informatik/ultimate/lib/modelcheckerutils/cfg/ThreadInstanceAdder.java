@@ -109,6 +109,7 @@ public class ThreadInstanceAdder {
 					TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
 			final IcfgInternalTransition errorTransition =
 					ef.createInternalTransition(callerNode, errorNode, new Payload(), errorTransformula);
+			// Add a self loop to the in-use-error location, necessary for termination
 			final IcfgInternalTransition errorLoop =
 					ef.createInternalTransition(errorNode, errorNode, new Payload(), errorTransformula);
 			errorNode.addIncoming(errorLoop);
