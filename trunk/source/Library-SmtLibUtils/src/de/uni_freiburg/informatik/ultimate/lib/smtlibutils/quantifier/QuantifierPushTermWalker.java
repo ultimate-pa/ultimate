@@ -107,6 +107,11 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		FormulaClassification classification = null;
 		// 20220502 Matthias: If you remove the PolyPac simplification here, it should
 		// be at least done for atoms (which are handled in one of the cases below)
+		// 20220706 Matthias: The underlying {@link TermContextTransformationEngine}
+		// does not simplify this level, e.g., if one of the siblings is the absorbing
+		// element for the connective. If you remove this simplification here, you have
+		// to improve the {@link TermContextTransformationEngine} (probably by something
+		// similar that this PolyPac simplification).
 		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
 				context.getCriticalConstraint(), term);
 		int iterations = 0;
