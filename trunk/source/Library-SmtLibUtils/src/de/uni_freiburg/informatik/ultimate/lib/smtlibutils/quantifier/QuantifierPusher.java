@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DerScout.DerApplicability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination.EliminationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils.IQuantifierEliminator;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -61,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
  * Transform a Term into form where quantifier are pushed as much inwards as possible and quantifiers are eliminated via
@@ -432,43 +428,6 @@ public class QuantifierPusher extends TermTransformer {
 
 
 
-
-
-
-
-
-
-
-
-
-	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
-			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
-		if (eliminatees.size() == 1) {
-			return eliminatees.iterator().next();
-		}
-		final Map<TermVariable, BigInteger> score =
-				computeDerApplicabilityScore(script, quantifier, eliminatees, currentDualFiniteParams);
-		// final Map<TermVariable, Long> inhabitedParamTreesizes = computeTreesizeOfInhabitedParams(eliminatees,
-		// currentDualFiniteParams);
-		final TreeHashRelation<BigInteger, TermVariable> tr = new TreeHashRelation<>();
-		tr.reverseAddAll(score);
-		final Entry<BigInteger, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
-		return best.getValue().iterator().next();
-	}
-
-	private static Map<TermVariable, BigInteger> computeDerApplicabilityScore(final Script script, final int quantifier,
-			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
-		final Term correspondingFiniteJunction =
-				QuantifierUtils.applyDualFiniteConnective(script, quantifier, currentDualFiniteParams);
-		final Map<TermVariable, BigInteger> result = new HashMap<>();
-		for (final TermVariable eliminatee : eliminatees) {
-			final DerApplicability da =
-					new DerScout(eliminatee, script, quantifier).transduce(correspondingFiniteJunction);
-			final BigInteger score = da.getWithoutDerCases().subtract(da.getWithoutVarCases());
-			result.put(eliminatee, score);
-		}
-		return result;
-	}
 
 	private Map<TermVariable, Long> computeTreesizeOfInhabitedParams(final List<TermVariable> eliminatees,
 			final List<Term> currentDualFiniteParams) {

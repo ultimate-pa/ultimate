@@ -136,7 +136,7 @@ public class QuantifierPushUtilsForSubsetPush {
 				// TODO change to logging output
 				throw new AssertionError("Maybe an infinite loop");
 			}
-			final TermVariable eliminatee = QuantifierPusher.selectBestEliminatee(mgdScript.getScript(),
+			final TermVariable eliminatee = DerScout.selectBestEliminatee(mgdScript.getScript(),
 					et.getQuantifier(), currentSuitableEliminatees, currentDualFiniteJuncts);
 			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteJuncts,
 					eliminatee);
