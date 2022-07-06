@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2019-2022 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2019-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -41,6 +43,34 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
+ * Computes an estimation of a formula's size if we apply our algorithm for the
+ * elimination of quantifiers.<br>
+ * Our algorithm (see {@link QuantifierPushTermWalker}) handles existentially
+ * quantified disjunctions by pushing ∃ over ∨ and it handles existentially
+ * quantified conjunctions by applying our "elimination techniques" (see
+ * {@link DualJunctionQuantifierElimination}) to these kinds of terms. If the
+ * elimination techniques fail and some conjunct is a disjunction we rewrite
+ * according to the and-or distributivity rule, push ∃ over ∨ and recurse on the
+ * disjuncts.<br>
+ * Here an interesting questions are
+ * <li>with which eliminatee(s) should we start with
+ * <li>which conjunct should we pick for the application of the distributivity
+ * rule. The algorithms implemented in this class try to explore (hence the name
+ * scout) the effect of these choices in advance. The measure that we use is the
+ * expected size of the formula. For the size we count the the number of
+ * existentially quantified disjuncts and we count separately whether the
+ * quantifier can be eliminated.<br>
+ * Usually we get a very coarse overapproximation, since eliminations typically
+ * allow simplifications that reduce the size of the formula significantly.
+ * However, this is not always an overapproximation. Some eliminations (e.g.,
+ * TIR for ≠) introduce new disjunctions themselves. <br>
+ * TODO 20220706 Matthias:
+ * <li>Add support for {@link MultiCaseSolvedBinaryRelation}s but make sure that
+ * variables quantified in ancestors are considered as blockers for divisiblity
+ * constraints.
+ * <li>Improve array heuristic. We incorrectly assume that all arrays have to
+ * occur below the root level (quantifier). This may however compensate the huge
+ * blowup that the array elimination sometimes brings.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -52,7 +82,24 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	public enum Occurrence {
-		DER, ELIMINATABLE, OTHER_OCCURRENCE, ABSENT
+		/**
+		 * Eliminatee occurs DER eliminable in conjunction. This is great because it is
+		 * still eliminable if we add more conjunct.
+		 */
+		DER,
+		/**
+		 * Eliminatee is not DER eliminable in conjunction but occurs eliminable in
+		 * every conjunct (e.g. eliminable via TIR).
+		 */
+		ELIMINABLE,
+		/**
+		 * Eliminatee is not eliminable in at least on conjunct.
+		 */
+		OTHER_OCCURRENCE,
+		/**
+		 * Eliminatee does not occur in this conjunction.
+		 */
+		ABSENT
 	};
 
 	private final Script mScript;
@@ -84,10 +131,10 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			if (isDerRelationForArray(quantifier, term, eliminatee)) {
 				return Occurrence.DER;
 			} else {
-				// For simplicity we assume that the array variable is always eliminatable. This
+				// For simplicity we assume that the array variable is always eliminable. This
 				// is however not true if the array is, e.g., the parameter of a function symbol
 				// or the index of another array.
-				return Occurrence.ELIMINATABLE;
+				return Occurrence.ELIMINABLE;
 			}
 		} else {
 			final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
@@ -101,7 +148,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			if (polyRel.getRelationSymbol() == QuantifierUtils.getDerOperator(quantifier)) {
 				return Occurrence.DER;
 			} else {
-				return Occurrence.ELIMINATABLE;
+				return Occurrence.ELIMINABLE;
 			}
 		}
 	}
@@ -121,39 +168,39 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	@Override
 	protected Result transduceAtom(final Term term) {
 		final long derCorrespondingJuncts;
-		final long eliminatableCorrespondingJuncts;
+		final long eliminableCorrespondingJuncts;
 		final long occurringCorrespondingJuncts;
 		final boolean atLeastOneNonInvolvedCorrespondingJunct;
 		final Occurrence classification = classify(mScript, mQuantifier, term, mEliminatee, mQuantifiedInAncestors);
 		switch (classification) {
 		case ABSENT:
 			derCorrespondingJuncts = 0;
-			eliminatableCorrespondingJuncts = 0;
+			eliminableCorrespondingJuncts = 0;
 			occurringCorrespondingJuncts = 0;
 			atLeastOneNonInvolvedCorrespondingJunct = true;
 			break;
 		case DER:
 			derCorrespondingJuncts = 1;
-			eliminatableCorrespondingJuncts = 0;
+			eliminableCorrespondingJuncts = 0;
 			occurringCorrespondingJuncts = 0;
 			atLeastOneNonInvolvedCorrespondingJunct = false;
 			break;
-		case ELIMINATABLE:
+		case ELIMINABLE:
 			derCorrespondingJuncts = 0;
-			eliminatableCorrespondingJuncts = 1;
+			eliminableCorrespondingJuncts = 1;
 			occurringCorrespondingJuncts = 0;
 			atLeastOneNonInvolvedCorrespondingJunct = false;
 			break;
 		case OTHER_OCCURRENCE:
 			derCorrespondingJuncts = 0;
-			eliminatableCorrespondingJuncts = 0;
+			eliminableCorrespondingJuncts = 0;
 			occurringCorrespondingJuncts = 1;
 			atLeastOneNonInvolvedCorrespondingJunct = false;
 			break;
 		default:
 			throw new AssertionError("unknown value: " + classification);
 		}
-		return new Result(Adk.ATOM, derCorrespondingJuncts, eliminatableCorrespondingJuncts,
+		return new Result(Adk.ATOM, derCorrespondingJuncts, eliminableCorrespondingJuncts,
 				occurringCorrespondingJuncts, atLeastOneNonInvolvedCorrespondingJunct);
 	}
 
@@ -171,65 +218,66 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	private Result transduceCorresponding(final Adk adk, final List<Result> transducedArguments) {
-		long derCorrespondingJuncts = 0;
-		long eliminatableCorrespondingJuncts = 0;
-		long occurringCorrespondingJuncts = 0;
+		double derCorrespondingJuncts = 0;
+		double eliminableCorrespondingJuncts = 0;
+		double occurringCorrespondingJuncts = 0;
 		boolean atLeastOneNonInvolvedCorrespondingJunct = false;
 		for (final Result arg : transducedArguments) {
 			if (arg.getAdk() == adk) {
 				throw new AssertionError("Expected alternation between conjunction and disjunction");
 			}
 			derCorrespondingJuncts += arg.getDerCorrespondingJuncts();
-			eliminatableCorrespondingJuncts += arg.getEliminatableCorrespondingJuncts();
+			eliminableCorrespondingJuncts += arg.getEliminableCorrespondingJuncts();
 			occurringCorrespondingJuncts += arg.getOccurringCorrespondingJuncts();
 			atLeastOneNonInvolvedCorrespondingJunct |= arg.isAtLeastOneNonInvolvedCorrespondingJunct();
 		}
-		return new Result(adk, derCorrespondingJuncts, eliminatableCorrespondingJuncts, occurringCorrespondingJuncts,
+		return new Result(adk, derCorrespondingJuncts, eliminableCorrespondingJuncts, occurringCorrespondingJuncts,
 				atLeastOneNonInvolvedCorrespondingJunct);
 	}
 
 	private Result transduceDual(final Adk adk, final List<Result> transducedArguments) {
-		long derCorrespondingJuncts = transducedArguments.get(0).getDerCorrespondingJuncts();
-		long eliminatableCorrespondingJuncts = transducedArguments.get(0).getEliminatableCorrespondingJuncts();
-		long occurringCorrespondingJuncts = transducedArguments.get(0).getOccurringCorrespondingJuncts();
+		double derCorrespondingJuncts = transducedArguments.get(0).getDerCorrespondingJuncts();
+		double eliminableCorrespondingJuncts = transducedArguments.get(0).getEliminableCorrespondingJuncts();
+		double occurringCorrespondingJuncts = transducedArguments.get(0).getOccurringCorrespondingJuncts();
 		boolean atLeastOneNonInvolvedCorrespondingJunct = transducedArguments.get(0)
 				.isAtLeastOneNonInvolvedCorrespondingJunct();
 		for (int i = 1; i < transducedArguments.size(); i++) {
 			if (transducedArguments.get(i).getAdk() == adk) {
 				throw new AssertionError("Expected alternation between conjunction and disjunction");
 			}
-			final long oldDerCorrespondingJuncts = derCorrespondingJuncts;
-			final long oldEliminatableCorrespondingJuncts = eliminatableCorrespondingJuncts;
-			final long oldEccurringCorrespondingJuncts = occurringCorrespondingJuncts;
-			final long oldNonInvolved = (atLeastOneNonInvolvedCorrespondingJunct ? 1 : 0);
+			final double oldDerCorrespondingJuncts = derCorrespondingJuncts;
+			final double oldEliminableCorrespondingJuncts = eliminableCorrespondingJuncts;
+			final double oldEccurringCorrespondingJuncts = occurringCorrespondingJuncts;
+			final double oldNonInvolved = (atLeastOneNonInvolvedCorrespondingJunct ? 1 : 0);
 
-			final long operandDerCorrespondingJuncts = transducedArguments.get(i).getDerCorrespondingJuncts();
-			final long operandEliminatableCorrespondingJuncts = transducedArguments.get(i)
-					.getEliminatableCorrespondingJuncts();
-			final long operandOccurringCorrespondingJuncts = transducedArguments.get(i)
+			final double operandDerCorrespondingJuncts = transducedArguments.get(i).getDerCorrespondingJuncts();
+			final double operandEliminableCorrespondingJuncts = transducedArguments.get(i)
+					.getEliminableCorrespondingJuncts();
+			final double operandOccurringCorrespondingJuncts = transducedArguments.get(i)
 					.getOccurringCorrespondingJuncts();
-			final long operandNonInvolved = (transducedArguments.get(i).isAtLeastOneNonInvolvedCorrespondingJunct() ? 1
+			final double operandNonInvolved = (transducedArguments.get(i).isAtLeastOneNonInvolvedCorrespondingJunct()
+					? 1
 					: 0);
 
 			derCorrespondingJuncts = oldDerCorrespondingJuncts * operandDerCorrespondingJuncts
-					+ oldDerCorrespondingJuncts * operandEliminatableCorrespondingJuncts
+					+ oldDerCorrespondingJuncts * operandEliminableCorrespondingJuncts
 					+ oldDerCorrespondingJuncts * operandOccurringCorrespondingJuncts
 					+ oldDerCorrespondingJuncts * operandNonInvolved
-					+ oldEliminatableCorrespondingJuncts * operandDerCorrespondingJuncts
+					+ oldEliminableCorrespondingJuncts * operandDerCorrespondingJuncts
 					+ oldEccurringCorrespondingJuncts * operandDerCorrespondingJuncts
 					+ oldNonInvolved * operandDerCorrespondingJuncts;
-			occurringCorrespondingJuncts = oldEccurringCorrespondingJuncts * operandEliminatableCorrespondingJuncts
+			occurringCorrespondingJuncts = oldEccurringCorrespondingJuncts * operandEliminableCorrespondingJuncts
 					+ oldEccurringCorrespondingJuncts * operandOccurringCorrespondingJuncts
 					+ oldEccurringCorrespondingJuncts * operandNonInvolved
-					+ oldEliminatableCorrespondingJuncts * operandOccurringCorrespondingJuncts
+					+ oldEliminableCorrespondingJuncts * operandOccurringCorrespondingJuncts
 					+ oldNonInvolved * operandOccurringCorrespondingJuncts;
-			eliminatableCorrespondingJuncts = oldEliminatableCorrespondingJuncts
-					* operandEliminatableCorrespondingJuncts + oldEliminatableCorrespondingJuncts * operandNonInvolved
-					+ oldNonInvolved * operandEliminatableCorrespondingJuncts;
+			eliminableCorrespondingJuncts = oldEliminableCorrespondingJuncts * operandEliminableCorrespondingJuncts
+					+ oldEliminableCorrespondingJuncts * operandNonInvolved
+					+ oldNonInvolved * operandEliminableCorrespondingJuncts;
 			atLeastOneNonInvolvedCorrespondingJunct &= transducedArguments.get(i)
 					.isAtLeastOneNonInvolvedCorrespondingJunct();
 		}
-		return new Result(adk, derCorrespondingJuncts, eliminatableCorrespondingJuncts, occurringCorrespondingJuncts,
+		return new Result(adk, derCorrespondingJuncts, eliminableCorrespondingJuncts, occurringCorrespondingJuncts,
 				atLeastOneNonInvolvedCorrespondingJunct);
 	}
 
@@ -247,20 +295,23 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 	}
 
+	/**
+	 * Estimate on the eliminability of an eliminatee. See {@link XnfScout#Occurrence}.
+	 */
 	public static class Result implements Comparable<Result> {
 		private final Adk mAdk;
 		private final boolean mAtLeastOneNonInvolvedCorrespondingJunct;
-		private final long mDerCorrespondingJuncts;
-		private final long mEliminatableCorrespondingJuncts;
-		private final long mOccurringCorrespondingJuncts;
+		private final double mDerCorrespondingJuncts;
+		private final double mEliminableCorrespondingJuncts;
+		private final double mOccurringCorrespondingJuncts;
 
-		public Result(final Adk adk, final long derCorrespondingJuncts, final long eliminatableCorrespondingJuncts,
-				final long occurringCorrespondingJuncts, final boolean atLeastOneNonInvolvedCorrespondingJunct) {
+		public Result(final Adk adk, final double derCorrespondingJuncts, final double eliminableCorrespondingJuncts,
+				final double occurringCorrespondingJuncts, final boolean atLeastOneNonInvolvedCorrespondingJunct) {
 			super();
 			mAdk = adk;
 			mAtLeastOneNonInvolvedCorrespondingJunct = atLeastOneNonInvolvedCorrespondingJunct;
 			mDerCorrespondingJuncts = derCorrespondingJuncts;
-			mEliminatableCorrespondingJuncts = eliminatableCorrespondingJuncts;
+			mEliminableCorrespondingJuncts = eliminableCorrespondingJuncts;
 			mOccurringCorrespondingJuncts = occurringCorrespondingJuncts;
 		}
 
@@ -272,44 +323,44 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			return mAtLeastOneNonInvolvedCorrespondingJunct;
 		}
 
-		public long getDerCorrespondingJuncts() {
+		public double getDerCorrespondingJuncts() {
 			return mDerCorrespondingJuncts;
 		}
 
-		public long getEliminatableCorrespondingJuncts() {
-			return mEliminatableCorrespondingJuncts;
+		public double getEliminableCorrespondingJuncts() {
+			return mEliminableCorrespondingJuncts;
 		}
 
-		public long getOccurringCorrespondingJuncts() {
+		public double getOccurringCorrespondingJuncts() {
 			return mOccurringCorrespondingJuncts;
 		}
 
 		@Override
 		public String toString() {
-			return String.format("%s: %s DER, %s eliminateable, %s other occurring, %s non-involved", mAdk,
-					mDerCorrespondingJuncts, mEliminatableCorrespondingJuncts, mOccurringCorrespondingJuncts,
+			return String.format("%s: %s DER, %s eliminable, %s other occurring, %s non-involved", mAdk,
+					mDerCorrespondingJuncts, mEliminableCorrespondingJuncts, mOccurringCorrespondingJuncts,
 					mAtLeastOneNonInvolvedCorrespondingJunct);
 		}
 
 		@Override
 		public int compareTo(final Result other) {
 			{
-				final int step1 = Long.valueOf(getOccurringCorrespondingJuncts())
-						.compareTo(Long.valueOf(other.getOccurringCorrespondingJuncts()));
+				final int step1 = Double.valueOf(getOccurringCorrespondingJuncts())
+						.compareTo(Double.valueOf(other.getOccurringCorrespondingJuncts()));
 				if (step1 != 0) {
 					return step1;
 				}
 			}
 			{
-				final int step2 = Long.valueOf(getEliminatableCorrespondingJuncts())
-						.compareTo(Long.valueOf(other.getEliminatableCorrespondingJuncts()));
+				final int step2 = Double.valueOf(getEliminableCorrespondingJuncts())
+						.compareTo(Double.valueOf(other.getEliminableCorrespondingJuncts()));
 				if (step2 != 0) {
 					return step2;
 				}
 			}
 			{
-				final int step3 = Long.valueOf(getDerCorrespondingJuncts())
-						.compareTo(Long.valueOf(other.getDerCorrespondingJuncts()));
+				final int step3 = Double.valueOf(getDerCorrespondingJuncts())
+						.compareTo(Double.valueOf(other.getDerCorrespondingJuncts()));
 				if (step3 != 0) {
 					return step3;
 				}
@@ -324,5 +375,41 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			return 0;
 		}
 
+		public Double computeDerRatio() {
+			final Double all = (getDerCorrespondingJuncts() + getEliminableCorrespondingJuncts()
+					+ getOccurringCorrespondingJuncts() + (isAtLeastOneNonInvolvedCorrespondingJunct() ? 1 : 0));
+			final Double derRatio = (getDerCorrespondingJuncts()) / all;
+			return derRatio;
+		}
+	}
+
+	/**
+	 * Recommend the conjunct (resp. disjunct for universal quantification) that we
+	 * should pick for applying the and-or distributivity rule.
+	 *
+	 */
+	public static int computeRecommendation(final Script script, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams, final int quantifier) {
+		final List<Double> scores = new ArrayList<>(dualFiniteParams.length);
+		for (int i = 0; i < dualFiniteParams.length; i++) {
+			scores.add(null);
+			final Term param = dualFiniteParams[i];
+			if (QuantifierUtils.isCorrespondingFiniteJunction(quantifier, param)) {
+				scores.set(i, Double.valueOf(0));
+				for (final TermVariable eliminatee : eliminatees) {
+					final Result res = new XnfScout(script, quantifier, eliminatee, null).transduce(param);
+					final double ratio = res.computeDerRatio();
+					scores.set(i, scores.get(i) + ratio);
+				}
+			}
+		}
+		final float currentMax = 0;
+		int argMax = -1;
+		for (int i = 0; i < scores.size(); i++) {
+			if (scores.get(i) != null && scores.get(i) > currentMax) {
+				argMax = i;
+			}
+		}
+		return argMax;
 	}
 }
