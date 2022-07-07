@@ -137,20 +137,20 @@
 	
 	<!-- ============================================================================================================ -->
 
-	<rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
+	<!--rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
 	  <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 	</rundefinition>
 
 	<rundefinition name="NewStatesSleep_Concrete-Smt_LOOPLOCKSTEP">
 	  <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 	</rundefinition>
 
 	<rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
 		<option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
-	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-	</rundefinition>
+	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	</rundefinition-->
 
 	<!-- ============================================================================================================ -->
 
@@ -168,17 +168,17 @@
 
 	<!-- ============================================================================================================ -->
 
-	<rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP_flip10-PURE-seed0">
+	<!--rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP_flip90-PURE-seed0">
 	  <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
     <option name="--traceabstraction.coinflip.random.seed">0</option>
     <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
 	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-  </rundefinition>
+  </rundefinition-->
 
-  <rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP_flip10-FALLBACK-seed0">
+  <rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP_flip90-FALLBACK-seed0">
 	  <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
     <option name="--traceabstraction.coinflip.random.seed">0</option>
     <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
 	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
