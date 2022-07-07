@@ -179,10 +179,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				mErrors.put(entry.getKey(), flattenAbstractStates(entry.getValue()));
 			}
 		}
-		// areAbStractStatesSound(loc2States);
+		areAbStractStatesSound(loc2States);
 	}
 
 	private boolean areAbStractStatesSound(final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States) {
+		boolean result = true;
 		for (final Entry<LOC, Set<DisjunctiveAbstractState<STATE>>> entry : loc2States.entrySet()) {
 			final Collection<ACTION> actions = mTransitionProvider.getSuccessorActions(entry.getKey());
 			for (final ACTION action : actions) {
@@ -192,11 +193,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				final var states = loc2States.get(mTransitionProvider.getTarget(action));
 				final DisjunctiveAbstractState<STATE> temp = flattenAbstractStates(states);
 				if (states != null && temp.isSubsetOf(postState) == SubsetResult.NONE) {
-					return false;
+					result = false;
 				}
 			}
 		}
-		return true;
+		return result;
 	}
 
 	/**
@@ -344,7 +345,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			}
 			final DisjunctiveAbstractState<STATE> interference = procedureInterferences.get(write);
 			if (interference != null) {
-				preState.union(interference);
+				preState = preState.union(preState.patch(interference));
 			}
 			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 			DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, write);
