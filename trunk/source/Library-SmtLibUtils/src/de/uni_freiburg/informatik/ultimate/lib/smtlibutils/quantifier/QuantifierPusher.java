@@ -342,7 +342,7 @@ public class QuantifierPusher extends TermTransformer {
 			return null;
 		}
 
-		if (QuantifierPushUtils.ELIMINATEE_SEQUENTIALIZATION) {
+		if (QuantifierPushUtils.OPTION_ELIMINATEE_SEQUENTIALIZATION) {
 			final Term seq = QuantifierPushUtilsForSubsetPush.sequentialSubsetPush(services, mgdScript,
 					applyDistributivity, pqeTechniques, simplificationTechnique, preprocessedEt, qe);
 			if (seq != null) {
@@ -350,8 +350,8 @@ public class QuantifierPusher extends TermTransformer {
 			}
 		}
 		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, preprocessedEt,
-				qe, QuantifierPushUtils.DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION,
-				QuantifierPushUtils.EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
+				qe, QuantifierPushUtils.OPTION_SCOUT_BASED_DISTRIBTIVITY_RECOMMENDATION,
+				QuantifierPushUtils.OPTION_EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
 	}
 
 	private static boolean isDualFiniteConnective(final EliminationTask et) {

@@ -67,9 +67,9 @@ public class QuantifierPushUtils {
 	 * elimination failed for all variables then we return the original term without applying distributivity.
 	 *
 	 */
-	public static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
-	public static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
-	public static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
+	public static final boolean OPTION_EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
+	public static final boolean OPTION_ELIMINATEE_SEQUENTIALIZATION = true;
+	public static final boolean OPTION_SCOUT_BASED_DISTRIBTIVITY_RECOMMENDATION = true;
 
 	public static boolean isQuantifiedDualFiniteJunction(final int quantifier, final Term term) {
 		final boolean result;
