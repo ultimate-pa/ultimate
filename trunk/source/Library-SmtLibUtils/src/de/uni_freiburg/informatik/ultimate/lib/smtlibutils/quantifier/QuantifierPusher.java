@@ -378,7 +378,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 
 		if (derBasedDistributivityParameterPreselection) {
-			final int rec = DerScout.computeRecommendation(mgdScript.getScript(), et.getEliminatees(), dualFiniteParams,
+			final int rec = XnfScout.computeRecommendation(mgdScript.getScript(), et.getEliminatees(), dualFiniteParams,
 					et.getQuantifier());
 			if (rec != -1) {
 				final Term correspondingFinite = applyDistributivityAndPushOneStep(services, mgdScript,

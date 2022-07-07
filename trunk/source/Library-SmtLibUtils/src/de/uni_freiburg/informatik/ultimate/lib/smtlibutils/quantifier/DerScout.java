@@ -48,12 +48,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
- * TODO 2020025 Matthias: Revise and add documentation.
- * Because of the SMT-COMP deadline, I committed this without documentation or code review.
+ * @deprecated Superseded by {@link XnfScout}. We keep this class only for
+ *             comparisons during debugging.
+ *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
+@Deprecated
 public class DerScout extends CondisTermTransducer<DerApplicability> {
 
 	public enum Adk { ATOM, DISJUNCTION, CONJUNCTION;
