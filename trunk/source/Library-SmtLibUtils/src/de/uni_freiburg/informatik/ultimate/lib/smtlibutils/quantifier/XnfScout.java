@@ -28,7 +28,10 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -41,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
  * Computes an estimation of a formula's size if we apply our algorithm for the
@@ -200,8 +204,8 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 		default:
 			throw new AssertionError("unknown value: " + classification);
 		}
-		return new Result(Adk.ATOM, derCorrespondingJuncts, eliminableCorrespondingJuncts,
-				occurringCorrespondingJuncts, atLeastOneNonInvolvedCorrespondingJunct);
+		return new Result(Adk.ATOM, derCorrespondingJuncts, eliminableCorrespondingJuncts, occurringCorrespondingJuncts,
+				atLeastOneNonInvolvedCorrespondingJunct);
 	}
 
 	@Override
@@ -296,7 +300,8 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	/**
-	 * Estimate on the eliminability of an eliminatee. See {@link XnfScout#Occurrence}.
+	 * Estimate on the eliminability of an eliminatee. See
+	 * {@link XnfScout#Occurrence}.
 	 */
 	public static class Result implements Comparable<Result> {
 		private final Adk mAdk;
@@ -381,6 +386,36 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			final Double derRatio = (getDerCorrespondingJuncts()) / all;
 			return derRatio;
 		}
+	}
+
+	/**
+	 * Heuristic for selecting an eliminatee that preferably can be eliminated and
+	 * that can be eliminated with a preferably small blowup of the formula's size.
+	 */
+	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
+			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
+		if (eliminatees.size() == 1) {
+			return eliminatees.iterator().next();
+		}
+		final Map<TermVariable, XnfScout.Result> score = computeApplicabilityScore(script, quantifier, eliminatees,
+				currentDualFiniteParams);
+		final TreeHashRelation<XnfScout.Result, TermVariable> tr = new TreeHashRelation<>();
+		tr.reverseAddAll(score);
+		final Map.Entry<XnfScout.Result, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
+		return best.getValue().iterator().next();
+	}
+
+	private static Map<TermVariable, XnfScout.Result> computeApplicabilityScore(final Script script,
+			final int quantifier, final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
+		final Term correspondingFiniteJunction = QuantifierUtils.applyDualFiniteConnective(script, quantifier,
+				currentDualFiniteParams);
+		final Map<TermVariable, XnfScout.Result> result = new HashMap<>();
+		for (final TermVariable eliminatee : eliminatees) {
+			final XnfScout.Result score = new XnfScout(script, quantifier, eliminatee, null)
+					.transduce(correspondingFiniteJunction);
+			result.put(eliminatee, score);
+		}
+		return result;
 	}
 
 	/**

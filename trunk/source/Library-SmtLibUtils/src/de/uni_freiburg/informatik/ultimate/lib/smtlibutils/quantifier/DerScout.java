@@ -238,7 +238,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 	}
 
 	/**
-	 * Heuristic for selecting a eliminatee that preferably can be eliminated and
+	 * Heuristic for selecting an eliminatee that preferably can be eliminated and
 	 * that can be eliminated with a preferably small blowup of the formula's size.
 	 */
 	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
