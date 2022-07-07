@@ -170,10 +170,10 @@
 
 	<!--rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP_flip90-PURE-seed0">
 	  <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-    <option name="--traceabstraction.coinflip.probability.value">90</option>
-    <option name="--traceabstraction.coinflip.random.seed">0</option>
-    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
-	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="- -traceabstraction.coinflip.probability.value">90</option>
+    <option name="- -traceabstraction.coinflip.random.seed">0</option>
+    <option name="- -traceabstraction.coinflip.budget.determination.mode">PURE</option>
+	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
   </rundefinition-->
 
   <rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP_flip90-FALLBACK-seed0">
