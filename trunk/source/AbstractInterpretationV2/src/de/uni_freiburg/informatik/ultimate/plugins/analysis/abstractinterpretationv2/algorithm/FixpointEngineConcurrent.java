@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -213,8 +214,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			result.add(new HashMap<>());
 			return result;
 		}
-		return versionOne(mFecUtils.filterProcedures(entryNode.getProcedure(), interferences),
-				entryNode.getProcedure());
+		// return versionOne(mFecUtils.filterProcedures(entryNode.getProcedure(),
+		// interferences),entryNode.getProcedure());
+
+		final Predicate<Map<ACTION, ACTION>> alwaysTrue = x -> true;
+		return versionTwo(interferences, alwaysTrue, entryNode.getProcedure());
 	}
 
 	/**
@@ -266,13 +270,41 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @param interferences
 	 * @return
 	 */
-	private Map<ACTION, DisjunctiveAbstractState<STATE>> versionTwo(final IcfgLocation entryNode,
-			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
-		// get crossproduct from mFecUtils
-		// if not computed already, compute it now -> mFecUtils.computeCrossProduct(Predicate)
-		// Then go through every entry and match every read with the to the write corresponding state in interferences
+	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> versionTwo(
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
+			final Predicate<Map<ACTION, ACTION>> combinationIsFeasable, final String procedure) {
 
-		final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterferences = new HashMap<>();
+		final Set<Map<ACTION, ACTION>> crossProduct = mFecUtils.getCrossProduct(combinationIsFeasable, procedure);
+
+		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> procedureInterferences = new HashSet<>();
+		for (final var map : crossProduct) {
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> combination = new HashMap<>();
+			for (final var entry : map.entrySet()) {
+				final ACTION write = entry.getValue();
+				if (write == null) {
+					// read should read procedure intern
+					continue;
+				}
+				DisjunctiveAbstractState<STATE> state = interferences.get(write);
+				if (state == null) {
+					state = new DisjunctiveAbstractState<>(mDomain.createTopState());
+					for (final IProgramVarOrConst variable : mFecUtils.getReadVars(entry.getKey())) {
+						state = state.addVariable(variable);
+					}
+				}
+				combination.put(entry.getKey(), state);
+
+				// add the state for the other part of the assume Statement
+				final ACTION counterpart = mFecUtils.hasAssumeCounterPart(entry.getKey());
+				if (counterpart != null) {
+					combination.put(counterpart, state);
+				}
+			}
+			if (!combination.isEmpty()) {
+				procedureInterferences.add(combination);
+			}
+		}
+
 		return procedureInterferences;
 	}
 

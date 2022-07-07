@@ -31,10 +31,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -66,6 +69,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final Map<String, Set<ACTION>> mWritesPerProcedure;
 	private final Map<String, Set<ACTION>> mReadsPerProcedure;
 
+	private final Map<LOC, ACTION> mLoc2Assume;
+	private final Map<ACTION, ACTION> mAssumes;
+
+	private final Map<String, Set<Map<ACTION, ACTION>>> mCrossProducts;
+
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider) {
 		mIcfg = icfg;
 		mTransitionProvider = transProvider;
@@ -77,7 +85,21 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mWritesPerProcedure = new HashMap<>();
 		mReadsPerProcedure = new HashMap<>();
 
+		mCrossProducts = new HashMap<>();
+
+		mAssumes = new HashMap<>();
+		mLoc2Assume = new HashMap<>();
+
 		initialize(mIcfg.getProcedureEntryNodes());
+	}
+
+	public Set<Map<ACTION, ACTION>> getCrossProduct(final Predicate<Map<ACTION, ACTION>> combinationIsFeasible,
+			final String procedure) {
+		final var crossProduct = mCrossProducts.get(procedure);
+		if (crossProduct == null) {
+			return computeCrossProduct(combinationIsFeasible, procedure);
+		}
+		return crossProduct;
 	}
 
 	public Set<ACTION> getWrites(final String procedure) {
@@ -86,6 +108,28 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	public Set<ACTION> getReads(final String procedure) {
 		return mReadsPerProcedure.get(procedure);
+
+	}
+
+	public Set<ACTION> getAssumeReducedReads(final String procedure) {
+		// copy of getReads
+		final Set<ACTION> actions = getReads(procedure);
+		if (actions == null) {
+			return null;
+		}
+		final Set<ACTION> toRemove = new HashSet<>();
+		for (final var action : actions) {
+			final ACTION assume = mAssumes.get(action);
+			if (assume != null) {
+				toRemove.add(assume);
+			}
+		}
+		actions.removeAll(toRemove);
+		return actions;
+	}
+
+	public ACTION hasAssumeCounterPart(final ACTION action) {
+		return mAssumes.get(action);
 	}
 
 	public Set<IProgramVarOrConst> getVarsForBuildingState(final ACTION action) {
@@ -287,7 +331,23 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mForks.put(forks, tempSet);
 	}
 
+	private boolean isAssume(final IcfgEdge edge) {
+		// only fast method for now
+		// TODO: find nicer way
+		final String description = edge.toString();
+		return description.contains("assume");
+	}
+
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
+		if (isAssume(edge)) {
+			if (mLoc2Assume.keySet().contains(edge.getSource())) {
+				mAssumes.put((ACTION) edge, mLoc2Assume.get(edge.getSource()));
+			} else {
+				// only put one assume part in Reads
+				mLoc2Assume.put((LOC) edge.getSource(), (ACTION) edge);
+			}
+		}
+
 		// SharedWrites
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
 			mSharedWriteReadVars.put((ACTION) edge, new HashSet<>());
@@ -316,5 +376,47 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				mReadsPerProcedure.put(procedure, tempSet);
 			}
 		}
+	}
+
+	private Set<Map<ACTION, ACTION>> computeCrossProduct(final Predicate<Map<ACTION, ACTION>> combinationIsFeasible,
+			final String procedure) {
+		final Set<Map<ACTION, ACTION>> result = new HashSet<>();
+		// LinkedHashMap, because Iteration order must stay the same
+		final Map<ACTION, List<ACTION>> writes = new LinkedHashMap<>();
+		int n = 1;
+		final ACTION dummy = null;
+		final Set<ACTION> reads = getAssumeReducedReads(procedure);
+		if (reads != null) {
+			for (final var read : reads) {
+				final List<ACTION> tempList = mWritesPerRead.get(read).stream().collect(Collectors.toList());
+				if (tempList.isEmpty()) {
+					// read must always read from it own procedure
+					continue;
+				}
+				tempList.add(dummy);
+				n *= tempList.size();
+				writes.put(read, tempList);
+			}
+
+			for (int i = 0; i < n; i++) {
+				int blocksize = 1;
+				final Map<ACTION, ACTION> map = new HashMap<>();
+				for (final var readEntry : writes.entrySet()) {
+					final int index = (i / blocksize) % readEntry.getValue().size();
+					final ACTION write = readEntry.getValue().get(index);
+					if (write != null) {
+						// maybe too early, because Information is needed in combinationIsFeasible
+						map.put(readEntry.getKey(), write);
+					}
+					blocksize *= readEntry.getValue().size();
+				}
+				if (!map.isEmpty() && combinationIsFeasible.test(map)) {
+					result.add(map);
+				}
+			}
+		}
+
+		mCrossProducts.put(procedure, result);
+		return result;
 	}
 }
