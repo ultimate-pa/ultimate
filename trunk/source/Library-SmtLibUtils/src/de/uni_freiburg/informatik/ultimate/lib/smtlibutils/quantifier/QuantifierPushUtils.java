@@ -59,9 +59,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class QuantifierPushUtils {
 
-
-	public static final String NOT_DUAL_FINITE_CONNECTIVE = "not dual finite connective";
-
 	/**
 	 * If set to true we check after applying distributivity if we were able to eliminate some quantified variables. If
 	 * elimination failed for all variables then we return the original term without applying distributivity.
@@ -70,6 +67,8 @@ public class QuantifierPushUtils {
 	public static final boolean OPTION_EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
 	public static final boolean OPTION_ELIMINATEE_SEQUENTIALIZATION = true;
 	public static final boolean OPTION_SCOUT_BASED_DISTRIBTIVITY_RECOMMENDATION = true;
+
+	public static final String NOT_DUAL_FINITE_CONNECTIVE = "not dual finite connective";
 
 	public static boolean isQuantifiedDualFiniteJunction(final int quantifier, final Term term) {
 		final boolean result;
