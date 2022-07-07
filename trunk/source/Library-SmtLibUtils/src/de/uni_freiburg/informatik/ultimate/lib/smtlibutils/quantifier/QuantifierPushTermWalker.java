@@ -53,19 +53,18 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public class QuantifierPushTermWalker extends TermWalker<Context> {
-	private final ManagedScript mMgdScript;
 
-	private final IUltimateServiceProvider mServices;
-
-	private final PqeTechniques mPqeTechniques;
-
-	private final SimplificationTechnique mSimplificationTechnique;
-
-	private final boolean mApplyDistributivity;
+	private static final boolean OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE = false;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
-
 	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
+
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mMgdScript;
+	private final PqeTechniques mPqeTechniques;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final boolean mApplyDistributivity;
+
 
 	/**
 	 * This class provides the new (2020) quantifier elimination and replaces the
@@ -243,7 +242,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	@Override
 	protected boolean applyRepeatedlyUntilNoChange() {
-		return false;
+		return OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE;
 	}
 
 	/**
