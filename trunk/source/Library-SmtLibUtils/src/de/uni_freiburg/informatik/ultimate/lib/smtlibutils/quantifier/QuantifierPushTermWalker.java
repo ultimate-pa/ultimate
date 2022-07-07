@@ -55,9 +55,16 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	private static final boolean OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE = false;
+	/**
+	 * Note that this is useless if
+	 * {@link QuantifierPushTermWalker#OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE} is
+	 * set.
+	 */
+	private static final boolean OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS = true;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
+
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -217,17 +224,39 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			final ApplicationTerm originalApplicationTerm, final Term[] resultParams) {
 		// TODO: Maybe full simplification with solver, maybe no simplification
 		if (originalApplicationTerm.getFunction().getName().equals("and")) {
-			return PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(),
+			final Term result;
+			if (OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS) {
+				final Term tmp = SmtUtils.and(mMgdScript.getScript(), resultParams);
+				result = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
+						context.getCriticalConstraint(), tmp);
+			} else {
+				result = PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(),
 					Arrays.asList(resultParams));
+			}
+			return result;
 		}
 		if (originalApplicationTerm.getFunction().getName().equals("or")) {
-			return PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(),
+			final Term result;
+			if (OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS) {
+				final Term tmp = SmtUtils.or(mMgdScript.getScript(), resultParams);
+				result = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
+						context.getCriticalConstraint(), tmp);
+			} else {
+				result = PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(),
 					Arrays.asList(resultParams));
+			}
+			return result;
 		}
 		// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
 		// terms here.
 		if (originalApplicationTerm.getFunction().getName().equals("=")) {
-			return SmtUtils.equality(mMgdScript.getScript(), resultParams);
+			final Term eq = SmtUtils.equality(mMgdScript.getScript(), resultParams);
+			if (OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS) {
+				return PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
+						context.getCriticalConstraint(), eq);
+			} else {
+				return eq;
+			}
 		}
 		assert Arrays.equals(originalApplicationTerm.getParameters(), resultParams);
 		return originalApplicationTerm;
