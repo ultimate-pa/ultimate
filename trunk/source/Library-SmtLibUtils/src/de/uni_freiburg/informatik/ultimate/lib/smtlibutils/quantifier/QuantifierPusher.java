@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -394,6 +395,10 @@ public class QuantifierPusher extends TermTransformer {
 			// after the first correspondingFiniteJunction
 			// was found.
 			if (isCorrespondingFinite(dualFiniteParams[i], et.getQuantifier())) {
+				final List<TermVariable> freeVars = Arrays.asList(dualFiniteParams[i].getFreeVars());
+				if (DataStructureUtils.intersection(new HashSet<>(freeVars), et.getEliminatees()).isEmpty()) {
+					throw new AssertionError("Useless application of distibutivity, no eliminatee involved.");
+				}
 				final Term correspondingFinite = applyDistributivityAndPushOneStep(services, mgdScript,
 						et.getQuantifier(), et.getEliminatees(), et.getContext(), dualFiniteParams, i);
 				if (!evaluateSuccessOfDistributivityApplication) {
