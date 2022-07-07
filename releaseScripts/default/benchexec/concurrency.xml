@@ -139,17 +139,17 @@
 
 	<rundefinition name="SleepMap_Concrete-Smt_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
 	  <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 	</rundefinition>
 
 	<rundefinition name="NewStatesSleep_Concrete-Smt_LOOPLOCKSTEP">
 	  <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 	</rundefinition>
 
 	<rundefinition name="NewStatesSleep_VarAbsGlobal-Syntactic_LOOPLOCKSTEP">
 		<option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
-	  <option name="- -traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+	  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 	</rundefinition>
 
 	<!-- ============================================================================================================ -->
