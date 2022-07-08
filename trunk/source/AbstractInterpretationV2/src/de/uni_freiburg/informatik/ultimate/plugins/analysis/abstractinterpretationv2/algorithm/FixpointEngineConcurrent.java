@@ -190,9 +190,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 				final DisjunctiveAbstractState<STATE> postState =
 						flattenAbstractStates(entry.getValue()).apply(postOp, action);
-				final var states = loc2States.get(mTransitionProvider.getTarget(action));
-				final DisjunctiveAbstractState<STATE> temp = flattenAbstractStates(states);
-				if (states != null && temp.isSubsetOf(postState) == SubsetResult.NONE) {
+				final var loc2StatesAfterAction = loc2States.get(mTransitionProvider.getTarget(action));
+				final DisjunctiveAbstractState<STATE> stateAfterAction = flattenAbstractStates(loc2StatesAfterAction);
+				if (loc2StatesAfterAction != null && postState.isSubsetOf(stateAfterAction) == SubsetResult.NONE) {
 					result = false;
 				}
 			}
@@ -219,7 +219,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		// interferences),entryNode.getProcedure());
 
 		final Predicate<Map<ACTION, ACTION>> alwaysTrue = x -> true;
-		return versionTwo(interferences, alwaysTrue, entryNode.getProcedure());
+		return filteredCrossProduct(interferences, alwaysTrue, entryNode.getProcedure());
 	}
 
 	/**
@@ -229,7 +229,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @param interferences
 	 * @return
 	 */
-	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> versionOne(
+	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> unionOverInterferences(
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final String currentProcedure) {
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> result = new HashSet<>();
 		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
@@ -271,7 +271,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @param interferences
 	 * @return
 	 */
-	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> versionTwo(
+	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> filteredCrossProduct(
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
 			final Predicate<Map<ACTION, ACTION>> combinationIsFeasable, final String procedure) {
 
