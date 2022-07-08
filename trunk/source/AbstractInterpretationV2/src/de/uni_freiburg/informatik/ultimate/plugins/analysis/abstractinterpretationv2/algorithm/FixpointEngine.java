@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -379,6 +382,34 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		return rtrState;
 	}
 
+	private AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOC> constructCounterexample(
+			final ITransitionProvider<ACTION, LOC> transitionProvider,
+			final IWorklistItem<STATE, ACTION, LOC> currentItem, final DisjunctiveAbstractState<STATE> postState) {
+
+		final List<Triple<DisjunctiveAbstractState<STATE>, LOC, ACTION>> abstractExecution = new ArrayList<>();
+
+		ACTION transition = currentItem.getAction();
+		abstractExecution.add(getCexTriple(transitionProvider, postState, transition));
+
+		DisjunctiveAbstractState<STATE> post = currentItem.getState();
+		IWorklistItem<STATE, ACTION, LOC> current = currentItem.getPredecessor();
+		while (current != null) {
+			transition = current.getAction();
+			abstractExecution.add(getCexTriple(transitionProvider, post, transition));
+			post = current.getState();
+			current = current.getPredecessor();
+		}
+
+		Collections.reverse(abstractExecution);
+		return new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution);
+	}
+
+	private Triple<DisjunctiveAbstractState<STATE>, LOC, ACTION> getCexTriple(
+			final ITransitionProvider<ACTION, LOC> transitionProvider, final DisjunctiveAbstractState<STATE> postState,
+			final ACTION transition) {
+		return new Triple<>(postState, transitionProvider.getTarget(transition), transition);
+	}
+
 	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final DisjunctiveAbstractState<STATE> postState, final Set<ACTION> reachedErrors) {
 		final ACTION currentAction = currentItem.getAction();
@@ -391,8 +422,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Error state reached"));
 		}
-
-		mResult.reachedError(mTransitionProvider, currentItem, postState);
+		mResult.addCounterexample(constructCounterexample(mTransitionProvider, currentItem, postState));
 	}
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {

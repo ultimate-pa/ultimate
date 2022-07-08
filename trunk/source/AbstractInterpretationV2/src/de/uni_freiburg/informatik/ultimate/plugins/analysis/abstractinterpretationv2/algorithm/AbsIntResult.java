@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -86,32 +84,9 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOC
 
 	}
 
-	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-			final IWorklistItem<STATE, ACTION, LOCATION> currentItem, final DisjunctiveAbstractState<STATE> postState) {
-
-		final List<Triple<DisjunctiveAbstractState<STATE>, LOCATION, ACTION>> abstractExecution = new ArrayList<>();
-
-		ACTION transition = currentItem.getAction();
-		abstractExecution.add(getCexTriple(transitionProvider, postState, transition));
-
-		DisjunctiveAbstractState<STATE> post = currentItem.getState();
-		IWorklistItem<STATE, ACTION, LOCATION> current = currentItem.getPredecessor();
-		while (current != null) {
-			transition = current.getAction();
-			abstractExecution.add(getCexTriple(transitionProvider, post, transition));
-			post = current.getState();
-			current = current.getPredecessor();
-		}
-
-		Collections.reverse(abstractExecution);
-		mCounterexamples
-				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
-	}
-
-	private Triple<DisjunctiveAbstractState<STATE>, LOCATION, ACTION> getCexTriple(
-			final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-			final DisjunctiveAbstractState<STATE> postState, final ACTION transition) {
-		return new Triple<>(postState, transitionProvider.getTarget(transition), transition);
+	void addCounterexample(
+			final AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION> counterexample) {
+		mCounterexamples.add(counterexample);
 	}
 
 	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, LOCATION> rootStateStorage) {
