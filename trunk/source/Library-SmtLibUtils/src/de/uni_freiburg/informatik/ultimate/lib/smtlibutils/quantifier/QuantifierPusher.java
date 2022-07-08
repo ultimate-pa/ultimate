@@ -350,7 +350,7 @@ public class QuantifierPusher extends TermTransformer {
 			}
 		}
 		return applyDistributivityAndPush(services, mgdScript, pqeTechniques, simplificationTechnique, preprocessedEt,
-				qe, QuantifierPushUtils.OPTION_SCOUT_BASED_DISTRIBTIVITY_RECOMMENDATION,
+				qe, QuantifierPushUtils.OPTION_SCOUT_BASED_DISTRIBUTIVITY_RECOMMENDATION,
 				QuantifierPushUtils.OPTION_EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION);
 	}
 
