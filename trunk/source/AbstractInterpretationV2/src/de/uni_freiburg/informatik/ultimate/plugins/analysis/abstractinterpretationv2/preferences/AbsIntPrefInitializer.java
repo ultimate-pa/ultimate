@@ -139,6 +139,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE,
 				null, PreferenceType.Label));
+		// ähnlich
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN_FUTURE,
 				DEF_ABSTRACT_DOMAIN_FUTURE, PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN_FUTURE));
 

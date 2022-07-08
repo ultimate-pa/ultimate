@@ -68,6 +68,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final Map<ACTION, Set<ACTION>> mWritesPerRead;
 	private final Map<String, Set<ACTION>> mWritesPerProcedure;
 	private final Map<String, Set<ACTION>> mReadsPerProcedure;
+	// Hashrelations
 
 	private final Map<LOC, ACTION> mLoc2Assume;
 	private final Map<ACTION, ACTION> mAssumes;

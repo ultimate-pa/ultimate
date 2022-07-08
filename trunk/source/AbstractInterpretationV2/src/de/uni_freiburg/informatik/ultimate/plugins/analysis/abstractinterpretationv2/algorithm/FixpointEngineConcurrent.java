@@ -141,7 +141,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> tempInterferences =
 					FixpointEngineConcurrentUtils.copyMap(interferences);
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
-				// TODO: Change such that procedureInterferences returns Set<Map<...>>
 				final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> interferencesMaps =
 						computeProcedureInterferences(entry.getValue(), interferences);
 
@@ -246,10 +245,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						&& DataStructureUtils.haveNonEmptyIntersection(variables, mFecUtils.getReadVars(read))) {
 					final DisjunctiveAbstractState<STATE> currentInterferences = procedureInterference.get(read);
 					if (currentInterferences != null) {
-						// TODO: Test if patch ist hier notwendig
-						// -> sollten immer dieselben Variablen beinhalten
-						final DisjunctiveAbstractState<STATE> tempState =
-								currentInterferences.patch(interference.getValue());
 						procedureInterference.put(read, unionIfNonEmpty(currentInterferences, interference.getValue()));
 					} else {
 						DisjunctiveAbstractState<STATE> tempState =
@@ -335,14 +330,26 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final LOC loc = mTransitionProvider.getSource(write);
 			final Set<DisjunctiveAbstractState<STATE>> states = loc2States.get(loc);
 			DisjunctiveAbstractState<STATE> preState;
-			if (states != null) {
-				preState = flattenAbstractStates(states);
-			} else {
+			if (states == null && !mIcfg.getProcedureEntryNodes().get(procedure).equals(loc)) {
+				// location is not in loc2States but not EntryNode
+				final DisjunctiveAbstractState<STATE> bottomState =
+						new DisjunctiveAbstractState<>(mDomain.createBottomState());
+				// for (final IProgramVarOrConst variable : mFecUtils.getWrittenVars(write)) {
+				// bottomState = bottomState.addVariable(variable);
+				// }
+				result = combineInterferences(result, write, bottomState);
+				continue;
+
+			}
+			if (states == null) {
 				preState = new DisjunctiveAbstractState<>(mDomain.createTopState());
 				for (final IProgramVarOrConst variable : mFecUtils.getVarsForBuildingState(write)) {
 					preState = preState.addVariable(variable);
 				}
+			} else {
+				preState = flattenAbstractStates(states);
 			}
+
 			final DisjunctiveAbstractState<STATE> interference = procedureInterferences.get(write);
 			if (interference != null) {
 				preState = preState.union(preState.patch(interference));
