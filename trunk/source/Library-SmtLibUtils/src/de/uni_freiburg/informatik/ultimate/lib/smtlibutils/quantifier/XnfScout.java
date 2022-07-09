@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -386,6 +387,13 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			final Double derRatio = (getDerCorrespondingJuncts()) / all;
 			return derRatio;
 		}
+
+		public Double computeEliminableRatio() {
+			final Double all = (getDerCorrespondingJuncts() + getEliminableCorrespondingJuncts()
+					+ getOccurringCorrespondingJuncts() + (isAtLeastOneNonInvolvedCorrespondingJunct() ? 1 : 0));
+			final Double eliminableRatio = (getEliminableCorrespondingJuncts()) / all;
+			return eliminableRatio;
+		}
 	}
 
 	/**
@@ -393,12 +401,12 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	 * that can be eliminated with a preferably small blowup of the formula's size.
 	 */
 	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
-			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
+			final List<TermVariable> eliminatees, final List<Term> dualFiniteParams) {
 		if (eliminatees.size() == 1) {
 			return eliminatees.iterator().next();
 		}
 		final Map<TermVariable, XnfScout.Result> score = computeApplicabilityScore(script, quantifier, eliminatees,
-				currentDualFiniteParams);
+				dualFiniteParams);
 		final TreeHashRelation<XnfScout.Result, TermVariable> tr = new TreeHashRelation<>();
 		tr.reverseAddAll(score);
 		final Map.Entry<XnfScout.Result, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
@@ -425,6 +433,15 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	 */
 	public static int computeRecommendation(final Script script, final Set<TermVariable> eliminatees,
 			final Term[] dualFiniteParams, final int quantifier) {
+		int res = computeRecommendationDer(script, eliminatees, dualFiniteParams, quantifier);
+		if (res == -1) {
+			res = computeRecommendationEliminable(script, eliminatees, dualFiniteParams, quantifier);
+		}
+		return res;
+	}
+
+	public static int computeRecommendation(final Script script, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams, final int quantifier, final Function<Result, Double> ratioProvider) {
 		final List<Double> scores = new ArrayList<>(dualFiniteParams.length);
 		for (int i = 0; i < dualFiniteParams.length; i++) {
 			scores.add(null);
@@ -433,7 +450,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 				scores.set(i, Double.valueOf(0));
 				for (final TermVariable eliminatee : eliminatees) {
 					final Result res = new XnfScout(script, quantifier, eliminatee, null).transduce(param);
-					final double ratio = res.computeDerRatio();
+					final double ratio = ratioProvider.apply(res);
 					scores.set(i, scores.get(i) + ratio);
 				}
 			}
@@ -447,4 +464,17 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 		}
 		return argMax;
 	}
+
+	public static int computeRecommendationDer(final Script script, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams, final int quantifier) {
+		return computeRecommendation(script, eliminatees, dualFiniteParams, quantifier, x -> x.computeDerRatio());
+	}
+
+	public static int computeRecommendationEliminable(final Script script, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams, final int quantifier) {
+		return computeRecommendation(script, eliminatees, dualFiniteParams, quantifier, x -> x.computeEliminableRatio());
+	}
+
+
+
 }
