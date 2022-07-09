@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DerScout.DerApplicability;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -120,7 +121,8 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 	}
 
 	@Override
-	protected DerApplicability transduceConjunction(final List<DerApplicability> transducedArguments) {
+	protected DerApplicability transduceConjunction(final ApplicationTerm originalTerm,
+			final List<DerApplicability> transducedArguments) {
 		final Adk subTermConnective = Adk.DISJUNCTION;
 		final Adk ownConnective = Adk.CONJUNCTION;
 		final DerApplicability result;
@@ -135,7 +137,8 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 	}
 
 	@Override
-	protected DerApplicability transduceDisjunction(final List<DerApplicability> transducedArguments) {
+	protected DerApplicability transduceDisjunction(final ApplicationTerm originalTerm,
+			final List<DerApplicability> transducedArguments) {
 		final Adk subTermConnective = Adk.CONJUNCTION;
 		final Adk ownConnective = Adk.DISJUNCTION;
 		final DerApplicability result;

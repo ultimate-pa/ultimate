@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Binary
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -210,7 +211,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	@Override
-	protected Result transduceConjunction(final List<Result> transducedArguments) {
+	protected Result transduceConjunction(final ApplicationTerm originalTerm, final List<Result> transducedArguments) {
 		final Result result;
 		if (mQuantifier == QuantifiedFormula.EXISTS) {
 			result = transduceDual(Adk.CONJUNCTION, transducedArguments);
@@ -287,7 +288,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	@Override
-	protected Result transduceDisjunction(final List<Result> transducedArguments) {
+	protected Result transduceDisjunction(final ApplicationTerm originalTerm, final List<Result> transducedArguments) {
 		final Result result;
 		if (mQuantifier == QuantifiedFormula.EXISTS) {
 			result = transduceCorresponding(Adk.DISJUNCTION, transducedArguments);
