@@ -107,13 +107,6 @@ public class QuantifierPushUtilsForSubsetPush {
 		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
 		}
-		{
-			final Pair<Term, Set<TermVariable>> pair = QuantifierPushUtilsForLocalEliminatees
-					.findSomePushableLocalEliminateeSet(et);
-			if (pair != null) {
-				throw new AssertionError("Contains local eliminatees");
-			}
-		}
 		if (!QuantifierPushUtils.isFlattened(et.getQuantifier(), currentDualFiniteJuncts)) {
 			throw new AssertionError("Not flattened");
 		}
@@ -204,10 +197,11 @@ public class QuantifierPushUtilsForSubsetPush {
 			{
 				final EliminationTask etForPreprocessing = new EliminationTask(et.getQuantifier(),
 						new HashSet<>(currentEliminatees), currentDualFiniteJunction, et.getContext());
+				final boolean pushLocalEliminatees = false;
 				final boolean pushDualQuantifiersInParams = true;
 				final Pair<Boolean, Term> pair = QuantifierPushUtils.preprocessDualFiniteJunction(services, mgdScript,
 						applyDistributivity, pqeTechniques, simplificationTechnique, etForPreprocessing, qe,
-						pushDualQuantifiersInParams);
+						pushLocalEliminatees, pushDualQuantifiersInParams);
 				if (!pair.getFirst()) {
 					return pair.getSecond();
 				}

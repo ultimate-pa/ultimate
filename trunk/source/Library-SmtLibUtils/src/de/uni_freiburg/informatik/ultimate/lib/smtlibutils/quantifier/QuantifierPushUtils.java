@@ -106,7 +106,8 @@ public class QuantifierPushUtils {
 	public static Pair<Boolean, Term> preprocessDualFiniteJunction(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
-			final IQuantifierEliminator qe, final boolean pushDualQuantifiersInParams) {
+			final IQuantifierEliminator qe, final boolean pushLocalEliminatees,
+			final boolean pushDualQuantifiersInParams) {
 		EliminationTask currentEt = et;
 		int i = 0;
 		// Each preprocessing step may change the structure of the formula completely
@@ -182,7 +183,7 @@ public class QuantifierPushUtils {
 
 			// Step 4: Push local eliminatees over corresponding connective if applicable
 			// See #innerAlternatingFirst
-			{
+			if (pushLocalEliminatees) {
 				final Term localsEliminated = QuantifierPushUtilsForLocalEliminatees
 						.pushLocalEliminateesOverCorrespondingFiniteJunction(services, mgdScript, applyDistributivity,
 								pqeTechniques, simplificationTechnique, currentEt, qe);

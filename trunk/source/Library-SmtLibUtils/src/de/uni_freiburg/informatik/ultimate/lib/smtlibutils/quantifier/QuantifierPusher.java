@@ -322,7 +322,7 @@ public class QuantifierPusher extends TermTransformer {
 			final IQuantifierEliminator qe) {
 
 		final Pair<Boolean, Term> pair = QuantifierPushUtils.preprocessDualFiniteJunction(services, mgdScript,
-				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe, true);
+				applyDistributivity, pqeTechniques, simplificationTechnique, et, qe, false, true);
 
 		if (!pair.getFirst()) {
 			return pair.getSecond();
