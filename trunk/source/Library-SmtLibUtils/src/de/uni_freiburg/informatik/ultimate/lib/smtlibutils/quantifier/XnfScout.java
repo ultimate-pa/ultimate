@@ -241,7 +241,8 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 		return result;
 	}
 
-	private Result transduceCorresponding(final ApplicationTerm originalTerm, final Adk adk, final List<Result> transducedArguments) {
+	private Result transduceCorresponding(final ApplicationTerm originalTerm, final Adk adk,
+			final List<Result> transducedArguments) {
 		double derCorrespondingJuncts = 0;
 		double eliminableCorrespondingJuncts = 0;
 		double occurringCorrespondingJuncts = 0;
@@ -259,8 +260,10 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 				atLeastOneNonInvolvedCorrespondingJunct);
 	}
 
-	private Result transduceDual(final ApplicationTerm originalTerm, final Adk adk, final List<Result> transducedArguments) {
-		double originalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJunction(mQuantifier, originalTerm.getParameters()[0]).length;
+	private Result transduceDual(final ApplicationTerm originalTerm, final Adk adk,
+			final List<Result> transducedArguments) {
+		double originalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJunction(mQuantifier,
+				originalTerm.getParameters()[0]).length;
 		double derCorrespondingJuncts = transducedArguments.get(0).getDerCorrespondingJuncts();
 		double eliminableCorrespondingJuncts = transducedArguments.get(0).getEliminableCorrespondingJuncts();
 		double occurringCorrespondingJuncts = transducedArguments.get(0).getOccurringCorrespondingJuncts();
@@ -276,7 +279,8 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			final double oldEccurringCorrespondingJuncts = occurringCorrespondingJuncts;
 			final double oldNonInvolved = (atLeastOneNonInvolvedCorrespondingJunct ? 1 : 0);
 
-			final double operandOriginalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJunction(mQuantifier, originalTerm.getParameters()[i]).length;
+			final double operandOriginalCorrespondingJuncts = QuantifierUtils
+					.getCorrespondingFiniteJunction(mQuantifier, originalTerm.getParameters()[i]).length;
 			final double operandDerCorrespondingJuncts = transducedArguments.get(i).getDerCorrespondingJuncts();
 			final double operandEliminableCorrespondingJuncts = transducedArguments.get(i)
 					.getEliminableCorrespondingJuncts();
@@ -500,9 +504,8 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 	public static int computeRecommendationEliminable(final Script script, final Set<TermVariable> eliminatees,
 			final Term[] dualFiniteParams, final int quantifier) {
-		return computeRecommendation(script, eliminatees, dualFiniteParams, quantifier, x -> x.computeEliminableRatio());
+		return computeRecommendation(script, eliminatees, dualFiniteParams, quantifier,
+				x -> x.computeEliminableRatio());
 	}
-
-
 
 }
