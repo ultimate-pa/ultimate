@@ -106,7 +106,25 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 		 * Eliminatee does not occur in this conjunction.
 		 */
 		ABSENT
-	};
+	}
+
+	/**
+	 * Yet probably not fully matured optimization based on the following
+	 * observation: If we have a term of the form `∃x.F[x] ∧ (x=t V G[x])` our
+	 * algorithm presumes that we have to bring F into DNF. This is typically only
+	 * true for the combination of F and G, for the combination of `x=t` and F we
+	 * can avoid to bring F in DNF since we can apply DER directly. This
+	 * optimization is however only a workaround: The idea is that we combine a DER
+	 * term only with the original terms (before DNF conversion) of the other
+	 * conjunct. If the other conjunct however also contains DER disjuncts it is
+	 * difficult to count the number of the DER-applicable disjuncts since we don't
+	 * know how DER-applicable disjuncts after DNF and the original disjuncts are
+	 * related. (The result probably depends on the order in which we descend into
+	 * the conjuncts.) Nonetheless, I think this optimization is a good idea.
+	 * However an quick evaluation on 20220710 did not show that the optimization
+	 * helps.
+	 */
+	private static final boolean OPTION_OMIT_DESCED_FOR_DER = false;
 
 	private final Script mScript;
 	private final int mQuantifier;
@@ -214,16 +232,16 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	protected Result transduceConjunction(final ApplicationTerm originalTerm, final List<Result> transducedArguments) {
 		final Result result;
 		if (mQuantifier == QuantifiedFormula.EXISTS) {
-			result = transduceDual(Adk.CONJUNCTION, transducedArguments);
+			result = transduceDual(originalTerm, Adk.CONJUNCTION, transducedArguments);
 		} else if (mQuantifier == QuantifiedFormula.FORALL) {
-			result = transduceCorresponding(Adk.CONJUNCTION, transducedArguments);
+			result = transduceCorresponding(originalTerm, Adk.CONJUNCTION, transducedArguments);
 		} else {
 			throw new AssertionError("Unknown quantifier " + mQuantifier);
 		}
 		return result;
 	}
 
-	private Result transduceCorresponding(final Adk adk, final List<Result> transducedArguments) {
+	private Result transduceCorresponding(final ApplicationTerm originalTerm, final Adk adk, final List<Result> transducedArguments) {
 		double derCorrespondingJuncts = 0;
 		double eliminableCorrespondingJuncts = 0;
 		double occurringCorrespondingJuncts = 0;
@@ -241,7 +259,8 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 				atLeastOneNonInvolvedCorrespondingJunct);
 	}
 
-	private Result transduceDual(final Adk adk, final List<Result> transducedArguments) {
+	private Result transduceDual(final ApplicationTerm originalTerm, final Adk adk, final List<Result> transducedArguments) {
+		double originalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJunction(mQuantifier, originalTerm.getParameters()[0]).length;
 		double derCorrespondingJuncts = transducedArguments.get(0).getDerCorrespondingJuncts();
 		double eliminableCorrespondingJuncts = transducedArguments.get(0).getEliminableCorrespondingJuncts();
 		double occurringCorrespondingJuncts = transducedArguments.get(0).getOccurringCorrespondingJuncts();
@@ -251,11 +270,13 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			if (transducedArguments.get(i).getAdk() == adk) {
 				throw new AssertionError("Expected alternation between conjunction and disjunction");
 			}
+			final double oldOriginalCorrespondingJuncts = originalCorrespondingJuncts;
 			final double oldDerCorrespondingJuncts = derCorrespondingJuncts;
 			final double oldEliminableCorrespondingJuncts = eliminableCorrespondingJuncts;
 			final double oldEccurringCorrespondingJuncts = occurringCorrespondingJuncts;
 			final double oldNonInvolved = (atLeastOneNonInvolvedCorrespondingJunct ? 1 : 0);
 
+			final double operandOriginalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJunction(mQuantifier, originalTerm.getParameters()[i]).length;
 			final double operandDerCorrespondingJuncts = transducedArguments.get(i).getDerCorrespondingJuncts();
 			final double operandEliminableCorrespondingJuncts = transducedArguments.get(i)
 					.getEliminableCorrespondingJuncts();
@@ -264,14 +285,20 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			final double operandNonInvolved = (transducedArguments.get(i).isAtLeastOneNonInvolvedCorrespondingJunct()
 					? 1
 					: 0);
-
-			derCorrespondingJuncts = oldDerCorrespondingJuncts * operandDerCorrespondingJuncts
-					+ oldDerCorrespondingJuncts * operandEliminableCorrespondingJuncts
-					+ oldDerCorrespondingJuncts * operandOccurringCorrespondingJuncts
-					+ oldDerCorrespondingJuncts * operandNonInvolved
-					+ oldEliminableCorrespondingJuncts * operandDerCorrespondingJuncts
-					+ oldEccurringCorrespondingJuncts * operandDerCorrespondingJuncts
-					+ oldNonInvolved * operandDerCorrespondingJuncts;
+			originalCorrespondingJuncts = oldOriginalCorrespondingJuncts * operandOriginalCorrespondingJuncts;
+			if (OPTION_OMIT_DESCED_FOR_DER) {
+				derCorrespondingJuncts = oldDerCorrespondingJuncts * operandOriginalCorrespondingJuncts
+						+ operandDerCorrespondingJuncts * oldOriginalCorrespondingJuncts
+						- derCorrespondingJuncts * operandDerCorrespondingJuncts;
+			} else {
+				derCorrespondingJuncts = oldDerCorrespondingJuncts * operandDerCorrespondingJuncts
+						+ oldDerCorrespondingJuncts * operandEliminableCorrespondingJuncts
+						+ oldDerCorrespondingJuncts * operandOccurringCorrespondingJuncts
+						+ oldDerCorrespondingJuncts * operandNonInvolved
+						+ oldEliminableCorrespondingJuncts * operandDerCorrespondingJuncts
+						+ oldEccurringCorrespondingJuncts * operandDerCorrespondingJuncts
+						+ oldNonInvolved * operandDerCorrespondingJuncts;
+			}
 			occurringCorrespondingJuncts = oldEccurringCorrespondingJuncts * operandEliminableCorrespondingJuncts
 					+ oldEccurringCorrespondingJuncts * operandOccurringCorrespondingJuncts
 					+ oldEccurringCorrespondingJuncts * operandNonInvolved
@@ -291,9 +318,9 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	protected Result transduceDisjunction(final ApplicationTerm originalTerm, final List<Result> transducedArguments) {
 		final Result result;
 		if (mQuantifier == QuantifiedFormula.EXISTS) {
-			result = transduceCorresponding(Adk.DISJUNCTION, transducedArguments);
+			result = transduceCorresponding(originalTerm, Adk.DISJUNCTION, transducedArguments);
 		} else if (mQuantifier == QuantifiedFormula.FORALL) {
-			result = transduceDual(Adk.DISJUNCTION, transducedArguments);
+			result = transduceDual(originalTerm, Adk.DISJUNCTION, transducedArguments);
 		} else {
 			throw new AssertionError("Unknown quantifier " + mQuantifier);
 		}
