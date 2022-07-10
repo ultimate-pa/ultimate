@@ -1872,5 +1872,30 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void feldberg() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "v_idx_2", "v_i_3", "v_itFin_1"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_a_1", "v_a_2"),
+
+			};
+		final String formulaAsString = "(forall ((v_it_2 Int)) (let ((.cse0 (select v_a_1 v_idx_2)) (.cse1 (and (= (+ (- 1) v_it_2 v_i_3) v_idx_2) (<= v_it_2 (- v_itFin_1 1)) (<= 0 v_it_2)))) (and (or (= .cse0 (select v_a_2 v_idx_2)) .cse1) (or (= .cse0 42) (not .cse1)))))";
+		final String expectedResult = "(let ((.cse0 (select v_a_1 v_idx_2))) (and (or (not (<= (+ 2 v_idx_2) (+ v_i_3 v_itFin_1))) (= .cse0 42) (not (<= v_i_3 (+ v_idx_2 1)))) (= .cse0 (select v_a_2 v_idx_2))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	/**
+	 * Best eliminatee for subset push occurs in all conjuncts
+	 */
+	@Test
+	public void bestInAll() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "a", "b"),
+			};
+		final String formulaAsString = "(exists ((x Int) (y Int)) (and (or (= x 2) (= x 3)) (or (<= a (+ x y)) (<= b (+ x y))) (<= (+ x y) 99)))";
+		final String expectedResult = "(or (<= a 99) (<= b 99))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }
