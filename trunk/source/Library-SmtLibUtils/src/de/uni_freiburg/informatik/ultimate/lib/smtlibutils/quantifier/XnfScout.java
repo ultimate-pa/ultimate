@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -506,6 +507,27 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			final Term[] dualFiniteParams, final int quantifier) {
 		return computeRecommendation(script, eliminatees, dualFiniteParams, quantifier,
 				x -> x.computeEliminableRatio());
+	}
+
+	/**
+	 * Alternative recommendation (see {@link XnfScout#computeRecommendation} where
+	 * we first select the "best" eliminatee and utilize only this eliminatee to
+	 * recommend a parameter.
+	 */
+	public static int computeRecommendation2(final Script script, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams, final int quantifier) {
+		final TermVariable bestEliminatee = selectBestEliminatee(script, quantifier, new ArrayList<>(eliminatees),
+				Arrays.asList(dualFiniteParams));
+		int res = computeRecommendationDer(script, Collections.singleton(bestEliminatee), dualFiniteParams, quantifier);
+		if (res == -1) {
+			res = computeRecommendationEliminable(script, Collections.singleton(bestEliminatee), dualFiniteParams,
+					quantifier);
+		}
+		final int alt = computeRecommendation(script, eliminatees, dualFiniteParams, quantifier);
+		if (res != alt) {
+			bestEliminatee.toString();
+		}
+		return res;
 	}
 
 }
