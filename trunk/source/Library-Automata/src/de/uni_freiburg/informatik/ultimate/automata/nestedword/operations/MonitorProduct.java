@@ -40,11 +40,15 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFa
  *
  * @param <L>
  *            letter type
+ * @param <S1>
+ *            State type of first operand (monitored automaton)
+ * @param <S2>
+ *            State type of second operand (monitor)
  * @param <S>
  *            state type
  */
-public class MonitorProduct<L, S> extends ProductNwa<L, S, S, S> {
-	private final IMonitorStateFactory<S, S, S> mStateFactory;
+public class MonitorProduct<L, S1, S2, S> extends ProductNwa<L, S1, S2, S> {
+	private final IMonitorStateFactory<S1, S2, S> mStateFactory;
 
 	/**
 	 * Implementation of the Information Storage Operation for Partial Order Reduction.
@@ -58,15 +62,15 @@ public class MonitorProduct<L, S> extends ProductNwa<L, S, S, S> {
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public MonitorProduct(final INwaOutgoingLetterAndTransitionProvider<L, S> fstOperand,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> sndOperand,
-			final IMonitorStateFactory<S, S, S> stateFactory) throws AutomataLibraryException {
+	public MonitorProduct(final INwaOutgoingLetterAndTransitionProvider<L, S1> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<L, S2> sndOperand,
+			final IMonitorStateFactory<S1, S2, S> stateFactory) throws AutomataLibraryException {
 		super(fstOperand, sndOperand, stateFactory, false);
 		mStateFactory = stateFactory;
 	}
 
 	@Override
-	protected final ProductNwa<L, S, S, S>.ProductState createProductState(final S fst, final S snd) {
+	protected final ProductState createProductState(final S1 fst, final S2 snd) {
 		final S res = mStateFactory.product(fst, snd);
 		final boolean isAccepting = mFstOperand.isFinal(fst);
 		return new ProductState(fst, snd, res, isAccepting);
