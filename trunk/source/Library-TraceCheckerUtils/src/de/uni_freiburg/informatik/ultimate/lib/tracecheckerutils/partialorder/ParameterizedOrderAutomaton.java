@@ -19,13 +19,13 @@ public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
 implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State>{
 	private final Map<String, Map<Integer, State>> mCreatedStates = new HashMap<>();
 	private final Set<String> mThreads = new HashSet<>();
-	private static Integer mParameter;
+	private static Integer mMaxStep;
 	private String mInitialThread;
 	private java.util.function.Predicate<L> mIsStep;
 
 	
 	public ParameterizedOrderAutomaton(final Integer parameter, final Set<String> threads, java.util.function.Predicate<L> isStep) {
-		mParameter = parameter;
+		mMaxStep = parameter;
 		mThreads.addAll(threads);
 		mIsStep = isStep;
 		for (String thread : mThreads) {
@@ -41,8 +41,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -95,7 +94,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 			if(letter.getPrecedingProcedure() != state.getThread()) {
 				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(letter.getPrecedingProcedure(),0)));
 			}
-			else if (state.getCounter()==mParameter) {
+			else if (state.getCounter()==mMaxStep-1) {
 				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread(state.getThread()),0)));
 			}
 			else {
@@ -108,6 +107,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 	}
 
 	private String nextThread(String thread) {
+		
 		// Welcher Thread kommt als nächstes?
 		// Sollte das überhaupt im Automaten ermittelt werden oder in ParameterizedOrder?
 		// Sollte der Automat überhaupt die Order kennen?

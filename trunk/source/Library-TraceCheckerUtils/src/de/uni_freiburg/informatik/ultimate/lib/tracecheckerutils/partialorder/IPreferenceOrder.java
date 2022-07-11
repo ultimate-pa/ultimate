@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 
 public interface IPreferenceOrder<L,S1,S2> {
 
-	Comparator<L> getOrder(S1 stateParameterized, S2 stateProgram);
+	Comparator<L> getOrder(S1 stateMonitor, S2 stateProgram);
 	
 	boolean isPositional();
 	

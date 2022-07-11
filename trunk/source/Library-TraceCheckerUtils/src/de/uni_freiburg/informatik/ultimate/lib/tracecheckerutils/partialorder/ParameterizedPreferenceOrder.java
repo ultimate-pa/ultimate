@@ -4,37 +4,36 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
-public class ParameterizedOrder<L extends IIcfgTransition<?>, S2> implements IPreferenceOrder<L, State, S2>{
+public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S2> implements IPreferenceOrder<L, State, S2>{
 	private final Set<String> mThreads = new HashSet<>();
-	private static Integer mParameter;
+	private static Integer mMaxStep;
 	private Set<L> mAlphabet;
 	private INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
-	public ParameterizedOrder(Integer parameter) {
-		mParameter = parameter;
-		mMonitor = new ParameterizedOrderAutomaton<L>(mParameter, mThreads, isStep);
+	public ParameterizedPreferenceOrder(int parameter,java.util.function.Predicate<L> isStep) {
+		mMaxStep = parameter;
+		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxStep, mThreads, isStep);
 	}
-	
+	/*
 	private Predicate<L> isStep = new Predicate<L>() {
 
 		@Override
 		public boolean test(L t) {
 			return true;
 		}
-	};
+	};*/
 
 	@Override
-	public Comparator<L> getOrder(State stateParameterized, S2 stateProgram) {
-		final String lastThread = ((de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State) stateParameterized).getThread();
+	public Comparator<L> getOrder(State stateMonitor, S2 stateProgram) {
+		final String lastThread = ((State) stateMonitor).getThread();
 		return new ParameterizedComparator<>(lastThread, mDefaultComparator);
 	}
 	
