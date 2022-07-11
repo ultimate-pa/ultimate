@@ -4,19 +4,17 @@ import java.util.Comparator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
-public class Dfs2PreferenceOrder<L, S> implements IPreferenceOrder<L,State,S> {
-	  private IDfsOrder<S, L> mDFSOrder;
+public class Dfs2PreferenceOrder<L, S1, S2> implements IPreferenceOrder<L,S1,S2> {
+	  private IDfsOrder<L,S1> mDFSOrder;
 
-	public Dfs2PreferenceOrder(IDfsOrder<S, L> underlying) {
+	public Dfs2PreferenceOrder(IDfsOrder<L,S1> underlying) {
 		  mDFSOrder = underlying;
 	  }
 
 	@Override
-	public Comparator<L> getOrder(State stateMonitor, S stateProgram) {
-		
-		return null; //die order hängt bei der IPreferenceOrder ausschließlich vom stateMonitor ab, aber dieser existiert für die IDfsOrder nicht
+	public Comparator<L> getOrder(S1 stateProgram, S2 stateMonitor) {
+		return mDFSOrder.getOrder(stateProgram);
 	}
 
 	@Override
@@ -25,7 +23,7 @@ public class Dfs2PreferenceOrder<L, S> implements IPreferenceOrder<L,State,S> {
 	}
 
 	@Override
-	public INwaOutgoingLetterAndTransitionProvider<L, State> getMonitor() {
+	public INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor() {
 		return null;
 	}
 

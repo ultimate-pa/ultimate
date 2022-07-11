@@ -2,9 +2,11 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -18,19 +20,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
 implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State>{
 	private final Map<String, Map<Integer, State>> mCreatedStates = new HashMap<>();
-	private final Set<String> mThreads = new HashSet<>();
+	private final List<String> mThreads;
 	private static Integer mMaxStep;
 	private String mInitialThread;
 	private java.util.function.Predicate<L> mIsStep;
+	private VpAlphabet<L> mAlphabet;
 
 	
-	public ParameterizedOrderAutomaton(final Integer parameter, final Set<String> threads, java.util.function.Predicate<L> isStep) {
+	public ParameterizedOrderAutomaton(final Integer parameter, final List<String> threads, VpAlphabet<L> alphabet,  java.util.function.Predicate<L> isStep) {
 		mMaxStep = parameter;
-		mThreads.addAll(threads);
+		mThreads=threads;
 		mIsStep = isStep;
+		mAlphabet = alphabet;
 		for (String thread : mThreads) {
 			mCreatedStates.put(thread, new HashMap<>());
 		}
+		mInitialThread = threads.get(0);
 		
 	}
 
@@ -41,7 +46,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		throw new UnsupportedOperationException();
+		return mAlphabet;
 	}
 
 	@Override
@@ -108,10 +113,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 
 	private String nextThread(String thread) {
 		
-		// Welcher Thread kommt als nächstes?
-		// Sollte das überhaupt im Automaten ermittelt werden oder in ParameterizedOrder?
-		// Sollte der Automat überhaupt die Order kennen?
-		return null;
+		return mThreads.get((mThreads.indexOf(thread)+1) % mThreads.size());
 	}
 
 	@Override

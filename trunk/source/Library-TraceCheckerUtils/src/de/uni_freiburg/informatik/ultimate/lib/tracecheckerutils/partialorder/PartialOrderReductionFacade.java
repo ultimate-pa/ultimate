@@ -28,15 +28,19 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
@@ -51,17 +55,22 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSet
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -88,6 +97,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 	private StateSplitter<IPredicate> mStateSplitter;
 	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
+	private IPreferenceOrder<L, Object, IPredicate> mPreferenceOrder;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -97,10 +107,18 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mAutomataServices = new AutomataLibraryServices(services);
 		mMode = mode;
 		mSleepFactory = createSleepFactory(predicateFactory);
+		mPreferenceOrder = getPreferenceOrder(icfg);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mIndependence = independence;
 		mPersistent = createPersistentSets(icfg, errorLocs);
 		mDeadEndStore = createDeadEndStore();
+	}
+
+	private IPreferenceOrder<L,Object,IPredicate> getPreferenceOrder(IIcfg<?> icfg) {
+		
+		List<String> threadList =IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
+		VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
+		return new ParameterizedPreferenceOrder(1,threadList, alphabet, x -> true);
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -193,6 +211,25 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
 		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
 			input = ((LoopLockstepOrder<L>) mDfsOrder).wrapAutomaton(input);
+		} else if (mPreferenceOrder.getMonitor()!=null) {
+			try {
+			input = (new InformationStorage(input, mPreferenceOrder.getMonitor(), new IIntersectionStateFactory<Object>() {
+
+				@Override
+				public Object createEmptyStackState() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+
+				@Override
+				public Object intersection(Object state1, Object state2) {
+					// TODO Auto-generated method stub
+					
+					return new MonitorPredicate((IMLPredicate) state1, state2);
+				}},false));}
+			catch (AutomataLibraryException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
 			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
@@ -203,8 +240,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, mIndependence, mDfsOrder, visitor);
 			break;
 		case SLEEP_NEW_STATES:
+			var dfsorder = new Preference2DfsOrder(mPreferenceOrder, x -> {
+				var y = (MonitorPredicate) mStateSplitter.getOriginal((IPredicate) x);
+				return new Pair<>(y.getState1(),y.getState2());
+				});
 			new DepthFirstTraversal<>(mAutomataServices,
-					new MinimalSleepSetReduction<>(input, mSleepFactory, mIndependence, mDfsOrder), mDfsOrder, visitor);
+					new MinimalSleepSetReduction<>(input, mSleepFactory, mIndependence, dfsorder), mDfsOrder, visitor);
 			break;
 		case PERSISTENT_SETS:
 			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
@@ -318,5 +359,53 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 				final Function<T, Object> oldGetInfo, final Function<T, Object> newGetInfo) {
 			return x -> new Pair<>(oldGetInfo.apply(x), newGetInfo.apply(oldGetOriginal.apply(x)));
 		}
+	}
+	
+	private static class MonitorPredicate implements IMLPredicate{
+
+		private IMLPredicate mState1;
+		private Object mState2;
+
+		public MonitorPredicate(IMLPredicate state1 , Object state2) {
+			mState1 = state1;
+			mState2 = state2;
+		}
+
+		@Override
+		public Term getFormula() {
+			return mState1.getFormula();
+		}
+
+		@Override
+		public Term getClosedFormula() {
+			// TODO Auto-generated method stub
+			return mState1.getClosedFormula();
+		}
+
+		@Override
+		public String[] getProcedures() {
+			// TODO Auto-generated method stub
+			return mState1.getProcedures();
+		}
+
+		@Override
+		public Set<IProgramVar> getVars() {
+			return mState1.getVars();
+		}
+
+		@Override
+		public IcfgLocation[] getProgramPoints() {
+			return mState1.getProgramPoints();
+		}
+		
+		public IMLPredicate getState1() {
+			return mState1;
+		}
+		
+		public Object getState2() {
+			return mState2;
+		}
+
+		
 	}
 }
