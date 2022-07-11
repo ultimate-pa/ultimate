@@ -29,20 +29,22 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
 
 /**
- * Implementation of the Information Storage Operation for Partial Order Reduction.
+ * A product automaton construction in which the second operand acts only as a monitor: It never blocks, and acceptance
+ * is purely determined by the first operand.
  *
  * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
  *            letter type
  * @param <S>
  *            state type
  */
-public class InformationStorage<L, S> extends ProductNwa<L, S, S, S> {
-	private final IIntersectionStateFactory<S> mStateFactory;
+public class MonitorProduct<L, S> extends ProductNwa<L, S, S, S> {
+	private final IMonitorStateFactory<S, S, S> mStateFactory;
 
 	/**
 	 * Implementation of the Information Storage Operation for Partial Order Reduction.
@@ -53,23 +55,19 @@ public class InformationStorage<L, S> extends ProductNwa<L, S, S, S> {
 	 *            automaton from which the information shall be taken
 	 * @param stateFactory
 	 *            state factory
-	 * @param assumeInSndNonFinalIsTrap
-	 *            assume that in the second operand a non-final state is a trap (i.e., whenever we reach a non-final
-	 *            state we can never go back to a final state.
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public InformationStorage(final INwaOutgoingLetterAndTransitionProvider<L, S> fstOperand,
+	public MonitorProduct(final INwaOutgoingLetterAndTransitionProvider<L, S> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> sndOperand,
-			final IIntersectionStateFactory<S> stateFactory, final boolean assumeInSndNonFinalIsTrap)
-			throws AutomataLibraryException {
-		super(fstOperand, sndOperand, stateFactory, assumeInSndNonFinalIsTrap);
+			final IMonitorStateFactory<S, S, S> stateFactory) throws AutomataLibraryException {
+		super(fstOperand, sndOperand, stateFactory, false);
 		mStateFactory = stateFactory;
 	}
 
 	@Override
 	protected final ProductNwa<L, S, S, S>.ProductState createProductState(final S fst, final S snd) {
-		final S res = mStateFactory.intersection(fst, snd);
+		final S res = mStateFactory.product(fst, snd);
 		final boolean isAccepting = mFstOperand.isFinal(fst);
 		return new ProductState(fst, snd, res, isAccepting);
 	}

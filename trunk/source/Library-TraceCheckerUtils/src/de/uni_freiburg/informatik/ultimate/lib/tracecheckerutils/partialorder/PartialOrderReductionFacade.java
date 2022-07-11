@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.MonitorProduct;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSet
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -211,23 +211,25 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
 		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
 			input = ((LoopLockstepOrder<L>) mDfsOrder).wrapAutomaton(input);
-		} else if (mPreferenceOrder.getMonitor()!=null) {
+		} else if (mPreferenceOrder.getMonitor() != null) {
 			try {
-			input = (new InformationStorage(input, mPreferenceOrder.getMonitor(), new IIntersectionStateFactory<Object>() {
+				input = (new MonitorProduct(input, mPreferenceOrder.getMonitor(),
+						new IMonitorStateFactory<Object, Object, Object>() {
 
-				@Override
-				public Object createEmptyStackState() {
-					// TODO Auto-generated method stub
-					return null;
-				}
+							@Override
+							public Object createEmptyStackState() {
+								// TODO Auto-generated method stub
+								return null;
+							}
 
-				@Override
-				public Object intersection(Object state1, Object state2) {
-					// TODO Auto-generated method stub
-					
-					return new MonitorPredicate((IMLPredicate) state1, state2);
-				}},false));}
-			catch (AutomataLibraryException e) {
+							@Override
+							public Object product(final Object state1, final Object state2) {
+								// TODO Auto-generated method stub
+
+								return new MonitorPredicate((IMLPredicate) state1, state2);
+							}
+						}));
+			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);
 			}
 		}

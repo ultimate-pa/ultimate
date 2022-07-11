@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.MonitorProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -102,7 +102,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
 	private final PartialOrderMode mPartialOrderMode;
-	private final IIntersectionStateFactory<IPredicate> mFactory;
+	private final IMonitorStateFactory<IPredicate, IPredicate, IPredicate> mFactory;
 	private final PartialOrderReductionFacade<L> mPOR;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
@@ -145,7 +145,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
 
 		// Actual refinement step
-		mAbstraction = new InformationStorage<>(mAbstraction, totalInterpol, mFactory, false);
+		mAbstraction = new MonitorProduct<>(mAbstraction, totalInterpol, mFactory);
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -336,14 +336,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		throw new UnsupportedOperationException("Hoare annotation not supported for " + PartialOrderCegarLoop.class);
 	}
 
-	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
+	private final class InformationStorageFactory implements IMonitorStateFactory<IPredicate, IPredicate, IPredicate> {
 		@Override
 		public IPredicate createEmptyStackState() {
 			return mStateFactoryForRefinement.createEmptyStackState();
 		}
 
 		@Override
-		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
+		public IPredicate product(final IPredicate state1, final IPredicate state2) {
 			if (isProvenState(state1) || isTrueLiteral(state2)) {
 				// If state1 is "false", we add no other conjuncts, and do not create a new state.
 				// Similarly, there is no point in adding state2 as conjunct if it is "true".
