@@ -306,13 +306,10 @@ public final class NestedWordAutomataUtils {
 	 *            second operand
 	 * @param <LETTER>
 	 *            letter type
-	 * @param <STATE>
-	 *            state type
 	 * @return {@code true} iff the automata have the same alphabets
 	 */
-	public static <LETTER, STATE> boolean sameAlphabet(
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) {
+	public static <LETTER> boolean sameAlphabet(final INwaOutgoingLetterAndTransitionProvider<LETTER, ?> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, ?> sndOperand) {
 		boolean result;
 		result = fstOperand.getVpAlphabet().equals(sndOperand.getVpAlphabet());
 		return result;

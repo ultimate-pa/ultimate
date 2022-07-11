@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,22 +45,23 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * On-the-fly intersection of two nested word automata.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
-	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
-	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
+public abstract class ProductNwa<LETTER, S1, S2, STATE>
+		implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, S1> mFstOperand;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, S2> mSndOperand;
 	// TODO 2017-06-23 Christian: this field is only present while automata provide their state factories
 	private final IEmptyStackStateFactory<STATE> mStateFactory;
 
 	private final STATE mEmptyStackState;
 
-	private final Map<STATE, Map<STATE, ProductState>> mFst2snd2res = new HashMap<>();
+	private final Map<S1, Map<S2, ProductState>> mFst2snd2res = new HashMap<>();
 	private final Map<STATE, ProductState> mRes2prod = new HashMap<>();
 
 	private final boolean mAssumeInSndNonFinalIsTrap;
@@ -81,8 +82,8 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	protected ProductNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand,
+	protected ProductNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, S1> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, S2> sndOperand,
 			final IEmptyStackStateFactory<STATE> emptyStackStateFactory, final boolean assumeInSndNonFinalIsTrap)
 			throws AutomataLibraryException {
 		mFstOperand = fstOperand;
@@ -97,14 +98,14 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 		mEmptyStackState = emptyStackStateFactory.createEmptyStackState();
 	}
 
-	public Map<STATE, Map<STATE, ProductState>> getFst2snd2res() {
+	public Map<S1, Map<S2, ProductState>> getFst2snd2res() {
 		return mFst2snd2res;
 	}
 
 	private Set<STATE> constructInitialState() {
 		final Set<STATE> initialStates = new HashSet<>();
-		for (final STATE fst : mFstOperand.getInitialStates()) {
-			for (final STATE snd : mSndOperand.getInitialStates()) {
+		for (final S1 fst : mFstOperand.getInitialStates()) {
+			for (final S2 snd : mSndOperand.getInitialStates()) {
 				final STATE init = getOrConstructState(fst, snd);
 				initialStates.add(init);
 			}
@@ -112,8 +113,8 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 		return initialStates;
 	}
 
-	private STATE getOrConstructState(final STATE fst, final STATE snd) {
-		Map<STATE, ProductState> snd2res = mFst2snd2res.get(fst);
+	private STATE getOrConstructState(final S1 fst, final S2 snd) {
+		Map<S2, ProductState> snd2res = mFst2snd2res.get(fst);
 		if (snd2res == null) {
 			snd2res = new HashMap<>();
 			mFst2snd2res.put(fst, snd2res);
@@ -134,7 +135,7 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	 *            state in second operand
 	 * @return product state
 	 */
-	protected abstract ProductState createProductState(final STATE fst, final STATE snd);
+	protected abstract ProductState createProductState(final S1 fst, final S2 snd);
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
@@ -174,20 +175,20 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
-		final STATE fst = mRes2prod.get(state).getFst();
+		final S1 fst = mRes2prod.get(state).getFst();
 		return mFstOperand.lettersInternal(fst);
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
-		final STATE fst = mRes2prod.get(state).getFst();
+		final S1 fst = mRes2prod.get(state).getFst();
 		return mFstOperand.lettersCall(fst);
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		final STATE fst = mRes2prod.get(state).getFst();
-		final STATE fstHier = mRes2prod.get(hier).getFst();
+		final S1 fst = mRes2prod.get(state).getFst();
+		final S1 fstHier = mRes2prod.get(hier).getFst();
 		return mFstOperand.lettersReturn(fst, fstHier);
 	}
 
@@ -195,28 +196,27 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
 		final ProductState prod = mRes2prod.get(state);
-		final STATE fst = prod.getFst();
-		final STATE snd = prod.getSnd();
+		final S1 fst = prod.getFst();
+		final S2 snd = prod.getSnd();
 		return internalSuccessors(mFstOperand.internalSuccessors(fst, letter), snd);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		final ProductState prod = mRes2prod.get(state);
-		final STATE fst = prod.getFst();
-		final STATE snd = prod.getSnd();
+		final S1 fst = prod.getFst();
+		final S2 snd = prod.getSnd();
 		return internalSuccessors(mFstOperand.internalSuccessors(fst), snd);
 	}
 
-	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final Iterable<OutgoingInternalTransition<LETTER, STATE>> fstInternalSuccs, final STATE snd) {
+	private Iterable<OutgoingInternalTransition<LETTER, STATE>>
+			internalSuccessors(final Iterable<OutgoingInternalTransition<LETTER, S1>> fstInternalSuccs, final S2 snd) {
 		final Collection<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
-		for (final OutgoingInternalTransition<LETTER, STATE> fstTrans : fstInternalSuccs) {
+		for (final OutgoingInternalTransition<LETTER, S1> fstTrans : fstInternalSuccs) {
 			final LETTER letter = fstTrans.getLetter();
-			for (final OutgoingInternalTransition<LETTER, STATE> sndTrans : mSndOperand.internalSuccessors(snd,
-					letter)) {
-				final STATE fstSucc = fstTrans.getSucc();
-				final STATE sndSucc = sndTrans.getSucc();
+			for (final OutgoingInternalTransition<LETTER, S2> sndTrans : mSndOperand.internalSuccessors(snd, letter)) {
+				final S1 fstSucc = fstTrans.getSucc();
+				final S2 sndSucc = sndTrans.getSucc();
 				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {
 					continue;
 				}
@@ -231,27 +231,27 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		final ProductState prod = mRes2prod.get(state);
-		final STATE fst = prod.getFst();
-		final STATE snd = prod.getSnd();
+		final S1 fst = prod.getFst();
+		final S2 snd = prod.getSnd();
 		return callSuccessors(mFstOperand.callSuccessors(fst, letter), snd);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		final ProductState prod = mRes2prod.get(state);
-		final STATE fst = prod.getFst();
-		final STATE snd = prod.getSnd();
+		final S1 fst = prod.getFst();
+		final S2 snd = prod.getSnd();
 		return callSuccessors(mFstOperand.callSuccessors(fst), snd);
 	}
 
 	private Iterable<OutgoingCallTransition<LETTER, STATE>>
-			callSuccessors(final Iterable<OutgoingCallTransition<LETTER, STATE>> fstCallSuccs, final STATE snd) {
+			callSuccessors(final Iterable<OutgoingCallTransition<LETTER, S1>> fstCallSuccs, final S2 snd) {
 		final Collection<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>();
-		for (final OutgoingCallTransition<LETTER, STATE> fstTrans : fstCallSuccs) {
+		for (final OutgoingCallTransition<LETTER, S1> fstTrans : fstCallSuccs) {
 			final LETTER letter = fstTrans.getLetter();
-			for (final OutgoingCallTransition<LETTER, STATE> sndTrans : mSndOperand.callSuccessors(snd, letter)) {
-				final STATE fstSucc = fstTrans.getSucc();
-				final STATE sndSucc = sndTrans.getSucc();
+			for (final OutgoingCallTransition<LETTER, S2> sndTrans : mSndOperand.callSuccessors(snd, letter)) {
+				final S1 fstSucc = fstTrans.getSucc();
+				final S2 sndSucc = sndTrans.getSucc();
 				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {
 					continue;
 				}
@@ -267,24 +267,24 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
 		final ProductState prodState = mRes2prod.get(state);
-		final STATE fstState = prodState.getFst();
-		final STATE sndState = prodState.getSnd();
+		final S1 fstState = prodState.getFst();
+		final S2 sndState = prodState.getSnd();
 		final ProductState prodHier = mRes2prod.get(hier);
-		final STATE fstHier = prodHier.getFst();
-		final STATE sndHier = prodHier.getSnd();
+		final S1 fstHier = prodHier.getFst();
+		final S2 sndHier = prodHier.getSnd();
 		return returnSuccessors(mFstOperand.returnSuccessors(fstState, fstHier, letter), hier, sndState, sndHier);
 	}
 
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final Iterable<OutgoingReturnTransition<LETTER, STATE>> fstReturnSuccs, final STATE hier,
-			final STATE sndState, final STATE sndHier) {
+			final Iterable<OutgoingReturnTransition<LETTER, S1>> fstReturnSuccs, final STATE hier, final S2 sndState,
+			final S2 sndHier) {
 		final Collection<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>();
-		for (final OutgoingReturnTransition<LETTER, STATE> fstTrans : fstReturnSuccs) {
+		for (final OutgoingReturnTransition<LETTER, S1> fstTrans : fstReturnSuccs) {
 			final LETTER letter = fstTrans.getLetter();
-			for (final OutgoingReturnTransition<LETTER, STATE> sndTrans : mSndOperand.returnSuccessors(sndState,
-					sndHier, letter)) {
-				final STATE fstSucc = fstTrans.getSucc();
-				final STATE sndSucc = sndTrans.getSucc();
+			for (final OutgoingReturnTransition<LETTER, S2> sndTrans : mSndOperand.returnSuccessors(sndState, sndHier,
+					letter)) {
+				final S1 fstSucc = fstTrans.getSucc();
+				final S2 sndSucc = sndTrans.getSucc();
 				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {
 					continue;
 				}
@@ -300,11 +300,11 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
 		final ProductState prodState = mRes2prod.get(state);
-		final STATE fstState = prodState.getFst();
-		final STATE sndState = prodState.getSnd();
+		final S1 fstState = prodState.getFst();
+		final S2 sndState = prodState.getSnd();
 		final ProductState prodHier = mRes2prod.get(hier);
-		final STATE fstHier = prodHier.getFst();
-		final STATE sndHier = prodHier.getSnd();
+		final S1 fstHier = prodHier.getFst();
+		final S2 sndHier = prodHier.getSnd();
 		return returnSuccessors(mFstOperand.returnSuccessorsGivenHier(fstState, fstHier), hier, sndState, sndHier);
 	}
 
@@ -320,27 +320,27 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 
 	/**
 	 * State of the product construction.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public class ProductState {
-		private final STATE mFst;
-		private final STATE mSnd;
+		private final S1 mFst;
+		private final S2 mSnd;
 		private final STATE mRes;
 		private final boolean mIsFinal;
 
-		ProductState(final STATE fst, final STATE snd, final STATE res, final boolean isFinal) {
+		ProductState(final S1 fst, final S2 snd, final STATE res, final boolean isFinal) {
 			mFst = fst;
 			mSnd = snd;
 			mRes = res;
 			mIsFinal = isFinal;
 		}
 
-		public STATE getFst() {
+		public S1 getFst() {
 			return mFst;
 		}
 
-		public STATE getSnd() {
+		public S2 getSnd() {
 			return mSnd;
 		}
 

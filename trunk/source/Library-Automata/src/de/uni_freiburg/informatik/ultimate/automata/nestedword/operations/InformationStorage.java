@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * @param <S>
  *            state type
  */
-public class InformationStorage<L, S> extends ProductNwa<L, S> {
+public class InformationStorage<L, S> extends ProductNwa<L, S, S, S> {
 	private final IIntersectionStateFactory<S> mStateFactory;
 
 	/**
@@ -52,23 +52,23 @@ public class InformationStorage<L, S> extends ProductNwa<L, S> {
 	 * @param sndOperand
 	 *            automaton from which the information shall be taken
 	 * @param stateFactory
-	 *            state factory 
+	 *            state factory
 	 * @param assumeInSndNonFinalIsTrap
 	 *            assume that in the second operand a non-final state is a trap (i.e., whenever we reach a non-final
 	 *            state we can never go back to a final state.
 	 * @throws AutomataLibraryException
-	 *             if alphabets differ                      
+	 *             if alphabets differ
 	 */
-	public InformationStorage(INwaOutgoingLetterAndTransitionProvider<L, S> fstOperand,
-			INwaOutgoingLetterAndTransitionProvider<L, S> sndOperand,
-			final IIntersectionStateFactory<S> stateFactory, boolean assumeInSndNonFinalIsTrap) 
+	public InformationStorage(final INwaOutgoingLetterAndTransitionProvider<L, S> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> sndOperand,
+			final IIntersectionStateFactory<S> stateFactory, final boolean assumeInSndNonFinalIsTrap)
 			throws AutomataLibraryException {
 		super(fstOperand, sndOperand, stateFactory, assumeInSndNonFinalIsTrap);
 		mStateFactory = stateFactory;
 	}
 
 	@Override
-	protected final ProductNwa<L, S>.ProductState createProductState(S fst, S snd) {
+	protected final ProductNwa<L, S, S, S>.ProductState createProductState(final S fst, final S snd) {
 		final S res = mStateFactory.intersection(fst, snd);
 		final boolean isAccepting = mFstOperand.isFinal(fst);
 		return new ProductState(fst, snd, res, isAccepting);
