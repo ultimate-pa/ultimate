@@ -196,22 +196,6 @@ public class QuantifierEliminationTodos {
 
 
 
-
-	/**
-	 * Regression test for bug in array PQE. Should maybe be moved to different
-	 * file.
-	 */
-	@Test
-	public void heap_data_cart2() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idxDim1", "idxDim2"),
-			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "arr"),
-		};
-		final String formulaAsString = "(and (= idxDim2 (_ bv0 32)) (exists ((x (_ BitVec 32))) (and (exists ((|â| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (y (_ BitVec 32)) (z Bool)) (and (or (and (not (bvslt (select (select |â| y) (_ bv4 32)) x)) (not z)) (and (bvslt (select (select |â| y) (_ bv4 32)) x) z)) (= (store |â| y (store (store (select |â| y) (_ bv8 32) x) (_ bv4 32) (select (store (select |â| y) (_ bv8 32) x) (_ bv4 32)))) arr) (not (bvslt (select (select |â| idxDim1) (bvadd idxDim2 (_ bv4 32))) (select (select |â| idxDim1) (bvadd idxDim2 (_ bv8 32))))) (not (bvslt (select (select |â| idxDim1) (bvadd idxDim2 (_ bv8 32))) (_ bv0 32))) (not z))) (not (bvslt x (_ bv0 32))))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
 	/**
 	 * Regression test for bug in array PQE. Should maybe be moved to different file.
 	 */
