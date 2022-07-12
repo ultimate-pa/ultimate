@@ -25,7 +25,6 @@ public class Preference2DfsOrder<L, S1, S2, S> implements IDfsOrder<L, S> {
 
 	@Override
 	public boolean isPositional() {
-		return true;
+		return mPreferenceOrder.isPositional() || mPreferenceOrder.getMonitor() != null;
 	}
-
-	}
+}
