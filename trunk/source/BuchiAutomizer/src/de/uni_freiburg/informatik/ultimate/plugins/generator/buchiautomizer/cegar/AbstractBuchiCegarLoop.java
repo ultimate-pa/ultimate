@@ -199,7 +199,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	private final TaskIdentifier mTaskIdentifier;
 	private final BuchiInterpolantAutomatonBuilder<L> mInterpolantAutomatonBuilder;
 	private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
-	private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
+	private final Minimization mAutomataMinimizationAfterFeasibilityBasedRefinement;
 	private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
 	protected boolean mIsSemiDeterministic;
 
@@ -247,7 +247,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
-		mAutomataMinimizationAfterFeasbilityBasedRefinement = baPref.getEnum(
+		mAutomataMinimizationAfterFeasibilityBasedRefinement = baPref.getEnum(
 				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
 				Minimization.class);
 		mAutomataMinimizationAfterRankBasedRefinement = baPref.getEnum(
@@ -471,7 +471,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		final A result;
 		try {
 			result = reduceAbstractionSize(refineFinite(abstraction, determinized),
-					mAutomataMinimizationAfterFeasbilityBasedRefinement);
+					mAutomataMinimizationAfterFeasibilityBasedRefinement);
 		} catch (final AutomataOperationCanceledException e) {
 			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 			throw e;
