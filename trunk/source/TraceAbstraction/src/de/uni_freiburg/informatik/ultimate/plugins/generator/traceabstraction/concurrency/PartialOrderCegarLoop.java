@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -209,6 +211,32 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					CoveringMode.PRUNE);
 		}
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore());
+	}
+
+	private <S, T> Predicate<S> compose(final Predicate<T> pred, final Function<S, T> func) {
+		return s -> pred.test(func.apply(s));
+	}
+
+	private <R> IDfsVisitor<L, R> createVisitor(final Function<R, IPredicate> getOriginal) {
+		IDfsVisitor<L, R> visitor;
+		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
+			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
+			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
+			visitor = new SleepSetVisitorSearch<>(compose(this::isGoalState, getOriginal),
+					compose(PartialOrderCegarLoop::isProvenState, getOriginal));
+		} else {
+			visitor = new AcceptingRunSearchVisitor<>(compose(this::isGoalState, getOriginal),
+					compose(PartialOrderCegarLoop::isProvenState, getOriginal));
+		}
+		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
+			// TODO move to PartialOrderReductionFacade?
+			visitor = ((BetterLockstepOrder<L, R>) mPOR.getDfsOrder()).wrapVisitor(visitor);
+		}
+
+		// TODO support covering optimization
+		// TODO support dead-end optimization
+
+		return visitor;
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {

@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *            The type of letters in the reduced automaton. We need ICFG transitions to notice when we reach a loop head
  *            in a thread.
  */
+@Deprecated
 public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrder<L, IPredicate> {
 
 	private final Comparator<L> mDefaultComparator =

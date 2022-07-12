@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.MonitorProduct;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDeadEndStore;
@@ -71,7 +72,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.C
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -97,7 +100,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final IPersistentSetChoice<L, IPredicate> mPersistent;
 	private StateSplitter<IPredicate> mStateSplitter;
 	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
-	private IPreferenceOrder<L, Object, IPredicate> mPreferenceOrder;
+	private final IPreferenceOrder<L, IPredicate, ?> mPreferenceOrder;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -114,11 +117,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mDeadEndStore = createDeadEndStore();
 	}
 
-	private IPreferenceOrder<L,Object,IPredicate> getPreferenceOrder(IIcfg<?> icfg) {
-		
-		List<String> threadList =IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
-		VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
-		return new ParameterizedPreferenceOrder(1,threadList, alphabet, x -> true);
+	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final IIcfg<?> icfg) {
+
+		final List<String> threadList =
+				IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
+		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
+		return new ParameterizedPreferenceOrder(1, threadList, alphabet, x -> true);
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -182,6 +186,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	private Object normalizePredicate(final IPredicate state) {
+		// TODO handle preference orders with monitor automata
+
 		if (mMode.hasFixedOrder() && mDfsOrder instanceof LoopLockstepOrder<?>) {
 			// For stateful orders, we need to include the chosen order in the normalization if we want to guarantee
 			// compatibility of persistent sets.
@@ -190,12 +196,162 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return ((IMLPredicate) state).getProgramPoints();
 	}
 
-	public IPersistentSetChoice<L, IPredicate> getPersistentSets() {
-		return mPersistent;
-	}
-
 	public IDfsOrder<L, IPredicate> getDfsOrder() {
 		return mDfsOrder;
+	}
+
+	/**
+	 * An interface used to create a visitor.
+	 *
+	 * We need this indirection so callers need not be aware of the intricate internal structure of states in the
+	 * reduction automaton to which the visitor is applied (monitor states, sleep sets, etc.). Instead, the only
+	 * information given is how the underlying's input automaton state can be extracted from a state of the reduction
+	 * automaton.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters
+	 * @param <S>
+	 *            The type of states in the input automaton
+	 */
+	@FunctionalInterface
+	interface IVisitorProvider<L, S> {
+		/**
+		 * Provides the visitor.
+		 *
+		 * @param <R>
+		 *            The type of states in the reduction automaton
+		 * @param originalState
+		 *            A function that extracts the original state from a state of the reduction automaton, which can be
+		 *            used to construct the visitor.
+		 * @return the visitor
+		 */
+		<R> IDfsVisitor<L, R> getVisitor(Function<R, S> originalState);
+	}
+
+	/**
+	 * Apply POR to a given automaton.
+	 *
+	 * @param input
+	 *            The automaton to which reduction is applied
+	 * @param visitorProvider
+	 *            Provides a visitor that traverses the reduced automaton
+	 *
+	 * @throws AutomataLibraryException
+	 *             if some automata operation fails
+	 * @throws AutomataOperationCanceledException
+	 *             if the traversal encounters a timeout
+	 */
+	// TODO problem: caller needs access to visitor result
+	public void apply(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
+			final IVisitorProvider<L, IPredicate> visitorProvider) throws AutomataLibraryException {
+		applyWithMonitor(input, visitorProvider, mPreferenceOrder, Function.identity());
+	}
+
+	// If the current preference order has a monitor, take the product of the input and the monitor.
+	// Then call #applyReduction.
+	private <R, M> void applyWithMonitor(final INwaOutgoingLetterAndTransitionProvider<L, R> input,
+			final IVisitorProvider<L, IPredicate> visitorProvider, final IPreferenceOrder<L, R, M> preference,
+			final Function<R, IPredicate> getOriginal) throws AutomataLibraryException {
+		final INwaOutgoingLetterAndTransitionProvider<L, M> monitor = preference.getMonitor();
+		if (monitor != null) {
+			final var product = new MonitorProduct<>(input, monitor, new IMonitorStateFactory.Default<>());
+			final IDfsOrder<L, Pair<R, M>> order = new Preference2DfsOrder<>(preference, Function.identity());
+			applyReduction(product, visitorProvider, order, getOriginal.compose(Pair::getFirst));
+		} else {
+			final IDfsOrder<L, R> order = new Preference2DfsOrder<>(preference, x -> new Pair<>(x, null));
+			applyReduction(input, visitorProvider, order, getOriginal);
+		}
+	}
+
+	// Applies sleep set and/or persistent set reduction
+	private <R> void applyReduction(final INwaOutgoingLetterAndTransitionProvider<L, R> input,
+			final IVisitorProvider<L, IPredicate> visitorProvider, final IDfsOrder<L, R> order,
+			final Function<R, IPredicate> getOriginal) throws AutomataOperationCanceledException {
+		switch (mMode) {
+		// DFS-based modes
+		case SLEEP_NEW_STATES:
+			applyDfs(
+					new MinimalSleepSetReduction<>(input, new ISleepSetStateFactory.MinimalReduction<>(),
+							lift(mIndependence, getOriginal), lift(order)),
+					visitorProvider, lift(order), getOriginal.compose(Pair::getFirst));
+			break;
+		case PERSISTENT_SLEEP_NEW_STATES:
+		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
+			final var extract = getOriginal.compose(Pair<R, ImmutableSet<L>>::getFirst);
+			PersistentSetReduction.<L, R, Pair<R, ImmutableSet<L>>> applyNewStateReduction(mAutomataServices, input,
+					lift(mIndependence, getOriginal), lift(order), new ISleepSetStateFactory.MinimalReduction<L, R>(),
+					lift(mPersistent, extract), visitorProvider.getVisitor(extract));
+			break;
+		case PERSISTENT_SETS:
+			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, order,
+					lift(mPersistent, getOriginal), visitorProvider.getVisitor(getOriginal));
+			break;
+		case NONE:
+			applyDfs(input, visitorProvider, order, getOriginal);
+			break;
+
+		// legacy modes (delay sets)
+		case SLEEP_DELAY_SET:
+			new SleepSetDelayReduction<>(mAutomataServices, input, new ISleepSetStateFactory.NoUnrolling<>(),
+					lift(mIndependence, getOriginal), order, visitorProvider.getVisitor(getOriginal));
+			break;
+		case PERSISTENT_SLEEP_DELAY_SET:
+		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
+			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, lift(mIndependence, getOriginal),
+					order, lift(mPersistent, getOriginal), visitorProvider.getVisitor(getOriginal));
+			break;
+		default:
+			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
+		}
+	}
+
+	// Performs the actual depth-first traversal (for persistent sets, this is already handled above).
+	private <R, S> void applyDfs(final INwaOutgoingLetterAndTransitionProvider<L, R> input,
+			final IVisitorProvider<L, S> visitorProvider, final IDfsOrder<L, R> order, final Function<R, S> getOriginal)
+			throws AutomataOperationCanceledException {
+		final var visitor = visitorProvider.getVisitor(getOriginal);
+		new DepthFirstTraversal<>(mAutomataServices, input, order, visitor);
+	}
+
+	private <R, X> IDfsOrder<L, Pair<R, X>> lift(final IDfsOrder<L, R> order) {
+		return new IDfsOrder<>() {
+			@Override
+			public Comparator<L> getOrder(final Pair<R, X> state) {
+				return order.getOrder(state.getFirst());
+			}
+
+			@Override
+			public boolean isPositional() {
+				return order.isPositional();
+			}
+		};
+	}
+
+	private <R, S> IIndependenceRelation<R, L> lift(final IIndependenceRelation<S, L> indep,
+			final Function<R, S> getOriginal) {
+		return new ConditionTransformingIndependenceRelation<>(indep, getOriginal);
+	}
+
+	private <R, S> IPersistentSetChoice<L, R> lift(final IPersistentSetChoice<L, S> persistent,
+			final Function<R, S> getOriginal) {
+		return new IPersistentSetChoice<>() {
+			@Override
+			public Set<L> persistentSet(final R state) {
+				return persistent.persistentSet(getOriginal.apply(state));
+			}
+
+			@Override
+			public IStatisticsDataProvider getStatistics() {
+				return persistent.getStatistics();
+			}
+
+			@Override
+			public boolean ensuresCompatibility(final IDfsOrder<L, R> order) {
+				return false; // TODO persistent.ensuresCompatibility(order);
+			}
+		};
 	}
 
 	/**
@@ -207,6 +363,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	 *            A visitor that traverses the reduced automaton
 	 * @throws AutomataOperationCanceledException
 	 */
+	@Deprecated
 	public void apply(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
 		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
@@ -242,10 +399,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, mIndependence, mDfsOrder, visitor);
 			break;
 		case SLEEP_NEW_STATES:
-			var dfsorder = new Preference2DfsOrder(mPreferenceOrder, x -> {
-				var y = (MonitorPredicate) mStateSplitter.getOriginal((IPredicate) x);
-				return new Pair<>(y.getState1(),y.getState2());
-				});
+			final var dfsorder = new Preference2DfsOrder(mPreferenceOrder, x -> {
+				final var y = (MonitorPredicate) mStateSplitter.getOriginal((IPredicate) x);
+				return new Pair<>(y.getState1(), y.getState2());
+			});
 			new DepthFirstTraversal<>(mAutomataServices,
 					new MinimalSleepSetReduction<>(input, mSleepFactory, mIndependence, dfsorder), mDfsOrder, visitor);
 			break;
@@ -362,13 +519,14 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return x -> new Pair<>(oldGetInfo.apply(x), newGetInfo.apply(oldGetOriginal.apply(x)));
 		}
 	}
-	
-	private static class MonitorPredicate implements IMLPredicate{
 
-		private IMLPredicate mState1;
-		private Object mState2;
+	@Deprecated
+	private static class MonitorPredicate implements IMLPredicate {
 
-		public MonitorPredicate(IMLPredicate state1 , Object state2) {
+		private final IMLPredicate mState1;
+		private final Object mState2;
+
+		public MonitorPredicate(final IMLPredicate state1, final Object state2) {
 			mState1 = state1;
 			mState2 = state2;
 		}
@@ -399,15 +557,14 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		public IcfgLocation[] getProgramPoints() {
 			return mState1.getProgramPoints();
 		}
-		
+
 		public IMLPredicate getState1() {
 			return mState1;
 		}
-		
+
 		public Object getState2() {
 			return mState2;
 		}
 
-		
 	}
 }
