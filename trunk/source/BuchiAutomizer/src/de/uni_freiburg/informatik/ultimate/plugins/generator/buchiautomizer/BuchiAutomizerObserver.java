@@ -40,7 +40,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
@@ -206,16 +205,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
 	 *
-	 * @param nestedLassoWord
+	 * @param counterexample
 	 */
 	private void reportNonTerminationResult(final NonTerminationArgument nta,
-			final NestedLassoWord<IcfgEdge> nestedLassoWord) {
-		final IcfgProgramExecution<IcfgEdge> stemExecution =
-				IcfgProgramExecution.create(nestedLassoWord.getStem().asList(), Collections.emptyMap(), IcfgEdge.class);
-		final IcfgProgramExecution<IcfgEdge> loopExecution =
-				IcfgProgramExecution.create(nestedLassoWord.getLoop().asList(), Collections.emptyMap(), IcfgEdge.class);
+			final NestedLassoRun<IcfgEdge, IPredicate> counterexample) {
+		final IcfgProgramExecution<IcfgEdge> stemExecution = IcfgProgramExecution
+				.create(counterexample.getStem().getWord().asList(), Collections.emptyMap(), IcfgEdge.class);
+		final IcfgProgramExecution<IcfgEdge> loopExecution = IcfgProgramExecution
+				.create(counterexample.getLoop().getWord().asList(), Collections.emptyMap(), IcfgEdge.class);
 		final NonTerminationArgumentResult<IcfgEdge, Term> result;
-		final IcfgEdge honda1 = nestedLassoWord.getLoop().getSymbol(0);
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
@@ -228,14 +226,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<>(honda1, Activator.PLUGIN_NAME, initHondaRays.get(0),
-					initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(),
-					gnta.getNus(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
+			result = new GeometricNonTerminationArgumentResult<>(getHondaAction(counterexample), Activator.PLUGIN_NAME,
+					initHondaRays.get(0), initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()),
+					gnta.getLambdas(), gnta.getNus(), getBacktranslationService(), Term.class, stemExecution,
+					loopExecution);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
 
-			result = new FixpointNonTerminationResult<>(honda1, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
-					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
+			result = new FixpointNonTerminationResult<>(getHondaAction(counterexample), Activator.PLUGIN_NAME,
+					ifr.getValuesAtInit(), ifr.getValuesAtHonda(), getBacktranslationService(), Term.class,
+					stemExecution, loopExecution);
 		} else {
 			throw new IllegalArgumentException("unknown TerminationArgument");
 		}
@@ -314,7 +314,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			final NestedLassoRun<IcfgEdge, IPredicate> counterexample = bcl.getCounterexample();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
-			reportNonTerminationResult(nta, counterexample.getNestedLassoWord());
+			reportNonTerminationResult(nta, counterexample);
 			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
 					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
 
@@ -327,7 +327,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IcfgProgramExecution<IcfgEdge> loopPE =
 					IcfgProgramExecution.create(counterexample.getLoop().getWord().asList(), partialProgramStateMapping,
 							new Map[counterexample.getLoop().getLength()], IcfgEdge.class);
-			final IResult ntreportRes = new NonterminatingLassoResult<>(getProgramPoint(counterexample),
+			final IResult ntreportRes = new NonterminatingLassoResult<>(getHondaAction(counterexample),
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE);
 			reportResult(ntreportRes);
 		} else {
@@ -343,7 +343,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private void reportLTLPropertyIsViolated(final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl,
 			final LTLPropertyCheck ltlAnnot) {
-		final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
+		final NestedLassoRun<IcfgEdge, IPredicate> counterexample = bcl.getCounterexample();
 		// first, check if the counter example is really infinite or not
 
 		final List<? extends IIcfgTransition<?>> stem = counterexample.getStem().getWord().asList();
@@ -358,16 +358,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		@SuppressWarnings("unchecked")
 		final IcfgProgramExecution<IcfgEdge> loopPE =
 				IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
-		reportResult(new LTLInfiniteCounterExampleResult<>(getProgramPoint(counterexample), Activator.PLUGIN_ID,
+		reportResult(new LTLInfiniteCounterExampleResult<>(getHondaAction(counterexample), Activator.PLUGIN_ID,
 				mServices.getBacktranslationService(), stemPE, loopPE, ltlAnnot.getUltimateLTLProperty()));
 	}
 
-	private static IcfgLocation
-			getProgramPoint(final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample) {
-		final IPredicate pred = counterexample.getLoop().getStateAtPosition(0);
-		// Return any program point from the predicate
-		// There is not really a "correct" answer here for concurrent programs
-		return BuchiAutomizerUtils.getLocations(pred).iterator().next();
+	private static IcfgEdge getHondaAction(final NestedLassoRun<IcfgEdge, IPredicate> counterexample) {
+		return counterexample.getLoop().getSymbol(0);
 	}
 
 	/**
