@@ -521,7 +521,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	@Deprecated
-	private static class MonitorPredicate implements IMLPredicate {
+	public static class MonitorPredicate implements IMLPredicate {
 
 		private final IMLPredicate mState1;
 		private final Object mState2;

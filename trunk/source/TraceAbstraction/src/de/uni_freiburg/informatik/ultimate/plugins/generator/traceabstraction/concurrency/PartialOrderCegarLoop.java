@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Be
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.MonitorPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
@@ -312,6 +313,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// TODO use mPOR.mStateSplitter for this
+		if (state instanceof MonitorPredicate) {
+			return isProvenState(((MonitorPredicate) state).getState1());
+		}
 		if (state instanceof PredicateWithLastThread) {
 			return isProvenState(((PredicateWithLastThread) state).getUnderlying());
 		}
@@ -344,6 +348,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// TODO use mPOR.mStateSplitter for this
+		if (conjunction instanceof MonitorPredicate) {
+			return getConjuncts(((MonitorPredicate) conjunction).getState1());
+		}
 		if (conjunction instanceof PredicateWithLastThread) {
 			return getConjuncts(((PredicateWithLastThread) conjunction).getUnderlying());
 		}
