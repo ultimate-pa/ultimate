@@ -121,7 +121,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
-
 	/**
 	 * Result of CEGAR loop iteration
 	 * <ul>
@@ -136,19 +135,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		TERMINATING, TIMEOUT, UNKNOWN, NONTERMINATING
 	}
 
-	protected static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	protected static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final String mIdentifier;
-	protected final CfgSmtToolkit mCsToolkitWithRankVars;
-
-	/**
-	 * Intermediate layer to encapsulate preferences.
-	 */
-	protected final TAPreferences mPref;
 
 	/**
 	 * Current Iteration of this CEGAR loop.
@@ -159,30 +152,35 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
 	protected NestedLassoRun<L, IPredicate> mCounterexample;
-
 	protected final PredicateFactoryForInterpolantAutomata mDefaultStateFactory;
-
-	protected final BuchiAutomizerModuleDecompositionBenchmark mMDBenchmark;
-
 	protected final BuchiCegarLoopBenchmarkGenerator mBenchmarkGenerator;
+	protected final PredicateFactory mPredicateFactory;
+	protected boolean mIsSemiDeterministic;
+
+	/**
+	 * Intermediate layer to encapsulate preferences.
+	 */
+	private final TAPreferences mPref;
+
+	private final BuchiAutomizerModuleDecompositionBenchmark mMDBenchmark;
 
 	/**
 	 * Construct a termination proof in the form that is required for the Termination Competition.
 	 * http://termination-portal.org/wiki/Termination_Competition This proof is finally print in the console output and
 	 * can be huge.
 	 */
-	protected final boolean mConstructTermcompProof;
-	protected final TermcompProofBenchmark mTermcompProofBenchmark;
+	private final boolean mConstructTermcompProof;
+	private final TermcompProofBenchmark mTermcompProofBenchmark;
 
 	private final InterpolationTechnique mInterpolation;
-
-	protected final PredicateFactory mPredicateFactory;
 
 	private BackwardCoveringInformation mBci;
 
 	private final CfgSmtToolkit mCsToolkitWithoutRankVars;
+	private final CfgSmtToolkit mCsToolkitWithRankVars;
 
 	private final BinaryStatePredicateManager mBinaryStatePredicateManager;
+
 	/**
 	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
 	 * <ul>
@@ -199,9 +197,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	private final TaskIdentifier mTaskIdentifier;
 	private final BuchiInterpolantAutomatonBuilder<L> mInterpolantAutomatonBuilder;
 	private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
+
 	private final Minimization mAutomataMinimizationAfterFeasibilityBasedRefinement;
 	private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
-	protected boolean mIsSemiDeterministic;
 
 	public AbstractBuchiCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
