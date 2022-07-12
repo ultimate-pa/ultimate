@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -85,7 +84,6 @@ public class DepthFirstTraversal<L, S> {
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
-		mLogger.setLevel(LogLevel.DEBUG);
 		mOperand = operand;
 		mOrder = order;
 		mVisitor = visitor;
