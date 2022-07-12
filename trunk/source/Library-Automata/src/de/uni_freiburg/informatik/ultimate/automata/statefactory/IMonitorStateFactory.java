@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.MonitorProduct;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * State factory for {@link MonitorProduct}.
@@ -51,4 +52,24 @@ public interface IMonitorStateFactory<S1, S2, STATE> extends IEmptyStackStateFac
 	 * @return the product state
 	 */
 	STATE product(final S1 fst, final S2 snd);
+
+	/**
+	 * Default implementation.
+	 *
+	 * @param <S1>
+	 *            State type of monitored automaton
+	 * @param <S2>
+	 *            State type of monitor
+	 */
+	final class Default<S1, S2> implements IMonitorStateFactory<S1, S2, Pair<S1, S2>> {
+		@Override
+		public Pair<S1, S2> createEmptyStackState() {
+			return null;
+		}
+
+		@Override
+		public Pair<S1, S2> product(final S1 fst, final S2 snd) {
+			return new Pair<>(fst, snd);
+		}
+	}
 }
