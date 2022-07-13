@@ -140,6 +140,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		while (true) {
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> tempInterferences =
 					FixpointEngineConcurrentUtils.copyMap(interferences);
+			// TODO: analyze Threads in topological order
 			for (final Map.Entry<String, ? extends IcfgLocation> entry : entryNodes.entrySet()) {
 				final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> interferencesMaps =
 						computeProcedureInterferences(entry.getValue(), interferences);
@@ -191,7 +192,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						flattenAbstractStates(entry.getValue()).apply(postOp, action);
 				final var loc2StatesAfterAction = loc2States.get(mTransitionProvider.getTarget(action));
 				final DisjunctiveAbstractState<STATE> stateAfterAction = flattenAbstractStates(loc2StatesAfterAction);
-				if (loc2StatesAfterAction != null && postState.isSubsetOf(stateAfterAction) == SubsetResult.NONE) {
+				if (loc2StatesAfterAction != null && postState != null
+						&& postState.isSubsetOf(stateAfterAction) == SubsetResult.NONE) {
 					result = false;
 				}
 			}
@@ -209,16 +211,17 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 */
 	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> computeProcedureInterferences(
 			final IcfgLocation entryNode, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		if (interferences.isEmpty()) {
-			final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> result = new HashSet<>();
-			result.add(new HashMap<>());
-			return result;
-		}
+		// if (interferences.isEmpty()) {
+		// final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> result = new HashSet<>();
+		// result.add(new HashMap<>());
+		// return result;
+		// }
+
 		// return versionOne(mFecUtils.filterProcedures(entryNode.getProcedure(),
 		// interferences),entryNode.getProcedure());
 
 		final Predicate<Map<LOC, ACTION>> alwaysTrue = x -> true;
-		return filteredCrossProduct(entryNode.getProcedure(), interferences, alwaysTrue);
+		return filteredCrossProduct(entryNode, interferences, alwaysTrue);
 	}
 
 	/**
@@ -249,8 +252,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 					} else {
 						DisjunctiveAbstractState<STATE> tempState =
 								flattenAbstractStates(loc2States.get(mTransitionProvider.getSource(read)));
-						tempState = removeNonSharedVariables(tempState, variables);
-						procedureInterference.put(read, unionIfNonEmpty(tempState, interference.getValue()));
+						if (tempState != null) {
+							tempState = removeNonSharedVariables(tempState, variables);
+							procedureInterference.put(read, unionIfNonEmpty(tempState, interference.getValue()));
+						}
 					}
 				}
 			}
@@ -266,17 +271,22 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @param interferences
 	 * @return
 	 */
-	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> filteredCrossProduct(final String procedure,
+	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> filteredCrossProduct(final IcfgLocation entryNode,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
 			final Predicate<Map<LOC, ACTION>> combinationIsFeasable) {
-
-		final Set<Map<LOC, ACTION>> crossProduct = mFecUtils.getCrossProduct(combinationIsFeasable, procedure);
-		final Map<ACTION, DisjunctiveAbstractState<STATE>> readsInLoops = loopHandling(procedure, interferences);
-
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> procedureInterferences = new HashSet<>();
+		if (mStateStorage.computeLoc2States().isEmpty()) {
+			return procedureInterferences;
+		}
+		final String procedure = entryNode.getProcedure();
+		final Set<Map<LOC, ACTION>> crossProduct = mFecUtils.getCrossProduct(combinationIsFeasable, procedure);
+		final Map<ACTION, DisjunctiveAbstractState<STATE>> readsInLoopsAndForks = new HashMap<>();
+		readsInLoopsAndForks.putAll(handlingLoops(procedure, interferences));
+		readsInLoopsAndForks.putAll(handlingForks(procedure, mTransitionProvider.getSuccessorActions((LOC) entryNode)));
+
 		for (final var map : crossProduct) {
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> combination = new HashMap<>();
-			combination.putAll(readsInLoops);
+			combination.putAll(readsInLoopsAndForks);
 			for (final var entry : map.entrySet()) {
 				final ACTION write = entry.getValue();
 				if (write == null) {
@@ -311,18 +321,51 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return procedureInterferences;
 	}
 
-	private Map<ACTION, DisjunctiveAbstractState<STATE>> loopHandling(final String procedure,
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> handlingLoops(final String procedure,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
+		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final ACTION read : mFecUtils.getSelfReachableReads(procedure)) {
 			DisjunctiveAbstractState<STATE> state =
 					flattenAbstractStates(loc2States.get(mTransitionProvider.getSource(read)));
+			if (state == null) {
+				continue;
+			}
 			for (final ACTION write : mFecUtils.getPossibleWrites(read)) {
 				state = state.union(state.patch(interferences.get(write)));
 			}
 			result.put(read, state);
 		}
+		return result;
+	}
+
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> handlingForks(final String procedure,
+			final Collection<ACTION> initialActions) {
+		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
+		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
+
+		final Set<IProgramVarOrConst> globalVariables = mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
+				.getModifiedBoogieVars(procedure).stream().collect(Collectors.toSet());
+		DisjunctiveAbstractState<STATE> state = null;
+		for (final LOC forkLocation : mFecUtils.forkedAt(procedure)) {
+			DisjunctiveAbstractState<STATE> forkedState = flattenAbstractStates(loc2States.get(forkLocation));
+			if (forkedState == null) {
+				continue;
+			}
+			forkedState = forkedState
+					.removeVariables(DataStructureUtils.difference(forkedState.getVariables(), globalVariables));
+			if (state != null) {
+				state = state.union(state.patch(forkedState));
+				continue;
+			}
+			state = forkedState;
+		}
+		if (state != null) {
+			for (final ACTION action : initialActions) {
+				result.put(action, state);
+			}
+		}
+
 		return result;
 	}
 
@@ -390,7 +433,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private DisjunctiveAbstractState<STATE>
 			flattenAbstractStates(final Set<DisjunctiveAbstractState<STATE>> setOfStates) {
 		if (setOfStates == null || setOfStates.isEmpty()) {
-			return new DisjunctiveAbstractState<>();
+			return null;
 		}
 
 		final Iterator<DisjunctiveAbstractState<STATE>> iterator = setOfStates.iterator();

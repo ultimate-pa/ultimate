@@ -70,6 +70,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final Map<String, Set<ACTION>> mWritesPerProcedure;
 	private final Map<String, Set<ACTION>> mReadsPerProcedure;
 	private final HashRelation<String, ACTION> mSelfReachableReads;
+	private final HashRelation<String, LOC> mForkedAt;
 	// Hashrelations
 
 	private final Map<LOC, ACTION> mLoc2Assume;
@@ -88,6 +89,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mWritesPerProcedure = new HashMap<>();
 		mReadsPerProcedure = new HashMap<>();
 		mSelfReachableReads = new HashRelation<>();
+		mForkedAt = new HashRelation<>();
 
 		mCrossProducts = new HashMap<>();
 
@@ -103,6 +105,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	public Set<ACTION> getPossibleWrites(final ACTION read) {
 		return mWritesPerRead.get(read);
+	}
+
+	public Set<LOC> forkedAt(final String procedure) {
+		return mForkedAt.getImage(procedure);
 	}
 
 	public Set<Map<LOC, ACTION>> getCrossProduct(final Predicate<Map<LOC, ACTION>> combinationIsFeasible,
@@ -204,6 +210,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			for (final var edge : iterator.asStream().collect(Collectors.toSet())) {
 				if (edge instanceof IForkActionThreadCurrent) {
 					final IForkActionThreadCurrent fork = (IForkActionThreadCurrent) edge;
+					mForkedAt.addPair(fork.getNameOfForkedProcedure(), mTransitionProvider.getSource((ACTION) edge));
 					addFork(entry.getValue().getProcedure(), fork.getNameOfForkedProcedure());
 
 					final IcfgEdgeIterator forkIterator = new IcfgEdgeIterator(edge.getTarget().getOutgoingEdges());
