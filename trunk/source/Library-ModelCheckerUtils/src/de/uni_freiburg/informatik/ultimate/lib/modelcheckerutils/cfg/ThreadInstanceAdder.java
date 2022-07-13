@@ -107,8 +107,13 @@ public class ThreadInstanceAdder {
 			final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 			final UnmodifiableTransFormula errorTransformula =
 					TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
-			final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
-					new Payload(), errorTransformula, errorTransformula);
+			final IcfgInternalTransition errorTransition =
+					ef.createInternalTransition(callerNode, errorNode, new Payload(), errorTransformula);
+			// Add a self loop to the in-use-error location, necessary for termination
+			final IcfgInternalTransition errorLoop =
+					ef.createInternalTransition(errorNode, errorNode, new Payload(), errorTransformula);
+			errorNode.addIncoming(errorLoop);
+			errorNode.addOutgoing(errorLoop);
 			integrateForkEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
 			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
 				addForkOtherThreadTransition(fct, ti.getIdVars(), icfg, ti.getThreadInstanceName(), backtranslator);
