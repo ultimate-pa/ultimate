@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -68,12 +69,13 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final Map<ACTION, Set<ACTION>> mWritesPerRead;
 	private final Map<String, Set<ACTION>> mWritesPerProcedure;
 	private final Map<String, Set<ACTION>> mReadsPerProcedure;
+	private final HashRelation<String, ACTION> mSelfReachableReads;
 	// Hashrelations
 
 	private final Map<LOC, ACTION> mLoc2Assume;
 	private final Map<ACTION, ACTION> mAssumes;
 
-	private final Map<String, Set<Map<ACTION, ACTION>>> mCrossProducts;
+	private final Map<String, Set<Map<LOC, ACTION>>> mCrossProducts;
 
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider) {
 		mIcfg = icfg;
@@ -85,6 +87,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mWritesPerRead = new HashMap<>();
 		mWritesPerProcedure = new HashMap<>();
 		mReadsPerProcedure = new HashMap<>();
+		mSelfReachableReads = new HashRelation<>();
 
 		mCrossProducts = new HashMap<>();
 
@@ -94,7 +97,15 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		initialize(mIcfg.getProcedureEntryNodes());
 	}
 
-	public Set<Map<ACTION, ACTION>> getCrossProduct(final Predicate<Map<ACTION, ACTION>> combinationIsFeasible,
+	public Set<ACTION> getSelfReachableReads(final String procedure) {
+		return mSelfReachableReads.getImage(procedure);
+	}
+
+	public Set<ACTION> getPossibleWrites(final ACTION read) {
+		return mWritesPerRead.get(read);
+	}
+
+	public Set<Map<LOC, ACTION>> getCrossProduct(final Predicate<Map<LOC, ACTION>> combinationIsFeasible,
 			final String procedure) {
 		final var crossProduct = mCrossProducts.get(procedure);
 		if (crossProduct == null) {
@@ -376,19 +387,34 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				tempSet.add((ACTION) edge);
 				mReadsPerProcedure.put(procedure, tempSet);
 			}
+
+			if (isSelfReachable(edge)) {
+				mSelfReachableReads.addPair(procedure, (ACTION) edge);
+			}
+
 		}
 	}
 
-	private Set<Map<ACTION, ACTION>> computeCrossProduct(final Predicate<Map<ACTION, ACTION>> combinationIsFeasible,
+	private static boolean isSelfReachable(final IcfgEdge action) {
+		final IcfgEdgeIterator edgeIterator = new IcfgEdgeIterator(action.getTarget().getOutgoingEdges());
+		return edgeIterator.asStream().anyMatch(edge -> edge.equals(action));
+	}
+
+	private Set<Map<LOC, ACTION>> computeCrossProduct(final Predicate<Map<LOC, ACTION>> combinationIsFeasible,
 			final String procedure) {
-		final Set<Map<ACTION, ACTION>> result = new HashSet<>();
+		final Set<Map<LOC, ACTION>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
-		final Map<ACTION, List<ACTION>> writes = new LinkedHashMap<>();
+		final Map<LOC, List<ACTION>> writes = new LinkedHashMap<>();
 		int n = 1;
 		final ACTION dummy = null;
 		final Set<ACTION> reads = getAssumeReducedReads(procedure);
+		final Set<ACTION> selfReachable = getSelfReachableReads(procedure);
 		if (reads != null) {
 			for (final var read : reads) {
+				if (selfReachable.contains(read)) {
+					// reads in loops are handled separately
+					continue;
+				}
 				final List<ACTION> tempList = mWritesPerRead.get(read).stream().collect(Collectors.toList());
 				if (tempList.isEmpty()) {
 					// read must always read from it own procedure
@@ -396,12 +422,15 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				}
 				tempList.add(dummy);
 				n *= tempList.size();
-				writes.put(read, tempList);
+				final LOC source = mTransitionProvider.getSource(read);
+				if (!writes.containsKey(source)) {
+					writes.put(source, tempList);
+				}
 			}
 
 			for (int i = 0; i < n; i++) {
 				int blocksize = 1;
-				final Map<ACTION, ACTION> map = new HashMap<>();
+				final Map<LOC, ACTION> map = new HashMap<>();
 				for (final var readEntry : writes.entrySet()) {
 					final int index = (i / blocksize) % readEntry.getValue().size();
 					final ACTION write = readEntry.getValue().get(index);

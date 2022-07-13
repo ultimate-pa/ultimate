@@ -10,7 +10,7 @@ var x: int;
 procedure thread1() returns()
 modifies x;
 {
-  x := 2;
+  x := 1;
 }
 
 procedure ULTIMATE.start() returns()
