@@ -145,7 +145,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (IcfgUtils.isConcurrent(icfg)) {
 			int numberOfThreadInstances = 1;
 			while (true) {
-				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances);
+				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances, true);
 				mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 				final IIcfg<IcfgLocation> petrified = icfgPetrifier.getPetrifiedIcfg();
 				final Set<IcfgLocation> insufficientThreadLocs = new HashSet<>(
