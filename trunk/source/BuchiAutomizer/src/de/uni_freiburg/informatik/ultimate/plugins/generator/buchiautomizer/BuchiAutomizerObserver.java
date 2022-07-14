@@ -206,12 +206,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 * @param counterexample
 	 */
 	private void reportNonTerminationResult(final NonTerminationArgument nta,
-			final NestedLassoRun<IcfgEdge, IPredicate> counterexample) {
-		final IcfgProgramExecution<IcfgEdge> stemExecution =
-				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getStem().getWord());
-		final IcfgProgramExecution<IcfgEdge> loopExecution =
-				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getLoop().getWord());
-
+			final IcfgProgramExecution<IcfgEdge> stemExecution, final IcfgProgramExecution<IcfgEdge> loopExecution,
+			final IcfgEdge hondaAction) {
 		final NonTerminationArgumentResult<IcfgEdge, Term> result;
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
@@ -225,16 +221,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<>(getHondaAction(counterexample), Activator.PLUGIN_NAME,
+			result = new GeometricNonTerminationArgumentResult<>(hondaAction, Activator.PLUGIN_NAME,
 					initHondaRays.get(0), initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()),
 					gnta.getLambdas(), gnta.getNus(), getBacktranslationService(), Term.class, stemExecution,
 					loopExecution);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
 
-			result = new FixpointNonTerminationResult<>(getHondaAction(counterexample), Activator.PLUGIN_NAME,
-					ifr.getValuesAtInit(), ifr.getValuesAtHonda(), getBacktranslationService(), Term.class,
-					stemExecution, loopExecution);
+			result = new FixpointNonTerminationResult<>(hondaAction, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
+					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		} else {
 			throw new IllegalArgumentException("unknown TerminationArgument");
 		}
@@ -312,18 +307,18 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(reportRes);
 
 			final NestedLassoRun<IcfgEdge, IPredicate> counterexample = bcl.getCounterexample();
-			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
-			reportNonTerminationResult(nta, counterexample);
-			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
-					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
-
 			final IcfgProgramExecution<IcfgEdge> stemPE =
 					TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getStem().getWord());
 			final IcfgProgramExecution<IcfgEdge> loopPE =
 					TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getLoop().getWord());
-			final IResult ntreportRes = new NonterminatingLassoResult<>(getHondaAction(counterexample),
-					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE);
-			reportResult(ntreportRes);
+			final IcfgEdge hondaAction = getHondaAction(counterexample);
+			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
+
+			reportNonTerminationResult(nta, stemPE, loopPE, hondaAction);
+			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
+					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
+			reportResult(new NonterminatingLassoResult<>(hondaAction, Activator.PLUGIN_ID,
+					mServices.getBacktranslationService(), stemPE, loopPE));
 		} else {
 			throw new AssertionError();
 		}
