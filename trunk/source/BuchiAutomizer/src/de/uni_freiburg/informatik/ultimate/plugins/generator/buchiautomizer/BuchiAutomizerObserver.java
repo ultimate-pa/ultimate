@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.AbstractBuchiCegarLoop;
@@ -318,15 +319,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
 					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
 
-			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
-			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution<IcfgEdge> stemPE =
-					IcfgProgramExecution.create(counterexample.getStem().getWord().asList(), partialProgramStateMapping,
-							new Map[counterexample.getStem().getLength()], IcfgEdge.class);
-			@SuppressWarnings("unchecked")
+					TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getStem().getWord());
 			final IcfgProgramExecution<IcfgEdge> loopPE =
-					IcfgProgramExecution.create(counterexample.getLoop().getWord().asList(), partialProgramStateMapping,
-							new Map[counterexample.getLoop().getLength()], IcfgEdge.class);
+					TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getLoop().getWord());
 			final IResult ntreportRes = new NonterminatingLassoResult<>(getHondaAction(counterexample),
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE);
 			reportResult(ntreportRes);
