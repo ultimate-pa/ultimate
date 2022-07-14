@@ -29,12 +29,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -51,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -65,12 +68,13 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedWriteWrittenVars;
 	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedWriteReadVars;
 	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedReadReadVars;
-	private final Map<String, Set<String>> mForks;
+	private final Map<String, Set<String>> mDependingProcedures;
 	private final Map<ACTION, Set<ACTION>> mWritesPerRead;
 	private final Map<String, Set<ACTION>> mWritesPerProcedure;
 	private final Map<String, Set<ACTION>> mReadsPerProcedure;
 	private final HashRelation<String, ACTION> mSelfReachableReads;
 	private final HashRelation<String, LOC> mForkedAt;
+	private final HashRelation<String, String> mForks;
 	// Hashrelations
 
 	private final Map<LOC, ACTION> mLoc2Assume;
@@ -84,12 +88,13 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mSharedWriteWrittenVars = new HashMap<>();
 		mSharedWriteReadVars = new HashMap<>();
 		mSharedReadReadVars = new HashMap<>();
-		mForks = new HashMap<>();
+		mDependingProcedures = new HashMap<>();
 		mWritesPerRead = new HashMap<>();
 		mWritesPerProcedure = new HashMap<>();
 		mReadsPerProcedure = new HashMap<>();
 		mSelfReachableReads = new HashRelation<>();
 		mForkedAt = new HashRelation<>();
+		mForks = new HashRelation<>();
 
 		mCrossProducts = new HashMap<>();
 
@@ -181,6 +186,65 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
+	public List<String> computeTopologicalOrder(final Set<String> procedures) {
+		final List<String> topologicalOrder = new ArrayList<>();
+		// TODO: compute inGrad
+		final Map<String, Integer> inGrad = new HashMap<>();
+		// initialize 0
+		for (final String procedure : procedures) {
+			inGrad.put(procedure, 0);
+		}
+
+		for (final var entry : mForks.entrySet()) {
+			for (final String forked : entry.getValue()) {
+				inGrad.put(forked, inGrad.get(forked) + 1);
+			}
+		}
+
+		final PriorityQueue<Pair<String, Integer>> pQueue = new PriorityQueue<>((x, y) -> queueCompare(x, y));
+
+		for (final var entry : inGrad.entrySet()) {
+			pQueue.add(new Pair<>(entry.getKey(), entry.getValue()));
+		}
+
+		final Set<String> visited = new HashSet<>();
+
+		while (!DataStructureUtils.difference(procedures, visited).isEmpty()) {
+			final Pair<String, Integer> currentItem = pQueue.poll();
+			if (currentItem.getSecond() == 0) {
+				final String key = currentItem.getFirst();
+				if (!visited.contains(key)) {
+					topologicalOrder.add(key);
+					visited.add(key);
+
+					// get current inGrad value and add minus one
+					for (final String forked : mForks.getImage(key)) {
+						if (inGrad.get(forked) > 0) {
+							inGrad.put(forked, inGrad.get(forked) - 1);
+							pQueue.add(new Pair<>(forked, inGrad.get(forked)));
+						}
+					}
+				}
+				continue;
+			}
+
+			// cycle -> add others arbitraly
+			for (final String procedure : DataStructureUtils.difference(procedures, visited)) {
+				topologicalOrder.add(procedure);
+			}
+			break;
+		}
+
+		return topologicalOrder;
+	}
+
+	private static Integer queueCompare(final Pair<String, Integer> pair1, final Pair<String, Integer> pair2) {
+		// 1 < 2 => -1
+		// 1 > 2 => 1
+		// 1 == 2 => 0
+		return pair1.getSecond() - pair2.getSecond();
+	}
+
 	/**
 	 * pre computation over the icfg: shared write locations and share read locations
 	 *
@@ -211,7 +275,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				if (edge instanceof IForkActionThreadCurrent) {
 					final IForkActionThreadCurrent fork = (IForkActionThreadCurrent) edge;
 					mForkedAt.addPair(fork.getNameOfForkedProcedure(), mTransitionProvider.getSource((ACTION) edge));
-					addFork(entry.getValue().getProcedure(), fork.getNameOfForkedProcedure());
+					addDependency(entry.getValue().getProcedure(), fork.getNameOfForkedProcedure());
+					mForks.addPair(entry.getValue().getProcedure(), fork.getNameOfForkedProcedure());
 
 					final IcfgEdgeIterator forkIterator = new IcfgEdgeIterator(edge.getTarget().getOutgoingEdges());
 					forkIterator.asStream().forEach(
@@ -220,8 +285,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 		}
 
-		final Map<String, Set<String>> closureForks = closure(mForks);
-		final Map<String, Set<String>> dependingOn = computeDependingProcedures(closureForks);
+		final Map<String, Set<String>> closureDepending = closure(mDependingProcedures);
+		final Map<String, Set<String>> dependingOn = computeDependingProcedures(closureDepending);
 
 		for (final Entry<ACTION, Set<String>> entry : readsFromProcedures.entrySet()) {
 			mWritesPerRead.put(entry.getKey(), new HashSet<>());
@@ -232,7 +297,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					mWritesPerRead.get(entry.getKey()).addAll(writesP1);
 				}
 				// add all writes from closure(procedure)
-				final Set<String> forkedByP1 = closureForks.get(p1);
+				final Set<String> forkedByP1 = closureDepending.get(p1);
 				if (forkedByP1 == null) {
 					continue;
 				}
@@ -296,17 +361,17 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mIcfg.getCfgSmtToolkit().getProcedures().forEach(p -> result.put(p, new HashSet<>()));
 		while (!worklist.isEmpty()) {
 			final String currentItem = worklist.poll();
-			if (!mForks.containsKey(currentItem)) {
+			if (!mDependingProcedures.containsKey(currentItem)) {
 				continue;
 			}
-			for (final String forked : mForks.get(currentItem)) {
+			for (final String forked : mDependingProcedures.get(currentItem)) {
 				// copy all entries von item into child
 				result.get(forked).addAll(result.get(currentItem));
 				// add parent
 				result.get(forked).add(currentItem);
 				// add all other children
-				final Set<String> otherChildren =
-						mForks.get(currentItem).stream().filter(a -> !a.equals(forked)).collect(Collectors.toSet());
+				final Set<String> otherChildren = mDependingProcedures.get(currentItem).stream()
+						.filter(a -> !a.equals(forked)).collect(Collectors.toSet());
 				result.get(forked).addAll(otherChildren);
 				// add closure over all other children
 				for (final String child : otherChildren) {
@@ -335,19 +400,19 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				&& ((IForkActionThreadCurrent) edge).getNameOfForkedProcedure().equals(currentProcedure)) {
 			// Procedures running parallel -> co-dependent
 			final IForkActionThreadCurrent fork = (IForkActionThreadCurrent) edge;
-			addFork(currentProcedure, fork.getNameOfForkedProcedure());
+			addDependency(currentProcedure, fork.getNameOfForkedProcedure());
 		}
 	}
 
-	private void addFork(final String forks, final String forkedProcedure) {
+	private void addDependency(final String forks, final String forkedProcedure) {
 		final Set<String> tempSet;
-		if (mForks.containsKey(forks)) {
-			tempSet = mForks.get(forks);
+		if (mDependingProcedures.containsKey(forks)) {
+			tempSet = mDependingProcedures.get(forks);
 		} else {
 			tempSet = new HashSet<>();
 		}
 		tempSet.add(forkedProcedure);
-		mForks.put(forks, tempSet);
+		mDependingProcedures.put(forks, tempSet);
 	}
 
 	private boolean isAssume(final IcfgEdge edge) {
@@ -358,14 +423,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
-		if (isAssume(edge)) {
-			if (mLoc2Assume.keySet().contains(edge.getSource())) {
-				mAssumes.put((ACTION) edge, mLoc2Assume.get(edge.getSource()));
-			} else {
-				// only put one assume part in Reads
-				mLoc2Assume.put((LOC) edge.getSource(), (ACTION) edge);
-			}
-		}
+		// if (isAssume(edge)) {
+		// if (mLoc2Assume.keySet().contains(edge.getSource())) {
+		// mAssumes.put((ACTION) edge, mLoc2Assume.get(edge.getSource()));
+		// } else {
+		// // only put one assume part in Reads
+		// mLoc2Assume.put((LOC) edge.getSource(), (ACTION) edge);
+		// }
+		// }
 
 		// SharedWrites
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
