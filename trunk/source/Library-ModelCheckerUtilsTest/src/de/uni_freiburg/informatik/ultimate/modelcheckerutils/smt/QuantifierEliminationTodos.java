@@ -303,6 +303,18 @@ public class QuantifierEliminationTodos {
 	}
 
 
+	@Test
+	public void hiddenWeakArrayEquality07ArrayInIndex() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= b1 (store a (select a k1) 23)) (= (store a k2 42) b2)))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
