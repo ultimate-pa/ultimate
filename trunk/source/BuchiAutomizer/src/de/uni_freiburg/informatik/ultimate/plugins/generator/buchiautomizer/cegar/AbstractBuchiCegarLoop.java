@@ -30,8 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ceg
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -56,11 +59,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -121,20 +124,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
-	/**
-	 * Result of CEGAR loop iteration
-	 * <ul>
-	 * <li>SAFE: there is no feasible trace to an error location
-	 * <li>UNSAFE: there is a feasible trace to an error location (the underlying program has at least one execution
-	 * which violates its specification)
-	 * <li>UNKNOWN: we found a trace for which we could not decide feasibility or we found an infeasible trace but were
-	 * not able to exclude it in abstraction refinement.
-	 * <li>TIMEOUT:
-	 */
-	public enum Result {
-		TERMINATING, TIMEOUT, UNKNOWN, NONTERMINATING
-	}
-
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
@@ -188,10 +177,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 * <li>a subset of the traces which respect the control flow of of the program.
 	 */
 	private A mAbstraction;
-
-	private NonTerminationArgument mNonterminationArgument;
-
-	private ToolchainCanceledException mToolchainCancelledException;
 
 	private final StrategyFactory<L> mRefinementStrategyFactory;
 	private final TaskIdentifier mTaskIdentifier;
@@ -311,11 +296,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected abstract A reduceAbstractionSize(final A abstraction, final Minimization automataMinimization)
 			throws AutomataOperationCanceledException;
 
-	public NestedLassoRun<L, IPredicate> getCounterexample() {
-		return mCounterexample;
-	}
-
-	public final Result runCegarLoop() throws IOException {
+	public final BuchiCegarLoopResult<L> runCegarLoop() throws IOException {
 		mLogger.info("Interprodecural is " + mPref.interprocedural());
 		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
 		mLogger.info("Compute interpolants for " + mInterpolation);
@@ -339,12 +320,12 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		} catch (final AutomataLibraryException e1) {
 			mLogger.warn("Verification cancelled");
 			mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
-			mToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
-			return Result.TIMEOUT;
+			return BuchiCegarLoopResult.constructTimeoutResult(new ToolchainCanceledException(e1.getClassOfThrower()),
+					mMDBenchmark, mTermcompProofBenchmark);
 		}
 		if (initalAbstractionCorrect) {
 			mMDBenchmark.reportNoRemainderModule();
-			return Result.TERMINATING;
+			return BuchiCegarLoopResult.constructTerminatingResult(mMDBenchmark, mTermcompProofBenchmark);
 		}
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
@@ -356,26 +337,26 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			} catch (final AutomataLibraryException e1) {
 				mLogger.warn("Verification cancelled");
 				reportRemainderModule(false);
-				mToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
-				return Result.TIMEOUT;
+				return BuchiCegarLoopResult.constructTimeoutResult(
+						new ToolchainCanceledException(e1.getClassOfThrower()), mMDBenchmark, mTermcompProofBenchmark);
 			}
 			if (abstractionCorrect) {
 				mMDBenchmark.reportNoRemainderModule();
 				if (mConstructTermcompProof) {
 					mTermcompProofBenchmark.reportNoRemainderModule();
 				}
-				return Result.TERMINATING;
+				return BuchiCegarLoopResult.constructTerminatingResult(mMDBenchmark, mTermcompProofBenchmark);
 			}
 
 			LassoCheck<L> lassoCheck;
 			try {
 				final TaskIdentifier taskIdentifier = new SubtaskIterationIdentifier(mTaskIdentifier, mIteration);
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.LASSO_ANALYSIS_TIME);
+				final String identifier = mIdentifier + "_Iteration" + mIteration;
 				lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
-						mCounterexample, generateLassoCheckIdentifier(), mServices, SIMPLIFICATION_TECHNIQUE,
-						XNF_CONVERSION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, taskIdentifier,
-						mBenchmarkGenerator);
+						mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
+						mRefinementStrategyFactory, mAbstraction, taskIdentifier, mBenchmarkGenerator);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
@@ -388,9 +369,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 							mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
-							mCounterexample, generateLassoCheckIdentifier(), mServices, SIMPLIFICATION_TECHNIQUE,
-							XNF_CONVERSION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,
-							mBenchmarkGenerator);
+							mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
+							mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier, mBenchmarkGenerator);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =
@@ -402,8 +382,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 								+ traceHistogramMaxStem + " " + "loop: length " + mCounterexample.getLoop().getLength()
 								+ " TraceHistMax " + traceHistogramMaxLoop + ")";
 				e.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
-				mToolchainCancelledException = e;
-				return Result.TIMEOUT;
+				return BuchiCegarLoopResult.constructTimeoutResult(e, mMDBenchmark, mTermcompProofBenchmark);
 			} finally {
 				mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.LASSO_ANALYSIS_TIME);
 			}
@@ -422,16 +401,20 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					mAbstraction = refineBuchiInternal(lassoCheck);
 					break;
 				case REPORT_UNKNOWN:
-					reportRemainderModule(false);
-					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
-					if (getOverapproximations().isEmpty()) {
-						mNonterminationArgument = lassoCheck.getNonTerminationArgument();
+					// Ignore the in-use-locations in the counterexample
+					final var inUseLocs = new HashSet<>(
+							mCsToolkitWithoutRankVars.getConcurrencyInformation().getInUseErrorNodeMap().values());
+					final NestedWord<L> stem = getWordWithoutLocs(mCounterexample.getStem(), inUseLocs);
+					final NestedWord<L> loop = getWordWithoutLocs(mCounterexample.getLoop(), inUseLocs);
+					if (cd == ContinueDirective.REPORT_NONTERMINATION && getOverapproximations().isEmpty()) {
 						reportRemainderModule(true);
-						return Result.NONTERMINATING;
+						return BuchiCegarLoopResult.constructNonTerminatingResult(stem, loop,
+								lassoCheck.getNonTerminationArgument(), mMDBenchmark, mTermcompProofBenchmark);
 					}
 					reportRemainderModule(false);
-					return Result.UNKNOWN;
+					return BuchiCegarLoopResult.constructUnknownResult(stem, loop, getOverapproximations(),
+							mMDBenchmark, mTermcompProofBenchmark);
 				default:
 					throw new AssertionError("impossible case");
 				}
@@ -445,14 +428,26 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 			} catch (final AutomataOperationCanceledException e) {
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "performing iteration " + mIteration);
-				mToolchainCancelledException = new ToolchainCanceledException(e, rti);
-				return Result.TIMEOUT;
+				return BuchiCegarLoopResult.constructTimeoutResult(new ToolchainCanceledException(e, rti), mMDBenchmark,
+						mTermcompProofBenchmark);
 			} catch (final ToolchainCanceledException e) {
-				mToolchainCancelledException = e;
-				return Result.TIMEOUT;
+				return BuchiCegarLoopResult.constructTimeoutResult(e, mMDBenchmark, mTermcompProofBenchmark);
 			}
 		}
-		return Result.TIMEOUT;
+		return BuchiCegarLoopResult.constructTimeoutResult(
+				new ToolchainCanceledException(getClass(), "Number of iterations exceeded"), mMDBenchmark,
+				mTermcompProofBenchmark);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <L extends IIcfgTransition<?>> NestedWord<L> getWordWithoutLocs(final NestedRun<L, ?> run,
+			final Set<IcfgLocation> ignoredLocs) {
+		if (ignoredLocs.isEmpty()) {
+			return run.getWord();
+		}
+		final L[] letters = (L[]) run.getWord().asList().stream().filter(x -> !ignoredLocs.contains(x.getTarget()))
+				.toArray(IIcfgTransition<?>[]::new);
+		return NestedWord.nestedWord(new Word<>(letters));
 	}
 
 	private A refineFiniteInternal(final A abstraction, final LassoCheck<L> lassoCheck)
@@ -747,38 +742,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		}
 	}
 
-	public Map<String, ILocation> getOverapproximations() {
+	private Map<String, ILocation> getOverapproximations() {
 		final NestedWord<L> stem = mCounterexample.getStem().getWord();
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		overapproximations.putAll(Overapprox.getOverapproximations(stem.asList()));
 		overapproximations.putAll(Overapprox.getOverapproximations(loop.asList()));
 		return overapproximations;
-	}
-
-	public ToolchainCanceledException getToolchainCancelledException() {
-		return mToolchainCancelledException;
-	}
-
-	public NonTerminationArgument getNonTerminationArgument() {
-		return mNonterminationArgument;
-	}
-
-	public BuchiAutomizerModuleDecompositionBenchmark getMDBenchmark() {
-		return mMDBenchmark;
-	}
-
-	public TermcompProofBenchmark getTermcompProofBenchmark() {
-		return mTermcompProofBenchmark;
-	}
-
-	/**
-	 * Returns an Identifier that describes a lasso analysis. Right now, this is the Filename (without path prefix) of
-	 * analyzed file together with the number of the current iteration.
-	 *
-	 */
-	private String generateLassoCheckIdentifier() {
-		return mIdentifier + "_Iteration" + mIteration;
 	}
 
 	private static class SubtaskAdditionalLoopUnwinding extends TaskIdentifier {
