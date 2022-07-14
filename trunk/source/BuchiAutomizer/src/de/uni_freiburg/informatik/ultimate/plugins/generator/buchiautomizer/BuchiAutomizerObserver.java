@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.NonterminationArgumentStatistics;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
@@ -71,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgram
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -210,10 +207,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 */
 	private void reportNonTerminationResult(final NonTerminationArgument nta,
 			final NestedLassoRun<IcfgEdge, IPredicate> counterexample) {
-		final IcfgProgramExecution<IcfgEdge> stemExecution = IcfgProgramExecution
-				.create(counterexample.getStem().getWord().asList(), Collections.emptyMap(), IcfgEdge.class);
-		final IcfgProgramExecution<IcfgEdge> loopExecution = IcfgProgramExecution
-				.create(counterexample.getLoop().getWord().asList(), Collections.emptyMap(), IcfgEdge.class);
+		final IcfgProgramExecution<IcfgEdge> stemExecution =
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getStem().getWord());
+		final IcfgProgramExecution<IcfgEdge> loopExecution =
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getLoop().getWord());
+
 		final NonTerminationArgumentResult<IcfgEdge, Term> result;
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
@@ -340,20 +338,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void reportLTLPropertyIsViolated(final AbstractBuchiCegarLoop<IcfgEdge, ?> bcl,
 			final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<IcfgEdge, IPredicate> counterexample = bcl.getCounterexample();
-		// first, check if the counter example is really infinite or not
-
-		final List<? extends IIcfgTransition<?>> stem = counterexample.getStem().getWord().asList();
-		final List<? extends IIcfgTransition<?>> loop = counterexample.getLoop().getWord().asList();
 
 		// TODO: Make some attempt at getting the values
-		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
-
-		@SuppressWarnings("unchecked")
 		final IcfgProgramExecution<IcfgEdge> stemPE =
-				IcfgProgramExecution.create(stem, partialProgramStateMapping, new Map[stem.size()]);
-		@SuppressWarnings("unchecked")
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getStem().getWord());
 		final IcfgProgramExecution<IcfgEdge> loopPE =
-				IcfgProgramExecution.create(loop, partialProgramStateMapping, new Map[loop.size()]);
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getLoop().getWord());
 		reportResult(new LTLInfiniteCounterExampleResult<>(getHondaAction(counterexample), Activator.PLUGIN_ID,
 				mServices.getBacktranslationService(), stemPE, loopPE, ltlAnnot.getUltimateLTLProperty()));
 	}
