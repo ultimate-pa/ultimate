@@ -21,7 +21,7 @@ modifies x;
   x := 0;
   fork 1 thread1();
   x := x + 1;
-  assert x == 1;
+  assert x == 2;
   i := x + 1;
   x := i + 1;
   assert x == 1;

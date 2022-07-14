@@ -81,6 +81,23 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 					DataflowDomain.class.getSimpleName(), LiveVariableDomain.class.getSimpleName(),
 					SMTTheoryDomain.class.getSimpleName(), PoormanAbstractDomain.class.getSimpleName() };
 
+	public enum AbstractInterpretationConcurrent {
+		/*
+		 * Union over all interferences of writes from which the read can read from
+		 */
+		INTERFERENCES_UNION,
+		/*
+		 * Computes every possible combinations of writes per read and analyzes each separately
+		 */
+		INTERFERENCES_CROSSPRODUCT,
+		/*
+		 * Computes every possible combinations of writes per read and filters by checking for feasibility
+		 */
+		INTERFERENCES_CROSSPRODUCT_FILTERED
+	}
+
+	public static final String LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT =
+			"Minimum iterations before widening over Interferences";
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
 	public static final String LABEL_MAX_EVALUATION_RECURSION_DETPH =
@@ -96,6 +113,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS =
 			"Do not report any results, suppress all exceptions except OOM, use 20% of available time.";
 
+	public static final int DEF_ITERATIONS_UNTIL_WIDENING_CONCURRENT = 3;
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
 	public static final int DEF_MAX_EVALUATION_RECURSION_DEPTH = -1;
@@ -111,6 +129,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	private static final Boolean DEF_USE_FUTURE_RCFG = false;
 	private static final String TOOLTIP_USE_FUTURE_RCFG =
 			"Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
+
+	public static final String LABEL_ABSTRACT_INTERPRETATION_CONCURRENT =
+			"Computation of Interferences for Sequential Abstract Interpretation of one procedure";
 
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -129,6 +150,12 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,
 				PreferenceType.Boolean));
+		rtr.add(new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_CONCURRENT,
+				AbstractInterpretationConcurrent.INTERFERENCES_UNION, PreferenceType.Combo,
+				AbstractInterpretationConcurrent.values()));
+		rtr.add(new UltimatePreferenceItem<>(LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT,
+				DEF_ITERATIONS_UNTIL_WIDENING_CONCURRENT, PreferenceType.Integer,
+				new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 
 		// Abstract Domains Container
 		final UltimatePreferenceItemContainer abstractDomainContainer =

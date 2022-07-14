@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer.AbstractInterpretationConcurrent;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -83,13 +84,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final IIcfg<?> mIcfg;
 	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
 
-	private final int mMaxIterations;
+	private final int mIterationsBeforeWidening;
 	private final FixpointEngineConcurrentUtils<STATE, ACTION, LOC> mFecUtils;
 
 	private final Map<LOC, DisjunctiveAbstractState<STATE>> mErrors;
 
+	private final AbstractInterpretationConcurrent mVersion;
+
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
-			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe) {
+			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe,
+			final AbstractInterpretationConcurrent version, final int iterations) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -108,11 +112,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mIcfg = icfg;
 		mFixpointEngine = fxpe;
 
-		mMaxIterations = 3;
+		mIterationsBeforeWidening = iterations;
 
 		mFecUtils = new FixpointEngineConcurrentUtils<>(mIcfg, mTransitionProvider);
 
 		mErrors = new HashMap<>();
+
+		mVersion = version;
 	}
 
 	@Override
@@ -162,6 +168,14 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 					tempInterferences.putAll(
 							computeNewInterferences(procedure, tempInterferences, procedureInterferences, iteration));
+
+					final var alreadyAdded = mResult.getCounterexamples();
+					for (final var counterExample : result.getCounterexamples()) {
+						// TODO: check if ErrorLocation is already added => currently AssertionError
+						if (!alreadyAdded.contains(counterExample)) {
+							mResult.addCounterexample(counterExample);
+						}
+					}
 				}
 
 				iteration++;
@@ -221,8 +235,21 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		// return versionOne(mFecUtils.filterProcedures(entryNode.getProcedure(),
 		// interferences),entryNode.getProcedure());
 
-		final Predicate<Map<LOC, ACTION>> alwaysTrue = x -> true;
-		return filteredCrossProduct(entryNode, interferences, alwaysTrue);
+		if (mVersion == AbstractInterpretationConcurrent.INTERFERENCES_UNION) {
+			return unionOverInterferences(mFecUtils.filterProcedures(entryNode.getProcedure(), interferences),
+					entryNode.getProcedure());
+		}
+
+		if (mVersion == AbstractInterpretationConcurrent.INTERFERENCES_CROSSPRODUCT) {
+			final Predicate<Map<LOC, ACTION>> alwaysTrue = x -> true;
+			return filteredCrossProduct(entryNode, interferences, alwaysTrue);
+		}
+
+		if (mVersion == AbstractInterpretationConcurrent.INTERFERENCES_CROSSPRODUCT_FILTERED) {
+			throw new UnsupportedOperationException("Filter is not already implemented");
+		}
+
+		throw new UnsupportedOperationException("Unsupported Option");
 	}
 
 	/**
@@ -421,7 +448,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			}
 			final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 			DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, write);
-			if (iteration > mMaxIterations && interferences.containsKey(write)) {
+			if (iteration > mIterationsBeforeWidening && interferences.containsKey(write)) {
 				final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
 				postState = interferences.get(write).widen(wideningOp, postState);
 			}
