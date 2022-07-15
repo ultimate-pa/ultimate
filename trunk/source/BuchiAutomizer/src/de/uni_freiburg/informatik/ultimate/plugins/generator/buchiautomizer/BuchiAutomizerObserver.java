@@ -286,8 +286,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.NONTERMINATING, longDescr);
 			reportResult(reportRes);
 
-			final IcfgProgramExecution<IcfgEdge> stemPE =
-					TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
+			final IcfgProgramExecution<IcfgEdge> stemPE;
+			if (result.getStem().length() == 0) {
+				stemPE = IcfgProgramExecution.create(IcfgEdge.class);
+			} else {
+				stemPE = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
+			}
 			final IcfgProgramExecution<IcfgEdge> loopPE =
 					TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
 			final NonTerminationArgument nta = result.getNonTerminationArgument();
@@ -312,8 +316,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void reportLTLPropertyIsViolated(final BuchiCegarLoopResult<IcfgEdge> result,
 			final LTLPropertyCheck ltlAnnot) {
 		// TODO: Make some attempt at getting the values
-		final IcfgProgramExecution<IcfgEdge> stemPE =
-				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
+		final IcfgProgramExecution<IcfgEdge> stemPE;
+		if (result.getStem().length() == 0) {
+			stemPE = IcfgProgramExecution.create(IcfgEdge.class);
+		} else {
+			stemPE = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
+		}
 		final IcfgProgramExecution<IcfgEdge> loopPE =
 				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
 		reportResult(new LTLInfiniteCounterExampleResult<>(result.getHondaAction(), Activator.PLUGIN_ID,
