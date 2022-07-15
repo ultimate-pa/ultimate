@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
@@ -186,10 +185,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 *
 	 * @param counterexample
 	 */
-	private void reportNonTerminationResult(final NonTerminationArgument nta,
+	private NonTerminationArgumentResult<IcfgEdge, Term> getNonTerminationResult(final NonTerminationArgument nta,
 			final IcfgProgramExecution<IcfgEdge> stemExecution, final IcfgProgramExecution<IcfgEdge> loopExecution,
 			final IcfgEdge hondaAction) {
-		final NonTerminationArgumentResult<IcfgEdge, Term> result;
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
@@ -202,120 +200,54 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<>(hondaAction, Activator.PLUGIN_NAME,
-					initHondaRays.get(0), initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()),
-					gnta.getLambdas(), gnta.getNus(), getBacktranslationService(), Term.class, stemExecution,
-					loopExecution);
-		} else if (nta instanceof InfiniteFixpointRepetition) {
+			return new GeometricNonTerminationArgumentResult<>(hondaAction, Activator.PLUGIN_NAME, initHondaRays.get(0),
+					initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(),
+					gnta.getNus(), mServices.getBacktranslationService(), Term.class, stemExecution, loopExecution);
+		}
+		if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
 
-			result = new FixpointNonTerminationResult<>(hondaAction, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
-					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
-		} else {
-			throw new IllegalArgumentException("unknown TerminationArgument");
+			return new FixpointNonTerminationResult<>(hondaAction, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
+					ifr.getValuesAtHonda(), mServices.getBacktranslationService(), Term.class, stemExecution,
+					loopExecution);
 		}
-		reportResult(result);
+		throw new IllegalArgumentException("Unknown NonTerminationArgument " + nta.getClass());
 	}
 
 	private void interpretAndReportResult(final BuchiCegarLoopResult<IcfgEdge> result, final IIcfg<?> icfg)
 			throws AssertionError {
-		String whatToProve = "termination";
-
 		final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(icfg);
-		if (ltlAnnot != null) {
-			switch (result.getResult()) {
-			case NONTERMINATING:
-				// there is a violation of the LTL property
-				reportLTLPropertyIsViolated(result, ltlAnnot);
-				return;
-			case TERMINATING:
-				// the LTL property holds
-				reportLTLPropertyHolds(ltlAnnot);
-				return;
-			case TIMEOUT:
-			case UNKNOWN:
-				// use the standard report, but say its the LTL property
-				whatToProve = ltlAnnot.getUltimateLTLProperty();
-				break;
-			default:
-				throw new AssertionError("Extend the switch with the new enum member " + result);
-			}
+		final String whatToProve = ltlAnnot != null ? ltlAnnot.getUltimateLTLProperty() : "termination";
+		switch (result.getResult()) {
+		case NONTERMINATING:
+			reportNonTermination(result, ltlAnnot);
+			return;
+		case TERMINATING:
+			reportTermination(ltlAnnot);
+			return;
+		case TIMEOUT:
+			reportTimeout(result, icfg, whatToProve);
+			return;
+		case UNKNOWN:
+			reportUnknown(result, whatToProve);
+			return;
+		default:
+			throw new AssertionError("Extend the switch with the new enum member " + result);
 		}
+	}
 
-		if (result.getResult() == Result.TERMINATING) {
+	private void reportTermination(final LTLPropertyCheck ltlAnnot) {
+		if (ltlAnnot == null) {
 			final String longDescr = "Buchi Automizer proved that your program is terminating";
-			final IResult reportRes =
-					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.TERMINATING, longDescr);
-			reportResult(reportRes);
-		} else if (result.getResult() == Result.UNKNOWN) {
-			final Map<String, ILocation> overapprox = result.getOverapproximations();
-			final StringBuilder longDescr = new StringBuilder();
-			if (overapprox.isEmpty()) {
-				longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
-			} else {
-				longDescr.append("Buchi Automizer cannot decide " + whatToProve
-						+ " for the following lasso because it contains the following overapproximations. ");
-				longDescr.append(CoreUtil.getPlatformLineSeparator());
-				longDescr.append("Overapproximations");
-				longDescr.append(CoreUtil.getPlatformLineSeparator());
-				for (final Entry<String, ILocation> oa : overapprox.entrySet()) {
-					longDescr.append(String.format("%s (Reason %s)", oa.getValue(), oa.getKey()));
-				}
-				longDescr.append(CoreUtil.getPlatformLineSeparator());
-				longDescr.append("Lasso");
-			}
-			longDescr.append(CoreUtil.getPlatformLineSeparator());
-			longDescr.append("Stem: ");
-			longDescr.append(result.getStem());
-			longDescr.append(CoreUtil.getPlatformLineSeparator());
-			longDescr.append("Loop: ");
-			longDescr.append(result.getLoop());
-			final IResult reportRes =
-					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.UNKNOWN, longDescr.toString());
-			reportResult(reportRes);
-		} else if (result.getResult() == Result.TIMEOUT) {
-			final IcfgLocation position = icfg.getProcedureEntryNodes().values().iterator().next();
-			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
-					+ result.getToolchainCancelledException().printRunningTaskMessage();
-			final IResult reportRes = new TimeoutResultAtElement<IIcfgElement>(position, Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), longDescr);
-			reportResult(reportRes);
-		} else if (result.getResult() == Result.NONTERMINATING) {
-			final String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
-			final IResult reportRes =
-					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.NONTERMINATING, longDescr);
-			reportResult(reportRes);
-
-			final IcfgProgramExecution<IcfgEdge> stemPE;
-			if (result.getStem().length() == 0) {
-				stemPE = IcfgProgramExecution.create(IcfgEdge.class);
-			} else {
-				stemPE = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
-			}
-			final IcfgProgramExecution<IcfgEdge> loopPE =
-					TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
-			final NonTerminationArgument nta = result.getNonTerminationArgument();
-
-			final IcfgEdge hondaAction = result.getHondaAction();
-			reportNonTerminationResult(nta, stemPE, loopPE, hondaAction);
-			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
-					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
-			reportResult(new NonterminatingLassoResult<>(hondaAction, Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), stemPE, loopPE));
+			reportResult(new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.TERMINATING, longDescr));
 		} else {
-			throw new AssertionError();
+			// The LTL property holds
+			reportResult(new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
+					"Buchi Automizer proved that the LTL property " + ltlAnnot.getUltimateLTLProperty() + " holds"));
 		}
 	}
 
-	private void reportLTLPropertyHolds(final LTLPropertyCheck ltlAnnot) {
-		final IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
-				"Buchi Automizer proved that the LTL property " + ltlAnnot.getUltimateLTLProperty() + " holds");
-		reportResult(result);
-	}
-
-	private void reportLTLPropertyIsViolated(final BuchiCegarLoopResult<IcfgEdge> result,
-			final LTLPropertyCheck ltlAnnot) {
-		// TODO: Make some attempt at getting the values
+	private void reportNonTermination(final BuchiCegarLoopResult<IcfgEdge> result, final LTLPropertyCheck ltlAnnot) {
 		final IcfgProgramExecution<IcfgEdge> stemPE;
 		if (result.getStem().length() == 0) {
 			stemPE = IcfgProgramExecution.create(IcfgEdge.class);
@@ -324,15 +256,58 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 		final IcfgProgramExecution<IcfgEdge> loopPE =
 				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
-		reportResult(new LTLInfiniteCounterExampleResult<>(result.getHondaAction(), Activator.PLUGIN_ID,
-				mServices.getBacktranslationService(), stemPE, loopPE, ltlAnnot.getUltimateLTLProperty()));
+		final IcfgEdge hondaAction = result.getHondaAction();
+
+		if (ltlAnnot == null) {
+			final String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
+			reportResult(new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.NONTERMINATING, longDescr));
+
+			final NonTerminationArgument nta = result.getNonTerminationArgument();
+			reportResult(getNonTerminationResult(nta, stemPE, loopPE, hondaAction));
+			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
+					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
+			reportResult(new NonterminatingLassoResult<>(hondaAction, Activator.PLUGIN_ID,
+					mServices.getBacktranslationService(), stemPE, loopPE));
+		} else {
+			// There is a violation of the LTL property
+			reportResult(new LTLInfiniteCounterExampleResult<>(hondaAction, Activator.PLUGIN_ID,
+					mServices.getBacktranslationService(), stemPE, loopPE, ltlAnnot.getUltimateLTLProperty()));
+		}
 	}
 
-	/**
-	 * @return the current translator sequence for building results
-	 */
-	private IBacktranslationService getBacktranslationService() {
-		return mServices.getBacktranslationService();
+	private void reportUnknown(final BuchiCegarLoopResult<IcfgEdge> result, final String whatToProve) {
+		final Map<String, ILocation> overapprox = result.getOverapproximations();
+		final StringBuilder longDescr = new StringBuilder();
+		if (overapprox.isEmpty()) {
+			longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
+		} else {
+			longDescr.append("Buchi Automizer cannot decide " + whatToProve
+					+ " for the following lasso because it contains the following overapproximations. ");
+			longDescr.append(CoreUtil.getPlatformLineSeparator());
+			longDescr.append("Overapproximations");
+			longDescr.append(CoreUtil.getPlatformLineSeparator());
+			for (final Entry<String, ILocation> oa : overapprox.entrySet()) {
+				longDescr.append(String.format("%s (Reason %s)", oa.getValue(), oa.getKey()));
+			}
+			longDescr.append(CoreUtil.getPlatformLineSeparator());
+			longDescr.append("Lasso");
+		}
+		longDescr.append(CoreUtil.getPlatformLineSeparator());
+		longDescr.append("Stem: ");
+		longDescr.append(result.getStem());
+		longDescr.append(CoreUtil.getPlatformLineSeparator());
+		longDescr.append("Loop: ");
+		longDescr.append(result.getLoop());
+		reportResult(new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.UNKNOWN, longDescr.toString()));
+	}
+
+	private void reportTimeout(final BuchiCegarLoopResult<IcfgEdge> result, final IIcfg<?> icfg,
+			final String whatToProve) {
+		final IcfgLocation position = icfg.getProcedureEntryNodes().values().iterator().next();
+		final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
+				+ result.getToolchainCancelledException().printRunningTaskMessage();
+		reportResult(new TimeoutResultAtElement<IIcfgElement>(position, Activator.PLUGIN_ID,
+				mServices.getBacktranslationService(), longDescr));
 	}
 
 	private void reportResult(final IResult res) {
