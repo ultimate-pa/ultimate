@@ -301,7 +301,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	private void reportTimeout(final BuchiCegarLoopResult<IcfgEdge> result, final String whatToProve) {
-		final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
+		final String longDescr = "Buchi Automizer is unable to decide " + whatToProve + ": Timeout "
 				+ result.getToolchainCancelledException().printRunningTaskMessage();
 		reportResult(new TimeoutResult(Activator.PLUGIN_ID, longDescr));
 	}

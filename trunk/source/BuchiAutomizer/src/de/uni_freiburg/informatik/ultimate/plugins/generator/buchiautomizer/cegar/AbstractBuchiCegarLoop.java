@@ -435,7 +435,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			}
 		}
 		return BuchiCegarLoopResult.constructTimeoutResult(
-				new ToolchainCanceledException(getClass(), "Number of iterations exceeded"), mMDBenchmark,
+				new ToolchainCanceledException(getClass(), "exceeding the number of iterations"), mMDBenchmark,
 				mTermcompProofBenchmark);
 	}
 
