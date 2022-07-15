@@ -85,15 +85,15 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		/*
 		 * Union over all interferences of writes from which the read can read from
 		 */
-		INTERFERENCES_UNION,
+		UNION,
 		/*
 		 * Computes every possible combinations of writes per read and analyzes each separately
 		 */
-		INTERFERENCES_CROSSPRODUCT,
+		CROSSPRODUCT_NO_FILTER,
 		/*
 		 * Computes every possible combinations of writes per read and filters by checking for feasibility
 		 */
-		INTERFERENCES_CROSSPRODUCT_FILTERED
+		CROSSPRODUCT_FILTER
 	}
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT =
@@ -131,7 +131,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 			"Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
 
 	public static final String LABEL_ABSTRACT_INTERPRETATION_CONCURRENT =
-			"Computation of Interferences for Sequential Abstract Interpretation of one procedure";
+			"Computation of Interferences for Sequential Abstract Interpretation of each procedure";
 
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -151,7 +151,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		rtr.add(new UltimatePreferenceItem<>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,
 				PreferenceType.Boolean));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_CONCURRENT,
-				AbstractInterpretationConcurrent.INTERFERENCES_UNION, PreferenceType.Combo,
+				AbstractInterpretationConcurrent.UNION, PreferenceType.Combo,
 				AbstractInterpretationConcurrent.values()));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT,
 				DEF_ITERATIONS_UNTIL_WIDENING_CONCURRENT, PreferenceType.Integer,

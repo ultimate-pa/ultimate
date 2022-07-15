@@ -226,30 +226,32 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 */
 	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> computeProcedureInterferences(
 			final IcfgLocation entryNode, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		// if (interferences.isEmpty()) {
-		// final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> result = new HashSet<>();
-		// result.add(new HashMap<>());
-		// return result;
-		// }
+		if (interferences.isEmpty()) {
+			final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> procedureInterferences = new HashSet<>();
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> map = new HashMap<>();
+			if (!mStateStorage.computeLoc2States().isEmpty()) {
+				map.putAll(handlingForks(entryNode.getProcedure(),
+						mTransitionProvider.getSuccessorActions((LOC) entryNode)));
+			}
+			procedureInterferences.add(map);
+			return procedureInterferences;
+		}
 
-		// return versionOne(mFecUtils.filterProcedures(entryNode.getProcedure(),
-		// interferences),entryNode.getProcedure());
-
-		if (mVersion == AbstractInterpretationConcurrent.INTERFERENCES_UNION) {
+		if (mVersion == AbstractInterpretationConcurrent.UNION) {
+			// should the interferences be filtered here???
 			return unionOverInterferences(mFecUtils.filterProcedures(entryNode.getProcedure(), interferences),
 					entryNode.getProcedure());
 		}
 
-		if (mVersion == AbstractInterpretationConcurrent.INTERFERENCES_CROSSPRODUCT) {
-			final Predicate<Map<LOC, ACTION>> alwaysTrue = x -> true;
-			return filteredCrossProduct(entryNode, interferences, alwaysTrue);
+		if (mVersion == AbstractInterpretationConcurrent.CROSSPRODUCT_NO_FILTER) {
+			return filteredCrossProduct(entryNode, interferences, x -> true);
 		}
 
-		if (mVersion == AbstractInterpretationConcurrent.INTERFERENCES_CROSSPRODUCT_FILTERED) {
-			throw new UnsupportedOperationException("Filter is not already implemented");
+		if (mVersion == AbstractInterpretationConcurrent.CROSSPRODUCT_FILTER) {
+			throw new UnsupportedOperationException("Filter is not implemented yet");
 		}
 
-		throw new UnsupportedOperationException("Unsupported Option");
+		throw new UnsupportedOperationException("Unvalid Version option selected");
 	}
 
 	/**
@@ -303,15 +305,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
 			final Predicate<Map<LOC, ACTION>> combinationIsFeasable) {
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> procedureInterferences = new HashSet<>();
-		if (interferences.isEmpty()) {
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> map = new HashMap<>();
-			if (!mStateStorage.computeLoc2States().isEmpty()) {
-				map.putAll(handlingForks(entryNode.getProcedure(),
-						mTransitionProvider.getSuccessorActions((LOC) entryNode)));
-			}
-			procedureInterferences.add(map);
-			return procedureInterferences;
-		}
 		final String procedure = entryNode.getProcedure();
 		final Set<Map<LOC, ACTION>> crossProduct = mFecUtils.getCrossProduct(combinationIsFeasable, procedure);
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> readsInLoopsAndForks = new HashMap<>();
@@ -343,12 +336,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 					combination.put(read, state);
 				}
-
-				// add the state for the other part of the assume Statement
-				// final ACTION counterpart = mFecUtils.hasAssumeCounterPart(entry.getKey());
-				// if (counterpart != null) {
-				// combination.put(counterpart, state);
-				// }
 			}
 			if (!combination.isEmpty()) {
 				procedureInterferences.add(combination);

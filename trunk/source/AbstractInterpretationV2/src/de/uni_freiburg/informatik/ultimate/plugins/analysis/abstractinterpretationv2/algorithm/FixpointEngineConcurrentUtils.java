@@ -188,9 +188,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	public List<String> computeTopologicalOrder(final Set<String> procedures) {
 		final List<String> topologicalOrder = new ArrayList<>();
-		// TODO: compute inGrad
 		final Map<String, Integer> inGrad = new HashMap<>();
-		// initialize 0
 		for (final String procedure : procedures) {
 			inGrad.put(procedure, 0);
 		}
@@ -217,7 +215,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					topologicalOrder.add(key);
 					visited.add(key);
 
-					// get current inGrad value and add minus one
 					for (final String forked : mForks.getImage(key)) {
 						if (inGrad.get(forked) > 0) {
 							inGrad.put(forked, inGrad.get(forked) - 1);
@@ -228,7 +225,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				continue;
 			}
 
-			// cycle -> add others arbitraly
+			// cycle -> add others in arbitrary order
 			for (final String procedure : DataStructureUtils.difference(procedures, visited)) {
 				topologicalOrder.add(procedure);
 			}
@@ -350,7 +347,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	private Map<String, Set<String>> computeDependingProcedures(final Map<String, Set<String>> closureForks) {
-		// TODO: Compute mDependingOn Map<String, String>
 		final Map<String, Set<String>> result = new HashMap<>();
 		final Queue<String> worklist = new ArrayDeque<>();
 		final Set<String> added = new HashSet<>();
@@ -415,23 +411,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mDependingProcedures.put(forks, tempSet);
 	}
 
-	private boolean isAssume(final IcfgEdge edge) {
-		// only fast method for now
-		// TODO: find nicer way
-		final String description = edge.toString();
-		return description.contains("assume");
-	}
-
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
-		// if (isAssume(edge)) {
-		// if (mLoc2Assume.keySet().contains(edge.getSource())) {
-		// mAssumes.put((ACTION) edge, mLoc2Assume.get(edge.getSource()));
-		// } else {
-		// // only put one assume part in Reads
-		// mLoc2Assume.put((LOC) edge.getSource(), (ACTION) edge);
-		// }
-		// }
-
 		// SharedWrites
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
 			mSharedWriteReadVars.put((ACTION) edge, new HashSet<>());
