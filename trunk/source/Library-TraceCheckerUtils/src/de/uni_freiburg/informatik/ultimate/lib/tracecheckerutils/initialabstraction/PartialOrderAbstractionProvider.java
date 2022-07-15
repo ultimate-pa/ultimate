@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StepType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 
 /**
@@ -63,6 +64,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final OrderType mOrderType;
 	private final long mDfsOrderSeed;
 	private final String mPluginId;
+	private StepType mStepType;
+	private int mMaxStep;
 
 	/**
 	 * Create a new instance of the provider.
@@ -88,7 +91,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
 			final PredicateFactory predicateFactory, final PartialOrderMode partialOrderMode, final OrderType orderType,
-			final long dfsOrderSeed, final String pluginId) {
+			final long dfsOrderSeed, final StepType stepType, final int maxStep, final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -96,6 +99,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		mPartialOrderMode = partialOrderMode;
 		mOrderType = orderType;
 		mDfsOrderSeed = dfsOrderSeed;
+		mStepType = stepType;
+		mMaxStep = maxStep;
 		mPluginId = pluginId;
 	}
 
@@ -110,7 +115,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
 		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
-				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, indep);
+				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, mStepType, mMaxStep, indep);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);

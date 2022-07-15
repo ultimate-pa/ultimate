@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeat
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StepType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -386,6 +387,14 @@ public final class TAPreferences {
 
 	public long getDfsOrderSeed() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
+	}
+	
+	public StepType getOrderStepType() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_STEP_TYPE, StepType.class);
+	}
+	
+	public int getOrderMaxStep() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_MAXSTEP);
 	}
 
 	public IndependenceSettings porIndependenceSettings() {

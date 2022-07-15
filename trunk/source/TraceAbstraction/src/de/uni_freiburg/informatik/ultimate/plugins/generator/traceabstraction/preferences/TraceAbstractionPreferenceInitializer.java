@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeat
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StepType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -133,6 +134,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
 	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
+	
+	public static final String LABEL_POR_ORDER_STEP_TYPE = "Defines what statements are conidered a step in POR";
+	private static final StepType DEF_POR_ORDER_STEP_TYPE = StepType.ALL_READ_WRITE;
+	
+	public static final String LABEL_POR_ORDER_MAXSTEP = "Maximal amount of steps a thread is allowed to take successively";
+	private static final int DEF_POR_ORDER_MAXSTEP = 1;
 
 	/* **************************************** */
 
@@ -549,6 +556,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_POR_ORDER_STEP_TYPE, DEF_POR_ORDER_STEP_TYPE, PreferenceType.Combo,
+						StepType.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_ORDER_MAXSTEP, DEF_POR_ORDER_MAXSTEP, PreferenceType.Integer),
 				/* ********************************* */
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),

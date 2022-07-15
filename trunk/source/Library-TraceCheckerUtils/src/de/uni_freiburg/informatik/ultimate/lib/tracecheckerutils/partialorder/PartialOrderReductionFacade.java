@@ -89,6 +89,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public enum OrderType {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
 	}
+	public enum StepType {
+		ALL_READ_WRITE, ALL_WRITE, GLOBAL_READ_WRITE, GLOBAL_WRITE, LOOP
+	}
 
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataServices;
@@ -104,25 +107,45 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
-			final OrderType orderType, final long randomOrderSeed,
+			final OrderType orderType, final long randomOrderSeed, final StepType steptype, final int maxStep,
 			final IIndependenceRelation<IPredicate, L> independence) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 		mMode = mode;
 		mSleepFactory = createSleepFactory(predicateFactory);
-		mPreferenceOrder = getPreferenceOrder(icfg);
+		mPreferenceOrder = getPreferenceOrder(steptype, maxStep, icfg);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mIndependence = independence;
 		mPersistent = createPersistentSets(icfg, errorLocs);
 		mDeadEndStore = createDeadEndStore();
 	}
 
-	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final IIcfg<?> icfg) {
+	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final int maxStep, final IIcfg<?> icfg) {
 
 		final List<String> threadList =
 				IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
-		return new ParameterizedPreferenceOrder(1, threadList, alphabet, x -> true);
+		switch (steptype) {
+		case ALL_READ_WRITE:
+			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> true);
+		case ALL_WRITE:
+			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> {
+				return !(x.getTransformula().getAssignedVars().isEmpty());
+			});
+		case GLOBAL_READ_WRITE:
+			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> {
+				return (x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal()));
+			});
+		case GLOBAL_WRITE:
+			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> {
+				return (x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal()));
+			});
+		case LOOP:
+			var loopHeads = icfg.getLoopLocations();
+			return new ParameterizedPreferenceOrder<>(1, threadList, alphabet, x -> loopHeads.contains(x));
+		default:
+			throw new UnsupportedOperationException("Unknown step type: " + steptype);
+		}
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>

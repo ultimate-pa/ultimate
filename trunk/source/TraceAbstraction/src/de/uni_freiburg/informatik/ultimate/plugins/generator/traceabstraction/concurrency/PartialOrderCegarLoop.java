@@ -125,7 +125,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
-				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), independenceRelation);
+				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
+				mPref.getOrderStepType(), mPref.getOrderMaxStep(), independenceRelation);
 	}
 
 	@Override
