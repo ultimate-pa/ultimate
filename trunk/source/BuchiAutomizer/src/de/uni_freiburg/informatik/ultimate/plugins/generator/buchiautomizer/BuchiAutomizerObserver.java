@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoR
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.Termination;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifi
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -226,7 +225,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportTermination(ltlAnnot);
 			return;
 		case TIMEOUT:
-			reportTimeout(result, icfg, whatToProve);
+			reportTimeout(result, whatToProve);
 			return;
 		case UNKNOWN:
 			reportUnknown(result, whatToProve);
@@ -301,13 +300,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.UNKNOWN, longDescr.toString()));
 	}
 
-	private void reportTimeout(final BuchiCegarLoopResult<IcfgEdge> result, final IIcfg<?> icfg,
-			final String whatToProve) {
-		final IcfgLocation position = icfg.getProcedureEntryNodes().values().iterator().next();
+	private void reportTimeout(final BuchiCegarLoopResult<IcfgEdge> result, final String whatToProve) {
 		final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 				+ result.getToolchainCancelledException().printRunningTaskMessage();
-		reportResult(new TimeoutResultAtElement<IIcfgElement>(position, Activator.PLUGIN_ID,
-				mServices.getBacktranslationService(), longDescr));
+		reportResult(new TimeoutResult(Activator.PLUGIN_ID, longDescr));
 	}
 
 	private void reportResult(final IResult res) {
