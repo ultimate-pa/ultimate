@@ -5,26 +5,27 @@
  * Date: 30.06.2022
  */
 
-var x: int;
+var x,y: int;
 
 procedure thread1() returns()
-modifies x;
+modifies x,y;
 {
-  x := 1;
+  // x 0,1; y -2
+  y := x;
+  x := x-y;
 }
 
 procedure ULTIMATE.start() returns()
-modifies x;
+modifies x,y;
 {
   var i : int;
-  var j : int;
+  i := -2;
   x := 0;
+  // x 0
+  y := x - i;
+  // y = -2
   fork 1 thread1();
-  x := x + 1;
-  assert x == 2;
-  i := x + 1;
-  x := i + 1;
-  assert x == 1;
-  assert 0 <= x && x <= 1;
-  x := x + i;
+  x := x + 1; 
+  // fork 2 thread1();
+  x := y + i;
 }

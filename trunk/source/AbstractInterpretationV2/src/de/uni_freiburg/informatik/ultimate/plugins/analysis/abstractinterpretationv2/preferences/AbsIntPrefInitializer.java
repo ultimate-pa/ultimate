@@ -85,19 +85,21 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		/*
 		 * Union over all interferences of writes from which the read can read from
 		 */
-		UNION,
+		FLOW_INSENSITIV,
 		/*
 		 * Computes every possible combinations of writes per read and analyzes each separately
 		 */
-		CROSSPRODUCT_NO_FILTER,
+		FLOW_SENSITIV,
 		/*
 		 * Computes every possible combinations of writes per read and filters by checking for feasibility
 		 */
-		CROSSPRODUCT_FILTER
+		FLOW_SENSITIV_PLUS_CONSTRAINTS
 	}
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT =
 			"Minimum iterations before widening over Interferences";
+	public static final String LABEL_ABSTRACT_INTERPRETATION_CONCURRENT =
+			"Computation of Interferences for Sequential Abstract Interpretation of each procedure";
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
 	public static final String LABEL_MAX_EVALUATION_RECURSION_DETPH =
@@ -130,9 +132,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	private static final String TOOLTIP_USE_FUTURE_RCFG =
 			"Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
 
-	public static final String LABEL_ABSTRACT_INTERPRETATION_CONCURRENT =
-			"Computation of Interferences for Sequential Abstract Interpretation of each procedure";
-
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -151,7 +150,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		rtr.add(new UltimatePreferenceItem<>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,
 				PreferenceType.Boolean));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_CONCURRENT,
-				AbstractInterpretationConcurrent.UNION, PreferenceType.Combo,
+				AbstractInterpretationConcurrent.FLOW_INSENSITIV, PreferenceType.Combo,
 				AbstractInterpretationConcurrent.values()));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT,
 				DEF_ITERATIONS_UNTIL_WIDENING_CONCURRENT, PreferenceType.Integer,

@@ -287,11 +287,15 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 		for (final Entry<ACTION, Set<String>> entry : readsFromProcedures.entrySet()) {
 			mWritesPerRead.put(entry.getKey(), new HashSet<>());
+			final Set<IProgramVarOrConst> readVars = getReadVars(entry.getKey());
 			for (final String p1 : entry.getValue()) {
+
 				// add all writes from procedure
 				final Set<ACTION> writesP1 = mWritesPerProcedure.get(p1);
 				if (writesP1 != null) {
-					mWritesPerRead.get(entry.getKey()).addAll(writesP1);
+					writesP1.stream()
+							.filter(x -> DataStructureUtils.haveNonEmptyIntersection(getWrittenVars(x), readVars))
+							.forEach(y -> mWritesPerRead.get(entry.getKey()).add(y));
 				}
 				// add all writes from closure(procedure)
 				final Set<String> forkedByP1 = closureDepending.get(p1);
@@ -301,7 +305,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				for (final String p2 : forkedByP1) {
 					final Set<ACTION> writesP2 = mWritesPerProcedure.get(p2);
 					if (writesP2 != null) {
-						mWritesPerRead.get(entry.getKey()).addAll(writesP2);
+						writesP2.stream()
+								.filter(x -> DataStructureUtils.haveNonEmptyIntersection(getWrittenVars(x), readVars))
+								.forEach(y -> mWritesPerRead.get(entry.getKey()).add(y));
 					}
 				}
 			}
@@ -310,10 +316,12 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			if (readDependsOn == null) {
 				continue;
 			}
-			for (final String p : readDependsOn) {
-				final Set<ACTION> writesP = mWritesPerProcedure.get(p);
-				if (writesP != null) {
-					mWritesPerRead.get(entry.getKey()).addAll(writesP);
+			for (final String p3 : readDependsOn) {
+				final Set<ACTION> writesP3 = mWritesPerProcedure.get(p3);
+				if (writesP3 != null) {
+					writesP3.stream()
+							.filter(x -> DataStructureUtils.haveNonEmptyIntersection(getWrittenVars(x), readVars))
+							.forEach(y -> mWritesPerRead.get(entry.getKey()).add(y));
 				}
 			}
 		}
@@ -456,10 +464,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			final String procedure) {
 		final Set<Map<LOC, ACTION>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
+		// reads can read from several global variables -> should LOC - Set<ACTION>
 		final Map<LOC, List<ACTION>> writes = new LinkedHashMap<>();
 		int n = 1;
 		final ACTION dummy = null;
-		final Set<ACTION> reads = getAssumeReducedReads(procedure);
+		final Set<ACTION> reads = getReads(procedure);
 		final Set<ACTION> selfReachable = getSelfReachableReads(procedure);
 		if (reads != null) {
 			for (final var read : reads) {
@@ -476,6 +485,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				n *= tempList.size();
 				final LOC source = mTransitionProvider.getSource(read);
 				if (!writes.containsKey(source)) {
+					// TODO: if read reads from more than one Variable, add CrossProduct over tempList
+					// such that each entry contains a write to x1, x2, x3, ..., xn
 					writes.put(source, tempList);
 				}
 			}
