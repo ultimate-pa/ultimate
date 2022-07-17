@@ -402,13 +402,17 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					break;
 				case REPORT_UNKNOWN:
 				case REPORT_NONTERMINATION:
-					// Ignore the in-use-locations in the counterexample
+					// Ignore the insufficient thread locations in the counterexample
 					final var inUseLocs = new HashSet<>(
 							mCsToolkitWithoutRankVars.getConcurrencyInformation().getInUseErrorNodeMap().values());
 					final NestedWord<L> stem = getWordWithoutLocs(mCounterexample.getStem(), inUseLocs);
 					final NestedWord<L> loop = getWordWithoutLocs(mCounterexample.getLoop(), inUseLocs);
 					if (cd == ContinueDirective.REPORT_NONTERMINATION && getOverapproximations().isEmpty()) {
 						reportRemainderModule(true);
+						// The loop is empty, i.e. it contains only self-loops in the insufficient thread locations.
+						if (loop.length() == 0) {
+							return BuchiCegarLoopResult.constructInsufficientThreadsResult();
+						}
 						return BuchiCegarLoopResult.constructNonTerminatingResult(stem, loop,
 								lassoCheck.getNonTerminationArgument(), mMDBenchmark, mTermcompProofBenchmark);
 					}

@@ -47,15 +47,16 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 	/**
 	 * Result of CEGAR loop iteration
 	 * <ul>
-	 * <li>SAFE: there is no feasible trace to an error location
-	 * <li>UNSAFE: there is a feasible trace to an error location (the underlying program has at least one execution
-	 * which violates its specification)
-	 * <li>UNKNOWN: we found a trace for which we could not decide feasibility or we found an infeasible trace but were
+	 * <li>SAFE: There is no feasible trace to an error location.
+	 * <li>UNSAFE: There is a feasible trace to an error location (the underlying program has at least one execution
+	 * which violates its specification).
+	 * <li>UNKNOWN: We found a trace for which we could not decide feasibility or we found an infeasible trace but were
 	 * not able to exclude it in abstraction refinement.
-	 * <li>TIMEOUT:
+	 * <li>TIMEOUT: A timeout occurred.
+	 * <li>INSUFFICIENT_THREADS: There are not enough threads to prove termination.
 	 */
 	public enum Result {
-		TERMINATING, TIMEOUT, UNKNOWN, NONTERMINATING
+		TERMINATING, TIMEOUT, UNKNOWN, NONTERMINATING, INSUFFICIENT_THREADS
 	}
 
 	private final Result mResult;
@@ -112,6 +113,10 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 			final TermcompProofBenchmark termcompProofBenchmark) {
 		return new BuchiCegarLoopResult<>(Result.TIMEOUT, null, null, null, toolchainCancelledException, null,
 				mDBenchmark, termcompProofBenchmark);
+	}
+
+	public static <L extends IIcfgTransition<?>> BuchiCegarLoopResult<L> constructInsufficientThreadsResult() {
+		return new BuchiCegarLoopResult<>(Result.INSUFFICIENT_THREADS, null, null, null, null, null, null, null);
 	}
 
 	public Result getResult() {

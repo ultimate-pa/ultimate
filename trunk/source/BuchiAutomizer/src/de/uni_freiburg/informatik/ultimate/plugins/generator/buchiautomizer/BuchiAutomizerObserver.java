@@ -140,7 +140,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IIcfg<IcfgLocation> petrified = icfgPetrifier.getPetrifiedIcfg();
 			final BuchiCegarLoopResult<L> result =
 					factory.constructCegarLoop(petrified, witnessAutomaton).runCegarLoop();
-			if (result.getResult() != Result.NONTERMINATING || result.getLoop().length() > 0) {
+			if (result.getResult() != Result.INSUFFICIENT_THREADS) {
 				return result;
 			}
 			mLogger.warn(numberOfThreadInstances
