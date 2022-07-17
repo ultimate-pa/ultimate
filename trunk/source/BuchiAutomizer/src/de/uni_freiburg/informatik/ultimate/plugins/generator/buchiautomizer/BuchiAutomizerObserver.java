@@ -180,9 +180,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	/**
-	 * Report a nontermination argument back to Ultimate's toolchain
-	 *
-	 * @param counterexample
+	 * Get a nontermination argument back to report.
 	 */
 	private NonTerminationArgumentResult<IcfgEdge, Term> getNonTerminationResult(final NonTerminationArgument nta,
 			final IcfgProgramExecution<IcfgEdge> stemExecution, final IcfgProgramExecution<IcfgEdge> loopExecution,
