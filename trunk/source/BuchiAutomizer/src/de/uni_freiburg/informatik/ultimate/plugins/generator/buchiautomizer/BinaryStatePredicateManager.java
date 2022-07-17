@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAr
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -504,7 +503,7 @@ public class BinaryStatePredicateManager {
 	}
 
 	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IIcfgTransition<?>> stem,
-			final NestedWord<? extends IAction> loop, final ModifiableGlobalsTable modifiableGlobalsTable) {
+			final NestedWord<? extends IIcfgTransition<?>> loop, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		boolean result = true;
 		final IPredicate truePredicate = mPredicateFactory.newPredicate(mManagedScript.getScript().term("true"));
 		if (isTrue(siPredicate)) {
@@ -514,7 +513,7 @@ public class BinaryStatePredicateManager {
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
-		final LBool loopCheck = createTraceCheck(siPredicate, siPredicate, stem).isCorrect();
+		final LBool loopCheck = createTraceCheck(siPredicate, siPredicate, loop).isCorrect();
 		if (loopCheck != LBool.UNSAT) {
 			result = false;
 		}
