@@ -132,10 +132,6 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 		return mLoop;
 	}
 
-	public L getHondaAction() {
-		return getLoop().getSymbol(0);
-	}
-
 	public Map<String, ILocation> getOverapproximations() {
 		if (mResult != Result.NONTERMINATING) {
 			throw new UnsupportedOperationException("Result " + mResult + " does not provide overapproximations.");

@@ -253,7 +253,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 		final IcfgProgramExecution<IcfgEdge> loopPE =
 				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
-		final IcfgEdge hondaAction = result.getHondaAction();
+		final IcfgEdge hondaAction = result.getLoop().getSymbol(0);
 
 		if (ltlAnnot == null) {
 			final String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
