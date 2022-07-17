@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -530,14 +529,7 @@ public class BinaryStatePredicateManager {
 	}
 
 	private static boolean isTrue(final IPredicate pred) {
-		final Term term = pred.getFormula();
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("true")) {
-				return true;
-			}
-		}
-		return false;
+		return SmtUtils.isTrueLiteral(pred.getFormula());
 	}
 
 	public boolean containsOldRankVariable(final IPredicate pred) {
