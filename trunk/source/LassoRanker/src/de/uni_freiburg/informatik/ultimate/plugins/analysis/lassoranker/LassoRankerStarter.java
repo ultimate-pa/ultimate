@@ -386,13 +386,13 @@ public class LassoRankerStarter {
 		boolean siCorrect = true;
 		for (final SupportingInvariant si : bspm.getTerminationArgument().getSupportingInvariants()) {
 			final IPredicate siPred = bspm.supportingInvariant2Predicate(si);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobalsTable());
+			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop);
 		}
 
 		// check array index supporting invariants
 		for (final Term aisi : bspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
 			final IPredicate siPred = bspm.term2Predicate(aisi);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobalsTable());
+			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop);
 		}
 
 		// check ranking function

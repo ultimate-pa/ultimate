@@ -374,12 +374,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		} else {
 			for (final SupportingInvariant si : mBspm.getTerminationArgument().getSupportingInvariants()) {
 				final IPredicate siPred = mBspm.supportingInvariant2Predicate(si);
-				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop, mCsToolkit.getModifiableGlobalsTable());
+				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop);
 			}
 			// check array index supporting invariants
 			for (final Term aisi : mBspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
 				final IPredicate siPred = mBspm.term2Predicate(aisi);
-				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop, mCsToolkit.getModifiableGlobalsTable());
+				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop);
 			}
 		}
 		return siCorrect;
