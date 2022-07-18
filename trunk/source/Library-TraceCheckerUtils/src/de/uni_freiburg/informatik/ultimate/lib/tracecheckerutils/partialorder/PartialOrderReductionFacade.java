@@ -120,7 +120,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mDeadEndStore = createDeadEndStore();
 	}
 
-	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final int maxStep, final IIcfg<?> icfg) {
+	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype,
+			final int maxStep, final IIcfg<?> icfg) {
 
 		final List<String> threadList =
 				IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
@@ -142,7 +143,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			});
 		case LOOP:
 			var loopHeads = icfg.getLoopLocations();
-			return new ParameterizedPreferenceOrder<>(1, threadList, alphabet, x -> loopHeads.contains(x));
+			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> loopHeads.contains(x.getTarget()));
 		default:
 			throw new UnsupportedOperationException("Unknown step type: " + steptype);
 		}

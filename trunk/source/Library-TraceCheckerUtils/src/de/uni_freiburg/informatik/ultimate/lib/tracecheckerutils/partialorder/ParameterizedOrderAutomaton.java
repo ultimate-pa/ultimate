@@ -45,16 +45,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 
 public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
 implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State>{
+	private static Integer sMaxStep;
 	private final Map<String, Map<Integer, State>> mCreatedStates = new HashMap<>();
 	private final List<String> mThreads;
-	private static Integer mMaxStep;
 	private String mInitialThread;
 	private java.util.function.Predicate<L> mIsStep;
 	private VpAlphabet<L> mAlphabet;
 
 	
 	public ParameterizedOrderAutomaton(final Integer parameter, final List<String> threads, VpAlphabet<L> alphabet,  java.util.function.Predicate<L> isStep) {
-		mMaxStep = parameter;
+		sMaxStep = parameter;
 		mThreads=threads;
 		mIsStep = isStep;
 		mAlphabet = alphabet;
@@ -125,7 +125,7 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 			if(letter.getPrecedingProcedure() != state.getThread()) {
 				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(letter.getPrecedingProcedure(),0)));
 			}
-			else if (state.getCounter()==mMaxStep-1) {
+			else if (state.getCounter()==sMaxStep-1) {
 				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread(state.getThread()),0)));
 			}
 			else {

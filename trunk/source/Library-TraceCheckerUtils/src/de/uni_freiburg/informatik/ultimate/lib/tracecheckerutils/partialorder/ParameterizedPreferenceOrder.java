@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -39,14 +38,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
 public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State>{
-	private static Integer mMaxStep;
+	private static Integer sMaxStep;
 	private INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
-	public ParameterizedPreferenceOrder(int parameter, List<String> threads, VpAlphabet<L> alphabet, java.util.function.Predicate<L> isStep) {
-		mMaxStep = parameter;
-		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxStep, threads,alphabet , isStep);
+	public ParameterizedPreferenceOrder(int parameter, List<String> threads, VpAlphabet<L> alphabet,
+			java.util.function.Predicate<L> isStep) {
+		sMaxStep = parameter;
+		mMonitor = new ParameterizedOrderAutomaton<L>(sMaxStep, threads,alphabet , isStep);
 	}
 
 	@Override
