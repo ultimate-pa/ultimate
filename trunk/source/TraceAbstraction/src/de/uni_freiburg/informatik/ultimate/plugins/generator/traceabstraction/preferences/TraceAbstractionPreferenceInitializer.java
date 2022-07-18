@@ -134,8 +134,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
 	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
-	
-	public static final String LABEL_POR_ORDER_STEP_TYPE = "Defines what statements are conidered a step in POR";
+
+	public static final String LABEL_POR_ORDER_STEP_TYPE = "Defines what statements are considered a step in POR";
 	private static final StepType DEF_POR_ORDER_STEP_TYPE = StepType.ALL_READ_WRITE;
 	
 	public static final String LABEL_POR_ORDER_MAXSTEP = "Maximal amount of steps a thread is allowed to take successively";
