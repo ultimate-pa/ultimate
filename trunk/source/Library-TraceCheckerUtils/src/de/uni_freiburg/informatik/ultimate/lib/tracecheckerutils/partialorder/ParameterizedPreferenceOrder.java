@@ -38,38 +38,42 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
 public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State>{
-	private static Integer sMaxStep;
+	private Integer mMaxStep;
+	private List<String> mThreads;
 	private INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
 	public ParameterizedPreferenceOrder(int parameter, List<String> threads, VpAlphabet<L> alphabet,
 			java.util.function.Predicate<L> isStep) {
-		sMaxStep = parameter;
-		mMonitor = new ParameterizedOrderAutomaton<L>(sMaxStep, threads,alphabet , isStep);
+		mMaxStep = parameter;
+		mThreads = threads;
+		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxStep, threads,alphabet , isStep);
 	}
 
 	@Override
 	public Comparator<L> getOrder(S1 stateProgram, State stateMonitor) {
 		final String lastThread = ((State) stateMonitor).getThread();
-		return new ParameterizedComparator<>(lastThread, mDefaultComparator);
+		return new ParameterizedComparator<>(lastThread, mDefaultComparator, mThreads);
 	}
 	
 	public static final class ParameterizedComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final Comparator<L> mFallback;
+		private List<String> mThreads;
 
-		public ParameterizedComparator(final String lastThread, final Comparator<L> fallback) {
+		public ParameterizedComparator(final String lastThread, final Comparator<L> fallback, final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mFallback = fallback;
+			mThreads = threads;
 		}
 
 		@Override
 		public int compare(final L x, final L y) {
 			final String xThread = x.getPrecedingProcedure();
-			final boolean xBefore = mLastThread.compareTo(xThread) >= 0;
+			final boolean xBefore = mThreads.indexOf(mLastThread) >= mThreads.indexOf(xThread);
 			final String yThread = y.getPrecedingProcedure();
-			final boolean yBefore = mLastThread.compareTo(yThread) >= 0;
+			final boolean yBefore = mThreads.indexOf(mLastThread) >= mThreads.indexOf(yThread);
 			
 			if (xBefore && !yBefore) {
 				return 1;
