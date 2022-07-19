@@ -571,8 +571,12 @@ public class JordanLoopAcceleration {
 		final Term zeroIterationCase;
 		{
 			final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
-			final Term notGuard = Util.not(script, guardTf.getFormula());
-			zeroIterationCase = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
+			if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
+				final Term notGuard = Util.not(script, guardTf.getFormula());
+				zeroIterationCase = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
+			} else {
+				zeroIterationCase = Util.and(script, itFinIs0, xPrimeEqualsX);
+			}
 		}
 		final Term disjunction = Util.or(script, zeroIterationCase, conjunction);
 
