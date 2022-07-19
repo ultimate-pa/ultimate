@@ -327,10 +327,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 */
 	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> filteredCrossProduct(final IcfgLocation entryNode,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
-			final Predicate<Map<LOC, ACTION>> combinationIsFeasable) {
+			final Predicate<Map<LOC, Set<ACTION>>> combinationIsFeasable) {
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> procedureInterferences = new HashSet<>();
 		final String procedure = entryNode.getProcedure();
-		final Set<Map<LOC, ACTION>> crossProduct = mFecUtils.getCrossProduct(combinationIsFeasable, procedure);
+		// change to Set<ACTION>
+		final Set<Map<LOC, Set<ACTION>>> crossProduct = mFecUtils.getCrossProduct(combinationIsFeasable, procedure);
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> readsInLoopsAndForks = new HashMap<>();
 		readsInLoopsAndForks.putAll(handlingLoops(procedure, interferences));
 		readsInLoopsAndForks.putAll(handlingForks(procedure, mTransitionProvider.getSuccessorActions((LOC) entryNode)));
@@ -340,27 +341,30 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> combination = new HashMap<>();
 			combination.putAll(readsInLoopsAndForks);
 			for (final var entry : map.entrySet()) {
-				final ACTION write = entry.getValue();
-				if (write == null) {
-					// read should read procedure intern
-					continue;
-				}
-
-				// TODO: compute state union over all interferences.get(write) in writes
-
-				for (final ACTION read : mTransitionProvider.getSuccessorActions(entry.getKey())) {
-					if (!reads.contains(read)) {
+				for (final var write : entry.getValue()) {
+					if (write == null) {
+						// read should read procedure intern, should be unnecessary
 						continue;
 					}
-					DisjunctiveAbstractState<STATE> state = interferences.get(write);
-					if (state == null) {
-						state = new DisjunctiveAbstractState<>(mDomain.createTopState());
-						for (final IProgramVarOrConst variable : mFecUtils.getReadVars(read)) {
-							state = state.addVariable(variable);
+
+					for (final ACTION read : mTransitionProvider.getSuccessorActions(entry.getKey())) {
+						if (!reads.contains(read)) {
+							continue;
+						}
+						DisjunctiveAbstractState<STATE> state = interferences.get(write);
+						if (state == null) {
+							state = new DisjunctiveAbstractState<>(mDomain.createTopState());
+							for (final IProgramVarOrConst variable : mFecUtils.getReadVars(read)) {
+								state = state.addVariable(variable);
+							}
+						}
+						final DisjunctiveAbstractState<STATE> currentState = combination.get(read);
+						if (currentState != null) {
+							combination.put(read, currentState.patch(state));
+						} else {
+							combination.put(read, state);
 						}
 					}
-
-					combination.put(read, state);
 				}
 			}
 			if (!combination.isEmpty()) {
@@ -467,6 +471,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
 				postState = interferences.get(write).widen(wideningOp, postState);
 			}
+			// TODO: relational Domain -> will remove relations between variables
 			postState = removeNonSharedVariables(postState, mFecUtils.getWrittenVars(write));
 			result = combineInterferences(result, write, postState);
 		}

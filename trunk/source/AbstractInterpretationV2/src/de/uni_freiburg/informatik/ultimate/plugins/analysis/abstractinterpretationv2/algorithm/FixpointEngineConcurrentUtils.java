@@ -32,6 +32,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final Map<LOC, ACTION> mLoc2Assume;
 	private final Map<ACTION, ACTION> mAssumes;
 
-	private final Map<String, Set<Map<LOC, ACTION>>> mCrossProducts;
+	private final Map<String, Set<Map<LOC, Set<ACTION>>>> mCrossProducts;
 
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider) {
 		mIcfg = icfg;
@@ -116,7 +117,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mForkedAt.getImage(procedure);
 	}
 
-	public Set<Map<LOC, ACTION>> getCrossProduct(final Predicate<Map<LOC, ACTION>> combinationIsFeasible,
+	public Set<Map<LOC, Set<ACTION>>> getCrossProduct(final Predicate<Map<LOC, Set<ACTION>>> combinationIsFeasible,
 			final String procedure) {
 		final var crossProduct = mCrossProducts.get(procedure);
 		if (crossProduct == null) {
@@ -460,14 +461,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return edgeIterator.asStream().anyMatch(edge -> edge.equals(action));
 	}
 
-	private Set<Map<LOC, ACTION>> computeCrossProduct(final Predicate<Map<LOC, ACTION>> combinationIsFeasible,
+	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final Predicate<Map<LOC, Set<ACTION>>> combinationIsFeasible,
 			final String procedure) {
-		final Set<Map<LOC, ACTION>> result = new HashSet<>();
+		final Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
 		// reads can read from several global variables -> should LOC - Set<ACTION>
-		final Map<LOC, List<ACTION>> writes = new LinkedHashMap<>();
+		final Map<LOC, List<Set<ACTION>>> writes = new LinkedHashMap<>();
 		int n = 1;
-		final ACTION dummy = null;
+		final Set<ACTION> dummy = null;
 		final Set<ACTION> reads = getReads(procedure);
 		final Set<ACTION> selfReachable = getSelfReachableReads(procedure);
 		if (reads != null) {
@@ -476,29 +477,33 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					// reads in loops are handled separately
 					continue;
 				}
-				final List<ACTION> tempList = mWritesPerRead.get(read).stream().collect(Collectors.toList());
-				if (tempList.isEmpty()) {
+
+				final LOC source = mTransitionProvider.getSource(read);
+				if (writes.containsKey(source)) {
+					// TODO: if read reads from more than one Variable, add CrossProduct over tempList
+					// such that each entry contains a write to x1, x2, x3, ..., xn
+					continue;
+				}
+
+				final List<Set<ACTION>> tempList = computeCrossProductOfWrites(mWritesPerRead.get(read));
+				// final List<ACTION> tempList = mWritesPerRead.get(read).stream().collect(Collectors.toList());
+				if (tempList == null) {
 					// read must always read from it own procedure
 					continue;
 				}
 				tempList.add(dummy);
+
 				n *= tempList.size();
-				final LOC source = mTransitionProvider.getSource(read);
-				if (!writes.containsKey(source)) {
-					// TODO: if read reads from more than one Variable, add CrossProduct over tempList
-					// such that each entry contains a write to x1, x2, x3, ..., xn
-					writes.put(source, tempList);
-				}
+				writes.put(source, tempList);
 			}
 
 			for (int i = 0; i < n; i++) {
 				int blocksize = 1;
-				final Map<LOC, ACTION> map = new HashMap<>();
+				final Map<LOC, Set<ACTION>> map = new HashMap<>();
 				for (final var readEntry : writes.entrySet()) {
 					final int index = (i / blocksize) % readEntry.getValue().size();
-					final ACTION write = readEntry.getValue().get(index);
+					final Set<ACTION> write = readEntry.getValue().get(index);
 					if (write != null) {
-						// maybe too early, because Information is needed in combinationIsFeasible
 						map.put(readEntry.getKey(), write);
 					}
 					blocksize *= readEntry.getValue().size();
@@ -510,6 +515,41 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		mCrossProducts.put(procedure, result);
+		return result;
+	}
+
+	private List<Set<ACTION>> computeCrossProductOfWrites(final Set<ACTION> writes) {
+		if (writes.isEmpty()) {
+			return null;
+		}
+		// split it up after read variables:
+		final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable = new HashRelation<>();
+		for (final var action : writes) {
+			getWrittenVars(action).forEach(variable -> writesPerVariable.addPair(variable, action));
+		}
+		final Iterator<IProgramVarOrConst> iterator = writesPerVariable.getDomain().iterator();
+
+		// initialize result
+		final List<Set<ACTION>> result = new ArrayList<>();
+		while (iterator.hasNext()) {
+			// add null element to writesPervariable
+			final var variable = iterator.next();
+			final List<Set<ACTION>> newResult = new ArrayList<>();
+			for (final ACTION action : writesPerVariable.getImage(variable)) {
+				final Set<ACTION> actionSet = new HashSet<>();
+				actionSet.add(action);
+				newResult.add(actionSet);
+				for (final var setOfActions : result) {
+					// nicht direkt SetofActions hinzufügen
+					final Set<ACTION> tempSet = setOfActions.stream().collect(Collectors.toSet());
+					tempSet.add(action);
+					newResult.add(tempSet);
+				}
+			}
+			result.addAll(newResult);
+			// add all writes as seperate Set to result
+		}
+
 		return result;
 	}
 }
