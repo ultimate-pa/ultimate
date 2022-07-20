@@ -85,7 +85,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -839,15 +838,13 @@ public final class TransFormulaUtils {
 		}
 		// yes! outVars of result are indeed the inVars of input
 
-		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
+		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(termAndAuxVars.getFirst());
+		tfb.setFormula(withoutAuxVars);
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
 
@@ -898,14 +895,13 @@ public final class TransFormulaUtils {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
 		final Term term = Substitution.apply(mgdScript, substitutionMapping, tf.getFormula());
-		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, mgdScript, term, auxVars);
+		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, term, auxVars);
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(termAndAuxVars.getFirst());
+		tfb.setFormula(withoutAuxVars);
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
 
@@ -914,12 +910,9 @@ public final class TransFormulaUtils {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, maScript, tf.getFormula(), tf.getAuxVars());
-		if (!termAndAuxVars.getSecond().isEmpty()) {
-			throw new UnsupportedOperationException("cannot negate if there are auxVars");
-		}
-		final Term formula = SmtUtils.not(maScript.getScript(), termAndAuxVars.getFirst());
+		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, maScript, tf.getFormula(),
+				tf.getAuxVars());
+		final Term formula = SmtUtils.not(maScript.getScript(), withoutAuxVars);
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
@@ -930,19 +923,19 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * Given the return of a {@link Transformula} try to eliminate auxvars.
+	 * Given term and auxvars of a {@link Transformula}. Quantify all auxvars
+	 * existentially and try to eliminate quantifiers.
 	 *
-	 * @return new term and set of remaining auxvars.
+	 * TODO 20220720 Matthias: Fix POLY_PAC as simplification? Maybe this and the
+	 * elimination procedure should become a parameter of this method.
 	 */
-	private static Pair<Term, Set<TermVariable>> tryToEliminateAuxVars(final IUltimateServiceProvider services,
-			final ManagedScript maScript, final Term formula, final Set<TermVariable> oldAuxVars) {
+	private static Term quantifyAndTryToEliminateAuxVars(final IUltimateServiceProvider services,
+			final ManagedScript maScript, final Term term, final Set<TermVariable> auxVars) {
 		final Term quantifiedTerm =
-				SmtUtils.quantifier(maScript.getScript(), QuantifiedFormula.EXISTS, oldAuxVars, formula);
+				SmtUtils.quantifier(maScript.getScript(), QuantifiedFormula.EXISTS, auxVars, term);
 		final Term resultTerm = PartialQuantifierElimination.eliminate(services, maScript, quantifiedTerm,
 				SimplificationTechnique.POLY_PAC);
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(resultTerm.getFreeVars()));
-		freeVars.retainAll(oldAuxVars);
-		return new Pair<>(resultTerm, freeVars);
+		return resultTerm;
 	}
 
 	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
