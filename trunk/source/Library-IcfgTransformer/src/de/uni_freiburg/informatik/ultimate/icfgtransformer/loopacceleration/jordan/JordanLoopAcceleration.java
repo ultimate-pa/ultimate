@@ -91,6 +91,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class JordanLoopAcceleration {
 
 	private static final boolean CONCATENATE_WITH_NEGATION_OF_GUARD = false;
+	/**
+	 * If set to true, we construct the reflexive, transitive closure, if set to
+	 * false, we construct only the transitive closure.
+	 */
+	private static final boolean REFLEXIVE_TRANSITIVE_CLOSURE = false;
 
 	private JordanLoopAcceleration() {
 		// do not instantiate
@@ -565,32 +570,35 @@ public class JordanLoopAcceleration {
 //		conjuncts.add(eq);
 		final Term conjunction = SmtUtils.and(script, conjuncts);
 
-
-
-		// (and (= itFin 0) (not (guard)) (x'=x))
-		final Term zeroIterationCase;
-		{
-			final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
-			if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
-				final Term notGuard = Util.not(script, guardTf.getFormula());
-				zeroIterationCase = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
-			} else {
-				zeroIterationCase = Util.and(script, itFinIs0, xPrimeEqualsX);
+		final Term accelerationTerm;
+		if (REFLEXIVE_TRANSITIVE_CLOSURE) {
+			// (and (= itFin 0) (not (guard)) (x'=x))
+			final Term zeroIterationCase;
+			{
+				final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
+				if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
+					final Term notGuard = Util.not(script, guardTf.getFormula());
+					zeroIterationCase = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
+				} else {
+					zeroIterationCase = Util.and(script, itFinIs0, xPrimeEqualsX);
+				}
 			}
+			accelerationTerm = Util.or(script, zeroIterationCase, conjunction);
+		} else {
+			accelerationTerm = conjunction;
 		}
-		final Term disjunction = Util.or(script, zeroIterationCase, conjunction);
 
 		final Set<TermVariable> itFinSet = new HashSet<>();
 		itFinSet.add(itFin);
-		final Term loopAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, disjunction);
+		final Term quantifiedAccelerationTerm = SmtUtils.quantifier(script, 0, itFinSet, accelerationTerm);
 
 		assert checkPropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula, inVars,
-				loopAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormIt, guardOfClosedFormIt, it, true);
+				quantifiedAccelerationTerm, guardTf, xPrimeEqualsX, guardOfClosedFormIt, guardOfClosedFormIt, it, true);
 
 		if (quantifyItFinExplicitly) {
-			return loopAccelerationTerm;
+			return quantifiedAccelerationTerm;
 		} else {
-			return disjunction;
+			return accelerationTerm;
 		}
 	}
 
@@ -927,17 +935,19 @@ public class JordanLoopAcceleration {
 			logger.warn("Reflexive-transitive closure is equivalent to false");
 		}
 
-		// Check reflexivity.
-		// Check: (x = x') and not (guard(x)) and not (loopAccelerationFormula(x,x')) is unsat.
-		final Term notGuard = Util.not(script, guardTf.getFormula());
 		final Term notLoopAccFormula = Util.not(script, simplified);
-		// final Term notLoopAccFormula = Util.not(script, loopAccelerationFormula.getFormula());
-		if (Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.UNKNOWN) {
-			logger.warn("Unable to prove reflexivity of computed reflexive-transitive closure.");
-		}
-		if (Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.SAT) {
-			throw new AssertionError("Computed reflexive-transitive closure is not reflexive. Something went wrong"
-					+ "in computation of loop acceleration formula.");
+		final Term notGuard = Util.not(script, guardTf.getFormula());
+		if (REFLEXIVE_TRANSITIVE_CLOSURE) {
+			// Check reflexivity.
+			// Check: (x = x') and not (guard(x)) and not (loopAccelerationFormula(x,x')) is unsat.
+			// final Term notLoopAccFormula = Util.not(script, loopAccelerationFormula.getFormula());
+			if (Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.UNKNOWN) {
+				logger.warn("Unable to prove reflexivity of computed reflexive-transitive closure.");
+			}
+			if (Util.checkSat(script, Util.and(script, xPrimeEqualsX, notGuard, notLoopAccFormula)) == LBool.SAT) {
+				throw new AssertionError("Computed reflexive-transitive closure is not reflexive. Something went wrong"
+						+ "in computation of loop acceleration formula.");
+			}
 		}
 
 		// Check whether relation itself is subset of reflexive transitive closure.
