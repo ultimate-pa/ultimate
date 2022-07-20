@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -94,9 +93,6 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	private final Map<Set<IPredicate>, IPredicate> mRankEqInputPreds2ResultPreds = new HashMap<>();
 	private final HashRelation<IPredicate, IPredicate> mRankEqResPred2InputPreds = new HashRelation<>();
 
-	private final Map<Set<IPredicate>, IPredicate> mWithoutAuxInputPreds2ResultPreds = new HashMap<>();
-	private final HashRelation<IPredicate, IPredicate> mWithoutAuxPred2InputPreds = new HashRelation<>();
-
 	private final PredicateUnifier mStemPU;
 	private final PredicateUnifier mLoopPU;
 	private final PredicateUnifier mAcceptingPU;
@@ -117,18 +113,12 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 		mStemPU = stemPU;
 		mLoopPU = loopPU;
 		mAcceptingPU = loopPU;
-		// mStemPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable,
-		// mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		// mLoopPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable,
-		// mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		// mAcceptingPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable,
-		// mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		IPredicate initialPredicate;
+
+		// TODO: We do not need the return values here! Is there a better way to keep the side-effects?
 		if (emtpyStem) {
-			final Set<IPredicate> empty = Collections.emptySet();
-			initialPredicate = getOrConstructAcceptingPredicate(empty, true);
+			getOrConstructAcceptingPredicate(Set.of(), true);
 		} else {
-			initialPredicate = getOrConstructStemPredicate(Collections.singleton(mBspm.getStemPrecondition()), true);
+			getOrConstructStemPredicate(Set.of(mBspm.getStemPrecondition()), true);
 		}
 
 		initializeConstruction(emtpyStem, bspm, stemInterpolants, loopInterpolants);
@@ -306,8 +296,6 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 
 	private IPredicate getOrConstructAcceptingPredicate(final Set<IPredicate> inputSuccsWithoutAuxVar,
 			final boolean isInitial) {
-		final IPredicate withoutAux = getOrConstructPredicate(inputSuccsWithoutAuxVar, mStemPU,
-				mWithoutAuxInputPreds2ResultPreds, mWithoutAuxPred2InputPreds);
 		final Set<IPredicate> inputSuccsRankDecreaseAndBound = new HashSet<>(inputSuccsWithoutAuxVar);
 		inputSuccsRankDecreaseAndBound.add(mBspm.getRankDecreaseAndBound());
 		final IPredicate rankDecreaseAndBound = getOrConstructPredicate(inputSuccsRankDecreaseAndBound, mAcceptingPU,
