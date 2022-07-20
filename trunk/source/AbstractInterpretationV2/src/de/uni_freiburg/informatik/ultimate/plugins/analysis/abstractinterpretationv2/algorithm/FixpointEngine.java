@@ -105,18 +105,19 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
-		return runWithInterferences(initialNodes, script, Map.of());
+		return runWithInterferences(initialNodes, script, Map.of(), Set.of());
 	}
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
-			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
+			final Set<ACTION> readsProcedureintern) {
 		initializeFixpointEngine();
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation(mResult.getBenchmark());
-		calculateFixpoint(initialNodes, interferences);
+		calculateFixpoint(initialNodes, interferences, readsProcedureintern);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
@@ -125,7 +126,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	}
 
 	private void calculateFixpoint(final Collection<? extends LOC> start,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final Set<ACTION> readsProcedureIntern) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -146,7 +147,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp, interferences);
+			final DisjunctiveAbstractState<STATE> postState =
+					calculateAbstractPost(currentItem, postOp, interferences, readsProcedureIntern);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
 				continue;
@@ -237,15 +239,16 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	private DisjunctiveAbstractState<STATE> calculateAbstractPost(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final Set<ACTION> readsProcedureIntern) {
 
-		final DisjunctiveAbstractState<STATE> preState;
-
-		// Commented for Testing
+		DisjunctiveAbstractState<STATE> preState;
 
 		if (interferences.containsKey(currentItem.getAction())
 				&& !interferences.get(currentItem.getAction()).getStates().isEmpty()) {
 			preState = currentItem.getState().patch(interferences.get(currentItem.getAction()));
+			if (readsProcedureIntern.contains(currentItem.getAction())) {
+				preState = currentItem.getState().union(preState);
+			}
 		} else {
 			preState = currentItem.getState();
 		}

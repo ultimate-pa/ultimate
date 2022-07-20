@@ -10,7 +10,7 @@ var x,y: int;
 procedure thread1() returns()
 modifies x,y;
 {
-  // x 0,1; y -2
+  // x: 0; y: 2
   y := x;
   x := x-y;
 }
@@ -25,6 +25,10 @@ modifies x,y;
   y := x - i;
   // y = -2
   fork 1 thread1();
+  while (i < 0) {
+     i := i + 1;
+     y := x + y;
+  }
   x := x + 1; 
   // fork 2 thread1();
   x := y + i;

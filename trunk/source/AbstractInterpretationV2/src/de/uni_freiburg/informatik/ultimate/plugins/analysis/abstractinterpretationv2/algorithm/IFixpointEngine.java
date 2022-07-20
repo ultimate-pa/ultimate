@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
@@ -48,5 +49,5 @@ public interface IFixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VA
 	AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start, final Script script);
 
 	AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start, final Script script,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences);
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final Set<ACTION> readsProcedureIntern);
 }
