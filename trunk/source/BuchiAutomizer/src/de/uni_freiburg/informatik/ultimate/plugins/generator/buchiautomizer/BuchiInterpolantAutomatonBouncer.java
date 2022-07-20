@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -168,7 +169,7 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 			if (!mInputLoopPredicates.contains(loopPredicate)) {
 				mInputLoopPredicates.add(loopPredicate);
 			}
-			if (bspm.containsOldRankVariable(loopPredicate)) {
+			if (Arrays.stream(bspm.getOldRankVariables()).anyMatch(loopPredicate.getVars()::contains)) {
 				mInputWithAuxPredicates.add(loopPredicate);
 			} else {
 				mInputAuxFreePredicates.add(loopPredicate);

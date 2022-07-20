@@ -531,14 +531,4 @@ public class BinaryStatePredicateManager {
 	private static boolean isTrue(final IPredicate pred) {
 		return SmtUtils.isTrueLiteral(pred.getFormula());
 	}
-
-	public boolean containsOldRankVariable(final IPredicate pred) {
-		for (final IProgramVar rankVariable : getOldRankVariables()) {
-			if (pred.getVars().contains(rankVariable)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 }
