@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 
 /**
@@ -66,18 +65,15 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final PredicateFactory mPredicateFactory;
-	private final PredicateFactoryForInterpolantAutomata mStateFactoryInterpolAutom;
 
 	public BuchiInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final PredicateFactory predicateFactory,
-			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom) {
+			final PredicateFactory predicateFactory) {
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mPredicateFactory = predicateFactory;
-		mStateFactoryInterpolAutom = stateFactoryInterpolAutom;
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final IPredicate precondition,
@@ -203,8 +199,7 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 					emptyStem ? null : stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1),
 					biaConstructionStyle.isScroogeNondeterminismStem(),
 					biaConstructionStyle.isScroogeNondeterminismLoop(), biaConstructionStyle.isBouncerStem(),
-					biaConstructionStyle.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
-					mServices, interpolAutomaton);
+					biaConstructionStyle.isBouncerLoop(), pu, pu, pu.getFalsePredicate(), mServices, interpolAutomaton);
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
 		}

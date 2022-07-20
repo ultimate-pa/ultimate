@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -109,8 +108,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 			final Set<IPredicate> stemInterpolants, final Set<IPredicate> loopInterpolants,
 			final LETTER hondaEntererStem, final LETTER hondaEntererLoop, final boolean scroogeNondeterminismStem,
 			final boolean scroogeNondeterminismLoop, final boolean hondaBouncerStem, final boolean hondaBouncerLoop,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryFia, final PredicateUnifier stemPU,
-			final PredicateUnifier loopPU, final IPredicate falsePredicate, final IUltimateServiceProvider services,
+			final PredicateUnifier stemPU, final PredicateUnifier loopPU, final IPredicate falsePredicate,
+			final IUltimateServiceProvider services,
 			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton) {
 		super(services, csToolkit, bhtc, false, falsePredicate, inputInterpolantAutomaton);
 		mPredicateFactory = predicateFactory;

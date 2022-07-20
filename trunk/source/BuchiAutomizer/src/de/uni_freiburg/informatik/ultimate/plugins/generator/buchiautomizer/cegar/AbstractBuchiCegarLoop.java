@@ -226,7 +226,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mPredicateFactory, mDefaultStateFactory, transitionClazz);
 		mAbstraction = initialAbstraction;
 		mInterpolantAutomatonBuilder = new BuchiInterpolantAutomatonBuilder<>(mServices, mCsToolkitWithRankVars,
-				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE, predicateFactory, mDefaultStateFactory);
+				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE, predicateFactory);
 		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
