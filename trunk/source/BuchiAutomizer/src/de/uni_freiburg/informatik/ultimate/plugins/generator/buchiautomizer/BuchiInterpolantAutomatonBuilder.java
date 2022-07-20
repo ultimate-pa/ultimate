@@ -144,6 +144,8 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 		return predicates[pos];
 	}
 
+	// TODO: This has a lot of arguments, can this be improved?
+	// TODO: We should try to get rid of bspm!
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructGeneralizedAutomaton(
 			final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle,
