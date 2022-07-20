@@ -514,8 +514,18 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	private A refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
 		final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
-		final IPredicate hondaPredicate = bspm.getHondaPredicate();
-		final IPredicate rankEqAndSi = bspm.getRankEqAndSi();
+		final IPredicate hondaPredicate;
+		final IPredicate rankEqAndSi;
+		final IPredicate siConjunction = bspm.getSiConjunction();
+		final IPredicate unseededOrRankDecrease =
+				mPredicateFactory.or(bspm.getStemPrecondition(), bspm.getRankDecreaseAndBound());
+		if (SmtUtils.isTrueLiteral(siConjunction.getFormula())) {
+			rankEqAndSi = bspm.getRankEquality();
+			hondaPredicate = unseededOrRankDecrease;
+		} else {
+			rankEqAndSi = mPredicateFactory.and(bspm.getRankEquality(), siConjunction);
+			hondaPredicate = mPredicateFactory.and(siConjunction, unseededOrRankDecrease);
+		}
 
 		assert !SmtUtils.isFalseLiteral(bspm.getStemPrecondition().getFormula());
 		assert !SmtUtils.isFalseLiteral(hondaPredicate.getFormula());

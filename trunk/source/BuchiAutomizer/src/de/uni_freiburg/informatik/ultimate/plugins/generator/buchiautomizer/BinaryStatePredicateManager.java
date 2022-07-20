@@ -87,9 +87,7 @@ public class BinaryStatePredicateManager {
 	private IPredicate mStemPrecondition;
 	private IPredicate mStemPostcondition;
 	private IPredicate mSiConjunction;
-	private IPredicate mHonda;
 	private Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
-	private IPredicate mRankEqualityAndSi;
 	private IPredicate mRankEquality;
 	private IPredicate mRankDecreaseAndBound;
 
@@ -167,18 +165,6 @@ public class BinaryStatePredicateManager {
 		return mSiConjunction;
 	}
 
-	@Deprecated
-	public IPredicate getHondaPredicate() {
-		assert mProvidesPredicates;
-		return mHonda;
-	}
-
-	@Deprecated
-	public IPredicate getRankEqAndSi() {
-		assert mProvidesPredicates;
-		return mRankEqualityAndSi;
-	}
-
 	public IProgramNonOldVar getUnseededVariable() {
 		assert mProvidesPredicates;
 		return mUnseededVariable;
@@ -198,8 +184,6 @@ public class BinaryStatePredicateManager {
 		mStemPrecondition = null;
 		mStemPostcondition = null;
 		mSiConjunction = null;
-		mHonda = null;
-		mRankEqualityAndSi = null;
 		mRankEquality = null;
 		mRankDecreaseAndBound = null;
 		mProvidesPredicates = false;
@@ -229,8 +213,6 @@ public class BinaryStatePredicateManager {
 		assert mTerminationArgument == null;
 		assert mStemPrecondition == null;
 		assert mStemPostcondition == null;
-		assert mHonda == null;
-		assert mRankEqualityAndSi == null;
 		assert mRankEquality == null;
 		assert mRankDecreaseAndBound == null;
 		assert mLexDecrease == null;
@@ -252,25 +234,10 @@ public class BinaryStatePredicateManager {
 		mSiConjunction = computeSiConjunction(mTerminationArgument.getSupportingInvariants(),
 				mTerminationArgument.getArrayIndexSupportingInvariants(), removeSuperfluousSupportingInvariants, stemTf,
 				loopTf, modifiableGlobals);
-		final boolean siConjunctionIsTrue = isTrue(mSiConjunction);
-		if (siConjunctionIsTrue) {
+		if (isTrue(mSiConjunction)) {
 			mStemPostcondition = unseededPredicate;
 		} else {
 			mStemPostcondition = mPredicateFactory.and(unseededPredicate, mSiConjunction);
-		}
-		if (siConjunctionIsTrue) {
-			mRankEqualityAndSi = mRankEquality;
-		} else {
-			mRankEqualityAndSi = mPredicateFactory.and(mRankEquality, mSiConjunction);
-		}
-		IPredicate unseededOrRankDecrease;
-
-		unseededOrRankDecrease = mPredicateFactory.or(unseededPredicate, mRankDecreaseAndBound);
-
-		if (siConjunctionIsTrue) {
-			mHonda = unseededOrRankDecrease;
-		} else {
-			mHonda = mPredicateFactory.and(mSiConjunction, unseededOrRankDecrease);
 		}
 		mProvidesPredicates = true;
 	}
@@ -518,12 +485,15 @@ public class BinaryStatePredicateManager {
 	}
 
 	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop) {
-		return createTraceCheck(mRankEqualityAndSi, mRankDecreaseAndBound, loop).isCorrect() == LBool.UNSAT;
+		// TODO: This creates a new predicate, since rankEqualityAndSi is no member anymore
+		// Is this an issue? This method is only called within assertions.
+		final IPredicate rankEqualityAndSi = mPredicateFactory.and(mRankEquality, mSiConjunction);
+		return createTraceCheck(rankEqualityAndSi, mRankDecreaseAndBound, loop).isCorrect() == LBool.UNSAT;
 	}
 
 	private ITraceCheck<?> createTraceCheck(final IPredicate preCond, final IPredicate postCond,
 			final NestedWord<? extends IIcfgTransition<?>> trace) {
-		return new TraceCheck<>(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices, mCsToolkit,
+		return new TraceCheck<>(preCond, postCond, new TreeMap<>(), trace, mServices, mCsToolkit,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
 
 	}
