@@ -544,7 +544,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		/*
 		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles Each construction style defines how
 		 * an interpolant automaton is constructed. Constructions that provide simpler (less nondeterministic) automata
-		 * should come first. In each iteration we compute the difference which causes an on-demand construciton of the
+		 * should come first. In each iteration we compute the difference which causes an on-demand construction of the
 		 * automaton and evaluate the automaton afterwards. If the automaton is "good" we keep the difference and
 		 * continued with the termination analysis. If the automaton is "bad" we construct the next automaton. Currently
 		 * an automaton is "good" iff the counterexample of the current CEGAR iteration is accepted by the automaton
