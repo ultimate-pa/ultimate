@@ -28,7 +28,6 @@ modifies x;
   i := x + 1;
   fork 2 thread2();
   if(x>0) {
-    // Location ist nicht in loc2States? -> Ungenauigkeit
     x := 3;
   } 
   fork 1 thread1();
@@ -38,5 +37,5 @@ modifies x;
     x := x + 1;
     fork 1 thread1();
   }
-  assert x <= 11; // should be correct, not able to prove
+  assert x <= 11; // ERROR
 }

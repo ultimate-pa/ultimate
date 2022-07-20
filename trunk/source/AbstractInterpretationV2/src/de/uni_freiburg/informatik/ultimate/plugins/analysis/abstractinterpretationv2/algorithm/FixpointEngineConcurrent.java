@@ -148,7 +148,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final List<String> analysingOrder = mFecUtils.computeTopologicalOrder(entryNodes.keySet());
 		final Set<LOC> addedErrorLocations = new HashSet<>();
 		// get Set of Reads which should also read thread-intern
-		final Map<String, Set<ACTION>> readsProcedureIntern = getReadsReadingProcedureIntern(entryNodes.keySet());
+		final Map<String, Set<ACTION>> readsProcedureIntern = getReadsReadingProcedureIntern(entryNodes);
 		while (true) {
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> tempInterferences =
 					FixpointEngineConcurrentUtils.copyMap(interferences);
@@ -192,14 +192,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			}
 			interferences = tempInterferences;
 		}
-		final var loc2States = mStateStorage.computeLoc2States();
-		// add Errors (just for convenience -> not final solution for showing results of analysis)
-		for (final Entry<LOC, Set<DisjunctiveAbstractState<STATE>>> entry : loc2States.entrySet()) {
-			if (mTransitionProvider.isErrorLocation(entry.getKey())) {
-				mErrors.put(entry.getKey(), flattenAbstractStates(entry.getValue()));
-			}
-		}
-		areAbStractStatesSound(loc2States);
+
+		areAbStractStatesSound(mStateStorage.computeLoc2States());
 	}
 
 	private boolean areAbStractStatesSound(final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States) {
@@ -287,7 +281,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				final DisjunctiveAbstractState<STATE> interference = interferences.get(write);
 				if (interference != null) {
 					if (newInterferences != null) {
-						newInterferences = newInterferences.union(interference);
+						newInterferences = mergeStates(newInterferences, interference);
 						continue;
 					}
 					newInterferences = interference;
@@ -298,7 +292,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				newInterferences = removeNonSharedVariables(newInterferences, mFecUtils.getReadVars(read));
 				final DisjunctiveAbstractState<STATE> oldInterferences = procedureInterference.get(read);
 				if (oldInterferences != null) {
-					procedureInterference.put(read, oldInterferences.union(oldInterferences.patch(newInterferences)));
+					procedureInterference.put(read, mergeStates(oldInterferences, newInterferences));
 				} else {
 					procedureInterference.put(read, newInterferences);
 				}
@@ -350,7 +344,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						}
 						final DisjunctiveAbstractState<STATE> currentState = combination.get(read);
 						if (currentState != null) {
-							combination.put(read, currentState.patch(state));
+							combination.put(read, mergeStates(currentState, state));
 						} else {
 							combination.put(read, state);
 						}
@@ -376,7 +370,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 					continue;
 				}
 				if (state != null) {
-					state = state.union(state.patch(interference));
+					state = mergeStates(state, interference);
 					continue;
 				}
 				state = interference;
@@ -404,7 +398,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			forkedState = forkedState
 					.removeVariables(DataStructureUtils.difference(forkedState.getVariables(), globalVariables));
 			if (state != null) {
-				state = state.union(state.patch(forkedState));
+				state = mergeStates(state, forkedState);
 				continue;
 			}
 			state = forkedState;
@@ -451,7 +445,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final DisjunctiveAbstractState<STATE> interference = procedureInterferences.get(write);
 			if (interference != null) {
 				if (preState != null) {
-					preState = preState.union(preState.patch(interference));
+					preState = mergeStates(preState, interference);
 				} else {
 					preState = interference;
 					preState = preState.addVariables(DataStructureUtils
@@ -530,13 +524,18 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return stateOne.union(stateTwo);
 	}
 
-	private Map<String, Set<ACTION>> getReadsReadingProcedureIntern(final Set<String> procedures) {
+	private Map<String, Set<ACTION>>
+			getReadsReadingProcedureIntern(final Map<String, ? extends IcfgLocation> entryNodes) {
 		if (mVersion == AbstractInterpretationConcurrent.FLOW_INSENSITIV) {
+			// all reads except if they are entryActions
 			final Map<String, Set<ACTION>> result = new HashMap<>();
-			for (final var procedure : procedures) {
+			for (final var entry : entryNodes.entrySet()) {
+				final String procedure = entry.getKey();
 				final var reads = mFecUtils.getReads(procedure);
 				if (reads != null) {
-					result.put(procedure, reads);
+					final Set<ACTION> entryActions = mTransitionProvider.getSuccessorActions((LOC) entry.getValue())
+							.stream().collect(Collectors.toSet());
+					result.put(procedure, DataStructureUtils.difference(reads, entryActions));
 				} else {
 					result.put(procedure, Set.of());
 				}
@@ -547,7 +546,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV
 				|| mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV_PLUS_CONSTRAINTS) {
 			final Map<String, Set<ACTION>> result = new HashMap<>();
-			for (final var procedure : procedures) {
+			for (final var procedure : entryNodes.keySet()) {
 				final var reads = mFecUtils.getSelfReachableReads(procedure);
 				if (reads != null) {
 					result.put(procedure, reads);
@@ -559,5 +558,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		}
 
 		throw new UnsupportedOperationException("Unvalid Version option selected");
+	}
+
+	private DisjunctiveAbstractState<STATE> mergeStates(final DisjunctiveAbstractState<STATE> oldState,
+			final DisjunctiveAbstractState<STATE> newState) {
+		return oldState.patch(newState).union(oldState);
 	}
 }

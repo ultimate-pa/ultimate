@@ -247,7 +247,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 				&& !interferences.get(currentItem.getAction()).getStates().isEmpty()) {
 			preState = currentItem.getState().patch(interferences.get(currentItem.getAction()));
 			if (readsProcedureIntern.contains(currentItem.getAction())) {
-				preState = currentItem.getState().union(preState);
+				preState = preState.union(currentItem.getState());
 			}
 		} else {
 			preState = currentItem.getState();
