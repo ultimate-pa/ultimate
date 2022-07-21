@@ -566,13 +566,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 						bspm.getStemPrecondition(), bspm.getStemPostcondition(), pu);
 				final IPredicate[] loopInterpolants =
 						getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
-				final NestedWordAutomaton<L, IPredicate> tmpAutomaton =
+				final NestedWordAutomaton<L, IPredicate> inputAutomaton =
 						mInterpolantAutomatonBuilder.constructInterpolantAutomaton(bspm.getStemPrecondition(),
 								mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
 								BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
 				if (dumpAutomata) {
 					final String filename = mIdentifier + "_" + "InterpolantAutomatonBuchi" + mIteration;
-					BuchiAutomizerUtils.writeAutomatonToFile(mServices, tmpAutomaton, dumpPath, filename, format,
+					BuchiAutomizerUtils.writeAutomatonToFile(mServices, inputAutomaton, dumpPath, filename, format,
 							constructionStyle.toString());
 				}
 				final IHoareTripleChecker ehtc =
@@ -580,13 +580,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 								HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
 				final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 				bhtc.putDecreaseEqualPair(hondaPredicate, rankEqAndSi);
-				assert new InductivityCheck<>(mServices, tmpAutomaton, false, true, bhtc).getResult();
-				assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), tmpAutomaton,
+				assert new InductivityCheck<>(mServices, inputAutomaton, false, true, bhtc).getResult();
+				assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), inputAutomaton,
 						mCounterexample.getNestedLassoWord()).getResult();
 
 				interpolantAutomaton = mInterpolantAutomatonBuilder.constructGeneralizedAutomaton(mCounterexample,
 						constructionStyle, bspm, hondaPredicate, rankEqAndSi, pu, stemInterpolants, loopInterpolants,
-						tmpAutomaton, bhtc);
+						inputAutomaton, bhtc);
 				mIsSemiDeterministic = constructionStyle.isAlwaysSemiDeterministic();
 				newAbstraction = refineBuchi(mAbstraction, interpolantAutomaton);
 				// Switch to read-only-mode for lazy constructions
