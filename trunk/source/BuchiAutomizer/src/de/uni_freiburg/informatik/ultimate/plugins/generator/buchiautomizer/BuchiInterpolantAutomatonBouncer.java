@@ -122,7 +122,7 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 		final NestedRun<LETTER, IPredicate> loop = counterexample.getLoop();
 		mHondaEntererLoop = loop.getSymbol(loop.getLength() - 2);
 
-		initializeConstruction(emptyStem, bspm, stemInterpolants, loopInterpolants);
+		initializeConstruction(emptyStem, stemInterpolants, loopInterpolants);
 		/**
 		 * Allow a some special nondeterministic transitions. For this additional transition the - predecessor is some
 		 * stem predicate - the letter is mHondaEntererStem - the successor is the honda state
@@ -142,9 +142,9 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 		mLogger.info(startMessage());
 	}
 
-	private void initializeConstruction(final boolean emtpyStem, final BinaryStatePredicateManager bspm,
-			final Set<IPredicate> stemInterpolants, final Set<IPredicate> loopInterpolants) {
-		final IPredicate precondition = bspm.getStemPrecondition();
+	private void initializeConstruction(final boolean emtpyStem, final Set<IPredicate> stemInterpolants,
+			final Set<IPredicate> loopInterpolants) {
+		final IPredicate precondition = mBspm.getStemPrecondition();
 		if (!emtpyStem) {
 			mInputStemPredicates.add(precondition);
 			for (final IPredicate stemPredicate : stemInterpolants) {
@@ -158,7 +158,7 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 			if (!mInputLoopPredicates.contains(loopPredicate)) {
 				mInputLoopPredicates.add(loopPredicate);
 			}
-			if (Arrays.stream(bspm.getOldRankVariables()).anyMatch(loopPredicate.getVars()::contains)) {
+			if (Arrays.stream(mBspm.getOldRankVariables()).anyMatch(loopPredicate.getVars()::contains)) {
 				mInputWithAuxPredicates.add(loopPredicate);
 			} else {
 				mInputAuxFreePredicates.add(loopPredicate);
