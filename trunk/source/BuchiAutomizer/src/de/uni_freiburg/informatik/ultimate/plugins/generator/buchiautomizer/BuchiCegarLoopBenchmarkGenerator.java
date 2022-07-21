@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.SynthesisResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -134,7 +133,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	}
 
 	public void reportLassoAnalysis(final LassoCheck<? extends IIcfgTransition<?>> lassoCheck) {
-		final LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
+		final var lcr = lassoCheck.getLassoCheckResult();
 		mPreprocessingBenchmarks.addAll(lassoCheck.getPreprocessingBenchmarks());
 		mTerminationAnalysisBenchmarks.addAll(lassoCheck.getTerminationAnalysisBenchmarks());
 		mNonterminationAnalysisBenchmarks.addAll(lassoCheck.getNonterminationAnalysisBenchmarks());

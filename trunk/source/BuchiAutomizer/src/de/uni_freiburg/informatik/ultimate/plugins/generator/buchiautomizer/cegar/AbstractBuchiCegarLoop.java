@@ -495,7 +495,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
 			constructRefinementEngineResult(final LassoCheck<L> lassoCheck) {
-		final LassoCheck<L>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
+		final var lcr = lassoCheck.getLassoCheckResult();
 		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			// if both (stem and loop) are infeasible we take the smaller one.
 			final int stemSize = mCounterexample.getStem().getLength();
