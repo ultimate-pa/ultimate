@@ -299,11 +299,11 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 		final Set<IPredicate> inputSuccsRankDecreaseAndBound = new HashSet<>(inputSuccsWithoutAuxVar);
 		inputSuccsRankDecreaseAndBound.add(mBspm.getRankDecreaseAndBound());
 		final IPredicate rankDecreaseAndBound = getOrConstructPredicate(inputSuccsRankDecreaseAndBound,
-				mPredicateUnifier, mAcceptingInputPreds2ResultPreds, mAcceptingResPred2InputPreds);
+				mAcceptingInputPreds2ResultPreds, mAcceptingResPred2InputPreds);
 		final Set<IPredicate> inputSuccsRankEquality = new HashSet<>(inputSuccsWithoutAuxVar);
 		inputSuccsRankEquality.add(mBspm.getRankEquality());
-		final IPredicate rankEquality = getOrConstructPredicate(inputSuccsRankEquality, mPredicateUnifier,
-				mRankEqInputPreds2ResultPreds, mRankEqResPred2InputPreds);
+		final IPredicate rankEquality = getOrConstructPredicate(inputSuccsRankEquality, mRankEqInputPreds2ResultPreds,
+				mRankEqResPred2InputPreds);
 		if (!mAlreadyConstructedAutomaton.contains(rankDecreaseAndBound)) {
 			mAlreadyConstructedAutomaton.addState(isInitial, true, rankDecreaseAndBound);
 		}
@@ -312,8 +312,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	}
 
 	private IPredicate getOrConstructStemPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
-		final IPredicate resSucc = getOrConstructPredicate(inputSuccs, mPredicateUnifier, mStemInputPreds2ResultPreds,
-				mStemResPred2InputPreds);
+		final IPredicate resSucc =
+				getOrConstructPredicate(inputSuccs, mStemInputPreds2ResultPreds, mStemResPred2InputPreds);
 		if (!mAlreadyConstructedAutomaton.contains(resSucc)) {
 			mAlreadyConstructedAutomaton.addState(isInitial, false, resSucc);
 		}
@@ -321,8 +321,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	}
 
 	private IPredicate getOrConstructLoopPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
-		final IPredicate resSucc = getOrConstructPredicate(inputSuccs, mPredicateUnifier, mLoopInputPreds2ResultPreds,
-				mLoopResPred2InputPreds);
+		final IPredicate resSucc =
+				getOrConstructPredicate(inputSuccs, mLoopInputPreds2ResultPreds, mLoopResPred2InputPreds);
 		if (!mAlreadyConstructedAutomaton.contains(resSucc)) {
 			mAlreadyConstructedAutomaton.addState(isInitial, false, resSucc);
 		}
@@ -391,13 +391,13 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 		}
 	}
 
-	private IPredicate getOrConstructPredicate(final Set<IPredicate> succs, final PredicateUnifier predicateUnifier,
+	private IPredicate getOrConstructPredicate(final Set<IPredicate> succs,
 			final Map<Set<IPredicate>, IPredicate> inputPreds2ResultPreds,
 			final HashRelation<IPredicate, IPredicate> resPred2InputPreds) {
 		IPredicate resSucc = inputPreds2ResultPreds.get(succs);
 		if (resSucc == null) {
 			final Term conjunction = mPredicateFactory.and(succs).getFormula();
-			resSucc = predicateUnifier.getOrConstructPredicate(conjunction);
+			resSucc = mPredicateUnifier.getOrConstructPredicate(conjunction);
 			assert resSucc != mIaFalseState : "false should have been handeled before";
 			inputPreds2ResultPreds.put(succs, resSucc);
 			for (final IPredicate succ : succs) {
