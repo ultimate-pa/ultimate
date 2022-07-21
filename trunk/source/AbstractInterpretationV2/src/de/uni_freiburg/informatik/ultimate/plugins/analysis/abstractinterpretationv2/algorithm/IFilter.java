@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
-
 /**
  *
  * @author Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
@@ -38,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
  */
 
 @FunctionalInterface
-public interface IFilter<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> {
+public interface IFilter<ACTION, LOC> {
 
 	/***
 	 * Returns whether a mapping from reads to writes should be considered in the flow sensitive analysis of a
@@ -48,5 +46,4 @@ public interface IFilter<STATE extends IAbstractState<STATE>, ACTION, VARDECL, L
 	 * @return
 	 */
 	boolean evaluate(Map<LOC, Set<ACTION>> read2Writes);
-	// Important: not every outgoing edge from LOC must be a read!
 }

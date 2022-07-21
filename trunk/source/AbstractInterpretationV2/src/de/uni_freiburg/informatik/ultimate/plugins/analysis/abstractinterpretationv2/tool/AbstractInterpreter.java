@@ -50,9 +50,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.BackwardFixpointEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FeasibilityFilter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFilter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
@@ -153,9 +155,10 @@ public final class AbstractInterpreter {
 				AbsIntPrefInitializer.LABEL_ABSTRACT_INTERPRETATION_CONCURRENT, AbstractInterpretationConcurrent.class);
 		final int iterationsBeforeWidening = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT);
+		final IFilter<IcfgEdge, IcfgLocation> filter = new FeasibilityFilter<>(services);
 		final FixpointEngineConcurrent<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec =
 				new FixpointEngineConcurrent<>(pfxpec, root, new FixpointEngine<>(pfxpe), version,
-						iterationsBeforeWidening);
+						iterationsBeforeWidening, filter);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpec.run(root.getInitialNodes(), script);
 

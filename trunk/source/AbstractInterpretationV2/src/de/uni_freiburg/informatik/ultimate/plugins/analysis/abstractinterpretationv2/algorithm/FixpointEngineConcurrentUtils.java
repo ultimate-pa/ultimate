@@ -66,9 +66,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private final IIcfg<?> mIcfg;
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedWriteWrittenVars;
+	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWriteWrittenVars;
 	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedWriteReadVars;
-	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedReadReadVars;
+	private final HashRelation<ACTION, IProgramVarOrConst> mSharedReadReadVars;
 	private final Map<String, Set<String>> mDependingProcedures;
 	private final Map<ACTION, Set<ACTION>> mWritesPerRead;
 	private final Map<String, Set<ACTION>> mWritesPerProcedure;
@@ -76,19 +76,16 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final HashRelation<String, ACTION> mSelfReachableReads;
 	private final HashRelation<String, LOC> mForkedAt;
 	private final HashRelation<String, String> mForks;
-	// Hashrelations
-
-	private final Map<LOC, ACTION> mLoc2Assume;
-	private final Map<ACTION, ACTION> mAssumes;
+	private final HashRelation<String, ACTION> mActionsInProcedure;
 
 	private final Map<String, Set<Map<LOC, Set<ACTION>>>> mCrossProducts;
 
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider) {
 		mIcfg = icfg;
 		mTransitionProvider = transProvider;
-		mSharedWriteWrittenVars = new HashMap<>();
+		mSharedWriteWrittenVars = new HashRelation<>();
 		mSharedWriteReadVars = new HashMap<>();
-		mSharedReadReadVars = new HashMap<>();
+		mSharedReadReadVars = new HashRelation<>();
 		mDependingProcedures = new HashMap<>();
 		mWritesPerRead = new HashMap<>();
 		mWritesPerProcedure = new HashMap<>();
@@ -96,13 +93,110 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mSelfReachableReads = new HashRelation<>();
 		mForkedAt = new HashRelation<>();
 		mForks = new HashRelation<>();
+		mActionsInProcedure = new HashRelation<>();
 
 		mCrossProducts = new HashMap<>();
 
-		mAssumes = new HashMap<>();
-		mLoc2Assume = new HashMap<>();
-
 		initialize(mIcfg.getProcedureEntryNodes());
+	}
+
+	public Set<ACTION> getAllReads() {
+		final Set<ACTION> result = new HashSet<>();
+		for (final String procedure : mIcfg.getCfgSmtToolkit().getProcedures()) {
+			result.addAll(getReads(procedure));
+		}
+		return result;
+	}
+
+	/***
+	 *
+	 * @param entryNodes
+	 * @return List of Relations for FeasibilityFilter regarding the Program Order.
+	 *
+	 *         Order in List: 1. DOMINATES 2. NOTREACHABLEFROM 3. THCREATES 4. THJOINS
+	 */
+	public List<HashRelation<ACTION, ACTION>>
+			getProgramOrderConstraints(final Map<String, ? extends IcfgLocation> entryNodes) {
+		final List<HashRelation<ACTION, ACTION>> result = new ArrayList<>();
+		result.add(getDominates());
+		result.add(getNotReachableFrom(entryNodes));
+		result.add(getThCreates(entryNodes));
+		result.add(getThJoins());
+		return result;
+	}
+
+	/***
+	 *
+	 * @return DOMINATES: (x,y) in DOMINATES, iff all paths from the thread entry to y contain x.
+	 */
+	public HashRelation<ACTION, ACTION> getDominates() {
+		// ??? look at paper
+		// first just use it as a blackbox
+		return new HashRelation<>();
+	}
+
+	/***
+	 *
+	 * @return NORTREACHABLEFROM: (x,y) in NOTREACHABLEFROM, iff x is not reachable from y.
+	 */
+	public HashRelation<ACTION, ACTION> getNotReachableFrom(final Map<String, ? extends IcfgLocation> entryNodes) {
+		// compute Set of all ACTIONS in Thread -> X
+		// compute ReachableFrom via Iterator
+		// Compute AllActions\ReachableFrom -> NOTREACHABLEFROM
+		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
+
+		// very inefficient, but first approach
+		// TODO: find a more efficient way
+		for (final var entry : entryNodes.entrySet()) {
+			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
+			for (final var item : iterator.asStream().collect(Collectors.toSet())) {
+				final Set<ACTION> reachable = new HashSet<>();
+				reachable.add((ACTION) item);
+				final IcfgEdgeIterator edgeIterator = new IcfgEdgeIterator(item);
+				edgeIterator.asStream().forEach(edge -> reachable.add((ACTION) edge));
+				result.addAllPairs((ACTION) item,
+						DataStructureUtils.difference(mActionsInProcedure.getImage(entry.getKey()), reachable));
+			}
+		}
+		return result;
+	}
+
+	/***
+	 *
+	 * @return Domain are thread entry actions, image is a fork which forks the corresponding thread
+	 */
+	public HashRelation<ACTION, ACTION> getThCreates(final Map<String, ? extends IcfgLocation> entryNodes) {
+		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
+		for (final var entry : mForkedAt.entrySet()) {
+			final Set<ACTION> entryActions = new HashSet<>();
+			entryNodes.get(entry.getKey()).getOutgoingEdges().forEach(edge -> entryActions.add((ACTION) edge));
+			for (final var forkLocation : entry.getValue()) {
+				mTransitionProvider.getSuccessorActions(forkLocation)
+						.forEach(fork -> result.addAllPairs(fork, entryActions));
+			}
+		}
+		return result;
+	}
+
+	public HashRelation<ACTION, ACTION> getThJoins() {
+		// no support yet
+		return new HashRelation<>();
+	}
+
+	/***
+	 *
+	 * @return ISLOAD: (l, v) in ISLOAD, iff l is a read of the variable v
+	 */
+	public HashRelation<ACTION, IProgramVarOrConst> getIsLoad() {
+		return mSharedReadReadVars;
+	}
+
+	/***
+	 *
+	 * @return ISSTORE: (l, v) in ISSTORE, iff l is a write to the variable v
+	 */
+	public HashRelation<ACTION, IProgramVarOrConst> getIsStore() {
+		return mSharedWriteWrittenVars;
 	}
 
 	public Set<ACTION> getSelfReachableReads(final String procedure) {
@@ -135,37 +229,16 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	}
 
-	public Set<ACTION> getAssumeReducedReads(final String procedure) {
-		// copy of getReads
-		final Set<ACTION> actions = getReads(procedure);
-		if (actions == null) {
-			return null;
-		}
-		final Set<ACTION> toRemove = new HashSet<>();
-		for (final var action : actions) {
-			final ACTION assume = mAssumes.get(action);
-			if (assume != null) {
-				toRemove.add(assume);
-			}
-		}
-		actions.removeAll(toRemove);
-		return actions;
-	}
-
-	public ACTION hasAssumeCounterPart(final ACTION action) {
-		return mAssumes.get(action);
-	}
-
 	public Set<IProgramVarOrConst> getVarsForBuildingState(final ACTION action) {
-		return DataStructureUtils.union(mSharedWriteWrittenVars.get(action), mSharedWriteReadVars.get(action));
+		return DataStructureUtils.union(getWrittenVars(action), mSharedWriteReadVars.get(action));
 	}
 
 	public Set<IProgramVarOrConst> getWrittenVars(final ACTION action) {
-		return mSharedWriteWrittenVars.get(action);
+		return mSharedWriteWrittenVars.getImage(action);
 	}
 
 	public Set<IProgramVarOrConst> getReadVars(final ACTION action) {
-		return mSharedReadReadVars.get(action);
+		return mSharedReadReadVars.getImage(action);
 	}
 
 	public boolean canReadFromInterference(final ACTION read, final ACTION write) {
@@ -397,7 +470,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private void checkforInterferences(final IcfgEdge edge, final String currentProcedure,
 			final Map<ACTION, Set<String>> map) {
 		// check if edge is sharedRead
-		if (mSharedReadReadVars.containsKey(edge)) {
+		if (mSharedReadReadVars.getDomain().contains(edge)) {
 			map.get(edge).add(currentProcedure);
 		}
 
@@ -421,13 +494,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	private void computationsPerEdge(final String procedure, final IcfgEdge edge, final Set<IProgramVar> variables) {
+		mActionsInProcedure.addPair(procedure, (ACTION) edge);
 		// SharedWrites
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getAssignedVars(), variables)) {
 			mSharedWriteReadVars.put((ACTION) edge, new HashSet<>());
 			mSharedWriteReadVars.get(edge).addAll(edge.getTransformula().getInVars().keySet());
 
-			mSharedWriteWrittenVars.put((ACTION) edge, new HashSet<>());
-			mSharedWriteWrittenVars.get(edge).addAll(edge.getTransformula().getAssignedVars());
+			edge.getTransformula().getAssignedVars().stream()
+					.forEach(var -> mSharedWriteWrittenVars.addPair((ACTION) edge, var));
 			if (mWritesPerProcedure.containsKey(procedure)) {
 				mWritesPerProcedure.get(procedure).add((ACTION) edge);
 			} else {
@@ -438,9 +512,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 		// SharedReads
 		if (DataStructureUtils.haveNonEmptyIntersection(edge.getTransformula().getInVars().keySet(), variables)) {
-			mSharedReadReadVars.put((ACTION) edge, new HashSet<>());
 			DataStructureUtils.intersection(edge.getTransformula().getInVars().keySet(), variables)
-					.forEach(var -> mSharedReadReadVars.get(edge).add(var));
+					.forEach(var -> mSharedReadReadVars.addPair((ACTION) edge, var));
 			if (mReadsPerProcedure.containsKey(procedure)) {
 				mReadsPerProcedure.get(procedure).add((ACTION) edge);
 			} else {

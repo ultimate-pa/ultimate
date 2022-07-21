@@ -91,9 +91,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private final AbstractInterpretationConcurrent mVersion;
 
+	private final IFilter<ACTION, LOC> mFilter;
+
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe,
-			final AbstractInterpretationConcurrent version, final int iterations) {
+			final AbstractInterpretationConcurrent version, final int iterations, final IFilter<ACTION, LOC> filter) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -119,6 +121,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mErrors = new HashMap<>();
 
 		mVersion = version;
+
+		mFilter = filter;
+
+		if (mFilter instanceof FeasibilityFilter) {
+			((FeasibilityFilter) mFilter).initializeProgramConstraints(
+					mFecUtils.getProgramOrderConstraints(mIcfg.getProcedureEntryNodes()), mFecUtils.getIsLoad(),
+					mFecUtils.getIsStore(), mFecUtils.getAllReads());
+			((FeasibilityFilter) mFilter).setTransitionProvider(mTransitionProvider);
+		}
 	}
 
 	@Override
@@ -248,8 +259,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		}
 
 		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE_FILTERED) {
-			final IFilter<STATE, ACTION, VARDECL, LOC> filter = new FeasibilityFilter<>();
-			return filteredCrossProduct(entryNode, interferences, x -> filter.evaluate(x));
+			return filteredCrossProduct(entryNode, interferences, x -> mFilter.evaluate(x));
 		}
 
 		throw new UnsupportedOperationException("Unvalid Version option selected");
