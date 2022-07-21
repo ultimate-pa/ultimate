@@ -239,15 +239,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			return procedureInterferences;
 		}
 
-		if (mVersion == AbstractInterpretationConcurrent.FLOW_INSENSITIV) {
+		if (mVersion == AbstractInterpretationConcurrent.FLOW_INSENSITIVE) {
 			return unionOverInterferences(interferences, entryNode);
 		}
 
-		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV) {
+		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE) {
 			return filteredCrossProduct(entryNode, interferences, x -> true);
 		}
 
-		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV_FILTERED) {
+		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE_FILTERED) {
 			final IFilter<STATE, ACTION, VARDECL, LOC> filter = new FeasibilityFilter<>();
 			return filteredCrossProduct(entryNode, interferences, x -> filter.evaluate(x));
 		}
@@ -526,7 +526,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private Map<String, Set<ACTION>>
 			getReadsReadingProcedureIntern(final Map<String, ? extends IcfgLocation> entryNodes) {
-		if (mVersion == AbstractInterpretationConcurrent.FLOW_INSENSITIV) {
+		if (mVersion == AbstractInterpretationConcurrent.FLOW_INSENSITIVE) {
 			// all reads except if they are entryActions
 			final Map<String, Set<ACTION>> result = new HashMap<>();
 			for (final var entry : entryNodes.entrySet()) {
@@ -543,8 +543,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			return result;
 		}
 
-		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV
-				|| mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV_FILTERED) {
+		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE
+				|| mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE_FILTERED) {
 			final Map<String, Set<ACTION>> result = new HashMap<>();
 			for (final var procedure : entryNodes.keySet()) {
 				final var reads = mFecUtils.getSelfReachableReads(procedure);

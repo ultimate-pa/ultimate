@@ -85,15 +85,15 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		/*
 		 * Union over all interferences of writes from which the read can read from
 		 */
-		FLOW_INSENSITIV,
+		FLOW_INSENSITIVE,
 		/*
 		 * Computes every possible combinations of writes per read and analyzes each separately
 		 */
-		FLOW_SENSITIV,
+		FLOW_SENSITIVE,
 		/*
 		 * Computes every possible combinations of writes per read and filters by checking for feasibility
 		 */
-		FLOW_SENSITIV_FILTERED
+		FLOW_SENSITIVE_FILTERED
 	}
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT =
@@ -150,7 +150,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		rtr.add(new UltimatePreferenceItem<>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,
 				PreferenceType.Boolean));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_CONCURRENT,
-				AbstractInterpretationConcurrent.FLOW_INSENSITIV, PreferenceType.Combo,
+				AbstractInterpretationConcurrent.FLOW_INSENSITIVE, PreferenceType.Combo,
 				AbstractInterpretationConcurrent.values()));
 		rtr.add(new UltimatePreferenceItem<>(LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT,
 				DEF_ITERATIONS_UNTIL_WIDENING_CONCURRENT, PreferenceType.Integer,

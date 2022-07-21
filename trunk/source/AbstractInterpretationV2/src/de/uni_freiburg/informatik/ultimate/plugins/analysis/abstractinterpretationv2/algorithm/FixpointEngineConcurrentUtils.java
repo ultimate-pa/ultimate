@@ -172,9 +172,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mWritesPerRead.get(read).contains(write);
 	}
 
+	// Is function needed?
 	public Map<ACTION, DisjunctiveAbstractState<STATE>> filterProcedures(final String name,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		// TODO: check nicer way via .collect ???
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		interferences.entrySet().stream().filter(a -> mTransitionProvider.getProcedureName(a.getKey()) != (name))
 				.forEach(b -> result.put(b.getKey(), b.getValue()));
@@ -480,8 +480,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 				final LOC source = mTransitionProvider.getSource(read);
 				if (writes.containsKey(source)) {
-					// TODO: if read reads from more than one Variable, add CrossProduct over tempList
-					// such that each entry contains a write to x1, x2, x3, ..., xn
 					continue;
 				}
 
