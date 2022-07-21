@@ -247,8 +247,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			return filteredCrossProduct(entryNode, interferences, x -> true);
 		}
 
-		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV_PLUS_CONSTRAINTS) {
-			throw new UnsupportedOperationException("Filter is not implemented yet");
+		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV_FILTERED) {
+			final IFilter<STATE, ACTION, VARDECL, LOC> filter = new FeasibilityFilter<>();
+			return filteredCrossProduct(entryNode, interferences, x -> filter.evaluate(x));
 		}
 
 		throw new UnsupportedOperationException("Unvalid Version option selected");
@@ -459,7 +460,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				postState = interferences.get(write).widen(wideningOp, postState);
 			}
 			// TODO: relational Domain -> will remove relations between variables
-			// TODO: should Variables really be removed
 			postState = removeNonSharedVariables(postState, mFecUtils.getWrittenVars(write));
 			result = combineInterferences(result, write, postState);
 		}
@@ -544,7 +544,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		}
 
 		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV
-				|| mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV_PLUS_CONSTRAINTS) {
+				|| mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIV_FILTERED) {
 			final Map<String, Set<ACTION>> result = new HashMap<>();
 			for (final var procedure : entryNodes.keySet()) {
 				final var reads = mFecUtils.getSelfReachableReads(procedure);

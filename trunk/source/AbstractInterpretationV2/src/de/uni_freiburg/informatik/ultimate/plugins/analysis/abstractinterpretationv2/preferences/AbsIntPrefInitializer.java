@@ -93,7 +93,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		/*
 		 * Computes every possible combinations of writes per read and filters by checking for feasibility
 		 */
-		FLOW_SENSITIV_PLUS_CONSTRAINTS
+		FLOW_SENSITIV_FILTERED
 	}
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT =
