@@ -65,15 +65,17 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final PredicateFactory mPredicateFactory;
+	private final InterpolationTechnique mInterpolation;
 
 	public BuchiInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final PredicateFactory predicateFactory) {
+			final PredicateFactory predicateFactory, final InterpolationTechnique interpolation) {
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mPredicateFactory = predicateFactory;
+		mInterpolation = interpolation;
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final IPredicate precondition,
@@ -140,17 +142,12 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 		return predicates[pos];
 	}
 
-	// TODO: This has a lot of arguments, can this be improved?
-	// TODO: We should try to get rid of bspm!
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructGeneralizedAutomaton(
 			final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle,
 			final BinaryStatePredicateManager bspm, final IPredicate rankEqAndSi, final IPredicate hondaPredicate,
-			final InterpolationTechnique interpolation, final PredicateUnifier pu, final IPredicate[] stemInterpolants,
-			final IPredicate[] loopInterpolants, final NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton,
-			final BuchiHoareTripleChecker bhtc) {
-		final NestedWord<LETTER> stem = counterexample.getStem().getWord();
-		final NestedWord<LETTER> loop = counterexample.getLoop().getWord();
+			final PredicateUnifier pu, final IPredicate[] stemInterpolants, final IPredicate[] loopInterpolants,
+			final NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final BuchiHoareTripleChecker bhtc) {
 		switch (biaConstructionStyle.getInterpolantAutomaton()) {
 		case LASSO_AUTOMATON:
 			return interpolAutomaton;
@@ -166,8 +163,7 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 		case SCROOGE_NONDETERMINISM:
 		case DETERMINISTIC:
 			Set<IPredicate> stemInterpolantsForRefinement;
-			final boolean emptyStem = BuchiAutomizerUtils.isEmptyStem(counterexample.getStem());
-			if (emptyStem) {
+			if (BuchiAutomizerUtils.isEmptyStem(counterexample.getStem())) {
 				stemInterpolantsForRefinement = Collections.emptySet();
 			} else if (biaConstructionStyle.cannibalizeLoop()) {
 				stemInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(stemInterpolants));
@@ -181,7 +177,7 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, rankEqAndSi.getFormula()));
 
 					final LoopCannibalizer<LETTER> lc = new LoopCannibalizer<>(counterexample,
-							loopInterpolantsForRefinement, rankEqAndSi, hondaPredicate, pu, mCsToolkit, interpolation,
+							loopInterpolantsForRefinement, rankEqAndSi, hondaPredicate, pu, mCsToolkit, mInterpolation,
 							mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
@@ -194,12 +190,9 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 				loopInterpolantsForRefinement.add(rankEqAndSi);
 			}
 
-			return new BuchiInterpolantAutomatonBouncer<>(mCsToolkit, mPredicateFactory, bspm, bhtc, emptyStem,
-					stemInterpolantsForRefinement, loopInterpolantsForRefinement,
-					emptyStem ? null : stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1),
-					biaConstructionStyle.isScroogeNondeterminismStem(),
-					biaConstructionStyle.isScroogeNondeterminismLoop(), biaConstructionStyle.isBouncerStem(),
-					biaConstructionStyle.isBouncerLoop(), pu, pu, pu.getFalsePredicate(), mServices, interpolAutomaton);
+			return new BuchiInterpolantAutomatonBouncer<>(mCsToolkit, mPredicateFactory, bspm, bhtc, counterexample,
+					stemInterpolantsForRefinement, loopInterpolantsForRefinement, biaConstructionStyle, pu, mServices,
+					interpolAutomaton);
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
 		}

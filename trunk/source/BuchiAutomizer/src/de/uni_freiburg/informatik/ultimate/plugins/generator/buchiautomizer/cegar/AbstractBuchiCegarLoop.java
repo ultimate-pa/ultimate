@@ -226,7 +226,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mPredicateFactory, mDefaultStateFactory, transitionClazz);
 		mAbstraction = initialAbstraction;
 		mInterpolantAutomatonBuilder = new BuchiInterpolantAutomatonBuilder<>(mServices, mCsToolkitWithRankVars,
-				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE, predicateFactory);
+				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE, predicateFactory, mInterpolation);
 		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
@@ -585,8 +585,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 						mCounterexample.getNestedLassoWord()).getResult();
 
 				interpolantAutomaton = mInterpolantAutomatonBuilder.constructGeneralizedAutomaton(mCounterexample,
-						constructionStyle, bspm, hondaPredicate, rankEqAndSi, mInterpolation, pu, stemInterpolants,
-						loopInterpolants, tmpAutomaton, bhtc);
+						constructionStyle, bspm, hondaPredicate, rankEqAndSi, pu, stemInterpolants, loopInterpolants,
+						tmpAutomaton, bhtc);
 				mIsSemiDeterministic = constructionStyle.isAlwaysSemiDeterministic();
 				newAbstraction = refineBuchi(mAbstraction, interpolantAutomaton);
 				// Switch to read-only-mode for lazy constructions

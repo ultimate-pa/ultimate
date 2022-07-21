@@ -33,7 +33,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -93,52 +95,50 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	private final Map<Set<IPredicate>, IPredicate> mRankEqInputPreds2ResultPreds = new HashMap<>();
 	private final HashRelation<IPredicate, IPredicate> mRankEqResPred2InputPreds = new HashRelation<>();
 
-	private final PredicateUnifier mStemPU;
-	private final PredicateUnifier mLoopPU;
-	private final PredicateUnifier mAcceptingPU;
+	private final PredicateUnifier mPredicateUnifier;
 
 	private final PredicateFactory mPredicateFactory;
 
 	public BuchiInterpolantAutomatonBouncer(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final BinaryStatePredicateManager bspm, final BuchiHoareTripleChecker bhtc, final boolean emtpyStem,
-			final Set<IPredicate> stemInterpolants, final Set<IPredicate> loopInterpolants,
-			final LETTER hondaEntererStem, final LETTER hondaEntererLoop, final boolean scroogeNondeterminismStem,
-			final boolean scroogeNondeterminismLoop, final boolean hondaBouncerStem, final boolean hondaBouncerLoop,
-			final PredicateUnifier stemPU, final PredicateUnifier loopPU, final IPredicate falsePredicate,
-			final IUltimateServiceProvider services,
+			final BinaryStatePredicateManager bspm, final BuchiHoareTripleChecker bhtc,
+			final NestedLassoRun<LETTER, IPredicate> counterexample, final Set<IPredicate> stemInterpolants,
+			final Set<IPredicate> loopInterpolants, final BuchiInterpolantAutomatonConstructionStyle constructionStyle,
+			final PredicateUnifier predicateUnifier, final IUltimateServiceProvider services,
 			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton) {
-		super(services, csToolkit, bhtc, false, falsePredicate, inputInterpolantAutomaton);
+		super(services, csToolkit, bhtc, false, predicateUnifier.getFalsePredicate(), inputInterpolantAutomaton);
 		mPredicateFactory = predicateFactory;
 		mBspm = bspm;
-		mStemPU = stemPU;
-		mLoopPU = loopPU;
-		mAcceptingPU = loopPU;
+		mPredicateUnifier = predicateUnifier;
 
-		// TODO: We do not need the return values here! Is there a better way to keep the side-effects?
-		if (emtpyStem) {
+		final NestedRun<LETTER, IPredicate> stem = counterexample.getStem();
+		final boolean emptyStem = BuchiAutomizerUtils.isEmptyStem(stem);
+		if (emptyStem) {
+			mHondaEntererStem = null;
 			getOrConstructAcceptingPredicate(Set.of(), true);
 		} else {
+			mHondaEntererStem = stem.getSymbol(stem.getLength() - 2);
 			getOrConstructStemPredicate(Set.of(mBspm.getStemPrecondition()), true);
 		}
+		final NestedRun<LETTER, IPredicate> loop = counterexample.getLoop();
+		mHondaEntererLoop = loop.getSymbol(loop.getLength() - 2);
 
-		initializeConstruction(emtpyStem, bspm, stemInterpolants, loopInterpolants);
-		mHondaEntererStem = hondaEntererStem;
-		mHondaEntererLoop = hondaEntererLoop;
+		initializeConstruction(emptyStem, bspm, stemInterpolants, loopInterpolants);
 		/**
 		 * Allow a some special nondeterministic transitions. For this additional transition the - predecessor is some
 		 * stem predicate - the letter is mHondaEntererStem - the successor is the honda state
 		 */
-		mScroogeNondeterminismStem = scroogeNondeterminismStem;
-		mScroogeNondeterminismLoop = scroogeNondeterminismLoop;
+		mScroogeNondeterminismStem = constructionStyle.isScroogeNondeterminismStem();
+		mScroogeNondeterminismLoop = constructionStyle.isScroogeNondeterminismLoop();
 		/**
 		 * If set, the nondeterministic transition from the stem predicates into the honda is only allowed for the
 		 * letter mHondaEntererStem
 		 */
-		mHondaBouncerStem = hondaBouncerStem;
+
+		mHondaBouncerStem = constructionStyle.isBouncerStem();
 		/**
 		 * If set, a transition from the stem predicates may only go to the honda if the letter is mHondaEntererLoop
 		 */
-		mHondaBouncerLoop = hondaBouncerLoop;
+		mHondaBouncerLoop = constructionStyle.isBouncerLoop();
 		mLogger.info(startMessage());
 	}
 
@@ -298,11 +298,11 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 			final boolean isInitial) {
 		final Set<IPredicate> inputSuccsRankDecreaseAndBound = new HashSet<>(inputSuccsWithoutAuxVar);
 		inputSuccsRankDecreaseAndBound.add(mBspm.getRankDecreaseAndBound());
-		final IPredicate rankDecreaseAndBound = getOrConstructPredicate(inputSuccsRankDecreaseAndBound, mAcceptingPU,
-				mAcceptingInputPreds2ResultPreds, mAcceptingResPred2InputPreds);
+		final IPredicate rankDecreaseAndBound = getOrConstructPredicate(inputSuccsRankDecreaseAndBound,
+				mPredicateUnifier, mAcceptingInputPreds2ResultPreds, mAcceptingResPred2InputPreds);
 		final Set<IPredicate> inputSuccsRankEquality = new HashSet<>(inputSuccsWithoutAuxVar);
 		inputSuccsRankEquality.add(mBspm.getRankEquality());
-		final IPredicate rankEquality = getOrConstructPredicate(inputSuccsRankEquality, mLoopPU,
+		final IPredicate rankEquality = getOrConstructPredicate(inputSuccsRankEquality, mPredicateUnifier,
 				mRankEqInputPreds2ResultPreds, mRankEqResPred2InputPreds);
 		if (!mAlreadyConstructedAutomaton.contains(rankDecreaseAndBound)) {
 			mAlreadyConstructedAutomaton.addState(isInitial, true, rankDecreaseAndBound);
@@ -312,8 +312,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	}
 
 	private IPredicate getOrConstructStemPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
-		final IPredicate resSucc =
-				getOrConstructPredicate(inputSuccs, mStemPU, mStemInputPreds2ResultPreds, mStemResPred2InputPreds);
+		final IPredicate resSucc = getOrConstructPredicate(inputSuccs, mPredicateUnifier, mStemInputPreds2ResultPreds,
+				mStemResPred2InputPreds);
 		if (!mAlreadyConstructedAutomaton.contains(resSucc)) {
 			mAlreadyConstructedAutomaton.addState(isInitial, false, resSucc);
 		}
@@ -321,8 +321,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	}
 
 	private IPredicate getOrConstructLoopPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
-		final IPredicate resSucc =
-				getOrConstructPredicate(inputSuccs, mLoopPU, mLoopInputPreds2ResultPreds, mLoopResPred2InputPreds);
+		final IPredicate resSucc = getOrConstructPredicate(inputSuccs, mPredicateUnifier, mLoopInputPreds2ResultPreds,
+				mLoopResPred2InputPreds);
 		if (!mAlreadyConstructedAutomaton.contains(resSucc)) {
 			mAlreadyConstructedAutomaton.addState(isInitial, false, resSucc);
 		}
