@@ -138,7 +138,7 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 	}
 
 	public Map<String, ILocation> getOverapproximations() {
-		if (mResult != Result.NONTERMINATING) {
+		if (mResult != Result.NONTERMINATING && mResult != Result.UNKNOWN) {
 			throw new UnsupportedOperationException("Result " + mResult + " does not provide overapproximations.");
 		}
 		return mOverapproximations;
