@@ -256,12 +256,12 @@ public final class MapEliminatorUtils {
 			throw new UnsupportedOperationException("not yet implemented");
 		} else if (varOrConst instanceof IReplacementVar) {
 			final IReplacementVar var = (IReplacementVar) varOrConst;
-			assert transformula.getInVars().containsKey(var) && transformula.getOutVars().containsKey(var) : var
-					+ " was not added to the transformula!";
-			if (ModifiableTransFormulaUtils.allVariablesAreInVars(term, transformula)) {
-				return transformula.getInVars().get(var);
+			final TermVariable inVar = transformula.getInVars().get(var);
+			final TermVariable outVar = transformula.getOutVars().get(var);
+			if (inVar == null || outVar == null) {
+				throw new AssertionError(var + " was not added to the transformula!");
 			}
-			return transformula.getOutVars().get(var);
+			return ModifiableTransFormulaUtils.allVariablesAreInVars(term, transformula) ? inVar : outVar;
 		} else {
 			throw new AssertionError("illegal type " + varOrConst.getClass());
 		}
