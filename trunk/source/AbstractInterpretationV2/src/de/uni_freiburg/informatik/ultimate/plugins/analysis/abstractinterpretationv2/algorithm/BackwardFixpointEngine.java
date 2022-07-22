@@ -32,9 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -107,8 +105,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
-			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
-			final Set<ACTION> readsProcedureintern) {
+			final Script script, final InterferenceProvider<ACTION, STATE> interferences) {
 		throw new UnsupportedOperationException("Operation not supported for BackwardFixpointEngine");
 	}
 

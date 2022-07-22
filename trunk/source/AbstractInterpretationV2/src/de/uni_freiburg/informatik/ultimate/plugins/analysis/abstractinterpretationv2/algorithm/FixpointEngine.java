@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -105,19 +104,18 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
-		return runWithInterferences(initialNodes, script, Map.of(), Set.of());
+		return runWithInterferences(initialNodes, script, new InterferenceProvider<>());
 	}
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
-			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
-			final Set<ACTION> readsProcedureintern) {
+			final Script script, final InterferenceProvider<ACTION, STATE> interferences) {
 		initializeFixpointEngine();
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation(mResult.getBenchmark());
-		calculateFixpoint(initialNodes, interferences, readsProcedureintern);
+		calculateFixpoint(initialNodes, interferences);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
@@ -126,7 +124,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	}
 
 	private void calculateFixpoint(final Collection<? extends LOC> start,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final Set<ACTION> readsProcedureIntern) {
+			final InterferenceProvider<ACTION, STATE> interferences) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -147,8 +145,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			final DisjunctiveAbstractState<STATE> postState =
-					calculateAbstractPost(currentItem, postOp, interferences, readsProcedureIntern);
+			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp, interferences);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
 				continue;
@@ -239,22 +236,22 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	private DisjunctiveAbstractState<STATE> calculateAbstractPost(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final Set<ACTION> readsProcedureIntern) {
+			final InterferenceProvider<ACTION, STATE> interferences) {
 
 		DisjunctiveAbstractState<STATE> preState;
-
-		if (interferences.containsKey(currentItem.getAction())
-				&& !interferences.get(currentItem.getAction()).getStates().isEmpty()) {
-			preState = currentItem.getState().patch(interferences.get(currentItem.getAction()));
-			if (readsProcedureIntern.contains(currentItem.getAction())) {
-				preState = preState.union(currentItem.getState());
+		final ACTION currentAction = currentItem.getAction();
+		final DisjunctiveAbstractState<STATE> currentPreState = currentItem.getState();
+		final DisjunctiveAbstractState<STATE> interferingStatates = interferences.getInterferingState(currentAction);
+		if (interferingStatates != null && !interferingStatates.isEmpty()) {
+			preState = currentPreState.patch(interferingStatates);
+			if (interferences.canReadFromOwnThread(currentAction)) {
+				preState = preState.union(currentPreState);
 			}
 		} else {
-			preState = currentItem.getState();
+			preState = currentPreState;
 		}
 
 		final DisjunctiveAbstractState<STATE> hierachicalPreState = currentItem.getHierachicalState();
-		final ACTION currentAction = currentItem.getAction();
 
 		// calculate the (abstract) effect of the current action
 		DisjunctiveAbstractState<STATE> postState;
