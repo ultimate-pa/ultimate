@@ -905,21 +905,41 @@ public final class TransFormulaUtils {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
+	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services) {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, maScript, tf.getFormula(),
+		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(),
 				tf.getAuxVars());
-		final Term formula = SmtUtils.not(maScript.getScript(), withoutAuxVars);
+		final Term formula = SmtUtils.not(mgdScript.getScript(), withoutAuxVars);
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				false, tf.getBranchEncoders(), true);
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(maScript);
+		return tfb.finishConstruction(mgdScript);
+	}
+
+	/**
+	 * Given a list of {@link UnmodifiableTransFormula}s tf1,..., tfn that represent
+	 * relations R1,...,Rn, construct a {@link UnmodifiableTransFormula} that
+	 * represents the intersection R1∩...∩Rn.
+	 */
+	public static UnmodifiableTransFormula intersect(final ManagedScript mgdScript,
+			final UnmodifiableTransFormula... tfs) {
+		final TransFormulaUnification tfu = new TransFormulaUnification(mgdScript, tfs);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tfu.getInVars(), tfu.getOutVars(), true, null, true,
+				null, false);
+		tfu.getAuxVars().stream().forEach(tfb::addAuxVar);
+		final Term[] terms = new Term[tfs.length];
+		for (int i = 0; i < tfs.length; i++) {
+			terms[i] = tfu.getUnifiedFormula(i);
+		}
+		tfb.setFormula(SmtUtils.and(mgdScript.getScript(), terms));
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mgdScript);
 	}
 
 	/**
