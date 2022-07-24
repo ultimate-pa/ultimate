@@ -30,6 +30,7 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -124,16 +125,19 @@ public class LoopAccelerationUtils {
 			// Check whether result is a subset of the havoced input relation.
 			// In order to implement this check, we determine if res(x,x') ∧
 			// ¬havoced(R)(x,x') is satisfiable.
-			// FIXME 20220724 Matthias: I think for reflexive closures we have to take union
-			// of havoc and reflexive
-			// closure (implement via parallel coposition?)
-
 			final UnmodifiableTransFormula guardedHavoc = TransFormulaUtils.computeGuardedHavoc(loopTransFormula,
 					mgdScript, services, true);
-			final UnmodifiableTransFormula negatedGuardedHavoc = TransFormulaUtils.negate(guardedHavoc, mgdScript,
-					services);
-			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, accelerationResult,
-					negatedGuardedHavoc);
+			final UnmodifiableTransFormula negated;
+			if (isAlsoReflexive) {
+				final UnmodifiableTransFormula reflexiveClosure = TransFormulaBuilder.getTrivialTransFormula(mgdScript);
+				final UnmodifiableTransFormula guardedHavocOrReflexiveClosure = TransFormulaUtils.parallelComposition(
+						logger, services, mgdScript, null, false,
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, guardedHavoc, reflexiveClosure);
+				negated = TransFormulaUtils.negate(guardedHavocOrReflexiveClosure, mgdScript, services);
+			} else {
+				negated = TransFormulaUtils.negate(guardedHavoc, mgdScript, services);
+			}
+			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, accelerationResult, negated);
 			final LBool lbool = Util.checkSat(mgdScript.getScript(), and.getClosedFormula());
 			if (lbool == LBool.SAT) {
 				throw new AssertionError("Result is not a subset of the input relation's guarded havoc");
