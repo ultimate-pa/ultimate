@@ -568,24 +568,24 @@ public class JordanLoopAcceleration {
 //						TransFormulaUtils.constructDefaultvarsToInvarsMap(loopTransFormula),
 //						su.getDeterministicArrayWrites()));
 //		conjuncts.add(eq);
-		final Term conjunction = SmtUtils.and(script, conjuncts);
+		final Term transitiveClosure = SmtUtils.and(script, conjuncts);
 
 		final Term accelerationTerm;
 		if (REFLEXIVE_TRANSITIVE_CLOSURE) {
 			// (and (= itFin 0) (not (guard)) (x'=x))
-			final Term zeroIterationCase;
+			final Term reflexiveClosure;
 			{
 				final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
 				if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
 					final Term notGuard = Util.not(script, guardTf.getFormula());
-					zeroIterationCase = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
+					reflexiveClosure = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
 				} else {
-					zeroIterationCase = Util.and(script, itFinIs0, xPrimeEqualsX);
+					reflexiveClosure = Util.and(script, itFinIs0, xPrimeEqualsX);
 				}
 			}
-			accelerationTerm = Util.or(script, zeroIterationCase, conjunction);
+			accelerationTerm = Util.or(script, reflexiveClosure, transitiveClosure);
 		} else {
-			accelerationTerm = conjunction;
+			accelerationTerm = transitiveClosure;
 		}
 
 		final Set<TermVariable> itFinSet = new HashSet<>();
