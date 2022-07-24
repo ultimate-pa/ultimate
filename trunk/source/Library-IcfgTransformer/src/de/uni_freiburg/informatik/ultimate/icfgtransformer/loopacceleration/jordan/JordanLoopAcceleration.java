@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +39,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.LoopAccelerationUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAcceleratedUpdate.LinearUpdate;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult.JordanTransformationStatus;
@@ -389,7 +389,8 @@ public class JordanLoopAcceleration {
 			loopAccelerationFormula = buildAccelerationFormula(logger, mgdScript, services, loopTransFormula,
 					loopAccelerationTerm, quantifyItFinExplicitly, itFin, inVars);
 		}
-		assert checkSomePropertiesOfLoopAccelerationFormula(logger, services, mgdScript, loopTransFormula, loopAccelerationFormula);
+		assert LoopAccelerationUtils.checkSomePropertiesOfLoopAccelerationFormula(services, mgdScript,
+				loopTransFormula, loopAccelerationFormula, REFLEXIVE_TRANSITIVE_CLOSURE);
 		return loopAccelerationFormula;
 	}
 
@@ -903,85 +904,6 @@ public class JordanLoopAcceleration {
 		} else if (Util.checkSat(script,
 				Util.and(script, formulaWithoutQuantifiers, Util.not(script, quantifiedFormula))) == LBool.UNKNOWN) {
 			logger.warn("Unable to prove correctness of quantifier elimination.");
-		}
-		return true;
-	}
-
-	/**
-	 * The resulting acceleration formula describes a subset R* of a reflexive transitive closure: ((({expr} x S_V,\mu)
-	 * \cap [[st]])* \cap (S_V,\mu x {!expr})). This method tests the correctness of the acceleration formula. It checks
-	 * whether {(x,x') | x = x' and not guard(x')}, {(x,x') | loopTransFormula(x,x') and not guard(closedForm(x,1))},
-	 * {(x,x') | sequentialComposition(x,x') and not guard(closedForm(x,2)} are subsets of R*. It also checks whether a
-	 * "havoc" of all assigned variables is a superset of R*.
-	 */
-	private static boolean checkSomePropertiesOfLoopAccelerationFormula(final ILogger logger,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula accelerationResult) {
-		final Script script = mgdScript.getScript();
-
-		script.echo(new QuotedObject("Check if formula equivalent to false"));
-		if (Util.checkSat(script, accelerationResult.getClosedFormula()) == LBool.UNSAT) {
-			logger.warn("Reflexive-transitive closure is equivalent to false");
-		}
-
-		final UnmodifiableTransFormula neg = TransFormulaUtils.negate(accelerationResult, mgdScript, services);
-		if (REFLEXIVE_TRANSITIVE_CLOSURE) {
-			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, loopTransFormula, neg);
-			final LBool lbool = Util.checkSat(mgdScript.getScript(), and.getClosedFormula());
-			if (lbool == LBool.SAT) {
-				throw new AssertionError("Not reflexive");
-			} else if (lbool == LBool.UNKNOWN) {
-				logger.warn("Insufficient resssources to check reflexivity");
-			}
-		}
-
-		// Check whether input relation R(x,x') is a subset of the result res(x,x').
-		// In order to implement this check, we determine if R(x,x') ∧ ¬res(x,x') is satisfiable.
-		{
-			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, loopTransFormula, neg);
-			final LBool lbool = Util.checkSat(mgdScript.getScript(), and.getClosedFormula());
-			if (lbool == LBool.SAT) {
-				throw new AssertionError("Input relation is not a subset of the result");
-			} else if (lbool == LBool.UNKNOWN) {
-				logger.warn("Insufficient resssources to check whether input relation is a subset of the result");
-			}
-		}
-
-		{
-			// Check whether concatenation of input relation with itself is a subset of the
-			// result. In order to implement this check, we determine if R(x,x')⚬R(x,x') ∧
-			// ¬res(x,x') is satisfiable.
-			final UnmodifiableTransFormula loop2 = TransFormulaUtils.sequentialComposition(logger, services, mgdScript,
-					true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-					SimplificationTechnique.NONE,
-					Arrays.asList(new UnmodifiableTransFormula[] { loopTransFormula, loopTransFormula }));
-			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, loop2, neg);
-			final LBool lbool = Util.checkSat(mgdScript.getScript(), and.getClosedFormula());
-			if (lbool == LBool.SAT) {
-				throw new AssertionError("Concatenation of input relation with itself is not a subset of the result");
-			} else if (lbool == LBool.UNKNOWN) {
-				logger.warn(
-						"Insufficient resssources to check whether concatenation of input relation with itself is a subset of the result");
-			}
-		}
-
-		{
-			// Check whether result is a subset of the havoced input relation.
-			// In order to implement this check, we determine if res(x,x') ∧
-			// ¬havoced(R)(x,x') is satisfiable.
-
-			final UnmodifiableTransFormula guardedHavoc = TransFormulaUtils.computeGuardedHavoc(loopTransFormula,
-					mgdScript, services, true);
-			final UnmodifiableTransFormula negatedGuardedHavoc = TransFormulaUtils.negate(guardedHavoc, mgdScript,
-					services);
-			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, accelerationResult, negatedGuardedHavoc);
-			final LBool lbool = Util.checkSat(mgdScript.getScript(), and.getClosedFormula());
-			if (lbool == LBool.SAT) {
-				throw new AssertionError("Result is not a subset of the input relation's guarded havoc");
-			} else if (lbool == LBool.UNKNOWN) {
-				logger.warn(
-						"Insufficient resssources to check whether result is a subset of the input relation's guarded havoc");
-			}
 		}
 		return true;
 	}
