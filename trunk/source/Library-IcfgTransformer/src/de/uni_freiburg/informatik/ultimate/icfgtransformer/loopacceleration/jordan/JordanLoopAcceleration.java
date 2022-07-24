@@ -362,47 +362,60 @@ public class JordanLoopAcceleration {
 	 */
 	private static UnmodifiableTransFormula createLoopAccelerationFormula(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SimultaneousUpdate su,
-			final SimultaneousUpdateWithReplacements suwr, final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
-			final JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
-			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible,
-			final boolean quantifyItFinExplicitly, final boolean isAlternatingClosedFormRequired) {
+			final SimultaneousUpdateWithReplacements suwr, final LinearUpdate linearUpdate,
+			final HashMap<Term, Integer> varMatrixIndexMap, final JordanTransformationResult jordanUpdate,
+			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
+			final boolean restrictedVersionPossible, final boolean quantifyItFinExplicitly,
+			final boolean isAlternatingClosedFormRequired) {
 
 		final UnmodifiableTransFormula loopAccelerationFormula;
-		final Map<IProgramVar, TermVariable> newInVars =
-				new HashMap<IProgramVar, TermVariable>(loopTransFormula.getInVars());
+		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(loopTransFormula.getInVars());
 		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, newInVars, loopTransFormula.getOutVars());
+
+		final Term transitiveClosure;
+		final TermVariable itFin;
 		if (isAlternatingClosedFormRequired) {
-			final TermVariable itFinHalf =
-					mgdScript.constructFreshTermVariable("itFinHalf", SmtSortUtils.getIntSort(mgdScript.getScript()));
-			final Term loopAccelerationTerm = createLoopAccelerationTermAlternating(logger, services, mgdScript, su, suwr,
-					linearUpdate, varMatrixIndexMap, jordanUpdate, loopTransFormula, guardTf, quantifyItFinExplicitly,
-					itFinHalf, xPrimeEqualsX, newInVars);
-			loopAccelerationFormula = buildAccelerationFormula(logger, mgdScript, services, loopTransFormula,
-					loopAccelerationTerm, quantifyItFinExplicitly, itFinHalf, newInVars);
+			itFin = mgdScript.constructFreshTermVariable("itFinHalf", SmtSortUtils.getIntSort(mgdScript.getScript()));
+			transitiveClosure = createLoopAccelerationTermAlternating(logger, services, mgdScript, su, suwr,
+					linearUpdate, varMatrixIndexMap, jordanUpdate, loopTransFormula, guardTf, itFin, newInVars);
 		} else {
-			final TermVariable itFin =
-					mgdScript.constructFreshTermVariable("itFin", SmtSortUtils.getIntSort(mgdScript.getScript()));
-			final Term loopAccelerationTerm = createLoopAccelerationTermSequential(logger, services, mgdScript, su, suwr,
+			itFin = mgdScript.constructFreshTermVariable("itFin", SmtSortUtils.getIntSort(mgdScript.getScript()));
+			transitiveClosure = createLoopAccelerationTermSequential(logger, services, mgdScript, su, suwr,
 					linearUpdate, varMatrixIndexMap, jordanUpdate, loopTransFormula, guardTf, restrictedVersionPossible,
-					quantifyItFinExplicitly, itFin, xPrimeEqualsX, newInVars);
-			loopAccelerationFormula = buildAccelerationFormula(logger, mgdScript, services, loopTransFormula,
-					loopAccelerationTerm, quantifyItFinExplicitly, itFin, newInVars);
+					itFin, newInVars);
 		}
-		assert LoopAccelerationUtils.checkSomePropertiesOfLoopAccelerationFormula(services, mgdScript,
-				loopTransFormula, loopAccelerationFormula, REFLEXIVE_TRANSITIVE_CLOSURE);
+		final Term accelerationTerm;
+		if (REFLEXIVE_TRANSITIVE_CLOSURE) {
+			// (and (not (guard)) (x'=x))
+			final Term reflexiveClosure;
+			{
+				if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
+					final Term notGuard = Util.not(mgdScript.getScript(), guardTf.getFormula());
+					reflexiveClosure = Util.and(mgdScript.getScript(), notGuard, xPrimeEqualsX);
+				} else {
+					reflexiveClosure = Util.and(mgdScript.getScript(), xPrimeEqualsX);
+				}
+			}
+			accelerationTerm = Util.or(mgdScript.getScript(), reflexiveClosure, transitiveClosure);
+		} else {
+			accelerationTerm = transitiveClosure;
+		}
+		loopAccelerationFormula = buildAccelerationTransFormula(logger, mgdScript, services, loopTransFormula,
+				accelerationTerm, quantifyItFinExplicitly, itFin, newInVars);
+
+		assert LoopAccelerationUtils.checkSomePropertiesOfLoopAccelerationFormula(services, mgdScript, loopTransFormula,
+				loopAccelerationFormula, REFLEXIVE_TRANSITIVE_CLOSURE);
 		return loopAccelerationFormula;
 	}
 
 	/**
 	 * Simplify the term representing the loop acceleration formula and build UnmodifiableTransFormula.
 	 */
-	private static UnmodifiableTransFormula buildAccelerationFormula(final ILogger logger,
+	private static UnmodifiableTransFormula buildAccelerationTransFormula(final ILogger logger,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final UnmodifiableTransFormula loopTransFormula, final Term loopAccelerationTerm,
 			final boolean quantifyItFinExplicitly, final TermVariable itFin,
 			final Map<IProgramVar, TermVariable> inVars) {
-		UnmodifiableTransFormula loopAccelerationFormula;
-
 		final Term nnf =
 				new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(loopAccelerationTerm);
 		final Term loopAccelerationFormulaWithoutQuantifiers = PartialQuantifierElimination.eliminateCompat(services,
@@ -411,25 +424,21 @@ public class JordanLoopAcceleration {
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
 				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
 
+		UnmodifiableTransFormula loopAccelerationFormula;
 		if (quantifyItFinExplicitly) {
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, loopTransFormula.getOutVars(),
 					loopTransFormula.getNonTheoryConsts().isEmpty(), loopTransFormula.getNonTheoryConsts(),
 					loopTransFormula.getBranchEncoders().isEmpty(), loopTransFormula.getBranchEncoders(),
 					loopTransFormula.getAuxVars().isEmpty());
 			tfb.setInfeasibility(loopTransFormula.isInfeasible());
-
 			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS,
 					Collections.singleton(itFin), simplified);
-
 			tfb.setFormula(quantified);
 			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-			// Correctness of quantifier elimination is checked within
-			// checkPropertiesOfLoopAccelerationFormula.
 		} else {
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, loopTransFormula.getOutVars(),
 					loopTransFormula.getNonTheoryConsts().isEmpty(), loopTransFormula.getNonTheoryConsts(),
 					loopTransFormula.getBranchEncoders().isEmpty(), loopTransFormula.getBranchEncoders(), false);
-
 			tfb.addAuxVar(itFin);
 			tfb.setInfeasibility(loopTransFormula.isInfeasible());
 			tfb.setFormula(simplified);
@@ -456,7 +465,6 @@ public class JordanLoopAcceleration {
 	 * 				(guard(closedForm(x,it)))))
 	 * 		((x' = closedForm(x,itFin)))))))
 	 * </pre>
-	 *
 	 * @param services
 	 * @param mgdScript
 	 * @param su
@@ -472,8 +480,7 @@ public class JordanLoopAcceleration {
 			final SimultaneousUpdateWithReplacements suwr, final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
 			final JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
 			final UnmodifiableTransFormula guardTf, final boolean restrictedVersionPossible,
-			final boolean quantifyItFinExplicitly, final TermVariable itFin, final Term xPrimeEqualsX,
-			final Map<IProgramVar, TermVariable> inVars) {
+			final TermVariable itFin, final Map<IProgramVar, TermVariable> inVars) {
 		final Script script = mgdScript.getScript();
 
 		final ClosedFormOfUpdate closedFormItFinTuple =
@@ -572,25 +579,7 @@ public class JordanLoopAcceleration {
 //						su.getDeterministicArrayWrites()));
 //		conjuncts.add(eq);
 		final Term transitiveClosure = SmtUtils.and(script, conjuncts);
-
-		final Term accelerationTerm;
-		if (REFLEXIVE_TRANSITIVE_CLOSURE) {
-			// (and (= itFin 0) (not (guard)) (x'=x))
-			final Term reflexiveClosure;
-			{
-				final Term itFinIs0 = script.term("=", itFin, script.numeral(BigInteger.ZERO));
-				if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
-					final Term notGuard = Util.not(script, guardTf.getFormula());
-					reflexiveClosure = Util.and(script, itFinIs0, notGuard, xPrimeEqualsX);
-				} else {
-					reflexiveClosure = Util.and(script, itFinIs0, xPrimeEqualsX);
-				}
-			}
-			accelerationTerm = Util.or(script, reflexiveClosure, transitiveClosure);
-		} else {
-			accelerationTerm = transitiveClosure;
-		}
-		return accelerationTerm;
+		return transitiveClosure;
 	}
 
 	/**
@@ -714,7 +703,6 @@ public class JordanLoopAcceleration {
 	 * 					(guard(closedFormOdd(x, 2*itHalf+1))))))
 	 * 		(x' = closedFormOdd(x,2*itFinHalf+1)))))
 	 * </pre>
-	 *
 	 * @param services
 	 * @param mgdScript
 	 * @param su
@@ -729,17 +717,10 @@ public class JordanLoopAcceleration {
 			final SimultaneousUpdate su, final SimultaneousUpdateWithReplacements suwr, final LinearUpdate linearUpdate,
 			final HashMap<Term, Integer> varMatrixIndexMap, final JordanTransformationResult jordanUpdate,
 			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
-			final boolean quantifyItFinExplicitly, final TermVariable itFinHalf, final Term xPrimeEqualsX,
-			final Map<IProgramVar, TermVariable> inVars) {
+			final TermVariable itFinHalf, final Map<IProgramVar, TermVariable> inVars) {
 
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
-
-		// (and (= itFinHalf 0) (not (guard)) (x'=x))
-		// final TermVariable itFinHalf = mgdScript.constructFreshTermVariable("itFinHalf", sort);
-		final Term itFinHalfEquals0 = script.term("=", itFinHalf, script.numeral(BigInteger.ZERO));
-		final Term notGuard = Util.not(script, guardTf.getFormula());
-		final Term firstFinalDisjunctEven = Util.and(script, itFinHalfEquals0, notGuard, xPrimeEqualsX);
 
 		// (> itFinHalf 0)
 		final Term itFinHalfGreater0 = script.term(">", itFinHalf, script.numeral(BigInteger.ZERO));
@@ -838,8 +819,7 @@ public class JordanLoopAcceleration {
 		innerConjuncts2.add(xPrimedOdd);
 
 		final Term innerConjunction2 = SmtUtils.and(script, innerConjuncts2);
-		final Term middleDisjunction = Util.or(script, firstFinalDisjunctEven, innerConjunction1);
-		final Term disjunction = Util.or(script, middleDisjunction, innerConjunction2);
+		final Term disjunction = Util.or(script, innerConjunction1, innerConjunction2);
 		return disjunction;
 	}
 
