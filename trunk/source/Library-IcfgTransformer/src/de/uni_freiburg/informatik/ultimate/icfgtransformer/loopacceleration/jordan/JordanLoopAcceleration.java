@@ -434,10 +434,6 @@ public class JordanLoopAcceleration {
 			tfb.setInfeasibility(loopTransFormula.isInfeasible());
 			tfb.setFormula(simplified);
 			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
-
-			// Check correctness of quantifier elimination.
-			assert checkCorrectnessOfQuantifierElimination(logger, mgdScript.getScript(), loopAccelerationTerm,
-					simplified);
 		}
 		return loopAccelerationFormula;
 	}
