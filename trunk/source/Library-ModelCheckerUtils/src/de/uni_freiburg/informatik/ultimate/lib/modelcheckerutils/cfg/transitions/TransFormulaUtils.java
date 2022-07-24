@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -871,9 +870,9 @@ public final class TransFormulaUtils {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			if (cellPrecisionForArrays && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
-				final Set<ApplicationTerm> stores =
-						new ApplicationTermFinder("store", false).findMatchingSubterms(tf.getFormula());
-				for (final ApplicationTerm appTerm : stores) {
+				final Set<Term> stores = SmtUtils.extractApplicationTerms("store", tf.getFormula(), false);
+				for (final Term store : stores) {
+					final ApplicationTerm appTerm = (ApplicationTerm) store;
 					final Term storedValue = appTerm.getParameters()[2];
 					if (!SmtSortUtils.isArraySort(storedValue.getSort())) {
 						final TermVariable aux = mgdScript.constructFreshTermVariable("rosehip", storedValue.getSort());
