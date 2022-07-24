@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
@@ -419,7 +418,8 @@ public class JordanLoopAcceleration {
 					loopTransFormula.getAuxVars().isEmpty());
 			tfb.setInfeasibility(loopTransFormula.isInfeasible());
 
-			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, Collections.singleton(itFin), simplified);
+			final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS,
+					Collections.singleton(itFin), simplified);
 
 			tfb.setFormula(quantified);
 			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
@@ -431,7 +431,7 @@ public class JordanLoopAcceleration {
 					loopTransFormula.getBranchEncoders().isEmpty(), loopTransFormula.getBranchEncoders(), false);
 
 			tfb.addAuxVar(itFin);
-			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+			tfb.setInfeasibility(loopTransFormula.isInfeasible());
 			tfb.setFormula(simplified);
 			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
 
