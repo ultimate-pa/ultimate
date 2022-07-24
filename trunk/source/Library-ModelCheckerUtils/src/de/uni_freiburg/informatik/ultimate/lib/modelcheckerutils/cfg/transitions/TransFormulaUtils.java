@@ -868,7 +868,12 @@ public final class TransFormulaUtils {
 			final boolean cellPrecisionForArrays) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar bv : tf.getAssignedVars()) {
+		for (final IProgramVar bv : tf.getOutVars().keySet()) {
+			if (tf.getOutVars().get(bv) == tf.getInVars().get(bv)) {
+				// inVar and outVar are identical, variables that are not changed should not be
+				// havoced
+				continue;
+			}
 			if (cellPrecisionForArrays && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
 				final Set<Term> stores = SmtUtils.extractApplicationTerms("store", tf.getFormula(), false);
 				for (final Term store : stores) {
