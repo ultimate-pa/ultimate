@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 
 /**
@@ -144,8 +145,7 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructGeneralizedAutomaton(
 			final NestedLassoRun<LETTER, IPredicate> counterexample,
-			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle,
-			final BinaryStatePredicateManager bspm, final IPredicate rankEqAndSi, final IPredicate hondaPredicate,
+			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle, final BspmResult bspmResult,
 			final PredicateUnifier pu, final IPredicate[] stemInterpolants, final IPredicate[] loopInterpolants,
 			final NestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final BuchiHoareTripleChecker bhtc) {
 		switch (biaConstructionStyle.getInterpolantAutomaton()) {
@@ -174,11 +174,13 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 			if (biaConstructionStyle.cannibalizeLoop()) {
 				try {
 					loopInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(loopInterpolants));
-					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, rankEqAndSi.getFormula()));
+					loopInterpolantsForRefinement
+							.addAll(pu.cannibalize(false, bspmResult.getRankEqAndSi().getFormula()));
 
-					final LoopCannibalizer<LETTER> lc = new LoopCannibalizer<>(counterexample,
-							loopInterpolantsForRefinement, rankEqAndSi, hondaPredicate, pu, mCsToolkit, mInterpolation,
-							mServices, mSimplificationTechnique, mXnfConversionTechnique);
+					final LoopCannibalizer<LETTER> lc =
+							new LoopCannibalizer<>(counterexample, loopInterpolantsForRefinement,
+									bspmResult.getRankEqAndSi(), bspmResult.getHondaPredicate(), pu, mCsToolkit,
+									mInterpolation, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
 					final String taskDescription = "loop cannibalization";
@@ -187,12 +189,12 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 				}
 			} else {
 				loopInterpolantsForRefinement = new HashSet<>(Arrays.asList(loopInterpolants));
-				loopInterpolantsForRefinement.add(rankEqAndSi);
+				loopInterpolantsForRefinement.add(bspmResult.getRankEqAndSi());
 			}
 
-			return new BuchiInterpolantAutomatonBouncer<>(mCsToolkit, mPredicateFactory, bspm, bhtc, counterexample,
-					stemInterpolantsForRefinement, loopInterpolantsForRefinement, biaConstructionStyle, pu, mServices,
-					interpolAutomaton);
+			return new BuchiInterpolantAutomatonBouncer<>(mCsToolkit, mPredicateFactory, bspmResult, bhtc,
+					counterexample, stemInterpolantsForRefinement, loopInterpolantsForRefinement, biaConstructionStyle,
+					pu, mServices, interpolAutomaton);
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
 		}

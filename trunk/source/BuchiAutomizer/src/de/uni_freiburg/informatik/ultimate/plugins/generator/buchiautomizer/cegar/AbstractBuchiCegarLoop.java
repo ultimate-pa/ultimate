@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
@@ -513,21 +514,11 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	}
 
 	private A refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
-		final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
-		final IPredicate hondaPredicate;
-		final IPredicate rankEqAndSi;
-		final IPredicate siConjunction = bspm.getSiConjunction();
-		final IPredicate unseededOrRankDecrease =
-				mPredicateFactory.or(bspm.getStemPrecondition(), bspm.getRankDecreaseAndBound());
-		if (SmtUtils.isTrueLiteral(siConjunction.getFormula())) {
-			rankEqAndSi = bspm.getRankEquality();
-			hondaPredicate = unseededOrRankDecrease;
-		} else {
-			rankEqAndSi = mPredicateFactory.and(bspm.getRankEquality(), siConjunction);
-			hondaPredicate = mPredicateFactory.and(siConjunction, unseededOrRankDecrease);
-		}
+		final BspmResult bspmResult = lassoCheck.getBspmResult();
+		final IPredicate hondaPredicate = bspmResult.getHondaPredicate();
+		final IPredicate rankEqAndSi = bspmResult.getRankEqAndSi();
 
-		assert !SmtUtils.isFalseLiteral(bspm.getStemPrecondition().getFormula());
+		assert !SmtUtils.isFalseLiteral(bspmResult.getStemPrecondition().getFormula());
 		assert !SmtUtils.isFalseLiteral(hondaPredicate.getFormula());
 		assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
 
@@ -535,7 +526,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		final String dumpPath = mPref.dumpPath();
 		final Format format = mPref.getAutomataFormat();
 
-		final RankingFunction rankingFunction = bspm.getTerminationArgument().getRankingFunction();
+		final RankingFunction rankingFunction = bspmResult.getTerminationArgument().getRankingFunction();
 		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();
 		mMDBenchmark.reportRankingFunction(mIteration, rankingFunction, script);
 
@@ -560,14 +551,15 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				final PredicateUnifier pu =
 						new PredicateUnifier(mLogger, mServices, mCsToolkitWithRankVars.getManagedScript(),
 								mPredicateFactory, mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
-								XNF_CONVERSION_TECHNIQUE, bspm.getStemPrecondition(), hondaPredicate, rankEqAndSi,
-								bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
+								XNF_CONVERSION_TECHNIQUE, bspmResult.getStemPrecondition(), hondaPredicate, rankEqAndSi,
+								bspmResult.getStemPostcondition(), bspmResult.getRankDecreaseAndBound(),
+								bspmResult.getSiConjunction());
 				final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
-						bspm.getStemPrecondition(), bspm.getStemPostcondition(), pu);
+						bspmResult.getStemPrecondition(), bspmResult.getStemPostcondition(), pu);
 				final IPredicate[] loopInterpolants =
 						getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
 				final NestedWordAutomaton<L, IPredicate> inputAutomaton =
-						mInterpolantAutomatonBuilder.constructInterpolantAutomaton(bspm.getStemPrecondition(),
+						mInterpolantAutomatonBuilder.constructInterpolantAutomaton(bspmResult.getStemPrecondition(),
 								mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
 								BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
 				if (dumpAutomata) {
@@ -585,8 +577,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 						mCounterexample.getNestedLassoWord()).getResult();
 
 				interpolantAutomaton = mInterpolantAutomatonBuilder.constructGeneralizedAutomaton(mCounterexample,
-						constructionStyle, bspm, hondaPredicate, rankEqAndSi, pu, stemInterpolants, loopInterpolants,
-						inputAutomaton, bhtc);
+						constructionStyle, bspmResult, pu, stemInterpolants, loopInterpolants, inputAutomaton, bhtc);
 				mIsSemiDeterministic = constructionStyle.isAlwaysSemiDeterministic();
 				newAbstraction = refineBuchi(mAbstraction, interpolantAutomaton);
 				// Switch to read-only-mode for lazy constructions
@@ -664,7 +655,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				}
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mBci);
-				mBinaryStatePredicateManager.clearPredicates();
 				return reduceAbstractionSize(newAbstraction, mAutomataMinimizationAfterRankBasedRefinement);
 			}
 			stage++;

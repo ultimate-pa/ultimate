@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
@@ -88,7 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
@@ -209,6 +208,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
 
+	private BspmResult mBspmResult;
+
 	public LassoCheck(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final SmtFunctionsAndAxioms smtSymbols, final BinaryStatePredicateManager bspm,
 			final NestedLassoRun<L, IPredicate> counterexample, final String lassoCheckIdentifier,
@@ -259,10 +260,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
 		} else if (mLassoCheckResult.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE;
-		} else // loop not infeasible
-		if (mLassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
-			assert mBspm.providesPredicates();
-		} else {
+		} else if (mLassoCheckResult.getLoopTermination() != SynthesisResult.TERMINATING) {
 			assert mConcatCheck != null;
 			if (mLassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
 				assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
@@ -295,8 +293,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return mConcatenatedCounterexample;
 	}
 
-	public BinaryStatePredicateManager getBinaryStatePredicateManager() {
-		return mBspm;
+	public BspmResult getBspmResult() {
+		return mBspmResult;
 	}
 
 	public NonTerminationArgument getNonTerminationArgument() {
@@ -362,34 +360,34 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				mXnfConversionTechnique, mSimplificationTechnique);
 	}
 
-	private boolean areSupportingInvariantsCorrect() {
-		final NestedWord<L> stem = mCounterexample.getStem().getWord();
-		mLogger.info("Stem: " + stem);
-		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
-		mLogger.info("Loop: " + loop);
-		boolean siCorrect = true;
-		if (stem.length() == 0) {
-			// do nothing
-			// TODO: check that si is equivalent to true
-		} else {
-			for (final SupportingInvariant si : mBspm.getTerminationArgument().getSupportingInvariants()) {
-				final IPredicate siPred = mBspm.supportingInvariant2Predicate(si);
-				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop);
-			}
-			// check array index supporting invariants
-			for (final Term aisi : mBspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
-				final IPredicate siPred = mBspm.term2Predicate(aisi);
-				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop);
-			}
-		}
-		return siCorrect;
-	}
-
-	private boolean isRankingFunctionCorrect() {
-		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
-		mLogger.info("Loop: " + loop);
-		return mBspm.checkRankDecrease(loop);
-	}
+	// private boolean areSupportingInvariantsCorrect() {
+	// final NestedWord<L> stem = mCounterexample.getStem().getWord();
+	// mLogger.info("Stem: " + stem);
+	// final NestedWord<L> loop = mCounterexample.getLoop().getWord();
+	// mLogger.info("Loop: " + loop);
+	// boolean siCorrect = true;
+	// if (stem.length() == 0) {
+	// // do nothing
+	// // TODO: check that si is equivalent to true
+	// } else {
+	// for (final SupportingInvariant si : mBspm.getTerminationArgument().getSupportingInvariants()) {
+	// final IPredicate siPred = mBspm.supportingInvariant2Predicate(si);
+	// siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop);
+	// }
+	// // check array index supporting invariants
+	// for (final Term aisi : mBspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
+	// final IPredicate siPred = mBspm.term2Predicate(aisi);
+	// siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop);
+	// }
+	// }
+	// return siCorrect;
+	// }
+	//
+	// private boolean isRankingFunctionCorrect() {
+	// final NestedWord<L> loop = mCounterexample.getLoop().getWord();
+	// mLogger.info("Loop: " + loop);
+	// return mBspm.checkRankDecrease(loop);
+	// }
 
 	private String generateFileBasenamePrefix(final boolean withStem) {
 		return mLassoCheckIdentifier + "_" + (withStem ? "Lasso" : "Loop");
@@ -648,7 +646,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// }
 
 		final TerminationArgument termArg =
-				tryTemplatesAndComputePredicates(withStem, laT, rankingFunctionTemplates, stemTF, loopTF);
+				tryTemplatesAndComputePredicates(laT, rankingFunctionTemplates, stemTF, loopTF);
+		mBspmResult = mBspm.computePredicates(termArg, mRemoveSuperfluousSupportingInvariants, stemTF, loopTF,
+				mModifiableGlobalsAtHonda);
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
@@ -659,17 +659,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return SynthesisResult.UNKNOWN;
 	}
 
-	/**
-	 * @param withStem
-	 * @param lrta
-	 * @param nonTermArgument
-	 * @param rankingFunctionTemplates
-	 * @param loopTF
-	 * @return
-	 * @throws AssertionError
-	 * @throws IOException
-	 */
-	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, final LassoAnalysis la,
+	private TerminationArgument tryTemplatesAndComputePredicates(final LassoAnalysis la,
 			final List<RankingTemplate> rankingFunctionTemplates, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF) throws AssertionError, IOException {
 		TerminationArgument firstTerminationArgument = null;
@@ -696,27 +686,22 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			if (termArg != null) {
 				assert termArg.getRankingFunction() != null;
 				assert termArg.getSupportingInvariants() != null;
-				mBspm.computePredicates(!withStem, termArg, mRemoveSuperfluousSupportingInvariants, stemTF, loopTF,
-						mModifiableGlobalsAtHonda);
-				assert mBspm.providesPredicates();
+				// TODO: Check the supporting invariants here. This needs methods from bspm that do not exist anymore.
 				// assert areSupportingInvariantsCorrect() : "incorrect supporting invariant with"
 				// + rft.getClass().getSimpleName();
-				assert isRankingFunctionCorrect() : "incorrect ranking function with" + rft.getClass().getSimpleName();
+				// assert isRankingFunctionCorrect() : "incorrect ranking function with" +
+				// rft.getClass().getSimpleName();
 				if (!mTemplateBenchmarkMode) {
 					return termArg;
 				}
 				if (firstTerminationArgument == null) {
 					firstTerminationArgument = termArg;
 				}
-				mBspm.clearPredicates();
 			}
 		}
 		if (firstTerminationArgument != null) {
 			assert firstTerminationArgument.getRankingFunction() != null;
 			assert firstTerminationArgument.getSupportingInvariants() != null;
-			mBspm.computePredicates(!withStem, firstTerminationArgument, mRemoveSuperfluousSupportingInvariants, stemTF,
-					loopTF, mModifiableGlobalsAtHonda);
-			assert mBspm.providesPredicates();
 			return firstTerminationArgument;
 		}
 		return null;
@@ -891,7 +876,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 
 		private SynthesisResult checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {
-			assert !mBspm.providesPredicates() : "termination already checked";
 			final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 			if (containsArrays) {
 				// if there are array variables we will probably run in a huge
@@ -903,7 +887,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		private SynthesisResult checkLassoTermination(final UnmodifiableTransFormula stemTF,
 				final UnmodifiableTransFormula loopTF) throws IOException {
-			assert !mBspm.providesPredicates() : "termination already checked";
 			assert loopTF != null;
 			final boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
 					|| SmtUtils.containsArrayVariables(loopTF.getFormula());
