@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityana
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbolFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
@@ -554,8 +555,9 @@ public class MapEliminator {
 		// 20211226 Matthias: I am wondering why the substitution is applied twice.
 		// Because we often have two-dimensional arrays? Shouldn't we apply the
 		// substitution until a fixpoint is reached?
-		return Substitution.apply(mManagedScript, substitutionMap,
-				Substitution.apply(mManagedScript, substitutionMap, SmtUtils.and(mScript, conjuncts)));
+		// TODO: We need the PureSubstitution here, since the normal form might break the the required sorting
+		final PureSubstitution substitution = new PureSubstitution(mManagedScript, substitutionMap);
+		return substitution.transform(substitution.transform(SmtUtils.and(mScript, conjuncts)));
 	}
 
 	/**
