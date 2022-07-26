@@ -647,10 +647,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		final TerminationArgument termArg =
 				tryTemplatesAndComputePredicates(laT, rankingFunctionTemplates, stemTF, loopTF);
-		mBspmResult = mBspm.computePredicates(termArg, mRemoveSuperfluousSupportingInvariants, stemTF, loopTF,
-				mModifiableGlobalsAtHonda);
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
+			mBspmResult = mBspm.computePredicates(termArg, mRemoveSuperfluousSupportingInvariants, stemTF, loopTF,
+					mModifiableGlobalsAtHonda);
 			return SynthesisResult.TERMINATING;
 		}
 		if (nonTermArgument != null) {
