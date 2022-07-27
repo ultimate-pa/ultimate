@@ -172,7 +172,7 @@ public class TransFormulaLRWithArrayCells {
 		final EqualityAnalysisResult invariantEqualitiesAfter = equalityAnalysisAtHonda;
 
 		final IndexAnalyzer ia = new IndexAnalyzer(mResult.getFormula(), mFirstGeneration2Indices, boogie2smt, mResult,
-				invariantEqualitiesBefore, invariantEqualitiesAfter, mLogger, mReplacementVarFactory, script);
+				invariantEqualitiesBefore, invariantEqualitiesAfter, mLogger, script);
 		mIndexAnalysisResult = ia.getResult();
 		final CellVariableBuilder cvb = new CellVariableBuilder(mResult, this, replacementVarFactory, mLogger,
 				mFirstGeneration2Indices, mArrayCellInVars, mArrayCellOutVars);

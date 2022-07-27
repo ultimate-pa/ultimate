@@ -325,7 +325,7 @@ public class MapEliminator {
 		final HashRelation<MapTemplate, ArrayIndex> localIndices =
 				getLocalIndices(newTF, mTransFormulasToLocalIndices.get(transformula));
 		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(term, computeDoubletons(localIndices), mSymbolTable,
-				newTF, equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory, mManagedScript);
+				newTF, equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mManagedScript);
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
 		final Term storeFreeTerm = replaceStoreTerms(term, newTF, invariants);
 		assert !SmtUtils.containsFunctionApplication(storeFreeTerm, "store") : "The formula contains still store-terms";
