@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -70,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -79,14 +79,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -173,13 +172,18 @@ public abstract class AbstractAbstractionTestSuite<H> {
 	}
 
 	private Term parseWithVariables(final String syntax) {
-		final String template = "(%1$s %2$s) (%1$s_in %2$s) (%1$s_out %2$s)";
-		final String declarations = mSymbolTable.getGlobals().stream()
-				.map(pv -> String.format(template, pv.getTermVariable().getName(), pv.getSort()))
-				.collect(Collectors.joining(" ")) + " (aux Int)";
-		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
-		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
-		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
+		final var progVars = suffixVars("");
+		final var inVars = suffixVars("_in");
+		final var outVars = suffixVars("_out");
+		final var auxVars = Set.of(mScript.getTheory().createTermVariable("aux", mIntSort));
+		return SmtParserUtils.parseWithVariables(syntax, mServices, mMgdScript,
+				DataStructureUtils.union(progVars, inVars, outVars, auxVars));
+	}
+
+	private Set<TermVariable> suffixVars(final String suffix) {
+		return mSymbolTable.getGlobals().stream().map(
+				pv -> mScript.getTheory().createTermVariable(pv.getTermVariable().getName() + suffix, pv.getSort()))
+				.collect(Collectors.toSet());
 	}
 
 	protected IPredicate pred(final String formula) {
