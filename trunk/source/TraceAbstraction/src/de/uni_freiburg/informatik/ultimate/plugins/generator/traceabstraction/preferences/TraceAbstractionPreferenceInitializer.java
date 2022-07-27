@@ -97,6 +97,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "amount of iterations occured. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
 
+	// This setting is useful to debug the proof check.
+	public static final String LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE =
+			"Read initial proof assertions from file if available";
+	private static final boolean DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE = false;
+
 	/*
 	 * Settings for Petri net Large Block Encoding (Lipton Reduction)
 	 */
@@ -441,6 +446,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS, PreferenceType.Combo,
 						InsufficientError.values()),
 
+				new UltimatePreferenceItem<>(LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE,
+						DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
 						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,

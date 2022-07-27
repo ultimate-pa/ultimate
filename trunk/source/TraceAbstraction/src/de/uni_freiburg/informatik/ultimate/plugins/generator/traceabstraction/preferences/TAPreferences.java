@@ -219,6 +219,10 @@ public final class TAPreferences {
 				InsufficientError.class);
 	}
 
+	public boolean readInitialProof() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE);
+	}
+
 	public FloydHoareAutomataReuse getFloydHoareAutomataReuse() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_FLOYD_HOARE_AUTOMATA_REUSE,
 				FloydHoareAutomataReuse.class);
