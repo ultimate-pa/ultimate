@@ -148,8 +148,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
-			final Script script, final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
-			final Set<ACTION> readsProcedureintern) {
+			final Script script, final InterferenceProvider<ACTION, STATE> interferences) {
 		throw new UnsupportedOperationException("Operation not supported for FixpointEngineConcurrent");
 	}
 
@@ -171,8 +170,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 					// runWithInterferences needs a Collection
 					final Collection<LOC> entryCollection = new ArrayList<>();
 					entryCollection.add((LOC) entryNodes.get(procedure));
-					final AbsIntResult<STATE, ACTION, LOC> result = mFixpointEngine.runWithInterferences(
-							entryCollection, script, procedureInterferences, readsProcedureIntern.get(procedure));
+					final InterferenceProvider<ACTION, STATE> interferenceProvider =
+							new InterferenceProvider<>(procedureInterferences, readsProcedureIntern.get(procedure));
+					final AbsIntResult<STATE, ACTION, LOC> result =
+							mFixpointEngine.runWithInterferences(entryCollection, script, interferenceProvider);
 
 					// merge mStateStorage and result.getLoc2States
 					for (final var locAndStates : result.getLoc2States().entrySet()) {

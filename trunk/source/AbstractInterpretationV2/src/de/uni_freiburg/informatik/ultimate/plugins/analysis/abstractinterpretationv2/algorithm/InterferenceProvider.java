@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2017 University of Freiburg
+ * Copyright (C) 2022 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -24,27 +24,41 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
- * @param <STATE>
  * @param <ACTION>
- * @param <VARDECL>
- * @param <LOC>
+ * @param <STATE>
  */
+public class InterferenceProvider<ACTION, STATE extends IAbstractState<STATE>> {
+	private final Map<ACTION, DisjunctiveAbstractState<STATE>> mInterferingStates;
+	private final Set<ACTION> mReadsFromOwnThread;
 
-public interface IFixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> {
+	public InterferenceProvider(final Map<ACTION, DisjunctiveAbstractState<STATE>> interferingStates,
+			final Set<ACTION> readsFromOwnThread) {
+		mInterferingStates = interferingStates;
+		mReadsFromOwnThread = readsFromOwnThread;
+	}
 
-	AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start, final Script script);
+	public InterferenceProvider() {
+		this(Map.of(), Set.of());
+	}
 
-	AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start, final Script script,
-			InterferenceProvider<ACTION, STATE> interferences);
+	public DisjunctiveAbstractState<STATE> getInterferingState(final ACTION action) {
+		return mInterferingStates.get(action);
+	}
+
+	public boolean canReadFromOwnThread(final ACTION action) {
+		return mReadsFromOwnThread.contains(action);
+	}
 }
