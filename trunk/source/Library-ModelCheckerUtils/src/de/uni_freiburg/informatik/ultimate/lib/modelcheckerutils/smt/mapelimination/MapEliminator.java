@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityana
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbolFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
@@ -214,8 +213,8 @@ public class MapEliminator {
 				final Term array1 = arrayWrite.getOldArray();
 				final Term array2 = arrayWrite2.getOldArray();
 				if (allVariablesAreVisible(array1, transformula) && allVariablesAreVisible(array2, transformula)) {
-					final Term globalArray1 = translateTermVariablesToDefinitions(mScript, transformula, array1);
-					final Term globalArray2 = translateTermVariablesToDefinitions(mScript, transformula, array2);
+					final Term globalArray1 = translateTermVariablesToDefinitions(mManagedScript, transformula, array1);
+					final Term globalArray2 = translateTermVariablesToDefinitions(mManagedScript, transformula, array2);
 					// If the two arrays are different, add them to the set of related arrays
 					// (the indices need to be shared then)
 					if (globalArray1 != globalArray2) {
@@ -255,11 +254,11 @@ public class MapEliminator {
 				return;
 			}
 		}
-		final Term globalArray = translateTermVariablesToDefinitions(mScript, transformula, array);
+		final Term globalArray = translateTermVariablesToDefinitions(mManagedScript, transformula, array);
 		mTransFormulasToLocalIndices.get(transformula).addPair(new ArrayTemplate(globalArray, mScript), index);
 		if (allVariablesAreVisible(index, transformula)) {
 			final ArrayIndex globalIndex =
-					new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
+					new ArrayIndex(translateTermVariablesToDefinitions(mManagedScript, transformula, index));
 			for (final TermVariable var : globalIndex.getFreeVars()) {
 				mVariablesToIndices.addPair(var, globalIndex);
 			}
@@ -288,7 +287,7 @@ public class MapEliminator {
 		mUninterpretedFunctions.add(functionName);
 		if (allVariablesAreVisible(index, transformula)) {
 			final ArrayIndex globalIndex =
-					new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
+					new ArrayIndex(translateTermVariablesToDefinitions(mManagedScript, transformula, index));
 			for (final TermVariable var : globalIndex.getFreeVars()) {
 				mVariablesToIndices.addPair(var, globalIndex);
 			}
@@ -507,13 +506,13 @@ public class MapEliminator {
 		for (final Term select : SmtUtils.extractApplicationTerms("select", term, true)) {
 			if (!select.getSort().isArraySort()) {
 				substitution.put(select,
-						getReplacementVar(select, transformula, mScript, mReplacementVarFactory, mAuxVars));
+						getReplacementVar(select, transformula, mManagedScript, mReplacementVarFactory, mAuxVars));
 			}
 		}
 		for (final String functionName : mUninterpretedFunctions) {
 			for (final Term functionCall : SmtUtils.extractApplicationTerms(functionName, term, true)) {
-				substitution.put(functionCall,
-						getReplacementVar(functionCall, transformula, mScript, mReplacementVarFactory, mAuxVars));
+				substitution.put(functionCall, getReplacementVar(functionCall, transformula, mManagedScript,
+						mReplacementVarFactory, mAuxVars));
 			}
 		}
 		return Substitution.apply(mManagedScript, substitution, term);
@@ -555,9 +554,8 @@ public class MapEliminator {
 		// 20211226 Matthias: I am wondering why the substitution is applied twice.
 		// Because we often have two-dimensional arrays? Shouldn't we apply the
 		// substitution until a fixpoint is reached?
-		// TODO: We need the PureSubstitution here, since the normal form might break the the required sorting
-		final PureSubstitution substitution = new PureSubstitution(mManagedScript, substitutionMap);
-		return substitution.transform(substitution.transform(SmtUtils.and(mScript, conjuncts)));
+		return Substitution.apply(mManagedScript, substitutionMap,
+				Substitution.apply(mManagedScript, substitutionMap, SmtUtils.and(mScript, conjuncts)));
 	}
 
 	/**
@@ -638,8 +636,8 @@ public class MapEliminator {
 		final List<Term> result = new ArrayList<>();
 		final boolean oldIsInVar = transformula.getInVarsReverseMapping().containsKey(oldArray);
 		final boolean newIsInVar = transformula.getInVarsReverseMapping().containsKey(newArray);
-		final Term globalOldArray = translateTermVariablesToDefinitions(mScript, transformula, oldArray);
-		final Term globalNewArray = translateTermVariablesToDefinitions(mScript, transformula, newArray);
+		final Term globalOldArray = translateTermVariablesToDefinitions(mManagedScript, transformula, oldArray);
+		final Term globalNewArray = translateTermVariablesToDefinitions(mManagedScript, transformula, newArray);
 		final ArrayTemplate oldTemplate = new ArrayTemplate(globalOldArray, mScript);
 		final ArrayTemplate newTemplate = new ArrayTemplate(globalNewArray, mScript);
 		final Set<ArrayIndex> processedIndices = new HashSet<>();

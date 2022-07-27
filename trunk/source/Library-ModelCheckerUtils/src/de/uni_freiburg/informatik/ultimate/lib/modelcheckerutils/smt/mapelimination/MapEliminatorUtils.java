@@ -41,13 +41,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -79,8 +78,7 @@ public final class MapEliminatorUtils {
 				substitution.put(var, transformula.getOutVars().get(programVar));
 			}
 		}
-		// TODO: We need the PureSubstitution here, since the normal form might break the the required sorting
-		return new PureSubstitution(managedScript, substitution).transform(term);
+		return Substitution.apply(managedScript, substitution, term);
 	}
 
 	/**
@@ -244,7 +242,7 @@ public final class MapEliminatorUtils {
 	 * {@code auxVars}.
 	 */
 	public static Term getReplacementVar(final Term term, final ModifiableTransFormula transformula,
-			final Script script, final ReplacementVarFactory replacementVarFactory,
+			final ManagedScript script, final ReplacementVarFactory replacementVarFactory,
 			final Collection<TermVariable> auxVars) {
 		if (!ModifiableTransFormulaUtils.allVariablesAreInVars(term, transformula)
 				&& !ModifiableTransFormulaUtils.allVariablesAreOutVars(term, transformula)) {
