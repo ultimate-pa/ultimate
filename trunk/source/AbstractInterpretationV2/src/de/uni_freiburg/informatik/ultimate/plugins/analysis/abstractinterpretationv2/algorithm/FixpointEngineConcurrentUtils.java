@@ -103,7 +103,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	public Set<ACTION> getAllReads() {
 		final Set<ACTION> result = new HashSet<>();
 		for (final String procedure : mIcfg.getCfgSmtToolkit().getProcedures()) {
-			result.addAll(getReads(procedure));
+			final Set<ACTION> temp = getReads(procedure);
+			if (temp != null) {
+				result.addAll(getReads(procedure));
+			}
 		}
 		return result;
 	}

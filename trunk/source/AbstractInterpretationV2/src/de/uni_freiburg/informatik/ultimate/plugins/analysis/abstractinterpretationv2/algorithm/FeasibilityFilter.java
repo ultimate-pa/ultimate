@@ -79,7 +79,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	public FeasibilityFilter(final IUltimateServiceProvider services) {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
-				.setUseExternalSolver(ExternalSolver.Z3, Logics.HORN).setSolverMode(SolverMode.External_DefaultMode);
+				.setUseExternalSolver(ExternalSolver.Z3, Logics.HORN).setSolverMode(SolverMode.External_DefaultMode)
+				.setDumpSmtScriptToFile(true, ".", "test", false);
 
 		mScript = SolverBuilder.buildAndInitializeSolver(services, solverSettings, "HornClauseSolver");
 
@@ -358,6 +359,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	private Term forAll(final Term term, final TermVariable... termVariables) {
 		// not sure what pattern exaclty does
+		// SmtUtils.quantifier(script, quantifier, vars, subformula)
 		return mScript.quantifier(1, termVariables, term, null);
 	}
 
