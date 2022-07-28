@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -311,7 +313,7 @@ public class MapEliminator {
 	 *            The invariants that are valid after the transformula
 	 * @return A TransFormula, where array accesses and calls of uninterpreted functions are replaced
 	 */
-	public ModifiableTransFormula getRewrittenTransFormula(final ModifiableTransFormula transformula,
+	public ModifiableTransFormula eliminateMaps(final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter) {
 		assert mTransFormulasToLocalIndices.containsKey(transformula) : "This transformula wasn't preprocessed";
 		final ModifiableTransFormula newTF = new ModifiableTransFormula(transformula);
@@ -330,7 +332,7 @@ public class MapEliminator {
 		final Term storeFreeTerm = replaceStoreTerms(term, newTF, invariants);
 		assert !SmtUtils.containsFunctionApplication(storeFreeTerm, "store") : "The formula contains still store-terms";
 		final List<Term> conjuncts = new ArrayList<>();
-		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
+		conjuncts.add(storeFreeTerm);
 		conjuncts.addAll(getAdditionalEqualities(localIndices, invariants));
 		if (!mSettings.onlyTrivialImplicationsForModifiedArguments()) {
 			conjuncts.addAll(getAllImplicationsForIndexAssignment(newTF, invariants));
@@ -449,8 +451,9 @@ public class MapEliminator {
 	private static void clearTransFormula(final ModifiableTransFormula transformula) {
 		final List<IProgramVar> inVarsToRemove = new ArrayList<>();
 		final List<IProgramVar> outVarsToRemove = new ArrayList<>();
-		final List<TermVariable> auxVarsToRemove = new ArrayList<>();
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
+		final List<TermVariable> auxVarsToRemove =
+				transformula.getAuxVars().stream().filter(tv -> !freeVars.contains(tv)).collect(Collectors.toList());
 		for (final Entry<IProgramVar, TermVariable> entry : transformula.getInVars().entrySet()) {
 			final Term inVar = entry.getValue();
 			final IProgramVar var = entry.getKey();
@@ -468,20 +471,9 @@ public class MapEliminator {
 				outVarsToRemove.add(entry.getKey());
 			}
 		}
-		for (final TermVariable tv : transformula.getAuxVars()) {
-			if (!freeVars.contains(tv)) {
-				auxVarsToRemove.add(tv);
-			}
-		}
-		for (final IProgramVar var : inVarsToRemove) {
-			transformula.removeInVar(var);
-		}
-		for (final IProgramVar var : outVarsToRemove) {
-			transformula.removeOutVar(var);
-		}
-		for (final TermVariable tv : auxVarsToRemove) {
-			transformula.removeAuxVar(tv);
-		}
+		inVarsToRemove.forEach(transformula::removeInVar);
+		outVarsToRemove.forEach(transformula::removeOutVar);
+		auxVarsToRemove.forEach(transformula::removeAuxVar);
 	}
 
 	/**
@@ -496,26 +488,22 @@ public class MapEliminator {
 	 */
 	private Term replaceMapReads(final ModifiableTransFormula transformula, final Term term) {
 		// Create for all map/index-pairs a new replacementVar
-		for (final MapTemplate template : mMapsToIndices.getDomain()) {
-			for (final ArrayIndex index : mMapsToIndices.getImage(template)) {
-				final Term mapTerm = template.getTerm(index);
-				addReplacementVar(mapTerm, transformula, mManagedScript, mReplacementVarFactory, mSymbolTable);
-			}
+		for (final Entry<MapTemplate, ArrayIndex> entry : mMapsToIndices.getSetOfPairs()) {
+			final ArrayIndex index = entry.getValue();
+			final Term mapTerm = entry.getKey().getTerm(index);
+			addReplacementVar(mapTerm, transformula, mManagedScript, mReplacementVarFactory, mSymbolTable);
 		}
-		final Map<Term, Term> substitution = new HashMap<>();
-		for (final Term select : SmtUtils.extractApplicationTerms("select", term, true)) {
-			if (!select.getSort().isArraySort()) {
-				substitution.put(select,
-						getReplacementVar(select, transformula, mManagedScript, mReplacementVarFactory, mAuxVars));
-			}
-		}
-		for (final String functionName : mUninterpretedFunctions) {
-			for (final Term functionCall : SmtUtils.extractApplicationTerms(functionName, term, true)) {
-				substitution.put(functionCall, getReplacementVar(functionCall, transformula, mManagedScript,
-						mReplacementVarFactory, mAuxVars));
-			}
-		}
+		final Map<Term, Term> substitution = extractMapReads(term).collect(Collectors.toMap(x -> x,
+				x -> getReplacementVar(x, transformula, mManagedScript, mReplacementVarFactory, mAuxVars)));
 		return Substitution.apply(mManagedScript, substitution, term);
+	}
+
+	private Stream<Term> extractMapReads(final Term term) {
+		final Stream<Term> arrays =
+				SmtUtils.extractApplicationTerms("select", term, true).stream().filter(x -> !x.getSort().isArraySort());
+		final Stream<Term> functions =
+				mUninterpretedFunctions.stream().flatMap(x -> SmtUtils.extractApplicationTerms(x, term, true).stream());
+		return Stream.concat(arrays, functions);
 	}
 
 	/**
@@ -533,25 +521,23 @@ public class MapEliminator {
 	private Term replaceStoreTerms(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants) {
 		final Map<Term, Term> substitutionMap = new HashMap<>();
-		final List<Term> auxVarEqualities = new ArrayList<>();
+		final List<Term> conjuncts = new ArrayList<>();
 		// First remove all array inequalities by replacing them with true as an overapproximation
-		final Term newTerm = replaceArrayInequalities(term);
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(newTerm, false)) {
+		final Term replacedTerm = replaceArrayInequalities(term);
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(replacedTerm, false)) {
 			if (SmtUtils.isFunctionApplication(select.getArray(), "store")) {
 				final Term selectTerm = select.getSelectTerm();
 				substitutionMap.put(selectTerm,
-						replaceSelectStoreTerm(selectTerm, transformula, invariants, auxVarEqualities));
+						replaceSelectStoreTerm(selectTerm, transformula, invariants, conjuncts));
 			}
 		}
-		for (final Term t : SmtUtils.extractApplicationTerms("=", newTerm, false)) {
+		for (final Term t : SmtUtils.extractApplicationTerms("=", replacedTerm, false)) {
 			if (((ApplicationTerm) t).getParameters()[0].getSort().isArraySort()) {
 				substitutionMap.put(t, replaceArrayEquality(t, transformula, invariants));
 			}
 		}
-		final List<Term> conjuncts = new ArrayList<>();
-		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(newTerm)));
-		conjuncts.addAll(auxVarEqualities);
-		// 20211226 Matthias: I am wondering why the substitution is applied twice.
+		conjuncts.add(replacedTerm);
+		// TODO: 20211226 Matthias: I am wondering why the substitution is applied twice.
 		// Because we often have two-dimensional arrays? Shouldn't we apply the
 		// substitution until a fixpoint is reached?
 		return Substitution.apply(mManagedScript, substitutionMap,
@@ -787,7 +773,7 @@ public class MapEliminator {
 
 	/**
 	 * Return set of unordered pairs ({@link Doubleton}s) of all Terms {x,y} such that x and y occur as entry of a
-	 * (potentially multi-dimentional) argument i_x i_y of the same (or equivalent) map.
+	 * (potentially multi-dimensional) argument i_x i_y of the same (or equivalent) map.
 	 */
 	public Set<Doubleton<Term>> getDoubletons() {
 		return mDoubletons;
