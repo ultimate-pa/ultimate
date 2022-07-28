@@ -35,7 +35,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -63,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -74,9 +72,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -85,8 +80,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnionPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -94,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
@@ -104,7 +96,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.LooperIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.RefinableCachedAbstraction;
@@ -139,7 +130,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final PartialOrderMode mPartialOrderMode;
 	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
 	private final PartialOrderReductionFacade<L> mPOR;
-	private final List<IRefinableIndependenceContainer<L>> mIndependenceContainers;
+	private final List<IRefinableIndependenceProvider<L>> mIndependenceContainers;
 	private ManagedScript mIndependenceScript;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
@@ -171,13 +162,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mLogger.warn("Only combine independence relations if you are sure the combination is sound.");
 		}
 		for (int i = 0; i < numIndependenceRelations; ++i) {
-			final IRefinableIndependenceContainer<L> container = constructIndependenceContainer(i, copyFactory);
+			final IRefinableIndependenceProvider<L> container = constructIndependenceProvider(i, copyFactory);
 			container.initialize();
 			mIndependenceContainers.add(container);
 		}
 
 		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceContainers.stream()
-				.map(IRefinableIndependenceContainer::getOrConstructIndependence).collect(Collectors.toList());
+				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations);
 	}
@@ -230,7 +221,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		for (int i = 0; i < mIndependenceContainers.size(); ++i) {
 			final var container = mIndependenceContainers.get(i);
 			container.refine(mRefinementResult);
-			mPOR.replaceIndependence(i, container.getOrConstructIndependence());
+			mPOR.replaceIndependence(i, container.retrieveIndependence());
 		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
@@ -314,13 +305,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), true);
 	}
 
-	private IRefinableIndependenceContainer<L> constructIndependenceContainer(final int index,
+	private IRefinableIndependenceProvider<L> constructIndependenceProvider(final int index,
 			final ICopyActionFactory<L> copyFactory) {
 		final IndependenceSettings settings = mPref.porIndependenceSettings(index);
 		mLogger.info("Independence Relation #%d: %s", index + 1, settings);
 
 		if (settings.getAbstractionType() == AbstractionType.LOOPER) {
-			return new IndependenceContainerForLoopers<>(mServices, mCsToolkit, settings.getIndependenceType());
+			return new IndependenceProviderForLoopers<>(mServices, mCsToolkit, settings.getIndependenceType());
 		}
 
 		// Construct the script used for independence checks.
@@ -339,7 +330,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			// Construct the independence relation (without abstraction). It is the responsibility of the independence
 			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
 			final var independence = constructIndependence(settings, mIndependenceScript, transferrer, false);
-			return new StaticIndependenceContainer<>(independence);
+			return new StaticIndependenceProvider<>(independence);
 		}
 
 		// Construct the abstraction function.
@@ -351,7 +342,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		// the independence relation to transfer conditions.
 		final var independence = constructIndependence(settings, mIndependenceScript, transferrer, true);
 
-		return new IndependenceContainerWithAbstraction<>(cachedAbstraction, independence);
+		return new IndependenceProviderWithAbstraction<>(cachedAbstraction, independence);
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final IndependenceSettings settings,
@@ -581,166 +572,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			}
 
 			return mPredicateFactory.and(conjuncts);
-		}
-	}
-
-	/**
-	 * Encapsulates management of abstraction levels and corresponding independence relations.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <L>
-	 *            The type of letters for which an independence relation is managed.
-	 */
-	private interface IRefinableIndependenceContainer<L extends IIcfgTransition<?>> {
-		void initialize();
-
-		void refine(IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement);
-
-		IIndependenceRelation<IPredicate, L> getOrConstructIndependence();
-	}
-
-	/**
-	 * An {@link IRefinableIndependenceContainer} implementation for the case where we only consider concrete
-	 * commutativity.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 */
-	private static class StaticIndependenceContainer<L extends IIcfgTransition<?>>
-			implements IRefinableIndependenceContainer<L> {
-		private final IIndependenceRelation<IPredicate, L> mIndependence;
-
-		public StaticIndependenceContainer(final IIndependenceRelation<IPredicate, L> independence) {
-			mIndependence = independence;
-		}
-
-		@Override
-		public void initialize() {
-			// nothing to initialize
-		}
-
-		@Override
-		public void refine(final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-			// nothing to refine
-		}
-
-		@Override
-		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
-			return mIndependence;
-		}
-	}
-
-	/**
-	 * An {@link IRefinableIndependenceContainer} implementation for the case where we consider abstract commutativity
-	 * given by some refinable abstraction function.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <H>
-	 *            The type of abstraction levels
-	 */
-	private static class IndependenceContainerWithAbstraction<L extends IIcfgTransition<?>, H>
-			implements IRefinableIndependenceContainer<L> {
-		private final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> mRefinableAbstraction;
-		private final IIndependenceRelation<IPredicate, L> mUnderlyingIndependence;
-		private H mAbstractionLevel;
-
-		public IndependenceContainerWithAbstraction(
-				final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> abstraction,
-				final IIndependenceRelation<IPredicate, L> underlyingIndependence) {
-			mRefinableAbstraction = abstraction;
-			mUnderlyingIndependence = underlyingIndependence;
-		}
-
-		@Override
-		public void initialize() {
-			mAbstractionLevel = mRefinableAbstraction.getInitial();
-		}
-
-		@Override
-		public void refine(final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-			final H newLevel = mRefinableAbstraction.refine(mAbstractionLevel, refinement);
-			assert mRefinableAbstraction.getHierarchy().compare(newLevel, mAbstractionLevel)
-					.isLessOrEqual() : "Refinement must yield a lower abstraction level";
-			mAbstractionLevel = newLevel;
-		}
-
-		@Override
-		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
-			return IndependenceBuilder.fromPredicateActionIndependence(mUnderlyingIndependence)
-					// Apply abstraction to each letter before checking commutativity.
-					.withAbstraction(mRefinableAbstraction, mAbstractionLevel)
-					// Retrieve the constructed relation.
-					.build();
-		}
-	}
-
-	private static class IndependenceContainerForLoopers<L extends IIcfgTransition<?>>
-			implements IRefinableIndependenceContainer<L> {
-
-		private final IUltimateServiceProvider mServices;
-		private final ILogger mLogger;
-		private final CfgSmtToolkit mCsToolkit;
-		private final IndependenceSettings.IndependenceType mType;
-
-		private Set<IPredicate> mAbstractionLevel;
-
-		private ChainingHoareTripleChecker mHtc;
-		private UnionPredicateCoverageChecker mCoverage;
-
-		public IndependenceContainerForLoopers(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-				final IndependenceSettings.IndependenceType type) {
-			mServices = services;
-			mLogger = services.getLoggingService().getLogger(IndependenceContainerForLoopers.class);
-			mCsToolkit = csToolkit;
-			mType = type;
-		}
-
-		@Override
-		public void initialize() {
-			mAbstractionLevel = Collections.emptySet();
-			if (mType != IndependenceType.SYNTACTIC) {
-				mHtc = ChainingHoareTripleChecker.empty(mLogger);
-				mCoverage = UnionPredicateCoverageChecker.empty();
-			}
-		}
-
-		@Override
-		public void refine(final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
-			mAbstractionLevel = LooperIndependenceRelation.refine(mAbstractionLevel, refinement);
-			if (mType != IndependenceType.SYNTACTIC) {
-				final Predicate<IPredicate> protection = p -> !refinement.getPredicateUnifier().isRepresentative(p);
-				mHtc = mHtc.andThen(getHoareTripleChecker(refinement)).predicatesProtectedBy(protection);
-				mCoverage = mCoverage.with(refinement.getPredicateUnifier().getCoverageRelation(), protection);
-			}
-		}
-
-		@Override
-		public IIndependenceRelation<IPredicate, L> getOrConstructIndependence() {
-			return IndependenceBuilder
-					.fromPredicateActionIndependence(
-							new LooperIndependenceRelation<>(mAbstractionLevel, constructCheck()))
-					.threadSeparated().build();
-		}
-
-		private IHoareTripleChecker getHoareTripleChecker(final IRefinementEngineResult<L, ?> refinement) {
-			final IHoareTripleChecker refinementHtc = refinement.getHoareTripleChecker();
-			if (refinementHtc != null) {
-				return refinementHtc;
-			}
-			return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-					HoareTripleChecks.MONOLITHIC, mCsToolkit, refinement.getPredicateUnifier());
-		}
-
-		private ILooperCheck<L> constructCheck() {
-			switch (mType) {
-			case SEMANTIC:
-				return new ILooperCheck.HoareLooperCheck<>(mHtc, mCoverage);
-			case SYNTACTIC:
-				return new ILooperCheck.IndependentLooperCheck<>();
-			default:
-				throw new UnsupportedOperationException("Unknown independence type " + mType);
-			}
 		}
 	}
 }
