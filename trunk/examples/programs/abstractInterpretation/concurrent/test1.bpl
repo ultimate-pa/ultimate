@@ -10,8 +10,8 @@ var x,y: int;
 procedure thread1() returns()
 modifies x,y;
 {
-  y := x;
   x := x-y;
+  y := x;
 }
 
 procedure ULTIMATE.start() returns()

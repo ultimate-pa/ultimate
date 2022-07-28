@@ -37,11 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
@@ -53,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer.AbstractInterpretationConcurrent;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -95,7 +97,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IIcfg<?> icfg, final FixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe,
-			final AbstractInterpretationConcurrent version, final int iterations, final IFilter<ACTION, LOC> filter) {
+			final IUltimateServiceProvider services) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -114,22 +116,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mIcfg = icfg;
 		mFixpointEngine = fxpe;
 
-		mIterationsBeforeWidening = iterations;
-
 		mFecUtils = new FixpointEngineConcurrentUtils<>(mIcfg, mTransitionProvider);
 
 		mErrors = new HashMap<>();
 
-		mVersion = version;
+		mVersion = services.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(
+				AbsIntPrefInitializer.LABEL_ABSTRACT_INTERPRETATION_CONCURRENT, AbstractInterpretationConcurrent.class);
+		mIterationsBeforeWidening = services.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING_CONCURRENT);
 
-		mFilter = filter;
-
-		if (mFilter instanceof FeasibilityFilter) {
-			((FeasibilityFilter) mFilter).initializeProgramConstraints(
-					mFecUtils.getProgramOrderConstraints(mIcfg.getProcedureEntryNodes()), mFecUtils.getIsLoad(),
-					mFecUtils.getIsStore(), mFecUtils.getAllReads());
-			((FeasibilityFilter) mFilter).setTransitionProvider(mTransitionProvider);
-		}
+		mFilter = buildFilter(services);
 	}
 
 	@Override
@@ -199,7 +195,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			iteration++;
 
 			// Check if Fixpoint is reached
-			if (interferences.equals(tempInterferences)) {
+			if (interferencesAreEqual(interferences, tempInterferences)) {
 				break;
 			}
 			interferences = tempInterferences;
@@ -260,7 +256,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		}
 
 		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE_FILTERED) {
-			return filteredCrossProduct(entryNode, interferences, x -> mFilter.evaluate(x));
+			return filteredCrossProduct(entryNode, interferences, mFilter);
 		}
 
 		throw new UnsupportedOperationException("Unvalid Version option selected");
@@ -322,15 +318,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	 * @return
 	 */
 	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> filteredCrossProduct(final IcfgLocation entryNode,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences,
-			final Predicate<Map<LOC, Set<ACTION>>> combinationIsFeasable) {
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences, final IFilter<ACTION, LOC> filter) {
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> procedureInterferences = new HashSet<>();
 		final String procedure = entryNode.getProcedure();
+		final Set<ACTION> entryActions =
+				mTransitionProvider.getSuccessorActions((LOC) entryNode).stream().collect(Collectors.toSet());
 		// change to Set<ACTION>
-		final Set<Map<LOC, Set<ACTION>>> crossProduct = mFecUtils.getCrossProduct(combinationIsFeasable, procedure);
+		final Set<Map<LOC, Set<ACTION>>> crossProduct = mFecUtils.getCrossProduct(filter, procedure);
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> readsInLoopsAndForks = new HashMap<>();
 		readsInLoopsAndForks.putAll(handlingLoops(procedure, interferences));
-		readsInLoopsAndForks.putAll(handlingForks(procedure, mTransitionProvider.getSuccessorActions((LOC) entryNode)));
+		readsInLoopsAndForks.putAll(handlingForks(procedure, entryActions));
 
 		final Set<ACTION> reads = mFecUtils.getReads(procedure);
 		for (final var map : crossProduct) {
@@ -338,8 +335,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			combination.putAll(readsInLoopsAndForks);
 			for (final var entry : map.entrySet()) {
 				for (final var write : entry.getValue()) {
+					// TODO: Decrease Nesting
 					if (write == null) {
-						// read should read procedure intern, should be unnecessary
+						// read should read procedure intern
 						continue;
 					}
 
@@ -356,6 +354,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						}
 						final DisjunctiveAbstractState<STATE> currentState = combination.get(read);
 						if (currentState != null) {
+							if (entryActions.contains(read)) {
+								combination.put(read, currentState.patch(state));
+								continue;
+							}
 							combination.put(read, mergeStates(currentState, state));
 						} else {
 							combination.put(read, state);
@@ -468,9 +470,12 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			DisjunctiveAbstractState<STATE> postState = preState.apply(postOp, write);
 			if (iteration > mIterationsBeforeWidening && interferences.containsKey(write)) {
 				final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
-				postState = interferences.get(write).widen(wideningOp, postState);
+				final Set<IProgramVarOrConst> variableIntersect = DataStructureUtils
+						.intersection(interferences.get(write).getVariables(), postState.getVariables());
+				final var first = removeNonSharedVariables(interferences.get(write), variableIntersect);
+				final var second = removeNonSharedVariables(postState, variableIntersect);
+				postState = first.widen(wideningOp, second);
 			}
-			// TODO: relational Domain -> will remove relations between variables
 			postState = removeNonSharedVariables(postState, mFecUtils.getWrittenVars(write));
 			result = combineInterferences(result, write, postState);
 		}
@@ -532,7 +537,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		if (stateTwo.getStates().isEmpty()) {
 			return stateOne;
 		}
-		return stateOne.union(stateTwo);
+		// return stateOne.union(stateTwo);
+		return mergeStates(stateOne, stateTwo);
 	}
 
 	private Map<String, Set<ACTION>>
@@ -573,6 +579,36 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> mergeStates(final DisjunctiveAbstractState<STATE> oldState,
 			final DisjunctiveAbstractState<STATE> newState) {
-		return oldState.patch(newState).union(oldState);
+		final DisjunctiveAbstractState<STATE> one = oldState.patch(newState);
+		final DisjunctiveAbstractState<STATE> two = newState.patch(oldState);
+		final DisjunctiveAbstractState<STATE> three = one.union(two);
+		return oldState.patch(newState).union(newState.patch(oldState));
+	}
+
+	private boolean interferencesAreEqual(final Map<ACTION, DisjunctiveAbstractState<STATE>> oldInts,
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> newInts) {
+		if (oldInts.size() != newInts.size()) {
+			return false;
+		}
+
+		for (final var entry : oldInts.entrySet()) {
+			if (!newInts.get(entry.getKey()).isEqualTo(entry.getValue())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private IFilter<ACTION, LOC> buildFilter(final IUltimateServiceProvider services) {
+		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE_FILTERED) {
+			final FeasibilityFilter<ACTION, LOC> filter = new FeasibilityFilter<>(services);
+			filter.setTransitionProvider(mTransitionProvider);
+			filter.initializeProgramConstraints(mFecUtils.getProgramOrderConstraints(mIcfg.getProcedureEntryNodes()),
+					mFecUtils.getIsLoad(), mFecUtils.getIsStore(), mFecUtils.getAllReads());
+			return filter;
+		}
+
+		// set to default value
+		return x -> true;
 	}
 }

@@ -1,5 +1,3 @@
-//#Unsafe
-
 /*
  * Author: Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  * Date: 07.06.2022

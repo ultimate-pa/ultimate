@@ -40,7 +40,6 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -121,7 +120,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	public List<HashRelation<ACTION, ACTION>>
 			getProgramOrderConstraints(final Map<String, ? extends IcfgLocation> entryNodes) {
 		final List<HashRelation<ACTION, ACTION>> result = new ArrayList<>();
-		result.add(getDominates());
+		result.add(getDominates(entryNodes));
 		result.add(getNotReachableFrom(entryNodes));
 		result.add(getThCreates(entryNodes));
 		result.add(getThJoins());
@@ -132,15 +131,53 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	 *
 	 * @return DOMINATES: (x,y) in DOMINATES, iff all paths from the thread entry to y contain x.
 	 */
-	public HashRelation<ACTION, ACTION> getDominates() {
-		// ??? look at paper
-		// first just use it as a blackbox
-		return new HashRelation<>();
+	public HashRelation<ACTION, ACTION> getDominates(final Map<String, ? extends IcfgLocation> entryNodes) {
+		final Map<ACTION, Set<ACTION>> dominatedBy = new HashMap<>();
+		for (final var entry : entryNodes.entrySet()) {
+			final Queue<ACTION> workList = new ArrayDeque<>();
+			// initialize
+			for (final var action : mTransitionProvider.getSuccessorActions((LOC) entry.getValue())) {
+				workList.add(action);
+				final Set<ACTION> identity = new HashSet<>();
+				identity.add(action);
+				dominatedBy.put(action, identity);
+			}
+
+			while (!workList.isEmpty()) {
+				final ACTION item = workList.poll();
+				final LOC target = mTransitionProvider.getTarget(item);
+				final Set<ACTION> itemDominatedBy = dominatedBy.get(item);
+				for (final var successor : mTransitionProvider.getSuccessorActions(target)) {
+					// if changes -> add successor to workList
+					final Set<ACTION> currentlyDominatedBy = dominatedBy.get(successor);
+					if (currentlyDominatedBy == null) {
+						final Set<ACTION> tempSet = new HashSet<>();
+						tempSet.add(successor);
+						tempSet.addAll(itemDominatedBy);
+						dominatedBy.put(successor, tempSet);
+						workList.add(successor);
+						continue;
+					}
+					final Set<ACTION> intersection =
+							DataStructureUtils.intersection(itemDominatedBy, currentlyDominatedBy);
+					if (!intersection.equals(currentlyDominatedBy)) {
+						dominatedBy.put(successor, intersection);
+						workList.add(successor);
+					}
+				}
+			}
+		}
+		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
+		// reverse dominatedBy
+		for (final var entry : dominatedBy.entrySet()) {
+			entry.getValue().forEach(value -> result.addPair(value, entry.getKey()));
+		}
+		return result;
 	}
 
 	/***
 	 *
-	 * @return NORTREACHABLEFROM: (x,y) in NOTREACHABLEFROM, iff x is not reachable from y.
+	 * @return NOTREACHABLEFROM: (x,y) in NOTREACHABLEFROM, iff x is not reachable from y.
 	 */
 	public HashRelation<ACTION, ACTION> getNotReachableFrom(final Map<String, ? extends IcfgLocation> entryNodes) {
 		// compute Set of all ACTIONS in Thread -> X
@@ -154,11 +191,13 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
 			for (final var item : iterator.asStream().collect(Collectors.toSet())) {
 				final Set<ACTION> reachable = new HashSet<>();
-				reachable.add((ACTION) item);
+				final ACTION action = (ACTION) item;
+				reachable.add(action);
 				final IcfgEdgeIterator edgeIterator = new IcfgEdgeIterator(item);
 				edgeIterator.asStream().forEach(edge -> reachable.add((ACTION) edge));
-				result.addAllPairs((ACTION) item,
-						DataStructureUtils.difference(mActionsInProcedure.getImage(entry.getKey()), reachable));
+				final Set<ACTION> notReachable =
+						DataStructureUtils.difference(mActionsInProcedure.getImage(entry.getKey()), reachable);
+				notReachable.forEach(x -> result.addPair(x, action));
 			}
 		}
 		return result;
@@ -214,11 +253,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mForkedAt.getImage(procedure);
 	}
 
-	public Set<Map<LOC, Set<ACTION>>> getCrossProduct(final Predicate<Map<LOC, Set<ACTION>>> combinationIsFeasible,
-			final String procedure) {
+	public Set<Map<LOC, Set<ACTION>>> getCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
 		final var crossProduct = mCrossProducts.get(procedure);
 		if (crossProduct == null) {
-			return computeCrossProduct(combinationIsFeasible, procedure);
+			return computeCrossProduct(filter, procedure);
 		}
 		return crossProduct;
 	}
@@ -537,8 +575,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return edgeIterator.asStream().anyMatch(edge -> edge.equals(action));
 	}
 
-	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final Predicate<Map<LOC, Set<ACTION>>> combinationIsFeasible,
-			final String procedure) {
+	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
 		final Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
 		// reads can read from several global variables -> should LOC - Set<ACTION>
@@ -582,7 +619,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					}
 					blocksize *= readEntry.getValue().size();
 				}
-				if (!map.isEmpty() && combinationIsFeasible.test(map)) {
+				if (!map.isEmpty() && filter.evaluate(map)) {
 					result.add(map);
 				}
 			}
