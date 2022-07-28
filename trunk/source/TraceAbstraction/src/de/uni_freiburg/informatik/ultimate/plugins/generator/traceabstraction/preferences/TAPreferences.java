@@ -387,6 +387,14 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_MODE, PartialOrderMode.class);
 	}
 
+	public boolean dumpIndependenceScript() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_INDEPENDENCE_SCRIPT);
+	}
+
+	public String independenceScriptDumpPath() {
+		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH);
+	}
+
 	public OrderType getDfsOrderType() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.class);
 	}

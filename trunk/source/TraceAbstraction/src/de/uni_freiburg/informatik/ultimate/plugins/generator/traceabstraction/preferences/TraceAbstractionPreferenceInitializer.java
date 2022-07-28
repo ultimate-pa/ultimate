@@ -130,6 +130,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_NUM_INDEPENDENCE = "Number of independence relations to use for POR";
 	private static final int DEF_POR_NUM_INDEPENDENCE = 1;
 
+	public static final String LABEL_DUMP_INDEPENDENCE_SCRIPT = "Dump SMT script used for independence checks";
+	private static final boolean DEF_DUMP_INDEPENDENCE_SCRIPT = false;
+
+	public static final String LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH =
+			"Dump independence script to the following directory";
+	private static final String DEF_INDEPENDENCE_SCRIPT_DUMP_PATH = "";
+
 	public static final String LABEL_INDEPENDENCE_POR = "Independence relation used for POR in concurrent analysis";
 	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
@@ -557,17 +564,25 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
+
 				/* Petri LBE settings */
+
 				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
 						IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean),
+
 				/* Partial Order Reduction settings */
+
 				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_NUM_INDEPENDENCE, DEF_POR_NUM_INDEPENDENCE,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_DUMP_INDEPENDENCE_SCRIPT, DEF_DUMP_INDEPENDENCE_SCRIPT,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
+						PreferenceType.Directory),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE,
 						PreferenceType.Combo, IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, IndependenceSettings.DEFAULT_ABSTRACTION_TYPE,

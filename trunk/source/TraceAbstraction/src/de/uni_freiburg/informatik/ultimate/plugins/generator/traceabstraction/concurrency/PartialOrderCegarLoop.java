@@ -398,12 +398,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final SolverSettings solverSettings;
 		if (settings.getSolver() == ExternalSolver.SMTINTERPOL) {
 			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
-					.setSmtInterpolTimeout(settings.getSolverTimeout())
-					.setDumpSmtScriptToFile(true, ".", "commutativity", false);
+					.setSmtInterpolTimeout(settings.getSolverTimeout()).setDumpSmtScriptToFile(
+							mPref.dumpIndependenceScript(), mPref.independenceScriptDumpPath(), "commutativity", false);
 		} else {
 			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
-					.setUseExternalSolver(settings.getSolver(), settings.getSolverTimeout())
-					.setDumpSmtScriptToFile(true, ".", "commutativity", false);
+					.setUseExternalSolver(settings.getSolver(), settings.getSolverTimeout()).setDumpSmtScriptToFile(
+							mPref.dumpIndependenceScript(), mPref.independenceScriptDumpPath(), "commutativity", false);
 		}
 
 		return mCsToolkit.createFreshManagedScript(mServices, solverSettings, "SemanticIndependence");
