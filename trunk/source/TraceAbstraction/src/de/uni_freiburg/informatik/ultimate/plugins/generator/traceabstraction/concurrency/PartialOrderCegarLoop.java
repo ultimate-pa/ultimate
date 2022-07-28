@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -567,7 +568,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
 			// No support for calls and returns means the map should always have a simple structure.
 			assert down2up.size() == 1 && down2up.containsKey(createEmptyStackState());
-			final Set<IPredicate> conjuncts = down2up.get(createEmptyStackState());
+			final List<IPredicate> conjuncts = down2up.get(createEmptyStackState())
+					// sort predicates to ensure deterministic order
+					.stream().sorted(Comparator.comparingInt(Object::hashCode)).collect(Collectors.toList());
 
 			// Interpolant automaton should not have "don't care".
 			assert conjuncts.stream().noneMatch(mPredicateFactory::isDontCare);
