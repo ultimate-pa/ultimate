@@ -57,12 +57,12 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 	public SleepMapReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final List<IIndependenceRelation<S, L>> relations, final IDfsOrder<L, R> order,
-			final ISleepMapStateFactory<L, S, R> stateFactory, final IBudgetFunction<L, R> budget) {
+			final ISleepMapStateFactory<L, S, R> stateFactory,
+			final Function<SleepMapReduction<L, S, R>, IBudgetFunction<L, R>> getBudget) {
 		mOperand = operand;
 		mOrder = order;
 		mRelations = relations;
 		mStateFactory = stateFactory;
-		mBudgetFunction = budget;
 
 		final var oldInitial =
 				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
@@ -71,6 +71,8 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 		} else {
 			mInitial = null;
 		}
+
+		mBudgetFunction = getBudget.apply(this);
 	}
 
 	@Override
@@ -176,9 +178,5 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 	public interface IBudgetFunction<L, R> {
 		int computeBudget(R state, L letter);
-
-		default void setReduction(final SleepMapReduction<L, ?, R> reduction) {
-			// do nothing
-		}
 	}
 }

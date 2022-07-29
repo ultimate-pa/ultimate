@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitor
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CoinFlipBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -111,7 +112,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CoinflipMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
@@ -170,7 +170,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceContainers.stream()
 				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
-				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations);
+				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations,
+				this::makeBudget);
 	}
 
 	@Override
@@ -234,17 +235,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
-			IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
-					mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor);
-			if (mPref.useCoinflip() == CoinflipMode.FALLBACK) {
-				budget = new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration),
-						budget);
-			} else if (mPref.useCoinflip() == CoinflipMode.PURE) {
-				budget = new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration),
-						(s, l) -> 1);
-			}
-			mPOR.setBudget(budget);
-
 			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
@@ -256,6 +246,21 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
+	}
+
+	private IBudgetFunction<L, IPredicate> makeBudget(final SleepMapReduction<L, IPredicate, IPredicate> reduction) {
+		final IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
+				mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor, reduction);
+		switch (mPref.useCoinflip()) {
+		case OFF:
+			return budget;
+		case FALLBACK:
+			return new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration), budget);
+		case PURE:
+			return new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration),
+					(s, l) -> 1);
+		}
+		throw new IllegalArgumentException("Unknown coinflip mode: " + mPref.useCoinflip());
 	}
 
 	@Override

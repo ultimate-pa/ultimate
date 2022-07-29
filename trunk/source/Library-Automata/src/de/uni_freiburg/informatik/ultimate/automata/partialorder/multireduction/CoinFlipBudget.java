@@ -60,9 +60,4 @@ public class CoinFlipBudget<L, R> implements IBudgetFunction<L, R> {
 	private boolean flipCoin() {
 		return mRand.nextDouble() >= mProbabilityMin;
 	}
-
-	@Override
-	public void setReduction(final SleepMapReduction<L, ?, R> reduction) {
-		mUnderlying.setReduction(reduction);
-	}
 }

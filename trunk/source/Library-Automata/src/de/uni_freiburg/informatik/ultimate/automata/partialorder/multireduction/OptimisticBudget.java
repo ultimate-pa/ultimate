@@ -63,7 +63,7 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	private final ISleepMapStateFactory<L, S, R> mStateFactory;
 	private final Supplier<IDfsVisitor<L, R>> mMakeVisitor;
 
-	private SleepMapReduction<L, ?, R> mReduction;
+	private final SleepMapReduction<L, ?, R> mReduction;
 
 	private final Set<R> mSuccessful = new HashSet<>();
 	private final Set<R> mUnsuccessful = new HashSet<>();
@@ -77,21 +77,17 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	 *            Create a new visitor to determine reachability of "bad states" (the definition of bad states is up to
 	 *            the caller). The visitor must either be an {@link AcceptingRunSearchVisitor} or a wrapper visitor such
 	 *            that the underlying base visitor is an {@link AcceptingRunSearchVisitor}.
+	 * @param reduction
+	 *            The reduction automaton for which budgets shall be computed.
 	 */
 	public OptimisticBudget(final AutomataLibraryServices services, final IDfsOrder<L, R> order,
-			final ISleepMapStateFactory<L, S, R> stateFactory, final Supplier<IDfsVisitor<L, R>> makeVisitor) {
+			final ISleepMapStateFactory<L, S, R> stateFactory, final Supplier<IDfsVisitor<L, R>> makeVisitor,
+			final SleepMapReduction<L, ?, R> reduction) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OptimisticBudget.class);
 		mOrder = order;
 		mStateFactory = stateFactory;
 		mMakeVisitor = makeVisitor;
-	}
-
-	@Override
-	public void setReduction(final SleepMapReduction<L, ?, R> reduction) {
-		if (mReduction != null) {
-			throw new UnsupportedOperationException("Reduction automaton already set");
-		}
 		mReduction = reduction;
 	}
 

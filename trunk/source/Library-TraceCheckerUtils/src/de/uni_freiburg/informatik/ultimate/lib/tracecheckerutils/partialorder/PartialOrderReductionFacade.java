@@ -112,7 +112,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	private final List<IIndependenceRelation<IPredicate, L>> mIndependenceRelations;
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
-	private IBudgetFunction<L, IPredicate> mBudget;
+	private final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> mGetBudget;
 
 	private final List<StatisticsData> mOldIndependenceStatistics = new ArrayList<>();
 	private final List<StatisticsData> mOldPersistentSetStatistics = new ArrayList<>();
@@ -120,7 +120,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
-			final List<IIndependenceRelation<IPredicate, L>> independenceRelations) {
+			final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
+			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
@@ -132,6 +133,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			throw new IllegalArgumentException("This mode does not support multiple independence relations");
 		}
 		mIndependenceRelations = new ArrayList<>(independenceRelations);
+		mGetBudget = getBudget;
 
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
@@ -267,10 +269,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return mDfsOrder;
 	}
 
-	public void setBudget(final IBudgetFunction<L, IPredicate> budget) {
-		mBudget = budget;
-	}
-
 	/**
 	 * Apply POR to a given automaton.
 	 *
@@ -302,8 +300,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 						visitor);
 			} else {
 				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
-						new CachedBudget<>(mBudget));
-				mBudget.setReduction(red);
+						mGetBudget.andThen(CachedBudget::new));
 				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
 			}
 			break;
