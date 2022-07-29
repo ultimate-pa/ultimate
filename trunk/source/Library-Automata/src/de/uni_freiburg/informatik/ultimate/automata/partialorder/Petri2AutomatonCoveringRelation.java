@@ -36,6 +36,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 /**
  * A covering relation for automata created from one-safe Petri nets.
  *
+ * A marking n is covered by a marking o if for all places p in n, either p is in o, or p has no successors and is not
+ * accepting.
+ *
+ * This means that if e.g. one thread has reached a dead end location (e.g. an error location that is checked in another
+ * CEGAR loop), then the resulting marking is covered by a marking where the thread is still running, and all other
+ * threads are in the same location as before.
+ *
  * @see de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton
  * @see de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton
  *
@@ -63,24 +70,10 @@ public class Petri2AutomatonCoveringRelation<L, S, P> implements ICoveringRelati
 		final Marking<L, P> oldMarking = mGetMarking.apply(oldState);
 		final Marking<L, P> newMarking = mGetMarking.apply(newState);
 
-		final boolean oldAccepting = mPetriNet.isAccepting(oldMarking);
+		// TODO In the future, the second disjunct below could be replaced by a strictly weaker condition:
+		// A (cached) check whether any accepting place can be reached from p.
 
-		for (final P place : newMarking) {
-			if (oldMarking.contains(place)) {
-				// Places that are themselves contained in oldMarking are represented.
-				continue;
-			}
-			if (canLeave(place)) {
-				// A place that has outgoing transitions (but is not itself in oldMarking) breaks covering.
-				return false;
-			}
-			if (!oldAccepting && mPetriNet.isAccepting(place)) {
-				// An accepting marking cannot be covered by a non-accepting marking.
-				return false;
-			}
-		}
-
-		return true;
+		return newMarking.stream().allMatch(p -> oldMarking.contains(p) || (!canLeave(p) && !mPetriNet.isAccepting(p)));
 	}
 
 	private boolean canLeave(final P place) {
