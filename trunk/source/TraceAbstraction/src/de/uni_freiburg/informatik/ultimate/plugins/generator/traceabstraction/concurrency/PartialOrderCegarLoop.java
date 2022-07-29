@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSea
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
@@ -354,8 +353,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final ManagedScript independenceScript, final TransferrerWithVariableCache transferrer,
 			final boolean tfsAlreadyTransferred) {
 		if (settings.getIndependenceType() == IndependenceType.SYNTACTIC) {
-			return IndependenceBuilder.<L, IPredicate> syntactic().cached(new DefaultIndependenceCache<>())
-					.threadSeparated().build();
+			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
 		}
 
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
@@ -372,7 +370,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
 				// Cache independence query results.
-				.cached(new DefaultIndependenceCache<>())
+				.cached()
 				// Setup condition optimization (if conditional independence is enabled).
 				// =========================================================================
 				// NOTE: Soundness of the condition elimination here depends on the fact that all inconsistent
