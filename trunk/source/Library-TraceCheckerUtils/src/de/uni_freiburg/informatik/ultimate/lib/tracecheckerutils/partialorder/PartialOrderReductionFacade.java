@@ -118,6 +118,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
 	private IBudgetFunction<L, IPredicate> mBudget;
 
+	private final List<StatisticsData> mOldIndependenceStatistics = new ArrayList<>();
+	private final List<StatisticsData> mOldPersistentSetStatistics = new ArrayList<>();
+
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
@@ -151,7 +154,17 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (Objects.equals(independence, oldRelation)) {
 			return;
 		}
-		// TODO save statistics!
+
+		final StatisticsData indepData = new StatisticsData();
+		indepData.aggregateBenchmarkData(oldRelation.getStatistics());
+		mOldIndependenceStatistics.add(indepData);
+
+		if (mPersistent != null) {
+			final StatisticsData persData = new StatisticsData();
+			persData.aggregateBenchmarkData(mPersistent.getStatistics());
+			mOldPersistentSetStatistics.add(persData);
+		}
+
 		mIndependenceRelations.set(index, independence);
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
@@ -388,11 +401,24 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	public void reportStatistics(final String pluginId) {
-		for (int i = 0; i < mIndependenceRelations.size(); ++i) {
-			final StatisticsData data = new StatisticsData();
-			data.aggregateBenchmarkData(mIndependenceRelations.get(i).getStatistics());
+		int i = 0;
+		for (final StatisticsData data : mOldIndependenceStatistics) {
 			mServices.getResultService().reportResult(pluginId,
 					new StatisticsResult<>(pluginId, "Independence relation #" + (i + 1) + " benchmarks", data));
+			i++;
+		}
+
+		for (final var relation : mIndependenceRelations) {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(relation.getStatistics());
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Independence relation #" + (i + 1) + " benchmarks", data));
+			i++;
+		}
+
+		for (final StatisticsData data : mOldPersistentSetStatistics) {
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Persistent set benchmarks", data));
 		}
 
 		if (mPersistent != null) {
