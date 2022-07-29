@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMap;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -71,14 +70,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -431,129 +427,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	public StateSplitter<IPredicate> getStateSplitter() {
 		return mStateSplitter;
-	}
-
-	private static class SleepMapStateFactory<L> implements ISleepMapStateFactory<L, IPredicate, IPredicate> {
-
-		private final IPredicate mEmptyStack;
-
-		private final NestedMap3<IPredicate, SleepMap<L, IPredicate>, Integer, SleepMapPredicate<L>> mMap =
-				new NestedMap3<>();
-
-		public SleepMapStateFactory(final PredicateFactory predicateFactory) {
-			mEmptyStack = predicateFactory.newEmptyStackPredicate();
-		}
-
-		@Override
-		public IPredicate createEmptyStackState() {
-			return mEmptyStack;
-		}
-
-		@Override
-		public IPredicate createSleepMapState(final IPredicate state, final SleepMap<L, IPredicate> sleepMap,
-				final int budget) {
-			final SleepMapPredicate<L> existing = mMap.get(state, sleepMap, budget);
-			if (existing != null) {
-				return existing;
-			}
-
-			final SleepMapPredicate<L> predicate = new SleepMapPredicate<>((IMLPredicate) state, sleepMap, budget);
-			mMap.put(state, sleepMap, budget, predicate);
-			return predicate;
-		}
-
-		@Override
-		public IPredicate getOriginalState(final IPredicate sleepMapState) {
-			return ((SleepMapPredicate<?>) sleepMapState).getUnderlying();
-		}
-
-		@Override
-		public SleepMap<L, IPredicate> getSleepMap(final IPredicate sleepMapState) {
-			return ((SleepMapPredicate<L>) sleepMapState).getSleepMap();
-		}
-
-		@Override
-		public int getBudget(final IPredicate sleepMapState) {
-			return ((SleepMapPredicate<?>) sleepMapState).getBudget();
-		}
-
-	}
-
-	public static class SleepMapPredicate<L> implements IMLPredicate {
-		private final IMLPredicate mUnderlying;
-		private final SleepMap<L, IPredicate> mSleepMap;
-		private final int mBudget;
-
-		public SleepMapPredicate(final IMLPredicate underlying, final SleepMap<L, IPredicate> sleepMap,
-				final int budget) {
-			mUnderlying = underlying;
-			mSleepMap = sleepMap;
-			mBudget = budget;
-		}
-
-		@Override
-		public Term getFormula() {
-			return mUnderlying.getFormula();
-		}
-
-		@Override
-		public Term getClosedFormula() {
-			return mUnderlying.getClosedFormula();
-		}
-
-		@Override
-		public String[] getProcedures() {
-			return mUnderlying.getProcedures();
-		}
-
-		@Override
-		public Set<IProgramVar> getVars() {
-			return mUnderlying.getVars();
-		}
-
-		@Override
-		public IcfgLocation[] getProgramPoints() {
-			return mUnderlying.getProgramPoints();
-		}
-
-		public IMLPredicate getUnderlying() {
-			return mUnderlying;
-		}
-
-		public SleepMap<L, IPredicate> getSleepMap() {
-			return mSleepMap;
-		}
-
-		public int getBudget() {
-			return mBudget;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(mBudget, mSleepMap, mUnderlying);
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final SleepMapPredicate<?> other = (SleepMapPredicate<?>) obj;
-			return mBudget == other.mBudget && Objects.equals(mSleepMap, other.mSleepMap)
-					&& Objects.equals(mUnderlying, other.mUnderlying);
-		}
-
-		@Override
-		public String toString() {
-			return "SleepMapPredicate [underlying: " + mUnderlying + ", budget: " + mBudget + ", map: " + mSleepMap
-					+ "]";
-		}
 	}
 
 	/**
