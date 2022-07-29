@@ -8,19 +8,29 @@
  */
 
 var x : int;
+var m : int;
 procedure ULTIMATE.start() returns()
-modifies x;
+modifies m, x;
 {
-  x := 0;
+  m := 0;
   fork 1 thread1();
-  fork 2 thread1();
+  fork 2 thread2();
 }
 
 
 procedure thread1() returns()
-modifies x;
+modifies m, x;
 {
+  atomic{ assume m == 0; m := 1;}
   x := 1;
+  assert x == 1;
+  m := 0;
+}
+
+procedure thread2() returns()
+modifies m, x;
+{
+  atomic {assume m == 0; m := 1;}
   x := 0;
-  assert x == 0;
+  m := 0;
 }

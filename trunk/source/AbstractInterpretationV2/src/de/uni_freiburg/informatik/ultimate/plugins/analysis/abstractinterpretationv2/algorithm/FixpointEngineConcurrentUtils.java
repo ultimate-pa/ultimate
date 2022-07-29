@@ -188,6 +188,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		// very inefficient, but first approach
 		// TODO: find a more efficient way
 		for (final var entry : entryNodes.entrySet()) {
+			// TODO: if procedure can run parallel to itself then skip
 			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
 			for (final var item : iterator.asStream().collect(Collectors.toSet())) {
 				final Set<ACTION> reachable = new HashSet<>();
