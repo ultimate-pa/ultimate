@@ -135,4 +135,10 @@ public interface IPolynomialTerm {
 	 */
 	Equivalence compare(IPolynomialTerm otherTerm);
 
+	/**
+	 * @return A new {@link IPolynomialTerm} that is differs from this only in an
+	 *         offset that was added.
+	 */
+	IPolynomialTerm add(final Rational offset);
+
 }
