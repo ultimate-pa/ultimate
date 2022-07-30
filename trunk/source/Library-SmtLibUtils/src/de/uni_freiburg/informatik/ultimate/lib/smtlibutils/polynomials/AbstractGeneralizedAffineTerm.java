@@ -439,6 +439,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		return Rational.valueOf(bi, BigInteger.ONE);
 	}
 
+	@Override
 	public IPolynomialTerm add(final Rational offset) {
 		final Rational newConstant;
 		if (SmtSortUtils.isRealSort(getSort())) {
