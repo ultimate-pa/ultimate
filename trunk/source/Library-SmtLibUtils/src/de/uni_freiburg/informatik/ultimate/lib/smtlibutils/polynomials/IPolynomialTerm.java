@@ -97,6 +97,22 @@ public interface IPolynomialTerm {
 
 	Sort getSort();
 
+	/**
+	 * @return A new {@link IPolynomialTerm} that is the multiplication of this
+	 *         {@link IPolynomialTerm} with a {@link Rational literal}
+	 */
+	default IPolynomialTerm mul(final Rational rat) {
+		// TODO 20220730 Matthias: Do refactor that implements more methods in
+		// subclasses (instead of static methods).
+		if (this instanceof AffineTerm) {
+			return AffineTerm.mul(this, rat);
+		} else if (this instanceof PolynomialTerm) {
+			return PolynomialTerm.mul(this, rat);
+		} else {
+			throw new UnsupportedOperationException("Unsupported kind of polynomial");
+		}
+	}
+
 
 	/**
 	 * @return Divide this {@link IPolynomialTerm} by divisor. Return the result
