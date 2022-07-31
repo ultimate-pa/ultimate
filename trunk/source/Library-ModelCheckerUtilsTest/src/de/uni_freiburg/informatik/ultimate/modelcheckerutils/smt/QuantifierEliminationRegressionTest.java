@@ -1354,6 +1354,14 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
+	public void doubleAntiDerTirExist() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi", "a", "b") };
+		final String inputSTR = "(exists ((x Int)) (and	(not (= (* 2 x) a)) (not (= (* 3 x) b)) (> x lo) (< x hi)) )";
+		final String expectedResult = "(let ((.cse11 (- b)) (.cse10 (- a))) (let ((.cse3 (div .cse10 (- 2))) (.cse9 (+ 2 lo)) (.cse8 (div .cse11 (- 3))) (.cse2 (+ (div (+ (- 1) .cse11) (- 3)) 1)) (.cse7 (+ (div (+ (- 1) .cse10) (- 2)) 1))) (let ((.cse5 (<= .cse7 hi)) (.cse0 (<= .cse2 hi)) (.cse6 (<= .cse9 .cse8)) (.cse1 (<= .cse9 .cse3)) (.cse4 (<= .cse9 hi))) (or (and .cse0 .cse1 (<= .cse2 .cse3) .cse4) (and .cse5 .cse6 (<= .cse7 .cse8) .cse4) (and .cse5 .cse0 .cse4) (and .cse6 .cse1 .cse4)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void antiDerTirForall() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi", "y") };
 		final String inputSTR = "(forall ((x Int)) (or	(=(* 4 x) y) (> x lo) (< x hi))  )";
@@ -1910,6 +1918,7 @@ public class QuantifierEliminationRegressionTest {
 		final String formulaAsString = "(and (= idxDim2 (_ bv0 32)) (exists ((x (_ BitVec 32))) (and (exists ((|â| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (y (_ BitVec 32)) (z Bool)) (and (or (and (not (bvslt (select (select |â| y) (_ bv4 32)) x)) (not z)) (and (bvslt (select (select |â| y) (_ bv4 32)) x) z)) (= (store |â| y (store (store (select |â| y) (_ bv8 32) x) (_ bv4 32) (select (store (select |â| y) (_ bv8 32) x) (_ bv4 32)))) arr) (not (bvslt (select (select |â| idxDim1) (bvadd idxDim2 (_ bv4 32))) (select (select |â| idxDim1) (bvadd idxDim2 (_ bv8 32))))) (not (bvslt (select (select |â| idxDim1) (bvadd idxDim2 (_ bv8 32))) (_ bv0 32))) (not z))) (not (bvslt x (_ bv0 32))))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
 
 	//@formatter:on
 }
