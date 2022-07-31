@@ -47,13 +47,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.ExplicitLhsPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -310,8 +308,21 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations(eliminatee.getSort());
 		// have to be processed after we determined the BvSignedness
 		final List<ExplicitLhsPolynomialRelation> compatibleDistinctAndEqRelations = new ArrayList<>();
+
+		final TransformInequality tfi;
+		if (!SmtSortUtils.isIntSort(eliminatee.getSort())) {
+			tfi = TransformInequality.NO_TRANFORMATION;
+		} else {
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				tfi = TransformInequality.STRICT2NONSTRICT;
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				tfi = TransformInequality.NONSTRICT2STRICT;
+			} else {
+				throw new AssertionError("Unknown quantifier");
+			}
+		}
 		for (final Term t : withEliminatee) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t);
+			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t, tfi);
 			final ExplicitLhsPolynomialRelation elpr;
 			if (polyRel == null) {
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(t);
@@ -412,12 +423,26 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			default:
 				throw new AssertionError("unknown relation " + elpr.getRelationSymbol());
 			}
-			final RelationSymbol greaterRelationSymbol = RelationSymbol.getGreaterRelationSymbol(inequalitiesAreStrict,
-					eliminatee.getSort(), bvSignedness);
-			final ExplicitLhsPolynomialRelation lower = elpr.changeRelationSymbol(greaterRelationSymbol);
-			final RelationSymbol lessRelationSymbol = RelationSymbol.getLessRelationSymbol(inequalitiesAreStrict,
-					eliminatee.getSort(), bvSignedness);
-			final ExplicitLhsPolynomialRelation upper = elpr.changeRelationSymbol(lessRelationSymbol);
+			final ExplicitLhsPolynomialRelation lower;
+			{
+				final RelationSymbol greaterRelationSymbol = RelationSymbol
+						.getGreaterRelationSymbol(inequalitiesAreStrict, eliminatee.getSort(), bvSignedness);
+				if (SmtSortUtils.isIntSort(elpr.getRhs().getSort())) {
+					lower = elpr.changeRelationSymbol(greaterRelationSymbol).changeStrictness(tfi);
+				} else {
+					lower = elpr.changeRelationSymbol(greaterRelationSymbol);
+				}
+			}
+			final ExplicitLhsPolynomialRelation upper;
+			{
+				final RelationSymbol lessRelationSymbol = RelationSymbol.getLessRelationSymbol(inequalitiesAreStrict,
+						eliminatee.getSort(), bvSignedness);
+				if (SmtSortUtils.isIntSort(elpr.getRhs().getSort())) {
+					upper = elpr.changeRelationSymbol(lessRelationSymbol).changeStrictness(tfi);
+				} else {
+					upper = elpr.changeRelationSymbol(lessRelationSymbol);
+				}
+			}
 			result.addAntiDerRelation(lower, upper);
 		}
 		return result;
