@@ -1919,6 +1919,21 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * Formula that stems from the verification of SV-COMP benchmark
+	 * loop_lit_gsv2008 and demonstates that we need the "exact shadows" of the
+	 * omega test.
+	 */
+	@Test
+	public void exactShadows01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "a", "b"),
+			};
+		final String formulaAsString = "(exists ((x Int) (y Int)) (and (<= (+ 52 a) (+ y (* x 2))) (<= (+ y 1) b) (<= (+ x 4) (* 2 y))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	//@formatter:on
 }
