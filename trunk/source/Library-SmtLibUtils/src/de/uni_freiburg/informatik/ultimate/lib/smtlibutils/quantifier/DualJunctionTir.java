@@ -748,15 +748,15 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			final boolean allLowerCoefficientsOne = allCoefficientsOne(lowerBounds);
 			final boolean allUpperCoefficientsOne = allCoefficientsOne(upperBounds);
-			if (allLowerCoefficientsOne != allUpperCoefficientsOne) {
-				if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
-					final String message = "we need the exact shadows from the omega test";
-					throw new AssertionError(message);
-				} else {
-					// TODO: log message
-					return null;
-				}
-			}
+//			if (allLowerCoefficientsOne != allUpperCoefficientsOne) {
+//				if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
+//					final String message = "we need the exact shadows from the omega test";
+//					throw new AssertionError(message);
+//				} else {
+//					// TODO: log message
+//					return null;
+//				}
+//			}
 			if (!allLowerCoefficientsOne && !allUpperCoefficientsOne) {
 				if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
 					final String message = "we need the omega test";
@@ -814,9 +814,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					|| relSymbAndOffset.getSecond().equals(Rational.MONE);
 			final IPolynomialTerm lhs = lower.getRhs();
 			final IPolynomialTerm rhs = upper.getRhs();
-
 			final Term result;
 			if (SmtSortUtils.isBitvecSort(lower.getRhs().getSort())) {
+				assert (lower.getLhsCoefficient().equals(Rational.ONE)
+						&& upper.getLhsCoefficient().equals(Rational.ONE)) : "Both coefficients must be one";
 				if (!relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
 					// for bitvectors we cannot handle offsets
 					// e.g., required if we combine two strict
@@ -826,22 +827,31 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					result = relSymbAndOffset.getFirst().constructTerm(script, lhs.toTerm(script), rhs.toTerm(script));
 				}
 			} else {
-				final IPolynomialTerm resultLhs;
-				if (relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
-					resultLhs = lhs;
-				} else {
-					resultLhs = PolynomialTerm.sum(lhs,
-							new AffineTerm(lhs.getSort(), relSymbAndOffset.getSecond(), Collections.emptyMap()));
+				assert (lower.getLhsCoefficient().equals(Rational.ONE)
+						|| upper.getLhsCoefficient().equals(Rational.ONE)) : "At least one coefficient must be one";
+				if (!relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
+					throw new AssertionError("Offset must be zero for non-bitvectors");
 				}
-				final Term originalTerm = relSymbAndOffset.getFirst().constructTerm(script, resultLhs.toTerm(script),
-						rhs.toTerm(script));
+				final IPolynomialTerm resultLhs;
+				if (!upper.getLhsCoefficient().equals(Rational.ONE)) {
+					resultLhs = lhs.mul(upper.getLhsCoefficient());
+				} else {
+					resultLhs = lhs;
+				}
+				final IPolynomialTerm resultRhs;
+				if (!lower.getLhsCoefficient().equals(Rational.ONE)) {
+					resultRhs = rhs.mul(lower.getLhsCoefficient());
+				} else {
+					resultRhs = rhs;
+				}
+				final Term preliminaryResult = relSymbAndOffset.getFirst().constructTerm(script,
+						resultLhs.toTerm(script), resultRhs.toTerm(script));
 				result = new PolynomialRelation(script, TransformInequality.NO_TRANFORMATION,
 						relSymbAndOffset.getFirst(), (AbstractGeneralizedAffineTerm<?>) resultLhs,
-						(AbstractGeneralizedAffineTerm<?>) rhs, originalTerm).positiveNormalForm(script);
+						(AbstractGeneralizedAffineTerm<?>) resultRhs, preliminaryResult).positiveNormalForm(script);
 			}
 			return result;
 		}
-
 	}
 
 	private static Pair<RelationSymbol, Rational> computeRelationSymbolAndOffset(final int quantifier,
