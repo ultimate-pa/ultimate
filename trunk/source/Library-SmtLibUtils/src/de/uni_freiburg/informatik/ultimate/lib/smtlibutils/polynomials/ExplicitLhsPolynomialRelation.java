@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -573,6 +574,59 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		suppTerms.add(
 				new SupportingTerm(rhsRelationZeroTerm, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
 		return new Case(null, suppTerms, xnf);
+	}
+
+	public ExplicitLhsPolynomialRelation changeStrictness(final TransformInequality strictnessTrans) {
+		if (!SmtSortUtils.isIntSort(mRhs.getSort())) {
+			throw new UnsupportedOperationException("Change of strictness only for ints.");
+		}
+		if (strictnessTrans == TransformInequality.NO_TRANFORMATION) {
+			return this;
+		}
+		switch (mRelationSymbol) {
+		case EQ:
+		case DISTINCT:
+			throw new UnsupportedOperationException("Only applicable to integer inequalities");
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new UnsupportedOperationException("Only applicable to integer inequalities");
+		case GEQ:
+			if (strictnessTrans == TransformInequality.NONSTRICT2STRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.GREATER, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.MONE));
+			} else {
+				throw new UnsupportedOperationException("Not strict");
+			}
+		case GREATER:
+			if (strictnessTrans == TransformInequality.STRICT2NONSTRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.GEQ, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.ONE));
+			} else {
+				throw new UnsupportedOperationException("Is strict");
+			}
+		case LEQ:
+			if (strictnessTrans == TransformInequality.NONSTRICT2STRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.LESS, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.ONE));
+			} else {
+				throw new UnsupportedOperationException("Not strict");
+			}
+		case LESS:
+			if (strictnessTrans == TransformInequality.STRICT2NONSTRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.LEQ, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.MONE));
+			} else {
+				throw new UnsupportedOperationException("Is strict");
+			}
+		default:
+			throw new AssertionError("Unknown relation symbol " + mRelationSymbol);
+		}
 	}
 
 	private static boolean isEqOrDistinct(final RelationSymbol relSym) {
