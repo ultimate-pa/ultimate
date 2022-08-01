@@ -123,14 +123,15 @@ public class MapEliminationPreAnalysis {
 				findIndicesArrayWrite(arrayWrite2, transformula);
 				final Term array1 = arrayWrite.getOldArray();
 				final Term array2 = arrayWrite2.getOldArray();
-				if (allVariablesAreVisible(array1, transformula) && allVariablesAreVisible(array2, transformula)) {
-					final Term globalArray1 = translateTermVariablesToDefinitions(mManagedScript, transformula, array1);
-					final Term globalArray2 = translateTermVariablesToDefinitions(mManagedScript, transformula, array2);
-					// If the two arrays are different, add them to the set of related arrays
-					// (the indices need to be shared then)
-					if (globalArray1 != globalArray2) {
-						mRelatedArays.add(new Doubleton<>(globalArray1, globalArray2));
-					}
+				if (!allVariablesAreVisible(array1, transformula) || !allVariablesAreVisible(array2, transformula)) {
+					continue;
+				}
+				final Term globalArray1 = translateTermVariablesToDefinitions(mManagedScript, transformula, array1);
+				final Term globalArray2 = translateTermVariablesToDefinitions(mManagedScript, transformula, array2);
+				// If the two arrays are different, add them to the set of related arrays
+				// (the indices need to be shared then)
+				if (globalArray1 != globalArray2) {
+					mRelatedArays.add(new Doubleton<>(globalArray1, globalArray2));
 				}
 			}
 		}
