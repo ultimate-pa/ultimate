@@ -629,6 +629,44 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		}
 	}
 
+	/**
+	 * We call a {@link ExplicitLhsPolynomialRelation} tight if
+	 * <li>the sort is Real and the lhs coefficient is 1.0 or if
+	 * <li>the sort is Int and the lhs coefficient is positive and there is no
+	 * equivalent {@link ExplicitLhsPolynomialRelation} that has a smaller lhs
+	 * coefficient but the same monomials (i.e., it is not allowed to obtain the
+	 * smaller lhs coefficient by a division that introduces a div term on the
+	 * rhs).
+	 */
+	public ExplicitLhsPolynomialRelation makeTight() {
+		Rational divisor;
+		if (SmtSortUtils.isRealSort(mRhs.getSort())) {
+			divisor = mLhsCoefficient;
+		} else if (SmtSortUtils.isBitvecSort(mRhs.getSort())) {
+			if (!mLhsCoefficient.equals(Rational.ONE) && !mLhsCoefficient.equals(Rational.MONE)) {
+				throw new AssertionError("Expect that bitvector relations can only habe coefficient 1 and -1.");
+			}
+			divisor = mLhsCoefficient;
+		} else if (SmtSortUtils.isIntSort(mRhs.getSort())) {
+			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients());
+			if (!gcd.isNegative() && mLhsCoefficient.isNegative()) {
+				divisor = gcd.negate();
+			} else {
+				divisor = gcd;
+			}
+		} else {
+			throw new UnsupportedOperationException("Unsupported sort: " + mRhs.getSort());
+		}
+		if (divisor.equals(Rational.ONE)) {
+			return this;
+		}
+		final ExplicitLhsPolynomialRelation res = divInvertible(divisor);
+		if (res == null) {
+			throw new AssertionError("Invertible division must not fail for " + divisor);
+		}
+		return res;
+	}
+
 	private static boolean isEqOrDistinct(final RelationSymbol relSym) {
 		return (relSym.equals(RelationSymbol.EQ)) || (relSym.equals(RelationSymbol.DISTINCT));
 	}
