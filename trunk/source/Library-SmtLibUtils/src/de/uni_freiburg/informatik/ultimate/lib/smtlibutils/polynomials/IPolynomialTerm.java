@@ -141,4 +141,9 @@ public interface IPolynomialTerm {
 	 */
 	IPolynomialTerm add(final Rational offset);
 
+	/**
+	 * Compute the GCD of all coefficients and the constant.
+	 */
+	Rational computeGcdOfCoefficients();
+
 }
