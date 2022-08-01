@@ -122,7 +122,7 @@ public final class MapEliminatorUtils {
 	 * Given an ArrayIndex of definitions, adds the needed in- and out-vars to the transformula and returns the index
 	 * with in-vars.
 	 *
-	 * @param term
+	 * @param index
 	 *            An array-index with global variables
 	 * @param transformula
 	 *            A TransFormula
@@ -142,7 +142,7 @@ public final class MapEliminatorUtils {
 	 * Given an ArrayIndex of definitions, adds the needed in- and out-vars to the transformula and returns the index
 	 * with out-vars.
 	 *
-	 * @param term
+	 * @param index
 	 *            An array-index with global variables
 	 * @param transformula
 	 *            A TransFormula
