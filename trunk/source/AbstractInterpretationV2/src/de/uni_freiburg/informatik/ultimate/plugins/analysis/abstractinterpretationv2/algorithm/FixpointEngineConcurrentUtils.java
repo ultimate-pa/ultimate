@@ -76,6 +76,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final HashRelation<String, LOC> mForkedAt;
 	private final HashRelation<String, String> mForks;
 	private final HashRelation<String, ACTION> mActionsInProcedure;
+	private final Set<String> mParallelProcedures;
 
 	private final Map<String, Set<Map<LOC, Set<ACTION>>>> mCrossProducts;
 
@@ -93,6 +94,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mForkedAt = new HashRelation<>();
 		mForks = new HashRelation<>();
 		mActionsInProcedure = new HashRelation<>();
+		mParallelProcedures = new HashSet<>();
 
 		mCrossProducts = new HashMap<>();
 
@@ -188,7 +190,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		// very inefficient, but first approach
 		// TODO: find a more efficient way
 		for (final var entry : entryNodes.entrySet()) {
-			// TODO: if procedure can run parallel to itself then skip
+			if (mParallelProcedures.contains(entry.getKey())) {
+				// procedure can run parallel to itself -> NotReachable condition is not valid anymore
+				continue;
+			}
 			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
 			for (final var item : iterator.asStream().collect(Collectors.toSet())) {
 				final Set<ACTION> reachable = new HashSet<>();
@@ -400,6 +405,12 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 		final Map<String, Set<String>> closureDepending = closure(mDependingProcedures);
 		final Map<String, Set<String>> dependingOn = computeDependingProcedures(closureDepending);
+
+		for (final var entry : dependingOn.entrySet()) {
+			if (entry.getValue().contains(entry.getKey())) {
+				mParallelProcedures.add(entry.getKey());
+			}
+		}
 
 		for (final Entry<ACTION, Set<String>> entry : readsFromProcedures.entrySet()) {
 			mWritesPerRead.put(entry.getKey(), new HashSet<>());
