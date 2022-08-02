@@ -958,11 +958,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	}
 
 	/**
-	 * Compute the GCD of all coefficients and the constant.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public Rational computeGcdOfCoefficients() {
-		Rational gcd = mConstant;
+		Rational gcd = Rational.ZERO;
 		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			gcd = gcd.gcd(entry.getValue());
 		}

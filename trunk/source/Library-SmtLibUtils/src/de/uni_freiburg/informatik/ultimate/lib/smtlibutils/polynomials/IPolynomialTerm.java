@@ -142,7 +142,10 @@ public interface IPolynomialTerm {
 	IPolynomialTerm add(final Rational offset);
 
 	/**
-	 * Compute the GCD of all coefficients and the constant.
+	 * Compute the GCD of all coefficients (but do not include the constant in the
+	 * computation). E.g., this method returns 2 for the polynomial 4*x+6*y+5. We
+	 * use the semantics of {@link Rational#gcd}. If there are no coefficients, we
+	 * return the {@link Rational} zero.
 	 */
 	Rational computeGcdOfCoefficients();
 
