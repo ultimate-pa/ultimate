@@ -54,15 +54,15 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 	@Override
 	public Comparator<L> getOrder(S1 stateProgram, State stateMonitor) {
 		final String lastThread = ((State) stateMonitor).getThread();
-		return new ParameterizedComparator<>(lastThread, mDefaultComparator, mThreads);
+		return new PreferenceOrderComparator<>(lastThread, mDefaultComparator, mThreads);
 	}
 	
-	public static final class ParameterizedComparator<L extends IAction> implements Comparator<L> {
+	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final Comparator<L> mFallback;
 		private List<String> mThreads;
 
-		public ParameterizedComparator(final String lastThread, final Comparator<L> fallback, final List<String> threads) {
+		public PreferenceOrderComparator(final String lastThread, final Comparator<L> fallback, final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mFallback = fallback;
 			mThreads = threads;
@@ -70,10 +70,11 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 
 		@Override
 		public int compare(final L x, final L y) {
-			final String xThread = x.getPrecedingProcedure();
-			final boolean xBefore = mThreads.indexOf(mLastThread) >= mThreads.indexOf(xThread);
-			final String yThread = y.getPrecedingProcedure();
-			final boolean yBefore = mThreads.indexOf(mLastThread) >= mThreads.indexOf(yThread);
+			final int lastThreadIndex = mThreads.indexOf(mLastThread);
+			final int xThreadIndex = mThreads.indexOf(x.getPrecedingProcedure());
+			final boolean xBefore = lastThreadIndex >= xThreadIndex;
+			final int yThreadIndex = mThreads.indexOf(y.getPrecedingProcedure());
+			final boolean yBefore = lastThreadIndex >= yThreadIndex;
 			
 			if (xBefore && !yBefore) {
 				return 1;
@@ -81,7 +82,8 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			if (yBefore && !xBefore) {
 				return -1;
 			}
-			return mFallback.compare(x, y);
+			return Integer.compare(xThreadIndex, yThreadIndex);
+			//return mFallback.compare(x, y);
 		}
 
 		@Override
@@ -100,8 +102,9 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			final ParameterizedComparator<L> other = (ParameterizedComparator<L>) obj;
-			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread);
+			final PreferenceOrderComparator<L> other = (PreferenceOrderComparator<L>) obj;
+			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread) 
+					&& Objects.equals(mThreads, other.mThreads);
 		}
 	}
 

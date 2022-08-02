@@ -27,17 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
-import java.util.Comparator;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
-public interface IPreferenceOrder<L, S1, S2> extends IPartialPreferenceOrder<L, S1, S2>{
+public interface IPartialPreferenceOrder<L, S1, S2> {
 
-	Comparator<L> getOrder(S1 stateProgram, S2 stateMonitor);
+	IPartialComparator<L> getPartialOrder(S1 stateProgram, S2 stateMonitor);
 
-	default IPartialComparator<L> getPartialOrder(S1 stateProgram, S2 stateMonitor){
-		return null; //nach dem merge zur conversion abändern
-		
-	}
+	boolean isPositional();
+
+	INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor();
 }
