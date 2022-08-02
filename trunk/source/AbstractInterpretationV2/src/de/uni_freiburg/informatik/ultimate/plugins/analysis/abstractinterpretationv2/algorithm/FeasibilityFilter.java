@@ -252,7 +252,10 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	private Term forkRule(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
-		return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
+		// Rule from Paper
+		// return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
+		// Adapted Rule version
+		return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
 	}
 
 	private Term joinRule(final Sort sort) {
@@ -371,6 +374,12 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		final Set<Term> termCollection = new HashSet<>();
 		termCollection.add(term);
 		return SmtUtils.quantifier(mScript, 1, SmtUtils.getFreeVars(termCollection), term);
+	}
+
+	private Term exists(final Term term, final TermVariable variable) {
+		final Set<TermVariable> variables = new HashSet<>();
+		variables.add(variable);
+		return SmtUtils.quantifier(mScript, 0, variables, term);
 	}
 
 	private String declareFunctionforAction(final ACTION item, final Sort action) {
