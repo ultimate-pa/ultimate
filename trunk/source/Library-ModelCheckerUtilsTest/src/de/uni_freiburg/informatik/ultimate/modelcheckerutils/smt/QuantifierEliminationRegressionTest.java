@@ -1310,7 +1310,16 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
+	/**
+	 * Check that we do not accidentally divide by two in the first conjunct.
+	 */
+	@Test
+	public void bvTirNoInvertibleDivision() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvule (bvmul (_ bv2 8) lo) (bvmul (_ bv2 8) x)) (bvule x hi)))";
+		final String expectedResult = inputSTR;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	@Test
 	public void greaterTIRNegativeCoef() {
