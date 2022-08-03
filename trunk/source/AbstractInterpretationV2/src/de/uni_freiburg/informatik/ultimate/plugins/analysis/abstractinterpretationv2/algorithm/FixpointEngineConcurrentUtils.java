@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -579,13 +580,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					continue;
 				}
 
-				final List<Set<ACTION>> tempList = computeCrossProductOfWrites(mWritesPerRead.get(read));
+				final List<Set<ACTION>> tempList =
+						computeCrossProductOfWrites(sortWritesAfterVariables(mWritesPerRead.get(read)));
 				tempList.addAll(computeDummyWrites(read));
 				if (tempList.isEmpty()) {
 					continue;
 				}
 				// TODO: delete dummy element if computeDummyWrites is implemented
-				tempList.add(dummy);
+				// tempList.add(dummy);
 				n *= tempList.size();
 				writes.put(source, tempList);
 			}
@@ -596,10 +598,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				for (final var readEntry : writes.entrySet()) {
 					final int index = (i / blocksize) % readEntry.getValue().size();
 					final Set<ACTION> write = readEntry.getValue().get(index);
-					if (write != null) {
-						// TODO: if computeDummyWrites is implemented delete if-condition
-						map.put(readEntry.getKey(), write);
-					}
+					// if (write != null) {
+					// TODO: if computeDummyWrites is implemented delete if-condition
+					map.put(readEntry.getKey(), write);
+					// }
 					blocksize *= readEntry.getValue().size();
 				}
 				if (!map.isEmpty() && filter.evaluate(map)) {
@@ -612,21 +614,12 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
-	private List<Set<ACTION>> computeCrossProductOfWrites(final Set<ACTION> writes) {
-		// initialize result
+	private List<Set<ACTION>>
+			computeCrossProductOfWrites(final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable) {
 		final List<Set<ACTION>> result = new ArrayList<>();
-		if (writes.isEmpty()) {
-			return result;
-		}
-		// split it up after read variables:
-		final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable = new HashRelation<>();
-		for (final var action : writes) {
-			getWrittenVars(action).forEach(variable -> writesPerVariable.addPair(variable, action));
-		}
 		final Iterator<IProgramVarOrConst> iterator = writesPerVariable.getDomain().iterator();
 
 		while (iterator.hasNext()) {
-			// add null element to writesPerVariable
 			final var variable = iterator.next();
 			final List<Set<ACTION>> newResult = new ArrayList<>();
 			for (final ACTION action : writesPerVariable.getImage(variable)) {
@@ -647,11 +640,72 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
+	private HashRelation<IProgramVarOrConst, ACTION> sortWritesAfterVariables(final Set<ACTION> writes) {
+		final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable = new HashRelation<>();
+		if (writes.isEmpty()) {
+			return writesPerVariable;
+		}
+		for (final var action : writes) {
+			getWrittenVars(action).forEach(variable -> writesPerVariable.addPair(variable, action));
+		}
+		return writesPerVariable;
+	}
+
 	private List<Set<ACTION>> computeDummyWrites(final ACTION read) {
 		// if there is a way such that it is possible to have no write before -> add null element
-		final List<Set<ACTION>> result = new ArrayList<>();
+		final HashRelation<IProgramVarOrConst, ACTION> dummyWrites = new HashRelation<>();
+		final Set<ACTION> entryActions = getFirstActions();
+		for (final var entry : mSharedReadReadVars.getImage(read)) {
+			dummyWrites.addAllPairs(entry, backwardsBFSForWrites(entry, read, entryActions));
+		}
+		return computeCrossProductOfWrites(dummyWrites);
+	}
 
+	private Set<ACTION> backwardsBFSForWrites(final IProgramVarOrConst variable, final ACTION read,
+			final Set<ACTION> entryActions) {
+		final Set<ACTION> result = new HashSet<>();
+		final Queue<ACTION> workList = new ArrayDeque<>();
+		boolean canBeUninitialized = false;
+		workList.add(read);
+		final Set<ACTION> done = new HashSet<>();
+		final Set<ACTION> allWritesToVariable = mSharedWriteWrittenVars.getDomain().stream()
+				.filter(write -> mSharedWriteWrittenVars.getImage(write).contains(variable))
+				.collect(Collectors.toSet());
+		while (!workList.isEmpty()) {
+			final ACTION currentItem = workList.poll();
+			if (allWritesToVariable.contains(currentItem)) {
+				result.add(currentItem);
+				continue;
+			}
+			if (entryActions.contains(currentItem)) {
+				canBeUninitialized = true;
+				continue;
+			}
+			final LOC source = mTransitionProvider.getSource(currentItem);
+			final Collection<ACTION> predecessors = mTransitionProvider.getPredecessorActions(source);
+			if (predecessors.isEmpty()) {
+				// source is ThreadEntry
+				for (final var fork : mForkedAt.getImage(mTransitionProvider.getProcedureName(currentItem))) {
+					workList.addAll(mTransitionProvider.getPredecessorActions(fork));
+				}
+				continue;
+			}
+			for (final var predecessor : predecessors) {
+				if (!done.contains(predecessor)) {
+					workList.add(predecessor);
+				}
+			}
+			done.add(currentItem);
+		}
+		if (canBeUninitialized) {
+			result.add(null);
+		}
 		return result;
+	}
+
+	private Set<ACTION> getFirstActions() {
+		final IcfgLocation start = mIcfg.getProcedureEntryNodes().get(mTopologicalOrder.get(0));
+		return new HashSet<>(mTransitionProvider.getSuccessorActions((LOC) start));
 	}
 
 	private void computeTopologicalOrder(final Set<String> procedures) {
