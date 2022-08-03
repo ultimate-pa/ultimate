@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -256,9 +255,17 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		final String initialProcedure = mTopologicalOrder.get(0);
 		for (final var entry : mIcfg.getProcedureEntryNodes().entrySet()) {
 			if (!entry.getKey().equals(initialProcedure)) {
-				mTransitionProvider.getSuccessorActions((LOC) entry.getValue()).forEach(action -> result.add(action));
+				result.addAll(mTransitionProvider.getSuccessorActions((LOC) entry.getValue()));
 			}
 		}
+		return result;
+	}
+
+	public Set<ACTION> getProgramEntry() {
+		final Set<ACTION> result = new HashSet<>();
+		final String initialProcedure = mTopologicalOrder.get(0);
+		result.addAll(
+				mTransitionProvider.getSuccessorActions((LOC) mIcfg.getProcedureEntryNodes().get(initialProcedure)));
 		return result;
 	}
 
@@ -581,13 +588,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				}
 
 				final List<Set<ACTION>> tempList =
-						computeCrossProductOfWrites(sortWritesAfterVariables(mWritesPerRead.get(read)));
-				tempList.addAll(computeDummyWrites(read));
+						computeCrossProductOfWrites(sortWritesAfterVariables(mWritesPerRead.get(read)), read);
 				if (tempList.isEmpty()) {
 					continue;
 				}
-				// TODO: delete dummy element if computeDummyWrites is implemented
-				// tempList.add(dummy);
 				n *= tempList.size();
 				writes.put(source, tempList);
 			}
@@ -614,27 +618,34 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
-	private List<Set<ACTION>>
-			computeCrossProductOfWrites(final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable) {
-		final List<Set<ACTION>> result = new ArrayList<>();
-		final Iterator<IProgramVarOrConst> iterator = writesPerVariable.getDomain().iterator();
+	private List<Set<ACTION>> computeCrossProductOfWrites(
+			final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable, final ACTION read) {
+		List<Set<ACTION>> result = new ArrayList<>();
 
-		while (iterator.hasNext()) {
-			final var variable = iterator.next();
+		final Set<ACTION> entryActions = getFirstActions();
+		for (final IProgramVarOrConst variable : writesPerVariable.getDomain()) {
+			if (canBeUninitialized(variable, read, entryActions)) {
+				writesPerVariable.addPair(variable, null);
+			}
+		}
+
+		for (final var entry : writesPerVariable.entrySet()) {
 			final List<Set<ACTION>> newResult = new ArrayList<>();
-			for (final ACTION action : writesPerVariable.getImage(variable)) {
-				final Set<ACTION> actionSet = new HashSet<>();
-				actionSet.add(action);
-				newResult.add(actionSet);
-				for (final var setOfActions : result) {
-					// nicht direkt SetofActions hinzufügen
-					final Set<ACTION> tempSet = setOfActions.stream().collect(Collectors.toSet());
+			for (final ACTION action : entry.getValue()) {
+				if (result.isEmpty()) {
+					final Set<ACTION> actionSet = new HashSet<>();
+					actionSet.add(action);
+					newResult.add(actionSet);
+					continue;
+				}
+
+				for (final Set<ACTION> set : result) {
+					final Set<ACTION> tempSet = set.stream().collect(Collectors.toSet());
 					tempSet.add(action);
 					newResult.add(tempSet);
 				}
 			}
-			result.addAll(newResult);
-			// add all writes as seperate Set to result
+			result = newResult;
 		}
 
 		return result;
@@ -651,21 +662,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return writesPerVariable;
 	}
 
-	private List<Set<ACTION>> computeDummyWrites(final ACTION read) {
-		// if there is a way such that it is possible to have no write before -> add null element
-		final HashRelation<IProgramVarOrConst, ACTION> dummyWrites = new HashRelation<>();
-		final Set<ACTION> entryActions = getFirstActions();
-		for (final var entry : mSharedReadReadVars.getImage(read)) {
-			dummyWrites.addAllPairs(entry, backwardsBFSForWrites(entry, read, entryActions));
-		}
-		return computeCrossProductOfWrites(dummyWrites);
-	}
-
-	private Set<ACTION> backwardsBFSForWrites(final IProgramVarOrConst variable, final ACTION read,
+	private boolean canBeUninitialized(final IProgramVarOrConst variable, final ACTION read,
 			final Set<ACTION> entryActions) {
-		final Set<ACTION> result = new HashSet<>();
 		final Queue<ACTION> workList = new ArrayDeque<>();
-		boolean canBeUninitialized = false;
 		workList.add(read);
 		final Set<ACTION> done = new HashSet<>();
 		final Set<ACTION> allWritesToVariable = mSharedWriteWrittenVars.getDomain().stream()
@@ -674,12 +673,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		while (!workList.isEmpty()) {
 			final ACTION currentItem = workList.poll();
 			if (allWritesToVariable.contains(currentItem)) {
-				result.add(currentItem);
 				continue;
 			}
 			if (entryActions.contains(currentItem)) {
-				canBeUninitialized = true;
-				continue;
+				return true;
 			}
 			final LOC source = mTransitionProvider.getSource(currentItem);
 			final Collection<ACTION> predecessors = mTransitionProvider.getPredecessorActions(source);
@@ -697,10 +694,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 			done.add(currentItem);
 		}
-		if (canBeUninitialized) {
-			result.add(null);
-		}
-		return result;
+		return false;
 	}
 
 	private Set<ACTION> getFirstActions() {

@@ -599,7 +599,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final FeasibilityFilter<ACTION, LOC> filter = new FeasibilityFilter<>(services);
 			filter.setTransitionProvider(mTransitionProvider);
 			filter.initializeProgramConstraints(mFecUtils.getProgramOrderConstraints(mIcfg.getProcedureEntryNodes()),
-					mFecUtils.getIsLoad(), mFecUtils.getIsStore(), mFecUtils.getAllReads(), mFecUtils.getIsEntry());
+					mFecUtils.getIsLoad(), mFecUtils.getIsStore(), mFecUtils.getAllReads(), mFecUtils.getIsEntry(),
+					mFecUtils.getProgramEntry());
 			return filter;
 		}
 

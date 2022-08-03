@@ -70,6 +70,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	private final Map<FeasibilityFilter.Sorts, String> mSorts;
 	private final Map<FeasibilityFilter.Relations, String> mRelations;
+	private final String mExtraHavoc;
 
 	private enum Relations {
 		DOMINATES, NOT_REACHABLE_FROM, THCREATES, THJOINS, ISLOAD, ISSTORE, MHB, READS_FROM, ENTRY
@@ -98,6 +99,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mSorts = new HashMap<>();
 		mRelations = new HashMap<>();
 
+		mExtraHavoc = "havoc";
+
 		defineNames();
 	}
 
@@ -118,10 +121,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 				}
 				for (final ACTION action : entry.getValue()) {
 					if (action == null) {
-						for (final String shadowWrite : mShadowWrites) {
-							mScript.assertTerm(mScript.term(mRelations.get(Relations.READS_FROM), mScript.term(read),
-									mScript.term(shadowWrite)));
-						}
+						mScript.assertTerm(mScript.term(mRelations.get(Relations.READS_FROM), mScript.term(read),
+								mScript.term(mExtraHavoc)));
 						continue;
 					}
 					String write = mAction2Function.get(action);
@@ -149,7 +150,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	public void initializeProgramConstraints(final List<HashRelation<ACTION, ACTION>> programOrderConstraints,
 			final HashRelation<ACTION, IProgramVarOrConst> isLoad,
 			final HashRelation<ACTION, IProgramVarOrConst> isStore, final Set<ACTION> allReads,
-			final Set<ACTION> isEntry) {
+			final Set<ACTION> isEntry, final Set<ACTION> mainProcedureEntry) {
 
 		mAllReads.addAll(allReads);
 		// Declare Sorts
@@ -205,6 +206,27 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		addVariableConstraints(isStore, mRelations.get(Relations.ISSTORE), action, variable);
 		addEntryConstraints(isEntry, mRelations.get(Relations.ENTRY), action);
 		// For all loaded variables add a write at the top of ultimate and save them
+		mScript.declareFun(mExtraHavoc, new Sort[0], mScript.sort(mSorts.get(Sorts.ACTION)));
+		// add MHB before entries
+		for (final var entry : mainProcedureEntry) {
+			String two = mAction2Function.get(entry);
+			if (two == null) {
+				two = declareFunctionforAction(entry, action);
+			}
+			mScript.assertTerm(mustHappenBefore(mScript.term(mExtraHavoc), mScript.term(two)));
+		}
+		// add isStore for every Variable
+		final Set<IProgramVarOrConst> variables = new HashSet<>();
+		for (final var entry : isLoad.entrySet()) {
+			variables.addAll(entry.getValue());
+		}
+		for (final var value : variables) {
+			String two = mVariable2Function.get(value);
+			if (two == null) {
+				two = declareFunctionforVariable(value, variable);
+			}
+			mScript.assertTerm(isStore(mScript.term(mExtraHavoc), mScript.term(two)));
+		}
 	}
 
 	private void defineNames() {
@@ -277,10 +299,10 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
 		// Rule from Paper
-		// return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
+		return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
 		// Adapted Rule version
-		return forAll(implication(isEntry(b), not(exists(and(forks(a, b), mustHappenBefore(a, b)), a)),
-				mScript.term("false")));
+		// return forAll(implication(isEntry(b), not(exists(and(forks(a, b), mustHappenBefore(a, b)), a)),
+		// mScript.term("false")));
 		// return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
 	}
 
