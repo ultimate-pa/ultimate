@@ -77,6 +77,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final HashRelation<String, String> mForks;
 	private final HashRelation<String, ACTION> mActionsInProcedure;
 	private final Set<String> mParallelProcedures;
+	private final List<String> mTopologicalOrder;
 
 	private final Map<String, Set<Map<LOC, Set<ACTION>>>> mCrossProducts;
 
@@ -97,6 +98,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mParallelProcedures = new HashSet<>();
 
 		mCrossProducts = new HashMap<>();
+
+		mTopologicalOrder = new ArrayList<>();
 
 		initialize(mIcfg.getProcedureEntryNodes());
 	}
@@ -247,6 +250,17 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mSharedWriteWrittenVars;
 	}
 
+	public Set<ACTION> getIsEntry() {
+		final Set<ACTION> result = new HashSet<>();
+		final String initialProcedure = mTopologicalOrder.get(0);
+		for (final var entry : mIcfg.getProcedureEntryNodes().entrySet()) {
+			if (!entry.getKey().equals(initialProcedure)) {
+				mTransitionProvider.getSuccessorActions((LOC) entry.getValue()).forEach(action -> result.add(action));
+			}
+		}
+		return result;
+	}
+
 	public Set<ACTION> getSelfReachableReads(final String procedure) {
 		return mSelfReachableReads.getImage(procedure);
 	}
@@ -307,53 +321,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
-	public List<String> computeTopologicalOrder(final Set<String> procedures) {
-		final List<String> topologicalOrder = new ArrayList<>();
-		final Map<String, Integer> inGrad = new HashMap<>();
-		for (final String procedure : procedures) {
-			inGrad.put(procedure, 0);
-		}
-
-		for (final var entry : mForks.entrySet()) {
-			for (final String forked : entry.getValue()) {
-				inGrad.put(forked, inGrad.get(forked) + 1);
-			}
-		}
-
-		final PriorityQueue<Pair<String, Integer>> pQueue = new PriorityQueue<>((x, y) -> queueCompare(x, y));
-
-		for (final var entry : inGrad.entrySet()) {
-			pQueue.add(new Pair<>(entry.getKey(), entry.getValue()));
-		}
-
-		final Set<String> visited = new HashSet<>();
-
-		while (!DataStructureUtils.difference(procedures, visited).isEmpty()) {
-			final Pair<String, Integer> currentItem = pQueue.poll();
-			if (currentItem.getSecond() == 0) {
-				final String key = currentItem.getFirst();
-				if (!visited.contains(key)) {
-					topologicalOrder.add(key);
-					visited.add(key);
-
-					for (final String forked : mForks.getImage(key)) {
-						if (inGrad.get(forked) > 0) {
-							inGrad.put(forked, inGrad.get(forked) - 1);
-							pQueue.add(new Pair<>(forked, inGrad.get(forked)));
-						}
-					}
-				}
-				continue;
-			}
-
-			// cycle -> add others in arbitrary order
-			for (final String procedure : DataStructureUtils.difference(procedures, visited)) {
-				topologicalOrder.add(procedure);
-			}
-			break;
-		}
-
-		return topologicalOrder;
+	public List<String> getTopologicalOrder() {
+		return mTopologicalOrder;
 	}
 
 	private static Integer queueCompare(final Pair<String, Integer> pair1, final Pair<String, Integer> pair2) {
@@ -452,6 +421,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				}
 			}
 		}
+
+		computeTopologicalOrder(entryNodes.keySet());
 	}
 
 	private static Map<String, Set<String>> closure(final Map<String, Set<String>> map) {
@@ -609,13 +580,12 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				}
 
 				final List<Set<ACTION>> tempList = computeCrossProductOfWrites(mWritesPerRead.get(read));
-				// final List<ACTION> tempList = mWritesPerRead.get(read).stream().collect(Collectors.toList());
-				if (tempList == null) {
-					// read must always read from it own procedure
+				tempList.addAll(computeDummyWrites(read));
+				if (tempList.isEmpty()) {
 					continue;
 				}
+				// TODO: delete dummy element if computeDummyWrites is implemented
 				tempList.add(dummy);
-
 				n *= tempList.size();
 				writes.put(source, tempList);
 			}
@@ -627,6 +597,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					final int index = (i / blocksize) % readEntry.getValue().size();
 					final Set<ACTION> write = readEntry.getValue().get(index);
 					if (write != null) {
+						// TODO: if computeDummyWrites is implemented delete if-condition
 						map.put(readEntry.getKey(), write);
 					}
 					blocksize *= readEntry.getValue().size();
@@ -642,8 +613,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	private List<Set<ACTION>> computeCrossProductOfWrites(final Set<ACTION> writes) {
+		// initialize result
+		final List<Set<ACTION>> result = new ArrayList<>();
 		if (writes.isEmpty()) {
-			return null;
+			return result;
 		}
 		// split it up after read variables:
 		final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable = new HashRelation<>();
@@ -652,10 +625,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 		final Iterator<IProgramVarOrConst> iterator = writesPerVariable.getDomain().iterator();
 
-		// initialize result
-		final List<Set<ACTION>> result = new ArrayList<>();
 		while (iterator.hasNext()) {
-			// add null element to writesPervariable
+			// add null element to writesPerVariable
 			final var variable = iterator.next();
 			final List<Set<ACTION>> newResult = new ArrayList<>();
 			for (final ACTION action : writesPerVariable.getImage(variable)) {
@@ -674,5 +645,58 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		return result;
+	}
+
+	private List<Set<ACTION>> computeDummyWrites(final ACTION read) {
+		// if there is a way such that it is possible to have no write before -> add null element
+		final List<Set<ACTION>> result = new ArrayList<>();
+
+		return result;
+	}
+
+	private void computeTopologicalOrder(final Set<String> procedures) {
+		final Map<String, Integer> inGrad = new HashMap<>();
+		for (final String procedure : procedures) {
+			inGrad.put(procedure, 0);
+		}
+
+		for (final var entry : mForks.entrySet()) {
+			for (final String forked : entry.getValue()) {
+				inGrad.put(forked, inGrad.get(forked) + 1);
+			}
+		}
+
+		final PriorityQueue<Pair<String, Integer>> pQueue = new PriorityQueue<>((x, y) -> queueCompare(x, y));
+
+		for (final var entry : inGrad.entrySet()) {
+			pQueue.add(new Pair<>(entry.getKey(), entry.getValue()));
+		}
+
+		final Set<String> visited = new HashSet<>();
+
+		while (!DataStructureUtils.difference(procedures, visited).isEmpty()) {
+			final Pair<String, Integer> currentItem = pQueue.poll();
+			if (currentItem.getSecond() == 0) {
+				final String key = currentItem.getFirst();
+				if (!visited.contains(key)) {
+					mTopologicalOrder.add(key);
+					visited.add(key);
+
+					for (final String forked : mForks.getImage(key)) {
+						if (inGrad.get(forked) > 0) {
+							inGrad.put(forked, inGrad.get(forked) - 1);
+							pQueue.add(new Pair<>(forked, inGrad.get(forked)));
+						}
+					}
+				}
+				continue;
+			}
+
+			// cycle -> add others in arbitrary order
+			for (final String procedure : DataStructureUtils.difference(procedures, visited)) {
+				mTopologicalOrder.add(procedure);
+			}
+			break;
+		}
 	}
 }

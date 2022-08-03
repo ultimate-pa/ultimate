@@ -151,7 +151,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private void calculateFixpoint(final Map<String, ? extends IcfgLocation> entryNodes, final Script script) {
 		Map<ACTION, DisjunctiveAbstractState<STATE>> interferences = new HashMap<>();
 		int iteration = 0;
-		final List<String> analysingOrder = mFecUtils.computeTopologicalOrder(entryNodes.keySet());
+		final List<String> analysingOrder = mFecUtils.getTopologicalOrder();
 		final Set<LOC> addedErrorLocations = new HashSet<>();
 		// get Set of Reads which should also read thread-intern
 		final Map<String, Set<ACTION>> readsProcedureIntern = getReadsReadingProcedureIntern(entryNodes);
@@ -336,11 +336,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			for (final var entry : map.entrySet()) {
 				for (final var write : entry.getValue()) {
 					// TODO: Decrease Nesting
-					if (write == null) {
-						// read should read procedure intern
-						continue;
-					}
-
 					for (final ACTION read : mTransitionProvider.getSuccessorActions(entry.getKey())) {
 						if (!reads.contains(read)) {
 							continue;
@@ -604,7 +599,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final FeasibilityFilter<ACTION, LOC> filter = new FeasibilityFilter<>(services);
 			filter.setTransitionProvider(mTransitionProvider);
 			filter.initializeProgramConstraints(mFecUtils.getProgramOrderConstraints(mIcfg.getProcedureEntryNodes()),
-					mFecUtils.getIsLoad(), mFecUtils.getIsStore(), mFecUtils.getAllReads());
+					mFecUtils.getIsLoad(), mFecUtils.getIsStore(), mFecUtils.getAllReads(), mFecUtils.getIsEntry());
 			return filter;
 		}
 

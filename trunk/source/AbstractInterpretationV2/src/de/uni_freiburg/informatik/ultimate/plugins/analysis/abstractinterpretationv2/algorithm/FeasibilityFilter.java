@@ -59,6 +59,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	private final Set<ACTION> mAllReads;
 	private final Map<ACTION, String> mAction2Function;
 	private final Map<IProgramVarOrConst, String> mVariable2Function;
+	private final Set<String> mShadowWrites;
 
 	private int mActCounter;
 	private final int mVarCounter;
@@ -71,7 +72,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	private final Map<FeasibilityFilter.Relations, String> mRelations;
 
 	private enum Relations {
-		DOMINATES, NOT_REACHABLE_FROM, THCREATES, THJOINS, ISLOAD, ISSTORE, MHB, READS_FROM
+		DOMINATES, NOT_REACHABLE_FROM, THCREATES, THJOINS, ISLOAD, ISSTORE, MHB, READS_FROM, ENTRY
 	}
 
 	private enum Sorts {
@@ -90,6 +91,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mAllReads = new HashSet<>();
 		mAction2Function = new HashMap<>();
 		mVariable2Function = new HashMap<>();
+		mShadowWrites = new HashSet<>();
 		mActCounter = 0;
 		mVarCounter = 0;
 
@@ -101,6 +103,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	@Override
 	public boolean evaluate(final Map<LOC, Set<ACTION>> read2Writes) {
+		// if Set<ACTION> contains null -> treat write as write at entry of Ultimate
+		// Problem Variable is not known, add RF for every variable
 		mScript.push(1);
 		for (final var entry : read2Writes.entrySet()) {
 			for (final ACTION potentialRead : mTransitionProvider.getSuccessorActions(entry.getKey())) {
@@ -113,6 +117,13 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 					read = declareFunctionforAction(potentialRead, mScript.sort(mSorts.get(Sorts.ACTION)));
 				}
 				for (final ACTION action : entry.getValue()) {
+					if (action == null) {
+						for (final String shadowWrite : mShadowWrites) {
+							mScript.assertTerm(mScript.term(mRelations.get(Relations.READS_FROM), mScript.term(read),
+									mScript.term(shadowWrite)));
+						}
+						continue;
+					}
 					String write = mAction2Function.get(action);
 					if (write == null) {
 						write = declareFunctionforAction(action, mScript.sort(mSorts.get(Sorts.ACTION)));
@@ -137,7 +148,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	public void initializeProgramConstraints(final List<HashRelation<ACTION, ACTION>> programOrderConstraints,
 			final HashRelation<ACTION, IProgramVarOrConst> isLoad,
-			final HashRelation<ACTION, IProgramVarOrConst> isStore, final Set<ACTION> allReads) {
+			final HashRelation<ACTION, IProgramVarOrConst> isStore, final Set<ACTION> allReads,
+			final Set<ACTION> isEntry) {
 
 		mAllReads.addAll(allReads);
 		// Declare Sorts
@@ -148,22 +160,23 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		final Sort bool = mScript.sort("Bool");
 
 		// Declare Functions (Relations)
-		final List<Sort> actAct = new ArrayList<>();
-		actAct.add(action);
-		actAct.add(action);
-		final Sort[] paramsActAct = actAct.toArray(new Sort[actAct.size()]);
-		mScript.declareFun(mRelations.get(Relations.DOMINATES), paramsActAct, bool);
-		mScript.declareFun(mRelations.get(Relations.NOT_REACHABLE_FROM), paramsActAct, bool);
-		mScript.declareFun(mRelations.get(Relations.MHB), paramsActAct, bool);
-		mScript.declareFun(mRelations.get(Relations.THCREATES), paramsActAct, bool);
-		mScript.declareFun(mRelations.get(Relations.THJOINS), paramsActAct, bool);
-		mScript.declareFun(mRelations.get(Relations.READS_FROM), paramsActAct, bool);
-		final List<Sort> actVar = new ArrayList<>();
-		actVar.add(action);
-		actVar.add(variable);
-		final Sort[] paramsActVar = actVar.toArray(new Sort[actVar.size()]);
-		mScript.declareFun(mRelations.get(Relations.ISLOAD), paramsActVar, bool);
-		mScript.declareFun(mRelations.get(Relations.ISSTORE), paramsActVar, bool);
+		final Sort[] actAct = new Sort[2];
+		actAct[0] = action;
+		actAct[1] = action;
+		mScript.declareFun(mRelations.get(Relations.DOMINATES), actAct, bool);
+		mScript.declareFun(mRelations.get(Relations.NOT_REACHABLE_FROM), actAct, bool);
+		mScript.declareFun(mRelations.get(Relations.MHB), actAct, bool);
+		mScript.declareFun(mRelations.get(Relations.THCREATES), actAct, bool);
+		mScript.declareFun(mRelations.get(Relations.THJOINS), actAct, bool);
+		mScript.declareFun(mRelations.get(Relations.READS_FROM), actAct, bool);
+		final Sort[] actVar = new Sort[2];
+		actVar[0] = action;
+		actVar[1] = variable;
+		mScript.declareFun(mRelations.get(Relations.ISLOAD), actVar, bool);
+		mScript.declareFun(mRelations.get(Relations.ISSTORE), actVar, bool);
+		final Sort[] act = new Sort[1];
+		act[0] = action;
+		mScript.declareFun(mRelations.get(Relations.ENTRY), act, bool);
 
 		// add Rules from Paper
 		mScript.assertTerm(dominationRule(action));
@@ -190,8 +203,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 		addVariableConstraints(isLoad, mRelations.get(Relations.ISLOAD), action, variable);
 		addVariableConstraints(isStore, mRelations.get(Relations.ISSTORE), action, variable);
-
-		mScript.checkSat();
+		addEntryConstraints(isEntry, mRelations.get(Relations.ENTRY), action);
+		// For all loaded variables add a write at the top of ultimate and save them
 	}
 
 	private void defineNames() {
@@ -203,6 +216,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mRelations.put(Relations.ISSTORE, "isStore");
 		mRelations.put(Relations.MHB, "mustHappenBefore");
 		mRelations.put(Relations.READS_FROM, "readsFrom");
+		mRelations.put(Relations.ENTRY, "isEntry");
 
 		mSorts.put(Sorts.ACTION, "Action");
 		mSorts.put(Sorts.VARIABLE, "Variable");
@@ -243,6 +257,16 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		}
 	}
 
+	private void addEntryConstraints(final Set<ACTION> entrys, final String relationName, final Sort action) {
+		for (final var entry : entrys) {
+			String one = mAction2Function.get(entry);
+			if (one == null) {
+				one = declareFunctionforAction(entry, action);
+			}
+			mScript.assertTerm(mScript.term(relationName, mScript.term(one)));
+		}
+	}
+
 	private Term dominationRule(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
@@ -255,7 +279,9 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		// Rule from Paper
 		// return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
 		// Adapted Rule version
-		return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
+		return forAll(implication(isEntry(b), not(exists(and(forks(a, b), mustHappenBefore(a, b)), a)),
+				mScript.term("false")));
+		// return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
 	}
 
 	private Term joinRule(final Sort sort) {
@@ -364,6 +390,13 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		throw new UnsupportedOperationException("Wrong Sort of Variables");
 	}
 
+	private Term isEntry(final Term potentialEntry) {
+		if (potentialEntry.getSort() == mScript.sort(mSorts.get(Sorts.ACTION))) {
+			return mScript.term(mRelations.get(Relations.ENTRY), potentialEntry);
+		}
+		throw new UnsupportedOperationException("Wrong Sort of Variables");
+	}
+
 	private Term implication(final Term... terms) {
 		return mScript.term("=>", terms);
 	}
@@ -380,6 +413,14 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		final Set<TermVariable> variables = new HashSet<>();
 		variables.add(variable);
 		return SmtUtils.quantifier(mScript, 0, variables, term);
+	}
+
+	private Term not(final Term term) {
+		return SmtUtils.not(mScript, term);
+	}
+
+	private Term and(final Term... terms) {
+		return SmtUtils.and(mScript, terms);
 	}
 
 	private String declareFunctionforAction(final ACTION item, final Sort action) {
