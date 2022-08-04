@@ -250,6 +250,26 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mSharedWriteWrittenVars;
 	}
 
+	public Set<ACTION> getParallelProcedureEntrys() {
+		final Set<ACTION> result = new HashSet<>();
+		for (final var entry : mIcfg.getProcedureEntryNodes().entrySet()) {
+			if (mParallelProcedures.contains(entry.getKey())) {
+				result.addAll(mTransitionProvider.getSuccessorActions((LOC) entry.getValue()));
+			}
+		}
+		return result;
+	}
+
+	public Set<ACTION> getNormalProcedureEntrys() {
+		final Set<ACTION> result = new HashSet<>();
+		for (final var entry : mIcfg.getProcedureEntryNodes().entrySet()) {
+			if (!mParallelProcedures.contains(entry.getKey())) {
+				result.addAll(mTransitionProvider.getSuccessorActions((LOC) entry.getValue()));
+			}
+		}
+		return result;
+	}
+
 	public Set<ACTION> getIsEntry() {
 		final Set<ACTION> result = new HashSet<>();
 		final String initialProcedure = mTopologicalOrder.get(0);

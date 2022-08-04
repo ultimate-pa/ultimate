@@ -73,7 +73,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	private final String mExtraHavoc;
 
 	private enum Relations {
-		DOMINATES, NOT_REACHABLE_FROM, THCREATES, THJOINS, ISLOAD, ISSTORE, MHB, READS_FROM, ENTRY
+		DOMINATES, NOT_REACHABLE_FROM, THCREATES, THJOINS, ISLOAD, ISSTORE, MHB, READS_FROM, PARALLEL_ENTRY,
+		NORMAL_ENTRY
 	}
 
 	private enum Sorts {
@@ -150,7 +151,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	public void initializeProgramConstraints(final List<HashRelation<ACTION, ACTION>> programOrderConstraints,
 			final HashRelation<ACTION, IProgramVarOrConst> isLoad,
 			final HashRelation<ACTION, IProgramVarOrConst> isStore, final Set<ACTION> allReads,
-			final Set<ACTION> isEntry, final Set<ACTION> mainProcedureEntry) {
+			final Set<ACTION> isParallelEntry, final Set<ACTION> mainProcedureEntry, final Set<ACTION> isNormalEntry) {
 
 		mAllReads.addAll(allReads);
 		// Declare Sorts
@@ -177,11 +178,13 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mScript.declareFun(mRelations.get(Relations.ISSTORE), actVar, bool);
 		final Sort[] act = new Sort[1];
 		act[0] = action;
-		mScript.declareFun(mRelations.get(Relations.ENTRY), act, bool);
+		mScript.declareFun(mRelations.get(Relations.PARALLEL_ENTRY), act, bool);
+		mScript.declareFun(mRelations.get(Relations.NORMAL_ENTRY), act, bool);
 
 		// add Rules from Paper
 		mScript.assertTerm(dominationRule(action));
 		mScript.assertTerm(forkRule(action));
+		mScript.assertTerm(forkRule2(action));
 		mScript.assertTerm(joinRule(action));
 		mScript.assertTerm(transitivity(action));
 		mScript.assertTerm(readsFromOne(action, variable));
@@ -204,29 +207,20 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 		addVariableConstraints(isLoad, mRelations.get(Relations.ISLOAD), action, variable);
 		addVariableConstraints(isStore, mRelations.get(Relations.ISSTORE), action, variable);
-		addEntryConstraints(isEntry, mRelations.get(Relations.ENTRY), action);
-		// For all loaded variables add a write at the top of ultimate and save them
-		mScript.declareFun(mExtraHavoc, new Sort[0], mScript.sort(mSorts.get(Sorts.ACTION)));
-		// add MHB before entries
-		for (final var entry : mainProcedureEntry) {
-			String two = mAction2Function.get(entry);
-			if (two == null) {
-				two = declareFunctionforAction(entry, action);
+		addEntryConstraints(isParallelEntry, mRelations.get(Relations.PARALLEL_ENTRY), action);
+		addEntryConstraints(isNormalEntry, mRelations.get(Relations.NORMAL_ENTRY), action);
+
+		addExtraHavoc(isLoad, mainProcedureEntry, action, variable);
+
+		for (final var entry : programOrderConstraints.get(2).entrySet()) {
+			String one = mAction2Function.get(entry.getKey());
+			if (one == null) {
+				one = declareFunctionforAction(entry.getKey(), action);
 			}
-			mScript.assertTerm(mustHappenBefore(mScript.term(mExtraHavoc), mScript.term(two)));
+			mScript.assertTerm(
+					mScript.term(mRelations.get(Relations.NOT_REACHABLE_FROM), mScript.term(one), mScript.term(one)));
 		}
-		// add isStore for every Variable
-		final Set<IProgramVarOrConst> variables = new HashSet<>();
-		for (final var entry : isLoad.entrySet()) {
-			variables.addAll(entry.getValue());
-		}
-		for (final var value : variables) {
-			String two = mVariable2Function.get(value);
-			if (two == null) {
-				two = declareFunctionforVariable(value, variable);
-			}
-			mScript.assertTerm(isStore(mScript.term(mExtraHavoc), mScript.term(two)));
-		}
+
 	}
 
 	private void defineNames() {
@@ -238,7 +232,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mRelations.put(Relations.ISSTORE, "isStore");
 		mRelations.put(Relations.MHB, "mustHappenBefore");
 		mRelations.put(Relations.READS_FROM, "readsFrom");
-		mRelations.put(Relations.ENTRY, "isEntry");
+		mRelations.put(Relations.PARALLEL_ENTRY, "isParallelEntry");
+		mRelations.put(Relations.NORMAL_ENTRY, "isNormalEntry");
 
 		mSorts.put(Sorts.ACTION, "Action");
 		mSorts.put(Sorts.VARIABLE, "Variable");
@@ -289,6 +284,32 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		}
 	}
 
+	private void addExtraHavoc(final HashRelation<ACTION, IProgramVarOrConst> isLoad,
+			final Set<ACTION> mainProcedureEntry, final Sort action, final Sort variable) {
+		// For all loaded variables add a write at the top of ultimate and save them
+		mScript.declareFun(mExtraHavoc, new Sort[0], mScript.sort(mSorts.get(Sorts.ACTION)));
+		// add MHB before entries
+		for (final var entry : mainProcedureEntry) {
+			String two = mAction2Function.get(entry);
+			if (two == null) {
+				two = declareFunctionforAction(entry, action);
+			}
+			mScript.assertTerm(mustHappenBefore(mScript.term(mExtraHavoc), mScript.term(two)));
+		}
+		// add isStore for every Variable
+		final Set<IProgramVarOrConst> variables = new HashSet<>();
+		for (final var entry : isLoad.entrySet()) {
+			variables.addAll(entry.getValue());
+		}
+		for (final var value : variables) {
+			String two = mVariable2Function.get(value);
+			if (two == null) {
+				two = declareFunctionforVariable(value, variable);
+			}
+			mScript.assertTerm(isStore(mScript.term(mExtraHavoc), mScript.term(two)));
+		}
+	}
+
 	private Term dominationRule(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
@@ -298,12 +319,44 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	private Term forkRule(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
+		final TermVariable c = mScript.variable("c", sort);
 		// Rule from Paper
-		return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
-		// Adapted Rule version
+		// return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
+		// Adapted Rules version 1
+		// return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
+		// version 2
 		// return forAll(implication(isEntry(b), not(exists(and(forks(a, b), mustHappenBefore(a, b)), a)),
 		// mScript.term("false")));
+		// version 3
+		// return forAll(implication(forks(a, b), mustHappenBefore(b, a), mScript.term("false")));
+		// version 4
+		// return forAll(implication(not(equal(a, b)), forks(a, c), forks(b, c), mustHappenBefore(a, b),
+		// mustHappenBefore(a, c)));
+		final Term caseParallel = implication(isParallelEntry(c), not(equal(a, b)), forks(a, c), forks(b, c),
+				mustHappenBefore(a, b), mustHappenBefore(a, c));
+		return forAll(caseParallel);
+
+	}
+
+	private Term forkRule2(final Sort sort) {
+		final TermVariable a = mScript.variable("a", sort);
+		final TermVariable b = mScript.variable("b", sort);
+		final TermVariable c = mScript.variable("c", sort);
+		// Rule from Paper
+		// return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
+		// Adapted Rules version 1
 		// return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
+		// version 2
+		// return forAll(implication(isEntry(b), not(exists(and(forks(a, b), mustHappenBefore(a, b)), a)),
+		// mScript.term("false")));
+		// version 3
+		// return forAll(implication(forks(a, b), mustHappenBefore(b, a), mScript.term("false")));
+		// version 4
+		// return forAll(implication(not(equal(a, b)), forks(a, c), forks(b, c), mustHappenBefore(a, b),
+		// mustHappenBefore(a, c)));
+		final Term caseNonParallel = implication(isNormalEntry(b), forks(a, b), mustHappenBefore(a, b));
+		return forAll(caseNonParallel);
+
 	}
 
 	private Term joinRule(final Sort sort) {
@@ -412,9 +465,16 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		throw new UnsupportedOperationException("Wrong Sort of Variables");
 	}
 
-	private Term isEntry(final Term potentialEntry) {
+	private Term isParallelEntry(final Term potentialEntry) {
 		if (potentialEntry.getSort() == mScript.sort(mSorts.get(Sorts.ACTION))) {
-			return mScript.term(mRelations.get(Relations.ENTRY), potentialEntry);
+			return mScript.term(mRelations.get(Relations.PARALLEL_ENTRY), potentialEntry);
+		}
+		throw new UnsupportedOperationException("Wrong Sort of Variables");
+	}
+
+	private Term isNormalEntry(final Term potentialEntry) {
+		if (potentialEntry.getSort() == mScript.sort(mSorts.get(Sorts.ACTION))) {
+			return mScript.term(mRelations.get(Relations.NORMAL_ENTRY), potentialEntry);
 		}
 		throw new UnsupportedOperationException("Wrong Sort of Variables");
 	}
@@ -443,6 +503,10 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	private Term and(final Term... terms) {
 		return SmtUtils.and(mScript, terms);
+	}
+
+	private Term equal(final Term term1, final Term term2) {
+		return and(dominates(term1, term2), dominates(term2, term1));
 	}
 
 	private String declareFunctionforAction(final ACTION item, final Sort action) {

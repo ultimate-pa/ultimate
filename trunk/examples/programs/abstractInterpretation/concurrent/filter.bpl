@@ -36,8 +36,8 @@ modifies flag, x, y;
   var b : bool;
   var t : int;
   b := flag;  
-  if (b) {
-    t := x + y;
-    assert t == 5;
+  if (flag) {
+    t := x;
+    assert x == 5;
   }
 }
