@@ -339,7 +339,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						}
 						DisjunctiveAbstractState<STATE> state = interferences.get(write);
 						if (state == null) {
-							state = new DisjunctiveAbstractState<>(1, mDomain.createTopState());
+							state = new DisjunctiveAbstractState<>(mDomain.createTopState());
 							for (final IProgramVarOrConst variable : mFecUtils.getReadVars(read)) {
 								state = state.addVariable(variable);
 							}
@@ -469,9 +469,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				postState = first.widen(wideningOp, second);
 			}
 			postState = removeNonSharedVariables(postState, mFecUtils.getWrittenVars(write));
-			if (postState.getStates().size() > 1) {
-				postState = reduceDisjunctiveState(postState);
-			}
 			result = combineInterferences(result, write, postState);
 		}
 		return result;
@@ -572,14 +569,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		throw new UnsupportedOperationException("Unvalid Version option selected");
 	}
 
-	private DisjunctiveAbstractState<STATE> mergeStates(DisjunctiveAbstractState<STATE> oldState,
-			DisjunctiveAbstractState<STATE> newState) {
-		if (oldState.getStates().size() > 1) {
-			oldState = reduceDisjunctiveState(oldState);
-		}
-		if (newState.getStates().size() > 1) {
-			newState = reduceDisjunctiveState(newState);
-		}
+	private DisjunctiveAbstractState<STATE> mergeStates(final DisjunctiveAbstractState<STATE> oldState,
+			final DisjunctiveAbstractState<STATE> newState) {
 		return oldState.patch(newState).union(newState.patch(oldState));
 	}
 
@@ -610,15 +601,5 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 		// set to default value
 		return x -> true;
-	}
-
-	private DisjunctiveAbstractState<STATE> reduceDisjunctiveState(final DisjunctiveAbstractState<STATE> state) {
-		final Iterator<STATE> iter = state.getStates().iterator();
-		DisjunctiveAbstractState<STATE> reducedState = new DisjunctiveAbstractState<>(1, iter.next());
-		while (iter.hasNext()) {
-			final DisjunctiveAbstractState<STATE> temp = new DisjunctiveAbstractState<>(1, iter.next());
-			reducedState = reducedState.union(temp);
-		}
-		return reducedState;
 	}
 }
