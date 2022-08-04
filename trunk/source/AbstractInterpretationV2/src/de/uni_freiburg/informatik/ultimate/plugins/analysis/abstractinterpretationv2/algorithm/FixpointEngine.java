@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -240,10 +241,20 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 		DisjunctiveAbstractState<STATE> preState;
 		final ACTION currentAction = currentItem.getAction();
-		final DisjunctiveAbstractState<STATE> currentPreState = currentItem.getState();
-		final DisjunctiveAbstractState<STATE> interferingStatates = interferences.getInterferingState(currentAction);
-		if (interferingStatates != null && !interferingStatates.isEmpty()) {
-			preState = currentPreState.patch(interferingStatates);
+		DisjunctiveAbstractState<STATE> currentPreState = currentItem.getState();
+		final DisjunctiveAbstractState<STATE> interferingStates = interferences.getInterferingState(currentAction);
+		if (interferingStates != null && !interferingStates.isEmpty()) {
+			if (currentPreState.getStates().size() != interferingStates.getStates().size()) {
+				final Set<STATE> states = currentPreState.getStates();
+				final Iterator<STATE> iter = states.iterator();
+				DisjunctiveAbstractState<STATE> result = new DisjunctiveAbstractState<>(1, iter.next());
+				while (iter.hasNext()) {
+					final DisjunctiveAbstractState<STATE> temp = new DisjunctiveAbstractState<>(1, iter.next());
+					result = result.union(temp);
+				}
+				currentPreState = result;
+			}
+			preState = currentPreState.patch(interferingStates);
 			if (interferences.canReadFromOwnThread(currentAction)) {
 				preState = preState.union(currentPreState);
 			}

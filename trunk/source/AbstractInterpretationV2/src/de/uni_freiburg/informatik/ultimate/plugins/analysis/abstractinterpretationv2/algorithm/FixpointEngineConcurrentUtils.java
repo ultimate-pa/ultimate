@@ -42,6 +42,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
@@ -65,6 +66,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private final IIcfg<?> mIcfg;
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
+	private final ILogger mLogger;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWriteWrittenVars;
 	private final Map<ACTION, Set<IProgramVarOrConst>> mSharedWriteReadVars;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedReadReadVars;
@@ -81,9 +83,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private final Map<String, Set<Map<LOC, Set<ACTION>>>> mCrossProducts;
 
-	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider) {
+	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider,
+			final ILogger logger) {
 		mIcfg = icfg;
 		mTransitionProvider = transProvider;
+		mLogger = logger;
 		mSharedWriteWrittenVars = new HashRelation<>();
 		mSharedWriteReadVars = new HashMap<>();
 		mSharedReadReadVars = new HashRelation<>();
@@ -587,6 +591,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
+		mLogger.info("Cross Product Computation started for " + procedure);
 		final Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
 		// reads can read from several global variables -> should LOC - Set<ACTION>
@@ -631,6 +636,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		mCrossProducts.put(procedure, result);
+		mLogger.info("Cross Product Computation finished. Number of Combinations: " + result.size());
 		return result;
 	}
 

@@ -139,7 +139,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 
 	@Override
 	public DisjunctiveAbstractState<STATE> patch(final DisjunctiveAbstractState<STATE> dominator) {
-		assert mStates.size() != dominator.mStates
+		// assert mStates.size() != dominator.mStates
+		// .size() : "Cannot apply symmetrical with differently sized multi-states";
+		assert mStates.size() == dominator.mStates
 				.size() : "Cannot apply symmetrical with differently sized multi-states";
 		final Set<STATE> newSet = newSet(mStates.size());
 		final Iterator<STATE> iter = mStates.iterator();
@@ -600,7 +602,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	 *
 	 */
 	private static <STATE extends IAbstractState<STATE>> List<STATE> getTopologicalOrder(final Set<STATE> states) {
-		final IPartialComparator<STATE> comparator = new IPartialComparator<STATE>() {
+		final IPartialComparator<STATE> comparator = new IPartialComparator<>() {
 
 			@Override
 			public ComparisonResult compare(final STATE first, final STATE second) {
