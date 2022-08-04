@@ -184,11 +184,53 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		return result;
 	}
 
+	/**
+	 * Divide both sides of the relation by a {@link Rational} such the resulting
+	 * relation is logically equivalent, has the same monomials (i.e., each `div`
+	 * term can be resolved), and there is an inverse operation (multiplication)
+	 * that yields the original relation. <br>
+	 * This method has a special behavior for inequalities that have Int sort. It is
+	 * applicable even if the constant of the polynomial is not divisible by this
+	 * method's divisor, because we do a transformation that is based on the
+	 * following equalities for positive k.
+	 * <li> `k*x <= t` iff `x <= t div k`
+	 * <li> `k*x < t` iff `x < ((t-1) div k) +1`
+	 * <li> `k*x => t` iff `x => ((t-1) div k) +1`
+	 * <li> `k*x => t` iff `x => t div k`
+	 *
+	 */
 	public ExplicitLhsPolynomialRelation divInvertible(final Rational divisor) {
 		if (divisor.equals(Rational.ZERO)) {
 			throw new AssertionError("div by zero");
 		}
-		final IPolynomialTerm newRhs = mRhs.divInvertible(divisor);
+		final RelationSymbol resultRelationSymbol =
+				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, divisor);
+		final IPolynomialTerm newRhs;
+		if (resultRelationSymbol.isConvexInequality() && SmtSortUtils.isIntSort(mRhs.getSort())) {
+			final IPolynomialTerm rhsWithoutConst = mRhs.add(mRhs.getConstant().negate());
+			assert rhsWithoutConst.getConstant().equals(Rational.ZERO);
+			final IPolynomialTerm newRhsWithoutConst = rhsWithoutConst.divInvertible(divisor);
+			if (newRhsWithoutConst == null) {
+				return null;
+			}
+			final Rational constWithRightSign;
+			if (divisor.isNegative()) {
+				constWithRightSign = mRhs.getConstant().negate();
+			} else {
+				constWithRightSign = mRhs.getConstant();
+			}
+			final Rational newConst;
+			if (resultRelationSymbol.equals(RelationSymbol.LEQ) || resultRelationSymbol.equals(RelationSymbol.GREATER)) {
+				newConst = constWithRightSign.div(divisor.abs()).floor();
+			} else if (resultRelationSymbol.equals(RelationSymbol.LESS) || resultRelationSymbol.equals(RelationSymbol.GEQ) ) {
+				newConst = constWithRightSign.add(Rational.MONE).div(divisor.abs()).floor().add(Rational.ONE);
+			} else {
+				throw new AssertionError("Unexpected relation symbol: " + resultRelationSymbol);
+			}
+			newRhs = newRhsWithoutConst.add(newConst);
+		} else {
+			newRhs = mRhs.divInvertible(divisor);
+		}
 		if (newRhs == null) {
 			return null;
 		}
@@ -197,8 +239,6 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		if (newLhsCoefficient == null) {
 			return null;
 		}
-		final RelationSymbol resultRelationSymbol =
-				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, divisor);
 		return new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
 	}
 
