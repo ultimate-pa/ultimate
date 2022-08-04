@@ -1,8 +1,6 @@
-//#Unsafe
+//#Safe
 
 /*
- * Version 3 is unsound for this program
- *
  * Author: Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  * Date: 28.07.2022
  */
@@ -24,13 +22,13 @@ modifies m, x;
   atomic{ assume m == 0; m := 1;}
   x := 1;
   assert x == 1;
-  m := 0;
+  m := 0 + 0;
 }
 
 procedure thread2() returns()
 modifies m, x;
 {
-  atomic {assume m == 0; m := 1;}
+  atomic {assume m == 0; m := 1 + 0;}
   x := 0;
-  m := 0;
+  m := 1-1;
 }

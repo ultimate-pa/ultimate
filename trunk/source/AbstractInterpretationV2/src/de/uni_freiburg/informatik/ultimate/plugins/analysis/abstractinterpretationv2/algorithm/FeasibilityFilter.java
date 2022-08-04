@@ -59,10 +59,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	private final Set<ACTION> mAllReads;
 	private final Map<ACTION, String> mAction2Function;
 	private final Map<IProgramVarOrConst, String> mVariable2Function;
-	private final Set<String> mShadowWrites;
 
 	private int mActCounter;
-	private final int mVarCounter;
 
 	private final Script mScript;
 
@@ -86,16 +84,13 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 				SolverBuilder.constructSolverSettings().setUseExternalSolver(ExternalSolver.Z3, Logics.HORN)
 						.setSolverMode(SolverMode.External_DefaultMode).setDumpSmtScriptToFile(true,
 								"/home/jo/Documents/Studium/Bachelor/6.Semester/Bachelor-Projekt", "script", false);
-		// "/home/jo/Documents/Studium/Bachelor/6.Semester/Bachelor-Projekt"
 
 		mScript = SolverBuilder.buildAndInitializeSolver(services, solverSettings, "HornClauseSolver");
 
 		mAllReads = new HashSet<>();
 		mAction2Function = new HashMap<>();
 		mVariable2Function = new HashMap<>();
-		mShadowWrites = new HashSet<>();
 		mActCounter = 0;
-		mVarCounter = 0;
 
 		mSorts = new HashMap<>();
 		mRelations = new HashMap<>();
@@ -181,10 +176,10 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mScript.declareFun(mRelations.get(Relations.PARALLEL_ENTRY), act, bool);
 		mScript.declareFun(mRelations.get(Relations.NORMAL_ENTRY), act, bool);
 
-		// add Rules from Paper
+		// add Rules from Paper (fork rule is adapted)
 		mScript.assertTerm(dominationRule(action));
-		mScript.assertTerm(forkRule(action));
-		mScript.assertTerm(forkRule2(action));
+		mScript.assertTerm(forkRuleParallel(action));
+		mScript.assertTerm(forkRuleNonParallel(action));
 		mScript.assertTerm(joinRule(action));
 		mScript.assertTerm(transitivity(action));
 		mScript.assertTerm(readsFromOne(action, variable));
@@ -207,20 +202,12 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 		addVariableConstraints(isLoad, mRelations.get(Relations.ISLOAD), action, variable);
 		addVariableConstraints(isStore, mRelations.get(Relations.ISSTORE), action, variable);
+
+		// Extra Relations for case distinction for the fork rule
 		addEntryConstraints(isParallelEntry, mRelations.get(Relations.PARALLEL_ENTRY), action);
 		addEntryConstraints(isNormalEntry, mRelations.get(Relations.NORMAL_ENTRY), action);
 
 		addExtraHavoc(isLoad, mainProcedureEntry, action, variable);
-
-		for (final var entry : programOrderConstraints.get(2).entrySet()) {
-			String one = mAction2Function.get(entry.getKey());
-			if (one == null) {
-				one = declareFunctionforAction(entry.getKey(), action);
-			}
-			mScript.assertTerm(
-					mScript.term(mRelations.get(Relations.NOT_REACHABLE_FROM), mScript.term(one), mScript.term(one)));
-		}
-
 	}
 
 	private void defineNames() {
@@ -237,7 +224,6 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 		mSorts.put(Sorts.ACTION, "Action");
 		mSorts.put(Sorts.VARIABLE, "Variable");
-
 	}
 
 	private void addProgramOrderConstraints(final HashRelation<ACTION, ACTION> relation, final String relationName,
@@ -316,46 +302,19 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		return forAll(implication(dominates(a, b), notReachable(a, b), mustHappenBefore(a, b)));
 	}
 
-	private Term forkRule(final Sort sort) {
+	private Term forkRuleParallel(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
 		final TermVariable c = mScript.variable("c", sort);
-		// Rule from Paper
-		// return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
-		// Adapted Rules version 1
-		// return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
-		// version 2
-		// return forAll(implication(isEntry(b), not(exists(and(forks(a, b), mustHappenBefore(a, b)), a)),
-		// mScript.term("false")));
-		// version 3
-		// return forAll(implication(forks(a, b), mustHappenBefore(b, a), mScript.term("false")));
-		// version 4
-		// return forAll(implication(not(equal(a, b)), forks(a, c), forks(b, c), mustHappenBefore(a, b),
-		// mustHappenBefore(a, c)));
-		final Term caseParallel = implication(isParallelEntry(c), not(equal(a, b)), forks(a, c), forks(b, c),
-				mustHappenBefore(a, b), mustHappenBefore(a, c));
-		return forAll(caseParallel);
+		return forAll(implication(isParallelEntry(c), not(sameAction(a, b)), forks(a, c), forks(b, c),
+				mustHappenBefore(a, b), mustHappenBefore(a, c)));
 
 	}
 
-	private Term forkRule2(final Sort sort) {
+	private Term forkRuleNonParallel(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
-		final TermVariable c = mScript.variable("c", sort);
-		// Rule from Paper
-		// return forAll(implication(forks(a, b), mustHappenBefore(a, b)));
-		// Adapted Rules version 1
-		// return forAll(exists(implication(forks(a, b), mustHappenBefore(a, b)), a));
-		// version 2
-		// return forAll(implication(isEntry(b), not(exists(and(forks(a, b), mustHappenBefore(a, b)), a)),
-		// mScript.term("false")));
-		// version 3
-		// return forAll(implication(forks(a, b), mustHappenBefore(b, a), mScript.term("false")));
-		// version 4
-		// return forAll(implication(not(equal(a, b)), forks(a, c), forks(b, c), mustHappenBefore(a, b),
-		// mustHappenBefore(a, c)));
-		final Term caseNonParallel = implication(isNormalEntry(b), forks(a, b), mustHappenBefore(a, b));
-		return forAll(caseNonParallel);
+		return forAll(implication(isNormalEntry(b), forks(a, b), mustHappenBefore(a, b)));
 
 	}
 
@@ -484,17 +443,9 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	}
 
 	private Term forAll(final Term term) {
-		// not sure what pattern exaclty does
-		// SmtUtils.quantifier(script, quantifier, vars, subformula)
 		final Set<Term> termCollection = new HashSet<>();
 		termCollection.add(term);
 		return SmtUtils.quantifier(mScript, 1, SmtUtils.getFreeVars(termCollection), term);
-	}
-
-	private Term exists(final Term term, final TermVariable variable) {
-		final Set<TermVariable> variables = new HashSet<>();
-		variables.add(variable);
-		return SmtUtils.quantifier(mScript, 0, variables, term);
 	}
 
 	private Term not(final Term term) {
@@ -505,7 +456,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		return SmtUtils.and(mScript, terms);
 	}
 
-	private Term equal(final Term term1, final Term term2) {
+	private Term sameAction(final Term term1, final Term term2) {
 		return and(dominates(term1, term2), dominates(term2, term1));
 	}
 

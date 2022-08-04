@@ -592,7 +592,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		// reads can read from several global variables -> should LOC - Set<ACTION>
 		final Map<LOC, List<Set<ACTION>>> writes = new LinkedHashMap<>();
 		int n = 1;
-		final Set<ACTION> dummy = null;
 		final Set<ACTION> reads = getReads(procedure);
 		final Set<ACTION> selfReachable = getSelfReachableReads(procedure);
 		if (reads != null) {
@@ -622,10 +621,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				for (final var readEntry : writes.entrySet()) {
 					final int index = (i / blocksize) % readEntry.getValue().size();
 					final Set<ACTION> write = readEntry.getValue().get(index);
-					// if (write != null) {
-					// TODO: if computeDummyWrites is implemented delete if-condition
 					map.put(readEntry.getKey(), write);
-					// }
 					blocksize *= readEntry.getValue().size();
 				}
 				if (!map.isEmpty() && filter.evaluate(map)) {

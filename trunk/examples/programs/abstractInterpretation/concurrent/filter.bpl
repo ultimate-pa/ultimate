@@ -13,7 +13,7 @@ modifies flag, x, y;
 {
   flag := false;
   x := 0;
-  y := 0;
+  // y := 0;
   fork 1 thread1();
   fork 2 thread2();
 }
@@ -23,9 +23,9 @@ procedure thread1() returns()
 modifies flag, x, y;
 {
   x := 4;
-  y := 4;
+  // y := 4;
   x := 5;
-  y := 0;
+  // y := 0;
   flag := true;
 }
 
