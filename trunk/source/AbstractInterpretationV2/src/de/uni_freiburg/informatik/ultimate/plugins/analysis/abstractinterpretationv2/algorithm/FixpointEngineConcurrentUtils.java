@@ -629,9 +629,13 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					map.put(readEntry.getKey(), write);
 					blocksize *= readEntry.getValue().size();
 				}
+
+				mLogger.info("Filter Iteration " + i + " started");
 				if (!map.isEmpty() && filter.evaluate(map)) {
 					result.add(map);
+					mLogger.info("No contradiction");
 				}
+				mLogger.info("Filter Iteration " + i + " ended");
 			}
 		}
 

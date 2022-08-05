@@ -461,8 +461,10 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	}
 
 	private String declareFunctionforAction(final ACTION item, final Sort action) {
-		final String procedure = mTransitionProvider.getProcedureName(item);
-		final String name = item.toString() + "_" + procedure + "_" + String.valueOf(mActCounter);
+		// for debugging
+		// final String name = item.toString() + "_" + mTransitionProvider.getProcedureName(item) + "_" +
+		// String.valueOf(mActCounter);
+		final String name = "Act_" + String.valueOf(mActCounter);
 		mScript.declareFun(name, new Sort[0], action);
 		mAction2Function.put(item, name);
 		mActCounter++;
