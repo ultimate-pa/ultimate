@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+    
+	<option name="--force-no-wrapper" />
+  <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+	
+	<rundefinition name="Flow insensitive">
+    <option name="-s">../../../trunk/examples/settings/ai/thread-modular/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_FLOW_INSENSITIVE.epf</option>
+  </rundefinition>
+  
+  <rundefinition name="Flow sensitive">
+    <option name="-s">../../../trunk/examples/settings/ai/thread-modular/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_FLOW_SENSITIVE_FILTERED.epf</option>
+  </rundefinition>
+    
+	<tasks name="SVCOMP ConcurrencySafety-Main">
+		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks>
+    
+	<tasks name="Ultimate Repo">
+		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks>
+
+</benchmark>
