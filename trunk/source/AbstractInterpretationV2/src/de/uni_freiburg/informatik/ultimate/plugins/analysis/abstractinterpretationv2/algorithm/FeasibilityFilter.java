@@ -80,10 +80,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	}
 
 	public FeasibilityFilter(final IUltimateServiceProvider services) {
-		final SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings().setUseExternalSolver(ExternalSolver.Z3, Logics.HORN)
-						.setSolverMode(SolverMode.External_DefaultMode).setDumpSmtScriptToFile(true,
-								"/home/jo/Documents/Studium/Bachelor/6.Semester/Bachelor-Projekt", "script", false);
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setUseExternalSolver(ExternalSolver.Z3, Logics.HORN).setSolverMode(SolverMode.External_DefaultMode);
 
 		mScript = SolverBuilder.buildAndInitializeSolver(services, solverSettings, "HornClauseSolver");
 
