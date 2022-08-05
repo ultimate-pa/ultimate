@@ -646,9 +646,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 		final Set<ACTION> entryActions = getFirstActions();
 		for (final IProgramVarOrConst variable : writesPerVariable.getDomain()) {
-			if (canBeUninitialized(variable, read, entryActions)) {
-				writesPerVariable.addPair(variable, null);
-			}
+			writesPerVariable.addAllPairs(variable, checkDummyWrite(variable, read, entryActions));
 		}
 
 		for (final var entry : writesPerVariable.entrySet()) {
@@ -684,8 +682,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return writesPerVariable;
 	}
 
-	private boolean canBeUninitialized(final IProgramVarOrConst variable, final ACTION read,
+	private Set<ACTION> checkDummyWrite(final IProgramVarOrConst variable, final ACTION read,
 			final Set<ACTION> entryActions) {
+		final Set<ACTION> result = new HashSet<>();
 		final Queue<ACTION> workList = new ArrayDeque<>();
 		workList.add(read);
 		final Set<ACTION> done = new HashSet<>();
@@ -695,10 +694,13 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		while (!workList.isEmpty()) {
 			final ACTION currentItem = workList.poll();
 			if (allWritesToVariable.contains(currentItem)) {
+				if (mTransitionProvider.getProcedureName(read) == mTransitionProvider.getProcedureName(currentItem)) {
+					result.add(currentItem);
+				}
 				continue;
 			}
 			if (entryActions.contains(currentItem)) {
-				return true;
+				result.add(null);
 			}
 			final LOC source = mTransitionProvider.getSource(currentItem);
 			final Collection<ACTION> predecessors = mTransitionProvider.getPredecessorActions(source);
@@ -716,7 +718,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 			done.add(currentItem);
 		}
-		return false;
+		return result;
 	}
 
 	private Set<ACTION> getFirstActions() {
