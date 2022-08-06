@@ -1030,6 +1030,55 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
+	public void tirDivisionForInequality00() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(exists ((x Int) (y Int)) (and (<= (+ (* 17 lo) (* 17 y) 5) (* 17 x)) (<= (* 11 x) (+ (* 7 hi) (* 11 y) 9))))";
+		final String expectedResult = "(<= (+ (* lo 11) 2) (* 7 hi))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo1", "lo2", "hi") };
+		final String inputSTR = "(exists ((x Int)) (and (<= (+ (* 11 lo1) 4) (* 11 x)) (<= (+ (* 11 lo2) 22) (* 11 x))  (<= (* 2 x) hi)))";
+		final String expectedResult = "(and (<= (+ 4 (* lo2 2)) hi) (<= (+ 2 (* 2 lo1)) hi))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi1", "hi2") };
+		final String inputSTR = "(exists ((x Int)) (and (>= (+ (* 11 hi1) 4) (* 11 x)) (<= (+ (* 11 hi2) 22) (* 11 x))  (>= (* 2 x) lo)))";
+		final String expectedResult = "(and (<= (+ hi2 2) hi1) (<= lo (* hi1 2)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality03() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "hi1", "hi2", "lo") };
+		final String inputSTR = "(forall ((x Int)) (or (> (+ (* 11 hi1) 4) (* 11 x)) (> (+ (* 11 hi2) 22) (* 11 x))  (> (* 2 x) lo)))";
+		final String expectedResult = "(or (< lo (+ (* hi1 2) 2)) (< lo (+ (* hi2 2) 4)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality04() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "hi", "lo1", "lo2") };
+		final String inputSTR = "(forall ((x Int)) (or (< (+ (* 11 lo1) 4) (* 11 x)) (< (+ (* 11 lo2) 22) (* 11 x))  (< (* 2 x) hi)))";
+		final String expectedResult = "(or (< (* 2 lo1) hi) (< (+ 4 (* lo2 2)) hi))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality05PartialInvertibleDivision() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "hi1", "hi2", "lo") };
+		final String inputSTR = "(exists ((x Int)) (and (<= (* 6 lo) (* 4 x)) (<= (* 11 x) (* 5 hi1)) (<= (* 11 x) (* 5 hi2))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
 	public void bvuleTIR() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvule x hi ) (bvule lo x)))";
@@ -1292,7 +1341,6 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
 	@Test
 	public void bvTirIrd1() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "a", "b") };
@@ -1300,7 +1348,6 @@ public class QuantifierEliminationRegressionTest {
 		final String expectedResult = inputSTR;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void bvTirIrd3() {
@@ -1930,7 +1977,7 @@ public class QuantifierEliminationRegressionTest {
 
 	/**
 	 * Formula that stems from the verification of SV-COMP benchmark
-	 * loop_lit_gsv2008 and demonstates that we need the "exact shadows" of the
+	 * loop_lit_gsv2008 and demonstrates that we need the "exact shadows" of the
 	 * omega test.
 	 */
 	@Test
