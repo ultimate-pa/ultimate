@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -202,21 +203,17 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 				throw new AssertionError("unknown value " + classification);
 			}
 			iterations++;
+			if (iterations % 10 == 0) {
+				final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
+				logger.info(String.format(
+						"Run %s iterations without descend maybe there is a nontermination bug.",
+						iterations));
+			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(QuantifierPusher.class,
+						String.format("running %s iterations on subformula", iterations));
+			}
 		}
-		// throw new AssertionError();
-		//
-		//
-		//
-		//
-		// if (term instanceof ApplicationTerm) {
-		// final ApplicationTerm appTerm = (ApplicationTerm) term;
-		// if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
-		// return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-		// }
-		// } else if (term instanceof QuantifiedFormula) {
-		// return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-		// }
-		// return new TermContextTransformationEngine.FinalResultForAscend<Term>(term);
 	}
 
 	@Override

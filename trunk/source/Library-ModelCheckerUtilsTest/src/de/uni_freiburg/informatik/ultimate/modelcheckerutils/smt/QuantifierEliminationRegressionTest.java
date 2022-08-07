@@ -1990,6 +1990,22 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * Problem: While eliminating eliminatee in dualFiniteJuncts new DER
+	 * possibilities for other eliminatee were introduced.
+	 */
+	@Test
+	public void shouldHaveBeenEliminatedByDer() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_cstrstr_~s#1.base", "ULTIMATE.start_cstrstr_~find#1.base", "ULTIMATE.start_cstrstr_~s#1.offset"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#length"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			};
+		final String formulaAsString = "(exists ((|v_#memory_int_34| (Array Int (Array Int Int))) (|ULTIMATE.start_main_~nondetString1~0#1.offset| Int) (v_ArrVal_219 (Array Int Int))) (and (<= |ULTIMATE.start_cstrstr_~s#1.offset| |ULTIMATE.start_main_~nondetString1~0#1.offset|) (or (exists ((|ULTIMATE.start_main_~length1~0#1| Int)) (and (<= 1 |ULTIMATE.start_main_~length1~0#1|) (<= 0 (select (select |v_#memory_int_34| |ULTIMATE.start_cstrstr_~s#1.base|) (+ (- 1) |ULTIMATE.start_main_~nondetString1~0#1.offset| |ULTIMATE.start_main_~length1~0#1|))) (<= |ULTIMATE.start_main_~length1~0#1| (select |#length| |ULTIMATE.start_cstrstr_~s#1.base|)))) (and (= |ULTIMATE.start_cstrstr_~find#1.base| |ULTIMATE.start_cstrstr_~s#1.base|) (exists ((|ULTIMATE.start_main_~length1~0#1| Int)) (and (<= 1 |ULTIMATE.start_main_~length1~0#1|) (<= 0 (select (select |v_#memory_int_34| |ULTIMATE.start_cstrstr_~s#1.base|) (+ (- 1) |ULTIMATE.start_main_~nondetString1~0#1.offset| |ULTIMATE.start_main_~length1~0#1|))))))) (<= |ULTIMATE.start_main_~nondetString1~0#1.offset| 0) (= |#memory_int| (store |v_#memory_int_34| |ULTIMATE.start_cstrstr_~find#1.base| v_ArrVal_219))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	//@formatter:on
 }
