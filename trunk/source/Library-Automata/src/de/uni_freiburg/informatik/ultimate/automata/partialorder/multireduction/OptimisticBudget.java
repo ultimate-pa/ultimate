@@ -65,16 +65,20 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 
 	private final SleepMapReduction<L, ?, R> mReduction;
 
+	// A state is "successful" if no bad state is reachable from it
 	private final Set<R> mSuccessful = new HashSet<>();
+	// A state is "unsuccessful" if a bad state is reachable from it
 	private final Set<R> mUnsuccessful = new HashSet<>();
 
 	/**
 	 *
 	 * @param services
 	 * @param order
+	 *            The order in which the reduction automaton will be traversed
 	 * @param stateFactory
+	 *            The state factory used to create the reduction automaton
 	 * @param makeVisitor
-	 *            Create a new visitor to determine reachability of "bad states" (the definition of bad states is up to
+	 *            Creates a new visitor to determine reachability of "bad states" (the definition of bad states is up to
 	 *            the caller). The visitor must either be an {@link AcceptingRunSearchVisitor} or a wrapper visitor such
 	 *            that the underlying base visitor is an {@link AcceptingRunSearchVisitor}.
 	 * @param reduction
@@ -149,7 +153,6 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 		return result;
 	}
 
-	// We call a state "successful" if it can NOT reach a bad state.
 	private boolean checkIsSuccessful(final R state) {
 		// If we can reach a known unsuccessful state, the given state is definitely unsuccessful.
 		// Hence we can abort the search. To this end, we use a ReachabilityCheckVisitor.
