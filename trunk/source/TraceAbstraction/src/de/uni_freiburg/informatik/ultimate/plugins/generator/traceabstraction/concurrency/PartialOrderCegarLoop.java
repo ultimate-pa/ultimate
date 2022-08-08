@@ -306,7 +306,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
 		}
-		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), true);
+
+		final boolean recordDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
+				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
+		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), !recordDeadEnds);
 	}
 
 	private IRefinableIndependenceProvider<L> constructIndependenceProvider(final int index,
@@ -320,13 +323,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		// Construct the script used for independence checks.
 		// TODO Only construct this if an independence relation actually needs a script!
-		// TODO problem: auxVar constants in abstraction can still not be created in the locked Icfg script.
 		if (mIndependenceScript == null) {
 			mIndependenceScript = constructIndependenceScript(settings);
 		}
 
 		// We need to transfer given transition formulas and condition predicates to the independenceScript.
-		// TODO Only construct this if we actually need to transfer to a different script!
 		final TransferrerWithVariableCache transferrer =
 				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), mIndependenceScript);
 
