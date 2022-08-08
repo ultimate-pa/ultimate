@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Solved
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -141,9 +142,14 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 
 		return new ExplicitLhsPolynomialRelation(polyRel.getRelationSymbol(), coeffOfSubject, monomialOfSubject,
 				polyRel.getPolynomialTerm().removeAndNegate(monomialOfSubject));
-
 	}
 
+	/**
+	 * @deprecated We do not have an application for this method yet. I was
+	 *             developed at a time where we wrongly assumed that the following
+	 *             transformation is sound `∃x. lo<=2x /\ 2x<=hi` ~~~> `lo<=hi`
+	 */
+	@Deprecated
 	public ExplicitLhsPolynomialRelation mul(final Rational factor, final Script script, final boolean tight) {
 		if (factor.equals(Rational.ZERO)) {
 			throw new AssertionError("mul by zero not supported");
@@ -302,6 +308,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		return new Pair<>(resultElpr, divisibilityConstraint);
 	}
 
+	/**
+	 * @deprecated Only called by the old {@link XnfTir} class.
+	 */
+	@Deprecated
 	public SolvedBinaryRelation divideByIntegerCoefficientForInequalities(final Script script,
 			final Set<TermVariable> bannedForDivCapture) {
 		switch (mRelationSymbol) {
