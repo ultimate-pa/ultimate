@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -173,11 +174,12 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		case PARTIAL_ORDER_FA:
 			requireNoReuse("POR-based analysis");
 			requireNoWitnesses(witnessAutomaton, "POR-based analysis");
+			final var factory = new IndependenceProviderFactory<>(services, mPrefs, mCopyFactory);
 			return new PartialOrderCegarLoop<>(name,
 					createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
 							errorLocs),
 					root, csToolkit, predicateFactory, mPrefs, errorLocs, mPrefs.interpolation(), services,
-					mCopyFactory, mTransitionClazz, stateFactoryForRefinement);
+					factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement);
 		case PETRI_NET:
 			requireNoReuse("Petri net-based analysis");
 			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
