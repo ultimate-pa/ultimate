@@ -148,7 +148,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @return true, if the marking enables the specified transition.
 	 */
 	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
-			final IPetriNet<LETTER, PLACE> net) {
+			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
 		return mPlaces.containsAll(net.getPredecessors(transition));
 	}
 
@@ -159,7 +159,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @throws PetriNetNot1SafeException
 	 */
 	public Marking<LETTER, PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
-			final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
+			final IPetriNetSuccessorProvider<LETTER, PLACE> net) throws PetriNetNot1SafeException {
 		final Set<PLACE> predecessors = net.getPredecessors(transition);
 		final Set<PLACE> successors = net.getSuccessors(transition);
 		final Object[] places =

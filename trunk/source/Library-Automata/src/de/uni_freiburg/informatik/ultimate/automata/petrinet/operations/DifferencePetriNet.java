@@ -63,29 +63,33 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
 
-	private static final String EXACTLY_ONE_STATE_OF_SUBTRAHEND = "query for successors must contain exactly one state of subtrahend";
-	private static final String AT_MOST_ONE_STATE_OF_SUBTRAHEND = "query for successors must contain at most one state of subtrahend";
-	private static final String EMPTY_INITIAL_ERROR_MESSAGE = "Subtrahend has no initial states! We could soundly return the minuend as result (implement this if required). However we presume that in most cases, such a subtrahend was passed accidentally";
+	private static final String EXACTLY_ONE_STATE_OF_SUBTRAHEND =
+			"query for successors must contain exactly one state of subtrahend";
+	private static final String AT_MOST_ONE_STATE_OF_SUBTRAHEND =
+			"query for successors must contain at most one state of subtrahend";
+	private static final String EMPTY_INITIAL_ERROR_MESSAGE =
+			"Subtrahend has no initial states! We could soundly return the minuend as result (implement this if required). However we presume that in most cases, such a subtrahend was passed accidentally";
 	private final AutomataLibraryServices mServices;
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mMinuend;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
-	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mNew2Old = new HashMap<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>>();
+	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mNew2Old =
+			new HashMap<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>>();
 	private final Map<ITransition<LETTER, PLACE>, PLACE> mNewTransition2AutomatonPredecessorState = new HashMap<>();
 	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mBlockingConfigurations = new HashRelation<>();
 	private final Set<PLACE> mMinuendPlaces = new HashSet<>();
 	private final Set<PLACE> mSubtrahendStates = new HashSet<>();
-	private final NestedMap2<ITransition<LETTER, PLACE>, PLACE, ITransition<LETTER, PLACE>> mInputTransition2State2OutputTransition = new NestedMap2<>();
+	private final NestedMap2<ITransition<LETTER, PLACE>, PLACE, ITransition<LETTER, PLACE>> mInputTransition2State2OutputTransition =
+			new NestedMap2<>();
 	private int mNumberOfConstructedTransitions = 0;
 	// horrible hack to do a cast and store known transitions
 	// 20200126 Matthias: We can get rid of this Map by using
 	// information form mOld2New
 	private final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mTransitions = new HashMap<>();
 	/**
-	 * Letters for which the subtrahend DFA has a selfloop in every state. This
-	 * set is provided by the user of {@link DifferencePetriNet} it can be an
-	 * underapproximation of the letters that have a selfloop, we do not check
-	 * if this set does really contain only universal loopers (i.e., we do
-	 * not check if what the user provided was correct).
+	 * Letters for which the subtrahend DFA has a selfloop in every state. This set is provided by the user of
+	 * {@link DifferencePetriNet} it can be an underapproximation of the letters that have a selfloop, we do not check
+	 * if this set does really contain only universal loopers (i.e., we do not check if what the user provided was
+	 * correct).
 	 */
 	private final Set<LETTER> mUniversalLoopers;
 	private final BoundedPetriNet<LETTER, PLACE> mYetConstructedResult;
@@ -167,10 +171,9 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		}
 	}
 
-
 	@Override
-	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
-			final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
+	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
+			getSuccessorTransitionProviders(final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
 		if (mustPlaces.isEmpty()) {
 			return Collections.emptySet();
 		}
@@ -189,8 +192,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			minuendMayPlaces = split.getFirst();
 			subtrahendMayStates = split.getSecond();
 		}
-//		System.out.println("ComputeDifferenceSuccs " + minuendMustPlaces.size() + "+" + subtrahendMustStates.size()
-//				+ " " + minuendMayPlaces.size() + "+" + subtrahendMayStates.size());
+		// System.out.println("ComputeDifferenceSuccs " + minuendMustPlaces.size() + "+" + subtrahendMustStates.size()
+		// + " " + minuendMayPlaces.size() + "+" + subtrahendMayStates.size());
 		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> minuendStps;
 		if (subtrahendMustStates.isEmpty()) {
 			minuendStps = mMinuend.getSuccessorTransitionProviders(minuendMustPlaces, minuendMayPlaces);
@@ -202,11 +205,11 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
 		for (final ISuccessorTransitionProvider<LETTER, PLACE> minuendStp : minuendStps) {
 			// TODO: Compute on-demand
-			final boolean emtpyIntersectionWithMinuendMustPlaces = DataStructureUtils
-					.haveEmptyIntersection(minuendStp.getPredecessorPlaces(), minuendMustPlaces);
+			final boolean emtpyIntersectionWithMinuendMustPlaces =
+					DataStructureUtils.haveEmptyIntersection(minuendStp.getPredecessorPlaces(), minuendMustPlaces);
 			if (useUniversalLoopersOptimization) {
-				final SuccessorTransitionProviderSplit<LETTER, PLACE> split = new SuccessorTransitionProviderSplit<>(
-						minuendStp, mUniversalLoopers, mMinuend);
+				final SuccessorTransitionProviderSplit<LETTER, PLACE> split =
+						new SuccessorTransitionProviderSplit<>(minuendStp, mUniversalLoopers, mMinuend);
 				if (split.getSuccTransProviderLetterInSet() != null) {
 					// copy from minuend, no need to synchronize
 					if (emtpyIntersectionWithMinuendMustPlaces) {
@@ -248,38 +251,40 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 	/**
 	 * @param places
-	 *            Set of places where exactly one is a state of the subtrahend and
-	 *            the others are places of the minuend.
+	 *            Set of places where exactly one is a state of the subtrahend and the others are places of the minuend.
 	 */
 	@Override
-	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
-			final HashRelation<PLACE, PLACE> place2allowedSiblings) {
+	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
+			getSuccessorTransitionProviders(final HashRelation<PLACE, PLACE> place2allowedSiblings) {
 		if (place2allowedSiblings.isEmpty()) {
 			return Collections.emptySet();
 		}
-//		System.out.println("ComputeDifferenceSuccsOld " + place2allowedSiblings.size());
-//		assert (exactlyOneStateFromAutomaton(place2allowedSiblings)) : "not exactly one state from automaton";
+		// System.out.println("ComputeDifferenceSuccsOld " + place2allowedSiblings.size());
+		// assert (exactlyOneStateFromAutomaton(place2allowedSiblings)) : "not exactly one state from automaton";
 		final HashRelation<Set<PLACE>, PLACE> mNetPredecessors2AutomatonPredecessors = new HashRelation<>();
-		final Map<Set<PLACE>, ISuccessorTransitionProvider<LETTER, PLACE>> mNetPredecessors2TransitionProvider = new HashMap<>();
+		final Map<Set<PLACE>, ISuccessorTransitionProvider<LETTER, PLACE>> mNetPredecessors2TransitionProvider =
+				new HashMap<>();
 		for (final PLACE place : place2allowedSiblings.getDomain()) {
 			if (mMinuendPlaces.contains(place)) {
 				final HashRelation<PLACE, PLACE> tmp = new HashRelation<>();
 				final Pair<Set<PLACE>, Set<PLACE>> split = split(place2allowedSiblings.getImage(place));
-//				assert split.getSecond().size() <= 1 : "there can be at most one automaton successor";
-//				System.out.println(" Minuend place " + split.getFirst().size()+"+"+split.getSecond().size());
+				// assert split.getSecond().size() <= 1 : "there can be at most one automaton successor";
+				// System.out.println(" Minuend place " + split.getFirst().size()+"+"+split.getSecond().size());
 				tmp.addAllPairs(place, split.getFirst());
-				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinuend.getSuccessorTransitionProviders(tmp);
+				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds =
+						mMinuend.getSuccessorTransitionProviders(tmp);
 				for (final ISuccessorTransitionProvider<LETTER, PLACE> stp : preds) {
 					mNetPredecessors2AutomatonPredecessors.addAllPairs(stp.getPredecessorPlaces(), split.getSecond());
 					mNetPredecessors2TransitionProvider.put(stp.getPredecessorPlaces(), stp);
 				}
 			} else if (mSubtrahendStates.contains(place)) {
 				final Pair<Set<PLACE>, Set<PLACE>> split = split(place2allowedSiblings.getImage(place));
-//				System.out.println(" subtrahend state " + split.getFirst().size()+"+"+split.getSecond().size());
+				// System.out.println(" subtrahend state " + split.getFirst().size()+"+"+split.getSecond().size());
 				assert split.getSecond().equals(Collections.singleton(place)) : "automata states cannot be siblings "
 						+ place + " " + split.getSecond();
 
-				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinuend.getSuccessorTransitionProviders(split.getFirst(), split.getFirst());
+				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds =
+						mMinuend.getSuccessorTransitionProviders(split.getFirst(), split.getFirst());
 				for (final ISuccessorTransitionProvider<LETTER, PLACE> stp : preds) {
 					mNetPredecessors2AutomatonPredecessors.addPair(stp.getPredecessorPlaces(), place);
 					mNetPredecessors2TransitionProvider.put(stp.getPredecessorPlaces(), stp);
@@ -288,59 +293,61 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				throw new IllegalArgumentException("state does not exist");
 			}
 		}
-//		PLACE automatonPredecessor = null;
-//		Set<PLACE> automatonPredecessorSiblings = null;
-//		final HashRelation<PLACE, PLACE> petriNetPredecessors = new HashRelation<>();
-//		for (final Entry<PLACE, PLACE> entry : place2allowedSiblings.entrySet()) {
-//			if (mMinuendPlaces.contains(entry.getKey())) {
-//
-//				petriNetPredecessors.addPair(entry.getKey(), entry.getValue());
-//			} else if (mSubtrahendStates.contains(entry.getKey())) {
-//				if (automatonPredecessor == null) {
-//					automatonPredecessor = entry.getKey();
-//					automatonPredecessorSiblings = entry.getValue();
-//				} else {
-//					throw new IllegalArgumentException(AT_MOST_ONE_STATE_OF_SUBTRAHEND);
-//				}
-//			}
-//		}
-//
+		// PLACE automatonPredecessor = null;
+		// Set<PLACE> automatonPredecessorSiblings = null;
+		// final HashRelation<PLACE, PLACE> petriNetPredecessors = new HashRelation<>();
+		// for (final Entry<PLACE, PLACE> entry : place2allowedSiblings.entrySet()) {
+		// if (mMinuendPlaces.contains(entry.getKey())) {
+		//
+		// petriNetPredecessors.addPair(entry.getKey(), entry.getValue());
+		// } else if (mSubtrahendStates.contains(entry.getKey())) {
+		// if (automatonPredecessor == null) {
+		// automatonPredecessor = entry.getKey();
+		// automatonPredecessorSiblings = entry.getValue();
+		// } else {
+		// throw new IllegalArgumentException(AT_MOST_ONE_STATE_OF_SUBTRAHEND);
+		// }
+		// }
+		// }
+		//
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
-//		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds;
-//		if (automatonPredecessor == null) {
-//			preds = mMinued.getSuccessorTransitionProviders(petriNetPredecessors);
-//		} else {
-//			// do use transitions of *all* yet known places because the subtrahend
-//			// predecessor could potentially have a transition with all of them.
-//			// TODO 2018-10-21 Matthias: Optimization: Overapproximate candidates
-//			// in Unfolding. Do not take all minuend places but only these where at
-//			// least one corresponding place is in co-relation with automaton
-//			// successor
-//			preds = mMinued.getSuccessorTransitionProviders(mMinuendPlaces);
-//		}
+		// final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds;
+		// if (automatonPredecessor == null) {
+		// preds = mMinued.getSuccessorTransitionProviders(petriNetPredecessors);
+		// } else {
+		// // do use transitions of *all* yet known places because the subtrahend
+		// // predecessor could potentially have a transition with all of them.
+		// // TODO 2018-10-21 Matthias: Optimization: Overapproximate candidates
+		// // in Unfolding. Do not take all minuend places but only these where at
+		// // least one corresponding place is in co-relation with automaton
+		// // successor
+		// preds = mMinued.getSuccessorTransitionProviders(mMinuendPlaces);
+		// }
 
 		final boolean useUniversalLoopersOptimization = (mUniversalLoopers != null);
 
-
 		for (final Set<PLACE> predecessors : mNetPredecessors2AutomatonPredecessors.getDomain()) {
 			final Set<PLACE> automatonPredecessors = mNetPredecessors2AutomatonPredecessors.getImage(predecessors);
-			final ISuccessorTransitionProvider<LETTER, PLACE> pred = mNetPredecessors2TransitionProvider.get(predecessors);
+			final ISuccessorTransitionProvider<LETTER, PLACE> pred =
+					mNetPredecessors2TransitionProvider.get(predecessors);
 			if (useUniversalLoopersOptimization) {
-				final SuccessorTransitionProviderSplit<LETTER, PLACE> split = new SuccessorTransitionProviderSplit<>(
-						pred, mUniversalLoopers, mMinuend);
+				final SuccessorTransitionProviderSplit<LETTER, PLACE> split =
+						new SuccessorTransitionProviderSplit<>(pred, mUniversalLoopers, mMinuend);
 				if (split.getSuccTransProviderLetterInSet() != null) {
 					// copy from minuend, no need to synchronize
 					final List<ITransition<LETTER, PLACE>> transitions = new ArrayList<>();
-					for (final ITransition<LETTER, PLACE> trans : split.getSuccTransProviderLetterInSet().getTransitions()) {
+					for (final ITransition<LETTER, PLACE> trans : split.getSuccTransProviderLetterInSet()
+							.getTransitions()) {
 						final Set<PLACE> transitionPredecessors = mMinuend.getPredecessors(trans);
-//						if (!mMinuendPlaces.containsAll(transitionPredecessors)) {
-//							// not all predecessors places of transition are
-//							// yet constructed, maybe this transition is dead
-//							continue;
-//						}
+						// if (!mMinuendPlaces.containsAll(transitionPredecessors)) {
+						// // not all predecessors places of transition are
+						// // yet constructed, maybe this transition is dead
+						// continue;
+						// }
 						// TODO 20200228 Matthias: Why checked for each transition?
 						// Shouls be the same for all transitions of an STP
-						if (DataStructureUtils.haveNonEmptyIntersection(transitionPredecessors, place2allowedSiblings.getDomain())) {
+						if (DataStructureUtils.haveNonEmptyIntersection(transitionPredecessors,
+								place2allowedSiblings.getDomain())) {
 							transitions.add(trans);
 						} else {
 							// do nothing
@@ -355,19 +362,21 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 				}
 				if (split.getSuccTransProviderLetterNotInSet() != null) {
-//					for (final PLACE automatonPredecessor : automatonPredecessors)
-//					if (automatonPredecessor != null) {
-//						result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(), automatonPredecessor));
-//					} else {
-						for (final PLACE yetConstructedState : automatonPredecessors) {
-							result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(), yetConstructedState));
-						}
-//					}
+					// for (final PLACE automatonPredecessor : automatonPredecessors)
+					// if (automatonPredecessor != null) {
+					// result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(),
+					// automatonPredecessor));
+					// } else {
+					for (final PLACE yetConstructedState : automatonPredecessors) {
+						result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(),
+								yetConstructedState));
+					}
+					// }
 				}
 			} else {
-//				if (automatonPredecessor == null) {
-//					throw new IllegalArgumentException(EXACTLY_ONE_STATE_OF_SUBTRAHEND);
-//				}
+				// if (automatonPredecessor == null) {
+				// throw new IllegalArgumentException(EXACTLY_ONE_STATE_OF_SUBTRAHEND);
+				// }
 				for (final PLACE yetConstructedState : automatonPredecessors) {
 					result.add(new DifferenceSuccessorTransitionProvider(pred, yetConstructedState));
 				}
@@ -430,8 +439,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		public Collection<ITransition<LETTER, PLACE>> getTransitions() {
 			final List<ITransition<LETTER, PLACE>> result = new ArrayList<>();
 			for (final ITransition<LETTER, PLACE> inputTransition : mPetriNetPredecessors.getTransitions()) {
-				final ITransition<LETTER, PLACE> outputTransition = getOrConstructTransition(inputTransition,
-						mAutomatonPredecessor);
+				final ITransition<LETTER, PLACE> outputTransition =
+						getOrConstructTransition(inputTransition, mAutomatonPredecessor);
 				if (outputTransition != null) {
 					result.add(outputTransition);
 				}
@@ -441,13 +450,13 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 		/**
 		 *
-		 * @return null iff subtrahend successor is accepting which means that we do not
-		 *         want such a transition in our resulting Petri net.
+		 * @return null iff subtrahend successor is accepting which means that we do not want such a transition in our
+		 *         resulting Petri net.
 		 */
 		private ITransition<LETTER, PLACE> getOrConstructTransition(final ITransition<LETTER, PLACE> inputTransition,
 				final PLACE automatonPredecessor) {
-			ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition,
-					automatonPredecessor);
+			ITransition<LETTER, PLACE> result =
+					mInputTransition2State2OutputTransition.get(inputTransition, automatonPredecessor);
 			if (result == null) {
 				final PLACE automatonSuccessor = NestedWordAutomataUtils.getSuccessorState(mSubtrahend,
 						automatonPredecessor, inputTransition.getSymbol());
@@ -485,8 +494,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	}
 
 	/**
-	 * @return Mapping from new transitions (i.e., transitions of the resulting
-	 *         difference) to old transitions (i.e., transitions of the minuend).
+	 * @return Mapping from new transitions (i.e., transitions of the resulting difference) to old transitions (i.e.,
+	 *         transitions of the minuend).
 	 */
 	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
 		return Collections.unmodifiableMap(mNew2Old);
@@ -523,7 +532,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		}
 	}
 
-
 	/**
 	 * DifferenceSynchronizationInformation for all reachable transitions.
 	 */
@@ -532,15 +540,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	}
 
 	/**
-	 * DifferenceSynchronizationInformation for a restricted set of transitions.
-	 * This is useful if you want to restrict the result of an {@link Difference}
-	 * operation to the set of vital transitions. TODO 2020-02-01 Matthias: Warning
-	 * this information is not yet optimal. Assume we have a transition-state pair
-	 * that is blocking but its preset is never reachable in the result of the
-	 * Difference operation, then the entry in "blockingTransitions" is useless and
-	 * might prevent an efficient synchronization of selfloops. However, I expect
-	 * that the costs for a corresponding optimization are probably high and the
-	 * gain is low.
+	 * DifferenceSynchronizationInformation for a restricted set of transitions. This is useful if you want to restrict
+	 * the result of an {@link Difference} operation to the set of vital transitions. TODO 2020-02-01 Matthias: Warning
+	 * this information is not yet optimal. Assume we have a transition-state pair that is blocking but its preset is
+	 * never reachable in the result of the Difference operation, then the entry in "blockingTransitions" is useless and
+	 * might prevent an efficient synchronization of selfloops. However, I expect that the costs for a corresponding
+	 * optimization are probably high and the gain is low.
 	 */
 	public DifferenceSynchronizationInformation<LETTER, PLACE> computeDifferenceSynchronizationInformation(
 			final Set<ITransition<LETTER, PLACE>> transitionSubset, final boolean vitalityPreserved) {
@@ -588,8 +593,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				contributingTransitions, blockingTransitions, true, vitalityPreserved);
 	}
 
-
-
 	private class SimpleSuccessorTransitionProviderWithUsageInformation
 			extends SimpleSuccessorTransitionProvider<LETTER, PLACE> {
 
@@ -609,10 +612,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			return transitions;
 		}
 
-		private ITransition<LETTER, PLACE> getOrConstructTransitionCopy(final ITransition<LETTER, PLACE> inputTransition) {
+		private ITransition<LETTER, PLACE>
+				getOrConstructTransitionCopy(final ITransition<LETTER, PLACE> inputTransition) {
 			ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition, null);
 			if (result == null) {
-//				assert (mMinuendPlaces.containsAll(mMinued.getPredecessors(inputTransition))) : "missing predecessor";
+				// assert (mMinuendPlaces.containsAll(mMinued.getPredecessors(inputTransition))) : "missing
+				// predecessor";
 				final Set<PLACE> successors = new LinkedHashSet<>();
 				for (final PLACE petriNetSuccessor : mMinuend.getSuccessors(inputTransition)) {
 					// possibly first time that we saw this place, add
@@ -631,6 +636,18 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			return result;
 		}
 
+	}
+
+	@Override
+	public Set<ITransition<LETTER, PLACE>> getSuccessors(PLACE place) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+
+	@Override
+	public Set<ITransition<LETTER, PLACE>> getPredecessors(PLACE place) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 }

@@ -18,24 +18,30 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 	/** @return Incoming places of given transition. */
 	ImmutableSet<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition);
 
-	/**
-	 *
-	 * @param place2allowedSiblings
-	 * @return all {@link ISuccessorTransitionProvider}s such that for its predecessors {p1,...,pn}
-	 * there exists some i such that pi is in the domain of the place2allowedSiblings and all
-	 * elements of {p1,...,p_{i-1},p_{i+1},pn} are in relation with pi.
-	 */
-	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
-			final HashRelation<PLACE, PLACE> place2allowedSiblings);
+	/** @return Outgoing transitions of given place. */
+	Set<ITransition<LETTER, PLACE>> getSuccessors(final PLACE place);
+
+	/** @return Incoming transitions of given place. */
+	Set<ITransition<LETTER, PLACE>> getPredecessors(final PLACE place);
 
 	/**
 	 *
-	 * @return {@link ISuccessorTransitionProvider}s such that the set of
-	 *         predecessors contains only "mayPlaces" and at least one "mustPlaces".
+	 * @param place2allowedSiblings
+	 * @return all {@link ISuccessorTransitionProvider}s such that for its predecessors {p1,...,pn} there exists some i
+	 *         such that pi is in the domain of the place2allowedSiblings and all elements of
+	 *         {p1,...,p_{i-1},p_{i+1},pn} are in relation with pi.
 	 */
-	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
-			final Set<PLACE> mustPlaces,
+	Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
+			getSuccessorTransitionProviders(final HashRelation<PLACE, PLACE> place2allowedSiblings);
+
+	/**
+	 *
+	 * @return {@link ISuccessorTransitionProvider}s such that the set of predecessors contains only "mayPlaces" and at
+	 *         least one "mustPlaces".
+	 */
+	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(final Set<PLACE> mustPlaces,
 			final Set<PLACE> mayPlaces);
+
 	/**
 	 * @param marking
 	 *            A marking.
