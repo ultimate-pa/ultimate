@@ -259,6 +259,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		return result;
 	}
 
+
+	/**
+	 * @deprecated Unused since we use the "exact shadows" from the omega test.
+	 *             Maybe we can delete this method in the future.
+	 */
+	@Deprecated
 	private static ExplicitLhsPolynomialRelations bestDivision(final Script script, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture, final int quantifier,
 			final ExplicitLhsPolynomialRelations elprs) {
@@ -281,10 +287,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 		for (final Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation> pair : elprs
 				.getAntiDerRelations()) {
-			final ExplicitLhsPolynomialRelation solvedLower =
-					bestDivision(script, bannedForDivCapture, pair.getFirst());
-			final ExplicitLhsPolynomialRelation solvedUpper =
-					bestDivision(script, bannedForDivCapture, pair.getSecond());
+			final ExplicitLhsPolynomialRelation solvedLower = bestDivision(script, bannedForDivCapture,
+					pair.getFirst());
+			final ExplicitLhsPolynomialRelation solvedUpper = bestDivision(script, bannedForDivCapture,
+					pair.getSecond());
 			if (solvedLower == null) {
 				assert solvedUpper == null;
 				return null;
@@ -300,11 +306,15 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					result.addAntiDerRelation(solvedLower, solvedUpper);
 				}
 			}
-
 		}
 		return result;
 	}
 
+	/**
+	 * @deprecated Unused since we use the "exact shadows" from the omega test.
+	 *             Maybe we can delete this method in the future.
+	 */
+	@Deprecated
 	private static ExplicitLhsPolynomialRelation bestDivision(final Script script,
 			final Set<TermVariable> bannedForDivCapture, final ExplicitLhsPolynomialRelation elpr) {
 		final ExplicitLhsPolynomialRelation solved = elpr.divInvertible(elpr.getLhsCoefficient());
@@ -913,6 +923,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return result;
 		}
 
+		/**
+		 * @deprecated Superseded by {@link DualJunctionTir#countNonOneCoefficients}
+		 */
+		@Deprecated
 		private static boolean allCoefficientsOne(final List<ExplicitLhsPolynomialRelation> bounds) {
 			for (final ExplicitLhsPolynomialRelation bound : bounds) {
 				if (!bound.getLhsMonomial().isLinear()) {
