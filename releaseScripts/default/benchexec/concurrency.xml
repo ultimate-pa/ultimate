@@ -303,9 +303,14 @@
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-ConcreteSyntactic.epf</option>
   </rundefinition-->
 
-  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
-  </rundefinition-->
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.WithAssertions">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
+    <option name="-ea" />
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.LooperAbs">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
