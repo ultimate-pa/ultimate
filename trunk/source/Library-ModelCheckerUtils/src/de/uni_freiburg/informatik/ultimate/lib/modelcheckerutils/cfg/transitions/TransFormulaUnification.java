@@ -117,6 +117,11 @@ public class TransFormulaUnification {
 	 */
 	private void computeJointInOutVars() {
 		for (final UnmodifiableTransFormula tf : mTransFormulas) {
+			if (!tf.getNonTheoryConsts().isEmpty()) {
+				throw new UnsupportedOperationException(
+						TransFormulaUnification.class.getSimpleName() + " does not support NonTheoryConsts");
+			}
+
 			for (final IProgramVar pv : tf.getInVars().keySet()) {
 				if (!mInVars.containsKey(pv)) {
 					addFreshTermVariable(mInVars, pv, "In");

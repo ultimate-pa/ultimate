@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class Context {
-	private static final boolean OVERAPPOXIMATE_QUANTIFIERS_IN_CRITICAL_CONSTRAINT = true;
+	private static final CcTransformation OPTION_CCTRANSFORMATION = CcTransformation.OVERAPPROXIMATE_QUANTIFIERS;
 
 	/**
 	 * Transformations that can be done with the critical constraint.
@@ -90,14 +90,14 @@ public class Context {
 
 	public Context(final Script script) {
 		super();
-		mCcTransformation = CcTransformation.OVERAPPROXIMATE_QUANTIFIERS;
+		mCcTransformation = OPTION_CCTRANSFORMATION;
 		mCriticalConstraint = script.term("true");
 		mBoundByAncestors = Collections.emptySet();
 	}
 
 	public Context(final Term criticalConstraint, final Set<TermVariable> boundByAncestors) {
 		super();
-		mCcTransformation = CcTransformation.OVERAPPROXIMATE_QUANTIFIERS;
+		mCcTransformation = OPTION_CCTRANSFORMATION;
 		Objects.requireNonNull(criticalConstraint);
 		Objects.requireNonNull(boundByAncestors);
 		mCriticalConstraint = criticalConstraint;

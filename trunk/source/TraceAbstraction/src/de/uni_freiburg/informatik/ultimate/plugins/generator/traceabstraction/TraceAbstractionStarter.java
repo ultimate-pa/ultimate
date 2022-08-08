@@ -513,7 +513,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		assert IcfgUtils.isConcurrent(icfg) : "Petrification unnecessary for sequential programs";
 
 		mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
-		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances);
+		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances, false);
 		final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 		mLocationMap = ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getLocationMapping();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());

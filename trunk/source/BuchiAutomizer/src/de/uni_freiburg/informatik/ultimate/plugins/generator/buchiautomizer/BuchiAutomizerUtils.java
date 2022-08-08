@@ -29,18 +29,22 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -58,73 +62,25 @@ public final class BuchiAutomizerUtils {
 				path + "/" + filename, format, message, automaton);
 	}
 
-	public static boolean isEmptyStem(final NestedLassoRun<?, IPredicate> nlr) {
-		assert nlr.getStem().getLength() > 0;
-		return nlr.getStem().getLength() == 1;
+	public static boolean isEmptyStem(final NestedRun<?, ?> stem) {
+		assert stem.getLength() > 0;
+		return stem.getLength() == 1;
 	}
 
-	public static <LETTER extends IIcfgTransition<?>> NestedWordAutomaton<LETTER, IPredicate>
-			constructBuchiInterpolantAutomaton(final IPredicate precondition, final NestedWord<LETTER> stem,
-					final IPredicate[] stemInterpolants, final IPredicate honda, final NestedWord<LETTER> loop,
-					final IPredicate[] loopInterpolants,
-					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
-					final IUltimateServiceProvider services,
-					final IEmptyStackStateFactory<IPredicate> emptyStateFactory) {
-		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(services), abstraction.getVpAlphabet(), emptyStateFactory);
-		if (stem.length() == 0) {
-			result.addState(true, true, honda);
-		} else {
-			result.addState(true, false, precondition);
-			for (int i = 0; i < stemInterpolants.length; i++) {
-				addState(stemInterpolants[i], result);
-				addTransition(i, precondition, stemInterpolants, honda, stem, result);
-			}
-			result.addState(false, true, honda);
-			addTransition(stemInterpolants.length, precondition, stemInterpolants, honda, stem, result);
+	public static Set<IcfgLocation> getLocations(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return Set.of(((ISLPredicate) pred).getProgramPoint());
 		}
-		for (int i = 0; i < loopInterpolants.length; i++) {
-			addState(loopInterpolants[i], result);
-			addTransition(i, honda, loopInterpolants, honda, loop, result);
+		if (pred instanceof IMLPredicate) {
+			return Arrays.stream(((IMLPredicate) pred).getProgramPoints()).collect(Collectors.toSet());
 		}
-		addTransition(loopInterpolants.length, honda, loopInterpolants, honda, loop, result);
-		return result;
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
 	}
 
-	private static void addState(final IPredicate pred, final NestedWordAutomaton<?, IPredicate> nwa) {
-		if (!nwa.getStates().contains(pred)) {
-			nwa.addState(false, false, pred);
+	public static <LETTER> VpAlphabet<LETTER> getVpAlphabet(final IAutomaton<LETTER, ?> automaton) {
+		if (automaton instanceof INwaBasis) {
+			return ((INwaBasis<LETTER, ?>) automaton).getVpAlphabet();
 		}
-	}
-
-	private static <LETTER extends IIcfgTransition<?>> void addTransition(final int pos, final IPredicate pre,
-			final IPredicate[] predicates, final IPredicate post, final NestedWord<LETTER> nw,
-			final NestedWordAutomaton<LETTER, IPredicate> nwa) {
-		final IPredicate pred = getPredicateAtPosition(pos - 1, pre, predicates, post);
-		final IPredicate succ = getPredicateAtPosition(pos, pre, predicates, post);
-		final LETTER cb = nw.getSymbol(pos);
-		if (nw.isInternalPosition(pos)) {
-			nwa.addInternalTransition(pred, cb, succ);
-		} else if (nw.isCallPosition(pos)) {
-			nwa.addCallTransition(pred, cb, succ);
-		} else if (nw.isReturnPosition(pos)) {
-			assert !nw.isPendingReturn(pos);
-			final int k = nw.getCallPosition(pos);
-			final IPredicate hier = getPredicateAtPosition(k - 1, pre, predicates, post);
-			nwa.addReturnTransition(pred, hier, cb, succ);
-		}
-	}
-
-	private static IPredicate getPredicateAtPosition(final int pos, final IPredicate before,
-			final IPredicate[] predicates, final IPredicate after) {
-		assert pos >= -1;
-		assert pos <= predicates.length;
-		if (pos < 0) {
-			return before;
-		}
-		if (pos >= predicates.length) {
-			return after;
-		}
-		return predicates[pos];
+		return new VpAlphabet<>(automaton.getAlphabet());
 	}
 }
