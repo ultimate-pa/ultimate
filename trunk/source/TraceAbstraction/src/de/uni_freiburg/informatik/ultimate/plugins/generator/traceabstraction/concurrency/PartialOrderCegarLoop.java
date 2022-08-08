@@ -372,14 +372,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
-			if (isFalseLiteral(state1) || isTrueLiteral(state2)) {
-				// If state1 is "false", we add no other conjuncts, and do not create a new state.
-				// Similarly, there is no point in adding state2 as conjunct if it is "true".
-				return state1;
-			}
-
 			final IPredicate newState;
-			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
+			if (isFalseLiteral(state1) || isTrueLiteral(state2)) {
+				// If state1 is "false", we add no other conjuncts.
+				// Similarly, there is no point in adding state2 as conjunct if it is "true".
+				if (state1 instanceof MLPredicateWithConjuncts) {
+					final var mlState1 = (MLPredicateWithConjuncts) state1;
+					newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
+							mlState1.getProgramPoints(), mlState1.getConjuncts()));
+				} else {
+					newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
+							((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state1)));
+				}
+			} else if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
 				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
 				// As another (less important) optimization, we also ignore state1 if it is "true".
 				newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
