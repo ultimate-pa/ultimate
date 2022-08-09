@@ -40,10 +40,12 @@ import java.util.Set;
  * @param <S>
  * @param <V>
  */
-// TODO This duplicates in part code of AcceptingRunSearchVisitor, and is sort of an akward API. See if we can improve.
+// This duplicates in part code / functionality of AcceptingRunSearchVisitor and DeadEndOptimizingVisitor.
+// TODO See if we can avoid such duplication.
 public class ReachabilityCheckVisitor<L, S, V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
 
 	private final Set<S> mCanReach;
+	private final Set<S> mCanNotReach;
 	private boolean mFound;
 
 	// The current stack of states
@@ -52,9 +54,10 @@ public class ReachabilityCheckVisitor<L, S, V extends IDfsVisitor<L, S>> extends
 	// A possible successor of the last state on the stack, which may become the next element on the stack.
 	private S mPendingState;
 
-	public ReachabilityCheckVisitor(final V underlying, final Set<S> canReach) {
+	public ReachabilityCheckVisitor(final V underlying, final Set<S> canReach, final Set<S> canNotReach) {
 		super(underlying);
 		mCanReach = canReach;
+		mCanNotReach = canNotReach;
 	}
 
 	@Override
@@ -62,7 +65,7 @@ public class ReachabilityCheckVisitor<L, S, V extends IDfsVisitor<L, S>> extends
 		assert mStateStack.isEmpty() : "start state must be first";
 		mStateStack.addLast(state);
 		checkState(state);
-		return mUnderlying.addStartState(state);
+		return mCanNotReach.contains(state) || mUnderlying.addStartState(state);
 	}
 
 	@Override
@@ -70,12 +73,13 @@ public class ReachabilityCheckVisitor<L, S, V extends IDfsVisitor<L, S>> extends
 		assert !mFound : "Unexpected transition discovery after abort";
 		assert mStateStack.getLast() == source : "Unexpected transition from state " + source;
 		mPendingState = target;
-		return mUnderlying.discoverTransition(source, letter, target);
+		return mCanNotReach.contains(target) || mUnderlying.discoverTransition(source, letter, target);
 	}
 
 	@Override
 	public boolean discoverState(final S state) {
 		assert !mFound : "Unexpected state discovery after abort";
+		assert !mCanNotReach.contains(state) : "should have pruned transition to this state";
 
 		if (mPendingState == null) {
 			// Must be initial state
@@ -98,6 +102,10 @@ public class ReachabilityCheckVisitor<L, S, V extends IDfsVisitor<L, S>> extends
 
 		mPendingState = null;
 		mStateStack.removeLast();
+
+		if (isComplete) {
+			mCanNotReach.add(state);
+		}
 
 		mUnderlying.backtrackState(state, isComplete);
 	}

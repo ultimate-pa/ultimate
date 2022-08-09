@@ -156,7 +156,7 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	private boolean checkIsSuccessful(final R state) {
 		// If we can reach a known unsuccessful state, the given state is definitely unsuccessful.
 		// Hence we can abort the search. To this end, we use a ReachabilityCheckVisitor.
-		final var visitor = new ReachabilityCheckVisitor<>(mMakeVisitor.get(), mUnsuccessful);
+		final var visitor = new ReachabilityCheckVisitor<>(mMakeVisitor.get(), mUnsuccessful, mSuccessful);
 
 		try {
 			new DepthFirstTraversal<>(mServices, mReduction, mOrder, visitor, state);
