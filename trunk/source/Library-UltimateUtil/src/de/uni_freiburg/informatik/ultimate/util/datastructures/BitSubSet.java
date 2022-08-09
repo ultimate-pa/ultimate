@@ -122,7 +122,7 @@ public class BitSubSet<E> extends AbstractSet<E> {
 
 		@Override
 		public boolean hasNext() {
-			return mIndex < mBitSet.length() - 1;
+			return mIndex < mBitSet.length();
 		}
 
 		@Override
@@ -299,7 +299,7 @@ public class BitSubSet<E> extends AbstractSet<E> {
 			if (mElements.length == 0) {
 				return;
 			}
-			bitset.flip(0, mElements.length - 1);
+			bitset.flip(0, mElements.length);
 		}
 
 		private static BitSet copy(final BitSet bitset) {
