@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -191,5 +193,36 @@ public final class TraceAbstractionUtils {
 			vars.add(((IProgramOldVar) bv).getNonOldVar());
 		}
 		return result;
+	}
+
+	public static <L> String prettyPrintTracePredicates(final NestedWord<L> nestedWord,
+			final TracePredicates tracePredicates) {
+		if (!nestedWord.getPendingReturns().isEmpty()) {
+			throw new UnsupportedOperationException();
+		}
+		final StringBuilder sb = new StringBuilder();
+		int callStackDepth = 0;
+		for (int i = 0; i < nestedWord.length(); i++) {
+			sb.append("{ ");
+			sb.append(tracePredicates.getPredicate(i).getFormula());
+			sb.append(" }");
+			sb.append(System.lineSeparator());
+			if (nestedWord.isCallPosition(i)) {
+				callStackDepth++;
+			}
+			sb.append("\t".repeat(callStackDepth));
+			sb.append(nestedWord.getSymbol(i));
+			sb.append(System.lineSeparator());
+			if (nestedWord.isReturnPosition(i)) {
+				callStackDepth--;
+			}
+			sb.append("\t".repeat(callStackDepth));
+			// this is the postcondition for i==nestedWord.length()-1
+		}
+		sb.append("{ ");
+		sb.append(tracePredicates.getPostcondition().getFormula());
+		sb.append(" }");
+		sb.append(System.lineSeparator());
+		return sb.toString();
 	}
 }
