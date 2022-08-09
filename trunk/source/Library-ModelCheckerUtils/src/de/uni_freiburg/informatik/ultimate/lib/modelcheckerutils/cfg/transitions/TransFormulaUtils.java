@@ -361,14 +361,17 @@ public final class TransFormulaUtils {
 			throw new IllegalArgumentException();
 		}
 
+		final TransFormulaUnification unification = new TransFormulaUnification(mgdScript, transFormulas);
+		final Set<IProgramConst> consts = unification.getNonTheoryConsts();
+
 		final TransFormulaBuilder tfb;
 		if (useBranchEncoders) {
-			tfb = new TransFormulaBuilder(null, null, false, null, false, Arrays.asList(branchIndicators), false);
+			tfb = new TransFormulaBuilder(null, null, consts.isEmpty(), consts, false, Arrays.asList(branchIndicators),
+					false);
 		} else {
-			tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
+			tfb = new TransFormulaBuilder(null, null, consts.isEmpty(), consts, true, null, false);
 		}
 
-		final TransFormulaUnification unification = new TransFormulaUnification(mgdScript, transFormulas);
 		tfb.addInVars(unification.getInVars());
 		tfb.addOutVars(unification.getOutVars());
 		for (final TermVariable auxVar : unification.getAuxVars()) {
@@ -934,8 +937,9 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula intersect(final ManagedScript mgdScript,
 			final UnmodifiableTransFormula... tfs) {
 		final TransFormulaUnification tfu = new TransFormulaUnification(mgdScript, tfs);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(tfu.getInVars(), tfu.getOutVars(), true, null, true,
-				null, false);
+		final Set<IProgramConst> consts = tfu.getNonTheoryConsts();
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(tfu.getInVars(), tfu.getOutVars(), consts.isEmpty(), consts, true, null, false);
 		tfu.getAuxVars().stream().forEach(tfb::addAuxVar);
 		final Term[] terms = new Term[tfs.length];
 		for (int i = 0; i < tfs.length; i++) {
