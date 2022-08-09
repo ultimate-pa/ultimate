@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that provides the Buchi acceptance check for (Buchi-)Petri nets.
@@ -41,7 +42,11 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	 * word.
 	 */
 	private Set<MarkingOfFireSequence<LETTER, PLACE>> mFireSequenceTreeMarkings;
-	private boolean misInLoopPart;
+	/*
+	 * Keeps track of the index of the FIreSequenceTree that is created during the isWordAcceptedByBuchiPetriNet()
+	 * method.
+	 */
+	private int mfireSequenceIndex;
 	private final boolean mResult;
 
 	/*
@@ -60,8 +65,8 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 		mOperand = operand;
 		mInitialMarking = new Marking<>(ImmutableSet.of(operand.getInitialPlaces()));
 		mLassoWord = word;
-		misInLoopPart = false;
 		mFireSequenceTreeMarkings = new HashSet<>();
+		mfireSequenceIndex = 0;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -91,36 +96,58 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	 * @return boolean representing if word is accepted by net.
 	 */
 	private final boolean isWordAcceptedByBuchiPetriNet() throws PetriNetNot1SafeException {
-		computeHondaMarkingsFromInitialMarking();
-		misInLoopPart = true;
+		computeMarkingsFromFirstWordRun();
 		return computeLoopMarkingsAndCheckForAcceptance();
 	}
 
-	private void computeHondaMarkingsFromInitialMarking() throws PetriNetNot1SafeException {
-		mFireSequenceTreeMarkings.add(new MarkingOfFireSequence<>(mInitialMarking, mInitialMarking, false));
+	private void computeMarkingsFromFirstWordRun() throws PetriNetNot1SafeException {
+		mFireSequenceTreeMarkings.add(new MarkingOfFireSequence<>(mInitialMarking, new HashSet<>(), 0, 0));
 		for (LETTER symbol : mLassoWord.getStem()) {
 			produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
 		}
-		// at this point of the fire sequence tree the markings are the hondamarkings
-		for (MarkingOfFireSequence<LETTER, PLACE> marking : mFireSequenceTreeMarkings) {
-			marking.setHondaMarkingOfFireSequence(marking.getMarking());
-		}
-	}
-
-	private final boolean computeLoopMarkingsAndCheckForAcceptance() throws PetriNetNot1SafeException {
 		for (LETTER symbol : mLassoWord.getLoop()) {
 			produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
 		}
-		return containsAcceptingFiresequence(mFireSequenceTreeMarkings);
+	}
+
+	// Any time in a firing sequence when the Loop part of a word was fired, we denote the resulting marking as a honda
+	// marking. Thus any fire sequence might have multiple hondamarkings.
+	private final boolean computeLoopMarkingsAndCheckForAcceptance() throws PetriNetNot1SafeException {
+		// TODO: check again for infinite loop edge cases.
+		while (!mFireSequenceTreeMarkings.isEmpty()) {
+			// After a firing of the Loop part of the word, we store those produced hondamarkings in the firing
+			// sequences.
+			for (MarkingOfFireSequence<LETTER, PLACE> marking : mFireSequenceTreeMarkings) {
+				marking.addHondaMarkingOfFireSequence(marking.getMarking(), mfireSequenceIndex);
+			}
+			for (LETTER symbol : mLassoWord.getLoop()) {
+				produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
+			}
+			// Check if any fire sequence reaches a hondamarking of its stored hondamarkings and if in that loop we fire
+			// a token into an accepting Petri place.
+			for (Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer> markingAndHondaIndex : containsLoopingFiresequence(
+					mFireSequenceTreeMarkings)) {
+				if (markingAndHondaIndex.getFirst()
+						.getLastIndexOfShootingAcceptingStateInFireSequence() >= markingAndHondaIndex.getSecond()) {
+					return true;
+				}
+				// any nonaccepting firing sequence stuck in a loop is disregarded
+				mFireSequenceTreeMarkings.remove(markingAndHondaIndex.getFirst());
+			}
+		}
+		return false;
 	}
 
 	private void produceSuccessorMarkingsOfFireSequenceOfSet(final LETTER currentSymbol)
 			throws PetriNetNot1SafeException {
+
 		final Set<MarkingOfFireSequence<LETTER, PLACE>> successorMarkingSet = new HashSet<>();
 		for (MarkingOfFireSequence<LETTER, PLACE> markingOfFireSequence : mFireSequenceTreeMarkings) {
 			successorMarkingSet.addAll(getSuccessorMarkingsOfFireSequence(markingOfFireSequence, currentSymbol));
 		}
 		mFireSequenceTreeMarkings = successorMarkingSet;
+
+		mfireSequenceIndex++;
 	}
 
 	private Set<MarkingOfFireSequence<LETTER, PLACE>> getSuccessorMarkingsOfFireSequence(
@@ -140,10 +167,14 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	private MarkingOfFireSequence<LETTER, PLACE> getSuccessorMarkingOfFireSequence(
 			MarkingOfFireSequence<LETTER, PLACE> predecessor, ITransition<LETTER, PLACE> transition)
 			throws PetriNetNot1SafeException {
-		boolean firedIntoAcceptingStateBoolean = misInLoopPart && (predecessor.getAcceptingPlaceSeenInLoopBoolean()
-				|| mOperand.getSuccessors(transition).stream().anyMatch(mOperand::isAccepting));
+		int firingInAcceptingPlaceIndex;
+		if (mOperand.getSuccessors(transition).stream().anyMatch(mOperand::isAccepting)) {
+			firingInAcceptingPlaceIndex = mfireSequenceIndex;
+		} else {
+			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
+		}
 		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition, mOperand),
-				predecessor.getHondaMarkingOfFireSequence(), firedIntoAcceptingStateBoolean);
+				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex);
 	}
 
 	private Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking,
@@ -158,7 +189,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	}
 
 	/*
-	 * This method computes if in the given set of markings, there is a marking which is atleast as strong as the honda
+	 * This method computes if in the given set of markings, there is a marking which is atleast as strong as one honda
 	 * marking m' of its fire sequence. <p> A marking m being as strong as a marking m' means for any place p where
 	 * m'(p) = n, m(p) >= n has to hold. The reason we do this is if at the end of the supposed loop of a lasso if the
 	 * resulting marking is as strong as the honda marking, we know that we have an actual feasible loop in the Petri
@@ -166,19 +197,19 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	 * 
 	 * @param <markingSet> The set of markings we want to test.
 	 * 
-	 * @param <comparedMarking> The marking we want to find an as strong marking for.
-	 * 
-	 * @return boolean representing if a marking of the set is as strong as the comparedMarking.
+	 * @return Pair of marking and the index of the hondamarking they reached.
 	 */
-	private final boolean containsAcceptingFiresequence(final Set<MarkingOfFireSequence<LETTER, PLACE>> markingSet) {
+	private final Set<Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer>>
+			containsLoopingFiresequence(final Set<MarkingOfFireSequence<LETTER, PLACE>> markingSet) {
+		final Set<Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer>> loopingFiringSequences = new HashSet<>();
 		for (MarkingOfFireSequence<LETTER, PLACE> marking : markingSet) {
-			final Set<PLACE> comparedMarkingPlaceSet =
-					marking.getHondaMarkingOfFireSequence().stream().collect(Collectors.toSet());
-			if (marking.getMarking().containsAll(comparedMarkingPlaceSet)
-					&& marking.getAcceptingPlaceSeenInLoopBoolean()) {
-				return true;
+			for (Pair<Marking<LETTER, PLACE>, Integer> hondaMarking : marking.getHondaMarkingsOfFireSequence()) {
+				final Set<PLACE> comparedMarkingPlaceSet = hondaMarking.getFirst().stream().collect(Collectors.toSet());
+				if (marking.getMarking().containsAll(comparedMarkingPlaceSet)) {
+					loopingFiringSequences.add(new Pair<>(marking, hondaMarking.getSecond()));
+				}
 			}
 		}
-		return false;
+		return loopingFiringSequences;
 	}
 }

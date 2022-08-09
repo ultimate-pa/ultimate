@@ -1,11 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
- * Object containing the marking at some index of some (imagined) firing sequence, the honda marking of that fire sequence if
- * the index is beyond the stem of the lassoword, and a boolean denoting if up until that point of the fire sequence during the
- * loop part of the lasso word there was a token shot inside an accepting place of the Petri net.
+ * Object containing the marking at some index of some (imagined) firing sequence, the (indexed) honda marking(s) of
+ * that fire sequence and an index denoting when in the firing sequence an accpeting place was last fired into with a
+ * token.
  * 
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
@@ -14,41 +17,55 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
  */
 public class MarkingOfFireSequence<LETTER, PLACE> {
 	private final Marking<LETTER, PLACE> mMarking;
-	private Marking<LETTER, PLACE> mHondaMarkingOfFireSequence;
-	private final boolean mAcceptingPlaceSeenInLoop;
+	/*
+	 * Indexed hondamarkings of firing sequence of marking.
+	 */
+	private Set<Pair<Marking<LETTER, PLACE>, Integer>> mHondaMarkingsOfFireSequence;
+	private final int mFireSequenceIndex;
+	private final int mLastIndexOfShootingAcceptingStateInFireSequence;
 
 	/*
 	 * Constructor.
 	 * 
 	 * @param <marking> The marking with {@link Marking}.
 	 * 
-	 * @param <hondaMarking> Hondamarking (The first marking of the loop part of the firing sequence). Defaults to the
-	 * initial marking if the loop part of the word wasnt reached yet.
+	 * @param <hondaMarking> A marking which is produced after the firing of the loop part of a word during the a fire
+	 * sequence. We also denote the index of the firing sequence when this marking is produced.
 	 * 
-	 * @param <acceptingStateSeen> Boolean denoting if up until that point of the fire sequence there was a token shot
-	 * inside an accepting place of the Petri net.
+	 * @param <lastIndexOfShootingAcceptingStateInFireSequence> denoting at what index of a firing sequence an accepting
+	 * place was last shot with a token.
 	 */
-	public MarkingOfFireSequence(final Marking<LETTER, PLACE> marking, final Marking<LETTER, PLACE> hondaMarking,
-			final boolean acceptingStateSeen) {
+	public MarkingOfFireSequence(final Marking<LETTER, PLACE> marking,
+			final Set<Pair<Marking<LETTER, PLACE>, Integer>> hondaMarkings, final int fireSequenceIndex,
+			final int lastIndexOfShootingAcceptingStateInFireSequence) {
 		mMarking = marking;
-		mHondaMarkingOfFireSequence = hondaMarking;
-		mAcceptingPlaceSeenInLoop = acceptingStateSeen;
+		mHondaMarkingsOfFireSequence = hondaMarkings;
+		mFireSequenceIndex = fireSequenceIndex;
+		mLastIndexOfShootingAcceptingStateInFireSequence = lastIndexOfShootingAcceptingStateInFireSequence;
 	}
 
-	public Marking<LETTER, PLACE> getMarking() {
+	public final Marking<LETTER, PLACE> getMarking() {
 		return mMarking;
 	}
 
-	public Marking<LETTER, PLACE> getHondaMarkingOfFireSequence() {
-		return mHondaMarkingOfFireSequence;
+	public Set<Pair<Marking<LETTER, PLACE>, Integer>> getHondaMarkingsOfFireSequence() {
+		return mHondaMarkingsOfFireSequence;
 	}
 
-	public void setHondaMarkingOfFireSequence(Marking<LETTER, PLACE> newHondaMarking) {
-		mHondaMarkingOfFireSequence = newHondaMarking;
+	public void addHondaMarkingOfFireSequence(Marking<LETTER, PLACE> newHondaMarking, int hondaMarkingIndex) {
+		mHondaMarkingsOfFireSequence.add(new Pair<>(newHondaMarking, hondaMarkingIndex));
 	}
 
-	public boolean getAcceptingPlaceSeenInLoopBoolean() {
-		return mAcceptingPlaceSeenInLoop;
+	public void clearHondaMarkingsOfFireSequence() {
+		mHondaMarkingsOfFireSequence.clear();
+	}
+
+	public final int getfireSequenceIndex() {
+		return mFireSequenceIndex;
+	}
+
+	public final int getLastIndexOfShootingAcceptingStateInFireSequence() {
+		return mLastIndexOfShootingAcceptingStateInFireSequence;
 	}
 
 }

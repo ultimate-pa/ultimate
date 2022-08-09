@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -22,8 +21,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class BuchiPetrinetAcceptsTest {
 
 	private AutomataLibraryServices mServices;
-	private ILogger mLogger;
 
+	// TODO: this might be faulty depending on input.
 	private final NestedLassoWord<String> getLassoWord(final String word1, final String word2) {
 		return new NestedLassoWord<>(NestedWord.nestedWord(new Word<>(word1.split("\\s"))),
 				NestedWord.nestedWord(new Word<>(word2.split("\\s"))));
@@ -33,10 +32,7 @@ public class BuchiPetrinetAcceptsTest {
 	public void setUp() {
 		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 		mServices = new AutomataLibraryServices(services);
-		mLogger = services.getLoggingService().getLogger(getClass());
 	}
-
-	// netze aus präsentationen zb zwei self loops
 
 	@Test
 	public void testGetResultWithEmptyStem() throws PetriNetNot1SafeException {
@@ -58,6 +54,64 @@ public class BuchiPetrinetAcceptsTest {
 	}
 
 	@Test
+	public void testGetResultWithNonTrivialLoopPlaces() throws PetriNetNot1SafeException {
+		Set<String> alphabet = Set.of("a", "b");
+		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+		net1.addPlace("p1", true, false);
+		net1.addPlace("p2", false, false);
+		net1.addPlace("p3", false, false);
+		net1.addPlace("p4", false, false);
+		net1.addPlace("p5", false, false);
+		net1.addPlace("p6", false, true);
+		net1.addPlace("p7", false, false);
+		net1.addTransition("a", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p4")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p5")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p6")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p7")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p7")), ImmutableSet.of(Set.of("p6")));
+		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
+		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b"));
+		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
+		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
+				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+
+		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+
+		assertThat("Word is accepted in nontrivial Loop Petri net.", accepted);
+	}
+
+	@Test
+	public void testGetResultWithNonTrivialLoopPlaces2() throws PetriNetNot1SafeException {
+		Set<String> alphabet = Set.of("a", "b");
+		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+		net1.addPlace("p1", true, false);
+		net1.addPlace("p2", false, false);
+		net1.addPlace("p3", false, false);
+		net1.addPlace("p4", false, false);
+		net1.addPlace("p5", false, true);
+		net1.addPlace("p6", false, false);
+		net1.addPlace("p7", false, false);
+		net1.addTransition("a", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p4")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p5")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p6")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p7")));
+		net1.addTransition("b", ImmutableSet.of(Set.of("p7")), ImmutableSet.of(Set.of("p6")));
+		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
+		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b"));
+		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
+		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
+				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+
+		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+
+		assertThat("Word is accepted in nontrivial Loop Petri net.", !accepted);
+	}
+
+	@Test
 	public void testGetResultWithNondeterministicTransitions() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
@@ -73,7 +127,7 @@ public class BuchiPetrinetAcceptsTest {
 
 		boolean accepted = (boolean) buchiPetriAccpts.getResult();
 
-		// assertThat("Word is accepted in nondeterministic Petri net.", accepted);
+		assertThat("Word is accepted in nondeterministic Petri net.", accepted);
 	}
 
 	@Test
