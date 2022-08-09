@@ -132,8 +132,6 @@ public class SdHoareTripleCheckerHelper {
 	 * then a transition (pre, act, post) is not inductive.
 	 *
 	 * FIXME: Check for preconditions, postcondition?
-	 *
-	 * FIXME Unsound as it does not take program consts into account!
 	 */
 	public Validity sdecInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		final UnmodifiableTransFormula tf = act.getTransformula();
@@ -152,8 +150,15 @@ public class SdHoareTripleCheckerHelper {
 			return null;
 		}
 
-		// Now, we know that the variables of pre and post are both disjoint from the variables of act.
-		// Hence act is inductive iff pre implies post.
+		if (!tf.getNonTheoryConsts().isEmpty()) {
+			// TODO We could instead check if tf has any constants in common with pre or post.
+			// However, this requires IAbstractPredicate::getConstants to be supported.
+			return null;
+		}
+
+		// Now, we know that the variables of pre and post are both disjoint from the variables of act, and act does not
+		// constrain the value of any program constants.
+		// Hence the Hoare triple is valid iff pre implies post.
 		if (mPredicateCoverageChecker != null) {
 			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
