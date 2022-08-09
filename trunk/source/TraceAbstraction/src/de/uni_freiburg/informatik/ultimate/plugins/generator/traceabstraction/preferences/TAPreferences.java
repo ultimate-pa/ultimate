@@ -454,10 +454,7 @@ public final class TAPreferences {
 	}
 
 	private static String getLabel(final String label, final int index) {
-		if (index == 0) {
-			return label;
-		}
-		return label + "_" + (index + 1);
+		return TraceAbstractionPreferenceInitializer.getSuffixedLabel(label, index);
 	}
 
 	public IndependenceSettings lbeIndependenceSettings() {

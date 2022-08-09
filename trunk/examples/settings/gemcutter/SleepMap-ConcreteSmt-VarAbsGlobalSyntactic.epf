@@ -58,8 +58,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ independence\ relations\ to\ use\ for\ POR=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Independence\ relation\ used\ for\ POR\ in\ concurrent\ analysis=SYNTACTIC
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstraction\ used\ for\ commutativity\ in\ POR=VARIABLES_GLOBAL
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Independence\ relation\ used\ for\ POR\ in\ concurrent\ analysis_2=SEMANTIC
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstraction\ used\ for\ commutativity\ in\ POR_2=NONE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Independence\ relation\ used\ for\ POR\ in\ concurrent\ analysis\ #2=SEMANTIC
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstraction\ used\ for\ commutativity\ in\ POR\ #2=NONE
 
 
 
