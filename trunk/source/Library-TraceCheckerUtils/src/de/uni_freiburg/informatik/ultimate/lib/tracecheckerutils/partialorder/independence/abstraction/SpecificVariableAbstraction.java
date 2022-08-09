@@ -80,12 +80,20 @@ public class SpecificVariableAbstraction<L extends IAction>
 	 *            If the input letters' transition formulas do not belong to {@code mgdScript}, this must be a
 	 *            transferrer that transfers them from the script to which they belong to {@code mgdScript}. Otherwise,
 	 *            this should be null.
-	 * @param allProgramVars
-	 *            The set of all variables appearing in the program to which the input letters belong.
+	 * @param tfAuxEliminator
+	 *            Used to eliminate auxiliary variables from the abstracted transition formula. May be null.
 	 * @param allLetters
 	 *            The set of all letters that may be given as input.
+	 * @param allProgramVars
+	 *            The set of all variables appearing in the program to which the input letters belong.
 	 */
 	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
+			final TransferrerWithVariableCache transferrer, final TransFormulaAuxVarEliminator tfAuxEliminator,
+			final Set<L> allLetters, final Set<IProgramVar> allProgramVars) {
+		this(copyFactory, mgdScript, transferrer, tfAuxEliminator, allLetters, new BitSubSet.Factory<>(allProgramVars));
+	}
+
+	SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
 			final TransferrerWithVariableCache transferrer, final TransFormulaAuxVarEliminator tfAuxEliminator,
 			final Set<L> allLetters, final BitSubSet.Factory<IProgramVar> factory) {
 		mCopyFactory = copyFactory;

@@ -44,9 +44,8 @@ public class VariableAbstractionTest extends AbstractAbstractionTestSuite<BitSub
 	@Override
 	protected IAbstraction<BitSubSet<IProgramVar>, BasicInternalAction> createAbstraction() {
 		final Set<IProgramVar> allVariables = new HashSet<>(mSymbolTable.getGlobals());
-		final var abstraction = new VariableAbstraction<>(this::copyAction, mMgdScript, null, null, allVariables);
-		mFactory = abstraction.getFactory();
-		return abstraction;
+		mFactory = new BitSubSet.Factory<>(allVariables);
+		return new VariableAbstraction<>(this::copyAction, mMgdScript, null, null, mFactory);
 	}
 
 	/*

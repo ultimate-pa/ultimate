@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 
 /**
  * Creates {@link IRefinableIndependenceProvider} instances from given settings. This involves setting up
@@ -229,7 +228,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			// commutativity of forkCurrent and joinCurrent transitions, which are not in the alphabet.
 			final Set<L> allLetters = new IcfgEdgeIterator(icfg).asStream().map(x -> (L) x).collect(Collectors.toSet());
 			return new SpecificVariableAbstraction<>(mCopyFactory, abstractionScript, transferrer, tfEliminator,
-					allLetters, new BitSubSet.Factory<>(allVariables));
+					allLetters, allVariables);
 		default:
 			throw new UnsupportedOperationException("Unknown abstraction type: " + settings.getAbstractionType());
 		}

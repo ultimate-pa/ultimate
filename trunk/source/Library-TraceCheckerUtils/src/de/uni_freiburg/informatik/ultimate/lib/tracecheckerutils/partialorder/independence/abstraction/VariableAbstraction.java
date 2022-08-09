@@ -71,7 +71,13 @@ public class VariableAbstraction<L extends IAction>
 	public VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
 			final TransferrerWithVariableCache transferrer, final TransFormulaAuxVarEliminator tfAuxEliminator,
 			final Set<IProgramVar> allProgramVars) {
-		mFactory = new BitSubSet.Factory<>(allProgramVars);
+		this(copyFactory, mgdScript, transferrer, tfAuxEliminator, new BitSubSet.Factory<>(allProgramVars));
+	}
+
+	VariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
+			final TransferrerWithVariableCache transferrer, final TransFormulaAuxVarEliminator tfAuxEliminator,
+			final BitSubSet.Factory<IProgramVar> factory) {
+		mFactory = factory;
 		mHierarchy = new UpsideDownLattice<>(mFactory);
 		mSpecific = new SpecificVariableAbstraction<>(copyFactory, mgdScript, transferrer, tfAuxEliminator,
 				Collections.emptySet(), mFactory);
@@ -125,9 +131,5 @@ public class VariableAbstraction<L extends IAction>
 			}
 		}
 		return mFactory.union(current, mFactory.valueOf(constrainingVars));
-	}
-
-	BitSubSet.Factory<IProgramVar> getFactory() {
-		return mFactory;
 	}
 }
