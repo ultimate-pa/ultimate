@@ -213,9 +213,14 @@
   <!-- === Combined Sleep Map Reduction with Concrete Commutativity and Lightweight Variable-Based Abstraction === -->
   <!-- =========================================================================================================== -->
 
-  <!--rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic">
+  <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
-  </rundefinition-->
+  </rundefinition>
+
+  <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.WithAssertions">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="-ea" />
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
