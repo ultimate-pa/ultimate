@@ -131,36 +131,29 @@ public class SdHoareTripleCheckerHelper {
 	 * </ul>
 	 * then a transition (pre, act, post) is not inductive.
 	 *
-	 * FIXME: Check for preconditions, postcondition? Check at least for infeasibility flag of TransFormula.
+	 * FIXME: Check for preconditions, postcondition?
+	 *
+	 * FIXME Unsound as it does not take program consts into account!
 	 */
 	public Validity sdecInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
-		if (mPredicateCoverageChecker != null) {
-			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
-			if (sat == Validity.VALID) {
-				if (DataStructureUtils.haveEmptyIntersection(pre.getVars(), act.getTransformula().getAssignedVars())) {
-					mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
-					return Validity.VALID;
-				}
-			}
+		final UnmodifiableTransFormula tf = act.getTransformula();
+
+		// If pre implies post, and act does not modify any variable in pre, then the Hoare triple is valid.
+		if (mPredicateCoverageChecker != null && mPredicateCoverageChecker.isCovered(pre, post) == Validity.VALID
+				&& DataStructureUtils.haveEmptyIntersection(pre.getVars(), tf.getAssignedVars())) {
+			mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
+			return Validity.VALID;
 		}
-		for (final IProgramVar bv : pre.getVars()) {
-			if (act.getTransformula().getInVars().containsKey(bv)) {
-				return null;
-			}
+
+		// TODO Why no check for pre and outVars?
+		if (DataStructureUtils.haveNonEmptyIntersection(pre.getVars(), tf.getInVars().keySet())
+				|| DataStructureUtils.haveNonEmptyIntersection(post.getVars(), tf.getInVars().keySet())
+				|| DataStructureUtils.haveNonEmptyIntersection(post.getVars(), tf.getOutVars().keySet())) {
+			return null;
 		}
-		for (final IProgramVar bv : post.getVars()) {
-			// if (pre.getVars().contains(bv)) {
-			// return null;
-			// } else
-			if (act.getTransformula().getInVars().containsKey(bv)) {
-				return null;
-			}
-			if (act.getTransformula().getOutVars().containsKey(bv)) {
-				return null;
-			}
-		}
-		// now, we know that vars of pre and post are both disjoint from the
-		/// vars of cb. Edge is inductive iff pre implies post
+
+		// Now, we know that the variables of pre and post are both disjoint from the variables of act.
+		// Hence act is inductive iff pre implies post.
 		if (mPredicateCoverageChecker != null) {
 			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
@@ -186,6 +179,7 @@ public class SdHoareTripleCheckerHelper {
 		} else if (!Collections.disjoint(pre.getVars(), post.getVars())) {
 			return null;
 		}
+
 		mHoareTripleCheckerStatistics.getSDsCounter().incIn();
 		switch (act.getTransformula().isInfeasible()) {
 		case INFEASIBLE:
