@@ -111,6 +111,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
+	private final boolean mSupportsDeadEnds;
+
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
 			final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -147,6 +149,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations,
 				this::makeBudget);
+
+		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
+				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
 	}
 
 	@Override
@@ -277,9 +282,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					CoveringMode.PRUNE);
 		}
 
-		final boolean recordDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
-				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
-		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), !recordDeadEnds);
+		if (mSupportsDeadEnds) {
+			visitor = new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), false);
+		}
+
+		return visitor;
 	}
 
 	private void switchToOnDemandConstructionMode() {
@@ -395,7 +402,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
 			}
 
-			mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
+			if (mSupportsDeadEnds) {
+				mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
+			}
+
 			return newState;
 		}
 	}
