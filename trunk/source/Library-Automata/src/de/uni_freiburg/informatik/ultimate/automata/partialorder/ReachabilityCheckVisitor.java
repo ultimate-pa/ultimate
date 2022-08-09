@@ -37,8 +37,11 @@ import java.util.Set;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
+ *            The type of letters
  * @param <S>
+ *            The type of states
  * @param <V>
+ *            The type of the underlying visitor
  */
 // This duplicates in part code / functionality of AcceptingRunSearchVisitor and DeadEndOptimizingVisitor.
 // TODO See if we can avoid such duplication.
@@ -54,6 +57,17 @@ public class ReachabilityCheckVisitor<L, S, V extends IDfsVisitor<L, S>> extends
 	// A possible successor of the last state on the stack, which may become the next element on the stack.
 	private S mPendingState;
 
+	/**
+	 * Create a new instance of the visitor.
+	 *
+	 * @param underlying
+	 *            An underlying visitor to which calls are proxied
+	 * @param canReach
+	 *            A set of states for which reachability is checked
+	 * @param canNotReach
+	 *            A set of states for which it is known that they can not reach a state in the previous set. The visitor
+	 *            prunes the exploration of such states.
+	 */
 	public ReachabilityCheckVisitor(final V underlying, final Set<S> canReach, final Set<S> canNotReach) {
 		super(underlying);
 		mCanReach = canReach;
@@ -115,6 +129,9 @@ public class ReachabilityCheckVisitor<L, S, V extends IDfsVisitor<L, S>> extends
 		return mFound || mUnderlying.isFinished();
 	}
 
+	/**
+	 * @return true if a state in the given set was found (and the visitor aborted the search), false otherwise
+	 */
 	public boolean reachabilityConfirmed() {
 		return mFound;
 	}
