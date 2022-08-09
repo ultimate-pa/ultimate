@@ -26,9 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
-import java.util.AbstractSet;
+import java.util.AbstractCollection;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -48,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
  * @param <E>
  *            The type of elements in the set.
  */
-public class BitSubSet<E> extends AbstractSet<E> {
+public class BitSubSet<E> extends AbstractCollection<E> {
 	private final Factory<E> mFactory;
 	private final BitSet mBitSet;
 	private final LazyInt mHash;
@@ -56,7 +55,6 @@ public class BitSubSet<E> extends AbstractSet<E> {
 	private BitSubSet(final Factory<E> factory, final BitSet bitset) {
 		mFactory = factory;
 		mBitSet = bitset;
-		// TODO This violates the Set#hashCode contract, but it is much more efficient. Find a solution to this.
 		mHash = new LazyInt(mBitSet::hashCode);
 	}
 
@@ -66,17 +64,12 @@ public class BitSubSet<E> extends AbstractSet<E> {
 		return index != null && mBitSet.get(index);
 	}
 
-	@Override
-	public boolean containsAll(final Collection<?> c) {
-		if (c instanceof BitSubSet<?>) {
-			final BitSubSet<?> b = (BitSubSet<?>) c;
-			if (b.mFactory == mFactory) {
-				final BitSet diff = BitSet.valueOf(b.mBitSet.toLongArray());
-				diff.andNot(mBitSet);
-				return diff.isEmpty();
-			}
-		}
-		return super.containsAll(c);
+	public boolean containsAll(final BitSubSet<?> c) {
+		assert c.mFactory == mFactory : "Cannot compare sets from different universes";
+
+		final BitSet diff = BitSet.valueOf(c.mBitSet.toLongArray());
+		diff.andNot(mBitSet);
+		return diff.isEmpty();
 	}
 
 	@Override

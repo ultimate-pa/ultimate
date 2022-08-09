@@ -40,16 +40,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.B
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class SpecificVariableAbstractionTest
 		extends AbstractAbstractionTestSuite<VarAbsConstraints<BasicInternalAction>> {
 
+	private BitSubSet.Factory<IProgramVar> mFactory;
+
 	@Override
 	protected IAbstraction<VarAbsConstraints<BasicInternalAction>, BasicInternalAction> createAbstraction() {
 		final Set<IProgramVar> allVariables = new HashSet<>(mSymbolTable.getGlobals());
-		return new SpecificVariableAbstraction<>(this::copyAction, mMgdScript, null, null, allVariables,
-				Collections.emptySet());
+		mFactory = new BitSubSet.Factory<>(allVariables);
+		return new SpecificVariableAbstraction<>(this::copyAction, mMgdScript, null, null, Collections.emptySet(),
+				mFactory);
 	}
 
 	@Test
@@ -96,17 +100,17 @@ public class SpecificVariableAbstractionTest
 		testAbstractionDoesNothing(action, makeSimpleVarAbsConstraint(action, inConstr, outConstr));
 	}
 
-	private static VarAbsConstraints<BasicInternalAction> makeSimpleVarAbsConstraint(final BasicInternalAction letter,
+	private VarAbsConstraints<BasicInternalAction> makeSimpleVarAbsConstraint(final BasicInternalAction letter,
 			final Set<IProgramVar> in, final Set<IProgramVar> out) {
-		final Map<BasicInternalAction, Set<IProgramVar>> inConstr = new HashMap<>();
-		final Map<BasicInternalAction, Set<IProgramVar>> outConstr = new HashMap<>();
+		final Map<BasicInternalAction, BitSubSet<IProgramVar>> inConstr = new HashMap<>();
+		final Map<BasicInternalAction, BitSubSet<IProgramVar>> outConstr = new HashMap<>();
 		if (!in.isEmpty()) {
-			inConstr.put(letter, in);
+			inConstr.put(letter, mFactory.valueOf(in));
 		}
 		if (!out.isEmpty()) {
-			outConstr.put(letter, out);
+			outConstr.put(letter, mFactory.valueOf(out));
 		}
-		return new VarAbsConstraints<>(inConstr, outConstr);
+		return new VarAbsConstraints<>(inConstr, outConstr, mFactory.empty());
 	}
 
 	@Override
@@ -117,13 +121,20 @@ public class SpecificVariableAbstractionTest
 		// TODO This needs to be fixed, so we can test #refine, #restrict etc.
 		// Then this implementation will also be obsolete.
 
-		final Map<BasicInternalAction, Set<IProgramVar>> inConstr = new HashMap<>();
-		final Map<BasicInternalAction, Set<IProgramVar>> outConstr = new HashMap<>();
+		final Map<BasicInternalAction, BitSubSet<IProgramVar>> inConstr = new HashMap<>();
+		final Map<BasicInternalAction, BitSubSet<IProgramVar>> outConstr = new HashMap<>();
 
 		for (final var triple : triples) {
-			inConstr.computeIfAbsent(triple.getSecond(), x -> new HashSet<>()).addAll(triple.getFirst().getVars());
-			outConstr.computeIfAbsent(triple.getSecond(), x -> new HashSet<>()).addAll(triple.getThird().getVars());
+			final var oldInValue = inConstr.get(triple.getSecond());
+			final var newInVariables = mFactory.valueOf(triple.getFirst().getVars());
+			inConstr.put(triple.getSecond(),
+					oldInValue == null ? newInVariables : mFactory.union(oldInValue, newInVariables));
+
+			final var oldOutValue = outConstr.get(triple.getSecond());
+			final var newOutVariables = mFactory.valueOf(triple.getThird().getVars());
+			outConstr.put(triple.getSecond(),
+					oldOutValue == null ? newOutVariables : mFactory.union(oldOutValue, newOutVariables));
 		}
-		return new VarAbsConstraints<>(inConstr, outConstr);
+		return new VarAbsConstraints<>(inConstr, outConstr, mFactory.empty());
 	}
 }

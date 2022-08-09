@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 public class SpecificVariableAbstraction<L extends IAction>
@@ -64,8 +64,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private final TransferrerWithVariableCache mTransferrer;
 	private final TransFormulaAuxVarEliminator mEliminator;
 
-	private final Set<IProgramVar> mAllProgramVars;
-	private final Set<L> mAllLetters;
+	private final BitSubSet.Factory<IProgramVar> mFactory;
 
 	private final ILattice<VarAbsConstraints<L>> mHierarchy;
 
@@ -88,30 +87,31 @@ public class SpecificVariableAbstraction<L extends IAction>
 	 */
 	public SpecificVariableAbstraction(final ICopyActionFactory<L> copyFactory, final ManagedScript mgdScript,
 			final TransferrerWithVariableCache transferrer, final TransFormulaAuxVarEliminator tfAuxEliminator,
-			final Set<IProgramVar> allProgramVars, final Set<L> allLetters) {
+			final Set<L> allLetters, final BitSubSet.Factory<IProgramVar> factory) {
 		mCopyFactory = copyFactory;
 		mMgdScript = mgdScript;
 		mTransferrer = transferrer;
 		mEliminator = tfAuxEliminator;
 
-		mAllProgramVars = allProgramVars;
-		mAllLetters = allLetters;
-
-		mHierarchy = new VarAbsConstraints.Lattice<>(allProgramVars, mAllLetters);
+		mFactory = factory;
+		mHierarchy = new VarAbsConstraints.Lattice<>(allLetters, mFactory);
 	}
 
 	@Override
 	public L abstractLetter(final L inLetter, final VarAbsConstraints<L> constraints) {
+		final var inVars = inVars(inLetter);
+		final var outVars = outVars(inLetter);
+
 		if (inLetter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
-				|| nothingWillChange(inLetter, constraints)) {
+				|| nothingWillChange(inLetter, inVars, outVars, constraints)) {
 			if (mTransferrer == null) {
 				return inLetter;
 			}
 			return copy(inLetter, mTransferrer::transferTransFormula);
 		}
 
-		final Set<IProgramVar> transformInVars = getTransformVariablesIn(inLetter, constraints);
-		final Set<IProgramVar> transformOutVars = getTransformVariablesOut(inLetter, constraints);
+		final BitSubSet<IProgramVar> transformInVars = getTransformVariablesIn(inLetter, inVars, constraints);
+		final BitSubSet<IProgramVar> transformOutVars = getTransformVariablesOut(inLetter, outVars, constraints);
 		return copy(inLetter, tf -> abstractTransFormula(tf, transformInVars, transformOutVars));
 	}
 
@@ -127,36 +127,37 @@ public class SpecificVariableAbstraction<L extends IAction>
 		return mCopyFactory.copy(inLetter, newFormula, newFormulaBE);
 	}
 
-	private Set<IProgramVar> getTransformVariablesIn(final L letter, final VarAbsConstraints<L> constraints) {
-		return DataStructureUtils.difference(letter.getTransformula().getInVars().keySet(),
-				constraints.getInConstraints(letter));
+	private BitSubSet<IProgramVar> getTransformVariablesIn(final L letter, final BitSubSet<IProgramVar> inVars,
+			final VarAbsConstraints<L> constraints) {
+		return mFactory.difference(inVars, constraints.getInConstraints(letter));
 	}
 
-	private Set<IProgramVar> getTransformVariablesOut(final L letter, final VarAbsConstraints<L> constraints) {
-		return DataStructureUtils.difference(letter.getTransformula().getOutVars().keySet(),
-				constraints.getOutConstraints(letter));
+	private BitSubSet<IProgramVar> getTransformVariablesOut(final L letter, final BitSubSet<IProgramVar> outVars,
+			final VarAbsConstraints<L> constraints) {
+		return mFactory.difference(outVars, constraints.getOutConstraints(letter));
 	}
 
-	private boolean nothingWillChange(final L inLetter, final VarAbsConstraints<L> constraints) {
-		return constraints.getInConstraints(inLetter).containsAll(inLetter.getTransformula().getInVars().keySet())
-				&& constraints.getOutConstraints(inLetter)
-						.containsAll(inLetter.getTransformula().getOutVars().keySet());
+	private boolean nothingWillChange(final L inLetter, final BitSubSet<IProgramVar> inVars,
+			final BitSubSet<IProgramVar> outVars, final VarAbsConstraints<L> constraints) {
+		return constraints.getInConstraints(inLetter).containsAll(inVars)
+				&& constraints.getOutConstraints(inLetter).containsAll(outVars);
 	}
 
-	private UnmodifiableTransFormula abstractTransFormula(UnmodifiableTransFormula utf, Set<IProgramVar> inTransform,
-			Set<IProgramVar> outTransform) {
+	private UnmodifiableTransFormula abstractTransFormula(UnmodifiableTransFormula utf,
+			final BitSubSet<IProgramVar> inTransform, final BitSubSet<IProgramVar> outTransform) {
+		// If necessary, transfer the TF to another script.
 		if (mTransferrer != null) {
-			// If necessary, transfer the TF to another script, and replace the transformed variables by their
-			// transferred equivalents.
 			utf = mTransferrer.transferTransFormula(utf);
-			inTransform = mTransferrer.transferVariables(inTransform);
-			outTransform = mTransferrer.transferVariables(outTransform);
 		}
 
 		final Set<TermVariable> newAuxVars = new HashSet<>();
 		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
 
-		for (final IProgramVar v : inTransform) {
+		for (IProgramVar v : inTransform) {
+			if (mTransferrer != null) {
+				v = mTransferrer.transferProgramVar(v);
+			}
+
 			final TermVariable inVar = utf.getInVars().get(v);
 			if (!outTransform.contains(v) && utf.getOutVars().get(v) == inVar) {
 				// We cannot transform the variables independently.
@@ -169,7 +170,11 @@ public class SpecificVariableAbstraction<L extends IAction>
 			newAuxVars.add(nInVar);
 		}
 
-		for (final IProgramVar v : outTransform) {
+		for (IProgramVar v : outTransform) {
+			if (mTransferrer != null) {
+				v = mTransferrer.transferProgramVar(v);
+			}
+
 			final TermVariable outVar = utf.getOutVars().get(v);
 			if (utf.getInVars().get(v) == outVar) {
 				// Either the variable was already handled above (if it is also in inTransform), or we skip it because
@@ -234,8 +239,8 @@ public class SpecificVariableAbstraction<L extends IAction>
 	}
 
 	private VarAbsConstraints<L> fromAutomaton(final NestedWordAutomaton<L, IPredicate> automaton) {
-		final Map<L, Set<IProgramVar>> inConstraints = new HashMap<>();
-		final Map<L, Set<IProgramVar>> outConstraints = new HashMap<>();
+		final Map<L, BitSubSet<IProgramVar>> inConstraints = new HashMap<>();
+		final Map<L, BitSubSet<IProgramVar>> outConstraints = new HashMap<>();
 
 		for (final IPredicate state : automaton.getStates()) {
 			for (final OutgoingInternalTransition<L, IPredicate> trans : automaton.internalSuccessors(state)) {
@@ -244,12 +249,27 @@ public class SpecificVariableAbstraction<L extends IAction>
 			}
 		}
 
-		return new VarAbsConstraints<>(inConstraints, outConstraints);
+		return new VarAbsConstraints<>(inConstraints, outConstraints, mFactory.empty());
 	}
 
-	private void addConstraints(final Map<L, Set<IProgramVar>> map, final L key, final Set<IProgramVar> variables) {
-		final Set<IProgramVar> set = map.computeIfAbsent(key, x -> new HashSet<>());
-		set.addAll(variables);
+	private void addConstraints(final Map<L, BitSubSet<IProgramVar>> map, final L key,
+			final Set<IProgramVar> variables) {
+		final BitSubSet<IProgramVar> oldValue = map.get(key);
+		final BitSubSet<IProgramVar> newValue;
+		if (oldValue == null) {
+			newValue = mFactory.valueOf(variables);
+		} else {
+			newValue = mFactory.union(oldValue, mFactory.valueOf(variables));
+		}
+		map.put(key, newValue);
+	}
+
+	private BitSubSet<IProgramVar> inVars(final L letter) {
+		return mFactory.valueOf(letter.getTransformula().getInVars().keySet());
+	}
+
+	private BitSubSet<IProgramVar> outVars(final L letter) {
+		return mFactory.valueOf(letter.getTransformula().getOutVars().keySet());
 	}
 
 	@Override
@@ -259,14 +279,12 @@ public class SpecificVariableAbstraction<L extends IAction>
 		}
 
 		// Add all variables not used as inVars to the inConstraint.
-		final Set<IProgramVar> uselessIn =
-				DataStructureUtils.difference(mAllProgramVars, input.getTransformula().getInVars().keySet());
-		final Set<IProgramVar> inLevel = DataStructureUtils.union(constraints.getInConstraints(input), uselessIn);
+		final BitSubSet<IProgramVar> uselessIn = mFactory.complement(inVars(input));
+		final BitSubSet<IProgramVar> inLevel = mFactory.union(constraints.getInConstraints(input), uselessIn);
 
 		// Add all variables not used as outVars to the outConstraint.
-		final Set<IProgramVar> uselessOut =
-				DataStructureUtils.difference(mAllProgramVars, input.getTransformula().getInVars().keySet());
-		final Set<IProgramVar> outLevel = DataStructureUtils.union(constraints.getOutConstraints(input), uselessOut);
+		final BitSubSet<IProgramVar> uselessOut = mFactory.complement(outVars(input));
+		final BitSubSet<IProgramVar> outLevel = mFactory.union(constraints.getOutConstraints(input), uselessOut);
 
 		// For all letters, pick the minimal abstraction level, except for the input.
 		return mHierarchy.getBottom().withModifiedConstraints(input, inLevel, outLevel);

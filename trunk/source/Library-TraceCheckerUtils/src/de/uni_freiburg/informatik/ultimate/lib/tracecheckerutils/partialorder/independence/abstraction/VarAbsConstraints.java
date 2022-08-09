@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.LazyInt;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
 /**
@@ -55,8 +55,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownL
  */
 public class VarAbsConstraints<L extends IAction> {
 	private final LazyInt mHash;
-	private final Map<L, Set<IProgramVar>> mInConstr;
-	private final Map<L, Set<IProgramVar>> mOutConstr;
+	private final Map<L, BitSubSet<IProgramVar>> mInConstr;
+	private final Map<L, BitSubSet<IProgramVar>> mOutConstr;
+	private final BitSubSet<IProgramVar> mEmpty;
 
 	/**
 	 * Constructor.
@@ -70,30 +71,34 @@ public class VarAbsConstraints<L extends IAction> {
 	 * @param out
 	 *            maps letters to the set of constrained outVars
 	 */
-	public VarAbsConstraints(final Map<L, Set<IProgramVar>> in, final Map<L, Set<IProgramVar>> out) {
+	VarAbsConstraints(final Map<L, BitSubSet<IProgramVar>> in, final Map<L, BitSubSet<IProgramVar>> out,
+			final BitSubSet<IProgramVar> empty) {
 		mInConstr = in;
 		mOutConstr = out;
 		mHash = new LazyInt(() -> HashUtils.hashJenkins(17, mInConstr, mOutConstr));
+
+		assert empty.isEmpty();
+		mEmpty = empty;
 	}
 
 	/**
 	 * Returns an (unmodifiable) view of a letter's constrained inVars.
 	 */
-	public Set<IProgramVar> getInConstraints(final L letter) {
+	public BitSubSet<IProgramVar> getInConstraints(final L letter) {
 		if (mInConstr.containsKey(letter)) {
-			return Collections.unmodifiableSet(mInConstr.get(letter));
+			return mInConstr.get(letter);
 		}
-		return Collections.emptySet();
+		return mEmpty;
 	}
 
 	/**
 	 * Returns an (unmodifiable) view of a letter's constrained outVars.
 	 */
-	public Set<IProgramVar> getOutConstraints(final L letter) {
+	public BitSubSet<IProgramVar> getOutConstraints(final L letter) {
 		if (mOutConstr.containsKey(letter)) {
-			return Collections.unmodifiableSet(mOutConstr.get(letter));
+			return mOutConstr.get(letter);
 		}
-		return Collections.emptySet();
+		return mEmpty;
 	}
 
 	/**
@@ -108,18 +113,18 @@ public class VarAbsConstraints<L extends IAction> {
 	 *            Output constraints for the given letter.
 	 * @return the modified copy
 	 */
-	public VarAbsConstraints<L> withModifiedConstraints(final L letter, final Set<IProgramVar> inConstraints,
-			final Set<IProgramVar> outConstraints) {
-		// We make shallow copies of the maps here. This is ok, because the original map and its values will never be
-		// mutated, and the copy will only be mutated in this method (replacing a value, not mutating the old value).
+	public VarAbsConstraints<L> withModifiedConstraints(final L letter, final BitSubSet<IProgramVar> inConstraints,
+			final BitSubSet<IProgramVar> outConstraints) {
+		// We make shallow copies of the maps here. This is ok, because the maps' values are immutable, and the copy
+		// will only be mutated in this method (replacing a value, not mutating the old value).
 
-		final Map<L, Set<IProgramVar>> nInConstr = new HashMap<>(mInConstr);
+		final Map<L, BitSubSet<IProgramVar>> nInConstr = new HashMap<>(mInConstr);
 		nInConstr.put(letter, inConstraints);
 
-		final Map<L, Set<IProgramVar>> nOutConstr = new HashMap<>(mOutConstr);
+		final Map<L, BitSubSet<IProgramVar>> nOutConstr = new HashMap<>(mOutConstr);
 		nOutConstr.put(letter, outConstraints);
 
-		return new VarAbsConstraints<>(nInConstr, nOutConstr);
+		return new VarAbsConstraints<>(nInConstr, nOutConstr, mEmpty);
 	}
 
 	@Override
@@ -138,7 +143,7 @@ public class VarAbsConstraints<L extends IAction> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final VarAbsConstraints other = (VarAbsConstraints) obj;
+		final VarAbsConstraints<L> other = (VarAbsConstraints<L>) obj;
 		return Objects.equals(mInConstr, other.mInConstr) && Objects.equals(mOutConstr, other.mOutConstr);
 	}
 
@@ -152,21 +157,22 @@ public class VarAbsConstraints<L extends IAction> {
 	 *            The type of constrained letters
 	 */
 	public static final class Lattice<L extends IAction> implements ILattice<VarAbsConstraints<L>> {
+		private final BitSubSet.Factory<IProgramVar> mFactory;
+		private final UpsideDownLattice<Map<L, BitSubSet<IProgramVar>>> mMapLattice;
 		private final VarAbsConstraints<L> mBottom;
-		private final UpsideDownLattice<Map<L, Set<IProgramVar>>> mMapLattice;
 
 		/**
 		 * Creates a new lattice for {@link VarAbsConstraints} of a specific program.
 		 *
-		 * @param allVars
-		 *            The set of all variables occurring in the program
 		 * @param allLetters
 		 *            The set of all statements occurring in the program
+		 * @param factory
+		 *            Used to create and compare values
 		 */
-		public Lattice(final Set<IProgramVar> allVars, final Set<L> allLetters) {
-			mMapLattice =
-					new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(new PowersetLattice<>(allVars), allLetters));
-			mBottom = new VarAbsConstraints<>(mMapLattice.getBottom(), mMapLattice.getBottom());
+		public Lattice(final Set<L> allLetters, final BitSubSet.Factory<IProgramVar> factory) {
+			mFactory = factory;
+			mMapLattice = new UpsideDownLattice<>(new CanonicalLatticeForMaps<>(factory, allLetters));
+			mBottom = new VarAbsConstraints<>(mMapLattice.getBottom(), mMapLattice.getBottom(), factory.empty());
 		}
 
 		@Override
@@ -182,7 +188,7 @@ public class VarAbsConstraints<L extends IAction> {
 
 		@Override
 		public VarAbsConstraints<L> getTop() {
-			return new VarAbsConstraints<>(Collections.emptyMap(), Collections.emptyMap());
+			return new VarAbsConstraints<>(Collections.emptyMap(), Collections.emptyMap(), mFactory.empty());
 		}
 
 		@Override
@@ -190,14 +196,14 @@ public class VarAbsConstraints<L extends IAction> {
 			// the supremum (h1 OR h2) should usually be a Object with all the InConstraints and all the OutConstraints.
 			// Since we have to think inversely, it should be the Object with the Cut of all Constraints (h1 AND h2)
 			return new VarAbsConstraints<>(mMapLattice.supremum(h1.mInConstr, h2.mInConstr),
-					mMapLattice.supremum(h1.mOutConstr, h2.mOutConstr));
+					mMapLattice.supremum(h1.mOutConstr, h2.mOutConstr), mFactory.empty());
 		}
 
 		@Override
 		public VarAbsConstraints<L> infimum(final VarAbsConstraints<L> h1, final VarAbsConstraints<L> h2) {
 			// Look at commentary on supremum. infimum and supremum is flipped in this class. infimum is h1 OR h2
 			return new VarAbsConstraints<>(mMapLattice.infimum(h1.mInConstr, h2.mInConstr),
-					mMapLattice.infimum(h1.mOutConstr, h2.mOutConstr));
+					mMapLattice.infimum(h1.mOutConstr, h2.mOutConstr), mFactory.empty());
 		}
 	}
 }

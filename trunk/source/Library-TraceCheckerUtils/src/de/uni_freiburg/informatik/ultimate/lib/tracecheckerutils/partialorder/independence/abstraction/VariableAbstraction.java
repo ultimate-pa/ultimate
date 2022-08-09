@@ -74,7 +74,7 @@ public class VariableAbstraction<L extends IAction>
 		mFactory = new BitSubSet.Factory<>(allProgramVars);
 		mHierarchy = new UpsideDownLattice<>(mFactory);
 		mSpecific = new SpecificVariableAbstraction<>(copyFactory, mgdScript, transferrer, tfAuxEliminator,
-				allProgramVars, Collections.emptySet());
+				Collections.emptySet(), mFactory);
 	}
 
 	/**
