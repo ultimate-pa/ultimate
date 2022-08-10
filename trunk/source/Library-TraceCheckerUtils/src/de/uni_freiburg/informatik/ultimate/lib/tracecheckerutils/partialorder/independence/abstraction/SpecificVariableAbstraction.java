@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -43,11 +44,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -208,11 +211,8 @@ public class SpecificVariableAbstraction<L extends IAction>
 
 	private UnmodifiableTransFormula buildTransFormula(final UnmodifiableTransFormula utf,
 			final Map<TermVariable, TermVariable> substitutionMap, final Set<TermVariable> newAuxVars) {
-		final Set<IProgramConst> ntc = utf.getNonTheoryConsts();
-		final Set<TermVariable> be = utf.getBranchEncoders();
-		final TransFormulaBuilder tfBuilder =
-				new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), ntc.isEmpty(), ntc, be.isEmpty(), be, false);
 
+		// Compute the new formula
 		final Term substituted = Substitution.apply(mMgdScript, substitutionMap, utf.getFormula());
 		final Term formula;
 		if (newAuxVars.isEmpty() || mEliminator == null) {
@@ -222,10 +222,21 @@ public class SpecificVariableAbstraction<L extends IAction>
 			formula = mEliminator.eliminate(mMgdScript, substituted, newAuxVars);
 		}
 
+		// Collect the non-theory constants that (actually) appear in the (possibly simplified) formula.
+		Set<IProgramConst> ntc = utf.getNonTheoryConsts();
+		if (!ntc.isEmpty()) {
+			final Set<ApplicationTerm> constantsInFormula = new ConstantFinder().findConstants(formula, true);
+			ntc = ntc.stream().filter(c -> constantsInFormula.contains(c.getDefaultConstant()))
+					.collect(Collectors.toSet());
+		}
+
+		// Assemble the UnmodifiableTransFormula
+		final Set<TermVariable> be = utf.getBranchEncoders();
+		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(utf.getInVars(), utf.getOutVars(), ntc.isEmpty(),
+				ntc, be.isEmpty(), be, newAuxVars.isEmpty());
 		for (final TermVariable auxVar : newAuxVars) {
 			tfBuilder.addAuxVar(auxVar);
 		}
-
 		tfBuilder.setFormula(formula);
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfBuilder.ensureInternalNormalForm();
