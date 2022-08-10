@@ -116,7 +116,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		// Construct the script used for independence checks.
 		// TODO Only construct this if an independence relation actually needs a script!
 		if (mIndependenceScript == null) {
-			mIndependenceScript = constructIndependenceScript(csToolkit, settings);
+			mIndependenceScript = constructIndependenceScript(settings);
 		}
 
 		// We need to transfer given transition formulas and condition predicates to the independenceScript.
@@ -183,8 +183,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.build();
 	}
 
-	private ManagedScript constructIndependenceScript(final CfgSmtToolkit csToolkit,
-			final IndependenceSettings settings) {
+	private ManagedScript constructIndependenceScript(final IndependenceSettings settings) {
 		final SolverSettings solverSettings;
 		if (settings.getSolver() == ExternalSolver.SMTINTERPOL) {
 			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
@@ -196,7 +195,13 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 							mPref.dumpIndependenceScript(), mPref.independenceScriptDumpPath(), "commutativity", false);
 		}
 
-		return csToolkit.createFreshManagedScript(mServices, solverSettings, "SemanticIndependence");
+		// Intentionally do not use CfgSmtToolkit::createFreshManagedScript:
+		// That method transfers all declared constants to the new script, including for auxiliary variables in
+		// transition formulas. This leads to conflicts later when operations on the independence script create new
+		// auxiliary variables they believe to be fresh.
+		// TODO This might cause problems in programs with uninterpreted functions or axioms. Transfer (only) those.
+		return new ManagedScript(mServices,
+				SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, "SemanticIndependence"));
 	}
 
 	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(final IIcfg<?> icfg,
