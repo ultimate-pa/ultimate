@@ -209,4 +209,13 @@ public class HoareTripleCheckerTest {
 		final var tf = tfb.finishConstruction(mMgdScript);
 		testInternal(new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier), Validity.VALID, "true", tf, "(>= c 0)");
 	}
+
+	@Test
+	public void sdHtcTest03() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), false, Set.of(c), true, null, true);
+		tfb.setFormula(parseWithVariables("(>= c 0)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier), Validity.VALID, "(< c 0)", tf, "false");
+	}
 }
