@@ -1,10 +1,5 @@
 //#Safe
 /*
- * Benchmark for the combination of abstract and concrete commutativity:
- *
- * - T1 commutes only concretely against T2 and T3
- * - The print() calls in T2 and T3 do not commute concretely, but they commute abstractly
- *
  * Author: Dominik Klumpp
  * Date: June 2022
  */
@@ -12,9 +7,7 @@
 var N : int;
 var x, y : int;
 var A : [int]int;
-
-var buf : [int]int;
-var idx : int;
+var LOCK : [int]int;
 
 var i, j : int;
 
@@ -28,36 +21,44 @@ modifies x, y;
 }
 
 procedure T2()
-modifies x, i, buf, idx;
+modifies x, i, LOCK;
 {
   i := 0;
   while (i < N) {
+    atomic { call acq_read(i); }
     x := x + A[i];
-    atomic { call print(i); }
+    atomic { call rel_read(i); }
     i := i + 1;
   }
 }
 
 procedure T3()
-modifies y, j, buf, idx;
+modifies y, j, LOCK;
 {
   j := 0;
   while (j < N) {
+    atomic { call acq_read(j); }
     y := y + A[j];
-    atomic { call print(j); }
+    atomic { call rel_read(j); }
     j := j + 1;
   }
 }
 
-procedure print(val : int)
-modifies buf, idx;
+procedure acq_read(idx : int)
+modifies LOCK;
 {
-  buf[idx] := val;
-  idx := idx + 1;
+  assume LOCK[idx] >= 0;
+  LOCK[idx] := LOCK[idx] + 1;
+}
+procedure rel_read(idx : int)
+modifies LOCK;
+{
+  LOCK[idx] := LOCK[idx] - 1;
 }
 
+
 procedure ULTIMATE.start()
-modifies x, y, i, j, buf, idx;
+modifies x, y, i, j, LOCK;
 {
   x := 0;
   y := 0;

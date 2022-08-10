@@ -6,15 +6,18 @@
  *            thread2 performs aggr(A, B)
  *            thread3 performs update(B)
  *            such that map(_, f) and aggr(_, B) commute concretely (SMT);
-              while aggr(A, _) and update(_) do NOT commute concretely but B is irrelevant for the spec.
-
-              other instances:
-              f      aggr            update     property
-              ---------------------------------------------------------
-              relU   max_pos_index   :=k        A[m]>0 ==> result >= m
-              abs    sum_abs         :=0        result >= |A[m]|
-              abs    cnt_zeroes      :=0        ...
-              abs    max_zero_index  :=0        ...
+ *            while aggr(A, _) and update(_) do NOT commute concretely but B is irrelevant for the spec.
+ *
+ *            other instances:
+ *            f      aggr            update     property
+ *            ---------------------------------------------------------
+ *            relU   max_pos_index   :=k        A[m]>0 ==> result >= m
+ *            abs    sum_abs         :=0        result >= |A[m]|
+ *            abs    cnt_zeroes      :=0        ...
+ *            abs    max_zero_index  :=0        ...
+ *
+ * Author: Dominik Klumpp
+ * Date: June 2022
  */
 
 var A, B : [int]int;

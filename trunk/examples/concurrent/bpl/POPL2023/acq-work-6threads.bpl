@@ -1,4 +1,11 @@
 //#Safe
+/*
+ * Acquire-Work example in which two threads acquire exclusive access to some index in an array A.
+ *
+ * Author: Dominik Klumpp
+ * Date: June 2022
+ */
+
 var A : [int]int;
 var B : [int]bool;
 

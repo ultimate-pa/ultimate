@@ -1,4 +1,10 @@
 //#Safe
+/*
+ * Two threads that commute concretely (but are not disjoint).
+ *
+ * Author: Dominik Klumpp
+ * Date: June 2022
+ */
 var N : int;
 var x : int;
 
@@ -30,11 +36,11 @@ modifies x;
 procedure thread2()
 modifies x;
 {
-  var i : int;
+  var j : int;
 
-  i := 0;
-  while (i < N) {
+  j := 0;
+  while (j < N) {
     x := x - 1;
-    i := i + 1;
+    j := j + 1;
   }
 }

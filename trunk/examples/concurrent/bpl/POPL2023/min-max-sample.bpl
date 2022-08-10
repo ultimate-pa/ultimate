@@ -2,8 +2,7 @@
 /*
  * Benchmark where (variable) abstraction is essential:
  *
- * To prove the property, loop-lockstep alignment between computeMin and computeMax is crucial.
- * However, while these threads commute concretely, they only commute abstractly against the sample thread.
+ * While computeMin and computeMax commute concretely, they only commute abstractly against the sample thread.
  *
  * However, because computeMin and computeMax are disjoint, they in fact also commute under lightweight-abstract.
  *

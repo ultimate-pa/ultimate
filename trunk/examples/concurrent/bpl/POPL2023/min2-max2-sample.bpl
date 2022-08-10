@@ -1,9 +1,8 @@
 //#Safe
 /*
- * Benchmark where the combination (variable) abstraction with concrete is essential:
+ * Benchmark for the combination of (variable) abstraction with concrete commutativity:
  *
- * To prove the property, loop-lockstep alignment between computeMin and computeMax is crucial.
- * However, while computeMin and computeMax commute concretely, they only commute abstractly against the sample thread.
+ * While computeMin and computeMax commute concretely, they only commute abstractly against the sample thread.
  *
  * Because computeMin and computeMax are disjoint, they in fact also commute under lightweight-abstract.
  * However, the two copies of computeMin (resp. computeMax) only commute against each other under heavyweight(-concrete) commutativity.

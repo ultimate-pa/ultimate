@@ -40,7 +40,7 @@ modifies stdout, stdout_ptr;
     x := x + A[i];
     i := i + 1;
 
-    // printf("Sum of first %d elements is %d, i, x);
+    // printf("Sum of first %d elements is %d", i, x);
     call log(i);
     call log(x);
   }

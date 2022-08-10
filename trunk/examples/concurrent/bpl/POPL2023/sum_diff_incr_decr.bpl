@@ -1,6 +1,9 @@
+//#Safe
 /*
- *
+ * Author: Dominik Klumpp
+ * Date: June 2022
  */
+
 var A, B, C, D : [int]int;
 var N : int;
 

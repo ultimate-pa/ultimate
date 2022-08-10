@@ -1,5 +1,11 @@
 //#Safe
 /*
+ * Benchmark for combined concrete-abstract reduction.
+ *
+ * - The threads countZero and countEven commute concretely (they are disjoint).
+ * - The thread mapAbs commutes concretely with countZero and countEven (the absolute value of an even number / of zero is even / is zero).
+ * - The thread sample does not commute concretely with countZero and countEven, but it commutes abstractly (the variable diff can be abstracted away).
+ *
  * Author: Dominik Klumpp
  * Date: 2022-06-08
  */
