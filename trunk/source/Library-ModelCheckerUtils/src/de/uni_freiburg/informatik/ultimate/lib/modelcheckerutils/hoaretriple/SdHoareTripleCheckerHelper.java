@@ -93,7 +93,8 @@ public class SdHoareTripleCheckerHelper {
 	public Validity sdecInternalToFalse(final IPredicate pre, final IInternalAction act) {
 		final Infeasibility infeasiblity = act.getTransformula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
-			if (varsDisjoinedFormInVars(pre, act.getTransformula())) {
+			if (varsDisjoinedFromInVars(pre, act.getTransformula())
+					&& act.getTransformula().getNonTheoryConsts().isEmpty()) {
 				mHoareTripleCheckerStatistics.getSDtfsCounter().incIn();
 				return Validity.INVALID;
 			}
@@ -115,7 +116,7 @@ public class SdHoareTripleCheckerHelper {
 	 * @param symbol
 	 * @return
 	 */
-	private static boolean varsDisjoinedFormInVars(final IPredicate state, final UnmodifiableTransFormula tf) {
+	private static boolean varsDisjoinedFromInVars(final IPredicate state, final UnmodifiableTransFormula tf) {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getInVars().keySet());
 	}
 
