@@ -184,15 +184,14 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private ManagedScript constructIndependenceScript(final IndependenceSettings settings) {
-		final SolverSettings solverSettings;
+		SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setDumpSmtScriptToFile(
+				mPref.dumpIndependenceScript(), mPref.independenceScriptDumpPath(), "commutativity", false);
 		if (settings.getSolver() == ExternalSolver.SMTINTERPOL) {
-			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
-					.setSmtInterpolTimeout(settings.getSolverTimeout()).setDumpSmtScriptToFile(
-							mPref.dumpIndependenceScript(), mPref.independenceScriptDumpPath(), "commutativity", false);
+			solverSettings = solverSettings.setSolverMode(SolverMode.Internal_SMTInterpol)
+					.setSmtInterpolTimeout(settings.getSolverTimeout());
 		} else {
-			solverSettings = SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
-					.setUseExternalSolver(settings.getSolver(), settings.getSolverTimeout()).setDumpSmtScriptToFile(
-							mPref.dumpIndependenceScript(), mPref.independenceScriptDumpPath(), "commutativity", false);
+			solverSettings = solverSettings.setSolverMode(SolverMode.External_DefaultMode)
+					.setUseExternalSolver(settings.getSolver(), settings.getSolverTimeout());
 		}
 
 		// Intentionally do not use CfgSmtToolkit::createFreshManagedScript:
