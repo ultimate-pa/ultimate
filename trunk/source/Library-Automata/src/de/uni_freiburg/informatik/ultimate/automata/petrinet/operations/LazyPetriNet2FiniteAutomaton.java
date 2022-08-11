@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -151,7 +151,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 			// All outgoing transitions already cached.
 			return mCache.lettersInternal(state);
 		}
-		return getOutgoingNetTransitions(marking).map(ITransition::getSymbol).collect(Collectors.toSet());
+		return getOutgoingNetTransitions(marking).map(Transition::getSymbol).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -204,7 +204,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	private void createAutomatonTransition(final S state, final Marking<L, S> marking,
-			final ITransition<L, S> transition) {
+			final Transition<L, S> transition) {
 		try {
 			final S successor = getOrConstructState(marking.fireTransition(transition, mOperand));
 			if (successor != null) {
@@ -242,7 +242,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 		return state;
 	}
 
-	private Stream<ITransition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
+	private Stream<Transition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
 		return marking.stream().flatMap(place -> mOperand.getSuccessors(place).stream())
 				.filter(t -> marking.isTransitionEnabled(t, mOperand));
 	}

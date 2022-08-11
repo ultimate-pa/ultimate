@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -147,7 +148,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
+	public boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
 		return mPlaces.containsAll(net.getPredecessors(transition));
 	}
@@ -158,7 +159,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 * @throws PetriNetNot1SafeException
 	 */
-	public Marking<LETTER, PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
+	public Marking<LETTER, PLACE> fireTransition(final Transition<LETTER, PLACE> transition,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> net) throws PetriNetNot1SafeException {
 		final Set<PLACE> predecessors = net.getPredecessors(transition);
 		final Set<PLACE> successors = net.getSuccessors(transition);

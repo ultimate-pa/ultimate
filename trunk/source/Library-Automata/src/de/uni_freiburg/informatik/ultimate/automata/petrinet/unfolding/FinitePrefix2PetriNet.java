@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
@@ -81,7 +81,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final UnionFind<Event<LETTER, PLACE>> mEventRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
 	private final HashRelation<PLACE, PLACE> mOldToNewPlaces = new HashRelation<>();
-	private final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mOldToNewTransitions =
+	private final HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mOldToNewTransitions =
 			new HashRelation<>();
 	private final boolean mUsePetrification = false;
 	private final boolean mUseBackfoldingIds = false;
@@ -303,7 +303,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
 				succs.add(placeMap.get(representative));
 			}
-			final ITransition<LETTER, PLACE> newTransition =
+			final Transition<LETTER, PLACE> newTransition =
 					mNet.addTransition(e.getTransition().getSymbol(), ImmutableSet.of(preds), ImmutableSet.of(succs));
 			mOldToNewTransitions.addPair(newTransition, e.getTransition());
 		}
@@ -340,7 +340,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		 */
 	}
 
-	public Set<ITransition<LETTER, PLACE>> computeVitalTransitions() {
+	public Set<Transition<LETTER, PLACE>> computeVitalTransitions() {
 		assert mRemoveDeadTransitions : "remove dead transitions must be enabled";
 		return mVitalRepresentatives.stream().map(Event::getTransition).collect(Collectors.toSet());
 	}
@@ -456,7 +456,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		return mOldToNewPlaces;
 	}
 
-	public HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getOldToNewTransitions() {
+	public HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> getOldToNewTransitions() {
 		return mOldToNewTransitions;
 	}
 
@@ -503,9 +503,9 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	 */
 	private static <LETTER, PLACE> boolean areIndependent(final Condition<LETTER, PLACE> c1,
 			final Condition<LETTER, PLACE> c2) {
-		final Set<ITransition<LETTER, PLACE>> c1SuccTrans =
+		final Set<Transition<LETTER, PLACE>> c1SuccTrans =
 				c1.getSuccessorEvents().stream().map(Event::getTransition).collect(Collectors.toSet());
-		final Set<ITransition<LETTER, PLACE>> c2SuccTrans =
+		final Set<Transition<LETTER, PLACE>> c2SuccTrans =
 				c2.getSuccessorEvents().stream().map(Event::getTransition).collect(Collectors.toSet());
 		return Collections.disjoint(c1SuccTrans, c2SuccTrans);
 	}

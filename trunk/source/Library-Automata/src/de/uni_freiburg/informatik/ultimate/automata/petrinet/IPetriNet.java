@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPetriNetSuccessorProvider<LETTER, PLACE> {
 	Collection<PLACE> getPlaces();
 
-	Collection<ITransition<LETTER, PLACE>> getTransitions();
+	Collection<Transition<LETTER, PLACE>> getTransitions();
 
 	Collection<PLACE> getAcceptingPlaces();
 
@@ -63,7 +64,7 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 	}
 
 	/**
-	 * Default implementation that construct the {@link ITransition} while the {@link ISuccessorTransitionProvider} is
+	 * Default implementation that construct the {@link Transition} while the {@link ISuccessorTransitionProvider} is
 	 * constructed. Hence this implementation is not suitable for an on-demand construction.
 	 */
 	@Override
@@ -73,11 +74,11 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 		// necessary because (A) each transition should occur in at most one
 		// provider and (B) for each set of predecessor places there should be
 		// only one provider.
-		final HashRelation<Set<PLACE>, ITransition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
+		final HashRelation<Set<PLACE>, Transition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
 		for (final PLACE p : place2allowedSiblings.getDomain()) {
 			final HashSet<PLACE> allowedPredecessors = new HashSet<>(place2allowedSiblings.getImage(p));
 			allowedPredecessors.add(p);
-			for (final ITransition<LETTER, PLACE> t : getSuccessors(p)) {
+			for (final Transition<LETTER, PLACE> t : getSuccessors(p)) {
 				if (allowedPredecessors.containsAll(getPredecessors(t))) {
 					predecessorPlaces2Transition.addPair(getPredecessors(t), t);
 				}
@@ -87,7 +88,7 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 		// {@link SimpleSuccessorTransitionProvider}s.
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
 		for (final Set<PLACE> predecessors : predecessorPlaces2Transition.getDomain()) {
-			final Set<ITransition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
+			final Set<Transition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
 			result.add(new SimpleSuccessorTransitionProvider<>(transitions, this));
 		}
 		// System.out.println("OldSuccs " + place2allowedSiblings.getDomain().size() + " " +
@@ -98,14 +99,14 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 	@Override
 	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
 			getSuccessorTransitionProviders(final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
-		final HashRelation<Set<PLACE>, ITransition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
-		final Set<ITransition<LETTER, PLACE>> successorTransitions = new HashSet<>();
+		final HashRelation<Set<PLACE>, Transition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
+		final Set<Transition<LETTER, PLACE>> successorTransitions = new HashSet<>();
 		for (final PLACE p : mustPlaces) {
-			for (final ITransition<LETTER, PLACE> t : getSuccessors(p)) {
+			for (final Transition<LETTER, PLACE> t : getSuccessors(p)) {
 				successorTransitions.add(t);
 			}
 		}
-		for (final ITransition<LETTER, PLACE> t : successorTransitions) {
+		for (final Transition<LETTER, PLACE> t : successorTransitions) {
 			final Set<PLACE> predeccesorOfT = getPredecessors(t);
 			if (mayPlaces.containsAll(predeccesorOfT)) {
 				predecessorPlaces2Transition.addPair(predeccesorOfT, t);
@@ -114,7 +115,7 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
 		for (final Set<PLACE> predecessors : predecessorPlaces2Transition.getDomain()) {
-			final Set<ITransition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
+			final Set<Transition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
 			result.add(new SimpleSuccessorTransitionProvider<>(transitions, this));
 		}
 		// System.out.println("NewSuccs " + mustPlaces.size() + " " + mayPlaces.size());

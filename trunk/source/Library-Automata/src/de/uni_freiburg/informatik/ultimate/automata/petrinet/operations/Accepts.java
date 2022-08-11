@@ -36,10 +36,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -53,7 +53,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            place content type
  */
-public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
+public final class Accepts<LETTER, PLACE>
+		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private final Word<LETTER> mWord;
 	private final boolean mResult;
@@ -71,8 +72,8 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 	 *             if operation was canceled
 	 * @throws PetriNetNot1SafeException
 	 */
-	public Accepts(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand, final Word<LETTER> word)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+	public Accepts(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
+			final Word<LETTER> word) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
 		mWord = word;
@@ -126,7 +127,7 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 		final int nextPosition = position + 1;
 		boolean result = false;
 		Marking<LETTER, PLACE> nextMarking;
-		for (final ITransition<LETTER, PLACE> transition : activeTransitionsWithSymbol(marking, symbol)) {
+		for (final Transition<LETTER, PLACE> transition : activeTransitionsWithSymbol(marking, symbol)) {
 			nextMarking = marking.fireTransition(transition, mOperand);
 			if (getResultHelper(nextPosition, nextMarking)) {
 				result = true;
@@ -135,11 +136,11 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 		return result;
 	}
 
-	private Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking, final LETTER symbol) {
-		final Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
+	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking,
+			final LETTER symbol) {
+		final Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
 		for (final PLACE place : marking) {
-			mOperand.getSuccessors(place).stream()
-					.filter(transition -> transition.getSymbol().equals(symbol))
+			mOperand.getSuccessors(place).stream().filter(transition -> transition.getSymbol().equals(symbol))
 					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))
 					.forEach(activeTransitionsWithSymbol::add);
 		}

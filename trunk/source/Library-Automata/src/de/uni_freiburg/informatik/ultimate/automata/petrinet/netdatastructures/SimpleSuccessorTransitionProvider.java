@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 
 /**
  * TODO:
@@ -39,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
  */
 public class SimpleSuccessorTransitionProvider<LETTER, PLACE> implements ISuccessorTransitionProvider<LETTER, PLACE> {
 
-	private final Collection<ITransition<LETTER, PLACE>> mTransitions;
+	private final Collection<Transition<LETTER, PLACE>> mTransitions;
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mNet;
 
-	public SimpleSuccessorTransitionProvider(final Collection<ITransition<LETTER, PLACE>> transitions,
+	public SimpleSuccessorTransitionProvider(final Collection<Transition<LETTER, PLACE>> transitions,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
 		super();
 		if (transitions.isEmpty()) {
@@ -60,7 +59,7 @@ public class SimpleSuccessorTransitionProvider<LETTER, PLACE> implements ISucces
 	}
 
 	@Override
-	public Collection<ITransition<LETTER, PLACE>> getTransitions() {
+	public Collection<Transition<LETTER, PLACE>> getTransitions() {
 		return mTransitions;
 	}
 

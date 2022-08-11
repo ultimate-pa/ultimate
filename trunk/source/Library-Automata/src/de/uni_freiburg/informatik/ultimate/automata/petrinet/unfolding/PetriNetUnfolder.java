@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable;
@@ -258,7 +258,7 @@ public final class PetriNetUnfolder<L, P> {
 		assert current != null;
 
 		final ConditionMarking<L, P> finalMarking = current.fireEvent(event);
-		final ITransition<L, P> t = event.getTransition();
+		final Transition<L, P> t = event.getTransition();
 		final PetriNetRun<L, P> appendix =
 				new PetriNetRun<>(current.getMarking(), t.getSymbol(), finalMarking.getMarking());
 		run = run.concatenate(appendix);
@@ -356,14 +356,14 @@ public final class PetriNetUnfolder<L, P> {
 	 * FIXME documentation.
 	 */
 	public class Statistics {
-		private final Map<ITransition<L, P>, Map<Marking<L, P>, Set<Event<L, P>>>> mTrans2Mark2Events = new HashMap<>();
+		private final Map<Transition<L, P>, Map<Marking<L, P>, Set<Event<L, P>>>> mTrans2Mark2Events = new HashMap<>();
 		private int mCutOffEvents;
 		private int mNonCutOffEvents;
 
 		public void add(final Event<L, P> event) {
 			// TODO: The hash operations here take A LOT of time (~20% on the VMCAI2021) benchmarks
 			final Marking<L, P> marking = event.getMark();
-			final ITransition<L, P> transition = event.getTransition();
+			final Transition<L, P> transition = event.getTransition();
 			Map<Marking<L, P>, Set<Event<L, P>>> mark2Events = mTrans2Mark2Events.get(transition);
 			if (mark2Events == null) {
 				mark2Events = new HashMap<>();
@@ -459,7 +459,7 @@ public final class PetriNetUnfolder<L, P> {
 		 * @return Number of transitions that can never be fired in operand Petri net.
 		 */
 		public long unreachableTransitionsInOperand() {
-			// This statistic could be computed more efficiently when using a Set<ITransition> in
+			// This statistic could be computed more efficiently when using a Set<Transition> in
 			// this class' add(Event) method. But doing so would slow down computation
 			// even in cases in which this statistic is not needed.
 			final int transitionsInNet = ((IPetriNet<L, P>) mOperand).getTransitions().size();

@@ -7,17 +7,17 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that provides the Buchi acceptance check for (Buchi-)Petri nets.
- * 
+ *
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
  * @param <STATE>
@@ -51,11 +51,11 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 
 	/*
 	 * Constructor. Check if given Buchi-Petri Net accepts given word.
-	 * 
+	 *
 	 * @param <services> Ultimare services.
-	 * 
+	 *
 	 * @param <operand> Input Petri Net.
-	 * 
+	 *
 	 * @param <word> Input word.
 	 */
 	public BuchiPetrinetAccepts(final AutomataLibraryServices services,
@@ -92,7 +92,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	/*
 	 * Calculates all fire sequences of input word on the Buchi-Petrinet (multiple because of possible nondeterminism of
 	 * the net) and checks if one of those fire sequences is accepting.
-	 * 
+	 *
 	 * @return boolean representing if word is accepted by net.
 	 */
 	private final boolean isWordAcceptedByBuchiPetriNet() throws PetriNetNot1SafeException {
@@ -102,10 +102,10 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 
 	private void computeMarkingsFromFirstWordRun() throws PetriNetNot1SafeException {
 		mFireSequenceTreeMarkings.add(new MarkingOfFireSequence<>(mInitialMarking, new HashSet<>(), 0, 0));
-		for (LETTER symbol : mLassoWord.getStem()) {
+		for (final LETTER symbol : mLassoWord.getStem()) {
 			produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
 		}
-		for (LETTER symbol : mLassoWord.getLoop()) {
+		for (final LETTER symbol : mLassoWord.getLoop()) {
 			produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
 		}
 	}
@@ -117,15 +117,15 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 		while (!mFireSequenceTreeMarkings.isEmpty()) {
 			// After a firing of the Loop part of the word, we store those produced hondamarkings in the firing
 			// sequences.
-			for (MarkingOfFireSequence<LETTER, PLACE> marking : mFireSequenceTreeMarkings) {
+			for (final MarkingOfFireSequence<LETTER, PLACE> marking : mFireSequenceTreeMarkings) {
 				marking.addHondaMarkingOfFireSequence(marking.getMarking(), mfireSequenceIndex);
 			}
-			for (LETTER symbol : mLassoWord.getLoop()) {
+			for (final LETTER symbol : mLassoWord.getLoop()) {
 				produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
 			}
 			// Check if any fire sequence reaches a hondamarking of its stored hondamarkings and if in that loop we fire
 			// a token into an accepting Petri place.
-			for (Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer> markingAndHondaIndex : containsLoopingFiresequence(
+			for (final Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer> markingAndHondaIndex : containsLoopingFiresequence(
 					mFireSequenceTreeMarkings)) {
 				if (markingAndHondaIndex.getFirst()
 						.getLastIndexOfShootingAcceptingStateInFireSequence() >= markingAndHondaIndex.getSecond()) {
@@ -142,7 +142,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 			throws PetriNetNot1SafeException {
 
 		final Set<MarkingOfFireSequence<LETTER, PLACE>> successorMarkingSet = new HashSet<>();
-		for (MarkingOfFireSequence<LETTER, PLACE> markingOfFireSequence : mFireSequenceTreeMarkings) {
+		for (final MarkingOfFireSequence<LETTER, PLACE> markingOfFireSequence : mFireSequenceTreeMarkings) {
 			successorMarkingSet.addAll(getSuccessorMarkingsOfFireSequence(markingOfFireSequence, currentSymbol));
 		}
 		mFireSequenceTreeMarkings = successorMarkingSet;
@@ -151,21 +151,21 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	}
 
 	private Set<MarkingOfFireSequence<LETTER, PLACE>> getSuccessorMarkingsOfFireSequence(
-			MarkingOfFireSequence<LETTER, PLACE> predeccessorMarking, final LETTER currentSymbol)
+			final MarkingOfFireSequence<LETTER, PLACE> predeccessorMarking, final LETTER currentSymbol)
 			throws PetriNetNot1SafeException {
 
-		final Set<ITransition<LETTER, PLACE>> enabledTransitionSet =
+		final Set<Transition<LETTER, PLACE>> enabledTransitionSet =
 				activeTransitionsWithSymbol(predeccessorMarking.getMarking(), currentSymbol);
 
 		final Set<MarkingOfFireSequence<LETTER, PLACE>> successorMarkingsOfFireSequence = new HashSet<>();
-		for (final ITransition<LETTER, PLACE> transition : enabledTransitionSet) {
+		for (final Transition<LETTER, PLACE> transition : enabledTransitionSet) {
 			successorMarkingsOfFireSequence.add(getSuccessorMarkingOfFireSequence(predeccessorMarking, transition));
 		}
 		return successorMarkingsOfFireSequence;
 	}
 
 	private MarkingOfFireSequence<LETTER, PLACE> getSuccessorMarkingOfFireSequence(
-			MarkingOfFireSequence<LETTER, PLACE> predecessor, ITransition<LETTER, PLACE> transition)
+			final MarkingOfFireSequence<LETTER, PLACE> predecessor, final Transition<LETTER, PLACE> transition)
 			throws PetriNetNot1SafeException {
 		int firingInAcceptingPlaceIndex;
 		if (mOperand.getSuccessors(transition).stream().anyMatch(mOperand::isAccepting)) {
@@ -177,9 +177,9 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex);
 	}
 
-	private Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking,
+	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking,
 			final LETTER symbol) {
-		final Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
+		final Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
 		for (final PLACE place : marking) {
 			mOperand.getSuccessors(place).stream().filter(transition -> transition.getSymbol().equals(symbol))
 					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))
@@ -194,16 +194,16 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	 * m'(p) = n, m(p) >= n has to hold. The reason we do this is if at the end of the supposed loop of a lasso if the
 	 * resulting marking is as strong as the honda marking, we know that we have an actual feasible loop in the Petri
 	 * net.
-	 * 
+	 *
 	 * @param <markingSet> The set of markings we want to test.
-	 * 
+	 *
 	 * @return Pair of marking and the index of the hondamarking they reached.
 	 */
 	private final Set<Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer>>
 			containsLoopingFiresequence(final Set<MarkingOfFireSequence<LETTER, PLACE>> markingSet) {
 		final Set<Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer>> loopingFiringSequences = new HashSet<>();
-		for (MarkingOfFireSequence<LETTER, PLACE> marking : markingSet) {
-			for (Pair<Marking<LETTER, PLACE>, Integer> hondaMarking : marking.getHondaMarkingsOfFireSequence()) {
+		for (final MarkingOfFireSequence<LETTER, PLACE> marking : markingSet) {
+			for (final Pair<Marking<LETTER, PLACE>, Integer> hondaMarking : marking.getHondaMarkingsOfFireSequence()) {
 				final Set<PLACE> comparedMarkingPlaceSet = hondaMarking.getFirst().stream().collect(Collectors.toSet());
 				if (marking.getMarking().containsAll(comparedMarkingPlaceSet)) {
 					loopingFiringSequences.add(new Pair<>(marking, hondaMarking.getSecond()));

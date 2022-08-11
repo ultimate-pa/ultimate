@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.TransitionUnifier;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IsEquivalent;
@@ -73,17 +72,17 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	private final Set<PLACE> mPlaces = new HashSet<>();
 	private final Set<PLACE> mInitialPlaces = new HashSet<>();
 	private final Collection<PLACE> mAcceptingPlaces = new HashSet<>();
-	private final Collection<ITransition<LETTER, PLACE>> mTransitions = new HashSet<>();
+	private final Collection<Transition<LETTER, PLACE>> mTransitions = new HashSet<>();
 	private final Set<Integer> mTransitionIds = new HashSet<>();
 	private final TransitionUnifier<LETTER, PLACE> mTransitionUnifier = new TransitionUnifier<>();
 	/**
 	 * Map each place to its incoming transitions. Redundant to {@link #mTransitions} for better performance.
 	 */
-	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mPredecessors = new HashRelation<>();
+	private final HashRelation<PLACE, Transition<LETTER, PLACE>> mPredecessors = new HashRelation<>();
 	/**
 	 * Map each place to its outgoing transitions. Redundant to {@link #mTransitions} for better performance.
 	 */
-	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mSuccessors = new HashRelation<>();
+	private final HashRelation<PLACE, Transition<LETTER, PLACE>> mSuccessors = new HashRelation<>();
 
 	/**
 	 * If true the number of tokens in this petri net is constant. Formally: There is a natural number n such that every
@@ -129,8 +128,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			final boolean isAccepting = nwa.isFinal(nwaState);
 			final boolean newlyAdded = addPlace(nwaState, isInitial, isAccepting);
 			if (!newlyAdded) {
-				throw new AssertionError(
-						"Automaton must not contain state twice: " + nwaState);
+				throw new AssertionError("Automaton must not contain state twice: " + nwaState);
 			}
 			state2place.put(nwaState, nwaState);
 		}
@@ -145,21 +143,13 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	@Override
-	public ImmutableSet<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition) {
-		return cast(transition).getSuccessors();
+	public ImmutableSet<PLACE> getSuccessors(final Transition<LETTER, PLACE> transition) {
+		return transition.getSuccessors();
 	}
 
 	@Override
-	public ImmutableSet<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition) {
-		return cast(transition).getPredecessors();
-	}
-
-	private Transition<LETTER, PLACE> cast(final ITransition<LETTER, PLACE> transition) {
-		if (transition instanceof Transition) {
-			return ((Transition<LETTER, PLACE>) transition);
-		}
-		throw new IllegalArgumentException(
-				this.getClass().getSimpleName() + " works only with " + Transition.class.getSimpleName());
+	public ImmutableSet<PLACE> getPredecessors(final Transition<LETTER, PLACE> transition) {
+		return transition.getPredecessors();
 	}
 
 	/**
@@ -181,8 +171,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			mLogger.info("Testing correctness of constructor" + getClass().getSimpleName());
 		}
 
-		final boolean correct = new IsEquivalent<LETTER, PLACE>(mServices, stateFactory, this,
-				nwa).getResult();
+		final boolean correct = new IsEquivalent<LETTER, PLACE>(mServices, stateFactory, this, nwa).getResult();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of constructor " + getClass().getSimpleName());
 		}
@@ -275,7 +264,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 * @deprecated currently not used
 	 */
 	@Deprecated
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition, final Collection<PLACE> marking) {
+	public boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition, final Collection<PLACE> marking) {
 		return marking.containsAll(getSuccessors(transition));
 	}
 
@@ -290,7 +279,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 * @deprecated currently not used, modifies marking
 	 */
 	@Deprecated
-	private Collection<PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
+	private Collection<PLACE> fireTransition(final Transition<LETTER, PLACE> transition,
 			final Collection<PLACE> marking) {
 		marking.removeAll(getPredecessors(transition));
 		marking.addAll(getSuccessors(transition));
@@ -319,19 +308,19 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	@Override
-	public Collection<ITransition<LETTER, PLACE>> getTransitions() {
+	public Collection<Transition<LETTER, PLACE>> getTransitions() {
 		return mTransitions;
 	}
 
 	/** @return Outgoing transitions of given place. */
 	@Override
-	public Set<ITransition<LETTER, PLACE>> getSuccessors(final PLACE place) {
+	public Set<Transition<LETTER, PLACE>> getSuccessors(final PLACE place) {
 		return mSuccessors.getImage(place);
 	}
 
 	/** @return Incoming transitions of given place. */
 	@Override
-	public Set<ITransition<LETTER, PLACE>> getPredecessors(final PLACE place) {
+	public Set<Transition<LETTER, PLACE>> getPredecessors(final PLACE place) {
 		return mPredecessors.getImage(place);
 	}
 
@@ -372,7 +361,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	/** @return Letters actually being used as a label of some transition in this net. */
 	public Set<LETTER> usedLetters() {
 		final Set<LETTER> usedLetters = new HashSet<>();
-		for (final ITransition<LETTER, PLACE> trans : mTransitions) {
+		for (final Transition<LETTER, PLACE> trans : mTransitions) {
 			usedLetters.add(trans.getSymbol());
 		}
 		return usedLetters;

@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -59,10 +59,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER, PLACE> {
 	/**
-	 * Before 2019-10-20 we added cut-off events and their successor conditions to
-	 * the co-relation. This is not necessary for the computation of the finite
-	 * prefix (maybe necessary for other applications) and we might be able to save
-	 * some time. See Issue #448. https://github.com/ultimate-pa/ultimate/issues/448
+	 * Before 2019-10-20 we added cut-off events and their successor conditions to the co-relation. This is not
+	 * necessary for the computation of the finite prefix (maybe necessary for other applications) and we might be able
+	 * to save some time. See Issue #448. https://github.com/ultimate-pa/ultimate/issues/448
 	 */
 	private static final boolean ADD_CUTOFF_EVENTS_TO_CORELATION = true;
 	private final AutomataLibraryServices mServices;
@@ -76,49 +75,42 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final HashRelation<PLACE, Condition<LETTER, PLACE>> mPlace2Conds;
 
 	/**
-	 * Dummy root event with all initial conditions as successors.
-	 * Unlike all other events in this branching process, the root does not correspond to any transition of {@link #mNet}.
+	 * Dummy root event with all initial conditions as successors. Unlike all other events in this branching process,
+	 * the root does not correspond to any transition of {@link #mNet}.
 	 */
 	private final Event<LETTER, PLACE> mDummyRoot;
 
 	/**
-	 * Net associated with this branching process.
-	 * Places of this branching process correspond to places of the net.
+	 * Net associated with this branching process. Places of this branching process correspond to places of the net.
 	 * Events of this branching process correspond to transitions of the net.
 	 */
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mNet;
 
 	/**
-	 * The input is a {@link IPetriNetSuccessorProvider} and does not provide the
-	 * predecessor transitions of places. We use this relation to store the
-	 * information that we observed while computing the finite prefix.
+	 * The input is a {@link IPetriNetSuccessorProvider} and does not provide the predecessor transitions of places. We
+	 * use this relation to store the information that we observed while computing the finite prefix.
 	 */
-	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mYetKnownPredecessorTransitions = new HashRelation<>();
+	private final HashRelation<PLACE, Transition<LETTER, PLACE>> mYetKnownPredecessorTransitions = new HashRelation<>();
 
 	private final ConfigurationOrder<LETTER, PLACE> mOrder;
 
 	private int mConditionSerialnumberCounter = 0;
 
 	/**
-	 * Relation between the hashcode of {@link Event} {@link Marking}s and all
-	 * non-cut-off Events that have this {@link Marking}. Hashcode is the key,
-	 * allows us to check find cut-off events more quickly.
+	 * Relation between the hashcode of {@link Event} {@link Marking}s and all non-cut-off Events that have this
+	 * {@link Marking}. Hashcode is the key, allows us to check find cut-off events more quickly.
 	 * <p>
-	 * 2019-11-16 Matthias: I have some doubts that this optimization (hashcode
-	 * instead of {@link Marking}) brings a measureable speedup but it makes the
-	 * code more complicated. I case we have total {@link ConfigurationOrder} the image of
-	 * the relation has size one and hence we could use a map instead of a relation.
-	 * I guess that using a map instead of a relation will not bring a significant
-	 * speedup and will only reduce the memory consumption by 64 byes (initial size
-	 * of HashSet) per non-cut-off event.
+	 * 2019-11-16 Matthias: I have some doubts that this optimization (hashcode instead of {@link Marking}) brings a
+	 * measureable speedup but it makes the code more complicated. I case we have total {@link ConfigurationOrder} the
+	 * image of the relation has size one and hence we could use a map instead of a relation. I guess that using a map
+	 * instead of a relation will not bring a significant speedup and will only reduce the memory consumption by 64 byes
+	 * (initial size of HashSet) per non-cut-off event.
 	 * </p>
 	 */
 	private final HashRelation<Integer, Event<LETTER, PLACE>> mMarkingNonCutoffEventRelation = new HashRelation<>();
 
 	/**
-	 * #Backfolding
-	 * Temporary boolean flag for testing our computation of
-	 * a "finite comprehensive prefix".
+	 * #Backfolding Temporary boolean flag for testing our computation of a "finite comprehensive prefix".
 	 */
 	private final boolean mNewFiniteComprehensivePrefixMode = false;
 	private final boolean mUseFirstbornCutoffCheck;
@@ -143,13 +135,13 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 		// add a dummy event as root. its successors are the initial conditions.
 		mDummyRoot = new Event<>(this);
-		//mCoRelation.initialize(mDummyRoot.getSuccessorConditions());
+		// mCoRelation.initialize(mDummyRoot.getSuccessorConditions());
 		addEvent(mDummyRoot);
 	}
 
 	/**
-	 * @return dummy root event with all initial conditions as successors.
-	 *        Is not associated with any transition from the net.
+	 * @return dummy root event with all initial conditions as successors. Is not associated with any transition from
+	 *         the net.
 	 */
 	public Event<LETTER, PLACE> getDummyRoot() {
 		return mDummyRoot;
@@ -200,8 +192,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	/**
-	 * @deprecated Superseded by {@link ConditionMarking#getMarking()} which does
-	 *             not have additional costs.
+	 * @deprecated Superseded by {@link ConditionMarking#getMarking()} which does not have additional costs.
 	 */
 	@Deprecated
 	private PLACE isOneSafe(final Event<LETTER, PLACE> event) {
@@ -231,16 +222,14 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @see Event#checkCutOffAndSetCompanion(Event, Comparator, boolean)
 	 */
 	public boolean isCutoffEvent(final Event<LETTER, PLACE> event, final Comparator<Event<LETTER, PLACE>> order,
-		final boolean sameTransitionCutOff) {
+			final boolean sameTransitionCutOff) {
 		for (final Event<LETTER, PLACE> ev : mMarkingNonCutoffEventRelation.getImage(event.getMark().hashCode())) {
 			if (mNewFiniteComprehensivePrefixMode) {
 				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, this, sameTransitionCutOff)) {
 					return true;
 				}
-			} else {
-				if (event.checkCutOffAndSetCompanion(ev, order, sameTransitionCutOff)) {
-					return true;
-				}
+			} else if (event.checkCutOffAndSetCompanion(ev, order, sameTransitionCutOff)) {
+				return true;
 			}
 		}
 		return false;
@@ -267,8 +256,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return mEvents;
 	}
 
-
-
 	public Set<Condition<LETTER, PLACE>> getConditions(final PLACE p) {
 		return Collections.unmodifiableSet(mPlace2Conds.getImage(p));
 	}
@@ -281,10 +268,9 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	/**
-	 * Returns all minimal events of this branching process with respect to the causal order.
-	 * An event is causally minimal iff all its predecessors are initial conditions.
-	 * Events with a non-initial preceding condition c cannot be minimal.
-	 * Because c is non-initial it has to be preceded by another event which is causally smaller.
+	 * Returns all minimal events of this branching process with respect to the causal order. An event is causally
+	 * minimal iff all its predecessors are initial conditions. Events with a non-initial preceding condition c cannot
+	 * be minimal. Because c is non-initial it has to be preceded by another event which is causally smaller.
 	 *
 	 * @return The causally minimal events
 	 */
@@ -304,6 +290,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 	/**
 	 * Returns the net associated with this branching process.
+	 *
 	 * @return Net associated with this branching process
 	 */
 	public IPetriNetSuccessorProvider<LETTER, PLACE> getNet() {
@@ -416,8 +403,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	/**
-	 * @return Set containing all Conditions and Events which are ancestors of an
-	 *         Event. The dummyRoot is not considered as an ancestor.
+	 * @return Set containing all Conditions and Events which are ancestors of an Event. The dummyRoot is not considered
+	 *         as an ancestor.
 	 */
 	private Set<Object> ancestorNodes(final Event<LETTER, PLACE> event) {
 		final Set<Object> ancestorConditionAndEvents = new HashSet<>();
@@ -427,8 +414,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		}
 		return ancestorConditionAndEvents;
 	}
-
-
 
 	/**
 	 * @param conditions
@@ -456,27 +441,26 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 	/**
 	 * #Backfolding
-	 * @param cond : a condition
+	 *
+	 * @param cond
+	 *            : a condition
 	 * @return the set of Co
 	 */
 	public Set<PLACE> computeCoRelatedPlaces(final Condition<LETTER, PLACE> cond) {
 		final Set<PLACE> result = new HashSet<>();
-		for (final Condition<LETTER,PLACE> c : mCoRelation.computeCoRelatatedConditions(cond))
-		{
+		for (final Condition<LETTER, PLACE> c : mCoRelation.computeCoRelatatedConditions(cond)) {
 			result.add(c.getPlace());
 		}
 		return result;
 	}
 
 	/**
-	 * We call a transition "vital" if there is an accepting firing sequence in
-	 * which this transition occurs.
+	 * We call a transition "vital" if there is an accepting firing sequence in which this transition occurs.
 	 * <p>
-	 * 20200216 Matthias: Warning! Currently, this method computes only a superset
-	 * of the vital transitions.
+	 * 20200216 Matthias: Warning! Currently, this method computes only a superset of the vital transitions.
 	 * </p>
 	 */
-	public Set<ITransition<LETTER, PLACE>> computeVitalTransitions() {
+	public Set<Transition<LETTER, PLACE>> computeVitalTransitions() {
 		final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> companion2cutoff = new HashRelation<>();
 		for (final Event<LETTER, PLACE> e : getEvents()) {
 			if (e.isCutoffEvent()) {
@@ -510,8 +494,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			}
 		}
 		computeAncestors(companion2cutoff, vitalEvents, worklist);
-		final Set<ITransition<LETTER, PLACE>> vitalTransitions = vitalEvents.stream().filter(x -> x != mDummyRoot)
-				.map(Event::getTransition).collect(Collectors.toSet());
+		final Set<Transition<LETTER, PLACE>> vitalTransitions =
+				vitalEvents.stream().filter(x -> x != mDummyRoot).map(Event::getTransition).collect(Collectors.toSet());
 		return vitalTransitions;
 	}
 
@@ -566,12 +550,12 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	public int computeConditionPerPlaceMax() {
-		final int max = mPlace2Conds.getDomain().stream().map(x -> mPlace2Conds.getImage(x).size()).max(Integer::compare)
-				.orElse(0);
+		final int max = mPlace2Conds.getDomain().stream().map(x -> mPlace2Conds.getImage(x).size())
+				.max(Integer::compare).orElse(0);
 		return max;
 	}
 
-	public HashRelation<PLACE, ITransition<LETTER, PLACE>> getYetKnownPredecessorTransitions() {
+	public HashRelation<PLACE, Transition<LETTER, PLACE>> getYetKnownPredecessorTransitions() {
 		return mYetKnownPredecessorTransitions;
 	}
 
@@ -591,7 +575,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return (AutomatonDefinitionPrinter.toString(mServices, "branchingProcess", this));
 	}
 
-	public Collection<Condition<LETTER,PLACE>> getAcceptingConditions() {
-		return mConditions.stream().filter(c-> mNet.isAccepting(c.getPlace())).collect(Collectors.toSet());
+	public Collection<Condition<LETTER, PLACE>> getAcceptingConditions() {
+		return mConditions.stream().filter(c -> mNet.isAccepting(c.getPlace())).collect(Collectors.toSet());
 	}
 }

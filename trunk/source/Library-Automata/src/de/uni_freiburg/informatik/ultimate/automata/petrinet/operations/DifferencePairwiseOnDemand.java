@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -59,13 +59,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  * @author schaetzc@informatik.uni-freiburg.de
  *
  * @param <LETTER>
- *            Type of letters in the alphabet of minuend Petri net, subtrahend
- *            DFA, and difference Petri net
+ *            Type of letters in the alphabet of minuend Petri net, subtrahend DFA, and difference Petri net
  * @param <PLACE>
  *            Type of places in minuend and difference Petri net
  * @param <CRSF>
- *            Type of factory needed to check the result of this operation in
- *            {@link #checkResult(CRSF)}
+ *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
 public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends GeneralOperation<LETTER, PLACE, CRSF> {
@@ -101,34 +99,30 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 				mLogger.info("Universal subtrahend loopers provided by user.");
 				mLogger.info("Number of universal subtrahend loopers: " + numberLoopers + " of " + allLetters);
 			}
-		} else {
-			if (mSubtrahend instanceof INestedWordAutomaton) {
-				universalSubtrahendLoopers = determineUniversalLoopers(
-						(INestedWordAutomaton<LETTER, PLACE>) mSubtrahend);
-				if (mLogger.isInfoEnabled()) {
-					final int numberLoopers = universalSubtrahendLoopers.size();
-					final int allLetters = mSubtrahend.getAlphabet().size();
-					mLogger.info("Number of universal subtrahend loopers: " + numberLoopers + " of " + allLetters);
-				}
-			} else {
-				universalSubtrahendLoopers = null;
-				mLogger.info(
-						"Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
+		} else if (mSubtrahend instanceof INestedWordAutomaton) {
+			universalSubtrahendLoopers = determineUniversalLoopers((INestedWordAutomaton<LETTER, PLACE>) mSubtrahend);
+			if (mLogger.isInfoEnabled()) {
+				final int numberLoopers = universalSubtrahendLoopers.size();
+				final int allLetters = mSubtrahend.getAlphabet().size();
+				mLogger.info("Number of universal subtrahend loopers: " + numberLoopers + " of " + allLetters);
 			}
+		} else {
+			universalSubtrahendLoopers = null;
+			mLogger.info("Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
 		}
 		mDifference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend, universalSubtrahendLoopers);
 		mFinitePrefixOfDifference = new FinitePrefix<LETTER, PLACE>(mServices, mDifference);
 		mResult = mDifference.getYetConstructedPetriNet();
 
-		final Set<ITransition<LETTER, PLACE>> vitalTransitionsOfDifference = mFinitePrefixOfDifference.getResult()
-				.computeVitalTransitions();
-		mDifferenceSynchronizationInformation = mDifference
-				.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
+		final Set<Transition<LETTER, PLACE>> vitalTransitionsOfDifference =
+				mFinitePrefixOfDifference.getResult().computeVitalTransitions();
+		mDifferenceSynchronizationInformation =
+				mDifference.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
 		final int allTransitions = mDifference.getYetConstructedPetriNet().getTransitions().size();
 		final int deadTransitions = allTransitions - vitalTransitionsOfDifference.size();
 		{
-			final int looperLetters = mMinuend.getAlphabet().size()
-					- mDifferenceSynchronizationInformation.getChangerLetters().size();
+			final int looperLetters =
+					mMinuend.getAlphabet().size() - mDifferenceSynchronizationInformation.getChangerLetters().size();
 			mLogger.info(looperLetters + "/" + mMinuend.getAlphabet().size() + " looper letters, "
 					+ mDifferenceSynchronizationInformation.getSelfloops().size() + " selfloop transitions, "
 					+ mDifferenceSynchronizationInformation.getStateChangers().size() + " changer transitions "
@@ -146,7 +140,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		this(services, minuendNet, subtrahendDfa, null);
 	}
 
-	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
+	public Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> getTransitionBacktranslation() {
 		return mDifference.getTransitionBacktranslation();
 	}
 
@@ -212,8 +206,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 			throw new UnsupportedOperationException("Convert minuend to fully constructed net");
 		}
 		final BoundedPetriNet<LETTER, PLACE> minuend = (BoundedPetriNet<LETTER, PLACE>) mMinuend;
-		final boolean correct = PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, minuend, subtrahend,
-				mResult);
+		final boolean correct =
+				PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, minuend, subtrahend, mResult);
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + getOperationName());
