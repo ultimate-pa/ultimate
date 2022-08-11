@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.Conditionality;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticConditionEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SyntacticIndependenceRelation;
@@ -84,9 +85,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *            The type of letters in the given Petri net
  */
 public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
-
-	// TODO make this a setting again
-	public static final boolean MOVER_CHECK_WITH_PREDICATES_DISJUNCTIVE = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -158,19 +156,21 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private IIndependenceRelation<Set<IPredicate>, L> createIndependenceRelation(
 			final IndependenceSettings independenceSettings, final BasicPredicateFactory predicateFactory) {
 
+		final boolean conditional = independenceSettings.getConditionality() != Conditionality.UNCONDITIONAL;
+
 		final IIndependenceRelation<IPredicate, L> semanticCheck;
 		switch (independenceSettings.getIndependenceType()) {
 		case SEMANTIC:
 			mLogger.info("Petri net LBE is using semantic-based independence relation.");
-			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript,
-					independenceSettings.useConditional(), !independenceSettings.useSemiCommutativity());
+			semanticCheck = new SemanticIndependenceRelation<>(mServices, mManagedScript, conditional,
+					!independenceSettings.useSemiCommutativity());
 			break;
 		case SYNTACTIC:
 			mLogger.info("Petri net LBE is using variable-based independence relation.");
 			semanticCheck = null;
 			break;
 		default:
-			throw new AssertionError("unknown value " + independenceSettings.getIndependenceType());
+			throw new AssertionError("unknown value: " + independenceSettings.getIndependenceType());
 		}
 
 		final IIndependenceRelation<IPredicate, L> variableCheck = new SyntacticIndependenceRelation<>();
@@ -181,36 +181,43 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			unionCheck = new UnionIndependenceRelation<>(Arrays.asList(variableCheck, semanticCheck));
 		}
 
-		if (independenceSettings.useConditional() && MOVER_CHECK_WITH_PREDICATES_DISJUNCTIVE) {
-			// For this variant, it makes more sense to cache results for individual conditions rather than a set.
-			// This way, queries for different sets can share results.
-			final IIndependenceRelation<IPredicate, L> cachedCheck =
-					new CachedIndependenceRelation<>(unionCheck, getOrCreateIndependenceCache());
-
-			// We apply here the optimization that eliminates satisfiable but irrelevant conditions. This usage is only
-			// sound because we assume individual interpolants are unsatisfiable iff they are literally "false".
-			// It is important for performance that this elimination happens outside the caching layer.
-			final IIndependenceRelation<IPredicate, L> eliminatedCheck =
-					new SemanticConditionEliminator<>(cachedCheck, PetriNetLargeBlockEncoding::isFalseState);
-
-			// Lastly, we eliminate useless conditions (i.e. DebugPredicate or "true"; this is different from the work
-			// done by SemanticConditionEliminator above) and then query for each condition separately.
-			return new ConditionTransformingIndependenceRelation<>(
-					new DisjunctiveConditionalIndependenceRelation<>(eliminatedCheck),
-					PetriNetLargeBlockEncoding::eliminateIrrelevantPredicates);
-		}
-
-		final IIndependenceRelation<Set<IPredicate>, L> multiConditionCheck;
-		if (independenceSettings.useConditional()) {
+		switch (independenceSettings.getConditionality()) {
+		case UNCONDITIONAL:
+			assert !unionCheck.isConditional();
+			return new CachedIndependenceRelation<>(ConditionTransformingIndependenceRelation.unconditional(unionCheck),
+					getOrCreateIndependenceCache());
+		case CONDITIONAL_CONJUNCTIVE:
 			// It is important that this combination of predicates happens below the caching layer: Each call to
 			// combinePredicates will return a distinct predicate, even for the same input set. Hence caching results
 			// for combined predicates would have little to no effect.
-			multiConditionCheck = new ConditionTransformingIndependenceRelation<>(unionCheck,
-					s -> combinePredicates(s, predicateFactory));
-		} else {
-			multiConditionCheck = ConditionTransformingIndependenceRelation.unconditional(unionCheck);
+			return new CachedIndependenceRelation<>(new ConditionTransformingIndependenceRelation<>(unionCheck,
+					s -> combinePredicates(s, predicateFactory)), getOrCreateIndependenceCache());
+		case CONDITIONAL_DISJUNCTIVE:
+			return createDisjunctiveConditionalIndependence(unionCheck);
+		default:
+			throw new IllegalArgumentException(
+					"Unsupported conditionality: " + independenceSettings.getConditionality());
 		}
-		return new CachedIndependenceRelation<>(multiConditionCheck, getOrCreateIndependenceCache());
+	}
+
+	private IIndependenceRelation<Set<IPredicate>, L>
+			createDisjunctiveConditionalIndependence(final IIndependenceRelation<IPredicate, L> independence) {
+		// For this variant, it makes more sense to cache results for individual conditions rather than a set.
+		// This way, queries for different sets can share results.
+		final IIndependenceRelation<IPredicate, L> cachedCheck =
+				new CachedIndependenceRelation<>(independence, getOrCreateIndependenceCache());
+
+		// We apply here the optimization that eliminates satisfiable but irrelevant conditions. This usage is only
+		// sound because we assume individual interpolants are unsatisfiable iff they are literally "false".
+		// It is important for performance that this elimination happens outside the caching layer.
+		final IIndependenceRelation<IPredicate, L> eliminatedCheck =
+				new SemanticConditionEliminator<>(cachedCheck, PetriNetLargeBlockEncoding::isFalseState);
+
+		// Lastly, we eliminate useless conditions (i.e. DebugPredicate or "true"; this is different from the work
+		// done by SemanticConditionEliminator above) and then query for each condition separately.
+		return new ConditionTransformingIndependenceRelation<>(
+				new DisjunctiveConditionalIndependenceRelation<>(eliminatedCheck),
+				PetriNetLargeBlockEncoding::eliminateIrrelevantPredicates);
 	}
 
 	private <S> IIndependenceCache<S, L> getOrCreateIndependenceCache() {

@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.Conditionality;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -112,6 +113,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INDEPENDENCE_PLBE =
 			"Independence relation used for large block encoding in concurrent analysis";
 	private static final IndependenceType DEF_INDEPENDENCE_PLBE = IndependenceType.SEMANTIC;
+
+	public static final String LABEL_COND_LBE =
+			"Use conditional commutativity for large block encoding in concurrent analysis";
+	private static final Conditionality DEF_COND_LBE = Conditionality.CONDITIONAL_DISJUNCTIVE;
 
 	public static final String LABEL_SEMICOMM_PLBE =
 			"Use semi-commutativity for large block encoding in concurrent analysis";
@@ -570,6 +575,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
 						IndependenceType.values()),
+				new UltimatePreferenceItem<>(LABEL_COND_LBE, DEF_COND_LBE, PreferenceType.Combo,
+						Conditionality.values()),
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean),
 
 				/* Partial Order Reduction settings */
@@ -588,8 +595,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, IndependenceSettings.DEFAULT_ABSTRACTION_TYPE,
 						PreferenceType.Combo, AbstractionType.values()),
-				new UltimatePreferenceItem<>(LABEL_COND_POR, IndependenceSettings.DEFAULT_USE_CONDITIONAL,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_COND_POR, IndependenceSettings.DEFAULT_CONDITIONALITY,
+						PreferenceType.Combo, Conditionality.values()),
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_POR, IndependenceSettings.DEFAULT_SOLVER,
@@ -603,7 +610,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 1),
 						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 1),
-						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
+						IndependenceSettings.DEFAULT_CONDITIONALITY, PreferenceType.Combo, Conditionality.values()),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 1),
 						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 1),
@@ -617,7 +624,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 2),
 						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 2),
-						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
+						IndependenceSettings.DEFAULT_CONDITIONALITY, PreferenceType.Combo, Conditionality.values()),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 2),
 						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 2),

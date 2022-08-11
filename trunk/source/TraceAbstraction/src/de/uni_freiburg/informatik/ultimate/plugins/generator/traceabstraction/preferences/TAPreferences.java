@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.Conditionality;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -194,13 +195,15 @@ public final class TAPreferences {
 				McrInterpolantMethod.class);
 
 		mPorIndependenceSettings = new IndependenceSettings[getNumberOfIndependenceRelations()];
-		mLbeIndependenceSettings = new IndependenceSettings(
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_PLBE, IndependenceType.class),
-				AbstractionType.NONE /* currently hard-coded; will be changed for repeated Petri net LBE */,
-				false /* currently hard-coded; will be changed for repeated Petri net LBE */,
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
-				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
-				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
+		mLbeIndependenceSettings =
+				new IndependenceSettings(
+						mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_PLBE,
+								IndependenceType.class),
+						AbstractionType.NONE /* hard-coded */,
+						mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COND_LBE, Conditionality.class),
+						mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
+						IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
+						IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 	}
 
 	/**
@@ -441,8 +444,8 @@ public final class TAPreferences {
 							IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, IndependenceType.class),
 					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, index),
 							IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, AbstractionType.class),
-					mPrefs.getBoolean(getLabel(TraceAbstractionPreferenceInitializer.LABEL_COND_POR, index),
-							IndependenceSettings.DEFAULT_USE_CONDITIONAL),
+					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_COND_POR, index),
+							IndependenceSettings.DEFAULT_CONDITIONALITY, Conditionality.class),
 					mPrefs.getBoolean(getLabel(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR, index),
 							IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY),
 					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_POR, index),

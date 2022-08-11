@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.Conditionality;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
@@ -151,16 +152,22 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
 		}
 
+		final boolean conditional = settings.getConditionality() == Conditionality.CONDITIONAL_DISJUNCTIVE;
+		if (!conditional && settings.getConditionality() != Conditionality.UNCONDITIONAL) {
+			// We don't currently support CONDITIONAL_CONJUNCTIVE (or any other modes added later)
+			throw new IllegalArgumentException("Unsupported conditionality: " + settings.getConditionality());
+		}
+
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
 		return IndependenceBuilder
 				// Semantic independence forms the base.
 				// If transition formulas are already transferred to the independenceScript, we need not transfer them
 				// here. Otherwise, pass on the transferrer. Conditions are handled below.
-				.<L> semantic(mServices, independenceScript, tfsAlreadyTransferred ? null : transferrer,
-						settings.useConditional(), !settings.useSemiCommutativity())
+				.<L> semantic(mServices, independenceScript, tfsAlreadyTransferred ? null : transferrer, conditional,
+						!settings.useSemiCommutativity())
 				// If TFs have already been transferred and the relation is conditional, then we need to also transfer
 				// the condition predicates to the independenceScript.
-				.ifThen(tfsAlreadyTransferred && settings.useConditional(),
+				.ifThen(tfsAlreadyTransferred && conditional,
 						b -> b.withTransformedPredicates(transferrer::transferPredicate))
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()

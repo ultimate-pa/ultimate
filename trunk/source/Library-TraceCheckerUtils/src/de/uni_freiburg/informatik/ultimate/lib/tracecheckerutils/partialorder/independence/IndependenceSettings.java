@@ -39,7 +39,7 @@ public final class IndependenceSettings {
 
 	public static final IndependenceType DEFAULT_INDEPENDENCE_TYPE = IndependenceType.SEMANTIC;
 	public static final AbstractionType DEFAULT_ABSTRACTION_TYPE = AbstractionType.NONE;
-	public static final boolean DEFAULT_USE_CONDITIONAL = true;
+	public static final Conditionality DEFAULT_CONDITIONALITY = Conditionality.CONDITIONAL_DISJUNCTIVE;
 	public static final boolean DEFAULT_USE_SEMICOMMUTATIVITY = true;
 	public static final ExternalSolver DEFAULT_SOLVER = ExternalSolver.Z3;
 	public static final long DEFAULT_SOLVER_TIMEOUT = 1000;
@@ -88,9 +88,28 @@ public final class IndependenceSettings {
 		LOOPER
 	}
 
+	/**
+	 * Specifies how an independence relation should take <em>conditions</em> (assertions holding at the current state)
+	 * into account.
+	 */
+	public enum Conditionality {
+		/**
+		 * Use unconditional commutativity only
+		 */
+		UNCONDITIONAL,
+		/**
+		 * Take the conjunction of all assertions at the current state
+		 */
+		CONDITIONAL_CONJUNCTIVE,
+		/**
+		 * Take the disjunction of all assertions at the current state
+		 */
+		CONDITIONAL_DISJUNCTIVE
+	}
+
 	private final IndependenceType mIndependenceType;
 	private final AbstractionType mAbstractionType;
-	private final boolean mUseConditional;
+	private final Conditionality mConditionality;
 	private final boolean mUseSemiCommutativity;
 
 	private final ExternalSolver mSolver;
@@ -100,16 +119,16 @@ public final class IndependenceSettings {
 	 * Creates default settings for a simple independence relation.
 	 */
 	public IndependenceSettings() {
-		this(DEFAULT_INDEPENDENCE_TYPE, DEFAULT_ABSTRACTION_TYPE, DEFAULT_USE_CONDITIONAL,
-				DEFAULT_USE_SEMICOMMUTATIVITY, DEFAULT_SOLVER, DEFAULT_SOLVER_TIMEOUT);
+		this(DEFAULT_INDEPENDENCE_TYPE, DEFAULT_ABSTRACTION_TYPE, DEFAULT_CONDITIONALITY, DEFAULT_USE_SEMICOMMUTATIVITY,
+				DEFAULT_SOLVER, DEFAULT_SOLVER_TIMEOUT);
 	}
 
 	public IndependenceSettings(final IndependenceType independenceType, final AbstractionType abstractionType,
-			final boolean useConditional, final boolean useSemiCommutativity, final ExternalSolver solver,
+			final Conditionality conditionality, final boolean useSemiCommutativity, final ExternalSolver solver,
 			final long solverTimeout) {
 		mIndependenceType = independenceType;
 		mAbstractionType = abstractionType;
-		mUseConditional = useConditional;
+		mConditionality = conditionality;
 		mUseSemiCommutativity = useSemiCommutativity;
 		mSolver = solver;
 		mSolverTimeout = solverTimeout;
@@ -123,8 +142,8 @@ public final class IndependenceSettings {
 		return mAbstractionType;
 	}
 
-	public boolean useConditional() {
-		return mUseConditional;
+	public Conditionality getConditionality() {
+		return mConditionality;
 	}
 
 	public boolean useSemiCommutativity() {
@@ -146,8 +165,8 @@ public final class IndependenceSettings {
 					+ ", UseConditional=<UNSUPPORTED>, UseSemiCommutativity=<UNSUPPORTED>, "
 					+ "Solver=<NOT_USED>, SolverTimeout=<NOT_USED>]";
 		}
-		return "[IndependenceType=" + mIndependenceType + ", AbstractionType=" + mAbstractionType + ", UseConditional="
-				+ mUseConditional + ", UseSemiCommutativity=" + mUseSemiCommutativity + ", Solver=" + mSolver
+		return "[IndependenceType=" + mIndependenceType + ", AbstractionType=" + mAbstractionType + ", Conditionality="
+				+ mConditionality + ", UseSemiCommutativity=" + mUseSemiCommutativity + ", Solver=" + mSolver
 				+ ", SolverTimeout=" + mSolverTimeout + "ms]";
 	}
 }
