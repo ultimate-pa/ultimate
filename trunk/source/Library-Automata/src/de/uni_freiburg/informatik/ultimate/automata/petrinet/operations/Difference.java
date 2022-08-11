@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -142,8 +141,6 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
 	private BoundedPetriNet<LETTER, PLACE> mResult;
-
-	private final Map<PLACE, PLACE> mOldPlace2NewPlace = new HashMap<>();
 
 	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDsi;
 
@@ -310,7 +307,6 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 			if (!newlyAdded) {
 				throw new AssertionError("Must not add place twice: " + oldPlace);
 			}
-			mOldPlace2NewPlace.put(oldPlace, oldPlace);
 		}
 	}
 
@@ -395,7 +391,8 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 		if (blackSucc != null) {
 			successors.add(blackSucc);
 		}
-		copyMinuendFlow(oldTrans, predecessors, successors);
+		predecessors.addAll(oldTrans.getPredecessors());
+		successors.addAll(oldTrans.getSuccessors());
 		mResult.addTransition(oldTrans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 	}
 
@@ -448,8 +445,9 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 				throw new AssertionError("No black place for " + state);
 			}
 			predecessors.add(wPlace);
+			predecessors.addAll(oldTrans.getPredecessors());
 			successors.add(wPlace);
-			copyMinuendFlow(oldTrans, predecessors, successors);
+			successors.addAll(oldTrans.getSuccessors());
 			mResult.addTransition(oldTrans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
 		}
 	}
@@ -481,9 +479,8 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 			// This optimization relies on the special properties of the subtrahend L(A)◦Σ^*.
 			return;
 		}
-		final Set<PLACE> predecessors = new HashSet<>();
-		final Set<PLACE> successors = new HashSet<>();
-		copyMinuendFlow(oldTrans, predecessors, successors);
+		final Set<PLACE> predecessors = new HashSet<>(oldTrans.getPredecessors());
+		final Set<PLACE> successors = new HashSet<>(oldTrans.getSuccessors());
 		for (final PLACE state : Stream.concat(mDsi.getStateChangers().getImage(oldTrans).stream(),
 				mDsi.getBlockingTransitions().getImage(oldTrans).stream()).collect(Collectors.toList())) {
 			final PLACE bPlace = mBlackPlace.get(state);
@@ -494,25 +491,6 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 			successors.add(bPlace);
 		}
 		mResult.addTransition(oldTrans.getSymbol(), ImmutableSet.of(predecessors), ImmutableSet.of(successors));
-	}
-
-	private void copyMinuendFlow(final Transition<LETTER, PLACE> trans, final Collection<PLACE> preds,
-			final Collection<PLACE> succs) {
-		for (final PLACE oldPlace : trans.getPredecessors()) {
-			final PLACE newPlace = mOldPlace2NewPlace.get(oldPlace);
-			if (newPlace == null) {
-				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace + " size: "
-						+ mMinuend.size() + " " + mOldPlace2NewPlace.size());
-			}
-			preds.add(newPlace);
-		}
-		for (final PLACE oldPlace : trans.getSuccessors()) {
-			final PLACE newPlace = mOldPlace2NewPlace.get(oldPlace);
-			if (newPlace == null) {
-				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace);
-			}
-			succs.add(newPlace);
-		}
 	}
 
 	@Override
