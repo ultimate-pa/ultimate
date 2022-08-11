@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.CoveringMode;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -73,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -104,11 +107,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	private final PartialOrderMode mPartialOrderMode;
-	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
+	private final InformationStorageFactory mFactory = new InformationStorageFactory();
 
 	private final PartialOrderReductionFacade<L> mPOR;
 	private final List<IRefinableIndependenceProvider<L>> mIndependenceProviders;
 
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProgram;
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mItpAutomata;
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
 	private final boolean mSupportsDeadEnds;
@@ -160,6 +165,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		// TODO support dead ends with the new structure
 		mSupportsDeadEnds = false && mPref.getNumberOfIndependenceRelations() == 1
 				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
+
+		mProgram = initialAbstraction;
 	}
 
 	@Override
@@ -204,7 +211,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// Actual refinement step
-		mAbstraction = new InformationStorage<>(mAbstraction, determinized, mFactory, false);
+		if (mItpAutomata == null) {
+			mItpAutomata = determinized;
+		} else {
+			mItpAutomata = new UnionNwa<>(mItpAutomata, determinized, mFactory, false);
+		}
+		mAbstraction =
+				new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory, false);
 
 		// update independence relations (in case of abstract independence)
 		for (int i = 0; i < mIndependenceProviders.size(); ++i) {
@@ -327,14 +340,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (splitter != null) {
 			state = splitter.getOriginal(state);
 		}
-		return isFalseLiteral(state);
+		final boolean result = isFalseLiteral(state);
+		return result;
 	}
 
 	public static boolean isFalseLiteral(final IPredicate state) {
-		if (state instanceof MLPredicateWithConjuncts) {
+		if (state instanceof PredicateWithConjuncts) {
 			// By the way we create conjunctions in the state factory below, any conjunction that contains the conjunct
 			// "false" will contain no other conjuncts.
-			final ImmutableList<IPredicate> conjuncts = ((MLPredicateWithConjuncts) state).getConjuncts();
+			final ImmutableList<IPredicate> conjuncts = ((PredicateWithConjuncts) state).getConjuncts();
 			return conjuncts.size() == 1 && isFalseLiteral(conjuncts.getHead());
 		}
 
@@ -343,19 +357,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private static boolean isTrueLiteral(final IPredicate state) {
-		if (state instanceof MLPredicateWithConjuncts) {
-			final ImmutableList<IPredicate> conjuncts = ((MLPredicateWithConjuncts) state).getConjuncts();
+		if (state instanceof PredicateWithConjuncts) {
+			final ImmutableList<IPredicate> conjuncts = ((PredicateWithConjuncts) state).getConjuncts();
 			return conjuncts.size() == 1 && isTrueLiteral(conjuncts.getHead());
 		}
 		return SmtUtils.isTrueLiteral(state.getFormula());
 	}
 
-	public static List<IPredicate> getConjuncts(final IPredicate conjunction) {
+	public static ImmutableList<IPredicate> getConjuncts(final IPredicate conjunction) {
 		if (conjunction == null) {
 			return ImmutableList.empty();
 		}
-		if (conjunction instanceof MLPredicateWithConjuncts) {
-			return ((MLPredicateWithConjuncts) conjunction).getConjuncts();
+		if (conjunction instanceof PredicateWithConjuncts) {
+			return ((PredicateWithConjuncts) conjunction).getConjuncts();
 		}
 
 		// TODO use mPOR.mStateSplitter for this
@@ -379,7 +393,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		throw new UnsupportedOperationException("Hoare annotation not supported for " + PartialOrderCegarLoop.class);
 	}
 
-	private final class InformationStorageFactory implements IIntersectionStateFactory<IPredicate> {
+	private final class InformationStorageFactory
+			implements IIntersectionStateFactory<IPredicate>, IUnionStateFactory<IPredicate> {
 		@Override
 		public IPredicate createEmptyStackState() {
 			return mStateFactoryForRefinement.createEmptyStackState();
@@ -388,31 +403,57 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
 			final IPredicate newState;
+			// if (isFalseLiteral(state2)) {
+			newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
+					((IMLPredicate) state1).getProgramPoints(), getConjuncts(state2)));
+			// } else {
+			// newState = mPredicateFactory
+			// .construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
+			// }
+
+			// TODO support dead ends with the new structure
+			// if (mSupportsDeadEnds) {
+			// mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
+			// }
+
+			return newState;
+		}
+
+		@Override
+		public IPredicate createSinkStateContent() {
+			throw new UnsupportedOperationException();
+		}
+
+		// TODO If the new structure helps as much as expected, the optimizations in this method may be unnecessary.
+		// TODO Evaluate and possibly remove.
+		@Override
+		public IPredicate union(final IPredicate state1, final IPredicate state2) {
+			final IPredicate newState;
 			if (isFalseLiteral(state1) || isTrueLiteral(state2)) {
 				// If state1 is "false", we add no other conjuncts.
 				// Similarly, there is no point in adding state2 as conjunct if it is "true".
-				if (state1 instanceof MLPredicateWithConjuncts) {
-					final var mlState1 = (MLPredicateWithConjuncts) state1;
-					newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
-							mlState1.getProgramPoints(), mlState1.getConjuncts()));
+				if (state1 instanceof PredicateWithConjuncts) {
+					final var conjState1 = (PredicateWithConjuncts) state1;
+					newState = mPredicateFactory
+							.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts()));
 				} else {
-					newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
-							((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state1)));
+					newState = mPredicateFactory
+							.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1)));
 				}
 			} else if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
 				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
 				// As another (less important) optimization, we also ignore state1 if it is "true".
-				newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
-						((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state2)));
+				newState = mPredicateFactory
+						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2)));
 			} else {
 				// In the normal case, we simply add state2 as conjunct.
-				newState = mPredicateFactory
-						.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
+				newState = mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, state1, state2));
 			}
 
-			if (mSupportsDeadEnds) {
-				mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
-			}
+			// TODO support dead ends with the new structure
+			// if (mSupportsDeadEnds) {
+			// mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
+			// }
 
 			return newState;
 		}
