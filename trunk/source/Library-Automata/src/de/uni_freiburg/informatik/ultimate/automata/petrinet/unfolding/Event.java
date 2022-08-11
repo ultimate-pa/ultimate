@@ -89,15 +89,15 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final Transition<LETTER, PLACE> transition,
 			final BranchingProcess<LETTER, PLACE> bp, final int hashCode) throws PetriNetNot1SafeException {
 		assert conditionToPlaceEqual(predecessors,
-				bp.getNet().getPredecessors(transition)) : "An event was created with inappropriate predecessors.\n  "
+				transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
 						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
-						+ "\n  " + "transitions predecessors:" + bp.getNet().getPredecessors(transition);
+						+ "\n  " + "transitions predecessors:" + transition.getPredecessors();
 		mPredecessors = new HashSet<>(predecessors);
 		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
 
 		mTransition = transition;
 		mSuccessors = new HashSet<>();
-		for (final PLACE p : bp.getNet().getSuccessors(transition)) {
+		for (final PLACE p : transition.getSuccessors()) {
 			mSuccessors.add(bp.constructCondition(this, p));
 		}
 		mHashCode = hashCode;

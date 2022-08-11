@@ -73,7 +73,7 @@ public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LET
 			}
 		}
 		for (final Transition<LETTER, PLACE> t : successorTransitions) {
-			final Set<PLACE> predeccesorOfT = getPredecessors(t);
+			final Set<PLACE> predeccesorOfT = t.getPredecessors();
 			if (mayPlaces.containsAll(predeccesorOfT)) {
 				predecessorPlaces2Transition.addPair(predeccesorOfT, t);
 			}

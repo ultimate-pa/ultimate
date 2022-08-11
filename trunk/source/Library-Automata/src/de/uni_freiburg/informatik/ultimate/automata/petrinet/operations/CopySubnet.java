@@ -182,8 +182,8 @@ public class CopySubnet<LETTER, PLACE> {
 	}
 
 	private void rebuildTransition(final Transition<LETTER, PLACE> trans) {
-		final Set<PLACE> succ = SetOperations.intersection(mSuperNet.getSuccessors(trans), mResult.getPlaces());
-		mResult.addTransition(trans.getSymbol(), mSuperNet.getPredecessors(trans), ImmutableSet.of(succ));
+		final Set<PLACE> succ = SetOperations.intersection(trans.getSuccessors(), mResult.getPlaces());
+		mResult.addTransition(trans.getSymbol(), trans.getPredecessors(), ImmutableSet.of(succ));
 	}
 
 	/**
@@ -204,13 +204,13 @@ public class CopySubnet<LETTER, PLACE> {
 	private Set<PLACE> requiredPlaces() {
 		final Set<PLACE> requiredPlaces = new HashSet<>();
 		for (final Transition<LETTER, PLACE> trans : mTransitionSubset) {
-			requiredPlaces.addAll(mSuperNet.getPredecessors(trans));
+			requiredPlaces.addAll(trans.getPredecessors());
 
 			// successor places are only really required
 			// if they are predecessors of another reachable transition
 			// or if they are accepting
 			if (mKeepSuccessorPlaces) {
-				requiredPlaces.addAll(mSuperNet.getSuccessors(trans));
+				requiredPlaces.addAll(trans.getSuccessors());
 			}
 		}
 		acceptingSuccPlaces().forEach(requiredPlaces::add);

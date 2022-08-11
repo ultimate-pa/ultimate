@@ -118,7 +118,7 @@ public class PetriNetToUltimateModel<LETTER, PLACE> {
 			final Map<Transition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
 			final Transition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
 		final TransitionNode transitionNode = transition2transitionNode.get(transition);
-		for (final PLACE place : net.getSuccessors(transition)) {
+		for (final PLACE place : transition.getSuccessors()) {
 			PlaceNode placeNode = place2placeNode.get(place);
 			if (placeNode == null) {
 				placeNode = new PlaceNode(place, participatedAcceptingMarkings(place, acceptingMarkings));

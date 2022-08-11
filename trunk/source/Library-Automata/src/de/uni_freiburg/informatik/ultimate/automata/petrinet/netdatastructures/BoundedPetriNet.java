@@ -142,16 +142,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		assert constantTokenAmountGuaranteed();
 	}
 
-	@Override
-	public ImmutableSet<PLACE> getSuccessors(final Transition<LETTER, PLACE> transition) {
-		return transition.getSuccessors();
-	}
-
-	@Override
-	public ImmutableSet<PLACE> getPredecessors(final Transition<LETTER, PLACE> transition) {
-		return transition.getPredecessors();
-	}
-
 	/**
 	 * If {@link #mConstantTokenAmount} is set, check that amount of tokens is preserved for all initial markings* and
 	 * all firing sequences.
@@ -265,7 +255,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 */
 	@Deprecated
 	public boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition, final Collection<PLACE> marking) {
-		return marking.containsAll(getSuccessors(transition));
+		return marking.containsAll(transition.getSuccessors());
 	}
 
 	/**
@@ -281,8 +271,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	@Deprecated
 	private Collection<PLACE> fireTransition(final Transition<LETTER, PLACE> transition,
 			final Collection<PLACE> marking) {
-		marking.removeAll(getPredecessors(transition));
-		marking.addAll(getSuccessors(transition));
+		marking.removeAll(transition.getPredecessors());
+		marking.addAll(transition.getSuccessors());
 
 		return marking;
 	}
@@ -344,7 +334,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	boolean transitionsPreserveTokenAmount() {
 		return mTransitions.parallelStream()
-				.allMatch(transition -> getPredecessors(transition).size() == getSuccessors(transition).size());
+				.allMatch(transition -> transition.getPredecessors().size() == transition.getSuccessors().size());
 	}
 
 	@Override

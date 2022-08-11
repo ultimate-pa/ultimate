@@ -102,12 +102,12 @@ public class PetruchioWrapper<LETTER, PLACE> {
 			final Transition transitionPetruchio = mNetPetruchio.addTransition(tBounded.toString());
 			mTPetruchio2tBounded.put(transitionPetruchio, tBounded);
 			// PTArcs kopieren
-			for (final PLACE pBounded : mBoundedNet.getSuccessors(tBounded)) {
+			for (final PLACE pBounded : tBounded.getSuccessors()) {
 				// 1-safe net
 				mNetPetruchio.addArc(transitionPetruchio, mPBounded2pPetruchio.get(pBounded), 1);
 			}
 			// TPArcs kopieren
-			for (final PLACE p : mBoundedNet.getPredecessors(tBounded)) {
+			for (final PLACE p : tBounded.getPredecessors()) {
 				// 1-safe net
 				mNetPetruchio.addArc(mPBounded2pPetruchio.get(p), transitionPetruchio, 1);
 			}

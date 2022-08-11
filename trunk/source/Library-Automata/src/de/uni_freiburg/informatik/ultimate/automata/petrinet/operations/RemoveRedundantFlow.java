@@ -106,12 +106,12 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		}
 		final HashRelation<Transition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
 		for (final Transition<LETTER, PLACE> t : operand.getTransitions()) {
-			for (final PLACE p : operand.getPredecessors(t)) {
+			for (final PLACE p : t.getPredecessors()) {
 				if (isEligibleRedundancyCandidate(p)) {
 					final boolean isFlowRedundant = isFlowRedundant(t, p, redundantFlow);
 					if (isFlowRedundant) {
 						redundantFlow.addPair(t, p);
-						if (operand.getSuccessors(t).contains(p)) {
+						if (t.getSuccessors().contains(p)) {
 							mRedundantSelfloopFlow.addPair(t, p);
 						}
 					}
@@ -159,7 +159,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private boolean isFlowRedundant(final Transition<LETTER, PLACE> t, final PLACE redundancyCandidate,
 			final HashRelation<Transition<LETTER, PLACE>, PLACE> redundantFlow)
 			throws AutomataOperationCanceledException {
-		for (final PLACE p : mOperand.getPredecessors(t)) {
+		for (final PLACE p : t.getPredecessors()) {
 			if (isEligibleRestrictorCandidate(p) && !p.equals(redundancyCandidate) && (!MOUNTAIN_COCK_HEURISTIC
 					|| mFinPre.getConditions(p).size() <= mFinPre.getConditions(redundancyCandidate).size())) {
 				if (redundantFlow.containsPair(t, p)) {

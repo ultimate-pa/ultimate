@@ -107,11 +107,11 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 
 	private void printTransition(final Transition<LETTER, STATE> transition, final BoundedPetriNet<LETTER, STATE> net) {
 		printOneTransitionPrefix();
-		printMarking(net.getPredecessors(transition));
+		printMarking(transition.getPredecessors());
 		print(' ');
 		print(mAlphabet.get(transition.getSymbol()));
 		print(' ');
-		printMarking(net.getSuccessors(transition));
+		printMarking(transition.getSuccessors());
 		printOneTransitionSuffix();
 	}
 

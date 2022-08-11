@@ -114,24 +114,6 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 		return initialPlaces;
 	}
 
-	@Override
-	public ImmutableSet<PLACE> getSuccessors(final Transition<LETTER, PLACE> transition) {
-		final Transition<LETTER, PLACE> casted = mTransitions.get(transition);
-		if (casted == null) {
-			throw new IllegalArgumentException("unknown transition " + transition);
-		}
-		return casted.getSuccessors();
-	}
-
-	@Override
-	public ImmutableSet<PLACE> getPredecessors(final Transition<LETTER, PLACE> transition) {
-		final Transition<LETTER, PLACE> casted = mTransitions.get(transition);
-		if (casted == null) {
-			throw new IllegalArgumentException("unknown transition " + transition);
-		}
-		return casted.getPredecessors();
-	}
-
 	/*
 	 * Schaue ob die places in den input automaten existieren, nicht hier
 	 */
@@ -284,8 +266,8 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 
 		final Set<PLACE> allPredecessors = new HashSet<>();
 
-		allPredecessors.addAll(mPetriNet.getPredecessors(oldPetrTransition));
-		mCurrentlyRelevantPurePetriPlaces.addAll(mPetriNet.getPredecessors(oldPetrTransition));
+		allPredecessors.addAll(oldPetrTransition.getPredecessors());
+		mCurrentlyRelevantPurePetriPlaces.addAll(oldPetrTransition.getPredecessors());
 		allPredecessors.add(createOrGetLabelOneQPlace(buchiPredecessor));
 
 		final Set<PLACE> allSuccessors = getStateOneTransitionSuccessors(oldPetrTransition, buchiAutomataTransition);
@@ -309,8 +291,8 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 		}
 		final Set<PLACE> allPredecessors = new HashSet<>();
 
-		allPredecessors.addAll(mPetriNet.getPredecessors(oldPetrTransition));
-		mCurrentlyRelevantPurePetriPlaces.addAll(mPetriNet.getPredecessors(oldPetrTransition));
+		allPredecessors.addAll(oldPetrTransition.getPredecessors());
+		mCurrentlyRelevantPurePetriPlaces.addAll(oldPetrTransition.getPredecessors());
 		allPredecessors.add(createOrGetLabelTwoQPlace(buchiPredecessor));
 
 		final Set<PLACE> allSuccessors =
@@ -330,7 +312,7 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 		final Set<PLACE> allSuccessors = new HashSet<>();
 
 		boolean acceptingPetriSuccessor = false;
-		for (final PLACE place : mPetriNet.getSuccessors(oldPetrTransition)) {
+		for (final PLACE place : oldPetrTransition.getSuccessors()) {
 			if (mPetriNet.isAccepting(place)) {
 				acceptingPetriSuccessor = true;
 			}
@@ -342,8 +324,8 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 			allSuccessors.add(createOrGetLabelOneQPlace(buchiAutomataTransition.getSucc()));
 		}
 
-		allSuccessors.addAll(mPetriNet.getSuccessors(oldPetrTransition));
-		mCurrentlyRelevantPurePetriPlaces.addAll(mPetriNet.getSuccessors(oldPetrTransition));
+		allSuccessors.addAll(oldPetrTransition.getSuccessors());
+		mCurrentlyRelevantPurePetriPlaces.addAll(oldPetrTransition.getSuccessors());
 		return allSuccessors;
 	}
 
@@ -362,8 +344,8 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 			allSuccessors.add(createOrGetLabelTwoQPlace(buchiAutomataTransition.getSucc()));
 		}
 
-		allSuccessors.addAll(mPetriNet.getSuccessors(oldPetrTransition));
-		mCurrentlyRelevantPurePetriPlaces.addAll(mPetriNet.getSuccessors(oldPetrTransition));
+		allSuccessors.addAll(oldPetrTransition.getSuccessors());
+		mCurrentlyRelevantPurePetriPlaces.addAll(oldPetrTransition.getSuccessors());
 		return allSuccessors;
 	}
 }

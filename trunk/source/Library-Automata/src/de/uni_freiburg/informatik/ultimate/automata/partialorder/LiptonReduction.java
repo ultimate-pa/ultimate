@@ -190,8 +190,7 @@ public class LiptonReduction<L, P> {
 				}
 
 				// Check if Pre- and Postset are identical for t1 and t2.
-				if (petriNet.getPredecessors(t1).equals(petriNet.getPredecessors(t2))
-						&& petriNet.getSuccessors(t1).equals(petriNet.getSuccessors(t2))
+				if (t1.getPredecessors().equals(t2.getPredecessors()) && t1.getSuccessors().equals(t2.getSuccessors())
 						&& mCompositionFactory.isComposable(t1.getSymbol())
 						&& mCompositionFactory.isComposable(t2.getSymbol())) {
 
@@ -256,8 +255,8 @@ public class LiptonReduction<L, P> {
 				continue;
 			}
 
-			final Set<P> t1PostSet = petriNet.getSuccessors(t1);
-			final Set<P> t1PreSet = petriNet.getPredecessors(t1);
+			final Set<P> t1PostSet = t1.getSuccessors();
+			final Set<P> t1PreSet = t1.getPredecessors();
 
 			if (t1PostSet.size() != 1) {
 				// TODO: this isn't relevant for Y-V, is it?
@@ -403,8 +402,7 @@ public class LiptonReduction<L, P> {
 
 		final boolean composable =
 				mCompositionFactory.isComposable(t1.getSymbol()) && mCompositionFactory.isComposable(t2.getSymbol());
-		final boolean structurallyCorrect =
-				petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(place);
+		final boolean structurallyCorrect = t2.getPredecessors().size() == 1 && !t2.getSuccessors().contains(place);
 		final boolean moverProperties = isRightMover(t1) || isLeftMover(t2);
 
 		return composable && structurallyCorrect && moverProperties;
@@ -428,8 +426,8 @@ public class LiptonReduction<L, P> {
 
 		for (final Triple<L, Transition<L, P>, Transition<L, P>> triplet : pendingCompositions) {
 			petriNet.getAlphabet().add(triplet.getFirst());
-			petriNet.addTransition(triplet.getFirst(), petriNet.getPredecessors(triplet.getSecond()),
-					petriNet.getSuccessors(triplet.getThird()));
+			petriNet.addTransition(triplet.getFirst(), triplet.getSecond().getPredecessors(),
+					triplet.getThird().getSuccessors());
 		}
 
 		final Set<Transition<L, P>> transitionsToKeep = new HashSet<>(petriNet.getTransitions());

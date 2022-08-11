@@ -150,7 +150,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 */
 	public boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
-		return mPlaces.containsAll(net.getPredecessors(transition));
+		return mPlaces.containsAll(transition.getPredecessors());
 	}
 
 	/**
@@ -161,8 +161,8 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 */
 	public Marking<LETTER, PLACE> fireTransition(final Transition<LETTER, PLACE> transition,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> net) throws PetriNetNot1SafeException {
-		final Set<PLACE> predecessors = net.getPredecessors(transition);
-		final Set<PLACE> successors = net.getSuccessors(transition);
+		final Set<PLACE> predecessors = transition.getPredecessors();
+		final Set<PLACE> successors = transition.getSuccessors();
 		final Object[] places =
 				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream()).distinct()
 						.toArray();

@@ -123,16 +123,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		return result;
 	}
 
-	@Override
-	public ImmutableSet<PLACE> getSuccessors(final Transition<LETTER, PLACE> transition) {
-		return transition.getSuccessors();
-	}
-
-	@Override
-	public ImmutableSet<PLACE> getPredecessors(final Transition<LETTER, PLACE> transition) {
-		return transition.getPredecessors();
-	}
-
 	private void addMinuendPlace(final PLACE newMinuendPlace) {
 		final boolean newlyAdded = mMinuendPlaces.add(newMinuendPlace);
 		if (newlyAdded) {
@@ -315,7 +305,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					return null;
 				} else {
 					final Set<PLACE> successors = new LinkedHashSet<>();
-					for (final PLACE petriNetSuccessor : mMinuend.getSuccessors(inputTransition)) {
+					for (final PLACE petriNetSuccessor : inputTransition.getSuccessors()) {
 						// possibly first time that we saw this place, add
 						addMinuendPlace(petriNetSuccessor);
 						successors.add(petriNetSuccessor);
@@ -467,7 +457,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				// assert (mMinuendPlaces.containsAll(mMinued.getPredecessors(inputTransition))) : "missing
 				// predecessor";
 				final Set<PLACE> successors = new LinkedHashSet<>();
-				for (final PLACE petriNetSuccessor : mMinuend.getSuccessors(inputTransition)) {
+				for (final PLACE petriNetSuccessor : inputTransition.getSuccessors()) {
 					// possibly first time that we saw this place, add
 					addMinuendPlace(petriNetSuccessor);
 					successors.add(petriNetSuccessor);
@@ -475,7 +465,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				final int totalOrderId = mNumberOfConstructedTransitions;
 				mNumberOfConstructedTransitions++;
 				result = mYetConstructedResult.addTransition(inputTransition.getSymbol(),
-						mMinuend.getPredecessors(inputTransition), ImmutableSet.of(successors), totalOrderId);
+						inputTransition.getPredecessors(), ImmutableSet.of(successors), totalOrderId);
 				mInputTransition2State2OutputTransition.put(inputTransition, null, result);
 				final Transition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
 				assert valueBefore == null : "Cannot add transition twice.";

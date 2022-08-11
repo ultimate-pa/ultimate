@@ -498,7 +498,7 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 
 	private void copyMinuendFlow(final Transition<LETTER, PLACE> trans, final Collection<PLACE> preds,
 			final Collection<PLACE> succs) {
-		for (final PLACE oldPlace : mMinuend.getPredecessors(trans)) {
+		for (final PLACE oldPlace : trans.getPredecessors()) {
 			final PLACE newPlace = mOldPlace2NewPlace.get(oldPlace);
 			if (newPlace == null) {
 				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace + " size: "
@@ -506,7 +506,7 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 			}
 			preds.add(newPlace);
 		}
-		for (final PLACE oldPlace : mMinuend.getSuccessors(trans)) {
+		for (final PLACE oldPlace : trans.getSuccessors()) {
 			final PLACE newPlace = mOldPlace2NewPlace.get(oldPlace);
 			if (newPlace == null) {
 				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace);

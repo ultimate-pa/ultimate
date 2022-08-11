@@ -168,7 +168,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetr
 			final PLACE place = work.poll();
 			for (final Transition<LETTER, PLACE> predTransition : mOperand.getPredecessors(place)) {
 				transitivePredecessors.add(predTransition);
-				mOperand.getPredecessors(predTransition).stream().filter(visited::add).forEach(work::add);
+				predTransition.getPredecessors().stream().filter(visited::add).forEach(work::add);
 			}
 		}
 		return transitivePredecessors;

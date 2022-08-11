@@ -63,10 +63,10 @@ public class ProjectToSubnet<LETTER, PLACE> {
 			}
 		}
 		for (final Transition<LETTER, PLACE> t : operand.getTransitions()) {
-			final HashSet<PLACE> preds = new HashSet<>(operand.getPredecessors(t));
+			final HashSet<PLACE> preds = new HashSet<>(t.getPredecessors());
 			preds.removeAll(flowToRemove.getImage(t));
 			preds.removeAll(placesToRemove);
-			final HashSet<PLACE> succs = new HashSet<>(operand.getSuccessors(t));
+			final HashSet<PLACE> succs = new HashSet<>(t.getSuccessors());
 			succs.removeAll(flowToRemove.getImage(t));
 			succs.removeAll(placesToRemove);
 			final Transition<LETTER, PLACE> newTransition =

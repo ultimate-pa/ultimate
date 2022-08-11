@@ -70,9 +70,9 @@ public final class PetriNetUtils {
 		if (transitions.isEmpty()) {
 			return true;
 		} else {
-			final Set<PLACE> predecessorPlaces = net.getPredecessors(transitions.iterator().next());
+			final Set<PLACE> predecessorPlaces = transitions.iterator().next().getPredecessors();
 			for (final Transition<LETTER, PLACE> transition : transitions) {
-				final Set<PLACE> transPredPlaces = net.getPredecessors(transition);
+				final Set<PLACE> transPredPlaces = transition.getPredecessors();
 				if (!predecessorPlaces.equals(transPredPlaces)) {
 					return false;
 				}
@@ -191,9 +191,9 @@ public final class PetriNetUtils {
 		final Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> result = new HashMap<>();
 		for (final Transition<LETTER, PLACE> oldT : net.getTransitions()) {
 			final ImmutableSet<PLACE> predecessors =
-					net.getPredecessors(oldT).stream().map(map::get).collect(ImmutableSet.collector());
+					oldT.getPredecessors().stream().map(map::get).collect(ImmutableSet.collector());
 			final ImmutableSet<PLACE> successors =
-					net.getSuccessors(oldT).stream().map(map::get).collect(ImmutableSet.collector());
+					oldT.getSuccessors().stream().map(map::get).collect(ImmutableSet.collector());
 			final Transition<LETTER, PLACE> newT = new Transition<>(oldT.getSymbol(), predecessors, successors, 0);
 			result.put(oldT, newT);
 		}

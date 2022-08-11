@@ -6,17 +6,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
 
 	Set<PLACE> getInitialPlaces();
-
-	/** @return Outgoing places of given transition. */
-	ImmutableSet<PLACE> getSuccessors(Transition<LETTER, PLACE> transition);
-
-	/** @return Incoming places of given transition. */
-	ImmutableSet<PLACE> getPredecessors(final Transition<LETTER, PLACE> transition);
 
 	/** @return Outgoing transitions of given place. */
 	Set<Transition<LETTER, PLACE>> getSuccessors(final PLACE place);

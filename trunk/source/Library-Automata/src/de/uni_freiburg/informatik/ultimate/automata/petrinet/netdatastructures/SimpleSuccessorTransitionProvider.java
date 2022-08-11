@@ -55,7 +55,7 @@ public class SimpleSuccessorTransitionProvider<LETTER, PLACE> implements ISucces
 
 	@Override
 	public Set<PLACE> getPredecessorPlaces() {
-		return mNet.getPredecessors(mTransitions.iterator().next());
+		return mTransitions.iterator().next().getPredecessors();
 	}
 
 	@Override

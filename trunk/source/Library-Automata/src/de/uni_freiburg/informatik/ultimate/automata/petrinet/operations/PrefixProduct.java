@@ -199,12 +199,12 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 		for (final LETTER symbol : netOnlyAlphabet) {
 			for (final Transition<LETTER, PLACE> trans : mSymbol2netTransitions.get(symbol)) {
 				final Set<PLACE> predecessors = new HashSet<>();
-				for (final PLACE oldPlace : mOperand.getPredecessors(trans)) {
+				for (final PLACE oldPlace : trans.getPredecessors()) {
 					final PLACE newPlace = mOldPlace2newPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
 				final Set<PLACE> successors = new HashSet<>();
-				for (final PLACE oldPlace : mOperand.getSuccessors(trans)) {
+				for (final PLACE oldPlace : trans.getSuccessors()) {
 					final PLACE newPlace = mOldPlace2newPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
@@ -229,14 +229,14 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 	private void addSharedTransitionsHelper(final Transition<LETTER, PLACE> netTrans,
 			final AutomatonTransition nwaTrans, final Set<PLACE> predecessors,
 			final BoundedPetriNet<LETTER, PLACE> result) {
-		for (final PLACE oldPlace : mOperand.getPredecessors(netTrans)) {
+		for (final PLACE oldPlace : netTrans.getPredecessors()) {
 			final PLACE newPlace = mOldPlace2newPlace.get(oldPlace);
 			predecessors.add(newPlace);
 		}
 		predecessors.add(mState2newPlace.get(nwaTrans.getPredecessor()));
 
 		final Set<PLACE> successors = new HashSet<>();
-		for (final PLACE oldPlace : mOperand.getSuccessors(netTrans)) {
+		for (final PLACE oldPlace : netTrans.getSuccessors()) {
 			final PLACE newPlace = mOldPlace2newPlace.get(oldPlace);
 			successors.add(newPlace);
 		}

@@ -168,7 +168,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 			final MarkingOfFireSequence<LETTER, PLACE> predecessor, final Transition<LETTER, PLACE> transition)
 			throws PetriNetNot1SafeException {
 		int firingInAcceptingPlaceIndex;
-		if (mOperand.getSuccessors(transition).stream().anyMatch(mOperand::isAccepting)) {
+		if (transition.getSuccessors().stream().anyMatch(mOperand::isAccepting)) {
 			firingInAcceptingPlaceIndex = mfireSequenceIndex;
 		} else {
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
