@@ -86,11 +86,7 @@ public class PredicateFactory extends BasicPredicateFactory {
 	}
 
 	public MLPredicate newMLDontCarePredicate(final IcfgLocation[] programPoints) {
-		final TermVarsProc termVarsProc = constructTermVarsProc(mDontCareTerm);
-		final MLPredicate predicate =
-				new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getProcedures(),
-						termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
-		return predicate;
+		return newMLPredicate(programPoints, mDontCareTerm);
 	}
 
 	public ProdState getNewProdState(final List<IPredicate> programPoints) {
