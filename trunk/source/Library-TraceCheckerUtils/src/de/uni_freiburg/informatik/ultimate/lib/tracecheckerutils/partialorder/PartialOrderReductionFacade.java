@@ -190,6 +190,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final int maxStep,
 			final IIcfg<?> icfg) {
 
+		mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((MonitorPredicate) x).getState1(),
+				x -> ((MonitorPredicate) x).getState2());
+
 		final List<String> threadList =
 				IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
