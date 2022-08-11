@@ -168,7 +168,7 @@ public class LiptonReductionTests implements IMessagePrinter {
 		}
 
 		final String relDescr = commLine.get().substring(prefix.length());
-		final Pattern pairPattern = Pattern.compile("\s*\\(([^,]+),([^\\)]+)\\)");
+		final Pattern pairPattern = Pattern.compile("\\s*\\(([^,]+),([^\\)]+)\\)");
 		final Matcher matcher = pairPattern.matcher(relDescr);
 		while (matcher.find()) {
 			final String left = matcher.group(1).strip();
