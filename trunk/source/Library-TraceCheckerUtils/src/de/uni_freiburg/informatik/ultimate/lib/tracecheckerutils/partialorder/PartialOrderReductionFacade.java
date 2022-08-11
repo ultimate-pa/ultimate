@@ -105,11 +105,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
 	private final ISleepMapStateFactory<L, IPredicate, IPredicate> mSleepMapFactory;
+	private final McrStateFactory<L> mMcrFactory;
 
 	private StateSplitter<IPredicate> mStateSplitter;
 	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
-	private final PredicateFactory mPredicateFactory;
-	private final McrStateFactory<L> mMcrFactory;
 
 	private final IIcfg<?> mIcfg;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
@@ -143,7 +142,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mPredicateFactory = predicateFactory;
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
-		mMcrFactory = createMcrFactory(mcrOptimizeForkJoin, mcrOverApproxWRWC);
+		mMcrFactory = createMcrFactory(predicateFactory, mcrOptimizeForkJoin, mcrOverApproxWRWC);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mDeadEndStore = createDeadEndStore();
 		mIcfg = icfg;
@@ -206,11 +205,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return factory;
 	}
 
-	private McrStateFactory<L> createMcrFactory(final boolean optimizeForkJoin, final boolean overApproxWRWC) {
+	private McrStateFactory<L> createMcrFactory(final PredicateFactory predicateFactory, final boolean optimizeForkJoin,
+			final boolean overApproxWRWC) {
 		if (mMode != PartialOrderMode.MCR_WITH_DEPRANKS && mMode != PartialOrderMode.MCR_WITHOUT_DEPRANKS) {
 			return null;
 		}
-		final McrStateFactory<L> factory = new McrStateFactory<>(mPredicateFactory,
+		final McrStateFactory<L> factory = new McrStateFactory<>(predicateFactory,
 				mMode == PartialOrderMode.MCR_WITH_DEPRANKS, optimizeForkJoin, overApproxWRWC);
 		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, state -> state);
 		return factory;
