@@ -640,14 +640,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 	@Override
 	public Set<ITransition<LETTER, PLACE>> getSuccessors(PLACE place) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented yet.");
+		return mYetConstructedResult.getSuccessors(place);
 	}
 
 	@Override
 	public Set<ITransition<LETTER, PLACE>> getPredecessors(PLACE place) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented yet.");
+		return mYetConstructedResult.getPredecessors(place);
 	}
 
 }

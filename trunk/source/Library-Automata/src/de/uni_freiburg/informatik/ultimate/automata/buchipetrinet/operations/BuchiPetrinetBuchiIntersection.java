@@ -66,6 +66,7 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 
 	private int mNextTransitionId = 0;
 
+	// TODO call this clas slazy, and maybe make new one with ipetrinet..
 	public BuchiPetrinetBuchiIntersection(IPetriNetSuccessorProvider<LETTER, PLACE> petriNet,
 			INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> automaton, IBlackWhiteStateFactory<PLACE> factory) {
 		mPetriNet = petriNet;
@@ -108,6 +109,7 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 		final Set<PLACE> initialPlaces = new HashSet<>();
 		initialPlaces.addAll(mPetriNet.getInitialPlaces());
 		mCurrentlyRelevantPurePetriPlaces.addAll(mPetriNet.getInitialPlaces());
+		// exception for more than one initial state
 		PLACE qInitialPlace = createOrGetLabelOneQPlace(mBuchiAutomata.getInitialStates().iterator().next());
 		initialPlaces.add(qInitialPlace);
 		return initialPlaces;
@@ -131,6 +133,9 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 		return casted.getPredecessors();
 	}
 
+	/*
+	 * Schaue ob die places in den input automaten existieren, nicht hier
+	 */
 	@Override
 	public Set<ITransition<LETTER, PLACE>> getSuccessors(PLACE place) {
 		if (mCurrentlyRelevantLabeledBuchiPlaces.contains(place)) {
@@ -152,6 +157,7 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 		}
 	}
 
+	// methoden vereinigen
 	private final Set<ITransition<LETTER, PLACE>> getBuchiStateOnePlaceSuccessors(PLACE place) {
 		Set<ITransition<LETTER, PLACE>> successorTransitions = new HashSet<>();
 		for (OutgoingInternalTransition<LETTER, PLACE> transition : mBuchiAutomata
@@ -195,6 +201,7 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 			relevantLabeledQplaces.addAll(mCurrentlyRelevantLabeledBuchiPlaces);
 			for (PLACE qPlace : relevantLabeledQplaces) {
 				PLACE originalQPlace;
+				// TODO bidirection map
 				if (mInputQ1GetQ.containsKey(qPlace)) {
 					originalQPlace = mInputQ1GetQ.get(qPlace);
 				} else if (mInputQ2GetQ.containsKey(qPlace)) {
