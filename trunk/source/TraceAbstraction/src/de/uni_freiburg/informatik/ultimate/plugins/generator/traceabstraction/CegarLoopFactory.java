@@ -184,15 +184,16 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		case PETRI_NET:
 			requireNoReuse("Petri net-based analysis");
 			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
-
-			final var initial = createPetriAbstraction(services, predicateFactory, true, root, errorLocs);
-			if (mPrefs.useRepeatedLipton()) {
-				return new CegarLoopForPetriNetWithRepeatedLiptonReduction<>(name, initial, root, csToolkit,
-						predicateFactory, mPrefs, errorLocs, services, mCreateCompositionFactory.get(),
-						mTransitionClazz, stateFactoryForRefinement);
-			}
-			return new CegarLoopForPetriNet<>(name, initial, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					services, mTransitionClazz, stateFactoryForRefinement);
+			return new CegarLoopForPetriNet<>(name,
+					createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
+					predicateFactory, mPrefs, errorLocs, services, mTransitionClazz, stateFactoryForRefinement);
+		case REPEATED_LIPTON_PN:
+			requireNoReuse("Petri net-based analysis");
+			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
+			return new CegarLoopForPetriNetWithRepeatedLiptonReduction<>(name,
+					createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
+					predicateFactory, mPrefs, errorLocs, services, mCreateCompositionFactory.get(), mTransitionClazz,
+					stateFactoryForRefinement);
 		default:
 			throw new AssertionError("Unknown Setting: " + mPrefs.getAutomataTypeConcurrency());
 		}

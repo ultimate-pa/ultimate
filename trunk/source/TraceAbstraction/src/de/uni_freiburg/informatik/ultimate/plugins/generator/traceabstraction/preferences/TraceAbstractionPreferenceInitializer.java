@@ -124,9 +124,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_ONESHOT = "Apply one-shot Partial Order Reduction to input program";
 	private static final boolean DEF_POR_ONESHOT = false;
 
-	public static final String LABEL_REPEATED_LIPTON = "Apply repeated Lipton Reduction";
-	private static final boolean DEF_REPEATED_LIPTON = false;
-
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
@@ -571,7 +568,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				/* Petri LBE settings */
 
 				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_REPEATED_LIPTON, DEF_REPEATED_LIPTON, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
 						IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean),

@@ -106,7 +106,7 @@ public final class TAPreferences {
 	}
 
 	public enum Concurrency {
-		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA
+		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA, REPEATED_LIPTON_PN
 	}
 
 	public enum LooperCheck {
@@ -381,13 +381,6 @@ public final class TAPreferences {
 
 	public boolean applyOneShotPOR() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_POR_ONESHOT);
-	}
-
-	/**
-	 * @return true if Lipton Reduction should be applied repeatedly.
-	 */
-	public boolean useRepeatedLipton() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_REPEATED_LIPTON);
 	}
 
 	public PartialOrderMode getPartialOrderMode() {
