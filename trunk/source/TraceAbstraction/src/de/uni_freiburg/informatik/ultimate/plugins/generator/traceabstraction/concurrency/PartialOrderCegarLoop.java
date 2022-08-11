@@ -157,7 +157,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations,
 				this::makeBudget);
 
-		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
+		// TODO support dead ends with the new structure
+		mSupportsDeadEnds = false && mPref.getNumberOfIndependenceRelations() == 1
 				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
 	}
 
