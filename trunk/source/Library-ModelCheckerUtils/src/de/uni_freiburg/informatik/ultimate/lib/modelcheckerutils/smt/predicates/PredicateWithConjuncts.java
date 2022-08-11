@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -26,34 +26,33 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.util.Arrays;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 /**
- * A predicate with multiple locations (used in concurrency analysis) and a list of conjuncts. The conjunction formula
- * is not computed eagerly.
+ * A predicate with a list of conjuncts. The conjunction formula is not computed eagerly.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public final class MLPredicateWithConjuncts extends PredicateWithConjuncts implements IMLPredicate {
-	private final IcfgLocation[] mProgramPoints;
+public class PredicateWithConjuncts implements IPredicate {
+	protected final int mSerial;
+	protected final ImmutableList<IPredicate> mConjuncts;
 
 	/**
 	 * Create a new instance from scratch.
 	 *
 	 * @param serialNumber
 	 *            The predicate's serial number
-	 * @param programPoints
-	 *            The array of locations
 	 * @param conjuncts
 	 *            The list of conjuncts
 	 */
-	public MLPredicateWithConjuncts(final int serialNumber, final IcfgLocation[] programPoints,
-			final ImmutableList<IPredicate> conjuncts) {
-		super(serialNumber, conjuncts);
-		mProgramPoints = programPoints;
+	public PredicateWithConjuncts(final int serialNumber, final ImmutableList<IPredicate> conjuncts) {
+		mSerial = serialNumber;
+		mConjuncts = conjuncts;
 	}
 
 	/**
@@ -67,9 +66,25 @@ public final class MLPredicateWithConjuncts extends PredicateWithConjuncts imple
 	 * @param newConjunct
 	 *            A new conjunct to be added. Should not be an instance of this class (otherwise, nesting occurs).
 	 */
-	public MLPredicateWithConjuncts(final int serialNumber, final IMLPredicate old, final IPredicate newConjunct) {
-		super(serialNumber, old, newConjunct);
-		mProgramPoints = old.getProgramPoints();
+	public PredicateWithConjuncts(final int serialNumber, final IPredicate old, final IPredicate newConjunct) {
+		mSerial = serialNumber;
+
+		final ImmutableList<IPredicate> oldConjuncts;
+		if (old instanceof PredicateWithConjuncts) {
+			oldConjuncts = ((PredicateWithConjuncts) old).mConjuncts;
+		} else {
+			oldConjuncts = ImmutableList.singleton(old);
+		}
+		mConjuncts = new ImmutableList<>(newConjunct, oldConjuncts);
+	}
+
+	public ImmutableList<IPredicate> getConjuncts() {
+		return mConjuncts;
+	}
+
+	@Override
+	public int hashCode() {
+		return HashUtils.hashJenkins(31, mSerial);
 	}
 
 	@Override
@@ -81,19 +96,38 @@ public final class MLPredicateWithConjuncts extends PredicateWithConjuncts imple
 			return false;
 		}
 		if (getClass() == obj.getClass()) {
-			final MLPredicateWithConjuncts other = (MLPredicateWithConjuncts) obj;
+			final PredicateWithConjuncts other = (PredicateWithConjuncts) obj;
 			return mSerial == other.mSerial;
 		}
 		return false;
 	}
 
 	@Override
-	public IcfgLocation[] getProgramPoints() {
-		return mProgramPoints;
+	public Term getFormula() {
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Term getClosedFormula() {
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String[] getProcedures() {
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Set<IProgramVar> getVars() {
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String toString() {
-		return mSerial + "#" + Arrays.toString(mProgramPoints) + mConjuncts.toString();
+		return mSerial + "#" + mConjuncts.toString();
 	}
 }
