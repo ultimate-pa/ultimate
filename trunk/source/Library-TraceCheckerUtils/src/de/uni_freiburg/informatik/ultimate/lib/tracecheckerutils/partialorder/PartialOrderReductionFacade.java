@@ -75,6 +75,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.maximalcausality.MaximalCausalityReduction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.maximalcausality.McrStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -124,7 +126,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final OrderType orderType, final long randomOrderSeed,
 			final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
 			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget,
-			final TAPreferences preferences) {
+			final boolean mcrOptimizeForkJoin, final boolean mcrOverApproxWRWC) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
@@ -141,7 +143,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mPredicateFactory = predicateFactory;
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
-		mMcrFactory = createMcrFactory(preferences);
+		mMcrFactory = createMcrFactory(mcrOptimizeForkJoin, mcrOverApproxWRWC);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mDeadEndStore = createDeadEndStore();
 		mIcfg = icfg;
@@ -204,13 +206,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return factory;
 	}
 
-	private McrStateFactory<L> createMcrFactory(final TAPreferences preferences) {
+	private McrStateFactory<L> createMcrFactory(final boolean optimizeForkJoin, final boolean overApproxWRWC) {
 		if (mMode != PartialOrderMode.MCR_WITH_DEPRANKS && mMode != PartialOrderMode.MCR_WITHOUT_DEPRANKS) {
 			return null;
 		}
-		final McrStateFactory<L> factory =
-				new McrStateFactory<>(mPredicateFactory, mMode == PartialOrderMode.MCR_WITH_DEPRANKS,
-						preferences.optimizeForkJoinForMcr(), preferences.overapproximateWrwcForMcr());
+		final McrStateFactory<L> factory = new McrStateFactory<>(mPredicateFactory,
+				mMode == PartialOrderMode.MCR_WITH_DEPRANKS, optimizeForkJoin, overApproxWRWC);
 		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, state -> state);
 		return factory;
 	}
@@ -340,7 +341,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case MCR_WITHOUT_DEPRANKS:
 			final MaximalCausalityReduction<L> mcr = new MaximalCausalityReduction<>(
 					mAutomataServices.getLoggingService(), input, mMcrFactory, mDfsOrder);
-			new DepthFirstTraversal<>(mAutomataServices, mcr, mDfsOrder, visitor);
+			DepthFirstTraversal.traverse(mAutomataServices, mcr, mDfsOrder, visitor);
 			mcr.reportStatistics();
 			break;
 		case NONE:

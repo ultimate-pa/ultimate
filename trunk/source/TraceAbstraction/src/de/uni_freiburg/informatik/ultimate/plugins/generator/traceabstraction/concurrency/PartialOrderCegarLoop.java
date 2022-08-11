@@ -148,7 +148,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
 				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations,
-				this::makeBudget, mPref);
+				this::makeBudget, mPref.optimizeForkJoinForMcr(), mPref.overapproximateWrwcForMcr());
 
 		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
 				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;

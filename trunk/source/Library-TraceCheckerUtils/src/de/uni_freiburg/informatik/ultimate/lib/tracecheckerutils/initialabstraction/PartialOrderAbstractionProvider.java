@@ -63,6 +63,9 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final PartialOrderMode mPartialOrderMode;
 	private final OrderType mOrderType;
 	private final long mDfsOrderSeed;
+	private final boolean mMcrOptimizeForkJoin;
+	private final boolean mMcrOverApproxWRWC;
+
 	private final String mPluginId;
 
 	/**
@@ -82,6 +85,10 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	 *            Indicates the preference order used by Partial Order Reduction
 	 * @param dfsOrderSeed
 	 *            If {@code orderType} is random-based, the seed to use for the random generator.
+	 * @param mcrOptimizeForkJoin
+	 *            Whether or not to enable the fork-join optimization in maximal causality reduction
+	 * @param mcrOverApproxWRWC
+	 *            Whether or not to further over-approximate in maximal causality reduction
 	 * @param pluginId
 	 *            Plugin ID used to report statistics
 	 */
@@ -89,7 +96,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
 			final PredicateFactory predicateFactory, final PartialOrderMode partialOrderMode, final OrderType orderType,
-			final long dfsOrderSeed, final String pluginId) {
+			final long dfsOrderSeed, final boolean mcrOptimizeForkJoin, final boolean mcrOverApproxWRWC,
+			final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -97,6 +105,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		mPartialOrderMode = partialOrderMode;
 		mOrderType = orderType;
 		mDfsOrderSeed = dfsOrderSeed;
+		mMcrOptimizeForkJoin = mcrOptimizeForkJoin;
+		mMcrOverApproxWRWC = mcrOverApproxWRWC;
 		mPluginId = pluginId;
 	}
 
@@ -110,8 +120,9 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		final IIndependenceRelation<IPredicate, L> indep =
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
-		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
-				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, List.of(indep), null);
+		final PartialOrderReductionFacade<L> por =
+				new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg, errorLocs, mPartialOrderMode,
+						mOrderType, mDfsOrderSeed, List.of(indep), null, mMcrOptimizeForkJoin, mMcrOverApproxWRWC);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);
