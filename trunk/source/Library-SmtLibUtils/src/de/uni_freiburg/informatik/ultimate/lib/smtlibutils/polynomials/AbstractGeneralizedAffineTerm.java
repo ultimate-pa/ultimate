@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implements IPolynomialTerm {
 
+	public enum Equivalence { EQUALS, DISTINCT, INCOMPARABLE };
+
 	/**
 	 * Map from abstract variables to coeffcients. Coefficient zero is forbidden.
 	 */
@@ -437,6 +439,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		return Rational.valueOf(bi, BigInteger.ONE);
 	}
 
+	@Override
 	public IPolynomialTerm add(final Rational offset) {
 		final Rational newConstant;
 		if (SmtSortUtils.isRealSort(getSort())) {
@@ -449,6 +452,27 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			throw new AssertionError("unsupported Sort " + getSort());
 		}
 		return constructNew(getSort(), newConstant, getAbstractVariable2Coefficient());
+	}
+
+
+	@Override
+	public Equivalence compare(final IPolynomialTerm otherTerm) {
+		final Equivalence result;
+		if (otherTerm instanceof AbstractGeneralizedAffineTerm) {
+			final AbstractGeneralizedAffineTerm<?> otherPoly = (AbstractGeneralizedAffineTerm<?>) otherTerm;
+			if (this.getAbstractVariable2Coefficient().equals(otherPoly.getAbstractVariable2Coefficient())) {
+				if (this.getConstant().equals(otherPoly.getConstant())) {
+					result = Equivalence.EQUALS;
+				} else {
+					result = Equivalence.DISTINCT;
+				}
+			} else {
+				result = Equivalence.INCOMPARABLE;
+			}
+		} else {
+			result = Equivalence.INCOMPARABLE;
+		}
+		return result;
 	}
 
 
@@ -931,6 +955,18 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			throw new AssertionError("unknown value: " + rRel);
 		}
 		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Rational computeGcdOfCoefficients() {
+		Rational gcd = Rational.ZERO;
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			gcd = gcd.gcd(entry.getValue());
+		}
+		return gcd;
 	}
 
 	@Override

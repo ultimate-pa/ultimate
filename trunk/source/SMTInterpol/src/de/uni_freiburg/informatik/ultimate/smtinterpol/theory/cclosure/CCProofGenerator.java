@@ -27,6 +27,7 @@ import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
@@ -519,14 +520,14 @@ public class CCProofGenerator {
 		return proofOrder;
 	}
 
-	private Term buildLemma(final Theory theory, final RuleKind rule, final ProofInfo info, final Term diseq,
-			final boolean isTrivialDiseq, final HashMap<SymmetricPair<CCTerm>, Term> auxLiterals) {
+	private Term buildLemma(final Theory theory, final RuleKind rule, final ProofInfo info, final Term mainEq,
+			final HashMap<SymmetricPair<CCTerm>, Term> auxLiterals) {
 		// Collect the new clause literals.
-		final Term[] args = new Term[info.getLiterals().size() + (isTrivialDiseq ? 0 : 1) + info.getSubProofs().size()];
+		final Term[] args = new Term[info.getLiterals().size() + (mainEq == null ? 0 : 1) + info.getSubProofs().size()];
 		int i = 0;
-		if (!isTrivialDiseq) {
+		if (mainEq != null) {
 			// First the (positive) diseq literal
-			args[i++] = theory.annotatedTerm(CCEquality.QUOTED_CC, diseq);
+			args[i++] = theory.annotatedTerm(CCEquality.QUOTED_CC, mainEq);
 		}
 		// then the other literals, there may also be other positive literals.
 		for (final Literal entry : info.getLiterals()) {
@@ -551,15 +552,20 @@ public class CCProofGenerator {
 		final Term base = theory.or(args);
 
 		final IndexedPath[] paths = info.getPaths();
-		final boolean hasCycle = rule == RuleKind.DT_CYCLE;
-		final Object[] subannots = new Object[2 * paths.length + (diseq == null ? 0 : 1) + (hasCycle ? 2 : 0)];
-		int k = 0;
-		if (diseq != null) {
-			subannots[k++] = theory.annotatedTerm(CCEquality.QUOTED_CC, diseq);
+		final SymmetricPair<CCTerm> infoDiseq = info.getDiseq();
+		Object[] lemmaAnnot = new Object[0];
+		if (rule != RuleKind.CC && mAnnot.mDTLemma != null && mAnnot.mDTLemma.getAnnotation() != null) {
+			lemmaAnnot = mAnnot.mDTLemma.getAnnotation();
 		}
-		if (hasCycle) {
-			subannots[k++] = ":cycle";
-			subannots[k++] = mAnnot.mDTLemma.getCycleTerms();
+		final Object[] subannots = new Object[2 * paths.length + (infoDiseq == null ? 0 : 1) + lemmaAnnot.length];
+		int k = 0;
+		if (infoDiseq != null) {
+			final Term diseqTerm = theory.term(SMTLIBConstants.EQUALS, infoDiseq.getFirst().getFlatTerm(),
+					infoDiseq.getSecond().getFlatTerm());
+			subannots[k++] = theory.annotatedTerm(CCEquality.QUOTED_CC, diseqTerm);
+		}
+		for (final Object annot : lemmaAnnot) {
+			subannots[k++] = annot;
 		}
 		for (final IndexedPath p : paths) {
 			final CCTerm index = p.getIndex();
@@ -595,41 +601,32 @@ public class CCProofGenerator {
 		for (int lemmaNo = 0; lemmaNo < proofOrder.size(); lemmaNo++) {
 			// Build the lemma clause.
 			final ProofInfo info = proofOrder.get(lemmaNo);
-			Term diseq;
-			// Is trivial diseq is set if the main lemma proofs something like x == x + 1.
-			// In that case there is no equality atom in the clause
-			boolean isTrivialDiseq = false;
+			// The equality proved by the lemma. It is null if the lemma proofs a
+			// false equality like x == x + 1 (can only happen for the main lemma).
+			// In that case there is no positive equality atom in the clause.
+			Term provedEq;
 			if (lemmaNo == 0) { // main lemma
-				if (mAnnot.getDiseq() == null) {
+				assert info.getDiseq() == mAnnot.getDiseq();
+				if (info.getDiseq() == null) {
 					// Rule without disequality
-					diseq = null;
-					isTrivialDiseq = true;
+					provedEq = null;
 				} else {
-					final CCTerm diseqLHS = mAnnot.getDiseq().getFirst();
-					final CCTerm diseqRHS = mAnnot.getDiseq().getSecond();
-					final Literal diseqLit = mEqualityLiterals.get(new SymmetricPair<>(diseqLHS, diseqRHS));
-					if (diseqLit != null) {
-						// disequality must occur positively in lemma or not at all.
-						assert diseqLit.getSign() > 0;
-						// use the same order of sides as in the literal appearing in the lemma.
-						diseq = diseqLit.getSMTFormula(theory, false);
-					} else {
-						// if disequality does not occur, it is a trivial disequality.
-						diseq = theory.term("=", diseqLHS.getFlatTerm(), diseqRHS.getFlatTerm());
-						isTrivialDiseq = true;
-					}
+					final Literal diseqLit = mEqualityLiterals.get(info.getDiseq());
+					// disequality must occur positively in lemma or not at all.
+					assert diseqLit == null || diseqLit.getSign() > 0;
+					// if disequality does not occur, it is a trivial disequality.
+					provedEq = diseqLit == null ? null : diseqLit.getSMTFormula(theory, false);
 				}
 			} else {
 				// auxLiteral should already have been created by the lemma that needs it.
 				assert auxLiterals.containsKey(info.getDiseq());
-				diseq = auxLiterals.get(info.getDiseq());
+				provedEq = auxLiterals.get(info.getDiseq());
 			}
 
 			// Build lemma annotations.
-			Term lemma = buildLemma(theory, lemmaNo == 0 ? mRule : RuleKind.CC, info, diseq, isTrivialDiseq,
-					auxLiterals);
+			Term lemma = buildLemma(theory, lemmaNo == 0 ? mRule : RuleKind.CC, info, provedEq, auxLiterals);
 			if (lemmaNo != 0) {
-				final Term pivot = theory.annotatedTerm(CCEquality.QUOTED_CC, diseq);
+				final Term pivot = theory.annotatedTerm(CCEquality.QUOTED_CC, provedEq);
 				lemma = theory.annotatedTerm(new Annotation[] { new Annotation(":pivot", pivot) }, lemma);
 			}
 			allLemmas[lemmaNo] = lemma;
@@ -703,7 +700,7 @@ public class CCProofGenerator {
 			term = ((CCAppTerm) term).getFunc();
 			// term == const
 			if (term instanceof CCBaseTerm) {
-				return ((CCBaseTerm) term).getFunctionSymbol().getName().equals("const");
+				return ((CCBaseTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
 			}
 		}
 		return false;

@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.JordanLoopAccelerationResult;
@@ -60,7 +60,7 @@ public class JordanLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	public JordanLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final String newIcfgIdentifier, final IBacktranslationTracker backtranslationTracker,
+			final String newIcfgIdentifier, final IcfgTransformationBacktranslator backtranslationTracker,
 			final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mOriginalIcfg = originalIcfg;
@@ -85,7 +85,7 @@ public class JordanLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				// self loop, lets accelerate
 				final UnmodifiableTransFormula oldTf = oldEdge.getTransformula();
 				final JordanLoopAccelerationResult jlar = JordanLoopAcceleration.accelerateLoop(mServices,
-						mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, false);
+						mOriginalIcfg.getCfgSmtToolkit().getManagedScript(), oldTf, !false);
 				mLogger.info("Jordan loop acceleration statistics: " + jlar.getJordanLoopAccelerationStatistics());
 				if (jlar.getAccelerationStatus() == JordanLoopAccelerationResult.AccelerationStatus.SUCCESS) {
 					mLogger.info("Accelerated %s to %s", oldTf, jlar.getTransFormula());

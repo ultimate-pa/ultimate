@@ -2,6 +2,8 @@
 /*
  * Author: Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Date: 18. 10. 2021
+ *
+ * As of 2022-03-25, this fails because our memcpy implementation does not support data race detection.
  */
 
 typedef unsigned long pthread_t;

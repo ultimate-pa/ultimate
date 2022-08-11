@@ -43,50 +43,47 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 		/**
 		 * Only the lasso, considered as an automaton.
 		 */
-		LassoAutomaton, 
+		LASSO_AUTOMATON,
 		/**
-		 * Use predicate obtained for the lasso. Add as many edge as possible.
-		 * Resulting automaton is in general not semideterministic and
-		 * the complementation is very costly.
+		 * Use predicate obtained for the lasso. Add as many edge as possible. Resulting automaton is in general not
+		 * semi-deterministic and the complementation is very costly.
 		 */
-		EagerNondeterminism, 
+		EAGER_NONDETERMINISM,
 		/**
-		 * Automaton that is mainly deterministic but can have some
-		 * nondeterministic transitions.
-		 * (Does not guarantee that automaton is semideterministic
+		 * Automaton that is mainly deterministic but can have some nondeterministic transitions. (Does not guarantee
+		 * that automaton is semi-deterministic
 		 */
-		ScroogeNondeterminism, 
+		SCROOGE_NONDETERMINISM,
 		/**
-		 * Automaton that is deterministic. 
-		 * As we know from Büchi, there are
-		 * omega-regular languages that are not accepted by any deterministic
-		 * Büchi automaton.
-		 * Practical experience shows that we sometimes need such languages
-		 * in the termination analysis. Hence using only deterministic
-		 * automata is not sufficient. 
+		 * Automaton that is deterministic. As we know from Büchi, there are omega-regular languages that are not
+		 * accepted by any deterministic Büchi automaton. Practical experience shows that we sometimes need such
+		 * languages in the termination analysis. Hence using only deterministic automata is not sufficient.
 		 */
-		Deterministic, 
+		DETERMINISTIC,
 		/**
-		 * Try different automata iteratively. Start with less nondeterministic
-		 * automata, increase amount of nondeterminism until an appropriate
-		 * automaton was found.
+		 * Try different automata iteratively. Start with less nondeterministic automata, increase amount of
+		 * nondeterminism until an appropriate automaton was found.
 		 */
-		Staged, 
+		STAGED,
 	}
 
 	public enum BuchiComplementationConstruction {
-		Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven
-	}
-	
-	public enum NcsbImplementation {
-		ORIGINAL, INTSET, INTSET_GBA, INTSET_GBA_LAZY, INTSET_GBA_ANTICHAIN, INTSET_GBA_LAZY_ANTICHAIN, INTSET_LAZY, INTSET_LAZY2, INTSET_LAZY3
+		NCSB, ELASTIC, HEIMAT2, TIGHT_RO, TIGHT_BASIC, TIGHT_HIGH_EVEN
 	}
 
+	public enum NcsbImplementation {
+		ORIGINAL, INTSET, INTSET_GBA, INTSET_GBA_LAZY, INTSET_GBA_ANTICHAIN, INTSET_GBA_LAZY_ANTICHAIN, INTSET_LAZY,
+		INTSET_LAZY2, INTSET_LAZY3
+	}
+
+	public enum AutomatonTypeConcurrent {
+		BUCHI_AUTOMATON, BUCHI_PETRI_NET, RABIN_PETRI_NET
+	}
 
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";
 	public static final String LABEL_DETERMINIZATION_ON_DEMAND = "Determinization on demand";
 	public static final String LABEL_BIA_CONSTRUCTION_STRATEGY = "Buchi interpolant automaton construction strategy";
-	public static final BuchiInterpolantAutomatonConstructionStrategy DEF_BIA_CONSTRUCTION_STRATEGY = 
+	public static final BuchiInterpolantAutomatonConstructionStrategy DEF_BIA_CONSTRUCTION_STRATEGY =
 			BuchiInterpolantAutomatonConstructionStrategy.RHODODENDRON;
 	public static final String LABEL_BUCHI_INTERPOLANT_AUTOMATON = "Buchi interpolant automaton";
 	public static final String LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION = "Buchi complementation construction";
@@ -114,12 +111,14 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	private static final String DEF_DUMP_SCRIPT_PATH = "";
 	public static final String LABEL_CONSTRUCT_TERMCOMP_PROOF = "Construct termination proof for TermComp";
 	public static final String LABEL_SIMPLIFY = "Try to simplify termination arguments";
-	public static final String LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT = 
+	public static final String LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT =
 			"Automata minimization after feasibility-based refinement";
-	public static final String LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT = 
+	public static final String LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT =
 			"Automata minimization after rank-based refinement";
-	private static final Minimization DEF_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT = Minimization.MINIMIZE_SEVPA;
-	private static final Minimization DEF_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT = Minimization.MINIMIZE_SEVPA;
+	private static final Minimization DEF_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT =
+			Minimization.MINIMIZE_SEVPA;
+	private static final Minimization DEF_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT =
+			Minimization.MINIMIZE_SEVPA;
 	/**
 	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
 	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
@@ -143,6 +142,8 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	private static final boolean DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS = true;
 	public static final String LABEL_NCSB_IMPLEMENTATION = "NCSB implementation";
 	private static final NcsbImplementation DEF_NCSB_IMPLEMENTATION = NcsbImplementation.ORIGINAL;
+	public static final String LABEL_AUTOMATON_TYPE = "Automaton type for concurrent programs";
+	private static final AutomatonTypeConcurrent DEF_AUTOMATON_TYPE = AutomatonTypeConcurrent.BUCHI_AUTOMATON;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -154,10 +155,11 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 				new UltimatePreferenceItem<>(LABEL_IGNORE_DOWN_STATES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DETERMINIZATION_ON_DEMAND, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
-						BuchiComplementationConstruction.Ncsb, PreferenceType.Combo, BuchiComplementationConstruction.values()),
+						BuchiComplementationConstruction.NCSB, PreferenceType.Combo,
+						BuchiComplementationConstruction.values()),
 				new UltimatePreferenceItem<>(LABEL_BIA_CONSTRUCTION_STRATEGY, DEF_BIA_CONSTRUCTION_STRATEGY,
 						PreferenceType.Combo, BuchiInterpolantAutomatonConstructionStrategy.values()),
-				new UltimatePreferenceItem<>(LABEL_BUCHI_INTERPOLANT_AUTOMATON, BuchiInterpolantAutomaton.Staged,
+				new UltimatePreferenceItem<>(LABEL_BUCHI_INTERPOLANT_AUTOMATON, BuchiInterpolantAutomaton.STAGED,
 						PreferenceType.Combo, BuchiInterpolantAutomaton.values()),
 				new UltimatePreferenceItem<>(LABEL_BOUNCER_STEM, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BOUNCER_LOOP, false, PreferenceType.Boolean),
@@ -186,12 +188,12 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 				new UltimatePreferenceItem<>(LABEL_CONSTRUCT_TERMCOMP_PROOF, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_TRY_TWOFOLD_REFINEMENT, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT, 
-						DEF_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
-						PreferenceType.Combo, Minimization.values()),
-				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT, 
-						DEF_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
-						PreferenceType.Combo, Minimization.values()),
+				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
+						DEF_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT, PreferenceType.Combo,
+						Minimization.values()),
+				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
+						DEF_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT, PreferenceType.Combo,
+						Minimization.values()),
 				new UltimatePreferenceItem<>(LABEL_USE_OLD_MAP_ELIMINATION, DEF_USE_OLD_MAP_ELIMINATION,
 						"Use either Matthias' (old) or Frank's (new) implementation of a map elimination algorithm",
 						PreferenceType.Boolean),
@@ -203,8 +205,9 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 						DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS,
 						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_NCSB_IMPLEMENTATION,
-						DEF_NCSB_IMPLEMENTATION, PreferenceType.Combo, NcsbImplementation.values()) 
-				};
+				new UltimatePreferenceItem<>(LABEL_NCSB_IMPLEMENTATION, DEF_NCSB_IMPLEMENTATION, PreferenceType.Combo,
+						NcsbImplementation.values()),
+				new UltimatePreferenceItem<>(LABEL_AUTOMATON_TYPE, DEF_AUTOMATON_TYPE, PreferenceType.Combo,
+						AutomatonTypeConcurrent.values()) };
 	}
 }

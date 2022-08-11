@@ -44,14 +44,13 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEqualityExplicator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexBasedCostEstimation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
@@ -67,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNorm
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -491,7 +491,7 @@ public class ElimStorePlain {
 								} else {
 									effectiveIndex2 = index2;
 								}
-								final Term replaced = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(eTask.getTerm());
+								final Term replaced = Substitution.apply(mMgdScript, substitutionMapping, eTask.getTerm());
 								effectiveTerm = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
 										eTask.getQuantifier(), replaced, QuantifierUtils.applyDualFiniteConnective(
 												mMgdScript.getScript(), eTask.getQuantifier(), definitions));
@@ -728,7 +728,7 @@ public class ElimStorePlain {
 				SimplificationTechnique.SIMPLIFY_DDA, quantified);
 
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mgdScript, pnf);
 		final Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 

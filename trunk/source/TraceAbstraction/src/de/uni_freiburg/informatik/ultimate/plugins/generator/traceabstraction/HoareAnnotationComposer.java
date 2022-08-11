@@ -143,9 +143,9 @@ public class HoareAnnotationComposer {
 			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
 
 			final Set<IProgramVar> vars = TermVarsProc.computeTermVarsProc(conjunction,
-					mCsToolkit.getManagedScript().getScript(), mCsToolkit.getSymbolTable()).getVars();
+					mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable()).getVars();
 			conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
-					conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript().getScript());
+					conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript());
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
 					mCsToolkit.getManagedScript(), conjunction, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			mHoareAnnotationStatisticsGenerator.reportSimplificationInter();

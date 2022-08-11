@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.junit.Assert;
@@ -37,9 +38,10 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolOptions;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 @RunWith(Parameterized.class)
@@ -54,13 +56,14 @@ public class SystemTest {
 		final TestEnvironment testEnv = new TestEnvironment(solver, options);
 		if (!f.getAbsolutePath().contains("epr")) {
 			solver.setOption(":proof-check-mode", true);
+			solver.setOption(":proof-level", ProofMode.LOWLEVEL);
 			if (!f.getAbsolutePath().contains("quant") && !f.getAbsolutePath().contains("datatype")) {
 				solver.setOption(":model-check-mode", true);
 			}
 			solver.setOption(":interpolant-check-mode", true);
 		}
 		if (f.getAbsolutePath().contains("test" + File.separatorChar + "epr")) {
-			solver.setOption(SMTInterpolOptions.EPR, true);
+			solver.setOption(SMTInterpolConstants.EPR, true);
 		}
 		testEnv.parseStream(new FileReader(f), f.getName());
 		testEnv.checkExpected();
@@ -77,18 +80,15 @@ public class SystemTest {
 			}
 			final int size = Integer.parseInt(sizestr);
 			return size < 5;// NOCHECKSTYLE
-		} else if (fname.startsWith("tightrhombus")) {
+		}
+		if (fname.startsWith("tightrhombus")) {
 			String sizestr = fname.substring(21, 23); // NOCHECKSTYLE
 			if (sizestr.length() == 2 && !Character.isDigit(sizestr.charAt(1))) {
 				sizestr = sizestr.substring(0, 1);
 			}
 			final int size = Integer.parseInt(sizestr);
 			return size < 5;// NOCHECKSTYLE
-		} else if (f.getParent().endsWith("lira" + separator + "cut-lemmas" + separator + "20-vars")) {
-			return false;
-		} else if (f.getParent().contains("test" + separator + "epr")) {
-			return false;
-		} else if (f.getParent().contains("test" + separator + "datatype" + separator + "quantified")) {
+		} else if (f.getParent().endsWith("lira" + separator + "cut-lemmas" + separator + "20-vars") || f.getParent().contains("test" + separator + "epr") || f.getParent().contains("test" + separator + "datatype" + separator + "quantified")) {
 			return false;
 		}
 		return true;
@@ -106,13 +106,10 @@ public class SystemTest {
 		while (!todo.isEmpty()) {
 			final File file = todo.removeFirst();
 			if (file.isDirectory()) {
-				for (final File subFile : file.listFiles()) {
-					todo.add(subFile);
-				}
-			} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")) {
-				if (shouldExecute(file)) {
-					testFiles.add(file);
-				}
+				Collections.addAll(todo, file.listFiles());
+			} else if ((file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2"))
+					&& shouldExecute(file)) {
+				testFiles.add(file);
 			}
 		}
 		return testFiles;
@@ -140,7 +137,8 @@ public class SystemTest {
 		public int parseNumber(final Object value) {
 			if (value instanceof Number) {
 				return ((Number) value).intValue();
-			} else if (value instanceof String) {
+			}
+			if (value instanceof String) {
 				try {
 					return Integer.parseInt((String) value);
 				} catch (final NumberFormatException ex) {
@@ -180,8 +178,10 @@ public class SystemTest {
 		}
 
 		public void checkExpected() {
-			Assert.assertTrue(mFile.getAbsolutePath() + ": Unexpected error or unsupported results", mExpectedErrors >= 0 && mExpectedUnsupported >= 0);
-			Assert.assertTrue(mFile.getAbsolutePath() + ": Too few error or unsupported results", mExpectedErrors <= 0 && mExpectedUnsupported <= 0);
+			Assert.assertTrue(mFile.getAbsolutePath() + ": Unexpected error or unsupported results",
+					mExpectedErrors >= 0 && mExpectedUnsupported >= 0);
+			Assert.assertTrue(mFile.getAbsolutePath() + ": Too few error or unsupported results",
+					mExpectedErrors <= 0 && mExpectedUnsupported <= 0);
 		}
 	}
 }

@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -89,7 +89,7 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 		if (term == mDontCareTerm) {
 			termVarsProc = constructDontCare();
 		} else {
-			termVarsProc = TermVarsProc.computeTermVarsProc(term, mScript, mSymbolTable);
+			termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
 		}
 		return termVarsProc;
 	}
@@ -100,7 +100,7 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
 		final Term conjunction = andTermFromPreds(inputPreds, SimplificationTechnique.NONE);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mMgdScript, mSymbolTable);
 		return new BuchiPredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), inputPreds);
 	}

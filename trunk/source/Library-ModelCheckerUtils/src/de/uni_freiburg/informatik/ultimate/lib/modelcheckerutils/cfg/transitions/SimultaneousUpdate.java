@@ -37,7 +37,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionDer;
@@ -47,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Represents a simultaneous variable update that consists of two parts 1.
@@ -66,13 +69,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class SimultaneousUpdate {
 
 	private final Map<IProgramVar, Term> mDeterministicAssignment;
+	private final NestedMap2<IProgramVar, ArrayIndex, Term> mDeterministicArrayWrites;
 	private final Set<IProgramVar> mHavocedVars;
 	private final Set<IProgramVar> mReadonlyVars;
 
 	public SimultaneousUpdate(final Map<IProgramVar, Term> deterministicAssignment,
+			final NestedMap2<IProgramVar, ArrayIndex, Term> deterministicArrayWrites,
 			final Set<IProgramVar> havocedVars, final Set<IProgramVar> readonlyVars) {
 		super();
 		mDeterministicAssignment = deterministicAssignment;
+		mDeterministicArrayWrites = deterministicArrayWrites;
 		mHavocedVars = havocedVars;
 		mReadonlyVars = readonlyVars;
 	}
@@ -108,6 +114,7 @@ public class SimultaneousUpdate {
 			}
 		}
 		final Map<IProgramVar, Term> deterministicAssignment = new HashMap<>();
+		final NestedMap2<IProgramVar, ArrayIndex, Term> deterministicArrayWrites = new NestedMap2<>();
 		for (final IProgramVar pv : assignmentCandidates) {
 
 			final Set<Term> pvContainingConjuncts = pv2conjuncts.getImage(pv);
@@ -130,7 +137,19 @@ public class SimultaneousUpdate {
 						throw new SimultaneousUpdateException("cannot bring into simultaneous update form " + pv
 								+ "'s outvar occurs in several conjuncts " + Arrays.toString(conjuncts));
 					}
-					deterministicAssignment.put(pv, renamed);
+					if (SmtSortUtils.isArraySort(pv.getSort())) {
+						final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore
+								.convert(mgdScript.getScript(), renamed);
+						if (mdns.getIndices().size() > 1) {
+							throw new UnsupportedOperationException("Nested stores not yet supported");
+						}
+						if (!pv.getTermVariable().equals(mdns.getArray())) {
+							throw new UnsupportedOperationException("Only self-update supported");
+						}
+						deterministicArrayWrites.put(pv, mdns.getIndices().get(0), mdns.getValues().get(0));
+					} else {
+						deterministicAssignment.put(pv, renamed);
+					}
 				}
 			}
 		}
@@ -141,7 +160,8 @@ public class SimultaneousUpdate {
 				readonlyVariables.add(pv);
 			}
 		}
-		return new SimultaneousUpdate(deterministicAssignment, havocedVars, readonlyVariables);
+		return new SimultaneousUpdate(deterministicAssignment, deterministicArrayWrites, havocedVars,
+				readonlyVariables);
 	}
 
 	private static boolean isReadInSomeAssignment(final IProgramVar pv,
@@ -198,7 +218,7 @@ public class SimultaneousUpdate {
 		final Term rhs = ei.getRelatedTerm();
 		final Map<Term, Term> substitutionMapping = computeSubstitutionMapping(rhs, conjuncts, outVar,
 				inVarsReverseMapping, outVarsReverseMapping, mgdScript);
-		final Term renamed = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(rhs);
+		final Term renamed = Substitution.apply(mgdScript, substitutionMapping, rhs);
 		return renamed;
 	}
 
@@ -232,10 +252,21 @@ public class SimultaneousUpdate {
 	}
 
 	/**
-	 * Returns the variables that occur on the right-hand side of updates.
+	 * Returns the variables that occur on the right-hand side of updates. Except
+	 * for the variables that occur in
+	 * {@link SimultaneousUpdate#getDeterministicArrayWrites()}.
 	 */
 	public Map<IProgramVar, Term> getDeterministicAssignment() {
 		return mDeterministicAssignment;
+	}
+
+
+	/**
+	 * Returns variables that occur on the right-hand side of an update, where the
+	 * update could be identified as a, potentially multi-dimensional, array write.
+	 */
+	public NestedMap2<IProgramVar, ArrayIndex, Term> getDeterministicArrayWrites() {
+		return mDeterministicArrayWrites;
 	}
 
 	/**

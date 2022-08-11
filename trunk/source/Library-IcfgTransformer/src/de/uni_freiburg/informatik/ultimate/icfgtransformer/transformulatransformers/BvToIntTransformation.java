@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
@@ -35,11 +36,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationManager;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class BvToIntTransformation extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Translate Bitvectors to Integer Formulas";
@@ -47,14 +50,18 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	private final ReplacementVarFactory mFac;
 
+	final LinkedHashMap<Term, Term> mBacktranslationMap = new LinkedHashMap<>();
+
 	/**
 	 * @param fac
+	 * @param mgdScript
 	 * @param useNeighbors
 	 *            If set to false we obtain the underapproximation where we
 	 *            assume that the modulo operator is the identity for the
 	 *            first argument.
 	 */
-	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac) {
+	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac,
+			final ManagedScript mgdScript) {
 		super();
 		mFac = fac;
 		mServices = services;
@@ -69,6 +76,10 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 	public ModifiableTransFormula process(final ManagedScript mgdScript, final ModifiableTransFormula tf)
 			throws TermException {
 
+		if (!tf.getNonTheoryConsts().isEmpty()) {
+			throw new UnsupportedOperationException("Non-theory constants: " + tf.getNonTheoryConsts());
+		}
+
 		// final TransFormulaBuilder newIntTF = new TransFormulaBuilder(null,
 		// null, false, null, false, null, false);
 		final ModifiableTransFormula newIntTF = new ModifiableTransFormula(tf);
@@ -79,6 +90,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 			final IReplacementVarOrConst repVar = mFac.getOrConstuctReplacementVar(progVar.getTermVariable(), true,
 					bvToIntSort(mgdScript, progVar.getTerm().getSort()));
+			mBacktranslationMap.put(((IProgramVar) repVar).getTermVariable(), progVar.getTermVariable());
 
 			final TermVariable intInVar;
 			final TermVariable intOutVar;
@@ -118,7 +130,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			}
 		}
 
-		final TranslationManager translationManager = new TranslationManager(mgdScript);
+
 
 		// construct new auxVar for each existing auxVar
 		for (final TermVariable auxVar : tf.getAuxVars()) {
@@ -128,15 +140,21 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			newIntTF.addAuxVars(Collections.singleton(newAuxVar));
 		}
 
-		translationManager.setReplacementVarMaps(varMap);
+		final TranslationManager mTranslationManager;
+		mTranslationManager = new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM);
+		mTranslationManager.setReplacementVarMaps(varMap);
 
-		final Term newFormula = translationManager.translateBvtoInt(tf.getFormula());
+		final Triple<Term, Set<TermVariable>, Boolean> translated = mTranslationManager
+				.translateBvtoInt(tf.getFormula());
+		if (!translated.getSecond().isEmpty() || translated.getThird()) {
+			throw new UnsupportedOperationException();
+		}
 
-		newIntTF.setFormula(newFormula);
+		newIntTF.setFormula(translated.getFirst());
 		return newIntTF;
 	}
 
-	private Sort bvToIntSort(final ManagedScript mgdScript, final Sort sort) {
+	public static Sort bvToIntSort(final ManagedScript mgdScript, final Sort sort) {
 		if (SmtSortUtils.isBitvecSort(sort)) {
 			return SmtSortUtils.getIntSort(mgdScript);
 		} else if (SmtSortUtils.isArraySort(sort)) {
@@ -151,7 +169,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		} else if (SmtSortUtils.isBoolSort(sort)) {
 			return sort;
 		} else {
-			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
+			return sort;
+//			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
 		}
 
 	}
@@ -160,6 +179,10 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
 		return true; // TODO
+	}
+
+	public LinkedHashMap<Term, Term> getBacktranslationOfVariables() {
+		return mBacktranslationMap;
 	}
 
 }

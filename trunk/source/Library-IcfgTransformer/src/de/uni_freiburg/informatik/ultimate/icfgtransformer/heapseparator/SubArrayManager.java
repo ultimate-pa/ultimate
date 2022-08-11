@@ -33,14 +33,14 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -123,8 +123,8 @@ public class SubArrayManager {
 			final List<StoreLocationBlock> projectList) {
 
 		IProgramVarOrConst freshVar = null;
-		if (arrayPv instanceof LocalBoogieVar) {
-			final LocalBoogieVar lbv = (LocalBoogieVar) arrayPv;
+		if (arrayPv instanceof LocalProgramVar) {
+			final LocalProgramVar lbv = (LocalProgramVar) arrayPv;
 			final String newId = lbv.getIdentifier() + "_part_" + constructIndexName(projectList);
 			final TermVariable newTv = mManagedScript.constructFreshCopy(lbv.getTermVariable());
 
@@ -137,34 +137,33 @@ public class SubArrayManager {
 			mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
 			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.term(this, constPrimedString);
 
-			freshVar = new LocalBoogieVar(
+			freshVar = new LocalProgramVar(
 					newId,
 					lbv.getProcedure(),
-					null,
 					newTv,
 					newConst,
 					newPrimedConst);
 			mManagedScript.unlock(this);
 			return freshVar;
-		} else if (arrayPv instanceof BoogieNonOldVar) {
-			final BoogieNonOldVar bnovOld = (BoogieNonOldVar) arrayPv;
+		} else if (arrayPv instanceof ProgramNonOldVar) {
+			final ProgramNonOldVar bnovOld = (ProgramNonOldVar) arrayPv;
 
 			final String newId = bnovOld.getIdentifier() + "_part_" + constructIndexName(projectList);
 
 			mManagedScript.lock(this);
-			final BoogieNonOldVar bnovNew =
+			final ProgramNonOldVar bnovNew =
 					ProgramVarUtils.constructGlobalProgramVarPair(newId, bnovOld.getSort(), mManagedScript, this);
 
 			freshVar = bnovNew;
 			mManagedScript.unlock(this);
 			return freshVar;
-		} else if (arrayPv instanceof BoogieOldVar) {
-			final BoogieOldVar bovOld = (BoogieOldVar) arrayPv;
+		} else if (arrayPv instanceof ProgramOldVar) {
+			final ProgramOldVar bovOld = (ProgramOldVar) arrayPv;
 
 			final String newId = bovOld.getGloballyUniqueId() + "_part_" + constructIndexName(projectList);
 
 			mManagedScript.lock(this);
-			final BoogieNonOldVar bnovNew =
+			final ProgramNonOldVar bnovNew =
 					ProgramVarUtils.constructGlobalProgramVarPair(newId, bovOld.getSort(), mManagedScript, this);
 
 			freshVar = bnovNew.getOldVar();
@@ -173,7 +172,7 @@ public class SubArrayManager {
 			return freshVar;
 		} else if (arrayPv instanceof IntraproceduralReplacementVar) {
 			throw new AssertionError("TODO: implement");
-		} else if (arrayPv instanceof BoogieConst) {
+		} else if (arrayPv instanceof ProgramConst) {
 			throw new AssertionError("TODO: implement");
 		} else {
 			throw new AssertionError("case missing --> add it?");

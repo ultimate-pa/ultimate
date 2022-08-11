@@ -373,8 +373,7 @@ public class CongruencePath {
 		}
 		final Clause c = new Clause(negLits);
 		if (produceProofs) {
-			final SymmetricPair<CCTerm> diseq = propagatedEq == null ? null
-					: new SymmetricPair<>(propagatedEq.getLhs(), propagatedEq.getRhs());
+			final SymmetricPair<CCTerm> diseq = lemma.getMainEquality();
 			c.setProof(new LeafNode(LeafNode.THEORY_DT, new CCAnnotation(diseq, mAllPaths, lemma)));
 		}
 		return c;

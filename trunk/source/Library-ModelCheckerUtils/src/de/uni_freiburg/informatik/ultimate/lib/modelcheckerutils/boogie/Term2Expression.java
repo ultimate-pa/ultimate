@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -64,6 +65,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -79,6 +84,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -174,7 +181,7 @@ public final class Term2Expression implements Serializable {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
+			final ProgramConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
 			if (boogieConst != null) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
 						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
@@ -207,6 +214,22 @@ public final class Term2Expression implements Serializable {
 					return translateBitvectorConcat(type, term);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 					return translateWithSymbolTable(symb, type, termParams);
+				} else if (Arrays.asList(new String[] { "bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt" })
+						.contains(symb.getName())) {
+					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
+							BvOp.valueOf(symb.getName()), params);
+				} else if (Arrays.asList(new String[] { "zero_extend", "sign_extend" }).contains(symb.getName())) {
+					return BitvectorFactory.constructExtendOperation(null, ExtendOperation.valueOf(symb.getName()),
+							new BigInteger(symb.getIndices()[0]), params[0]);
+				} else if (Arrays.asList(new String[] { "bvnot", "bvneg" }).contains(symb.getName())) {
+					return BitvectorFactory.constructUnaryOperation(null,
+							BvOp.valueOf(symb.getName()), params[0]);
+				} else if (Arrays
+						.asList(new String[] { "bvadd", "bvsub", "bvmul", "bvudiv", "bvurem", "bvsdiv", "bvsrem",
+								"bvsmod", "bvand", "bvor", "bvxor", "bvshl", "bvlshr", "bvashr" })
+						.contains(symb.getName())) {
+					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
+							BvOp.valueOf(symb.getName()), params);
 				} else {
 					throw new UnsupportedOperationException(
 							"translation of " + symb + " not yet implemented, please contact Matthias");
@@ -282,7 +305,7 @@ public final class Term2Expression implements Serializable {
 		assert term.getParameters().length == 2;
 		final Expression op1 = translate(term.getParameters()[0]);
 		final Expression op2 = translate(term.getParameters()[1]);
-		return new BinaryExpression(null, Operator.BITVECCONCAT, op1, op2);
+		return new BinaryExpression(null, type, Operator.BITVECCONCAT, op1, op2);
 	}
 
 	/**
@@ -486,19 +509,19 @@ public final class Term2Expression implements Serializable {
 			// final ILocation loc = astNode.getLocation();
 			final ILocation loc = mBoogie2SmtSymbolTable.getLocation(pv);
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
-			if (pv instanceof LocalBoogieVar) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalBoogieVar) pv).getIdentifier()),
+			if (pv instanceof LocalProgramVar) {
+				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalProgramVar) pv).getIdentifier()),
 						declInfo);
-			} else if (pv instanceof BoogieNonOldVar) {
+			} else if (pv instanceof ProgramNonOldVar) {
 				result = new IdentifierExpression(loc, type,
-						translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
-			} else if (pv instanceof BoogieOldVar) {
+						translateIdentifier(((ProgramNonOldVar) pv).getIdentifier()), declInfo);
+			} else if (pv instanceof ProgramOldVar) {
 				assert pv.isGlobal();
 				final Expression nonOldExpression = new IdentifierExpression(loc, type,
-						translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
+						translateIdentifier(((ProgramOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 				result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
-			} else if (pv instanceof BoogieConst) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()),
+			} else if (pv instanceof ProgramConst) {
+				result = new IdentifierExpression(loc, type, translateIdentifier(((ProgramConst) pv).getIdentifier()),
 						declInfo);
 			} else {
 				// } else if (pv instanceof HcHeadVar) {

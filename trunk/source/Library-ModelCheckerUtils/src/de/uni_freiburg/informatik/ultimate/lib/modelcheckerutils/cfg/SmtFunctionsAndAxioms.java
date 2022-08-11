@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.NonDeclaringTermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -49,11 +49,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols created throughout a toolchain.
+ * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols
+ * created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- *         TODO: Extend {@link HistoryRecordingScript} to be able to create a nicer term transferrer
+ *         TODO: Extend {@link HistoryRecordingScript} to be able to create a
+ *         nicer term transferrer
+ *
+ *         TODO 20220401 Matthias: It does not make sense to store axioms and
+ *         SMT function symbols that are created throughout a toolchain in the
+ *         ICFG. Each algorithm should store the function symbol that it
+ *         utilizes. FunctionSymbols that are utilized by the ICFG should be
+ *         stored in the symbol table of the ICFG.
  *
  */
 public class SmtFunctionsAndAxioms {
@@ -231,7 +239,7 @@ public class SmtFunctionsAndAxioms {
 				}
 				substitutionMapping.put(paramVar, newArgs[i]);
 			}
-			setResult(new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(body));
+			setResult(Substitution.apply(mMgdScript, substitutionMapping, body));
 		}
 	}
 

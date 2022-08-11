@@ -28,7 +28,7 @@ public interface ILiteral {
 
 	/**
 	 * Get the underlying atom of this literal.
-	 * 
+	 *
 	 * @return the underlying atom. If this literal is an atom, it returns itself.
 	 */
 	public ILiteral getAtom();
@@ -40,14 +40,14 @@ public interface ILiteral {
 
 	/**
 	 * Check if the literal is ground.
-	 * 
+	 *
 	 * @return true if it is a ground literal, false otherwise.
 	 */
 	public boolean isGround();
 
 	/**
 	 * Returns an SMT representation of the literal.
-	 * 
+	 *
 	 * @param theory
 	 *            The term factory to use.
 	 * @param quoted

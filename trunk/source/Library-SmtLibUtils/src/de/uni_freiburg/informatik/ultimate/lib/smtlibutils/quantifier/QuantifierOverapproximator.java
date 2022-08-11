@@ -76,6 +76,11 @@ public class QuantifierOverapproximator extends TermTransformer {
 		throw new UnsupportedOperationException("Unsupported kind of Term: " + term.getClass().getSimpleName());
 	}
 
+	@Override
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+		setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mScript));
+	}
+
 	public static Term apply(final Script script, final Term term) {
 		return new QuantifierOverapproximator(script).transform(term);
 	}

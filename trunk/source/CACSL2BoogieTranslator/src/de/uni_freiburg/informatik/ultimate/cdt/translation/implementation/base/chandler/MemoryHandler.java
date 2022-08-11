@@ -1815,23 +1815,9 @@ public class MemoryHandler {
 	 * Returns an CPrimitive which is unsigned, integer and not bool that has the smallest bytesize.
 	 */
 	private CPrimitives getCprimitiveThatFitsBest(final List<ReadWriteDefinition> test) {
-		int smallestBytesize = Integer.MAX_VALUE;
-		for (final ReadWriteDefinition rwd : test) {
-			if (rwd.getBytesize() < smallestBytesize) {
-				smallestBytesize = rwd.getBytesize();
-			}
-		}
-		if (smallestBytesize == 0) {
-			// we only have unbounded data types
-			return CPrimitives.UCHAR;
-		}
-		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UCHAR, CPrimitives.USHORT, CPrimitives.UINT,
-				CPrimitives.ULONG, CPrimitives.ULONGLONG }) {
-			if (mTypeSizes.getSize(primitive) == smallestBytesize) {
-				return primitive;
-			}
-		}
-		throw new AssertionError("don't know how to store value on heap");
+		final int smallestBytesize =
+				test.stream().mapToInt(ReadWriteDefinition::getBytesize).min().orElse(Integer.MAX_VALUE);
+		return getCprimitiveThatFitsBest(smallestBytesize);
 	}
 
 	/**
@@ -2102,8 +2088,9 @@ public class MemoryHandler {
 		if (writeMode == HeapWriteMode.STORE_CHECKED) {
 			swrite.addAll(constructPointerBaseValidityCheck(loc, inPtr, procName));
 
-			final Expression sizeWrite = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
-					writtenTypeSize, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+			final Expression sizeWrite = ExpressionFactory.constructIdentifierExpression(loc,
+					mTypeHandler.getBoogieTypeForPointerComponents(), writtenTypeSize,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
 			swrite.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeWrite, inPtr, procName));
 		}
 
@@ -2260,8 +2247,9 @@ public class MemoryHandler {
 		if (!unchecked) {
 			sread.addAll(constructPointerBaseValidityCheck(loc, ptrId, readProcedureName));
 
-			final Expression sizeRead = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
-					readTypeSize, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, readProcedureName));
+			final Expression sizeRead = ExpressionFactory.constructIdentifierExpression(loc,
+					mTypeHandler.getBoogieTypeForPointerComponents(), readTypeSize,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, readProcedureName));
 
 			sread.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeRead, ptrId, readProcedureName));
 		}
@@ -3144,7 +3132,7 @@ public class MemoryHandler {
 								// old(#pthreadsRwLock)[#ptr] >= 0
 								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
 										constructOldRwLockComparisonExpression(tuLoc, inputPtr,
-												IASTBinaryExpression.op_equals),
+												IASTBinaryExpression.op_greaterEqual),
 										Collections.emptySet()),
 								// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
 								mProcedureManager.constructEnsuresSpecification(tuLoc, true,

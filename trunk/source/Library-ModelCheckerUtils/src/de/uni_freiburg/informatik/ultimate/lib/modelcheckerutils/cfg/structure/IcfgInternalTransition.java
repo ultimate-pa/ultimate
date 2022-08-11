@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -52,6 +53,10 @@ public final class IcfgInternalTransition extends AbstractIcfgTransition
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
 		mTransFormulaWithBranchEncoders =
 				Objects.requireNonNull(transFormulaWithBranchEncoders, "A transformula is missing");
+
+		assert TransFormulaUtils.hasInternalNormalForm(mTransFormula) : "Expected TF in internal normal form";
+		assert TransFormulaUtils
+				.hasInternalNormalForm(mTransFormulaWithBranchEncoders) : "Expected TF in internal normal form";
 	}
 
 	@Override

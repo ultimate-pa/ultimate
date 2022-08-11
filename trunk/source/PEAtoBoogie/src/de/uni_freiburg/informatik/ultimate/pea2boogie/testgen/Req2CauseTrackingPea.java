@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private final ILogger mLogger;
-	private final List<InitializationPattern> mInitPattern;
+	private final List<DeclarationPattern> mInitPattern;
 	private final List<ReqPeas> mReqPeas;
 	private IReqSymbolTable mSymbolTable;
 	private boolean mHasErrors;
@@ -77,7 +77,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	private static final String LOWER_AUTOMATON_SUFFIX = "_tt";
 
 	public Req2CauseTrackingPea(final IUltimateServiceProvider services, final ILogger logger,
-			final List<InitializationPattern> init) {
+			final List<DeclarationPattern> init) {
 		mServices = services;
 		mLogger = logger;
 		mInitPattern = init;
@@ -92,7 +92,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
-		for (final InitializationPattern p : mInitPattern) {
+		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
 			mDurations.addInitPattern(p);
 			if (p.getCategory() == VariableCategory.OUT) {

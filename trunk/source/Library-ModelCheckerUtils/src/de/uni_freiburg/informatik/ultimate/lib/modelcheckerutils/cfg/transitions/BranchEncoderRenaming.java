@@ -110,7 +110,7 @@ public final class BranchEncoderRenaming {
 			tfb.addAuxVar(aux);
 		}
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.setFormula(new Substitution(mgdScript, mSubstitution).transform(tf.getFormula()));
+		tfb.setFormula(Substitution.apply(mgdScript, mSubstitution, tf.getFormula()));
 		return tfb.finishConstruction(mgdScript);
 	}
 

@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -36,14 +36,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ReplacementOldVar extends BoogieOldVar implements IReplacementVar  {
+public class ReplacementOldVar extends ProgramOldVar implements IReplacementVar  {
 
 	private static final long serialVersionUID = 8758509461003371994L;
 	private final Term mDefinition;
 	
 	public ReplacementOldVar(final String identifier, final TermVariable tv, final ApplicationTerm defaultConstant,
 			final ApplicationTerm primedContant, final Term definition) {
-		super(identifier, null, tv, defaultConstant, primedContant);
+		super(identifier, tv, defaultConstant, primedContant);
 		mDefinition = definition;
 	}
 

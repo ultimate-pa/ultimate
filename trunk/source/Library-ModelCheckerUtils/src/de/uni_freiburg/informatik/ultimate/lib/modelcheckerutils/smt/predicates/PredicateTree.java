@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -193,8 +193,7 @@ public class PredicateTree<T extends IPredicate> {
 	}
 
 	private boolean goLeft(final Map<Term, Term> witness, final T predicate) {
-		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mScript, witness);
-		final Term result = subst.transform(predicate.getClosedFormula());
+		final Term result = Substitution.apply(mScript, witness, predicate.getClosedFormula());
 		return mTrue.equals(result);
 	}
 

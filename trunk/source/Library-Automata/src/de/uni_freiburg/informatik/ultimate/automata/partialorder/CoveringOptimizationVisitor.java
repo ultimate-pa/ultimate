@@ -87,14 +87,12 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 
 	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
-		final boolean result;
+		final S cover = getCoveringState(target);
 		switch (mMode) {
 		case REDIRECT:
-			final S old = getCoveringState(target);
-			result = super.discoverTransition(source, letter, old == null ? target : old);
-			return result || old != null;
+			final boolean result = super.discoverTransition(source, letter, cover == null ? target : cover);
+			return result || cover != null;
 		case PRUNE:
-			final S cover = getCoveringState(target);
 			if (cover != null) {
 				return true;
 			}
@@ -127,7 +125,22 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 	}
 
 	/**
-	 * A covering relation between states.
+	 * A covering relation between states of an automaton.
+	 *
+	 * The meaning of covering in an automaton is this: If state <code>q</code> covers state <code>p</code>, then the
+	 * language of all words accepted from <code>q</code> must be a superset of the states accepted from <code>p</code>.
+	 * (The reverse implication need not hold.)
+	 *
+	 * As such, a trivial covering relation is given by <code>Objects::equals</code>. However, depending on the
+	 * particular automaton, larger and thus more useful covering relations can often be computed.
+	 *
+	 * Covering relations must be reflexive: It is always sound to add the reflexive pairs to the covering relation
+	 * (without violating the above implication), it should be reasonably efficient to call <code>Objects::equal</code>,
+	 * and some derived covering relation constructions rely on their input relations being reflexive.
+	 *
+	 * By contrast, a covering relation need not be transitive, even though adding transitive pairs is also always
+	 * sound. Hence, if adding pairs to ensure transitivity is possible with reasonable efficiency, implementations are
+	 * encouraged to do so.
 	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 *

@@ -42,8 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierPushTermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -106,14 +104,16 @@ public class PartialQuantifierElimination {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
-		assert (CommuhashUtils.isInCommuhashNormalForm(chnf, "and", "or", "=")) : "Input not in commuhash form";
+		final Term result;
 		if (CORONA_QUANTIFIER_ELIMINATION) {
-			return QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
+			result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
 					SimplificationTechnique.NONE, chnf);
 		} else {
-			return QuantifierPusher.eliminate(services, mgdScript, false, PqeTechniques.ONLY_DER,
+			result = QuantifierPusher.eliminate(services, mgdScript, false, PqeTechniques.ONLY_DER,
 					SimplificationTechnique.NONE, chnf);
 		}
+		assert (CommuhashUtils.isInCommuhashNormalForm(result, CommuhashUtils.COMMUTATIVE_OPERATORS)) : "Output not in commuhash form";
+		return result;
 	}
 
 	/**
@@ -161,7 +161,7 @@ public class PartialQuantifierElimination {
 		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
 				simplificationTechnique, term);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
+		final QuantifierSequence qs = new QuantifierSequence(mgdScript, pnf);
 		final Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 		Term result = matrix;

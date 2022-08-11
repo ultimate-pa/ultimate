@@ -31,7 +31,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 final class TestPredicate implements IPredicate {
@@ -40,10 +40,10 @@ final class TestPredicate implements IPredicate {
 	private final Term mClosedFormula;
 	private final Term mFormula;
 
-	public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Script script) {
+	public TestPredicate(final Term formula, final Set<IProgramVar> vars, final ManagedScript mgdScript) {
 		mVars = vars;
 		mFormula = formula;
-		mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, script);
+		mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, mgdScript);
 	}
 
 	@Override

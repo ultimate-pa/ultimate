@@ -39,13 +39,13 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -77,6 +77,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * quantified and we introduced additional conjuncts (resp. disjuncts for
  * universal quantification) of the form k'=k that have to be merged to the
  * operand term of the quantifier elimination.
+ *
+ * TODO 20220210 Matthias: Take also care of cases like
+ * {@link QuantifierEliminationTodos#selfUpdateAraucariaSimplified}
+ * Idea: Introduce auxiliary variable for subterm, use subterm of dimension
+ * lower than arr to avoid nontermination.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -149,8 +154,7 @@ public class DerPreprocessor extends TermTransformer {
 					eliminatee, quantifier, airc, aiem);
 			mIntroducedDerPossibility = false;
 		}
-		final Term inputReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
-				.transform(input);
+		final Term inputReplacement = Substitution.apply(mgdScript, substitutionMapping, input);
 		final Term allAuxVarDefs = airc.constructDefinitions(mgdScript.getScript(), quantifier);
 		mNewAuxVars = new ArrayList<>(airc.getConstructedAuxVars());
 		mResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, inputReplacement,

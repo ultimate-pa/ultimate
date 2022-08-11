@@ -28,38 +28,38 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecisi
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternUT;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternTU;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEdgeResponsePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEdgeResponsePatternTU;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEdgeResponsePatternDelayed;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEntryConditionPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndExistencePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndPossResponsePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndRecurrencePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTU;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndTriggeredEntryConditionPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndTriggeredEntryConditionPatternDelayed;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConstrainedChainPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponsePatternDelayed;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DurationBoundLPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DurationBoundUPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseBoundL2Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseBoundU1Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseDelayPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseDelayBoundL2Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ExistenceBoundUPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.MaxDurationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.MinDurationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PossibilityPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PersistencePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain12Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain21Pattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain12Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ReccurrenceBoundLPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL1Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL12Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain12Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayBoundL2Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayBoundL1Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TriggerResponseBoundL1Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TriggerResponseDelayBoundL1Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPatternDelayed;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityDelayPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 parser ReqParser;
@@ -115,7 +115,7 @@ parser code {:
 		return p;
 	}
 
-	public InitializationPattern registerInitPattern(final InitializationPattern init) {
+	public DeclarationPattern registerInitPattern(final DeclarationPattern init) {
 		if (init != null) {
 			mDurations.addInitPattern(init);
 		}
@@ -149,7 +149,7 @@ scan with {: return getScanner().next_token(); :}
 /* Keywords */
 terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL, INPUT, OUTPUT, INTERNAL, CONST;
 terminal IT, IS, NEVER, ALWAYS, THE, CASE, THAT, INITIALLY;
-terminal IF, HOLD, HOLDS, HELD, EVENTUALLY;
+terminal IF, HOLD, HOLDS, HELD, EVENTUALLY, PERSISTENTLY;
 terminal TRANSITIONS, TO, STATES, IN, WHICH, OCCUR, AT, TWICE, AFTERWARDS;
 terminal THEN, PREVIOUSLY, AS, WELL;
 terminal WAS, PRECEDED, SUCCEEDED, BY, TOGGLES;
@@ -201,21 +201,21 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
             | error
                {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,t,InitializationPattern.VariableCategory.IN)); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,t,DeclarationPattern.VariableCategory.IN)); :}
 		  	| OUTPUT cid:i IS ID:t
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,t,InitializationPattern.VariableCategory.OUT)); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,t,DeclarationPattern.VariableCategory.OUT)); :}
 		 	| INTERNAL cid:i IS ID:t
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,t,InitializationPattern.VariableCategory.HIDDEN)); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,t,DeclarationPattern.VariableCategory.HIDDEN)); :}
 		 	| CONST cid:i IS NUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"int",DeclarationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v))); :}
 		 	| CONST cid:i IS REALNUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"real",DeclarationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v))); :}
 		 	| CONST cid:i IS MINUS NUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v)))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"int",DeclarationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v)))); :}
 		 	| CONST cid:i IS MINUS REALNUMBER:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v)))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"real",DeclarationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v)))); :}
 		 	| CONST cid:i IS bool:v
-		  	   {: RESULT = parser.registerInitPattern(new InitializationPattern(i,"bool",InitializationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$),BoogieType.TYPE_BOOL, v))); :}
+		  	   {: RESULT = parser.registerInitPattern(new DeclarationPattern(i,"bool",DeclarationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$),BoogieType.TYPE_BOOL, v))); :}
            ;
 
 propid ::= ID:id IDSEP
@@ -236,15 +236,19 @@ scope ::=
   ;
   
 pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
-			{: RESULT = new PatternBuilder(); RESULT.setType(InstAbsPattern.class); RESULT.addCdd(r); :}
+			{: RESULT = new PatternBuilder(); RESULT.setType(AbsencePattern.class); RESULT.addCdd(r); :}
   		| IT IS ALWAYS THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(r); :}
+		| IT IS ALWAYS THE CASE THAT INITIALLY expression:r HOLDS 
+			{: RESULT = new PatternBuilder(); RESULT.setType(InitializationPattern.class); RESULT.addCdd(r); :}
+		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN IT HOLDS PERSISTENTLY
+      		{: RESULT = new PatternBuilder(); RESULT.setType(PersistencePattern.class); RESULT.addCdd(r); :}	
   		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
-      		{: RESULT = new PatternBuilder(); RESULT.setType(InvariantPattern.class); RESULT.addCdd(s,r); :}
+      		{: RESULT = new PatternBuilder(); RESULT.setType(InvariancePattern.class); RESULT.addCdd(s,r); :}
 	  	| expression:r EVENTUALLY HOLDS
 	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),r); :}
 		| TRANSITIONS TO STATES IN WHICH expression:r HOLDS OCCUR AT MOST TWICE
-	      	{: RESULT = new PatternBuilder(); RESULT.setType(BndExistencePattern.class); RESULT.addCdd(r); :}
+	      	{: RESULT = new PatternBuilder(); RESULT.setType(ExistenceBoundUPattern.class); RESULT.addCdd(r); :}
 		| IT IS ALWAYS THE CASE THAT opattern:r 
 			{: RESULT = r; :}
 	  	| IT IS ALWAYS THE CASE THAT rtpattern:r
@@ -263,46 +267,43 @@ opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
 				{: RESULT = new PatternBuilder(); RESULT.setType(ResponseChain12Pattern.class); RESULT.addCdd(t,s,r); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:t WHERE expression:u DOES NOT HOLD BETWEEN expression:v AND expression:w
 				{: RESULT = new PatternBuilder(); RESULT.setType(ConstrainedChainPattern.class); RESULT.addCdd(w,v,u,t,s,r); :}
-			| IF expression:r HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:s EVENTUALLY HOLDS
-				{: RESULT = new PatternBuilder().setType(PossibilityPattern.class).addCdd(s,r); :}
   			;
   
 rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:c1
-				{: RESULT = new PatternBuilder().setType(MinDurationPattern.class).addCdd(r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(DurationBoundLPattern.class).addCdd(r).addDuration(c1); :}
   			| ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR LESS THAN duration:c1
-				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(DurationBoundUPattern.class).addCdd(r).addDuration(c1); :}
 			| ONCE expression:r BECOMES SATISFIED COMMA? expression:s HOLDS FOR AT LEAST duration:c1
-				{: RESULT = new PatternBuilder().setType(BndEdgeResponsePattern.class).addCdd(s,r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(EdgeResponseBoundL2Pattern.class).addCdd(s,r).addDuration(c1); :}
 			| ONCE expression:r BECOMES SATISFIED AND HOLDS FOR AT MOST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS
-				{: RESULT = new PatternBuilder().setType(BndEdgeResponsePatternTU.class).addCdd(s,r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(EdgeResponseBoundU1Pattern.class).addCdd(s,r).addDuration(c1); :}
 			| ONCE expression:r BECOMES SATISFIED COMMA? expression:s HOLDS AFTER AT MOST duration:c1
-				{: RESULT = new PatternBuilder().setType(EdgeResponsePatternDelayed.class).addCdd(s,r).addDuration(c1); :}	
+				{: RESULT = new PatternBuilder().setType(EdgeResponseDelayPattern.class).addCdd(s,r).addDuration(c1); :}	
 			| ONCE expression:r BECOMES SATISFIED COMMA? expression:s HOLDS AFTER AT MOST duration:c1 FOR AT LEAST duration:c2
-				{: RESULT = new PatternBuilder().setType(BndEdgeResponsePatternDelayed.class).addCdd(s,r).addDuration(c1, c2); :}
+				{: RESULT = new PatternBuilder().setType(EdgeResponseDelayBoundL2Pattern.class).addCdd(s,r).addDuration(c1, c2); :}
 			| expression:r HOLDS AT LEAST EVERY duration:c1
-				{: RESULT = new PatternBuilder().setType(BndRecurrencePattern.class).addCdd(r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(ReccurrenceBoundLPattern.class).addCdd(r).addDuration(c1); :}
 			| expression:r HOLDS AFTER AT MOST duration:c1
-				{: RESULT = new PatternBuilder().setType(UniversalityPatternDelayed.class).addCdd(r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(UniversalityDelayPattern.class).addCdd(r).addDuration(c1); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1
-				{: RESULT = new PatternBuilder().setType(BndResponsePatternUT.class).addCdd(s,r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(ResponseDelayPattern.class).addCdd(s,r).addDuration(c1); :}
   			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS FOR AT LEAST duration:c2
-				{: RESULT = new PatternBuilder().setType(BndResponsePatternTT.class).addCdd(s,r).addDuration(c1,c2); :}
+				{: RESULT = new PatternBuilder().setType(ResponseBoundL12Pattern.class).addCdd(s,r).addDuration(c1,c2); :}
 			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c2
-				{: RESULT = new PatternBuilder().setType(BndDelayedResponsePatternTU.class).addCdd(s,r).addDuration(c1, c2); :}	
+				{: RESULT = new PatternBuilder().setType(ResponseDelayBoundL1Pattern.class).addCdd(s,r).addDuration(c1, c2); :}	
   			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS
-				{: RESULT = new PatternBuilder().setType(BndResponsePatternTU.class).addCdd(s,r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(ResponseBoundL1Pattern.class).addCdd(s,r).addDuration(c1); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1 FOR AT LEAST duration:c2
-				{: RESULT = new PatternBuilder().setType(BndDelayedResponsePatternUT.class).addCdd(s,r).addDuration(c1, c2); :}						
+				{: RESULT = new PatternBuilder().setType(ResponseDelayBoundL2Pattern.class).addCdd(s,r).addDuration(c1, c2); :}						
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS FOR AT LEAST duration:c1
-				{: RESULT = new PatternBuilder().setType(BndInvariancePattern.class).addCdd(s,r).addDuration(c1); :}
-			| IF expression:r HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:s HOLDS AFTER AT MOST duration:c1
-				{: RESULT = new PatternBuilder().setType(BndPossResponsePattern.class).addCdd(s,r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(InvarianceBoundL2Pattern.class).addCdd(s,r).addDuration(c1); :}
+  			/* BndEntryConditionPattern is deprecated. */
   			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS
 				{: RESULT = new PatternBuilder().setType(BndEntryConditionPattern.class).addCdd(s,r).addDuration(c1); :}
 			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS
-				{: RESULT = new PatternBuilder().setType(BndTriggeredEntryConditionPattern.class).addCdd(t,s,r).addDuration(c1); :}
+				{: RESULT = new PatternBuilder().setType(TriggerResponseBoundL1Pattern.class).addCdd(t,s,r).addDuration(c1); :}
 			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS AFTER AT MOST duration:c2
-				{: RESULT = new PatternBuilder().setType(BndTriggeredEntryConditionPatternDelayed.class).addCdd(t,s,r).addDuration(c1, c2); :}	
+				{: RESULT = new PatternBuilder().setType(TriggerResponseDelayBoundL1Pattern.class).addCdd(t,s,r).addDuration(c1, c2); :}	
   			;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}

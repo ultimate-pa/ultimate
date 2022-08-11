@@ -58,17 +58,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 @SuppressWarnings("unchecked")
 public class PatternBuilder {
 
-	private static final Class<?>[] PATTERNS = new Class<?>[] { BndDelayedResponsePatternUT.class,
-			BndDelayedResponsePatternTU.class, BndEdgeResponsePattern.class, BndEdgeResponsePatternDelayed.class,
-			BndEdgeResponsePatternTU.class, BndEntryConditionPattern.class, BndExistencePattern.class,
-			BndInvariancePattern.class, BndPossResponsePattern.class, BndRecurrencePattern.class,
-			BndResponsePatternTT.class, BndResponsePatternTU.class, BndResponsePatternUT.class,
-			BndTriggeredEntryConditionPattern.class, BndTriggeredEntryConditionPatternDelayed.class,
-			ConstrainedChainPattern.class, EdgeResponsePatternDelayed.class, InitializationPattern.class,
-			InstAbsPattern.class, InvariantPattern.class, MaxDurationPattern.class, MinDurationPattern.class,
-			PossibilityPattern.class, PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class,
-			PrecedencePattern.class, ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
-			UniversalityPatternDelayed.class };
+	private static final Class<?>[] PATTERNS = new Class<?>[] { ResponseDelayBoundL2Pattern.class,
+			ResponseDelayBoundL1Pattern.class, EdgeResponseBoundL2Pattern.class, EdgeResponseDelayBoundL2Pattern.class,
+			EdgeResponseBoundU1Pattern.class, BndEntryConditionPattern.class, ExistenceBoundUPattern.class,
+			InvarianceBoundL2Pattern.class, ReccurrenceBoundLPattern.class, ResponseBoundL12Pattern.class,
+			ResponseBoundL1Pattern.class, ResponseDelayPattern.class, TriggerResponseBoundL1Pattern.class,
+			TriggerResponseDelayBoundL1Pattern.class, ConstrainedChainPattern.class, EdgeResponseDelayPattern.class,
+			DeclarationPattern.class, AbsencePattern.class, InitializationPattern.class, InvariancePattern.class,
+			DurationBoundUPattern.class, DurationBoundLPattern.class, PersistencePattern.class,
+			PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class, PrecedencePattern.class,
+			ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
+			UniversalityDelayPattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
@@ -191,7 +191,7 @@ public class PatternBuilder {
 	}
 
 	public static PatternType<?> normalize(final PatternType<?> p, final Durations durations) {
-		if (p instanceof InitializationPattern) {
+		if (p instanceof DeclarationPattern) {
 			return p;
 		}
 		final PatternBuilder pb = new PatternBuilder();

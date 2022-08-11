@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -72,8 +73,13 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 		mOrder = order;
 		mIndependence = independenceRelation;
 
-		final S oldInitial = DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state");
-		mInitial = mStateFactory.createSleepSetState(oldInitial, ImmutableSet.empty());
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			mInitial = mStateFactory.createSleepSetState(initial.get(), ImmutableSet.empty());
+		} else {
+			mInitial = null;
+		}
 	}
 
 	@Override
@@ -93,12 +99,12 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public Iterable<R> getInitialStates() {
-		return Set.of(mInitial);
+		return mInitial == null ? Collections.emptySet() : Set.of(mInitial);
 	}
 
 	@Override
 	public boolean isInitial(final R state) {
-		return mInitial.equals(state);
+		return Objects.equals(mInitial, state);
 	}
 
 	@Override
@@ -124,6 +130,11 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, R>> internalSuccessors(final R state, final L letter) {
+		final ImmutableSet<L> currentSleepSet = mStateFactory.getSleepSet(state);
+		if (currentSleepSet.contains(letter)) {
+			return Collections.emptySet();
+		}
+
 		final S currentState = mStateFactory.getOriginalState(state);
 		final var currentTransitionOpt = DataStructureUtils.getOnly(mOperand.internalSuccessors(currentState, letter),
 				"Automaton must be deterministic");
@@ -131,7 +142,6 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 			return Collections.emptySet();
 		}
 
-		final ImmutableSet<L> currentSleepSet = mStateFactory.getSleepSet(state);
 		final Comparator<L> comp = mOrder.getOrder(state);
 		final Stream<L> explored = mOperand.lettersInternal(currentState).stream()
 				.filter(x -> comp.compare(x, letter) < 0 && !currentSleepSet.contains(x));

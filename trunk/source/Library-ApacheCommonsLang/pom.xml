@@ -10,6 +10,6 @@
   
   <groupId>org.apache.commons</groupId>
   <artifactId>org.apache.commons.lang</artifactId>
-  <version>3.3.2</version>
+  <version>3.12.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>

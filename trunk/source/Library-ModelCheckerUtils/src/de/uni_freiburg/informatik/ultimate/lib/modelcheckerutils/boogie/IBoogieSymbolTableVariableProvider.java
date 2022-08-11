@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
 
 /**
  * Provides BoogieVars from BoogieSymbolTables. This is mainly used in abstract interpretation's abstract domains.
@@ -40,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 public interface IBoogieSymbolTableVariableProvider {
 
 	/**
-	 * Returns a {@link BoogieVar} for a variable with name varId.
+	 * Returns a {@link ProgramVar} for a variable with name varId.
 	 *
 	 * @param varId
 	 *            The name of the variable.
@@ -49,13 +51,13 @@ public interface IBoogieSymbolTableVariableProvider {
 	 * @param inOldContext
 	 *            <code>true</code> if the lookup should be done in the context of old variables, <code>false</code>
 	 *            otherwise.
-	 * @return The corresponding {@link BoogieVar}.
+	 * @return The corresponding {@link ProgramVar}.
 	 */
 	IProgramVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 			final boolean inOldContext);
 
 	/**
-	 * Returns a {@link BoogieVar} for a variable in the context of some procedure.
+	 * Returns a {@link ProgramVar} for a variable in the context of some procedure.
 	 *
 	 * @param varId
 	 *            The name of the variable.
@@ -64,16 +66,16 @@ public interface IBoogieSymbolTableVariableProvider {
 	 * @param isInParam
 	 *            <code>true</code> if the variable occurs in the in-parameters of the procedure, <code>false</code>
 	 *            otherwise.
-	 * @return The corresponding {@link BoogieVar}.
+	 * @return The corresponding {@link ProgramVar}.
 	 */
 	IProgramVar getBoogieVar(final String varId, final String procedure, final boolean isInParam);
 
 	/**
-	 * Returns a {@link BoogieConst} for a given contant name.
+	 * Returns a {@link ProgramConst} for a given contant name.
 	 *
 	 * @param constId
 	 *            The name of the constant.
-	 * @return The corresponding {@link BoogieConst}.
+	 * @return The corresponding {@link ProgramConst}.
 	 */
 	IProgramConst getBoogieConst(final String constId);
 }

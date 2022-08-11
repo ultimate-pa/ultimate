@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
@@ -42,7 +43,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Binary
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -87,7 +90,24 @@ public class PolynomialRelation implements IBinaryRelation {
 	protected final AbstractGeneralizedAffineTerm<Term> mPolynomialTerm;
 
 	public enum TransformInequality {
-		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT
+		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT;
+
+		/**
+		 * For the TIR quantifier elimination technique (see {@link DualJunctionTir}),
+		 * we prefer non-strict inequalities for the existential quantifier and we
+		 * prefer strict inequalities for the universal quantifier.
+		 */
+		public static TransformInequality determineTransformationForTir(final int quantifier) {
+			TransformInequality result;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				result = TransformInequality.STRICT2NONSTRICT;
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				result = TransformInequality.NONSTRICT2STRICT;
+			} else {
+				throw new AssertionError("Unknown quantifier");
+			}
+			return result;
+		}
 	}
 
 	public enum TrivialityStatus {
@@ -484,9 +504,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
 	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
 	 */
-	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
+	public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Set<TermVariable> bannedForDivCapture) {
-		return SolveForSubjectUtils.solveForSubject(script, subject, xnf, this, bannedForDivCapture);
+		return SolveForSubjectUtils.solveForSubject(mgdScript, subject, xnf, this, bannedForDivCapture);
 	}
 
 	/**
@@ -545,6 +565,6 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
-		return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
+		return (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, term);
 	}
 }

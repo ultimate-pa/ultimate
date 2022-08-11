@@ -2,7 +2,7 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
@@ -27,12 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -41,21 +43,21 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * {@link TransFormula} that can be modified. Stores additionally a
- * mapping from {@link TermVariable}s to {@link IProgramVar}s. 
- * 
+ * mapping from {@link TermVariable}s to {@link IProgramVar}s.
+ *
  * @author Jan Leike
  * @author Matthias Heizmann
- * 
+ *
  * @see VarFactory
  * @see IProgramVar
  */
 public class ModifiableTransFormula extends TransFormula {
-	
+
 	private final Map<TermVariable, IProgramVar> mInVarsReverseMapping;
 	private final Map<TermVariable, IProgramVar> mOutVarsReverseMapping;
-	
+
 	private Term mFormula;
-	
+
 	/**
 	 * Create a new TransformulaLR
 	 * @param formula the transition formula
@@ -66,7 +68,7 @@ public class ModifiableTransFormula extends TransFormula {
 		mOutVarsReverseMapping = new LinkedHashMap<>();
 		mFormula = formula;
 	}
-	
+
 	/**
 	 * Copy constructor
 	 */
@@ -79,9 +81,9 @@ public class ModifiableTransFormula extends TransFormula {
 		mAuxVars.addAll(other.mAuxVars);
 		mNonTheoryConsts.addAll(other.mNonTheoryConsts);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * @return mapping from inVars to the RankVar that is represented by the
 	 * inVar
@@ -97,7 +99,7 @@ public class ModifiableTransFormula extends TransFormula {
 	public Map<Term, IProgramVar> getOutVarsReverseMapping() {
 		return Collections.unmodifiableMap(mOutVarsReverseMapping);
 	}
-	
+
 	/**
 	 * Add an inVar to the collection
 	 * @param rkVar a RankVar
@@ -115,7 +117,7 @@ public class ModifiableTransFormula extends TransFormula {
 			}
 		}
 	}
-	
+
 	/**
 	 * Remove an inVar from the collection
 	 */
@@ -128,7 +130,7 @@ public class ModifiableTransFormula extends TransFormula {
 			mInVarsReverseMapping.remove(tv);
 		}
 	}
-	
+
 	/**
 	 * Add an outVar to the collection
 	 * @param rkVar a RankVar
@@ -146,7 +148,7 @@ public class ModifiableTransFormula extends TransFormula {
 			}
 		}
 	}
-	
+
 	/**
 	 * Remove an outVar from the collection
 	 */
@@ -159,7 +161,7 @@ public class ModifiableTransFormula extends TransFormula {
 			mOutVarsReverseMapping.remove(tv);
 		}
 	}
-	
+
 	public void removeAuxVar(final TermVariable auxVar) {
 		final boolean modified = mAuxVars.remove(auxVar);
 		if (!modified) {
@@ -167,8 +169,8 @@ public class ModifiableTransFormula extends TransFormula {
 					"cannot remove variable that is not contained");
 		}
 	}
-	
-	
+
+
 	/**
 	 * Add a TermVariables that each neither occur as inVar or outVar to the set
 	 * of auxiliary variables. (Note that auxiliary variables are different from
@@ -177,7 +179,7 @@ public class ModifiableTransFormula extends TransFormula {
 	public void addAuxVars(final Set<TermVariable> auxVars) {
 		mAuxVars.addAll(auxVars);
 	}
-	
+
 	/**
 	 * @return the transition formula
 	 */
@@ -185,14 +187,18 @@ public class ModifiableTransFormula extends TransFormula {
 	public Term getFormula() {
 		return mFormula;
 	}
-	
+
 	/**
 	 * @param term the new transition formula
 	 */
 	public void setFormula(final Term formula) {
 		mFormula = formula;
 	}
-	
+
+	public void addNonTheoryConsts(final Collection<IProgramConst> nonTheoryConsts) {
+		mNonTheoryConsts.addAll(nonTheoryConsts);
+	}
+
 	/**
 	 * Returns true if each auxVar occurs neither as inVar nor as outVar.
 	 * This property should always hold.
@@ -208,7 +214,7 @@ public class ModifiableTransFormula extends TransFormula {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Returns some TermVariable from tvs that occurs neither as inVar nor
 	 * as outVar nor as auxVar. Returns null if no such TermVariable in tvs
@@ -224,7 +230,7 @@ public class ModifiableTransFormula extends TransFormula {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * @return the set of assigned/updated variables. A variable is updated by
 	 * this transition if it occurs as outVar and
@@ -235,7 +241,7 @@ public class ModifiableTransFormula extends TransFormula {
 	public Set<IProgramVar> getAssignedVars() {
 		return Collections.unmodifiableSet(TransFormulaUtils.computeAssignedVars(mInVars, mOutVars));
 	}
-	
+
 	/**
 	 * @return whether the TermVariable tv occurs as inVar, outVar, or auxVar.
 	 */
@@ -245,7 +251,7 @@ public class ModifiableTransFormula extends TransFormula {
 		}
 		return mAuxVars.contains(tv);
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();

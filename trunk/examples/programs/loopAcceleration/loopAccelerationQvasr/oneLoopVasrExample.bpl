@@ -4,14 +4,12 @@
  */
 
 procedure main() {
-	var x,y,z : int;
+	var x,y : int;
 	x := 0;
 	y := 0;
-	z := 0;
 	
 	while (x <= 20) {
 		if (x <= 10) {
-			z := x;
 			x := x + y;
 			y := y + 1;
 		} else {

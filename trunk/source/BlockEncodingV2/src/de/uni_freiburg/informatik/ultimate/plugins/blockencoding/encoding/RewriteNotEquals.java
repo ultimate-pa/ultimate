@@ -107,7 +107,7 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 			if (!toRemove.add(edge)) {
 				continue;
 			}
-			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), edge.getTarget(),
+			final IcfgEdge newEdge = mEdgeBuilder.constructAndConnectInternalTransition(edge, edge.getSource(), edge.getTarget(),
 					TransFormulaBuilder.constructCopy(mgScript, rewrittenMtf, Collections.emptySet(),
 							Collections.emptySet(), Collections.emptyMap()));
 			rememberEdgeMapping(newEdge, edge);

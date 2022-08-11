@@ -110,7 +110,7 @@ public class EprHelpers {
 		} else if (atom instanceof EprQuantifiedEqualityAtom) {
 			final EprQuantifiedEqualityAtom eea = (EprQuantifiedEqualityAtom) atom;
 			final TermTuple newTT = sub.apply(eea.getArgumentsAsTermTuple());
-			final ApplicationTerm newTerm = theory.term("=", newTT.terms);
+			final ApplicationTerm newTerm = (ApplicationTerm) theory.term("=", newTT.terms);
 
 			if (newTerm.getFreeVars().length > 0) {
 				assert false : "TODO: reactivate below code?";

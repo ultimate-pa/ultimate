@@ -27,20 +27,18 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
-import java.util.Arrays;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents a rational vaector addition system
- *         with resets abstraction (Q-Vasr-abstraction). It is used to overapproximate changes to variables by a
- *         transition formula by linear simulating the formula onto a {@link Qvasr}.
+ * This class represents a rational vector addition system with resets abstraction (Q-Vasr-abstraction). It is used to
+ * overapproximate changes to variables by a transition formula by linear simulating the formula onto a {@link Qvasr}.
  *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
 
-public class QvasrAbstraction {
+public class QvasrAbstraction implements IVasrAbstraction<Rational> {
 
 	private final Rational[][] mSimulationMatrix;
 	private final Qvasr mQvasr;
@@ -49,12 +47,19 @@ public class QvasrAbstraction {
 	 * Construct a new Q-Vasr-abstraction (S, V), which overapproximates a {@link UnmodifiableTransFormula} F by using
 	 * linear matrix S to simulate F to the {@link Qvasr} V.
 	 *
-	 * @param initialSimulationMatrix
-	 * @param initialQvasr
+	 * @param simulationMatrix
+	 *            The initial simulation matrix S.
+	 * @param qvasr
+	 *            The initial {@link Qvasr} V.
 	 */
-	public QvasrAbstraction(final Rational[][] initialSimulationMatrix, final Qvasr initialQvasr) {
-		mSimulationMatrix = initialSimulationMatrix;
-		mQvasr = initialQvasr;
+	public QvasrAbstraction(final Rational[][] simulationMatrix, final Qvasr qvasr) {
+		mSimulationMatrix = simulationMatrix;
+		mQvasr = qvasr;
+	}
+
+	@Override
+	public int getConcreteDimension() {
+		return mSimulationMatrix[0].length;
 	}
 
 	/**
@@ -62,6 +67,7 @@ public class QvasrAbstraction {
 	 *
 	 * @return
 	 */
+	@Override
 	public Rational[][] getSimulationMatrix() {
 		return mSimulationMatrix;
 	}
@@ -71,7 +77,8 @@ public class QvasrAbstraction {
 	 *
 	 * @return
 	 */
-	public Qvasr getQvasr() {
+	@Override
+	public IVasr<Rational> getVasr() {
 		return mQvasr;
 	}
 
@@ -80,6 +87,18 @@ public class QvasrAbstraction {
 	 */
 	@Override
 	public String toString() {
-		return Arrays.toString(mSimulationMatrix) + "  " + mQvasr.toString();
+		final StringBuilder sb = new StringBuilder();
+		sb.append("S: \n");
+		for (int i = 0; i < mSimulationMatrix.length; i++) {
+			sb.append("[");
+			for (int j = 0; j < mSimulationMatrix[0].length; j++) {
+				sb.append(" " + mSimulationMatrix[i][j].toString() + " ");
+			}
+			sb.append("]");
+			sb.append("\n");
+		}
+		sb.append("\nV: \n");
+		sb.append(mQvasr.toString());
+		return sb.toString();
 	}
 }

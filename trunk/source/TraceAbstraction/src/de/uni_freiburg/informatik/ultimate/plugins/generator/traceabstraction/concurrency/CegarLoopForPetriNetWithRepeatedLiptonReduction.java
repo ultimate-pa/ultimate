@@ -29,7 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -38,7 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 /**
@@ -51,6 +58,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTransition<?>>
 		extends CegarLoopForPetriNet<L> {
+
+	private final IPLBECompositionFactory<L> mCompositionFactory;
+	private IIndependenceCache<?, L> mIndependenceCache;
 
 	/**
 	 * Construct the CEGAR loop.
@@ -65,21 +75,40 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 	 * @param compositionFactory
 	 * @param transitionClazz
 	 */
-	public CegarLoopForPetriNetWithRepeatedLiptonReduction(final DebugIdentifier name, final IIcfg<?> rootNode,
+	public CegarLoopForPetriNetWithRepeatedLiptonReduction(final DebugIdentifier name,
+			final BoundedPetriNet<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, services, compositionFactory,
-				transitionClazz);
-		if (mPref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
-			throw new IllegalArgumentException(getClass().getSimpleName() + "without Lipton reduction");
-		}
+			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, services,
+				transitionClazz, stateFactoryForRefinement);
+		mCompositionFactory = compositionFactory;
 	}
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final boolean result = super.refineAbstraction();
-		mAbstraction = applyLargeBlockEncoding((BoundedPetriNet<L, IPredicate>) mAbstraction);
+		mAbstraction = applyLargeBlockEncoding(mAbstraction);
 		return result;
+	}
+
+	protected BoundedPetriNet<L, IPredicate> applyLargeBlockEncoding(final BoundedPetriNet<L, IPredicate> cfg)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final long start_time = System.currentTimeMillis();
+		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
+				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
+				mIndependenceCache, mTransitionClazz);
+		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
+		mIndependenceCache = lbe.getIndependenceCache();
+		getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
+
+		final long end_time = System.currentTimeMillis();
+		final long difference = end_time - start_time;
+		mLogger.info("Time needed for LBE in milliseconds: " + difference);
+
+		getServices().getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+				"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
+		return lbecfg;
 	}
 }

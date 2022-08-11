@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
@@ -100,8 +101,10 @@ public final class LocalTransformer implements ITransformulaTransformer {
 	@Override
 	public TransformulaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
-		final ModifiableTransFormula mod =
-				ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
+		if (!(oldEdge instanceof IIcfgInternalTransition)) {
+			throw new UnsupportedOperationException("LocalTransformer does not support call/return");
+		}
+		final ModifiableTransFormula mod = ModifiableTransFormulaUtils.buildTransFormula(tf, mManagedScript);
 		try {
 			ModifiableTransFormula resultMod = mod;
 			for (final TransitionPreprocessor transformer : mTransitionPreprocessors) {
@@ -116,7 +119,6 @@ public final class LocalTransformer implements ITransformulaTransformer {
 		} catch (final TermException e) {
 			throw new AssertionError(e);
 		}
-
 	}
 
 	@Override

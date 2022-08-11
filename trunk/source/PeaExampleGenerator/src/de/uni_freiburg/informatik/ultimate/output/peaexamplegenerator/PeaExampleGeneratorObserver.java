@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences.PeaExampleGeneratorPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
@@ -105,7 +105,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 
 		final List<PatternType<?>> nonInitPatterns =
-				patterns.stream().filter(e -> !(e instanceof InitializationPattern)).collect(Collectors.toList());
+				patterns.stream().filter(e -> !(e instanceof DeclarationPattern)).collect(Collectors.toList());
 
 		if (nonInitPatterns.isEmpty()) {
 			throw new UnsupportedOperationException("No non-init pattern in: " + PatternContainer.class + ", have "
@@ -126,6 +126,8 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 	@Override
 	public void finish() {
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
+		final HashSet<Map<String, String>> signals = new HashSet<>();
+		int j = 0;
 		final List<ReqTestResultTest> reqTestResultTests =
 				(List<ReqTestResultTest>) ResultUtil.filterResults(results, ReqTestResultTest.class);
 
@@ -145,7 +147,14 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				final int waitTime = Integer.parseInt(((RealLiteral) step.getWaitTime().iterator().next()).getValue());
 
 				final Set<String> dontCares = new HashSet<>(identifiers);
-				dontCares.removeAll(step.getIdentifier());
+
+				// Consider waitForAssignements as dont-cares, except for the last test step
+				if (i != testSteps.size() - 1) {
+					step.getInputAssignment().forEach((k, v) -> dontCares.remove(k.getIdentifier()));
+					step.getOutputAssignment().forEach((k, v) -> dontCares.remove(k.getIdentifier()));
+				} else {
+					dontCares.removeAll(step.getIdentifier());
+				}
 
 				step.getInputAssignment()
 						.forEach((k, v) -> parseAssignment(k.getIdentifier(), v, waitTime, observables));
@@ -153,12 +162,29 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				step.getOutputAssignment()
 						.forEach((k, v) -> parseAssignment(k.getIdentifier(), v, waitTime, observables));
 
+				// waitForAssignments only need to be dealt with in the last test step (as they are considered as output
+				// assignments in the following test step)
+				if (i == testSteps.size() - 1) {
+					step.getWaitForAssignment()
+							.forEach((k, v) -> parseWaitForAssignment(k.getIdentifier(), v, waitTime, observables));
+					// In case there are waitForAssignments, the input must be prolonged by 1 time unit
+					if (!step.getWaitForAssignment().isEmpty()) {
+						step.getInputAssignment()
+								.forEach((k, v) -> parseAssignment(k.getIdentifier(), v, 1, observables));
+					}
+				}
+
 				dontCares.forEach(k -> parseAssignment(k, null, waitTime, observables));
+			}
+
+			// Do not generate duplicates.
+			if (!signals.add(observables)) {
+				continue;
 			}
 
 			try {
 				final String[] command = new String[] { "python", mScriptFile.getPath(), "-o",
-						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + i + mOutputFileExtension };
+						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + j + mOutputFileExtension };
 
 				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
 				final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
@@ -175,6 +201,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 			} catch (final IOException | InterruptedException e) {
 				throw new RuntimeException(e);
 			}
+			j++;
 		}
 	}
 
@@ -193,6 +220,24 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		for (int i = 0; i < waitTime - 1; i++) {
 			value += ".";
 		}
+		observables.put(identifier, values + value);
+	}
+
+	private static void parseWaitForAssignment(final String identifier, final Collection<Expression> expression,
+			final int waitTime, final Map<String, String> observables) {
+
+		final String values = observables.computeIfAbsent(identifier, e -> new String());
+		String value = "";
+		String waitForValue = "x";
+
+		for (int i = 0; i < waitTime; i++) {
+			value += ".";
+		}
+		if (expression != null) {
+			assert (expression.size() == 1);
+			waitForValue = ((BooleanLiteral) expression.iterator().next()).getValue() ? "h" : "l";
+		}
+		value += waitForValue;
 
 		observables.put(identifier, values + value);
 	}

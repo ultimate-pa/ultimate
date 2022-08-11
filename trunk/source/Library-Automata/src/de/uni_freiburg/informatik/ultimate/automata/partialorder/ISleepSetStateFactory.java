@@ -93,7 +93,7 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	 * @param <S>
 	 *            The type of states in the original (and in the reduced) automaton.
 	 */
-	public static class NoUnrolling<L, S> implements ISleepSetStateFactory<L, S, S> {
+	class NoUnrolling<L, S> implements ISleepSetStateFactory<L, S, S> {
 		@Override
 		public S createEmptyStackState() {
 			throw new UnsupportedOperationException();
@@ -130,7 +130,7 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	 * @param <S>
 	 *            The type of states in the original automaton
 	 */
-	public static class MinimalReduction<L, S> implements ISleepSetStateFactory<L, S, Pair<S, ImmutableSet<L>>> {
+	class MinimalReduction<L, S> implements ISleepSetStateFactory<L, S, Pair<S, ImmutableSet<L>>> {
 		@Override
 		public Pair<S, ImmutableSet<L>> createEmptyStackState() {
 			throw new UnsupportedOperationException();

@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
@@ -58,10 +59,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.Equivalence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStore3;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyDDAWithTimeout;
@@ -149,6 +154,7 @@ public final class SmtUtils {
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
 	private static final boolean DEBUG_ASSERT_ULTIMATE_NORMAL_FORM = false;
+	private static final boolean DEBUG_CHECK_EVERY_SIMPLIFICATION = false;
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -492,7 +498,7 @@ public final class SmtUtils {
 			return summands[0];
 		}
 		if (SmtSortUtils.isNumericSort(sort)) {
-			return script.term("+", CommuhashUtils.sortByHashCode(summands.clone()));
+			return script.term("+", CommuhashUtils.sortByHashCode(summands));
 		}
 		if (!SmtSortUtils.isBitvecSort(sort)) {
 			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
@@ -500,7 +506,7 @@ public final class SmtUtils {
 		if (BINARY_BITVECTOR_SUM_WORKAROUND) {
 			return binaryBitvectorSum(script, sort, summands);
 		}
-		return script.term("bvadd", CommuhashUtils.sortByHashCode(summands.clone()));
+		return script.term("bvadd", CommuhashUtils.sortByHashCode(summands));
 	}
 
 	/**
@@ -550,10 +556,10 @@ public final class SmtUtils {
 			return factors[0];
 		}
 		if (SmtSortUtils.isNumericSort(sort)) {
-			return script.term("*", factors);
+			return script.term("*", CommuhashUtils.sortByHashCode(factors));
 		}
 		if (SmtSortUtils.isBitvecSort(sort)) {
-			return script.term("bvmul", factors);
+			return script.term("bvmul", CommuhashUtils.sortByHashCode(factors));
 		}
 		throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 	}
@@ -589,7 +595,7 @@ public final class SmtUtils {
 		if (factors.length == 1) {
 			product = factors[0];
 		} else {
-			product = script.term(funcname, factors);
+			product = script.term(funcname, CommuhashUtils.sortByHashCode(factors));
 		}
 		final AffineTerm affine = (AffineTerm) new AffineTermTransformer(script).transform(product);
 		if (affine.isErrorTerm()) {
@@ -836,14 +842,6 @@ public final class SmtUtils {
 	private static Term setArrayCellValue(final Script script, final Term array, final Term index, final Term value) {
 		final Term select = SmtUtils.select(script, array, index);
 		return SmtUtils.binaryEquality(script, select, value);
-	}
-
-	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
-		final List<Term> result = new ArrayList<>();
-		for (int i = 0; i < subtituents.size(); i++) {
-			result.add(subst.transform(subtituents.get(i)));
-		}
-		return result;
 	}
 
 	/**
@@ -1215,6 +1213,27 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * Copy of {@link Util#ite} that uses our library methods for the construction
+	 * of terms.
+	 */
+	public static Term ite(final Script script, final Term cond, final Term thenPart, final Term elsePart) {
+		if (isTrueLiteral(cond)|| thenPart == elsePart) {
+			return thenPart;
+		} else if (isFalseLiteral(cond)) {
+			return elsePart;
+		} else if (isTrueLiteral(thenPart)) {
+			return or(script, cond, elsePart);
+		} else if (isFalseLiteral(elsePart)) {
+			return and(script, cond, thenPart);
+		} else if (isFalseLiteral(thenPart)) {
+			return and(script, not(script, cond), elsePart);
+		} else if (isTrueLiteral(elsePart)) {
+			return or(script, not(script, cond), thenPart);
+		}
+		return script.term("ite", cond, thenPart, elsePart);
+	}
+
+	/**
 	 * @return term that is equivalent to lhs <= rhs
 	 */
 	public static Term leq(final Script script, final Term lhs, final Term rhs) {
@@ -1331,7 +1350,7 @@ public final class SmtUtils {
 	 * constructs new terms that may violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}. Classes in
 	 * Ultimate that inherit {@link TermTransformer} should overwrite {@link TermTransformer#convertApplicationTerm} by
 	 * a method that uses this method for the construction of new terms. See e.g.,
-	 * {@link SubstitutionWithLocalSimplification}.
+	 * {@link Substitution}.
 	 *
 	 * @param appTerm
 	 *            original ApplicationTerm
@@ -1404,7 +1423,7 @@ public final class SmtUtils {
 			if (params.length != 3) {
 				throw new IllegalArgumentException("no ite");
 			}
-			result = Util.ite(script, params[0], params[1], params[2]);
+			result = SmtUtils.ite(script, params[0], params[1], params[2]);
 			break;
 		case "+":
 		case "bvadd":
@@ -1482,28 +1501,55 @@ public final class SmtUtils {
 		}
 		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
 				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
+
+		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION
+				|| Util.checkSat(script, script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
 		return result;
 	}
 
 	public static Term select(final Script script, final Term array, final Term index) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for select-over-store
-				if (nestedIdx.equals(index)) {
-					// Found select-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					// => transform into value
-					result = appArray.getParameters()[2];
-				} else {
-					result = script.term("select", array, index);
-				}
+			final ArrayStore as = ArrayStore.convert(array);
+			if (as != null) {
+				result = selectOverStore(script, as, index);
 			} else {
 				result = script.term("select", array, index);
 			}
 		} else {
 			result = script.term("select", array, index);
+		}
+		return result;
+	}
+
+	private static Term selectOverStore(final Script script, final ArrayStore as, final Term index) {
+		final Term result;
+		// Check for select-over-store
+		if (as.getIndex().equals(index)) {
+			// Found select-over-store => ignore inner store
+			// => transform into value
+			result = as.getValue();
+		} else {
+			final IPolynomialTerm selectIndex = PolynomialTermTransformer.convert(script, index);
+			final IPolynomialTerm storeIndex = PolynomialTermTransformer.convert(script, as.getIndex());
+			if (selectIndex == null || storeIndex == null) {
+				result = script.term("select", as.asTerm(), index);
+			} else {
+				final Equivalence comparison = selectIndex.compare(storeIndex);
+				switch (comparison) {
+				case DISTINCT:
+					result = select(script, as.getArray(), index);
+					break;
+				case EQUALS:
+					result = as.getValue();
+					break;
+				case INCOMPARABLE:
+					result = script.term("select", as.asTerm(), index);
+					break;
+				default:
+					throw new AssertionError("unknown value " + comparison);
+				}
+			}
 		}
 		return result;
 	}
@@ -1948,7 +1994,7 @@ public final class SmtUtils {
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
 			for (int i = 0; i < conjuncts.length; i++) {
-				final Term conjunct = new Substitution(script, substitutionMapping).transform(conjuncts[i]);
+				final Term conjunct = new PureSubstitution(script, substitutionMapping).transform(conjuncts[i]);
 				final String name = "conjunct" + i;
 				final Annotation annot = new Annotation(":named", name);
 				final Term annotTerm = script.annotate(conjunct, annot);
@@ -2112,7 +2158,7 @@ public final class SmtUtils {
 			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = new Substitution(mgdScript, substitutionMapping).transform(qFormula.getSubformula());
+		final Term newBody = Substitution.apply(mgdScript, substitutionMapping, qFormula.getSubformula());
 
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
 		for (int i = 0; i < vars.length; i++) {

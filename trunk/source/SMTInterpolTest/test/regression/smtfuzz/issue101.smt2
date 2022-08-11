@@ -1,4 +1,3 @@
-(set-info :expect-errors 1)
 (set-logic AUFLIA)
 (declare-fun f0 (Int Int Int Int Int) Int)
 (declare-fun f1 (Int Int Int Int Int Int) Int)

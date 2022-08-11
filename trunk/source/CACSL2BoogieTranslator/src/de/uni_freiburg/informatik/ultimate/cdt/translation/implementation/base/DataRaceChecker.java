@@ -83,6 +83,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 public final class DataRaceChecker {
 	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = true;
 
+	private static final String UNSUPPORTED_MSG =
+			"Race detection currently only supports simple variables and data on heap. "
+					+ "Structs and arrays are not yet supported (unless they are on the heap).";
+
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
 	private final ITypeHandler mTypeHandler;
@@ -123,9 +127,7 @@ public final class DataRaceChecker {
 				return;
 			}
 			// should be moved to heap in main run
-			throw new UnsupportedOperationException(
-					"Race detection currently only supports simple variables and data on heap. "
-							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
 		}
 
 		final Expression raceValue = createRaceRead();
@@ -161,9 +163,7 @@ public final class DataRaceChecker {
 				return;
 			}
 			// should be moved to heap in main run
-			throw new UnsupportedOperationException(
-					"Race detection currently only supports simple variables and data on heap. "
-							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
 		}
 
 		// TODO For better performance, make the statements created by #createRaceWrite and #updateRaceIndicator atomic.
@@ -326,9 +326,7 @@ public final class DataRaceChecker {
 		}
 
 		if (!SUPPORT_ARRAY_STRUCT_LHS) {
-			throw new UnsupportedOperationException(
-					"Race detection currently only supports simple variables and data on heap. "
-							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
 		}
 
 		if (lhs instanceof ArrayLHS) {

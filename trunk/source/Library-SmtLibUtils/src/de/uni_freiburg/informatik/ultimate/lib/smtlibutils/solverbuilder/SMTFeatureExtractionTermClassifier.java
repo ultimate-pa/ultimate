@@ -38,6 +38,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -68,7 +69,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	private final Map<Term, Integer> mVariableToCount;
 
 	public SMTFeatureExtractionTermClassifier() {
-		super();
 		mOccuringSortNames = new HashMap<>();
 		mOccuringFunctionNames = new HashMap<>();
 		mOccuringQuantifiers = new HashMap<>();
@@ -170,12 +170,10 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	public static double normalize(final double score, final double lower_bound, final double upper_bound) {
 		// Normalizes a given value to a certain interval.
 		// Normalize to [0,1]
-		double normalized_score = 1.0 - (1.0 / (score != 0 ? (double) score : 1.0));
+		double normalized_score = 1.0 - 1.0 / (score != 0 ? (double) score : 1.0);
 		// Scale to [lower_bound,upper_bound]
 		final double range = upper_bound - lower_bound;
-		normalized_score = (normalized_score * range) + lower_bound;
-
-		return normalized_score;
+		return normalized_score * range + lower_bound;
 	}
 
 	public double getScore(final ScoringMethod scoringMethod) {
@@ -202,8 +200,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			// Dummy score
 			score = 1;
 		}
-		final double normalized = normalize(score, 0.5, 1);
-		return normalized;
+		return normalize(score, 0.5, 1);
 	}
 
 	private static boolean isApplicationTermWithArityZero(final Term term) {
@@ -268,8 +265,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		}
 
 		private void createAndAddToTermset(final int eq_class_id, final Term... terms) {
-			final Set<Term> termset = new HashSet<>();
-			termset.addAll(Arrays.asList(terms));
+			final Set<Term> termset = new HashSet<>(Arrays.asList(terms));
 			termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.emptySet()));
 			mTermsets.put(eq_class_id, termset);
 		}
@@ -334,15 +330,13 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 						collectVariables((ApplicationTerm) term1, ((ApplicationTerm) term1).getFunction().getName(),
 								new_class_id);
 					}
-				} else {
-					if (term1 instanceof ApplicationTerm && term2 instanceof ApplicationTerm) {
-						collectVariables((ApplicationTerm) term1, ((ApplicationTerm) term1).getFunction().getName(),
-								eq_class_id);
-						// Term 2 is a new EQ class
-						final int new_class_id = functionname.equals("or") ? mTermsets.size() + 1 : eq_class_id;
-						collectVariables((ApplicationTerm) term2, ((ApplicationTerm) term2).getFunction().getName(),
-								new_class_id);
-					}
+				} else if (term1 instanceof ApplicationTerm && term2 instanceof ApplicationTerm) {
+					collectVariables((ApplicationTerm) term1, ((ApplicationTerm) term1).getFunction().getName(),
+							eq_class_id);
+					// Term 2 is a new EQ class
+					final int new_class_id = functionname.equals("or") ? mTermsets.size() + 1 : eq_class_id;
+					collectVariables((ApplicationTerm) term2, ((ApplicationTerm) term2).getFunction().getName(),
+							new_class_id);
 				}
 			}
 		}
@@ -422,6 +416,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			}
 			// cannot descend
 		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 }
