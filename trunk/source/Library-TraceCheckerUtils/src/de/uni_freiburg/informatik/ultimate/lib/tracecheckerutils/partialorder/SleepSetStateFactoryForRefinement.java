@@ -1,8 +1,6 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -33,7 +31,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.ICoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
@@ -68,7 +65,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 *            The predicate factory used to create new MLPredicates.
 	 */
 	public SleepSetStateFactoryForRefinement(final PredicateFactory predicateFactory) {
-		super();
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
 	}
 
@@ -193,24 +189,10 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		public ImmutableSet<L> getSleepSet() {
 			return mSleepSet;
 		}
-	}
-
-	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {
-		private final SleepSetStateFactoryForRefinement<L> mFactory;
-
-		public FactoryCoveringRelation(final SleepSetStateFactoryForRefinement<L> factory) {
-			mFactory = factory;
-		}
 
 		@Override
-		public boolean covers(final IPredicate oldState, final IPredicate newState) {
-			assert getKey(oldState) == getKey(newState);
-			return mFactory.getSleepSet(newState).containsAll(mFactory.getSleepSet(oldState));
-		}
-
-		@Override
-		public Object getKey(final IPredicate state) {
-			return mFactory.getOriginalState(state);
+		public String toString() {
+			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mSleepSet + "]";
 		}
 	}
 }

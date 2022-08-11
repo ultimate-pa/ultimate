@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -128,7 +129,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory, final Class<L> transitionClazz) {
+			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
+			final ICopyActionFactory<L> copyFactory, final Class<L> transitionClazz) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPrefs = new TAPreferences(mServices);
@@ -146,8 +148,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mComputeHoareAnnotation = mPrefs.computeHoareAnnotation();
 		}
 
-		mCegarFactory =
-				new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, mComputeHoareAnnotation);
+		mCegarFactory = new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, copyFactory,
+				mComputeHoareAnnotation);
 
 		runCegarLoops(icfg);
 	}
@@ -318,6 +320,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 			if (mPrefs.stopAfterFirstViolation() && clres.resultStream().anyMatch(a -> a == Result.UNSAFE)) {
 				// TODO: Report for all remaining errorLocs an unknown result
+				break;
+			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				// TODO: Report for all remaining errorLocs a timeout result
 				break;
 			}
 		}

@@ -59,8 +59,10 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -88,15 +90,18 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	private final Class<L> mTransitionClazz;
 	private final TAPreferences mPrefs;
 	private final Supplier<IPLBECompositionFactory<L>> mCreateCompositionFactory;
+	private final ICopyActionFactory<L> mCopyFactory;
 	private final boolean mComputeHoareAnnotation;
 
 	private CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	public CegarLoopFactory(final Class<L> transitionClazz, final TAPreferences taPrefs,
-			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory, final boolean computeHoareAnnotation) {
+			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
+			final ICopyActionFactory<L> copyFactory, final boolean computeHoareAnnotation) {
 		mTransitionClazz = transitionClazz;
 		mPrefs = taPrefs;
 		mCreateCompositionFactory = createCompositionFactory;
+		mCopyFactory = copyFactory;
 		mComputeHoareAnnotation = computeHoareAnnotation;
 	}
 
@@ -169,11 +174,12 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		case PARTIAL_ORDER_FA:
 			requireNoReuse("POR-based analysis");
 			requireNoWitnesses(witnessAutomaton, "POR-based analysis");
+			final var factory = new IndependenceProviderFactory<>(services, mPrefs, mCopyFactory);
 			return new PartialOrderCegarLoop<>(name,
 					createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
 							errorLocs),
 					root, csToolkit, predicateFactory, mPrefs, errorLocs, mPrefs.interpolation(), services,
-					mTransitionClazz, stateFactoryForRefinement);
+					factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement);
 		case PETRI_NET:
 			requireNoReuse("Petri net-based analysis");
 			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
@@ -281,7 +287,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
 			final PredicateFactory predicateFactory, final Class<L> transitionClazz, final TAPreferences pref,
 			final boolean removeDead, final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs) {
-		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, false)
+		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, null, false)
 				.createPetriAbstraction(services, predicateFactory, removeDead, icfg, errorLocs);
 	}
 

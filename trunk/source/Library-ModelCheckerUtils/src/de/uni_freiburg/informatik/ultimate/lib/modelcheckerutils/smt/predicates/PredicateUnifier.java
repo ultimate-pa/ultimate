@@ -205,7 +205,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	@Override
 	public IPredicate getOrConstructPredicateForConjunction(final Collection<IPredicate> conjunction) {
 		final Set<IPredicate> minimalSubset =
-				PosetUtils.filterMinimalElements(conjunction, mCoverageRelation.getPartialComperator())
+				PosetUtils.filterMinimalElements(conjunction, mCoverageRelation.getPartialComparator())
 						.collect(Collectors.toSet());
 		if (minimalSubset.size() == 1) {
 			return minimalSubset.iterator().next();
@@ -236,7 +236,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	@Override
 	public IPredicate getOrConstructPredicateForDisjunction(final Collection<IPredicate> disjunction) {
 		final Set<IPredicate> minimalSubset =
-				PosetUtils.filterMaximalElements(disjunction, mCoverageRelation.getPartialComperator())
+				PosetUtils.filterMaximalElements(disjunction, mCoverageRelation.getPartialComparator())
 						.collect(Collectors.toSet());
 		if (minimalSubset.size() == 1) {
 			return minimalSubset.iterator().next();
@@ -629,7 +629,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 
 		@Override
-		public IPartialComparator<IPredicate> getPartialComperator() {
+		public IPartialComparator<IPredicate> getPartialComparator() {
 			return (o1, o2) -> {
 				if (o1.equals(o2)) {
 					return ComparisonResult.EQUAL;

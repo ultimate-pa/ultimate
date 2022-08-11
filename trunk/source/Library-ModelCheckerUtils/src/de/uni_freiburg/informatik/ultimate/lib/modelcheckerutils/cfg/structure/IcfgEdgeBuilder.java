@@ -252,7 +252,7 @@ public class IcfgEdgeBuilder {
 		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof IIcfgSummaryTransition<?>);
 	}
 
-	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+	public IcfgEdge constructAndConnectInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final Term term) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final UnmodifiableTransFormula oldTf = IcfgUtils.getTransformula(oldTransition);
@@ -278,16 +278,88 @@ public class IcfgEdgeBuilder {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
 		final UnmodifiableTransFormula tf = tfb.finishConstruction(mManagedScript);
-		return constructInternalTransition(oldTransition, source, target, tf);
+		return constructAndConnectInternalTransition(oldTransition, source, target, tf);
+	}
+
+	public IcfgEdge constructAndConnectInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf) {
+		final IcfgEdge edge = constructInternalTransition(oldTransition, source, target, tf);
+		source.addOutgoing(edge);
+		target.addIncoming(edge);
+		return edge;
 	}
 
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
 		ModelUtils.copyAnnotations(oldTransition, rtr);
+		return rtr;
+	}
+
+	public IcfgForkThreadCurrentTransition constructForkCurrentTransition(
+			final IcfgForkThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf,
+			final boolean connect) {
+		final IcfgForkThreadCurrentTransition rtr =
+				mEdgeFactory.createForkThreadCurrentTransition(oldTransition.getSource(), oldTransition.getTarget(),
+						null, tf, oldTransition.getForkSmtArguments(), oldTransition.getNameOfForkedProcedure());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
+	public IcfgForkThreadOtherTransition constructForkOtherTransition(final IcfgForkThreadOtherTransition oldTransition,
+			final UnmodifiableTransFormula tf, final boolean connect) {
+		final IcfgForkThreadOtherTransition rtr =
+				mEdgeFactory.createForkThreadOtherTransition(oldTransition.getSource(), oldTransition.getTarget(), null,
+						tf, oldTransition.getCorrespondingIIcfgForkTransitionCurrentThread());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
+	public IcfgJoinThreadCurrentTransition constructJoinCurrentTransition(
+			final IcfgJoinThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf,
+			final boolean connect) {
+		final IcfgJoinThreadCurrentTransition rtr = mEdgeFactory.createJoinThreadCurrentTransition(
+				oldTransition.getSource(), oldTransition.getTarget(), null, tf, oldTransition.getJoinSmtArguments());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
+	public IcfgJoinThreadOtherTransition constructJoinOtherTransition(final IcfgJoinThreadOtherTransition oldTransition,
+			final UnmodifiableTransFormula tf, final boolean connect) {
+		final IcfgJoinThreadOtherTransition rtr =
+				mEdgeFactory.createJoinThreadOtherTransition(oldTransition.getSource(), oldTransition.getTarget(), null,
+						tf, oldTransition.getCorrespondingIIcfgJoinTransitionCurrentThread());
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			oldTransition.getSource().addOutgoing(rtr);
+			oldTransition.getTarget().addIncoming(rtr);
+		}
+		return rtr;
+	}
+
+	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf, final UnmodifiableTransFormula tfWithBe,
+			final boolean connect) {
+		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBe);
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		if (connect) {
+			source.addOutgoing(rtr);
+			target.addIncoming(rtr);
+		}
 		return rtr;
 	}
 

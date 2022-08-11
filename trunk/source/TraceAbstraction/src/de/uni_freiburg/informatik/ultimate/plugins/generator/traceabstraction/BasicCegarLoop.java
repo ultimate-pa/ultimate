@@ -32,10 +32,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -62,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -74,10 +81,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
@@ -226,6 +238,82 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 					mLogger.error("Creating FileWriter did not work.", e);
 				}
 			}
+		}
+
+	}
+
+	@Override
+	protected void initialize() throws AutomataLibraryException {
+		if (mPref.readInitialProof()) {
+			readInitialProof();
+		}
+	}
+
+	/**
+	 * Reads a sequence of SMT assertions from a file (line by line), creates a refinement result from them and refines
+	 * the initial abstraction with this result.
+	 */
+	protected final void readInitialProof() {
+		final String filename = ILocation.getAnnotation(mIcfg).getFileName() + ".proof.smt2";
+		final Path path = Paths.get(filename).toAbsolutePath();
+		if (Files.notExists(path)) {
+			mLogger.warn("Could not find file with proof assertions: %s", path.toString());
+			return;
+		}
+
+		mLogger.warn("First iteration: Refining with proof given in %s", path.toString());
+
+		// Read a sequence of predicates from the file
+		final List<IPredicate> predicates = new ArrayList<>();
+		try (final Scanner myReader = new Scanner(path, StandardCharsets.UTF_8)) {
+			while (myReader.hasNextLine()) {
+				final String data = myReader.nextLine();
+				if (data.isBlank() || data.stripLeading().startsWith("#")) {
+					// skip blank lines and comments
+					continue;
+				}
+				final Term term = SmtParserUtils.parseWithVariables(data, mServices, mCsToolkit);
+				final IPredicate pred = mPredicateFactory.newPredicate(term);
+				predicates.add(pred);
+			}
+		} catch (final IOException e) {
+			throw new IllegalStateException(e);
+		}
+
+		final IPredicateUnifier unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
+				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
+				predicates.toArray(IPredicate[]::new));
+
+		final VpAlphabet<L> alphabet;
+		if (mAbstraction instanceof INwaOutgoingLetterAndTransitionProvider<?, ?>) {
+			alphabet = ((INwaOutgoingLetterAndTransitionProvider<L, ?>) mAbstraction).getVpAlphabet();
+		} else {
+			alphabet = new VpAlphabet<>(mAbstraction.getAlphabet());
+		}
+
+		// Create an automaton from the predicates.
+		// The automaton has no edges, only states; it is only useful in combination with some enhancement.
+		final NestedWordAutomaton<L, IPredicate> nwa =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, mStateFactoryForRefinement);
+		final IPredicate truePred = unifier.getTruePredicate();
+		nwa.addState(true, false, truePred);
+		final IPredicate falsePred = unifier.getFalsePredicate();
+		nwa.addState(false, true, falsePred);
+		for (final IPredicate pred : predicates) {
+			nwa.addState(false, false, pred);
+		}
+
+		// Write the refinement result and interpolant automaton to the class fields, and call #refineAbstraction.
+		mRefinementResult = new BasicRefinementEngineResult<>(LBool.UNSAT, nwa, null, false,
+				List.of(new QualifiedTracePredicates(new TracePredicates(truePred, falsePred, predicates), getClass(),
+						false)),
+				new Lazy<>(() -> new MonolithicHoareTripleChecker(mCsToolkit)), new Lazy<>(() -> unifier));
+		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
+
+		try {
+			refineAbstraction();
+		} catch (final AutomataLibraryException e) {
+			throw new IllegalStateException(e);
 		}
 	}
 
