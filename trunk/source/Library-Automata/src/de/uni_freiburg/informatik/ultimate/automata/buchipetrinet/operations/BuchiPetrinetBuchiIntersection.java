@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
@@ -232,13 +231,6 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 			}
 		}
 		return predecessorTransitions;
-	}
-
-	@Override
-	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
-			getSuccessorTransitionProviders(final HashRelation<PLACE, PLACE> place2allowedSiblings) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

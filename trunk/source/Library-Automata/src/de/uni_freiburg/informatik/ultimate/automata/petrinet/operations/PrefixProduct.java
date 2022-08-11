@@ -42,23 +42,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Concur
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Given a Petri net N and an finite automaton A over the same alphabet.
- * The language of the {@link PrefixProduct} is the set of all words w such that
+ * Given a Petri net N and an finite automaton A over the same alphabet. The language of the {@link PrefixProduct} is
+ * the set of all words w such that
  * <ul>
- * <li> w is the interleaving of two words w_N and w_A such that
- * <li> there is a run of N over w_N
- * <li> there is a run of A over w_A
- * <li> w_A is accepted by A or w_N is accepted by N
- * </ ul>
+ * <li>w is the interleaving of two words w_N and w_A such that
+ * <li>there is a run of N over w_N
+ * <li>there is a run of A over w_A
+ * <li>w_A is accepted by A or w_N is accepted by N </ ul>
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <CRSF>
@@ -73,7 +72,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 	private final Map<PLACE, PLACE> mOldPlace2newPlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mState2newPlace = new HashMap<>();
 
-	private final Map<LETTER, Collection<ITransition<LETTER, PLACE>>> mSymbol2netTransitions = new HashMap<>();
+	private final Map<LETTER, Collection<Transition<LETTER, PLACE>>> mSymbol2netTransitions = new HashMap<>();
 	private final Map<LETTER, Collection<AutomatonTransition>> mSymbol2nwaTransitions = new HashMap<>();
 
 	public PrefixProduct(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
@@ -117,8 +116,8 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 		return mResult;
 	}
 
-	private void updateSymbol2netTransitions(final LETTER symbol, final ITransition<LETTER, PLACE> netTransition) {
-		Collection<ITransition<LETTER, PLACE>> netTransitions;
+	private void updateSymbol2netTransitions(final LETTER symbol, final Transition<LETTER, PLACE> netTransition) {
+		Collection<Transition<LETTER, PLACE>> netTransitions;
 		netTransitions = mSymbol2netTransitions.get(symbol);
 		if (netTransitions == null) {
 			netTransitions = new LinkedList<>();
@@ -154,7 +153,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 
 		addPlacesAndStates(result);
 
-		for (final ITransition<LETTER, PLACE> trans : mOperand.getTransitions()) {
+		for (final Transition<LETTER, PLACE> trans : mOperand.getTransitions()) {
 			updateSymbol2netTransitions(trans.getSymbol(), trans);
 		}
 
@@ -177,12 +176,13 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 		return result;
 	}
 
-	private void addSharedTransitions(final HashSet<LETTER> sharedAlphabet, final BoundedPetriNet<LETTER, PLACE> result) {
+	private void addSharedTransitions(final HashSet<LETTER> sharedAlphabet,
+			final BoundedPetriNet<LETTER, PLACE> result) {
 		for (final LETTER symbol : sharedAlphabet) {
 			if (!mSymbol2netTransitions.containsKey(symbol)) {
 				continue;
 			}
-			for (final ITransition<LETTER, PLACE> netTrans : mSymbol2netTransitions.get(symbol)) {
+			for (final Transition<LETTER, PLACE> netTrans : mSymbol2netTransitions.get(symbol)) {
 				if (!mSymbol2nwaTransitions.containsKey(symbol)) {
 					continue;
 				}
@@ -197,7 +197,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 	private void addUnsharedTransitions(final HashSet<LETTER> netOnlyAlphabet, final HashSet<LETTER> nwaOnlyAlphabet,
 			final BoundedPetriNet<LETTER, PLACE> result) {
 		for (final LETTER symbol : netOnlyAlphabet) {
-			for (final ITransition<LETTER, PLACE> trans : mSymbol2netTransitions.get(symbol)) {
+			for (final Transition<LETTER, PLACE> trans : mSymbol2netTransitions.get(symbol)) {
 				final Set<PLACE> predecessors = new HashSet<>();
 				for (final PLACE oldPlace : mOperand.getPredecessors(trans)) {
 					final PLACE newPlace = mOldPlace2newPlace.get(oldPlace);
@@ -226,8 +226,9 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 		}
 	}
 
-	private void addSharedTransitionsHelper(final ITransition<LETTER, PLACE> netTrans, final AutomatonTransition nwaTrans,
-			final Set<PLACE> predecessors, final BoundedPetriNet<LETTER, PLACE> result) {
+	private void addSharedTransitionsHelper(final Transition<LETTER, PLACE> netTrans,
+			final AutomatonTransition nwaTrans, final Set<PLACE> predecessors,
+			final BoundedPetriNet<LETTER, PLACE> result) {
 		for (final PLACE oldPlace : mOperand.getPredecessors(netTrans)) {
 			final PLACE newPlace = mOldPlace2newPlace.get(oldPlace);
 			predecessors.add(newPlace);
@@ -244,7 +245,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 	}
 
 	private void addPlacesAndStates(final BoundedPetriNet<LETTER, PLACE> result) {
-		//add places of old net
+		// add places of old net
 		for (final PLACE oldPlace : mOperand.getPlaces()) {
 			final boolean isInitial = mOperand.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
@@ -255,7 +256,7 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 			mOldPlace2newPlace.put(oldPlace, oldPlace);
 		}
 
-		//add states of automaton
+		// add states of automaton
 		for (final PLACE state : mNwa.getStates()) {
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
 			final boolean isAccepting = mNwa.isFinal(state);
@@ -267,7 +268,6 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 			mState2newPlace.put(state, state);
 		}
 	}
-
 
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {

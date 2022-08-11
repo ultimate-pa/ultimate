@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -50,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
  */
-public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPetriNetSuccessorProvider<LETTER, PLACE> {
+public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LETTER, PLACE> {
 	Collection<PLACE> getPlaces();
 
 	Collection<Transition<LETTER, PLACE>> getTransitions();
@@ -61,39 +60,6 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
 		return new PetriNetToUltimateModel<LETTER, PLACE>().transformToUltimateModel(this);
-	}
-
-	/**
-	 * Default implementation that construct the {@link Transition} while the {@link ISuccessorTransitionProvider} is
-	 * constructed. Hence this implementation is not suitable for an on-demand construction.
-	 */
-	@Override
-	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
-			getSuccessorTransitionProviders(final HashRelation<PLACE, PLACE> place2allowedSiblings) {
-		// Step 1: Construct mapping from predecessor places to transitions
-		// necessary because (A) each transition should occur in at most one
-		// provider and (B) for each set of predecessor places there should be
-		// only one provider.
-		final HashRelation<Set<PLACE>, Transition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
-		for (final PLACE p : place2allowedSiblings.getDomain()) {
-			final HashSet<PLACE> allowedPredecessors = new HashSet<>(place2allowedSiblings.getImage(p));
-			allowedPredecessors.add(p);
-			for (final Transition<LETTER, PLACE> t : getSuccessors(p)) {
-				if (allowedPredecessors.containsAll(getPredecessors(t))) {
-					predecessorPlaces2Transition.addPair(getPredecessors(t), t);
-				}
-			}
-		}
-		// Step 2: iterate over the transition sets and transform them into
-		// {@link SimpleSuccessorTransitionProvider}s.
-		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
-		for (final Set<PLACE> predecessors : predecessorPlaces2Transition.getDomain()) {
-			final Set<Transition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
-			result.add(new SimpleSuccessorTransitionProvider<>(transitions, this));
-		}
-		// System.out.println("OldSuccs " + place2allowedSiblings.getDomain().size() + " " +
-		// place2allowedSiblings.size());
-		return result;
 	}
 
 	@Override

@@ -7,7 +7,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
 
@@ -24,16 +23,6 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 
 	/** @return Incoming transitions of given place. */
 	Set<Transition<LETTER, PLACE>> getPredecessors(final PLACE place);
-
-	/**
-	 *
-	 * @param place2allowedSiblings
-	 * @return all {@link ISuccessorTransitionProvider}s such that for its predecessors {p1,...,pn} there exists some i
-	 *         such that pi is in the domain of the place2allowedSiblings and all elements of
-	 *         {p1,...,p_{i-1},p_{i+1},pn} are in relation with pi.
-	 */
-	Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
-			getSuccessorTransitionProviders(final HashRelation<PLACE, PLACE> place2allowedSiblings);
 
 	/**
 	 *

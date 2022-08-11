@@ -43,11 +43,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.TreePriorityQueue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -64,8 +64,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LETTER, PLACE> {
 
 	/**
-	 * Use the optimization that is outlined in observation B07 in the following
-	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
+	 * Use the optimization that is outlined in observation B07 in the following issue.
+	 * https://github.com/ultimate-pa/ultimate/issues/448
 	 */
 	private static final boolean USE_FORWARD_CHECKING = false;
 	private final Queue<Event<LETTER, PLACE>> mPe;
@@ -74,14 +74,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private static final boolean USE_PQ = true;
 	private final boolean mUseFirstbornCutoffCheck;
 	private final boolean mUseB32Optimization;
-	private int mNumberOfGeneratedExtensions =0;
+	private int mNumberOfGeneratedExtensions = 0;
 	/**
-	 * If {@link Event} is known to be cut-off event we can move it immediately
-	 * to front because it will not create descendants. This optimization keeps
-	 * the queue smaller. TODO 2019-10-16 Matthias: Mehdi found out that this
-	 * ArrayDeque is currently unused because the cut-off detection is only done
-	 * later. We could to an additional cut-off check earlier but we have doubts
-	 * that this will pay off.
+	 * If {@link Event} is known to be cut-off event we can move it immediately to front because it will not create
+	 * descendants. This optimization keeps the queue smaller. TODO 2019-10-16 Matthias: Mehdi found out that this
+	 * ArrayDeque is currently unused because the cut-off detection is only done later. We could to an additional
+	 * cut-off check earlier but we have doubts that this will pay off.
 	 */
 	private final Comparator<Event<LETTER, PLACE>> mOrder;
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
@@ -156,21 +154,23 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		} else {
 			boolean eventWithSameMarkingWasInTheMainQueu;
 			eventWithSameMarkingWasInTheMainQueu = mPe.remove(eventWithSameMarking);
-			assert(eventWithSameMarkingWasInTheMainQueu);
+			assert (eventWithSameMarkingWasInTheMainQueu);
 			mFastpathCutoffEventList.add(eventWithSameMarking);
 			eventWithSameMarking.setCompanion(newEvent);
 			return false;
 		}
 	}
+
 	/**
 	 * Evolves a {@code Candidate} for a new possible Event in all possible ways and, as a side-effect, adds valid
 	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
 	 */
 
 	private void addFullyInstantiatedCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
-		for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
-			mNumberOfGeneratedExtensions ++;
-			final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess, mNumberOfGeneratedExtensions);
+		for (final Transition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
+			mNumberOfGeneratedExtensions++;
+			final Event<LETTER, PLACE> newEvent =
+					new Event<>(cand.getInstantiated(), trans, mBranchingProcess, mNumberOfGeneratedExtensions);
 			if (mUseFirstbornCutoffCheck) {
 				if (firstbornCutoffCheck(newEvent)) {
 					mFastpathCutoffEventList.add(newEvent);
@@ -191,6 +191,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			}
 		}
 	}
+
 	@SuppressWarnings("squid:S1698")
 	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
 		if (cand.isFullyInstantiated()) {
@@ -202,7 +203,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		final List<Condition<LETTER, PLACE>> yetInstantiated = cand.getInstantiatedButNotInitially();
 		final Set<Condition<LETTER, PLACE>> inCoRelationWithAllInstantiated =
 				cand.getPossibleInstantiations(nextUninstantiated).stream()
-				.filter(x -> coRelation.isCoset(yetInstantiated, x)).collect(Collectors.toSet());
+						.filter(x -> coRelation.isCoset(yetInstantiated, x)).collect(Collectors.toSet());
 		for (final Condition<LETTER, PLACE> c : inCoRelationWithAllInstantiated) {
 			assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
 			// equality intended here
@@ -214,7 +215,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		}
 	}
 
-	private void evolveCandidateWithForwardChecking(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException  {
+	private void evolveCandidateWithForwardChecking(final Candidate<LETTER, PLACE> cand)
+			throws PetriNetNot1SafeException {
 		if (cand.isFullyInstantiated()) {
 			addFullyInstantiatedCandidate(cand);
 			return;
@@ -228,9 +230,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final Map<PLACE, Set<Condition<LETTER, PLACE>>> newPossibleInstantiations = new HashMap<>();
 			boolean uselessCandidate = false;
 			for (final PLACE p : possibleInstantiationsMap.keySet()) {
-				final Set<Condition<LETTER, PLACE>> possibleInstantiationsforP =
-						possibleInstantiationsMap.get(p).stream()
-						.filter(x -> coRelation.isInCoRelation(condition, x)).collect(Collectors.toSet());
+				final Set<Condition<LETTER, PLACE>> possibleInstantiationsforP = possibleInstantiationsMap.get(p)
+						.stream().filter(x -> coRelation.isInCoRelation(condition, x)).collect(Collectors.toSet());
 				if (possibleInstantiationsforP.isEmpty()) {
 					uselessCandidate = true;
 					break;
@@ -238,21 +239,18 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				newPossibleInstantiations.put(p, possibleInstantiationsforP);
 			}
 			if (!uselessCandidate) {
-				final LinkedList<Condition<LETTER, PLACE>> newInstantiated = new LinkedList<>(
-						cand.getInstantiated());
+				final LinkedList<Condition<LETTER, PLACE>> newInstantiated = new LinkedList<>(cand.getInstantiated());
 				newInstantiated.add(condition);
 				final LinkedList<PLACE> newNotInstantiated = new LinkedList<>(cand.getNotInstantiated());
 				newNotInstantiated.remove(newNotInstantiated.size() - 1);
-				evolveCandidateWithForwardChecking(new Candidate<LETTER, PLACE>(cand.getTransition(), newNotInstantiated,
-						newInstantiated, newPossibleInstantiations));
+				evolveCandidateWithForwardChecking(new Candidate<LETTER, PLACE>(cand.getTransition(),
+						newNotInstantiated, newInstantiated, newPossibleInstantiations));
 			}
 		}
 	}
 
-
 	/**
-	 * @return All {@code Candidate}s for possible extensions that are successors of
-	 *         the {@code Event}.
+	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
 	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
 		if (event.getSuccessorConditions().isEmpty()) {
@@ -294,14 +292,14 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				throw new AssertionError("non-lazy computation only available for fully constructed nets");
 			}
 			final IPetriNet<LETTER, PLACE> fullPetriNet = (IPetriNet<LETTER, PLACE>) mBranchingProcess.getNet();
-			final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
+			final Set<Transition<LETTER, PLACE>> transitions = new HashSet<>();
 			for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
-				for (final ITransition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {
+				for (final Transition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {
 					transitions.add(t);
 				}
 			}
 			final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
-			for (final ITransition<LETTER, PLACE> transition : transitions) {
+			for (final Transition<LETTER, PLACE> transition : transitions) {
 				final Candidate<LETTER, PLACE> candidate = new Candidate<>(
 						new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), fullPetriNet),
 						event.getSuccessorConditions(), null);
@@ -335,8 +333,5 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	public int getMaximalSize() {
 		return mMaximalSize;
 	}
-
-
-
 
 }
