@@ -245,38 +245,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		return addTransition(letter, preds, succs, mTransitions.size());
 	}
 
-	/**
-	 * @param transition
-	 *            A transition from this net.
-	 * @param marking
-	 *            marking
-	 * @return {@code true} iff the transition is enabled
-	 * @deprecated currently not used
-	 */
-	@Deprecated
-	public boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition, final Collection<PLACE> marking) {
-		return marking.containsAll(transition.getSuccessors());
-	}
-
-	/**
-	 * Fires a transition.
-	 *
-	 * @param transition
-	 *            transition
-	 * @param marking
-	 *            marking
-	 * @return resulting marking
-	 * @deprecated currently not used, modifies marking
-	 */
-	@Deprecated
-	private Collection<PLACE> fireTransition(final Transition<LETTER, PLACE> transition,
-			final Collection<PLACE> marking) {
-		marking.removeAll(transition.getPredecessors());
-		marking.addAll(transition.getSuccessors());
-
-		return marking;
-	}
-
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mAlphabet;
