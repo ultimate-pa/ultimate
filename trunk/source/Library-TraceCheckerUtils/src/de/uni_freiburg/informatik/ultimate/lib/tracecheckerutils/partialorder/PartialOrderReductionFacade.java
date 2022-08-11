@@ -139,7 +139,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mIndependenceRelations = new ArrayList<>(independenceRelations);
 		mGetBudget = getBudget;
 
-		mPredicateFactory = predicateFactory;
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
 		mMcrFactory = createMcrFactory(predicateFactory, mcrOptimizeForkJoin, mcrOverApproxWRWC);
