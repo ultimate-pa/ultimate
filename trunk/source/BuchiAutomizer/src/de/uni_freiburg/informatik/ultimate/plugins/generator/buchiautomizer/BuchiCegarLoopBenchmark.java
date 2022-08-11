@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.AbstractBuchiCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.BuchiCegarLoopResult.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;

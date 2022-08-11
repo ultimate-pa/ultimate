@@ -94,6 +94,10 @@ public class TermTransferrer extends TermTransformer {
 		mApplyLocalSimplifications = applyLocalSimplifications;
 	}
 
+	public Map<Term, Term> getTransferMapping() {
+		return mTransferMapping;
+	}
+
 	public Map<Term, Term> getBacktranferMapping() {
 		return mBacktransferMapping;
 	}

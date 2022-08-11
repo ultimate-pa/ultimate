@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNorm
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -267,7 +267,7 @@ public class ArrayQuantifierEliminationMain {
 
 						final Term indexnoteq = SmtUtils.not(mScript, indexeq);
 
-						final Map<ApplicationTerm, Term> substitutionMappin = Collections.singletonMap(
+						final Map<Term, Term> substitutionMappin = Collections.singletonMap(
 								select.getSelectTerm(), nas.getValues().get(nas.getIndices().indexOf(index)));
 						final Term subtermlhs = Substitution.apply(mMgdScript, substitutionMappin, term);
 						final Term lhs = SmtUtils.and(mScript, indexeq, subtermlhs, allindexnoteq);
@@ -275,7 +275,7 @@ public class ArrayQuantifierEliminationMain {
 						allindexnoteq = SmtUtils.and(mScript, indexnoteq, allindexnoteq);
 					}
 
-					final Map<ApplicationTerm, Term> map = Collections.singletonMap(select.getSelectTerm(),
+					final Map<Term, Term> map = Collections.singletonMap(select.getSelectTerm(),
 							SmtUtils.select(mScript, nas.getArray(), select.getIndex().get(0)));
 					final Term subtermrhs = Substitution.apply(mMgdScript, map, term);
 

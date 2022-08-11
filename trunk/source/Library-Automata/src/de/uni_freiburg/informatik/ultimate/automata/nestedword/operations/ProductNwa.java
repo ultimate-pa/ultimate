@@ -123,6 +123,8 @@ public abstract class ProductNwa<LETTER, S1, S2, STATE>
 		if (prod == null) {
 			prod = createProductState(fst, snd);
 			snd2res.put(snd, prod);
+			assert !mRes2prod
+					.containsKey(prod.getRes()) : "A product state must not represent multiple pairs of states";
 			mRes2prod.put(prod.getRes(), prod);
 		}
 		return prod.getRes();

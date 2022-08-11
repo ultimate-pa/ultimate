@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -279,16 +278,15 @@ public class PolynomialTermMatrix {
 	 * Method that computes matrix that represents closed form out of the jordan decomposition.
 	 * If !restrictedVersionPossible computes two closed form matrices for the two cases that
 	 * the iteration count is even or odd.
-	 * @return a pair consisting of the matrix and a boolean which is true iff the computation
-	 * of the matrix was successful.
 	 */
-	public static Pair<PolynomialTermMatrix, Boolean> computeClosedFormMatrix(
-			final ManagedScript mgdScript, final RationalMatrix modalUpdate, final JordanTransformationResult jordanUpdate,
-			final RationalMatrix inverseModalUpdate, final TermVariable it,
-			final TermVariable itHalf, final boolean itEven, boolean restrictedVersionPossible) {
+	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
+			final JordanTransformationResult jordanUpdate, final TermVariable it, final TermVariable itHalf,
+			final boolean itEven, boolean restrictedVersionPossible) {
 		final int n = jordanUpdate.getJnf().getDimension();
 		final Script script = mgdScript.getScript();
 		final Sort sort = SmtSortUtils.getIntSort(script);
+		final RationalMatrix modalUpdate = jordanUpdate.getModal();
+		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
 		PolynomialTermMatrix closedFormMatrix = constructConstantZeroMatrix(mgdScript, n);
 		if (restrictedVersionPossible) {
 			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, it, itHalf, itEven, jordanUpdate,
@@ -352,8 +350,7 @@ public class PolynomialTermMatrix {
 			}
 		}
 		closedFormMatrix.mDenominator = BigInteger.ONE;
-		final Pair<PolynomialTermMatrix, Boolean> result = new Pair<>(closedFormMatrix, true);
-		return result;
+		return closedFormMatrix;
 	}
 
 	/**

@@ -107,6 +107,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	private final PartialRelation<String, IcfgLocation> mErrorConflicts = new PartialRelation<>();
 	private final PartialRelation<IcfgLocation, String> mJoinConflicts = new PartialRelation<>();
 	private final PartialRelation<IcfgLocation, String> mForkCache = new PartialRelation<>();
+	private final Map<IcfgLocation, Boolean> mReachErrorCache = new HashMap<>();
 
 	/**
 	 * Create a new instance for a given CFG.
@@ -373,6 +374,8 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 *
 	 * Locations (l1, l2) have a join conflict if from l1, it is possible to reach (within the thread) a JoinCurrent
 	 * transition that may correspond to a JoinOther transition belonging to the thread of l2.
+	 *
+	 * We ignore JoinCurrent transitions from whose target location no error location can be reached.
 	 */
 	private boolean hasJoinConflict(final IcfgLocation persistentLoc, final IcfgLocation otherLoc) {
 		final String joinedThread = otherLoc.getProcedure();
@@ -383,9 +386,24 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		// "joinedThread". This was however unsound on programs where the *JoinCurrent edge was in a thread that had a
 		// commutativity conflict with another thread: As the thread blocked on the join and no join conflict was found,
 		// the commutativity conflict was ignored.
-		return IcfgUtils.canReachCached(persistentLoc, e -> mInfo.mayBeJoinOf(joinedThread, e),
+		return IcfgUtils.canReachCached(persistentLoc,
+				e -> mInfo.mayBeJoinOf(joinedThread, e) && canReachError(persistentLoc.getProcedure(), e.getTarget()),
 				e -> !ExtendedConcurrencyInformation.isThreadLocal(e), l -> mJoinConflicts.contains(l, joinedThread),
 				(l, r) -> mJoinConflicts.set(l, joinedThread, r));
+	}
+
+	private boolean canReachError(final String thread /* should be set of all threads */, final IcfgLocation loc) {
+		return IcfgUtils.canReachCached(loc, e -> mErrorLocs.contains(e.getTarget()), e -> false, l -> {
+			final Boolean stored = mReachErrorCache.get(l);
+			if (stored != null) {
+				return stored ? LBool.SAT : LBool.UNSAT;
+			}
+			// mErrorConflicts stores a more restricted notion of reachability.
+			// We can reuse it if already guarantees reachability, but not if it claims unreachability.
+			final LBool other = mErrorConflicts.contains(thread, l);
+			return other == LBool.SAT ? LBool.SAT : LBool.UNKNOWN;
+		}, (l, r) -> mReachErrorCache.put(l, r));
+
 	}
 
 	private boolean hasErrorConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc) {

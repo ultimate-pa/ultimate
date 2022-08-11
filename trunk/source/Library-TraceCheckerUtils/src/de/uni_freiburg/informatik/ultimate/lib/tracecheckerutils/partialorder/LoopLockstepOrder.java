@@ -294,5 +294,10 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 			final PredicateWithLastThread other = (PredicateWithLastThread) obj;
 			return Objects.equals(mLastThread, other.mLastThread) && Objects.equals(mUnderlying, other.mUnderlying);
 		}
+
+		@Override
+		public String toString() {
+			return "[last=" + mLastThread + ", underlying=" + mUnderlying + "]";
+		}
 	}
 }

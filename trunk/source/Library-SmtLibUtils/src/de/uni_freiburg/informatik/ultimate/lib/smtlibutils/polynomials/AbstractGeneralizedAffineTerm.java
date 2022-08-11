@@ -439,6 +439,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		return Rational.valueOf(bi, BigInteger.ONE);
 	}
 
+	@Override
 	public IPolynomialTerm add(final Rational offset) {
 		final Rational newConstant;
 		if (SmtSortUtils.isRealSort(getSort())) {
@@ -954,6 +955,18 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			throw new AssertionError("unknown value: " + rRel);
 		}
 		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Rational computeGcdOfCoefficients() {
+		Rational gcd = Rational.ZERO;
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			gcd = gcd.gcd(entry.getValue());
+		}
+		return gcd;
 	}
 
 	@Override

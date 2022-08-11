@@ -46,10 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StepType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -95,6 +98,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "amount of iterations occured. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
 
+	// This setting is useful to debug the proof check.
+	public static final String LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE =
+			"Read initial proof assertions from file if available";
+	private static final boolean DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE = false;
+
 	/*
 	 * Settings for Petri net Large Block Encoding (Lipton Reduction)
 	 */
@@ -120,14 +128,23 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
+	public static final String LABEL_POR_NUM_INDEPENDENCE = "Number of independence relations to use for POR";
+	private static final int DEF_POR_NUM_INDEPENDENCE = 1;
+
+	public static final String LABEL_DUMP_INDEPENDENCE_SCRIPT = "Dump SMT script used for independence checks";
+	private static final boolean DEF_DUMP_INDEPENDENCE_SCRIPT = false;
+
+	public static final String LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH =
+			"Dump independence script to the following directory";
+	private static final String DEF_INDEPENDENCE_SCRIPT_DUMP_PATH = "";
+
 	public static final String LABEL_INDEPENDENCE_POR = "Independence relation used for POR in concurrent analysis";
-	private static final IndependenceType DEF_INDEPENDENCE_POR = IndependenceType.SEMANTIC;
-
+	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
-	private static final boolean DEF_COND_POR = true;
-
 	public static final String LABEL_SEMICOMM_POR = "Use semi-commutativity for POR in concurrent analysis";
-	private static final boolean DEF_SEMICOMM_POR = true;
+	public static final String LABEL_INDEPENDENCE_SOLVER_POR = "SMT solver used for commutativity in POR";
+	public static final String LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR =
+			"SMT solver timeout for commutativity in POR (in ms)";
 
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
@@ -137,9 +154,23 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_POR_ORDER_STEP_TYPE = "Defines what statements are considered a step in POR";
 	private static final StepType DEF_POR_ORDER_STEP_TYPE = StepType.ALL_READ_WRITE;
-	
-	public static final String LABEL_POR_ORDER_MAXSTEP = "Maximal amount of steps a thread is allowed to take successively";
+
+	public static final String LABEL_POR_ORDER_MAXSTEP =
+			"Maximal amount of steps a thread is allowed to take successively";
 	private static final int DEF_POR_ORDER_MAXSTEP = 1;
+
+	public static final String LABEL_POR_COINFLIP_MODE = "Coinflip budget determination mode";
+	private static final CoinflipMode DEF_POR_COINFLIP_MODE = CoinflipMode.OFF;
+
+	public static final String LABEL_POR_COINFLIP_PROB = "Coinflip probability value";
+	private static final int DEF_POR_COINFLIP_PROB = 25;
+
+	public static final String LABEL_POR_COINFLIP_SEED = "Coinflip random seed";
+	private static final int DEF_POR_COINFLIP_SEED = 0;
+
+	public enum CoinflipMode {
+		OFF, FALLBACK, PURE
+	}
 
 	/* **************************************** */
 
@@ -430,6 +461,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS, PreferenceType.Combo,
 						InsufficientError.values()),
 
+				new UltimatePreferenceItem<>(LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE,
+						DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
 						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
@@ -539,19 +572,67 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
+
 				/* Petri LBE settings */
+
 				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
 						IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean),
+
 				/* Partial Order Reduction settings */
+
 				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
-				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, DEF_INDEPENDENCE_POR, PreferenceType.Combo,
+				new UltimatePreferenceItem<>(LABEL_POR_NUM_INDEPENDENCE, DEF_POR_NUM_INDEPENDENCE,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_DUMP_INDEPENDENCE_SCRIPT, DEF_DUMP_INDEPENDENCE_SCRIPT,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
+						PreferenceType.Directory),
+
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE,
+						PreferenceType.Combo, IndependenceType.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, IndependenceSettings.DEFAULT_ABSTRACTION_TYPE,
+						PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(LABEL_COND_POR, IndependenceSettings.DEFAULT_USE_CONDITIONAL,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_POR, IndependenceSettings.DEFAULT_SOLVER,
+						PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR,
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_POR, 1),
+						IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, PreferenceType.Combo,
 						IndependenceType.values()),
-				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, DEF_SEMICOMM_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 1),
+						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 1),
+						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 1),
+						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 1),
+						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, 1),
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_POR, 2),
+						IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, PreferenceType.Combo,
+						IndependenceType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 2),
+						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 2),
+						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 2),
+						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 2),
+						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, 2),
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
@@ -559,6 +640,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_POR_ORDER_STEP_TYPE, DEF_POR_ORDER_STEP_TYPE, PreferenceType.Combo,
 						StepType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_ORDER_MAXSTEP, DEF_POR_ORDER_MAXSTEP, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE, PreferenceType.Combo,
+						CoinflipMode.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_PROB, DEF_POR_COINFLIP_PROB, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 100)),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_SEED, DEF_POR_COINFLIP_SEED, PreferenceType.Integer),
+
 				/* ********************************* */
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
@@ -619,6 +706,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 		};
 
+	}
+
+	public static String getSuffixedLabel(final String label, final int index) {
+		if (index == 0) {
+			return label;
+		}
+		return label + " #" + (index + 1);
 	}
 
 	/**
@@ -732,6 +826,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * order.
 		 */
 		CAMEL_SMT_AM,
+		/**
+		 * Like {@link #CAMEL}, but only uses WP.
+		 */
+		CAMEL_BP_ONLY,
 		/**
 		 * Like {@link #CAMEL_NO_AM}, but continues as soon as some interpolants are available.
 		 */

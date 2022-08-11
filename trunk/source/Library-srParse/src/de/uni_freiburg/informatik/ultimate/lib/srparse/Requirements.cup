@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PersistencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain12Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain21Pattern;
@@ -148,7 +149,7 @@ scan with {: return getScanner().next_token(); :}
 /* Keywords */
 terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL, INPUT, OUTPUT, INTERNAL, CONST;
 terminal IT, IS, NEVER, ALWAYS, THE, CASE, THAT, INITIALLY;
-terminal IF, HOLD, HOLDS, HELD, EVENTUALLY;
+terminal IF, HOLD, HOLDS, HELD, EVENTUALLY, PERSISTENTLY;
 terminal TRANSITIONS, TO, STATES, IN, WHICH, OCCUR, AT, TWICE, AFTERWARDS;
 terminal THEN, PREVIOUSLY, AS, WELL;
 terminal WAS, PRECEDED, SUCCEEDED, BY, TOGGLES;
@@ -239,7 +240,9 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
   		| IT IS ALWAYS THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(r); :}
 		| IT IS ALWAYS THE CASE THAT INITIALLY expression:r HOLDS 
-			{: RESULT = new PatternBuilder(); RESULT.setType(InitializationPattern.class); RESULT.addCdd(r); :}	
+			{: RESULT = new PatternBuilder(); RESULT.setType(InitializationPattern.class); RESULT.addCdd(r); :}
+		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN IT HOLDS PERSISTENTLY
+      		{: RESULT = new PatternBuilder(); RESULT.setType(PersistencePattern.class); RESULT.addCdd(r); :}	
   		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
       		{: RESULT = new PatternBuilder(); RESULT.setType(InvariancePattern.class); RESULT.addCdd(s,r); :}
 	  	| expression:r EVENTUALLY HOLDS

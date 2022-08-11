@@ -34,7 +34,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -63,11 +62,9 @@ public class ArrayUpdate {
 	 */
 	public ArrayUpdate(final Term term, final boolean isNegated,
 			final boolean enforceThatOldArrayIsTermVariable) throws ArrayUpdateException {
-		BinaryEqualityRelation ber = null;
-		try {
-			ber = new BinaryEqualityRelation(term);
-		} catch (final NoRelationOfThisKindException e) {
-			throw new ArrayUpdateException(e.getMessage());
+		final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(term);
+		if (ber == null) {
+			throw new ArrayUpdateException("not a binary equality relation");
 		}
 		if (isNegated && ber.getRelationSymbol() != RelationSymbol.DISTINCT) {
 			throw new ArrayUpdateException("no negated array update");

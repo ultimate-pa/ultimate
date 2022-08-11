@@ -32,9 +32,9 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -71,9 +71,9 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		mModuleSizeNondeterministic.put(iteration, size);
 	}
 
-	public void reportRankingFunction(final Integer iteration,
-			final TerminationArgumentResult<IIcfgElement, Term> tar) {
-		mRankingFunction.put(iteration, prettyPrintRankingFunction(tar));
+	public void reportRankingFunction(final Integer iteration, final RankingFunction rankingFunction,
+			final Script script) {
+		mRankingFunction.put(iteration, prettyPrintRankingFunction(rankingFunction, script));
 	}
 
 	public void reportRemainderModule(final int numberLocations, final boolean nonterminationKnown) {
@@ -88,9 +88,9 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		mHasRemainderModule = false;
 	}
 
-	private String prettyPrintRankingFunction(final TerminationArgumentResult<IIcfgElement, Term> tar) {
-		return tar.getRankingFunctionDescription() + " ranking function "
-				+ ResultUtil.translateExpressionToString(mBacktranslationService, Term.class, tar.getRankingFunction());
+	private String prettyPrintRankingFunction(final RankingFunction rankingFunction, final Script script) {
+		return rankingFunction.getName() + " ranking function " + ResultUtil
+				.translateExpressionToString(mBacktranslationService, Term.class, rankingFunction.asLexTerm(script));
 	}
 
 	@Override

@@ -99,6 +99,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		assert eachAuxVarOccursInFormula() == null : "Superfluous aux var: " + eachAuxVarOccursInFormula();
 		assert termVariablesHaveUniqueProgramVar() : "Same TermVariable used for different program variables";
 		assert doConstantConsistencyCheck() : "consts inconsistent";
+		assert disjointVarSets() : "non-disjoint vars in TransFormula";
 	}
 
 	/**
@@ -171,6 +172,19 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			result &= mInVars.values().contains(tv) || mOutVars.values().contains(tv) || mAuxVars.contains(tv)
 					|| mBranchEncoders.contains(tv);
 			assert result : "unexpected variable in formula";
+		}
+		return result;
+	}
+
+	private boolean disjointVarSets() {
+		boolean result = true;
+		for (final TermVariable tv : super.getInVars().values()) {
+			result &= !super.getAuxVars().contains(tv);
+			assert result : "in var is also aux var: " + tv;
+		}
+		for (final TermVariable tv : super.getOutVars().values()) {
+			result &= !super.getAuxVars().contains(tv);
+			assert result : "out var is also aux var: " + tv;
 		}
 		return result;
 	}

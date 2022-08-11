@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -64,8 +65,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final OrderType mOrderType;
 	private final long mDfsOrderSeed;
 	private final String mPluginId;
-	private StepType mStepType;
-	private int mMaxStep;
+	private final StepType mStepType;
+	private final int mMaxStep;
 
 	/**
 	 * Create a new instance of the provider.
@@ -115,7 +116,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
 		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
-				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, mStepType, mMaxStep, indep);
+				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, mStepType, mMaxStep, List.of(indep), null);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);

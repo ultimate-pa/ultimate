@@ -52,6 +52,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * allows you to directly access the array and the indices.
  * This data structure allows also multidimensional arrays of dimension 0. In
  * this case, mArray is null, mIndex is empty and mSelectTerm is some term.
+ * <br>
+ * Note that due to the select-over-store optimization the resulting term may
+ * not necessarily be an ApplicationTerm.
  * @author Matthias Heizmann
  *
  */
@@ -59,7 +62,7 @@ public class MultiDimensionalSelect {
 
 	private final Term mArray;
 	private final ArrayIndex mIndex;
-	private final ApplicationTerm mSelectTerm;
+	private final Term mSelectTerm;
 
 	/**
 	 * Translate a (possibly) nested SMT term into this data structure.
@@ -68,7 +71,7 @@ public class MultiDimensionalSelect {
 	 */
 	public MultiDimensionalSelect(Term term) {
 		if (term instanceof ApplicationTerm) {
-			mSelectTerm = (ApplicationTerm) term;
+			mSelectTerm = term;
 		} else {
 			mSelectTerm = null;
 		}
@@ -100,7 +103,7 @@ public class MultiDimensionalSelect {
 		for (final Term entry : index) {
 			tmp = SmtUtils.select(script, tmp, entry);
 		}
-		mSelectTerm = (ApplicationTerm) tmp;
+		mSelectTerm = tmp;
 	}
 
 	/**
@@ -152,7 +155,7 @@ public class MultiDimensionalSelect {
 		return mIndex;
 	}
 
-	public ApplicationTerm getSelectTerm() {
+	public Term getSelectTerm() {
 		return mSelectTerm;
 	}
 
