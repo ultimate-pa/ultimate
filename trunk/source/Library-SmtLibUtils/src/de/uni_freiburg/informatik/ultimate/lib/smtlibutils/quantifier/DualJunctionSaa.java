@@ -32,9 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
@@ -149,16 +147,24 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 	private EliminationResult tryToEliminateOne2(final EliminationTask inputEt) {
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
-		final Term term = qs.getInnerTerm();
-		final EliminationTask et = inputEt.update(term);
+		final EliminationTask et = inputEt.update(qs.getInnerTerm());
 		final EliminationResult res = tryToEliminateOne3(et);
 		if (res == null) {
 			return null;
 		} else {
-			final QuantifierSequence qsForResult = new QuantifierSequence(mMgdScript, res.getEliminationTask().getTerm(),
-					qs.getQuantifierBlocks());
-			final Term resultTerm = qsForResult.toTerm();
-			return new EliminationResult(res.getEliminationTask().update(resultTerm), res.getNewEliminatees());
+			if (qs.getQuantifierBlocks().isEmpty()) {
+				return res;
+			} else {
+				// The new quantifiers have to be innermost.
+				// See {@link QuantifierEliminationRegressionTest#suse01}
+				// TODO 20220607 Matthias: Difficult decision: Should we do an elimination of
+				// inner quantifiers here? See #innerAlternatingFirst
+				final EliminationTask etWithNewEliminatees = res.integrateNewEliminatees();
+				final QuantifierSequence qsForResult = new QuantifierSequence(mMgdScript,
+						etWithNewEliminatees.toTerm(mMgdScript.getScript()), qs.getQuantifierBlocks());
+				final Term resultTerm = qsForResult.toTerm();
+				return new EliminationResult(etWithNewEliminatees.update(resultTerm), Collections.emptySet());
+			}
 		}
 	}
 

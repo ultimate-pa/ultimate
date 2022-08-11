@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvas
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractionJoin;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrAbstractor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -49,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -59,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
- * A summarizer for an ({@link UnmodifiableTransFormula}).
+ * A summarizer for {@link QvasrsAbstraction} UnmodifiableTransFormula}.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
@@ -94,19 +92,18 @@ public class QvasrsSummarizer {
 	 *            A {@link UnmodifiableTransFormula} representing changes to variables.
 	 * @return A summary of these changes in form of a {@link UnmodifiableTransFormula}
 	 */
-	public UnmodifiableTransFormula summarizeLoop(final UnmodifiableTransFormula transitionFormula) {
-		final Collection<TermVariable> quantOutVars = transitionFormula.getOutVars().values();
-		final Term quantifiedTransitionFormula = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.EXISTS,
-				quantOutVars, transitionFormula.getFormula());
-		/*
-		 * Get the topologic closure
-		 */
-		Term topologicClosure = PartialQuantifierElimination.eliminate(mServices, mScript, quantifiedTransitionFormula,
-				SimplificationTechnique.POLY_PAC);
+	public QvasrsAbstraction computeQvasrsAbstraction(final UnmodifiableTransFormula transitionFormula,
+			final boolean usedInIcfgTransformation) {
+		Set<Term> disjuncts = QvasrUtils.splitDisjunction(transitionFormula.getFormula());
+		final Set<Term> guards = new HashSet<>();
+		for (final Term disjunct : disjuncts) {
+			final UnmodifiableTransFormula disTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
+			guards.add(TransFormulaUtils.computeGuard(disTf, mScript, mServices).getFormula());
+		}
 
-		topologicClosure = SmtUtils.toDnf(mServices, mScript, topologicClosure,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final Set<Term> disjuncts = QvasrUtils.splitDisjunction(topologicClosure);
+		disjuncts = guards;
+		disjuncts = QvasrUtils.checkDisjoint(disjuncts, mScript, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
 		final Map<Term, Term> outToInMap = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> outVar : transitionFormula.getOutVars().entrySet()) {
 			if (transitionFormula.getInVars().containsKey(outVar.getKey())) {
@@ -121,6 +118,9 @@ public class QvasrsSummarizer {
 		final Rational[][] identityMatrix = QvasrUtils.getIdentityMatrix(tfDimension);
 		QvasrAbstraction bestAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
 
+		/*
+		 * Construct formulas of the for p(x) /\ tf /\ q(x') for predicates p and q.
+		 */
 		for (final Term pre : disjuncts) {
 			final Term preInvar = Substitution.apply(mScript, outToInMap, pre);
 			for (final Term post : disjuncts) {
@@ -128,28 +128,102 @@ public class QvasrsSummarizer {
 						SmtUtils.and(mScript.getScript(), preInvar, transitionFormula.getFormula(), post);
 				final UnmodifiableTransFormula conjunctionFormula =
 						QvasrUtils.buildFormula(transitionFormula, conjunctionPreTfPost, mScript);
-				final QvasrAbstraction preTfPostAbstraction =
-						QvasrAbstractor.computeAbstraction(mScript, conjunctionFormula);
 
+				final Term conjunctionDNF = SmtUtils.toDnf(mServices, mScript, conjunctionFormula.getFormula(),
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final Set<Term> disjunctsAbtraction = QvasrUtils.splitDisjunction(conjunctionDNF);
+				QvasrAbstraction preTfPostAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
+				for (final Term disjunct : disjunctsAbtraction) {
+					mLogger.warn(disjunct.toStringDirect());
+					final UnmodifiableTransFormula disjunctTf =
+							QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
+					final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mScript, disjunctTf);
+					preTfPostAbstraction =
+							QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction).getThird();
+				}
 				final Triple<Rational[][], Rational[][], QvasrAbstraction> abstractionWithSimulations =
 						QvasrAbstractionJoin.join(mScript, bestAbstraction, preTfPostAbstraction);
 				final Pair<Term, Term> prePostPair = new Pair<>(pre, post);
 				simulationMatrices.add(new Triple<>(prePostPair, preTfPostAbstraction.getVasr(),
 						abstractionWithSimulations.getSecond()));
-				bestAbstraction = abstractionWithSimulations.getThird();
+				bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, preTfPostAbstraction).getThird();
 			}
 		}
+
+		final Map<IProgramVar, TermVariable> inVarsReal = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVarsReal = new HashMap<>();
+		for (final IProgramVar assVar : transitionFormula.getOutVars().keySet()) {
+			if (transitionFormula.getInVars().containsKey(assVar)) {
+				inVarsReal.put(assVar, transitionFormula.getInVars().get(assVar));
+			} else if (transitionFormula.getOutVars().containsKey(assVar)) {
+				inVarsReal.put(assVar, transitionFormula.getOutVars().get(assVar));
+			}
+			if (transitionFormula.getOutVars().containsKey(assVar)) {
+				outVarsReal.put(assVar, transitionFormula.getOutVars().get(assVar));
+			}
+		}
+
 		final QvasrsAbstraction qvasrsAbstraction =
-				new QvasrsAbstraction(bestAbstraction.getSimulationMatrix(), disjuncts);
+				new QvasrsAbstraction(bestAbstraction, disjuncts, inVarsReal, outVarsReal);
 		for (final Triple<Pair<Term, Term>, IVasr<Rational>, Rational[][]> qvasrSimulationPair : simulationMatrices) {
 			final Term pre = qvasrSimulationPair.getFirst().getFirst();
 			final Term post = qvasrSimulationPair.getFirst().getSecond();
 			final Qvasr qvasrImage =
 					QvasrAbstractionJoin.image(qvasrSimulationPair.getSecond(), qvasrSimulationPair.getThird());
 			for (final Pair<Rational[], Rational[]> translatedTransformer : qvasrImage.getTransformer()) {
-				qvasrsAbstraction.addTransition(new Triple<>(pre, translatedTransformer, post));
+				final Triple<Term, Pair<Rational[], Rational[]>, Term> transition =
+						new Triple<>(pre, translatedTransformer, post);
+				if (checkIfTransitionIsAbsent(transition, qvasrsAbstraction)) {
+					qvasrsAbstraction.addTransition(transition);
+				}
 			}
 		}
-		return QvasrsReach.reach(qvasrsAbstraction, mScript);
+
+		/*
+		 * Get pre and post states when used in IcfgTransformation.
+		 */
+		if (usedInIcfgTransformation) {
+			final UnmodifiableTransFormula guard =
+					TransFormulaUtils.computeGuard(transitionFormula, mScript, mServices);
+			qvasrsAbstraction.setPreState(guard.getFormula());
+			final Map<Term, Term> subMap = new HashMap<>();
+			for (final Entry<IProgramVar, TermVariable> invars : transitionFormula.getInVars().entrySet()) {
+				if (transitionFormula.getOutVars().containsKey(invars.getKey())) {
+					subMap.put(invars.getValue(), transitionFormula.getOutVars().get(invars.getKey()));
+				}
+			}
+			final Term postLoop = Substitution.apply(mScript, subMap, guard.getFormula());
+			qvasrsAbstraction.setPostState(SmtUtils.not(mScript.getScript(), postLoop));
+		}
+		return qvasrsAbstraction;
+	}
+
+	private final boolean checkIfTransitionIsAbsent(final Triple<Term, Pair<Rational[], Rational[]>, Term> transition,
+			final QvasrsAbstraction qvasrsAbstraction) {
+		boolean absent = true;
+		for (final Triple<Term, Pair<Rational[], Rational[]>, Term> t : qvasrsAbstraction.getTransitions()) {
+			if (QvasrUtils.checkTermEquiv(mScript, t.getFirst(), transition.getFirst())
+					|| QvasrUtils.checkTermEquiv(mScript, t.getThird(), transition.getThird())) {
+				for (int i = 0; i < t.getSecond().getFirst().length; i++) {
+					if (transition.getSecond().getFirst()[i] != t.getSecond().getFirst()[i]) {
+						break;
+					}
+					if (transition.getSecond().getSecond()[i] != t.getSecond().getSecond()[i]) {
+						break;
+					}
+					absent = false;
+				}
+			}
+
+		}
+		return absent;
+	}
+
+	private final Term substituteVars(final Term termToBeSubbed, final Map<IProgramVar, TermVariable> toBeSubstituted) {
+		final Map<TermVariable, TermVariable> sub = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> old : toBeSubstituted.entrySet()) {
+			sub.put(old.getKey().getTermVariable(), old.getValue());
+		}
+		return Substitution.apply(mScript, sub, termToBeSubbed);
 	}
 }

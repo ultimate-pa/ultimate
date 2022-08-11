@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
@@ -66,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -280,6 +280,9 @@ public class Elim1Store {
 			}
 			newArrayMapping.put(store, newArray);
 		}
+		final Term hiddenWeakArrayEqualities = computeHiddenWeakArrayEqualities(mScript, quantifier, newArrayMapping);
+		assert !Arrays.asList(hiddenWeakArrayEqualities.getFreeVars()).contains(eliminatee) : "var is still there: "
+				+ eliminatee;
 
 		final Map<ArrayIndex, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives,
 				newArrayMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee, quantifier,
@@ -339,7 +342,7 @@ public class Elim1Store {
 			throw new ElimStorePlain.ElimStorePlainException(ElimStorePlainException.CAPTURED_INDEX);
 		}
 		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, transformedTerm,
-				singleCaseTerm);
+				singleCaseTerm, hiddenWeakArrayEqualities);
 		if (!doubleCaseJuncts.isEmpty()) {
 			final Term doubleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 					doubleCaseJuncts);
@@ -424,6 +427,70 @@ public class Elim1Store {
 
 	}
 
+
+	private Term computeHiddenWeakArrayEqualities(final Script script, final int quantifier,
+			final Map<MultiDimensionalNestedStore, Term> newArrayMapping) {
+		// add weak equality for each pair of stores
+		final List<Term> dualJuncts = new ArrayList<>();
+		final ArrayList<Entry<MultiDimensionalNestedStore, Term>> updates = new ArrayList<>(newArrayMapping.entrySet());
+		for (int i = 0; i < updates.size(); i++) {
+			for (int j = i + 1; j < updates.size(); j++) {
+				final Term hwae = computeHiddenWeakArrayEquality(script, quantifier, updates.get(i).getKey(),
+						updates.get(i).getValue(), updates.get(j).getKey(), updates.get(j).getValue());
+				dualJuncts.add(hwae);
+
+			}
+		}
+		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
+	}
+
+	private Term computeHiddenWeakArrayEquality(final Script script, final int quantifier,
+			final MultiDimensionalNestedStore store1, final Term array1, final MultiDimensionalNestedStore store2,
+			final Term array2) {
+		// If the store is nested the weakly equal arrays my differ at each index of a
+		// store.
+		// If the store is multi-dimensional only the first entry of the index affects
+		// the weak equality.
+		final List<Term> indicesOnWhichArraysMayDiffer = new ArrayList<>();
+		for (final ArrayIndex entry : store1.getIndices()) {
+			indicesOnWhichArraysMayDiffer.add(entry.get(0));
+		}
+		for (final ArrayIndex entry : store2.getIndices()) {
+			indicesOnWhichArraysMayDiffer.add(entry.get(0));
+		}
+		return constructWeakArrayEquality(script, quantifier, indicesOnWhichArraysMayDiffer, array1, array2);
+	}
+
+	/**
+	 * Given a finite set of indices K, a weak array equality between two arrays a1,
+	 * a2 states that a1 and a2 may only differ at indices that are in K.
+	 *
+	 * <br />
+	 *
+	 * If quantifier is ∃ and K={k1,k2} this method constructs the following
+	 * formula.
+	 *
+	 * <pre>
+	 * (= (store (store a1 k1 (select a2 k1)) k2 (select a2 k2)) a2)
+	 * </pre>
+	 *
+	 * If quantifier is ∀ and K={k1,k2} this method constructs the following
+	 * formula.
+	 *
+	 * <pre>
+	 * (not (= (store (store a1 k1 (select a2 k1)) k2 (select a2 k2)) a2))
+	 * </pre>
+	 *
+	 */
+	private static Term constructWeakArrayEquality(final Script script, final int quantifier,
+			final List<Term> indicesOnWhichArraysMayDiffer, final Term array1, final Term array2) {
+		Term lhs = array1;
+		for (final Term index : indicesOnWhichArraysMayDiffer) {
+			final Term select = SmtUtils.select(script, array2, index);
+			lhs = SmtUtils.store(script, lhs, index, select);
+		}
+		return QuantifierUtils.applyDerOperator(script, quantifier, lhs, array2);
+	}
 
 	/**
 	 * Add for each pair of equivalent indices i1, i2, the equality

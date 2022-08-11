@@ -28,9 +28,12 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 
 /**
  * Abstract superclass for Nontermination Arguments
@@ -81,23 +84,10 @@ public abstract class NonTerminationArgumentResult<P extends IElement, E> extend
 	}
 
 	protected String printState2(final Map<E, E> state) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("{");
-		boolean first = true;
-		for (final Entry<E, E> entry : state.entrySet()) {
-			final String var = mTranslatorSequence.translateExpressionToString(entry.getKey(), mExprClazz);
-			if (!first) {
-				sb.append(", ");
-			} else {
-				first = false;
-			}
-			sb.append(var);
-			sb.append("=");
-			final String value = mTranslatorSequence.translateExpressionToString(entry.getValue(), mExprClazz);
-			sb.append(value);
-		}
-		sb.append("}");
-		return sb.toString();
+		final ProgramState<E> programState = new ProgramState<>(
+				state.entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> Set.of(x.getValue()))),
+				mExprClazz);
+		return "{" + mTranslatorSequence.translateProgramStateToString(programState) + "}";
 	}
 
 }

@@ -30,6 +30,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -48,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AcceleratedInterpolationLoopAccelerationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
 /**
@@ -76,7 +76,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final String mPathOfDumpedScript;
 	private final Logics mLogicForExternalSolver;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
-	private final AcceleratedInterpolationLoopAccelerationTechnique mLoopAccelerationTechnique;
+	private final LoopAccelerators mLoopAccelerationTechnique;
 
 	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlockOrder;
@@ -95,6 +95,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mCompressDumpedScript;
 	private final Map<String, String> mAdditionalSolverOptions;
 	private final boolean mUseMinimalUnsatCoreEnumerationForSmtInterpol;
+	private final RefinementStrategy mAcceleratedInterpolationRefinementStrategy;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -131,6 +132,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
 		mMcrRefinementStrategy = taPrefs.getMcrRefinementStrategy();
+		mAcceleratedInterpolationRefinementStrategy = taPrefs.getAcceleratedInterpolationRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
 		mFakeNonIncrementalSolver = taPrefs.fakeNonIncrementalSolver();
@@ -184,6 +186,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public RefinementStrategy getMcrRefinementStrategy() {
 		return mMcrRefinementStrategy;
+	}
+
+	public RefinementStrategy getAcceleratedInterpolationRefinementStrategy() {
+		return mAcceleratedInterpolationRefinementStrategy;
 	}
 
 	@Override
@@ -259,7 +265,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mUnsatCores;
 	}
 
-	public AcceleratedInterpolationLoopAccelerationTechnique getLoopAccelerationTechnique() {
+	public LoopAccelerators getLoopAccelerationTechnique() {
 		return mLoopAccelerationTechnique;
 	}
 
@@ -329,7 +335,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mAdditionalSolverOptions;
 	}
 
-	public class TaAssertCodeBlockOrder extends AssertCodeBlockOrder {
+	public static class TaAssertCodeBlockOrder extends AssertCodeBlockOrder {
 
 		public TaAssertCodeBlockOrder(final AssertCodeBlockOrderType assertCodeBlockOrderType,
 				final SmtFeatureHeuristicPartitioningType smtFeatureHeuristicPartitioningType,

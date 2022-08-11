@@ -56,8 +56,14 @@ public class IntToBvBackTranslation extends TermTransformer {
 	private final Script mScript;
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps Int Var to Bv Var
 	private final Set<Term> mConstraintSet; // Set of all constraints
-	private final FunctionSymbol mIntand;
+	private final FunctionSymbol mIntand; // uninterpreted function symbol, maps two integer to an integer, represents
+											// bit-wise and
 
+	/*
+	 * Extension to the TermTransformer. Transforms an formula over integers to a formula over bit-vectors.
+	 * Can transform formulas with arrays and quantifers. Every variable in the integer formula has to be in the
+	 * variableMap.
+	 */
 	public IntToBvBackTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
 			final Set<Term> constraintSet, final FunctionSymbol intand) {
 		mMgdScript = mgdscript;
@@ -95,48 +101,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 	}
 
-	/*
-	 * Optimization, Pattern match for uts function
-	 */
-	private boolean uts(final Term term, final int width) {
-		if (!SmtSortUtils.isIntSort(term.getSort())) {
-			return false;
-		}
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("-")) {
-				if (appTerm.getParameters()[0] instanceof ApplicationTerm) {
-					final ApplicationTerm twoTimesMod = (ApplicationTerm) appTerm.getParameters()[0];
-					if (twoTimesMod.getFunction().getName().equals("*")) {
-						if (twoTimesMod.getParameters()[0] instanceof ConstantTerm) { // LHS is 2
-							final ConstantTerm two = (ConstantTerm) twoTimesMod.getParameters()[0];
-							if (two.getValue().equals(Rational.TWO)) {
-								if (twoTimesMod.getParameters()[1] instanceof ApplicationTerm) { // RHS is mod t 2^k-1
-									final ApplicationTerm mod = (ApplicationTerm) twoTimesMod.getParameters()[1];
-									if (mod.getParameters()[0] instanceof ApplicationTerm) {
-										if (mod.getParameters()[0].equals(appTerm.getParameters()[1])) {
-
-											if (mod.getParameters()[1] instanceof ConstantTerm) {
-												final ConstantTerm halfwidth = (ConstantTerm) mod.getParameters()[1];
-												if (halfwidth.getValue().equals(Rational.valueOf(
-														BigInteger.valueOf(2).pow(width - 1), BigInteger.ONE))) {
-													return true;
-												}
-											}
-										}
-									}
-								}
-
-							}
-						}
-
-					}
-				}
-			}
-
-		}
-		return false;
-	}
 
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
@@ -169,11 +133,9 @@ public class IntToBvBackTranslation extends TermTransformer {
 		}
 		if (oldwidth > targetwidth) {
 			// TODO sometimes necessary if targetwidth is given by select term
-			// TODO Test if sound
-				final BigInteger[] indices = new BigInteger[2];
+			final BigInteger[] indices = new BigInteger[2];
 				indices[0] = BigInteger.valueOf(targetwidth - 1);
 				indices[1] = BigInteger.valueOf(0);
-
 
 				return BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, term);
 
@@ -387,7 +349,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 					}
 					case "-": {
 						if (appTerm.getParameters()[0] instanceof ConstantTerm) {
-							// 2^k-t //TODO k = getwidth(t), was aber wenn k anderervalue?
+							// 2^k-t //TODO k = getwidth(t), but k has a different value?
 							if (isPowerOfTwo((Rational) ((ConstantTerm) appTerm.getParameters()[0]).getValue())) {
 								width = getWidth(appTerm.getParameters()[1]);
 								break;
@@ -407,7 +369,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 								break;
 							}
 						}
-						width = maxWidth; // TODO next 2er potenz von RHS
+						width = maxWidth;
 
 						break;
 					}
@@ -434,7 +396,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 			// if (isSigned(term)) { // TODO necessary?
 			// for (final Term argument : appTerm.getParameters()) {
 			// if (!isSigned(argument)) {
-			// // nur wenn auch width argument = width term??
+			// // in crease witdth by one for a sign bit
 			// return width + 1;
 			// }
 			// }
@@ -592,7 +554,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 						final BigInteger[] indices = new BigInteger[2];
 						indices[0] = BigInteger.valueOf(getTwoExponent(value) - 1);
 						indices[1] = BigInteger.valueOf(0);
-						// übersetzen zu (mod s t)-> (extract s)
+						// translate: (mod s t)-> (extract s)
 						// TODO argument smaller than expoenent
 						setResult(BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, args[0]));
 						return;
@@ -651,6 +613,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 					}
 				}
 				if (isSigned(appTerm)) {
+					// bit-vector term that represent euclidean division with signed arguments
 					final int width = getWidth(appTerm);
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], width, isSigned(oldargs[i]));
@@ -691,9 +654,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 					setResult(ite1);
 					return;
 				} else {
-
-
-
 						for (int i = 0; i < args.length; i++) {
 							newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 						}
@@ -758,55 +718,6 @@ public class IntToBvBackTranslation extends TermTransformer {
 		}else {
 			throw new UnsupportedOperationException("Unexpected Array Value Sort");
 		}
-	}
-
-	private boolean isZero(final Term term) {
-		if (term instanceof ConstantTerm) {
-			final ConstantTerm cnst = (ConstantTerm) term;
-			if (cnst.getValue().equals(Rational.ZERO)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean isMaxNumberPlusOne(final Term term, final int width) {
-		assert SmtSortUtils.isIntSort(term.getSort());
-		if (term instanceof ConstantTerm) {
-			final ConstantTerm ct = (ConstantTerm) term;
-			final Rational rational = (Rational) ct.getValue();
-			if (rational.equals(Rational.valueOf(BigInteger.TWO.pow(width), BigInteger.ONE))) {
-				return true;
-			}
-			// negated maxnumber
-			if (rational.isNegative()) {
-				if (rational.negate().equals(Rational.valueOf(BigInteger.TWO.pow(width), BigInteger.ONE))) {
-					return true;
-				}
-			}
-
-		}
-		return false;
-	}
-
-	private boolean isMaxNumberPlusOneHalf(final Term term, final int width) {
-		assert SmtSortUtils.isIntSort(term.getSort());
-		if (term instanceof ConstantTerm) {
-			final ConstantTerm ct = (ConstantTerm) term;
-			final Rational rational = (Rational) ct.getValue();
-			if (rational.equals(Rational.valueOf(BigInteger.TWO.pow(width).divide(BigInteger.TWO), BigInteger.ONE))) {
-				return true;
-			}
-			// negated maxnumber
-			if (rational.isNegative()) {
-				if (rational.negate()
-						.equals(Rational.valueOf(BigInteger.TWO.pow(width).divide(BigInteger.TWO), BigInteger.ONE))) {
-					return true;
-				}
-			}
-
-		}
-		return false;
 	}
 
 	private Term translateConst(final ConstantTerm value) {

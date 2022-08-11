@@ -348,4 +348,22 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		return polynomialTerms;
 	}
+
+	/**
+	 * Convert SMT {@link Term} into an {@link IPolynomialTerm}. We return null if
+	 * we the {@link Term} cannot be converted into an {@link IPolynomialTerm},
+	 * e.g., because its sort is Bool.
+	 */
+	public static IPolynomialTerm convert(final Script script, final Term term) {
+		final IPolynomialTerm result;
+		if (!hasSupportedSort(term)) {
+			result = null;
+		} else {
+			result = (IPolynomialTerm) new PolynomialTermTransformer(script).transform(term);
+			if (result.isErrorTerm()) {
+				throw new UnsupportedOperationException("Unknown conversion problem: " + term);
+			}
+		}
+		return result;
+	}
 }

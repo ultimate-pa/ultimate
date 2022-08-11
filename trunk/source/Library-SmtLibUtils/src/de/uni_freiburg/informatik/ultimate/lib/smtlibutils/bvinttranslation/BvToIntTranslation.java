@@ -33,10 +33,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -62,6 +62,12 @@ public class BvToIntTranslation extends TermTransformer {
 	private final Set<TermVariable> mOverapproxVariables;
 	private boolean mIsOverapproximation;
 
+	/*
+	 * Translates a formula over bit-vector to a formula over integers.
+	 * Can translate arrays and quantifiers.
+	 *
+	 * TODO mNutzTransformation not fully implemented yet
+	 */
 	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
 			final TranslationConstrainer tc, final TermVariable[] freeVars) {
 
@@ -115,7 +121,7 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 			}
-
+			// NONE Overapproximation
 			if (mTc.mMode.equals(ConstraintsForBitwiseOperations.NONE) && overaproxWithVars(appTerm)) {
 				final Sort newSort = translateSort(mScript, appTerm.getSort());
 				final TermVariable overaproxVar = mMgdScript.constructFreshTermVariable("overaproxVar", newSort);
@@ -319,6 +325,10 @@ public class BvToIntTranslation extends TermTransformer {
 		return bvsdiv;
 	}
 
+	/*
+	 * Gets as Input an ArraySort, if domain Sort or range Sort is bit-vector the method returns a new array where this
+	 * Sort is replaced by integer Sort. Iterates through nested arrays.
+	 */
 	private Sort translateArraySort(final Sort sort) {
 		if (SmtSortUtils.isBitvecSort(sort)) {
 			return SmtSortUtils.getIntSort(mMgdScript);
@@ -336,6 +346,11 @@ public class BvToIntTranslation extends TermTransformer {
 		}
 	}
 
+	/*
+	 * translate variables and uninterpreted constants of bit-vector sort or array sort
+	 * adds bv and int variable to mVariableMap and mReversedVarMap
+	 * returns the new variable (translation results)
+	 */
 	private Term translateVars(final Term term, final boolean addToVarMap) {
 		if (mVariableMap.containsKey(term)) {
 			mReversedVarMap.put(mVariableMap.get(term), term);
@@ -372,6 +387,9 @@ public class BvToIntTranslation extends TermTransformer {
 
 	}
 
+	/*
+	 * translates quantified formulas, adds constraints for translated quantified variables in their scope
+	 */
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		final HashSet<TermVariable> newTermVars = new HashSet();
@@ -421,6 +439,7 @@ public class BvToIntTranslation extends TermTransformer {
 				return true;
 			}
 			default: {
+				// not a bit-wise function symbol
 				return false;
 			}
 			}
@@ -429,7 +448,7 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	/*
-	 * TODO modularer
+	 * TODO more modular
 	 */
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] args) {
@@ -446,6 +465,7 @@ public class BvToIntTranslation extends TermTransformer {
 				setResult(mScript.term(fsym.getName(), args));
 				return;
 			case "select": {
+				// select terms can act to variables
 				if (SmtSortUtils.isBitvecSort(appTerm.getSort())) {
 					mArraySelectConstraintMap.put(args[0],
 							mTc.getSelectConstraint(appTerm, mScript.term(fsym.getName(), args)));
@@ -476,40 +496,36 @@ public class BvToIntTranslation extends TermTransformer {
 			}
 		} else if (appTerm.getParameters().length == 1
 				&& SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort())) {
+			// width of the first argument
 			final int width = Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]);
-			final Term maxNumber =
+			// maximal representable number by a bit-vector of width "width" plus one
+			final Term maxNumberPlusOne =
 					SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
 
 			final Term translatedLHS = args[0];
 			if (fsym.isIntern()) {
 				switch (fsym.getName()) {
 				case "bvnot": {
-					final Term not = mScript.term("-", maxNumber,
+					final Term not = mScript.term("-", maxNumberPlusOne,
 							mScript.term("+", translatedLHS, SmtUtils.rational2Term(mScript, Rational.ONE, intSort)));
 					setResult(not);
 					return;
 				}
 				case "bvneg": {
-					final Term negation = mScript.term("-", maxNumber, translatedLHS);
+					final Term negation = mScript.term("-", maxNumberPlusOne, translatedLHS);
 					if (mNutzTransformation) {
 						setResult(negation);
 						return;
 					}
-					setResult(mScript.term("mod", negation, maxNumber));
+					setResult(mScript.term("mod", negation, maxNumberPlusOne));
 					return;
 				}
 				case "extract": {
 					if (mNutzTransformation) {
 						throw new UnsupportedOperationException("not implemented Nutz" + fsym.getName());
 					}
-					final int lowerIndex = Integer.parseInt(appTerm.getFunction().getIndices()[1]);
-					final int upperIndex = Integer.parseInt(appTerm.getFunction().getIndices()[0]);
 
-					final Term divby = SmtUtils.rational2Term(mScript,
-							Rational.valueOf(two.pow(lowerIndex), BigInteger.ONE), intSort);
-					final Term modby = SmtUtils.rational2Term(mScript,
-							Rational.valueOf(two.pow(upperIndex - lowerIndex + 1), BigInteger.ONE), intSort);
-					setResult(mScript.term("mod", mScript.term("div", translatedLHS, divby), modby));
+					setResult(translateExtract(appTerm, translatedLHS));
 					return;
 				}
 				case "zero_extend":
@@ -608,39 +624,12 @@ public class BvToIntTranslation extends TermTransformer {
 					}
 
 					case "bvudiv": {
-						Term rhs;
-						Term lhs;
-						if (mNutzTransformation) {
-							rhs = mScript.term("mod", translatedRHS, maxNumber);
-							lhs = mScript.term("mod", translatedLHS, maxNumber);
-						} else {
-							rhs = translatedRHS;
-							lhs = translatedLHS;
-						}
-						final Term ifTerm =
-								mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
-						final Term thenTerm =
-								mScript.term("-", maxNumber, SmtUtils.rational2Term(mScript, Rational.ONE, intSort));
-						final Term elseTerm = mScript.term("div", lhs, rhs);
-						setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
+						setResult(translateBvudiv(translatedLHS, translatedRHS, maxNumber));
 						return;
 					}
 
 					case "bvurem": {
-						Term rhs;
-						Term lhs;
-						if (mNutzTransformation) {
-							rhs = mScript.term("mod", translatedRHS, maxNumber);
-							lhs = mScript.term("mod", translatedLHS, maxNumber);
-						} else {
-							rhs = translatedRHS;
-							lhs = translatedLHS;
-						}
-						final Term ifTerm =
-								mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
-						final Term thenTerm = lhs;
-						final Term elseTerm = mScript.term("mod", lhs, rhs);
-						setResult(mScript.term("ite", ifTerm, thenTerm, elseTerm));
+						setResult(translateBvurem(translatedLHS, translatedRHS, maxNumber));
 						return;
 					}
 					case "bvand": {
@@ -660,6 +649,53 @@ public class BvToIntTranslation extends TermTransformer {
 
 		}
 		super.convertApplicationTerm(appTerm, args);
+	}
+
+	private Term translateExtract(final ApplicationTerm appTerm, final Term translatedLHS) {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		final BigInteger two = BigInteger.valueOf(2);
+		final int lowerIndex = Integer.parseInt(appTerm.getFunction().getIndices()[1]);
+		final int upperIndex = Integer.parseInt(appTerm.getFunction().getIndices()[0]);
+
+		final Term divby = SmtUtils.rational2Term(mScript,
+				Rational.valueOf(two.pow(lowerIndex), BigInteger.ONE), intSort);
+		final Term modby = SmtUtils.rational2Term(mScript,
+				Rational.valueOf(two.pow(upperIndex - lowerIndex + 1), BigInteger.ONE), intSort);
+		return mScript.term("mod", mScript.term("div", translatedLHS, divby), modby);
+	}
+
+	private Term translateBvudiv(final Term translatedLHS, final Term translatedRHS, final Term maxNumber) {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		Term rhs;
+		Term lhs;
+		if (mNutzTransformation) {
+			rhs = mScript.term("mod", translatedRHS, maxNumber);
+			lhs = mScript.term("mod", translatedLHS, maxNumber);
+		} else {
+			rhs = translatedRHS;
+			lhs = translatedLHS;
+		}
+		final Term ifTerm = mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
+		final Term thenTerm = mScript.term("-", maxNumber, SmtUtils.rational2Term(mScript, Rational.ONE, intSort));
+		final Term elseTerm = mScript.term("div", lhs, rhs);
+		return mScript.term("ite", ifTerm, thenTerm, elseTerm);
+	}
+
+	private Term translateBvurem(final Term translatedLHS, final Term translatedRHS, final Term maxNumber) {
+		Term rhs;
+		Term lhs;
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		if (mNutzTransformation) {
+			rhs = mScript.term("mod", translatedRHS, maxNumber);
+			lhs = mScript.term("mod", translatedLHS, maxNumber);
+		} else {
+			rhs = translatedRHS;
+			lhs = translatedLHS;
+		}
+		final Term ifTerm = mScript.term("=", rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
+		final Term thenTerm = lhs;
+		final Term elseTerm = mScript.term("mod", lhs, rhs);
+		return mScript.term("ite", ifTerm, thenTerm, elseTerm);
 	}
 
 	private Term translateBvshl(final Term translatedLHS, final Term translatedRHS, final int width,
@@ -716,12 +752,12 @@ public class BvToIntTranslation extends TermTransformer {
 		}
 	}
 
-	private Term translateRelations(final FunctionSymbol fsym, final Term[] args, final Term maxNumber,
+	private Term translateRelations(final FunctionSymbol fsym, final Term[] args, final Term maxNumberPlusOne,
 			final int width) {
 		Term[] translatedArgs = new Term[args.length];
 		if (mNutzTransformation) {
 			for (int i = 0; i < args.length; i++) {
-				translatedArgs[i] = mScript.term("mod", args[i], maxNumber);
+				translatedArgs[i] = mScript.term("mod", args[i], maxNumberPlusOne);
 			}
 		} else {
 			translatedArgs = args;
@@ -788,8 +824,9 @@ public class BvToIntTranslation extends TermTransformer {
 		throw new UnsupportedOperationException("unexpected relation");
 	}
 
+	// unsigned to signed for relations
 	private final Term uts(final int width, final Term term) {
-		// 2 * (x mod 2k - 1 ) - x
+		// 2 * (x mod 2^(k - 1) ) - x
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		final Term two =
@@ -800,6 +837,7 @@ public class BvToIntTranslation extends TermTransformer {
 		return mScript.term("-", mScript.term("*", two, modulo), term);
 	}
 
+	// calculates power of two if exponent is a constant, otherwise this is not implemented in the SMT integer theory
 	private Term pow2(final Term term) {
 		assert term.getSort().isNumericSort();
 		if (term instanceof ConstantTerm) {

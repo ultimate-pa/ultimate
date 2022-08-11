@@ -112,7 +112,7 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 	}
 	
 	@Override
-	public IPartialComparator<IPredicate> getPartialComperator() {
+	public IPartialComparator<IPredicate> getPartialComparator() {
 		return (o1, o2) -> {
 			if (!mUnifier.isRepresentative(o1) || !mUnifier.isRepresentative(o2)) {
 				throw new AssertionError("predicates unknown to predicate unifier");

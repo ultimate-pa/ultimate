@@ -190,7 +190,7 @@ public final class ResultUtil {
 				sb.append(" [Line: ");
 				sb.append(loc.getStartLine()).append("]");
 			} else {
-				sb.append(" [UNKNOWN] ");
+				sb.append(" [Unknown line] ");
 			}
 		}
 		sb.append(": ");

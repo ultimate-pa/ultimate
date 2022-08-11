@@ -762,7 +762,7 @@ public class Statements2TransFormula {
 		mOverapproximations.putAll(tlres.getOverappoximations());
 		final Term[] argTerms = tlres.getTerms();
 
-		mTransFormulaBuilder.clearOutVars();
+		mTransFormulaBuilder.removeOutVarsOfLocalContext();
 
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, callee);
 		final Term[] assignments = new Term[arguments.length];

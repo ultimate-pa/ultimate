@@ -49,11 +49,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols created throughout a toolchain.
+ * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols
+ * created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- *         TODO: Extend {@link HistoryRecordingScript} to be able to create a nicer term transferrer
+ *         TODO: Extend {@link HistoryRecordingScript} to be able to create a
+ *         nicer term transferrer
+ *
+ *         TODO 20220401 Matthias: It does not make sense to store axioms and
+ *         SMT function symbols that are created throughout a toolchain in the
+ *         ICFG. Each algorithm should store the function symbol that it
+ *         utilizes. FunctionSymbols that are utilized by the ICFG should be
+ *         stored in the symbol table of the ICFG.
  *
  */
 public class SmtFunctionsAndAxioms {

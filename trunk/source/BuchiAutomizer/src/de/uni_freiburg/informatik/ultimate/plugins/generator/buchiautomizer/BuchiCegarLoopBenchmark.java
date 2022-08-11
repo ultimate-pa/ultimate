@@ -31,9 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
@@ -41,38 +39,36 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.BuchiCegarLoopResult.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
-public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements IStatisticsType {
+public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 
 	private static final BuchiCegarLoopBenchmark s_Instance = new BuchiCegarLoopBenchmark();
 
-	public static final String s_Result = "Result";
-	public static final String s_HighestRank = "HighestRank";
-	public static final String s_NonLiveStateRemoval = "NonLiveStateRemoval";
-	public static final String s_BuchiClosure = "BuchiClosure";
-	public static final String s_NontrivialModuleStages = "NontrivialModuleStages";
-	public static final String s_LassoAnalysisTime = "LassoAnalysisTime";
-	public static final String s_LassoAnalysisResults = "LassoAnalysisResults";
-	public static final String s_InterpolantCoveringCapabilityFinite = "InterpolantCoveringCapabilityFinite";
-	public static final String s_InterpolantCoveringCapabilityBuchi = "InterpolantCoveringCapabilityBuchi";
-	public static final String s_LassoPreprocessingBenchmarks = "LassoPreprocessingBenchmarks";
-	public static final String s_LassoTerminationAnalysisBenchmarks = "LassoTerminationAnalysisBenchmarks";
-	public static final String s_LassoNonterminationAnalysisBenchmarks = "LassoNonterminationAnalysisBenchmarks";
-	public static final String s_LassoNonterminationAnalysisSATFixpoint = "LassoNonterminationAnalysisSatFixpoint";
-	public static final String s_LassoNonterminationAnalysisSATUnbounded = "LassoNonterminationAnalysisSatUnbounded";
-	public static final String s_LassoNonterminationAnalysisUNSAT = "LassoNonterminationAnalysisUnsat";
-	public static final String s_LassoNonterminationAnalysisUNKNOWN = "LassoNonterminationAnalysisUnknown";
-	public static final String s_LassoNonterminationAnalysisTIME = "LassoNonterminationAnalysisTime";
-	public static final String s_MinimizationsOfDetermnisticAutomatomata = "MinimizationsOfDetermnisticAutomatomata";
-	public static final String s_MinimizationsOfNondetermnisticAutomatomata =
-			"MinimizationsOfNondetermnisticAutomatomata";
+	public static final String RESULT = "Result";
+	public static final String HIGHEST_RANK = "HighestRank";
+	public static final String NON_LIVE_STATE_REMOVAL = "NonLiveStateRemoval";
+	public static final String BUCHI_CLOSURE = "BuchiClosure";
+	public static final String NONTRIVIAL_MODUL_STAGES = "NontrivialModuleStages";
+	public static final String LASSO_ANALYSIS_TIME = "LassoAnalysisTime";
+	public static final String LASSO_ANALYSIS_RESULTS = "LassoAnalysisResults";
+	public static final String INTERPOLANT_COVERING_CAPABILITY_FINITE = "InterpolantCoveringCapabilityFinite";
+	public static final String INTERPOLANT_COVERING_CAPABILITY_BUCHI = "InterpolantCoveringCapabilityBuchi";
+	public static final String LASSO_PREPROCESSING_BENCHMARKS = "LassoPreprocessingBenchmarks";
+	public static final String LASSO_TERMINATION_ANALYSIS_BENCHMARKS = "LassoTerminationAnalysisBenchmarks";
+	public static final String LASSO_NONTERMINATION_ANALYSIS_BENCHMARKS = "LassoNonterminationAnalysisBenchmarks";
+	public static final String LASSO_NONTERMINATION_ANALYSIS_SAT_FIXPOINT = "LassoNonterminationAnalysisSatFixpoint";
+	public static final String LASSO_NONTERMINATION_ANALYSIS_SAT_UNBOUNDED = "LassoNonterminationAnalysisSatUnbounded";
+	public static final String LASSO_NONTERMINATION_ANALYSIS_UNSAT = "LassoNonterminationAnalysisUnsat";
+	public static final String LASSO_NONTERMINATION_ANALYSIS_UNKNOWN = "LassoNonterminationAnalysisUnknown";
+	public static final String LASSO_NONTERMINATION_ANALYSIS_TIME = "LassoNonterminationAnalysisTime";
+	public static final String MINIMIZATION_OF_DETERMINISTIC_AUTOMATA = "MinimizationsOfDetermnisticAutomata";
+	public static final String MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA = "MinimizationsOfNondetermnisticAutomata";
 
 	public static BuchiCegarLoopBenchmark getInstance() {
 		return s_Instance;
@@ -80,34 +76,34 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 
 	@Override
 	public Collection<String> getKeys() {
-		final ArrayList<String> keyList = new ArrayList<String>(super.getKeys());
-		keyList.add(s_HighestRank);
-		keyList.add(s_NonLiveStateRemoval);
-		keyList.add(s_BuchiClosure);
-		keyList.add(s_NontrivialModuleStages);
-		keyList.add(s_LassoAnalysisTime);
-		keyList.add(s_LassoAnalysisResults);
-		keyList.add(s_InterpolantCoveringCapabilityFinite);
-		keyList.add(s_InterpolantCoveringCapabilityBuchi);
-		keyList.add(s_LassoPreprocessingBenchmarks);
-		keyList.add(s_LassoTerminationAnalysisBenchmarks);
-		keyList.add(s_LassoNonterminationAnalysisSATFixpoint);
-		keyList.add(s_LassoNonterminationAnalysisSATUnbounded);
-		keyList.add(s_LassoNonterminationAnalysisUNSAT);
-		keyList.add(s_LassoNonterminationAnalysisUNKNOWN);
-		keyList.add(s_LassoNonterminationAnalysisTIME);
-		keyList.add(s_MinimizationsOfDetermnisticAutomatomata);
-		keyList.add(s_MinimizationsOfNondetermnisticAutomatomata);
+		final ArrayList<String> keyList = new ArrayList<>(super.getKeys());
+		keyList.add(HIGHEST_RANK);
+		keyList.add(NON_LIVE_STATE_REMOVAL);
+		keyList.add(BUCHI_CLOSURE);
+		keyList.add(NONTRIVIAL_MODUL_STAGES);
+		keyList.add(LASSO_ANALYSIS_TIME);
+		keyList.add(LASSO_ANALYSIS_RESULTS);
+		keyList.add(INTERPOLANT_COVERING_CAPABILITY_FINITE);
+		keyList.add(INTERPOLANT_COVERING_CAPABILITY_BUCHI);
+		keyList.add(LASSO_PREPROCESSING_BENCHMARKS);
+		keyList.add(LASSO_TERMINATION_ANALYSIS_BENCHMARKS);
+		keyList.add(LASSO_NONTERMINATION_ANALYSIS_SAT_FIXPOINT);
+		keyList.add(LASSO_NONTERMINATION_ANALYSIS_SAT_UNBOUNDED);
+		keyList.add(LASSO_NONTERMINATION_ANALYSIS_UNSAT);
+		keyList.add(LASSO_NONTERMINATION_ANALYSIS_UNKNOWN);
+		keyList.add(LASSO_NONTERMINATION_ANALYSIS_TIME);
+		keyList.add(MINIMIZATION_OF_DETERMINISTIC_AUTOMATA);
+		keyList.add(MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA);
 		return keyList;
 	}
 
 	@Override
 	public Object aggregate(final String key, final Object value1, final Object value2) {
 		switch (key) {
-		case s_Result:
+		case RESULT:
 			final Result result1 = (Result) value1;
 			final Result result2 = (Result) value2;
-			final Set<Result> results = new HashSet<Result>();
+			final Set<Result> results = new HashSet<>();
 			results.add(result1);
 			results.add(result2);
 			if (results.contains(Result.NONTERMINATING)) {
@@ -121,7 +117,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 			} else {
 				throw new AssertionError();
 			}
-		case s_NontrivialModuleStages: {
+		case NONTRIVIAL_MODUL_STAGES: {
 			final int[] array1 = (int[]) value1;
 			final int[] array2 = (int[]) value2;
 			assert array1.length == 4;
@@ -132,25 +128,26 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 			}
 			return result;
 		}
-		case s_InterpolantCoveringCapabilityFinite:
-		case s_InterpolantCoveringCapabilityBuchi:
+		case INTERPOLANT_COVERING_CAPABILITY_FINITE:
+		case INTERPOLANT_COVERING_CAPABILITY_BUCHI:
 			final BackwardCoveringInformation bci1 = (BackwardCoveringInformation) value1;
 			final BackwardCoveringInformation bci2 = (BackwardCoveringInformation) value2;
 			return new BackwardCoveringInformation(bci1, bci2);
-		case s_LassoPreprocessingBenchmarks:
-		case s_LassoTerminationAnalysisBenchmarks:
-		case s_HighestRank:
-		case s_LassoNonterminationAnalysisSATFixpoint:
-		case s_LassoNonterminationAnalysisSATUnbounded:
-		case s_LassoNonterminationAnalysisUNSAT:
-		case s_LassoNonterminationAnalysisUNKNOWN:
-		case s_LassoNonterminationAnalysisTIME:
+		case LASSO_PREPROCESSING_BENCHMARKS:
+		case LASSO_TERMINATION_ANALYSIS_BENCHMARKS:
+		case HIGHEST_RANK:
+		case LASSO_NONTERMINATION_ANALYSIS_SAT_FIXPOINT:
+		case LASSO_NONTERMINATION_ANALYSIS_SAT_UNBOUNDED:
+		case LASSO_NONTERMINATION_ANALYSIS_UNSAT:
+		case LASSO_NONTERMINATION_ANALYSIS_UNKNOWN:
+		case LASSO_NONTERMINATION_ANALYSIS_TIME:
 			throw new AssertionError("not yet implemented");
 		default:
 			return super.aggregate(key, value1, value2);
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 		final StringBuilder sb = new StringBuilder();
@@ -170,7 +167,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(trMax);
 		sb.append(". ");
 
-		final Long laTime = (Long) benchmarkData.getValue(s_LassoAnalysisTime);
+		final Long laTime = (Long) benchmarkData.getValue(LASSO_ANALYSIS_TIME);
 		sb.append("Analysis of lassos took ");
 		sb.append(prettyprintNanoseconds(laTime));
 		sb.append(". ");
@@ -194,16 +191,16 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(". ");
 
 		sb.append("Highest rank in rank-based complementation ");
-		final Integer highestRank = (Integer) benchmarkData.getValue(s_HighestRank);
+		final Integer highestRank = (Integer) benchmarkData.getValue(HIGHEST_RANK);
 		sb.append(highestRank);
 		sb.append(". ");
 
 		sb.append("Minimization of det autom ");
-		sb.append(benchmarkData.getValue(s_MinimizationsOfDetermnisticAutomatomata.toString()));
+		sb.append(benchmarkData.getValue(MINIMIZATION_OF_DETERMINISTIC_AUTOMATA));
 		sb.append(". ");
 
 		sb.append("Minimization of nondet autom ");
-		sb.append(benchmarkData.getValue(s_MinimizationsOfNondetermnisticAutomatomata.toString()));
+		sb.append(benchmarkData.getValue(MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA));
 		sb.append(". ");
 
 		sb.append("Automata minimization ");
@@ -211,10 +208,10 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(". ");
 
 		sb.append("Non-live state removal took ");
-		final Long nonLiveTime = (Long) benchmarkData.getValue(s_NonLiveStateRemoval);
+		final Long nonLiveTime = (Long) benchmarkData.getValue(NON_LIVE_STATE_REMOVAL);
 		sb.append(prettyprintNanoseconds(nonLiveTime));
 		sb.append(" Buchi closure took ");
-		final Long buchiClosureTime = (Long) benchmarkData.getValue(s_BuchiClosure);
+		final Long buchiClosureTime = (Long) benchmarkData.getValue(BUCHI_CLOSURE);
 		sb.append(prettyprintNanoseconds(buchiClosureTime));
 		sb.append(". ");
 
@@ -226,21 +223,21 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(sip.getIteration());
 		sb.append(".\t");
 
-		final int[] stages = (int[]) benchmarkData.getValue(s_NontrivialModuleStages);
+		final int[] stages = (int[]) benchmarkData.getValue(NONTRIVIAL_MODUL_STAGES);
 		sb.append("Nontrivial modules had stage ");
 		sb.append(Arrays.toString(stages));
 		sb.append(".\t");
 
 		final BackwardCoveringInformation bcif =
-				(BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityFinite);
-		sb.append(s_InterpolantCoveringCapabilityFinite);
+				(BackwardCoveringInformation) benchmarkData.getValue(INTERPOLANT_COVERING_CAPABILITY_FINITE);
+		sb.append(INTERPOLANT_COVERING_CAPABILITY_FINITE);
 		sb.append(": ");
 		sb.append(bcif.toString());
 		sb.append("\t");
 
 		final BackwardCoveringInformation bcib =
-				(BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityBuchi);
-		sb.append(s_InterpolantCoveringCapabilityBuchi);
+				(BackwardCoveringInformation) benchmarkData.getValue(INTERPOLANT_COVERING_CAPABILITY_BUCHI);
+		sb.append(INTERPOLANT_COVERING_CAPABILITY_BUCHI);
 		sb.append(": ");
 		sb.append(bcib.toString());
 		sb.append("\t");
@@ -250,53 +247,58 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(ecData);
 		sb.append("\t");
 
-		sb.append(s_LassoAnalysisResults);
+		sb.append(LASSO_ANALYSIS_RESULTS);
 		sb.append(": ");
-		final LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData.getValue(s_LassoAnalysisResults);
+		final LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData.getValue(LASSO_ANALYSIS_RESULTS);
 		sb.append(lar.toString());
 
-		sb.append(s_LassoPreprocessingBenchmarks);
+		sb.append(LASSO_PREPROCESSING_BENCHMARKS);
 		sb.append(": ");
 		final List<PreprocessingBenchmark> ppbench =
-				(List<PreprocessingBenchmark>) benchmarkData.getValue(s_LassoPreprocessingBenchmarks);
+				(List<PreprocessingBenchmark>) benchmarkData.getValue(LASSO_PREPROCESSING_BENCHMARKS);
 		sb.append(PreprocessingBenchmark.prettyprint(ppbench));
-		sb.append(s_LassoTerminationAnalysisBenchmarks);
+		sb.append(LASSO_TERMINATION_ANALYSIS_BENCHMARKS);
 		sb.append(": ");
 		final List<TerminationAnalysisBenchmark> tabbench =
-				(List<TerminationAnalysisBenchmark>) benchmarkData.getValue(s_LassoTerminationAnalysisBenchmarks);
+				(List<TerminationAnalysisBenchmark>) benchmarkData.getValue(LASSO_TERMINATION_ANALYSIS_BENCHMARKS);
 		sb.append(prettyPrintTerminationAnalysisBenchmark(tabbench));
-		sb.append(s_LassoTerminationAnalysisBenchmarks);
+		sb.append(LASSO_TERMINATION_ANALYSIS_BENCHMARKS);
 		sb.append(": ");
 
-		sb.append(s_LassoNonterminationAnalysisSATFixpoint);
+		sb.append(LASSO_NONTERMINATION_ANALYSIS_SAT_FIXPOINT);
 		sb.append(": ");
-		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisSATFixpoint));
+		sb.append(benchmarkData.getValue(LASSO_NONTERMINATION_ANALYSIS_SAT_FIXPOINT));
 		sb.append("\t");
 
-		sb.append(s_LassoNonterminationAnalysisSATUnbounded);
+		sb.append(LASSO_NONTERMINATION_ANALYSIS_SAT_UNBOUNDED);
 		sb.append(": ");
-		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisSATUnbounded));
+		sb.append(benchmarkData.getValue(LASSO_NONTERMINATION_ANALYSIS_SAT_UNBOUNDED));
 		sb.append("\t");
 
-		sb.append(s_LassoNonterminationAnalysisUNSAT);
+		sb.append(LASSO_NONTERMINATION_ANALYSIS_UNSAT);
 		sb.append(": ");
-		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisUNSAT));
+		sb.append(benchmarkData.getValue(LASSO_NONTERMINATION_ANALYSIS_UNSAT));
 		sb.append("\t");
 
-		sb.append(s_LassoNonterminationAnalysisUNKNOWN);
+		sb.append(LASSO_NONTERMINATION_ANALYSIS_UNKNOWN);
 		sb.append(": ");
-		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisUNKNOWN));
+		sb.append(benchmarkData.getValue(LASSO_NONTERMINATION_ANALYSIS_UNKNOWN));
 		sb.append("\t");
 
-		sb.append(s_LassoNonterminationAnalysisTIME);
+		sb.append(LASSO_NONTERMINATION_ANALYSIS_TIME);
 		sb.append(": ");
-		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(s_LassoNonterminationAnalysisTIME)));
+		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(LASSO_NONTERMINATION_ANALYSIS_TIME)));
 		sb.append("\t");
+
+		final String initTime = CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString();
+		sb.append(initTime);
+		sb.append(": ");
+		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(initTime)));
 
 		return sb.toString();
 	}
 
-	private String prettyPrintTerminationAnalysisBenchmark(final List<TerminationAnalysisBenchmark> benchmarks) {
+	private static String prettyPrintTerminationAnalysisBenchmark(final List<TerminationAnalysisBenchmark> benchmarks) {
 		if (benchmarks.isEmpty()) {
 			return "not available";
 		}
@@ -324,8 +326,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		return sb.toString();
 	}
 
-	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
-		final List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
+	private static ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
+		final List<ICsvProvider<Object>> list = new ArrayList<>();
 		benchmarks = Collections.singletonList(mostMotzkinButUnknownFirst(benchmarks));
 		for (final TerminationAnalysisBenchmark benchmark : benchmarks) {
 			list.add(benchmark.createCsvProvider());
@@ -341,7 +343,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		return numericColumns;
 	}
 
-	private TerminationAnalysisBenchmark
+	private static TerminationAnalysisBenchmark
 			mostMotzkinButUnknownFirst(final List<TerminationAnalysisBenchmark> benchmarks) {
 		boolean foundUnknown = false;
 		int mostMotzkin = 0;
@@ -365,128 +367,4 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		}
 		return mostDifficult;
 	}
-
-	public static class LassoAnalysisResults implements IStatisticsDataProvider, IStatisticsType {
-		public static final String s_LassoNonterminating = "nont";
-		public static final String s_TerminationUnknown = "unkn";
-		/**
-		 * Cases where (already a single iteration of) the loop is infeasible.
-		 */
-		public static final String s_StemFeasibleLoopInfeasible = "SFLI";
-		/**
-		 * Cases where the stem is feasible, (a single iteration of) the loop is feasible but the loop is terminating.
-		 */
-		public static final String s_StemFeasibleLoopTerminating = "SFLT";
-		/**
-		 * Cases where stem and loop are feasible but the concatenation of stem and loop is infeasible.
-		 */
-		public static final String s_ConcatenationInfeasible = "conc";
-		/**
-		 * Cases where stem and loop are feasible but the concatenation of stem and loop is infeasible and the loop is
-		 * terminating.
-		 */
-		public static final String s_ConcatInfeasibleLoopTerminating = "concLT";
-		/**
-		 * Cases where the stem is infeasible and the loop is nonterminating.
-		 */
-		public static final String s_StemInfeasibleLoopNonterminating = "SILN";
-		/**
-		 * Cases where the stem is infeasible and the termination/feasibility of the loop is unknown.
-		 */
-		public static final String s_StemInfeasibleLoopUnknown = "SILU";
-		/**
-		 * Cases where the stem is infeasible and the loop is infeasible.
-		 */
-		public static final String s_StemInfeasibleLoopInfeasible = "SILI";
-		/**
-		 * Cases where both, stem and loop are infeasible.
-		 */
-		public static final String s_StemInfeasibleLoopTerminating = "SILT";
-		/**
-		 * Cases where the stem and the loop are feasible, the loop itself is nonterminating but the lasso is
-		 * terminating.
-		 */
-		public static final String s_LassoTerminating = "lasso";
-
-		public final Map<String, Integer> mMap;
-
-		public LassoAnalysisResults() {
-			mMap = new LinkedHashMap<String, Integer>();
-			mMap.put(s_LassoNonterminating, 0);
-			mMap.put(s_TerminationUnknown, 0);
-			mMap.put(s_StemFeasibleLoopInfeasible, 0);
-			mMap.put(s_StemFeasibleLoopTerminating, 0);
-			mMap.put(s_ConcatenationInfeasible, 0);
-			mMap.put(s_ConcatInfeasibleLoopTerminating, 0);
-			mMap.put(s_StemInfeasibleLoopNonterminating, 0);
-			mMap.put(s_StemInfeasibleLoopUnknown, 0);
-			mMap.put(s_StemInfeasibleLoopInfeasible, 0);
-			mMap.put(s_StemInfeasibleLoopTerminating, 0);
-			mMap.put(s_LassoTerminating, 0);
-		}
-
-		@Override
-		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			for (final String key : getKeys()) {
-				sb.append(key);
-				sb.append(getValue(key));
-				sb.append(" ");
-			}
-			return sb.toString();
-		}
-
-		public void increment(final String key) {
-			final int value = mMap.get(key);
-			mMap.put(key, value + 1);
-		}
-
-		// public void aggregate(LassoAnalysisResults lassoAnalysisResults) {
-		// mLassoNonterminating = lassoAnalysisResults.mLassoNonterminating;
-		// mTerminationUnknown = lassoAnalysisResults.mTerminationUnknown;
-		// mStemFeasibleLoopInfeasible = lassoAnalysisResults.mStemFeasibleLoopInfeasible;
-		// mStemFeasibleLoopTerminating = lassoAnalysisResults.mStemFeasibleLoopTerminating;
-		// mConcatenationInfeasible = lassoAnalysisResults.mConcatenationInfeasible;
-		// mConcatInfeasibleLoopTerminating = lassoAnalysisResults.mConcatInfeasibleLoopTerminating;
-		// mStemInfeasibleLoopNonterminating = lassoAnalysisResults.mStemInfeasibleLoopNonterminating;
-		// mStemInfeasibleLoopUnknown = lassoAnalysisResults.mStemInfeasibleLoopUnknown;
-		// mStemInfeasibleLoopInfeasible = lassoAnalysisResults.mStemInfeasibleLoopInfeasible;
-		// mStemInfeasibleLoopTerminating = lassoAnalysisResults.mStemInfeasibleLoopTerminating;
-		// mLassoTerminating = lassoAnalysisResults.mLassoTerminating;
-		// }
-
-		@Override
-		public Collection<String> getKeys() {
-			return mMap.keySet();
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			return mMap.get(key);
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return this;
-		}
-
-		@Override
-		public Object aggregate(final String key, final Object value1, final Object value2) {
-			throw new AssertionError("not yet implemented");
-		}
-
-		@Override
-		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-			final LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData;
-			final StringBuilder sb = new StringBuilder();
-			for (final String key : lar.getKeys()) {
-				sb.append(key);
-				sb.append(lar.getValue(key));
-				sb.append(" ");
-			}
-			return sb.toString();
-		}
-
-	}
-
 }

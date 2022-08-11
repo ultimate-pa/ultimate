@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -79,13 +78,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -107,8 +107,20 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * compute the assigned/updated variables. A variable is updated by this transition if it occurs as outVar and - it
-	 * does not occur as inVar - or the inVar is represented by a different TermVariable
+	 * Compute the assigned/updated variables.
+	 *
+	 * A variable is assigned/updated by a transition if either
+	 * <ul>
+	 * <li>It occurs only as inVar,</li>
+	 * <li>or it occurs only as outVar,</li>
+	 * <li>or it occurs as inVar and as outVar, but represented by different {@link TermVariable}s.</li>
+	 * </ul>
+	 *
+	 * @param inVars
+	 *            The map of in-variables, see the documentation of {@link TransFormula}
+	 * @param outVars
+	 *            The map of out-variables, see the documentation of {@link TransFormula}
+	 * @return The set of assigned/updated variables as specified above
 	 */
 	public static Set<IProgramVar> computeAssignedVars(final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
@@ -119,28 +131,46 @@ public final class TransFormulaUtils {
 				assignedVars.add(entry.getKey());
 			}
 		}
+		for (final IProgramVar pv : inVars.keySet()) {
+			if (!outVars.containsKey(pv)) {
+				assignedVars.add(pv);
+			}
+		}
 		return assignedVars;
 	}
 
 	/**
-	 * @param services
+	 * Performs sequential composition of TransFormulas.
+	 *
+	 * In terms of statements, the sequential composition describes the effect of executing the TransFormulas one after
+	 * the other (in sequence). Another way to describe it is the relational composition of the transition relations
+	 * represented by the TransFormulas.
+	 *
+	 * NOTE: This method is not suited for TransFormulas that switch to different contexts! In particular, it should not
+	 * be used for procedure calls and returns.
+	 *
+	 * The returned TransFormula is in internal normal form (see {@link #hasInternalNormalForm(TransFormula)}).
+	 *
+	 * @param logger
+	 *            for debugging purposes
+	 * @param simplify
+	 *            whether or not the composed formula should be simplified.
 	 * @param tryAuxVarElimination
 	 *            Apply our partial quantifier elimination and try to eliminate auxVars. This is a postprocessing that
-	 *            we apply to the resulting formula which produces an equivalent formula with less auxvars.
-	 * @return the relational composition (concatenation) of transformula1 and transformula2
+	 *            we apply to the resulting formula which produces an equivalent formula with less auxVars.
+	 * @param tranformToCNF
+	 *            whether or not the composed formula should be transformed to conjunctive normal form
+	 * @param xnfConversionTechnique
+	 *            If the formula is transformed to CNF, the technique to do so
+	 * @param simplificationTechnique
+	 *            If the formula is simplified, the technique to do so. Also applies if quantifiers are eliminated.
+	 * @param transFormula
+	 *            The list of transition formulas to compose
+	 * @return the relational composition the given TransFormulas.
 	 */
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
 			final boolean tryAuxVarElimination, final boolean tranformToCNF,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final List<UnmodifiableTransFormula> transFormula) {
-		return sequentialComposition(logger, services, mgdScript, simplify, tryAuxVarElimination, tranformToCNF, true,
-				xnfConversionTechnique, simplificationTechnique, transFormula);
-	}
-
-	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
-			final boolean tryAuxVarElimination, final boolean tranformToCNF, final boolean checkSat,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<UnmodifiableTransFormula> transFormula) {
 		if (logger.isDebugEnabled()) {
@@ -205,16 +235,33 @@ public final class TransFormulaUtils {
 				if (currentTf.getOutVars().containsKey(var)) {
 					// nothing do to, this var was already considered above
 				} else {
-					// case var occurs only as inVar: var is not modfied.
+					// case var occurs only as inVar: var is havoc'ed (and possibly read)
 					final TermVariable inVar = entry.getValue();
-					TermVariable newInVar;
-					if (tfb.containsInVar(var)) {
-						newInVar = tfb.getInVar(var);
-					} else {
-						newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
-								var.getTermVariable().getSort());
-						tfb.addInVar(var, newInVar);
+
+					if (!tfb.containsOutVar(var)) {
+						// If var is not yet an outVar of tfb, add it.
+						final TermVariable newOutVar;
+						if (tfb.containsInVar(var)) {
+							// If var is an inVar of tfb, we must use the existing TermVariable.
+							// Note that below, the inVar of tfb for var is replaced, so we can use it here as outVar
+							// without implying that the value of var doesn't change.
+							newOutVar = tfb.getInVar(var);
+						} else {
+							// If var is not an inVar of tfb, we create a fresh dummy TermVariable.
+							newOutVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
+									var.getTermVariable().getSort());
+						}
+						tfb.addOutVar(var, newOutVar);
+					} else if (tfb.containsInVar(var) && tfb.getOutVar(var) != tfb.getInVar(var)) {
+						// If tfb has an inVar for var, and the inVar occurs *only* as inVar (not as outVar), we must
+						// make it an auxVar before we introduce a new inVar below.
+						tfb.addAuxVar(tfb.getInVar(var));
 					}
+
+					// Add a new inVar for var
+					final TermVariable newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
+							var.getTermVariable().getSort());
+					tfb.addInVar(var, newInVar);
 					substitutionMapping.put(inVar, newInVar);
 				}
 			}
@@ -239,22 +286,8 @@ public final class TransFormulaUtils {
 		}
 
 		if (tryAuxVarElimination) {
-			final Term eliminated;
-			// eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
-			// formula, services, logger, simplificationTechnique, xnfConversionTechnique);
-			final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, formula);
-			auxVars.clear();
-			final Term partiallyEliminated =
-					PartialQuantifierElimination.eliminate(services, mgdScript, quantified, simplificationTechnique);
-			final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
-			if (pnf instanceof QuantifiedFormula
-					&& ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
-				final QuantifiedFormula qf = (QuantifiedFormula) pnf;
-				auxVars.addAll(Arrays.asList(qf.getVariables()));
-				eliminated = qf.getSubformula();
-			} else {
-				eliminated = pnf;
-			}
+			final Term eliminated =
+					tryAuxVarElimination(services, mgdScript, simplificationTechnique, formula, auxVars);
 			if (logger.isDebugEnabled()) {
 				logger.debug("DAG size before PQE %s, DAG size after PQE %s", new DagSizePrinter(formula),
 						new DagSizePrinter(eliminated));
@@ -287,7 +320,25 @@ public final class TransFormulaUtils {
 		for (final TermVariable auxVar : auxVars) {
 			tfb.addAuxVar(auxVar);
 		}
+		tfb.ensureInternalNormalForm();
 		return tfb.finishConstruction(mgdScript);
+	}
+
+	public static Term tryAuxVarElimination(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final SimplificationTechnique simplificationTechnique, final Term formula,
+			final Set<TermVariable> auxVars) {
+		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, auxVars, formula);
+		auxVars.clear();
+
+		final Term partiallyEliminated =
+				PartialQuantifierElimination.eliminate(services, mgdScript, quantified, simplificationTechnique);
+		final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
+		if (pnf instanceof QuantifiedFormula && ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
+			final QuantifiedFormula qf = (QuantifiedFormula) pnf;
+			auxVars.addAll(Arrays.asList(qf.getVariables()));
+			return qf.getSubformula();
+		}
+		return pnf;
 	}
 
 	/**
@@ -315,14 +366,17 @@ public final class TransFormulaUtils {
 			throw new IllegalArgumentException();
 		}
 
+		final TransFormulaUnification unification = new TransFormulaUnification(mgdScript, transFormulas);
+		final Set<IProgramConst> consts = unification.getNonTheoryConsts();
+
 		final TransFormulaBuilder tfb;
 		if (useBranchEncoders) {
-			tfb = new TransFormulaBuilder(null, null, false, null, false, Arrays.asList(branchIndicators), false);
+			tfb = new TransFormulaBuilder(null, null, consts.isEmpty(), consts, false, Arrays.asList(branchIndicators),
+					false);
 		} else {
-			tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
+			tfb = new TransFormulaBuilder(null, null, consts.isEmpty(), consts, true, null, false);
 		}
 
-		final TransFormulaUnification unification = new TransFormulaUnification(mgdScript, transFormulas);
 		tfb.addInVars(unification.getInVars());
 		tfb.addOutVars(unification.getOutVars());
 		for (final TermVariable auxVar : unification.getAuxVars()) {
@@ -791,15 +845,13 @@ public final class TransFormulaUtils {
 		}
 		// yes! outVars of result are indeed the inVars of input
 
-		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
+		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(termAndAuxVars.getFirst());
+		tfb.setFormula(withoutAuxVars);
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
 
@@ -824,11 +876,16 @@ public final class TransFormulaUtils {
 			final boolean cellPrecisionForArrays) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar bv : tf.getAssignedVars()) {
+		for (final IProgramVar bv : tf.getOutVars().keySet()) {
+			if (tf.getOutVars().get(bv) == tf.getInVars().get(bv)) {
+				// inVar and outVar are identical, variables that are not changed should not be
+				// havoced
+				continue;
+			}
 			if (cellPrecisionForArrays && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
-				final Set<ApplicationTerm> stores =
-						new ApplicationTermFinder("store", false).findMatchingSubterms(tf.getFormula());
-				for (final ApplicationTerm appTerm : stores) {
+				final Set<Term> stores = SmtUtils.extractApplicationTerms("store", tf.getFormula(), false);
+				for (final Term store : stores) {
+					final ApplicationTerm appTerm = (ApplicationTerm) store;
 					final Term storedValue = appTerm.getParameters()[2];
 					if (!SmtSortUtils.isArraySort(storedValue.getSort())) {
 						final TermVariable aux = mgdScript.constructFreshTermVariable("rosehip", storedValue.getSort());
@@ -850,51 +907,68 @@ public final class TransFormulaUtils {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
 		final Term term = Substitution.apply(mgdScript, substitutionMapping, tf.getFormula());
-		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, mgdScript, term, auxVars);
+		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, term, auxVars);
 
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(termAndAuxVars.getFirst());
+		tfb.setFormula(withoutAuxVars);
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
 
-	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
+	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services) {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Pair<Term, Set<TermVariable>> termAndAuxVars =
-				tryToEliminateAuxVars(services, maScript, tf.getFormula(), tf.getAuxVars());
-		if (!termAndAuxVars.getSecond().isEmpty()) {
-			throw new UnsupportedOperationException("cannot negate if there are auxVars");
-		}
-		final Term formula = SmtUtils.not(maScript.getScript(), termAndAuxVars.getFirst());
+		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(),
+				tf.getAuxVars());
+		final Term formula = SmtUtils.not(mgdScript.getScript(), withoutAuxVars);
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				false, tf.getBranchEncoders(), true);
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(maScript);
+		return tfb.finishConstruction(mgdScript);
 	}
 
 	/**
-	 * Given the return of a {@link Transformula} try to eliminate auxvars.
-	 *
-	 * @return new term and set of remaining auxvars.
+	 * Given a list of {@link UnmodifiableTransFormula}s tf1,..., tfn that represent
+	 * relations R1,...,Rn, construct a {@link UnmodifiableTransFormula} that
+	 * represents the intersection R1∩...∩Rn.
 	 */
-	private static Pair<Term, Set<TermVariable>> tryToEliminateAuxVars(final IUltimateServiceProvider services,
-			final ManagedScript maScript, final Term formula, final Set<TermVariable> oldAuxVars) {
+	public static UnmodifiableTransFormula intersect(final ManagedScript mgdScript,
+			final UnmodifiableTransFormula... tfs) {
+		final TransFormulaUnification tfu = new TransFormulaUnification(mgdScript, tfs);
+		final Set<IProgramConst> consts = tfu.getNonTheoryConsts();
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(tfu.getInVars(), tfu.getOutVars(), consts.isEmpty(), consts, true, null, false);
+		tfu.getAuxVars().stream().forEach(tfb::addAuxVar);
+		final Term[] terms = new Term[tfs.length];
+		for (int i = 0; i < tfs.length; i++) {
+			terms[i] = tfu.getUnifiedFormula(i);
+		}
+		tfb.setFormula(SmtUtils.and(mgdScript.getScript(), terms));
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mgdScript);
+	}
+
+	/**
+	 * Given term and auxvars of a {@link Transformula}. Quantify all auxvars
+	 * existentially and try to eliminate quantifiers.
+	 *
+	 * TODO 20220720 Matthias: Fix POLY_PAC as simplification? Maybe this and the
+	 * elimination procedure should become a parameter of this method.
+	 */
+	private static Term quantifyAndTryToEliminateAuxVars(final IUltimateServiceProvider services,
+			final ManagedScript maScript, final Term term, final Set<TermVariable> auxVars) {
 		final Term quantifiedTerm =
-				SmtUtils.quantifier(maScript.getScript(), QuantifiedFormula.EXISTS, oldAuxVars, formula);
+				SmtUtils.quantifier(maScript.getScript(), QuantifiedFormula.EXISTS, auxVars, term);
 		final Term resultTerm = PartialQuantifierElimination.eliminate(services, maScript, quantifiedTerm,
 				SimplificationTechnique.POLY_PAC);
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(resultTerm.getFreeVars()));
-		freeVars.retainAll(oldAuxVars);
-		return new Pair<>(resultTerm, freeVars);
+		return resultTerm;
 	}
 
 	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
@@ -932,6 +1006,11 @@ public final class TransFormulaUtils {
 	public static Map<TermVariable, TermVariable> constructInvarsToDefaultvarsMap(final TransFormula tf) {
 		return tf.getInVars().entrySet().stream()
 				.collect(Collectors.toMap(Entry::getValue, x -> x.getKey().getTermVariable()));
+	}
+
+	public static Map<TermVariable, TermVariable> constructDefaultvarsToInvarsMap(final TransFormula tf) {
+		return tf.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(x -> x.getKey().getTermVariable(), Entry::getValue));
 	}
 
 	public static Map<TermVariable, TermVariable> constructOutvarsToDefaultvarsMap(final TransFormula tf) {
@@ -1082,11 +1161,11 @@ public final class TransFormulaUtils {
 
 		// Get the core part of the transition formulas.
 		// The RHS formula must be explicitly quantified, as it will be negated.
-		final Term lhsClosedFormula = lhs.getClosedFormula();
-		final Term rhsQuantFormula =
-				SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, rhs.getAuxVars(), rhs.getFormula());
+		final Term lhsClosedFormula = getClosedFormulaWithBranchEncoderConstants(mgdScript, lhs, lhs);
+		final Term rhsQuantFormula = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
+				DataStructureUtils.union(rhs.getAuxVars(), rhs.getBranchEncoders()), rhs.getFormula());
 		final Term rhsClosedFormula = UnmodifiableTransFormula.computeClosedFormula(rhsQuantFormula, rhs.getInVars(),
-				rhs.getOutVars(), new HashSet<>(), mgdScript);
+				rhs.getOutVars(), Collections.emptySet(), mgdScript);
 
 		// Add explicit equalities for variables mentioned in one, but not the other,
 		// transition formula.
@@ -1104,11 +1183,28 @@ public final class TransFormulaUtils {
 		mgdScript.assertTerm(lhs, SmtUtils.not(script, rhsFormula));
 
 		final LBool result = mgdScript.checkSat(lhs);
+		mgdScript.echo(lhs, new QuotedObject("Implication check result was " + result));
 
 		mgdScript.pop(lhs, 1);
 		mgdScript.unlock(lhs);
 
 		return result;
+	}
+
+	private static Term getClosedFormulaWithBranchEncoderConstants(final ManagedScript mgdScript, final Object lock,
+			final UnmodifiableTransFormula tf) {
+		if (tf.getBranchEncoders().isEmpty()) {
+			return tf.getClosedFormula();
+		}
+		final Map<TermVariable, Term> substitutionMap = new HashMap<>();
+		int i = 0;
+		for (final TermVariable be : tf.getBranchEncoders()) {
+			final String name = be.getName() + "_be_" + i;
+			mgdScript.declareFun(lock, name, new Sort[0], be.getSort());
+			substitutionMap.put(be, mgdScript.term(lock, name));
+			i++;
+		}
+		return Substitution.apply(mgdScript, substitutionMap, tf.getClosedFormula());
 	}
 
 	private static Term constructExplicitEqualities(final Script script, final Set<IProgramVar> variables) {
@@ -1253,6 +1349,34 @@ public final class TransFormulaUtils {
 			substitutionMapping.put(arrayStore.asTerm(), resultStore);
 		}
 		final Term resultTerm = Substitution.apply(mgdScript, substitutionMapping, term);
-		return new Triple<Term, List<TermVariable>, List<Term>>(resultTerm, resultVariables, resultEqualities);
+		return new Triple<>(resultTerm, resultVariables, resultEqualities);
+	}
+
+	/**
+	 * Determines if the given {@link TransFormula} is in <em>internal normal form</em>.
+	 *
+	 * We say that a {@link TransFormula} is in internal normal form iff every in-variable also appears as out-variable,
+	 * or its {@link TermVariable} is a free variable of the formula. This rules out certain representations of
+	 * {@code havoc}-like transitions, where a variable appears only as in-variable but not as out-variable.
+	 *
+	 * The effect of this normal form is that the in-variables of the {@link TransFormula} are not an unnecessarily
+	 * coarse over-approximation of the variables being <em>read</em> by the transition, i.e. whose values can influence
+	 * (1) whether the transition can execute, or (2) the values of the transition's assigned variables.
+	 *
+	 * Note that this normal form is only applicable to {@link TransFormula}s where the predecessor and successor state
+	 * range over the same variables. For instance, it is not applicable to transitions corresponding to procedure calls
+	 * or returns.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param tf
+	 *            The transition to check
+	 * @return {@code true} if the transition is in internal normal form, {@code false} otherwise
+	 */
+	public static boolean hasInternalNormalForm(final TransFormula tf) {
+		final Set<IProgramVar> outVars = tf.getOutVars().keySet();
+		final Set<TermVariable> freeVars = Arrays.stream(tf.getFormula().getFreeVars()).collect(Collectors.toSet());
+		return tf.getInVars().entrySet().stream()
+				.allMatch(e -> outVars.contains(e.getKey()) || freeVars.contains(e.getValue()));
 	}
 }

@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Edge in a recursive control flow graph that represents the call of a procedure, including execution of the procedure,
@@ -80,5 +82,11 @@ public class Summary extends CodeBlock implements IIcfgSummaryTransition<IcfgLoc
 	@Override
 	public String toString() {
 		return "SUMMARY for " + getPrettyPrintedStatements() + " srcloc: " + mSource;
+	}
+
+	@Override
+	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
+		assert TransFormulaUtils.hasInternalNormalForm(transFormula) : "Expected TF in internal normal form";
+		super.setTransitionFormula(transFormula);
 	}
 }

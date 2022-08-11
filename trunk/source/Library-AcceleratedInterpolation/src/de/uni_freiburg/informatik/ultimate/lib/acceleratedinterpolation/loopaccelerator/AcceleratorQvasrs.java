@@ -85,7 +85,7 @@ public class AcceleratorQvasrs implements IAccelerator {
 		try {
 			mLogger.debug("Accelerating Loop using Qvasr Summarization");
 			final QvasrsLoopSummarization qvasr = new QvasrsLoopSummarization(mLogger, mServices, mScript);
-			final UnmodifiableTransFormula loopSummary = qvasr.getQvasrsAcceleration(loop);
+			final UnmodifiableTransFormula loopSummary = qvasr.getQvasrsAcceleration(loop, false);
 			mFoundAcceleration = true;
 			return loopSummary;
 		} catch (final UnsupportedOperationException ue) {

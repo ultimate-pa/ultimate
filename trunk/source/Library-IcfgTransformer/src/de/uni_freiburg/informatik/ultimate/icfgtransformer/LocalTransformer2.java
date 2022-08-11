@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.BvToIntTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -334,7 +334,7 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 							mMgdScript.declareFun(null, newIdentifier, new Sort[0], newSort);
 							final ApplicationTerm newSmtConstant = (ApplicationTerm) mMgdScript.term(null, newIdentifier);
 							mBacktranslation.put(newSmtConstant, oldPv.getDefaultConstant());
-							return new BoogieConst(newIdentifier, null, newSmtConstant, false);
+							return new ProgramConst(newIdentifier, newSmtConstant, false);
 						}
 					});
 		}

@@ -15,8 +15,8 @@
 /trunk/examples/ultbench
 /trunk/examples/ultbench/*
 trunk/examples/concurrent/**/*.yml
-trunk/examples/concurrent/bpl/POPL2022/*.bpl
-trunk/examples/concurrent/bpl/POPL2022/*.yml
+trunk/examples/concurrent/bpl/PLDI2022/*.bpl
+trunk/examples/concurrent/bpl/PLDI2022/*.yml
 trunk/examples/concurrent/bpl/VMCAI2021/generated/*.bpl
 trunk/examples/concurrent/bpl/VMCAI2021/generated/*.yml
 trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.bpl
@@ -298,3 +298,5 @@ releaseScripts/default/UReqCheck-win32/
 /trunk/source/JavaCup/java/com/github/jhoenicke/javacup
 /releaseScripts/.idea
 /releaseScripts/default/update-smtinterpol-firestation.sh
+/trunk/runtime-Debug-E4.product
+/trunk/runtime-WebBackend.product

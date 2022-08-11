@@ -1,7 +1,3 @@
-#Mon Feb 07 18:02:32 CET 2022
-\!/instance/de.uni_freiburg.informatik.ultimate.gui=
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\ultimate\\trunk\\examples\\programs\\acceleratedInterpolation\\oneLoopSafe.bpl
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\ultimate\\trunk\\examples\\toolchains\\AutomizerBplTransformed.xml
 @de.uni_freiburg.informatik.ultimate.gui=0.2.2
 file_export_version=3.0
 #Mon Feb 07 18:02:32 CET 2022
@@ -313,30 +309,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/SVG\ Export\ directory\:=.
 /instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Which\ models\ should\ be\ visualized?=LAST
 @de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=0.2.2
-file_export_version=3.0
-#Mon Feb 07 18:02:32 CET 2022
-\!/instance/de.uni_freiburg.informatik.ultimate.req.printer=
-/instance/de.uni_freiburg.informatik.ultimate.req.printer/Output\ directory=C\:\\Users\\jonas\\AppData\\Local\\Temp\\
-/instance/de.uni_freiburg.informatik.ultimate.req.printer/Output\ file\ name=requirements.req
-/instance/de.uni_freiburg.informatik.ultimate.req.printer/Save\ file\ in\ source\ directory=false
-/instance/de.uni_freiburg.informatik.ultimate.req.printer/Use\ automatic\ naming=false
-@de.uni_freiburg.informatik.ultimate.req.printer=0.2.2
-file_export_version=3.0
-#Mon Feb 07 18:02:32 CET 2022
-\!/instance/de.uni_freiburg.informatik.ultimate.chcprinter=
-/instance/de.uni_freiburg.informatik.ultimate.chcprinter/Dump\ path=C\:\\Users\\jonas\\AppData\\Local\\Temp\\
-/instance/de.uni_freiburg.informatik.ultimate.chcprinter/File\ name=chcSmtPrinter.smt2
-/instance/de.uni_freiburg.informatik.ultimate.chcprinter/Save\ file\ in\ source\ directory=false
-/instance/de.uni_freiburg.informatik.ultimate.chcprinter/Use\ automatic\ naming=false
-@de.uni_freiburg.informatik.ultimate.chcprinter=0.2.2
-file_export_version=3.0
-#Mon Feb 07 18:02:32 CET 2022
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\Users\\jonas\\AppData\\Local\\Temp\\
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/File\ name\:=boogiePrinter.bpl
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory?=false
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=false
-@de.uni_freiburg.informatik.ultimate.boogie.printer=0.2.2
 file_export_version=3.0
 #Mon Feb 07 18:02:32 CET 2022
 \!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=

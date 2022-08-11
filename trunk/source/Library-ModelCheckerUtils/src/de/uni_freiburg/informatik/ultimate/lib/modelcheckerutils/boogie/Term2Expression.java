@@ -65,6 +65,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -177,7 +181,7 @@ public final class Term2Expression implements Serializable {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
+			final ProgramConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
 			if (boogieConst != null) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
 						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
@@ -505,19 +509,19 @@ public final class Term2Expression implements Serializable {
 			// final ILocation loc = astNode.getLocation();
 			final ILocation loc = mBoogie2SmtSymbolTable.getLocation(pv);
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
-			if (pv instanceof LocalBoogieVar) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalBoogieVar) pv).getIdentifier()),
+			if (pv instanceof LocalProgramVar) {
+				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalProgramVar) pv).getIdentifier()),
 						declInfo);
-			} else if (pv instanceof BoogieNonOldVar) {
+			} else if (pv instanceof ProgramNonOldVar) {
 				result = new IdentifierExpression(loc, type,
-						translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
-			} else if (pv instanceof BoogieOldVar) {
+						translateIdentifier(((ProgramNonOldVar) pv).getIdentifier()), declInfo);
+			} else if (pv instanceof ProgramOldVar) {
 				assert pv.isGlobal();
 				final Expression nonOldExpression = new IdentifierExpression(loc, type,
-						translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
+						translateIdentifier(((ProgramOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 				result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
-			} else if (pv instanceof BoogieConst) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()),
+			} else if (pv instanceof ProgramConst) {
+				result = new IdentifierExpression(loc, type, translateIdentifier(((ProgramConst) pv).getIdentifier()),
 						declInfo);
 			} else {
 				// } else if (pv instanceof HcHeadVar) {

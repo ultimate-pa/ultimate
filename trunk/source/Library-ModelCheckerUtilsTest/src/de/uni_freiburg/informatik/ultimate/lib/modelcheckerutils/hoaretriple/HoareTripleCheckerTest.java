@@ -27,7 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
 import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,15 +42,29 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.Concurrency
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
@@ -60,28 +77,30 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class HoareTripleCheckerTest {
 
+	private static final String PROCEDURE = HoareTripleCheckerTest.class.getSimpleName();
+
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
-	private Term mTrue;
-	private Term mFalse;
 	private PredicateUnifier mPredicateUnifier;
 	private CfgSmtToolkit mCsToolkit;
+	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
+
+	private IProgramConst c;
 
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
 		mScript = new HistoryRecordingScript(UltimateMocks.createZ3Script(LogLevel.INFO));
-		mLogger = mServices.getLoggingService().getLogger("lol");
+		mLogger = mServices.getLoggingService().getLogger(HoareTripleCheckerTest.class);
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
-		mTrue = mScript.term("true");
-		mFalse = mScript.term("false");
 
-		final DefaultIcfgSymbolTable symbolTable = new DefaultIcfgSymbolTable();
-		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, symbolTable);
-		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, symbolTable,
+		c = constructConst("c", SmtSortUtils.getIntSort(mScript));
+
+		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
+		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(new HashRelation<>());
@@ -89,9 +108,64 @@ public class HoareTripleCheckerTest {
 		final ConcurrencyInformation ci =
 				new ConcurrencyInformation(Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
 		final SmtFunctionsAndAxioms smtFunctionsAndAxioms = new SmtFunctionsAndAxioms(mMgdScript);
-		mCsToolkit = new CfgSmtToolkit(modGlobTab, mMgdScript, symbolTable, Collections.emptySet(),
+		mCsToolkit = new CfgSmtToolkit(modGlobTab, mMgdScript, mSymbolTable, Collections.emptySet(),
 				Collections.emptyMap(), Collections.emptyMap(), icfgEdgeFactory, ci, smtFunctionsAndAxioms);
 	}
+
+	private void testInternal(final IHoareTripleChecker htc, final Validity expected, final String pre,
+			final UnmodifiableTransFormula act, final String post) {
+		final IPredicate precond = pred(pre);
+		final IPredicate postcond = pred(post);
+		final Validity actual =
+				htc.checkInternal(precond, new BasicInternalAction(PROCEDURE, PROCEDURE, act), postcond);
+		switch (actual) {
+		case UNKNOWN:
+		case NOT_CHECKED:
+			if (actual != expected) {
+				mLogger.warn(htc.getClass().getSimpleName()
+						+ " was unable to check Hoare triple with expected validity " + expected);
+			}
+			break;
+		case VALID:
+		case INVALID:
+			Assert.assertEquals("Expected validity " + expected + " for Hoare triple, but was " + actual, expected,
+					actual);
+		}
+	}
+
+	/*
+	 * ****************************************************************************************************************
+	 * Code to parse formulas and terms.
+	 * ****************************************************************************************************************
+	 */
+
+	private IProgramConst constructConst(final String name, final Sort sort) {
+		mScript.declareFun(name, new Sort[0], sort);
+		final IProgramConst constant = new ProgramConst(name, (ApplicationTerm) mScript.term(name), false);
+		mSymbolTable.add(constant);
+		return constant;
+	}
+
+	private IProgramVar constructVar(final String name, final String sort) {
+		final IProgramVar variable =
+				ProgramVarUtils.constructGlobalProgramVarPair(name, mScript.sort(sort), mMgdScript, null);
+		mSymbolTable.add(variable);
+		return variable;
+	}
+
+	private Term parseWithVariables(final String syntax) {
+		return SmtParserUtils.parseWithVariables(syntax, mServices, mCsToolkit);
+	}
+
+	protected IPredicate pred(final String formula) {
+		return mPredicateUnifier.getOrConstructPredicate(parseWithVariables(formula));
+	}
+
+	/*
+	 * ****************************************************************************************************************
+	 * Actual tests.
+	 * ****************************************************************************************************************
+	 */
 
 	@Test
 	public void sdHtcTest01() {
@@ -119,4 +193,12 @@ public class HoareTripleCheckerTest {
 		new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier);
 	}
 
+	@Test
+	public void sdHtcTest02() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), false, Set.of(c), true, null, true);
+		tfb.setFormula(parseWithVariables("(>= c 0)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier), Validity.VALID, "true", tf, "(>= c 0)");
+	}
 }

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
@@ -45,14 +46,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.CegarRestartBehaviour;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -93,8 +97,32 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "amount of iterations occured. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
 
-	public static final String LABEL_LBE_CONCURRENCY = "Large block encoding in concurrent analysis";
-	private static final PetriNetLbe DEF_LBE_CONCURRENCY = PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK;
+	// This setting is useful to debug the proof check.
+	public static final String LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE =
+			"Read initial proof assertions from file if available";
+	private static final boolean DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE = false;
+
+	/*
+	 * Settings for Petri net Large Block Encoding (Lipton Reduction)
+	 */
+
+	public static final String LABEL_PETRI_LBE_ONESHOT = "Apply one-shot large block encoding in concurrent analysis";
+	private static final boolean DEF_PETRI_LBE_ONESHOT = true;
+
+	public static final String LABEL_INDEPENDENCE_PLBE =
+			"Independence relation used for large block encoding in concurrent analysis";
+	private static final IndependenceType DEF_INDEPENDENCE_PLBE = IndependenceType.SEMANTIC;
+
+	public static final String LABEL_SEMICOMM_PLBE =
+			"Use semi-commutativity for large block encoding in concurrent analysis";
+	private static final boolean DEF_SEMICOMM_PLBE = true;
+
+	/*
+	 * Settings for Partial Order Reduction
+	 */
+
+	public static final String LABEL_POR_ONESHOT = "Apply one-shot Partial Order Reduction to input program";
+	private static final boolean DEF_POR_ONESHOT = false;
 
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
@@ -105,21 +133,44 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_MCR_OVERAPPROXIMATE_WRWC = "MCR: Overapproximate write-read-write conflicts";
 	private static final boolean DEF_MCR_OVERAPPROXIMATE_WRWC = true;
 
+	public static final String LABEL_POR_NUM_INDEPENDENCE = "Number of independence relations to use for POR";
+	private static final int DEF_POR_NUM_INDEPENDENCE = 1;
+
+	public static final String LABEL_DUMP_INDEPENDENCE_SCRIPT = "Dump SMT script used for independence checks";
+	private static final boolean DEF_DUMP_INDEPENDENCE_SCRIPT = false;
+
+	public static final String LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH =
+			"Dump independence script to the following directory";
+	private static final String DEF_INDEPENDENCE_SCRIPT_DUMP_PATH = "";
+
+	public static final String LABEL_INDEPENDENCE_POR = "Independence relation used for POR in concurrent analysis";
+	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
 	public static final String LABEL_COND_POR = "Use conditional POR in concurrent analysis";
-	private static final boolean DEF_COND_POR = true;
-
-	public static final String LABEL_SYMM_POR = "Limit POR to symmetric independence in concurrent analysis";
-	private static final boolean DEF_SYMM_POR = false;
-
-	// TODO Reorganize all settings relating to independence relation
-	public static final String LABEL_SYNTACTIC_POR = "Limit POR to syntactic independence in concurrent analysis";
-	private static final boolean DEF_SYNTACTIC_POR = false;
+	public static final String LABEL_SEMICOMM_POR = "Use semi-commutativity for POR in concurrent analysis";
+	public static final String LABEL_INDEPENDENCE_SOLVER_POR = "SMT solver used for commutativity in POR";
+	public static final String LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR =
+			"SMT solver timeout for commutativity in POR (in ms)";
 
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
 
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
 	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
+
+	public static final String LABEL_POR_COINFLIP_MODE = "Coinflip budget determination mode";
+	private static final CoinflipMode DEF_POR_COINFLIP_MODE = CoinflipMode.OFF;
+
+	public static final String LABEL_POR_COINFLIP_PROB = "Coinflip probability value";
+	private static final int DEF_POR_COINFLIP_PROB = 25;
+
+	public static final String LABEL_POR_COINFLIP_SEED = "Coinflip random seed";
+	private static final int DEF_POR_COINFLIP_SEED = 0;
+
+	public enum CoinflipMode {
+		OFF, FALLBACK, PURE
+	}
+
+	/* **************************************** */
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
@@ -185,7 +236,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
 	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
 	public static final String LABEL_MCR_REFINEMENT_STRATEGY = "Trace refinement strategy used in MCR";
+	public static final String LABEL_ACIP_REFINEMENT_STRATEGY =
+			"Trace refinement strategy used in Accelerated Interpolation";
+
 	public static final String LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Trace refinement exception blacklist";
+
+	public static final String LABEL_DUMP_PATH_PROGRAM_IF_NOT_PERFECT =
+			"Dump path programs if interpolant sequence is not perfect";
+	public static final String LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN =
+			"Dump path programs if already analyzed N times";
+	public static final String LABEL_DUMP_PATH_PROGRAM_STOP_MODE = "Stop after dumping path program";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
@@ -233,6 +293,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 	public static final RefinementStrategy DEF_MCR_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
+	public static final RefinementStrategy DEF_ACIP_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
 			RefinementStrategyExceptionBlacklist.DEPENDING;
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
@@ -251,7 +312,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private static final boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
+	private static final boolean DEF_ABSINT_ALWAYS_REFINE = false;
 	private static final boolean DEF_ONLY_REUSE = false;
 	private static final boolean DEF_COMPUTE_COUNTEREXAMPLE = true;
 	private static final boolean DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = true;
@@ -351,8 +412,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE =
 			"Loop acceleration method that is used by accelerated interpolation";
-	public static final AcceleratedInterpolationLoopAccelerationTechnique DEF_LOOPACCELERATION_TECHNIQUE =
-			AcceleratedInterpolationLoopAccelerationTechnique.FAST_UPR;
+	public static final LoopAccelerators DEF_LOOPACCELERATION_TECHNIQUE = LoopAccelerators.FAST_UPR;
 	public static final String DESC_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE = "Set the loop acceleration technique.";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
@@ -401,6 +461,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS, PreferenceType.Combo,
 						InsufficientError.values()),
 
+				new UltimatePreferenceItem<>(LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE,
+						DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
 						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
@@ -512,21 +574,82 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
-						PetriNetLbe.values()),
+
+				/* Petri LBE settings */
+
+				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
+						IndependenceType.values()),
+				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean),
+
+				/* Partial Order Reduction settings */
+
+				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
 				new UltimatePreferenceItem<>(LABEL_MCR_OPTIMIZE_FORK_JOIN, DEF_MCR_OPTIMIZE_FORK_JOIN,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MCR_OVERAPPROXIMATE_WRWC, DEF_MCR_OVERAPPROXIMATE_WRWC,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_COND_POR, DEF_COND_POR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SYMM_POR, DEF_SYMM_POR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SYNTACTIC_POR, DEF_SYNTACTIC_POR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_POR_NUM_INDEPENDENCE, DEF_POR_NUM_INDEPENDENCE,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_DUMP_INDEPENDENCE_SCRIPT, DEF_DUMP_INDEPENDENCE_SCRIPT,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
+						PreferenceType.Directory),
+
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE,
+						PreferenceType.Combo, IndependenceType.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, IndependenceSettings.DEFAULT_ABSTRACTION_TYPE,
+						PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(LABEL_COND_POR, IndependenceSettings.DEFAULT_USE_CONDITIONAL,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_POR, IndependenceSettings.DEFAULT_SOLVER,
+						PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR,
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_POR, 1),
+						IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, PreferenceType.Combo,
+						IndependenceType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 1),
+						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 1),
+						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 1),
+						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 1),
+						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, 1),
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_POR, 2),
+						IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, PreferenceType.Combo,
+						IndependenceType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 2),
+						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 2),
+						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 2),
+						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 2),
+						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, 2),
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE, PreferenceType.Combo,
+						CoinflipMode.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_PROB, DEF_POR_COINFLIP_PROB, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 100)),
+				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_SEED, DEF_POR_COINFLIP_SEED, PreferenceType.Integer),
+
+				/* ********************************* */
 				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
 						LooperCheck.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,
@@ -549,6 +672,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_MCR_REFINEMENT_STRATEGY, DEF_MCR_REFINEMENT_STRATEGY,
 						PreferenceType.Combo, RefinementStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_ACIP_REFINEMENT_STRATEGY, DEF_ACIP_REFINEMENT_STRATEGY,
+						PreferenceType.Combo, RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
@@ -565,8 +690,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
 				new UltimatePreferenceItem<>(LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
-						DEF_LOOPACCELERATION_TECHNIQUE, PreferenceType.Combo,
-						AcceleratedInterpolationLoopAccelerationTechnique.values()),
+						DEF_LOOPACCELERATION_TECHNIQUE, PreferenceType.Combo, LoopAccelerators.values()),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
 						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
@@ -576,7 +700,22 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL,
 						DESC_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
-						PreferenceType.KeyValue), };
+						PreferenceType.KeyValue),
+
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_NOT_PERFECT, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
+						PreferenceType.Combo, PathProgramDumpStop.values()),
+
+		};
+
+	}
+
+	public static String getSuffixedLabel(final String label, final int index) {
+		if (index == 0) {
+			return label;
+		}
+		return label + " #" + (index + 1);
 	}
 
 	/**
@@ -691,6 +830,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		CAMEL_SMT_AM,
 		/**
+		 * Like {@link #CAMEL}, but only uses WP.
+		 */
+		CAMEL_BP_ONLY,
+		/**
 		 * Like {@link #CAMEL_NO_AM}, but continues as soon as some interpolants are available.
 		 */
 		LIZARD,
@@ -746,6 +889,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Maximal Causality reduction strategy
 		 */
 		MCR,
+
+		/**
+		 * Use accelerated interpolation and some other, nested strategy
+		 */
+		ACCELERATED_INTERPOLATION,
 	}
 
 	/**
@@ -828,11 +976,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		WP, SP
 	}
 
-	public enum AcceleratedInterpolationLoopAccelerationTechnique {
-		FAST_UPR, WERNER_OVERAPPROX, JORDAN, QVASR, QVASRS
-	}
-
 	public enum InsufficientError {
 		BEFORE, TOGETHER, AFTER
+	}
+
+	public enum PathProgramDumpStop {
+		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
 }
