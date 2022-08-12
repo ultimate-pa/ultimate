@@ -26,11 +26,9 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 
 	private final IBlackWhiteStateFactory<PLACE> mBuchiPlaceFactory;
 
-	private final NestedMap2<Transition<LETTER, PLACE>, OutgoingInternalTransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mStateOneTransitions =
-			new NestedMap2<>();
+	private final NestedMap2<String, String, Transition<LETTER, PLACE>> mStateOneTransitions = new NestedMap2<>();
 
-	private final NestedMap2<Transition<LETTER, PLACE>, OutgoingInternalTransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mStateTwoTransitions =
-			new NestedMap2<>();
+	private final NestedMap2<String, String, Transition<LETTER, PLACE>> mStateTwoTransitions = new NestedMap2<>();
 
 	/*
 	 * original places are keys, labeled q places are values
@@ -62,7 +60,7 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 	// probably cant know that only one Qplace is relevant... but would make it easy
 	// private PLACE mCurrentlyRelevantLabeledBuchiPlace;
 
-	private final int mNextTransitionId = 0;
+	private int mNextTransitionId = 0;
 
 	// TODO call this clas slazy, and maybe make new one with ipetrinet..
 	public BuchiPetrinetBuchiIntersectionLazy(final IPetriNetSuccessorProvider<LETTER, PLACE> petriNet,
@@ -258,9 +256,10 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 	private Transition<LETTER, PLACE> createOrGetLabelOneTransition(final Transition<LETTER, PLACE> oldPetrTransition,
 			final OutgoingInternalTransition<LETTER, PLACE> buchiAutomataTransition, final PLACE buchiPredecessor) {
 
-		if (mStateOneTransitions.containsKey(oldPetrTransition)) {
-			if (mStateOneTransitions.get(oldPetrTransition).containsKey(buchiAutomataTransition)) {
-				return mStateOneTransitions.get(oldPetrTransition).get(buchiAutomataTransition);
+		if (mStateOneTransitions.containsKey(oldPetrTransition.toString())) {
+			if (mStateOneTransitions.get(oldPetrTransition.toString())
+					.containsKey(buchiAutomataTransition.toString())) {
+				return mStateOneTransitions.get(oldPetrTransition.toString(), buchiAutomataTransition.toString());
 			}
 		}
 
@@ -274,19 +273,20 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 
 		final Transition<LETTER, PLACE> newTransition = new Transition<>(oldPetrTransition.getSymbol(),
 				ImmutableSet.of(allPredecessors), ImmutableSet.of(allSuccessors), mNextTransitionId);
-		// mNextTransitionId++;
+		mNextTransitionId++;
 
 		mTransitions.put(newTransition, newTransition);
-		mStateOneTransitions.put(oldPetrTransition, buchiAutomataTransition, newTransition);
+		mStateOneTransitions.put(oldPetrTransition.toString(), buchiAutomataTransition.toString(), newTransition);
 		return newTransition;
 	}
 
 	private Transition<LETTER, PLACE> createOrGetLabelTwoTransition(final Transition<LETTER, PLACE> oldPetrTransition,
 			final OutgoingInternalTransition<LETTER, PLACE> buchiAutomataTransition, final PLACE buchiPredecessor) {
 
-		if (mStateOneTransitions.containsKey(oldPetrTransition)) {
-			if (mStateOneTransitions.get(oldPetrTransition).containsKey(buchiAutomataTransition)) {
-				return mStateOneTransitions.get(oldPetrTransition).get(buchiAutomataTransition);
+		if (mStateTwoTransitions.containsKey(oldPetrTransition.toString())) {
+			if (mStateTwoTransitions.get(oldPetrTransition.toString())
+					.containsKey(buchiAutomataTransition.toString())) {
+				return mStateTwoTransitions.get(oldPetrTransition.toString(), buchiAutomataTransition.toString());
 			}
 		}
 		final Set<PLACE> allPredecessors = new HashSet<>();
@@ -300,10 +300,10 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 
 		final Transition<LETTER, PLACE> newTransition = new Transition<>(oldPetrTransition.getSymbol(),
 				ImmutableSet.of(allPredecessors), ImmutableSet.of(allSuccessors), mNextTransitionId);
-		// mNextTransitionId++;
+		mNextTransitionId++;
 
 		mTransitions.put(newTransition, newTransition);
-		mStateTwoTransitions.put(oldPetrTransition, buchiAutomataTransition, newTransition);
+		mStateTwoTransitions.put(oldPetrTransition.toString(), buchiAutomataTransition.toString(), newTransition);
 		return newTransition;
 	}
 

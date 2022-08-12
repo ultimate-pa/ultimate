@@ -20,18 +20,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class BuchiPetrinetBuchiIntersectionLazyTest {
+public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 	private AutomataLibraryServices mServices;
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 		mServices = new AutomataLibraryServices(services);
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersectionLazyWithDoubleSelfLoopNet() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionEagerWithDoubleSelfLoopNet() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -59,8 +59,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
-				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("c", "c"));
@@ -74,7 +74,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersectionLazyWithDoubleSelfLoopNet2() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionEagerWithDoubleSelfLoopNet2() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -102,8 +102,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
-				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("c", "c"));
@@ -117,7 +117,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersectionLazyWithDoubleSelfLoopNet3() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionEagerWithDoubleSelfLoopNet3() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -145,8 +145,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
-				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
@@ -160,7 +160,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersectionLazyWithLongDoubleSelfLoopNet()
+	public final void testBuchiPetrinetBuchiIntersectionEagerWithLongDoubleSelfLoopNet()
 			throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
@@ -191,8 +191,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
-				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "b"));
@@ -206,7 +206,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersectionLazyWithLongDoubleSelfLoopNet2()
+	public final void testBuchiPetrinetBuchiIntersectionEagerWithLongDoubleSelfLoopNet2()
 			throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
@@ -237,8 +237,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
-				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
@@ -252,7 +252,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersectionLazyWithNonDetermInputs() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionEagerWithNonDetermInputs() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c", "d", "e");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -283,8 +283,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
-				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
 
 		NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("e", "d", "e", "e"));
@@ -308,19 +308,11 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	 * 
 	 * @Test public final void testGetInitialPlaces() { fail("Not yet implemented"); }
 	 * 
-	 * @Test public final void testGetSuccessorsITransitionOfLETTERPLACE() { fail("Not yet implemented"); }
+	 * @Test public final void testGetSuccessors() { fail("Not yet implemented"); }
 	 * 
-	 * @Test public final void testGetPredecessorsITransitionOfLETTERPLACE() { fail("Not yet implemented"); }
+	 * @Test public final void testGetPredecessors() { fail("Not yet implemented"); }
 	 * 
-	 * @Test public final void testGetSuccessorsPLACE() { fail("Not yet implemented"); }
-	 * 
-	 * @Test public final void testGetPredecessorsPLACE() { fail("Not yet implemented"); }
-	 * 
-	 * @Test public final void testGetSuccessorTransitionProvidersHashRelationOfPLACEPLACE() {
-	 * fail("Not yet implemented"); }
-	 * 
-	 * @Test public final void testGetSuccessorTransitionProvidersSetOfPLACESetOfPLACE() { fail("Not yet implemented");
-	 * }
+	 * @Test public final void testGetSuccessorTransitionProviders() { fail("Not yet implemented"); }
 	 * 
 	 * @Test public final void testIsAcceptingMarkingOfLETTERPLACE() { fail("Not yet implemented"); }
 	 * 
