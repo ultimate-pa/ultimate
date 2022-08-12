@@ -97,7 +97,7 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	/**
 	 * A location is hopeless if in the CFG there is no path from this location to an error location.
 	 */
-	private boolean isLocationHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
+	private static boolean isLocationHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
 			final Set<? extends IcfgLocation> errorLocs, final IcfgLocation loc) {
 		if (errorLocs.contains(loc)) {
 			return false;

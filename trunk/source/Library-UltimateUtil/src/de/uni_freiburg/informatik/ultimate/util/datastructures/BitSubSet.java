@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
  * @param <E>
  *            The type of elements in the set.
  */
-public class BitSubSet<E> extends AbstractCollection<E> {
+public final class BitSubSet<E> extends AbstractCollection<E> {
 	private final Factory<E> mFactory;
 	private final BitSet mBitSet;
 	private final LazyInt mHash;
@@ -176,12 +176,6 @@ public class BitSubSet<E> extends AbstractCollection<E> {
 		 *         when given the original set
 		 */
 		public BitSubSet<E> valueOf(final Set<E> set) {
-			if (set instanceof BitSubSet<?>) {
-				final BitSubSet<E> b = (BitSubSet<E>) set;
-				if (b.mFactory == this) {
-					return new BitSubSet<>(this, b.mBitSet);
-				}
-			}
 			final BitSet bitset = new BitSet(mElements.length);
 			for (final E elem : set) {
 				final int index = getIndex(elem);
