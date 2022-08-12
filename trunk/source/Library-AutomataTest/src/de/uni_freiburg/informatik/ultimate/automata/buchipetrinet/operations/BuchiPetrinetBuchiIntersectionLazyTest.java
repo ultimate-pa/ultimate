@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class BuchiPetrinetBuchiIntersectionTest {
+public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 	private AutomataLibraryServices mServices;
 
@@ -31,7 +31,7 @@ public class BuchiPetrinetBuchiIntersectionTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersection() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionLazy() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -57,8 +57,8 @@ public class BuchiPetrinetBuchiIntersectionTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersection<String, String> intersection =
-				new BuchiPetrinetBuchiIntersection<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "b"));
@@ -72,7 +72,7 @@ public class BuchiPetrinetBuchiIntersectionTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersection2() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionLazy2() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -98,8 +98,8 @@ public class BuchiPetrinetBuchiIntersectionTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersection<String, String> intersection =
-				new BuchiPetrinetBuchiIntersection<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
@@ -113,7 +113,7 @@ public class BuchiPetrinetBuchiIntersectionTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersection3() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionLazy3() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -143,8 +143,8 @@ public class BuchiPetrinetBuchiIntersectionTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersection<String, String> intersection =
-				new BuchiPetrinetBuchiIntersection<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "b"));
@@ -158,7 +158,7 @@ public class BuchiPetrinetBuchiIntersectionTest {
 	}
 
 	@Test
-	public final void testBuchiPetrinetBuchiIntersection4() throws PetriNetNot1SafeException {
+	public final void testBuchiPetrinetBuchiIntersectionLazy4() throws PetriNetNot1SafeException {
 		Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -188,8 +188,8 @@ public class BuchiPetrinetBuchiIntersectionTest {
 
 		StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersection<String, String> intersection =
-				new BuchiPetrinetBuchiIntersection<>(petriNet, buchiAutomata, factory2);
+		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));

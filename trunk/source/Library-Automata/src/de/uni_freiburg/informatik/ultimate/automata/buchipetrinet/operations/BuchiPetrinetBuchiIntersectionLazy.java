@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
-public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
+public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
 
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mPetriNet;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mBuchiAutomata;
@@ -65,7 +65,7 @@ public class BuchiPetrinetBuchiIntersection<LETTER, PLACE> implements IPetriNetS
 	private final int mNextTransitionId = 0;
 
 	// TODO call this clas slazy, and maybe make new one with ipetrinet..
-	public BuchiPetrinetBuchiIntersection(final IPetriNetSuccessorProvider<LETTER, PLACE> petriNet,
+	public BuchiPetrinetBuchiIntersectionLazy(final IPetriNetSuccessorProvider<LETTER, PLACE> petriNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> automaton,
 			final IBlackWhiteStateFactory<PLACE> factory) {
 		mPetriNet = petriNet;
