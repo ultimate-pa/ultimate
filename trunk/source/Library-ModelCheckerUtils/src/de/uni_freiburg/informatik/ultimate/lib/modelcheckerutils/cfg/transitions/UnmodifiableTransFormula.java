@@ -39,7 +39,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -223,7 +222,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 	private boolean doConstantConsistencyCheck() {
 		boolean consistent = true;
-		final Set<ApplicationTerm> constantsInFormula = new ConstantFinder().findConstants(mFormula, false);
+		final Set<ApplicationTerm> constantsInFormula = SmtUtils.extractConstants(mFormula, false);
 		final Set<ApplicationTerm> nonTheoryConstantTerms = new HashSet<>();
 		for (final IProgramConst programConsts : getNonTheoryConsts()) {
 			consistent &= !programConsts.getDefaultConstant().getFunction().isIntern();
