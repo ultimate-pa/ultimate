@@ -116,6 +116,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);
 
+		// TODO add statistics support to IInitialAbstractionProvider
 		por.reportStatistics(mPluginId);
 		return result;
 	}

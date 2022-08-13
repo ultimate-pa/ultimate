@@ -63,6 +63,19 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	private final R mInitial;
 
+	/**
+	 * Create a new reduction automaton.
+	 *
+	 * @param operand
+	 *            The input automaton
+	 * @param stateFactory
+	 *            A state factory to create the reduction automaton's states
+	 * @param independenceRelation
+	 *            The independence relation up to which a reduction is computed. The input automaton must be closed up
+	 *            to this independence relation.
+	 * @param order
+	 *            The preference order for the reduction
+	 */
 	public MinimalSleepSetReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final ISleepSetStateFactory<L, S, R> stateFactory, final IIndependenceRelation<S, L> independenceRelation,
 			final IDfsOrder<L, R> order) {
