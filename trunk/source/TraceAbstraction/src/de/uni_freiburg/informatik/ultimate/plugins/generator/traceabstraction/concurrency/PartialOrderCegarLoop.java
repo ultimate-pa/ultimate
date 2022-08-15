@@ -127,12 +127,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
 
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
-		if (mPref.applyOneShotLbe()) {
-			throw new UnsupportedOperationException(
-					"Soundness is currently not guaranteed for this CEGAR loop if one-shot LBE is turned on.");
-		}
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
+		if (mPref.applyOneShotLbe()) {
+			boolean hasAbstraction = false;
+			for (int i = 0; !hasAbstraction && i < mPref.getNumberOfIndependenceRelations(); ++i) {
+				hasAbstraction |= mPref.porIndependenceSettings(i).getAbstractionType() != AbstractionType.NONE;
+			}
+			if (mPartialOrderMode.hasPersistentSets() || hasAbstraction) {
+				throw new UnsupportedOperationException(
+						"Soundness is currently not guaranteed for this CEGAR loop if one-shot LBE is turned on.");
+			}
+		}
+
 		mIndependenceProviders = independenceProviders;
 
 		// Setup management of abstraction levels and corresponding independence relations.

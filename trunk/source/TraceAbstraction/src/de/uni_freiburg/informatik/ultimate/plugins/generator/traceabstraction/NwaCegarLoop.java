@@ -143,7 +143,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 
-		final IPreferenceProvider prefs = getServices().getPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mSearchStrategy = getSearchStrategy(prefs);
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 
