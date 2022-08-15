@@ -76,14 +76,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -204,10 +203,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final var splitter = mStateSplitter;
 			mDfsOrder = new Preference2DfsOrder<>(order, x -> {
 				final var y = (MonitorPredicate) splitter.getOriginal(x);
-				return new Pair(y.getState1(), y.getState2());
+				return new Pair(y.getUnderlying(), y.getMonitorState());
 			});
-			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((MonitorPredicate) x).getState1(),
-					x -> ((MonitorPredicate) x).getState2());
+			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((MonitorPredicate) x).getUnderlying(),
+					x -> ((MonitorPredicate) x).getMonitorState());
 		}
 
 		return order;
@@ -705,50 +704,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	@Deprecated
-	public static class MonitorPredicate implements IMLPredicate {
-
-		private final IMLPredicate mState1;
-		private final Object mState2;
-
-		public MonitorPredicate(final IMLPredicate state1, final Object state2) {
-			mState1 = state1;
-			mState2 = state2;
+	public static class MonitorPredicate<M> extends AnnotatedMLPredicate<M> {
+		public MonitorPredicate(final IMLPredicate state, final M monitorState) {
+			super(state, monitorState);
 		}
 
-		@Override
-		public Term getFormula() {
-			return mState1.getFormula();
+		public M getMonitorState() {
+			return mAnnotation;
 		}
-
-		@Override
-		public Term getClosedFormula() {
-			// TODO Auto-generated method stub
-			return mState1.getClosedFormula();
-		}
-
-		@Override
-		public String[] getProcedures() {
-			// TODO Auto-generated method stub
-			return mState1.getProcedures();
-		}
-
-		@Override
-		public Set<IProgramVar> getVars() {
-			return mState1.getVars();
-		}
-
-		@Override
-		public IcfgLocation[] getProgramPoints() {
-			return mState1.getProgramPoints();
-		}
-
-		public IMLPredicate getState1() {
-			return mState1;
-		}
-
-		public Object getState2() {
-			return mState2;
-		}
-
 	}
 }

@@ -387,7 +387,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		// TODO use mPOR.mStateSplitter for this
 		if (conjunction instanceof MonitorPredicate) {
-			return getConjuncts(((MonitorPredicate) conjunction).getState1());
+			return getConjuncts(((MonitorPredicate) conjunction).getUnderlying());
 		}
 		if (conjunction instanceof PredicateWithLastThread) {
 			return getConjuncts(((PredicateWithLastThread) conjunction).getUnderlying());
