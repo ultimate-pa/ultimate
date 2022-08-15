@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -114,7 +115,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final AutomataLibraryServices mAutomataServices;
 
 	private final PartialOrderMode mMode;
-	private final IDfsOrder<L, IPredicate> mDfsOrder;
+	private IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
 	private final ISleepMapStateFactory<L, IPredicate, IPredicate> mSleepMapFactory;
 
@@ -153,7 +154,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
 		mPreferenceOrder = getPreferenceOrder(steptype, maxStep, icfg);
-		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
+		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 		mDeadEndStore = createDeadEndStore();
 
 		mIcfg = icfg;
@@ -189,39 +190,44 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final int maxStep,
 			final IIcfg<?> icfg) {
-
-		mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((MonitorPredicate) x).getState1(),
-				x -> ((MonitorPredicate) x).getState2());
+		// TODO Add support for all orders previously supported in #getDfsOrder
 
 		final List<String> threadList =
 				IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
-		final List<Integer> maxSteps = new ArrayList<Integer>();
-		for (int i=0; i<threadList.size();i++) {
-			maxSteps.add(maxStep);
-		}
+		final List<Integer> maxSteps = Collections.nCopies(threadList.size(), maxStep);
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
+
+		final IPreferenceOrder<L, IPredicate, ?> order =
+				new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, getStepDefinition(icfg, steptype));
+
+		if (order.getMonitor() != null) {
+			final var splitter = mStateSplitter;
+			mDfsOrder = new Preference2DfsOrder<>(order, x -> {
+				final var y = (MonitorPredicate) splitter.getOriginal(x);
+				return new Pair(y.getState1(), y.getState2());
+			});
+			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((MonitorPredicate) x).getState1(),
+					x -> ((MonitorPredicate) x).getState2());
+		}
+
+		return order;
+	}
+
+	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype) {
 		switch (steptype) {
 		case ALL_READ_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> true);
+			return x -> true;
 		case ALL_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> {
-				return !(x.getTransformula().getAssignedVars().isEmpty());
-			});
+			return x -> !x.getTransformula().getAssignedVars().isEmpty();
 		case GLOBAL_READ_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> {
-				return (x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal()));
-			});
+			return x -> x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal());
 		case GLOBAL_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> {
-				return (x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal()));
-			});
+			return x -> x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal());
 		case LOOP:
 			final var loopHeads = icfg.getLoopLocations();
-			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet,
-					x -> loopHeads.contains(x.getTarget()));
-		default:
-			throw new UnsupportedOperationException("Unknown step type: " + steptype);
+			return x -> loopHeads.contains(x.getTarget());
 		}
+		throw new UnsupportedOperationException("Unknown step type: " + steptype);
 	}
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
@@ -524,16 +530,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
 			break;
 		case SLEEP_NEW_STATES:
-			final var dfsorder = new Preference2DfsOrder(mPreferenceOrder, x -> {
-				final var y = (MonitorPredicate) mStateSplitter.getOriginal((IPredicate) x);
-				return new Pair<>(y.getState1(), y.getState2());
-			});
 			if (mIndependenceRelations.size() == 1) {
 				DepthFirstTraversal.traverse(mAutomataServices,
-						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, dfsorder), mDfsOrder,
+						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
 						visitor);
 			} else {
-				final var red = new SleepMapReduction<>(input, mIndependenceRelations, dfsorder, mSleepMapFactory,
+				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
 						mGetBudget.andThen(CachedBudget::new));
 				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
 			}
