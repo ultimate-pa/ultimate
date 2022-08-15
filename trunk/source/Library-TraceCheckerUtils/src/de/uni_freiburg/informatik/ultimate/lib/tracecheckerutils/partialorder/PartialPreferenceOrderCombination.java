@@ -8,14 +8,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.MonitorProduct;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class PartialPreferenceOrderCombination<L, S1, S2,S> implements IPreferenceOrder<L,S1,S2>{
+public class PartialPreferenceOrderCombination<L, S1, S2,S3> implements IPreferenceOrder<L,S1,Pair<S2,S3>>{
 	IPartialPreferenceOrder<L, S1, S2> mPartOrd;
-	IPreferenceOrder<L, S1, S2> mTotOrd;
+	IPreferenceOrder<L, S1, S3> mTotOrd;
 	
 	
 	public PartialPreferenceOrderCombination(IPartialPreferenceOrder<L, S1, S2> partOrd, 
-			IPreferenceOrder<L, S1, S2> totOrd) {
+			IPreferenceOrder<L, S1, S3> totOrd) {
 		mPartOrd = partOrd;
 		mTotOrd = totOrd;
 	}
@@ -26,38 +28,40 @@ public class PartialPreferenceOrderCombination<L, S1, S2,S> implements IPreferen
 	}
 
 	@Override
-	public INwaOutgoingLetterAndTransitionProvider getMonitor() {
-		//gibts hier eine bessere Lösung?
+	public INwaOutgoingLetterAndTransitionProvider<L,Pair<S2,S3>> getMonitor() {
 		try {
-			return new MonitorProduct<L,S2,S2,S>(mPartOrd.getMonitor(), mTotOrd.getMonitor(), 
-					(IMonitorStateFactory<S2, S2, S>) new IMonitorStateFactory.Default<S2,S2>());
+			return new MonitorProduct<L,S2,S3,Pair<S2,S3>>(mPartOrd.getMonitor(), mTotOrd.getMonitor(), 
+					new IMonitorStateFactory.Default<S2,S3>());
 		} catch (AutomataLibraryException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public IPartialComparator getPartialOrder(S1 stateProgram, S2 stateMonitor) {
+	public IPartialComparator<L> getPartialOrder(S1 stateProgram, Pair<S2,S3> stateMonitor) {
 		// transform back to Comparator
-		return new PartialPreferenceOrderCombinationComparator<L, S1, S2>(
-				mPartOrd.getPartialOrder(stateProgram, stateMonitor), 
-				mTotOrd.getPartialOrder(stateProgram, stateMonitor));
+		//return this.getOrder(stateProgram, stateMonitor);
+		return null;
 	}
 	
-	public static final class PartialPreferenceOrderCombinationComparator<L, S1, S2> implements IPartialComparator<L> {
+	public static final class PartialPreferenceOrderCombinationComparator<L, S1, S2> implements Comparator<L> {
 		IPartialComparator<L> mPartComp;
-		IPartialComparator<L> mTotComp;
+		Comparator<L> mTotComp;
 
-		public PartialPreferenceOrderCombinationComparator(IPartialComparator<L> partOrd, IPartialComparator<L> totOrd) {
+		public PartialPreferenceOrderCombinationComparator(IPartialComparator<L> partOrd, Comparator<L> totOrd) {
 			mPartComp = partOrd;
 			mTotComp = totOrd;
 		}
 
 		@Override
-		public ComparisonResult compare(final L x, final L y) {
+		public int compare(final L x, final L y) {
 			ComparisonResult partResult = mPartComp.compare(x, y);
-			if (partResult != ComparisonResult.INCOMPARABLE) {
-				return partResult;
+			if (partResult == ComparisonResult.EQUAL) {
+				return 0;
+			} else if(partResult == ComparisonResult.STRICTLY_GREATER){
+				return 1;
+			} else if(partResult == ComparisonResult.STRICTLY_SMALLER) {
+				return -1;
 			} else {
 				return mTotComp.compare(x, y);
 			}
@@ -86,10 +90,10 @@ public class PartialPreferenceOrderCombination<L, S1, S2,S> implements IPreferen
 	}
 
 	@Override
-	public Comparator<L> getOrder(S1 stateProgram, S2 stateMonitor) {
-		//transform from IPartialComparator<L> to Comparator<L>
-		//return this.getPartialOrder(stateProgram, stateMonitor);
-		return null;
+	public Comparator<L> getOrder(S1 stateProgram, Pair<S2,S3> stateMonitor) {
+		return new PartialPreferenceOrderCombinationComparator<L, S1, S2>(
+				mPartOrd.getPartialOrder(stateProgram, stateMonitor.getFirst()), 
+				mTotOrd.getOrder(stateProgram, stateMonitor.getSecond()));
 	}
 	
 }

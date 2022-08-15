@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -38,43 +39,56 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
 public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State>{
-	private Integer mMaxStep;
+	private List<Integer> mMaxSteps;
 	private List<String> mThreads;
 	private INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
-	public ParameterizedPreferenceOrder(int parameter, List<String> threads, VpAlphabet<L> alphabet,
+	public ParameterizedPreferenceOrder(List<Integer> maxSteps, List<String> threads, VpAlphabet<L> alphabet,
 			java.util.function.Predicate<L> isStep) {
-		mMaxStep = parameter;
+		mMaxSteps = maxSteps;
 		mThreads = threads;
-		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxStep, threads,alphabet , isStep);
+		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxSteps, mThreads,alphabet , isStep);
 	}
 
 	@Override
 	public Comparator<L> getOrder(S1 stateProgram, State stateMonitor) {
-		final String lastThread = ((State) stateMonitor).getThread();
-		return new PreferenceOrderComparator<>(lastThread, mDefaultComparator, mThreads);
+		final String lastThread = stateMonitor.getThread();
+		final Integer lastIndex = stateMonitor.getIndex();
+		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
 	}
 	
 	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
+		private final Integer mLastIndex;
 		private final Comparator<L> mFallback;
 		private List<String> mThreads;
 
-		public PreferenceOrderComparator(final String lastThread, final Comparator<L> fallback, final List<String> threads) {
+		public PreferenceOrderComparator(final String lastThread, final Integer lastIndex, final Comparator<L> fallback, final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);
+			mLastIndex = lastIndex;
 			mFallback = fallback;
 			mThreads = threads;
 		}
 
 		@Override
 		public int compare(final L x, final L y) {
-			final int lastThreadIndex = mThreads.indexOf(mLastThread);
+			//idee ist hier die Liste vom aktuellen thread ausgehend zu betrachten und falls ein thread mehrfach vorkommt,
+			//ist der relevante index der erste auf den aktuellen thread folgende
+			List<String> shiftedThreadList = new ArrayList<>();
+			shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
+			shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
+			
+			final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure());
+			final int yThreadIndex = shiftedThreadList.indexOf(y.getPrecedingProcedure());
+			return Integer.compare(xThreadIndex, yThreadIndex);
+			
+			/*
 			final int xThreadIndex = mThreads.indexOf(x.getPrecedingProcedure());
-			final boolean xBefore = lastThreadIndex >= xThreadIndex;
+			final boolean xBefore = mLastIndex >= xThreadIndex;
 			final int yThreadIndex = mThreads.indexOf(y.getPrecedingProcedure());
-			final boolean yBefore = lastThreadIndex >= yThreadIndex;
+			final boolean yBefore = mLastIndex >= yThreadIndex;
 			
 			if (xBefore && !yBefore) {
 				return 1;
@@ -84,6 +98,8 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			}
 			return Integer.compare(xThreadIndex, yThreadIndex);
 			//return mFallback.compare(x, y);
+			 * 
+			 */
 		}
 
 		@Override

@@ -195,25 +195,29 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		final List<String> threadList =
 				IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
+		final List<Integer> maxSteps = new ArrayList<Integer>();
+		for (int i=0; i<threadList.size();i++) {
+			maxSteps.add(maxStep);
+		}
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
 		switch (steptype) {
 		case ALL_READ_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> true);
+			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> true);
 		case ALL_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> {
+			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> {
 				return !(x.getTransformula().getAssignedVars().isEmpty());
 			});
 		case GLOBAL_READ_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> {
+			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> {
 				return (x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal()));
 			});
 		case GLOBAL_WRITE:
-			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet, x -> {
+			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, x -> {
 				return (x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal()));
 			});
 		case LOOP:
 			final var loopHeads = icfg.getLoopLocations();
-			return new ParameterizedPreferenceOrder<>(maxStep, threadList, alphabet,
+			return new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet,
 					x -> loopHeads.contains(x.getTarget()));
 		default:
 			throw new UnsupportedOperationException("Unknown step type: " + steptype);
