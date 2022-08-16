@@ -37,6 +37,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * A simple and efficient syntax-based independence relation. Two actions are independent if all variable accessed by
  * both of them are only read, not written to.
  *
+ * An extension of this basic idea allows statements to commute if the only conflicts between them are write/write
+ * conflicts and both statements havoc the affected variables.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <STATE>
@@ -45,6 +48,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters whose independence is tracked
  */
 public class SyntacticIndependenceRelation<STATE, L extends IAction> implements IIndependenceRelation<STATE, L> {
+
+	private static final boolean ALLOW_MUTUAL_HAVOCS = true;
+
 	private final IndependenceStatisticsDataProvider mStatistics =
 			new IndependenceStatisticsDataProvider(SyntacticIndependenceRelation.class);
 
@@ -63,12 +69,18 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 		final TransFormula tf1 = a.getTransformula();
 		final TransFormula tf2 = b.getTransformula();
 
-		final boolean noWWConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
 		final boolean noWRConflict =
 				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet());
 		final boolean noRWConflict =
 				DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars());
+
+		final boolean noWWConflict;
+		if (ALLOW_MUTUAL_HAVOCS) {
+			noWWConflict = DataStructureUtils.intersection(tf1.getAssignedVars(), tf2.getAssignedVars()).stream()
+					.allMatch(x -> tf1.isHavocedOut(x) && tf2.isHavocedOut(x));
+		} else {
+			noWWConflict = DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
+		}
 
 		final boolean result = noWWConflict && noWRConflict && noRWConflict;
 		mStatistics.reportQuery(result, false);

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+    
+	<option name="--force-no-wrapper" />
+  <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerCInline.xml</option>
+
+  <rundefinition name="BuchiAutomizer (no LBE)">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
+	</rundefinition>
+
+  <rundefinition name="BuchiAutomizer (semantic LBE)">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-semanticLbe.epf</option>
+	</rundefinition>
+	
+	<rundefinition name="BuchiAutomizer (syntactic LBE)">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-syntacticLbe.epf</option>
+	</rundefinition>
+    
+	<tasks name="SVCOMP ConcurrencySafety-Main">
+		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
+	</tasks>
+</benchmark>

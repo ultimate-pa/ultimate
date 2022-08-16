@@ -311,7 +311,7 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 				if (constructMinimalCover) {
 					final Set<IPredicate> minimalCover = PosetUtils
 							.filterMaximalElements(coveredPredicates,
-									mPredicateUnifier.getCoverageRelation().getPartialComperator())
+									mPredicateUnifier.getCoverageRelation().getPartialComparator())
 							.collect(Collectors.toSet());
 					if (minimalCover.size() < coveredPredicates.size()) {
 						// mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");

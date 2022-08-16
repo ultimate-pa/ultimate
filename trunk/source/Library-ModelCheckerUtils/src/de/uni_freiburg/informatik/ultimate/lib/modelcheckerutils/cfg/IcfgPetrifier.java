@@ -72,7 +72,7 @@ public class IcfgPetrifier {
 	private final BlockEncodingBacktranslator mBacktranslator;
 
 	public IcfgPetrifier(final IUltimateServiceProvider services, final IIcfg<?> icfg,
-			final int numberOfThreadInstances) {
+			final int numberOfThreadInstances, final boolean addSelfLoops) {
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -91,7 +91,7 @@ public class IcfgPetrifier {
 		final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joins = concurrency.getJoinTransitions().stream()
 				.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) old2newEdgeMapping.get(x))
 				.collect(Collectors.toList());
-		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices);
+		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices, addSelfLoops);
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap =
 				ThreadInstanceAdder.constructThreadInstances(mPetrifiedIcfg, forks, numberOfThreadInstances);
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap = new HashMap<>();

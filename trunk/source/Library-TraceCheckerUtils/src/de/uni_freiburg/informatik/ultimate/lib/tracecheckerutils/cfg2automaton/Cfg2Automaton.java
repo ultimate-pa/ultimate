@@ -287,9 +287,7 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 			}
 			for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> entry : icfg
 					.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().entrySet()) {
-				final IcfgLocation errorNode = entry.getValue();
-				final LETTER errorEdge = (LETTER) errorNode.getIncomingEdges().get(0);
-				errorEdge2fork.put(errorEdge, entry.getKey());
+				errorEdge2fork.put((LETTER) getIncomingEdge(entry.getValue()), entry.getKey());
 			}
 		}
 
@@ -374,6 +372,20 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 		return net;
+	}
+
+	private static IcfgEdge getIncomingEdge(final IcfgLocation location) {
+		IcfgEdge result = null;
+		for (final IcfgEdge edge : location.getIncomingEdges()) {
+			if (edge.getSource().equals(location)) {
+				continue;
+			}
+			if (result != null) {
+				throw new UnsupportedOperationException(location + " has no unique incoming edge");
+			}
+			result = edge;
+		}
+		return result;
 	}
 
 	private static <LETTER> IPredicate createThreadNotInUsePredicate(final String threadInstanceId,

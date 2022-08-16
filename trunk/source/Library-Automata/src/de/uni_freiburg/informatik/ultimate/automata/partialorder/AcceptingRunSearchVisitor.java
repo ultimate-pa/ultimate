@@ -61,6 +61,16 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 	private boolean mFound;
 	private NestedRun<L, S> mRun;
 
+	/**
+	 * Create a fresh visitor instance. Each instance can only be used for one traversal.
+	 *
+	 * @param isGoalState
+	 *            A predicate identifying a goal state. We consider a run accepting if it reaches such a state.
+	 * @param isHopelessState
+	 *            A predicate identifying hopeless states, i.e., states from which no goal state can be reached. The
+	 *            visitor prunes such states from the traversal. It is sound for this predicate to always return
+	 *            <code>false</code>, e.g. if there is no meaningful and cheap test to identify hopeless states.
+	 */
 	public AcceptingRunSearchVisitor(final Predicate<S> isGoalState, final Predicate<S> isHopelessState) {
 		mIsGoalState = isGoalState;
 		mIsHopelessState = isHopelessState;
@@ -80,12 +90,14 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 		assert mStateStack.getLast() == source : "Unexpected transition from state " + source;
 		mPendingLetter = letter;
 		mPendingState = target;
-		return false;
+		return isHopelessState(target);
 	}
 
 	@Override
 	public boolean discoverState(final S state) {
 		assert !mFound : "Unexpected state discovery after abort";
+		assert !isHopelessState(state) : "Should not be able to reach hopeless state";
+
 		if (mPendingLetter == null) {
 			// Must be initial state
 			assert mStateStack.size() == 1 && mStateStack.getLast() == state : "Unexpected discovery of state " + state;
@@ -99,7 +111,7 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 		}
 
 		mFound = mIsGoalState.test(state);
-		return isHopelessState(state);
+		return false;
 	}
 
 	@Override
@@ -129,7 +141,7 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 	/**
 	 * Retrieves an accepting run, if one was found.
 	 *
-	 * @return A run from an initial to a goal state, if found. Null otherwise.
+	 * @return A run from an initial to a goal state, if found. <code>null</code> otherwise.
 	 */
 	public NestedRun<L, S> getAcceptingRun() {
 		if (mRun != null) {

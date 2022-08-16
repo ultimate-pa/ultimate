@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -53,19 +54,25 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public class QuantifierPushTermWalker extends TermWalker<Context> {
-	private final ManagedScript mMgdScript;
 
-	private final IUltimateServiceProvider mServices;
-
-	private final PqeTechniques mPqeTechniques;
-
-	private final SimplificationTechnique mSimplificationTechnique;
-
-	private final boolean mApplyDistributivity;
+	private static final boolean OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE = false;
+	/**
+	 * Note that this is useless if
+	 * {@link QuantifierPushTermWalker#OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE} is
+	 * set.
+	 */
+	private static final boolean OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS = true;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
-
 	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
+
+
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mMgdScript;
+	private final PqeTechniques mPqeTechniques;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final boolean mApplyDistributivity;
+
 
 	/**
 	 * This class provides the new (2020) quantifier elimination and replaces the
@@ -107,6 +114,11 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		FormulaClassification classification = null;
 		// 20220502 Matthias: If you remove the PolyPac simplification here, it should
 		// be at least done for atoms (which are handled in one of the cases below)
+		// 20220706 Matthias: The underlying {@link TermContextTransformationEngine}
+		// does not simplify this level, e.g., if one of the siblings is the absorbing
+		// element for the connective. If you remove this simplification here, you have
+		// to improve the {@link TermContextTransformationEngine} (probably by something
+		// similar that this PolyPac simplification).
 		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
 				context.getCriticalConstraint(), term);
 		int iterations = 0;
@@ -191,21 +203,17 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 				throw new AssertionError("unknown value " + classification);
 			}
 			iterations++;
+			if (iterations % 10 == 0) {
+				final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
+				logger.info(String.format(
+						"Run %s iterations without descend maybe there is a nontermination bug.",
+						iterations));
+			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(QuantifierPusher.class,
+						String.format("running %s iterations on subformula", iterations));
+			}
 		}
-		// throw new AssertionError();
-		//
-		//
-		//
-		//
-		// if (term instanceof ApplicationTerm) {
-		// final ApplicationTerm appTerm = (ApplicationTerm) term;
-		// if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
-		// return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-		// }
-		// } else if (term instanceof QuantifiedFormula) {
-		// return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-		// }
-		// return new TermContextTransformationEngine.FinalResultForAscend<Term>(term);
 	}
 
 	@Override
@@ -213,17 +221,39 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			final ApplicationTerm originalApplicationTerm, final Term[] resultParams) {
 		// TODO: Maybe full simplification with solver, maybe no simplification
 		if (originalApplicationTerm.getFunction().getName().equals("and")) {
-			return PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(),
+			final Term result;
+			if (OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS) {
+				final Term tmp = SmtUtils.and(mMgdScript.getScript(), resultParams);
+				result = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
+						context.getCriticalConstraint(), tmp);
+			} else {
+				result = PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(),
 					Arrays.asList(resultParams));
+			}
+			return result;
 		}
 		if (originalApplicationTerm.getFunction().getName().equals("or")) {
-			return PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(),
+			final Term result;
+			if (OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS) {
+				final Term tmp = SmtUtils.or(mMgdScript.getScript(), resultParams);
+				result = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
+						context.getCriticalConstraint(), tmp);
+			} else {
+				result = PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(),
 					Arrays.asList(resultParams));
+			}
+			return result;
 		}
 		// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
 		// terms here.
 		if (originalApplicationTerm.getFunction().getName().equals("=")) {
-			return SmtUtils.equality(mMgdScript.getScript(), resultParams);
+			final Term eq = SmtUtils.equality(mMgdScript.getScript(), resultParams);
+			if (OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS) {
+				return PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
+						context.getCriticalConstraint(), eq);
+			} else {
+				return eq;
+			}
 		}
 		assert Arrays.equals(originalApplicationTerm.getParameters(), resultParams);
 		return originalApplicationTerm;
@@ -238,7 +268,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	@Override
 	protected boolean applyRepeatedlyUntilNoChange() {
-		return false;
+		return OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE;
 	}
 
 	/**

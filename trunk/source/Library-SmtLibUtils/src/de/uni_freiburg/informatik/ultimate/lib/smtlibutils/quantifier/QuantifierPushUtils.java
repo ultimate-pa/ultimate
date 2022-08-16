@@ -59,17 +59,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class QuantifierPushUtils {
 
-
-	public static final String NOT_DUAL_FINITE_CONNECTIVE = "not dual finite connective";
-
 	/**
 	 * If set to true we check after applying distributivity if we were able to eliminate some quantified variables. If
 	 * elimination failed for all variables then we return the original term without applying distributivity.
 	 *
 	 */
-	public static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
-	public static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
-	public static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
+	public static final boolean OPTION_EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = false;
+	public static final boolean OPTION_ELIMINATEE_SEQUENTIALIZATION = true;
+	public static final boolean OPTION_SCOUT_BASED_DISTRIBUTIVITY_RECOMMENDATION = true;
+
+	public static final String NOT_DUAL_FINITE_CONNECTIVE = "not dual finite connective";
 
 	public static boolean isQuantifiedDualFiniteJunction(final int quantifier, final Term term) {
 		final boolean result;
@@ -107,7 +106,8 @@ public class QuantifierPushUtils {
 	public static Pair<Boolean, Term> preprocessDualFiniteJunction(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
-			final IQuantifierEliminator qe, final boolean pushDualQuantifiersInParams) {
+			final IQuantifierEliminator qe, final boolean pushLocalEliminatees,
+			final boolean pushDualQuantifiersInParams) {
 		EliminationTask currentEt = et;
 		int i = 0;
 		// Each preprocessing step may change the structure of the formula completely
@@ -183,7 +183,7 @@ public class QuantifierPushUtils {
 
 			// Step 4: Push local eliminatees over corresponding connective if applicable
 			// See #innerAlternatingFirst
-			{
+			if (pushLocalEliminatees) {
 				final Term localsEliminated = QuantifierPushUtilsForLocalEliminatees
 						.pushLocalEliminateesOverCorrespondingFiniteJunction(services, mgdScript, applyDistributivity,
 								pqeTechniques, simplificationTechnique, currentEt, qe);

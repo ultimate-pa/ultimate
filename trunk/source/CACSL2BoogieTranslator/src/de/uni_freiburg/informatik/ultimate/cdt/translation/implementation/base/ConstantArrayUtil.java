@@ -165,7 +165,7 @@ public final class ConstantArrayUtil {
 		 * stands for "colon", if there is a nicer naming that still avoids name clashes, that naming should be used.
 		 */
 		final String sanitizedTypeName = boogieArrayType.toString().replace(":", "~COL~").replace(", ", "~COM~")
-				.replace("{ ", "~LC~").replace(" }", "~RC~").replaceAll("]", "~RB~").replace("[", "~LB~");
+				.replace("{ ", "~LC~").replace(" }", "~RC~").replace("]", "~RB~").replace("[", "~LB~");
 		return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName + suffix;
 	}
 }

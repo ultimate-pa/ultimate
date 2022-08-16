@@ -43,7 +43,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Binary
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -88,7 +90,24 @@ public class PolynomialRelation implements IBinaryRelation {
 	protected final AbstractGeneralizedAffineTerm<Term> mPolynomialTerm;
 
 	public enum TransformInequality {
-		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT
+		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT;
+
+		/**
+		 * For the TIR quantifier elimination technique (see {@link DualJunctionTir}),
+		 * we prefer non-strict inequalities for the existential quantifier and we
+		 * prefer strict inequalities for the universal quantifier.
+		 */
+		public static TransformInequality determineTransformationForTir(final int quantifier) {
+			TransformInequality result;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				result = TransformInequality.STRICT2NONSTRICT;
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				result = TransformInequality.NONSTRICT2STRICT;
+			} else {
+				throw new AssertionError("Unknown quantifier");
+			}
+			return result;
+		}
 	}
 
 	public enum TrivialityStatus {
