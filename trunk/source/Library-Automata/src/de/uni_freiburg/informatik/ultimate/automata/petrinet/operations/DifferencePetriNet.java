@@ -178,7 +178,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					DataStructureUtils.haveEmptyIntersection(minuendStp.getPredecessorPlaces(), minuendMustPlaces);
 			if (useUniversalLoopersOptimization) {
 				final SuccessorTransitionProviderSplit<LETTER, PLACE> split =
-						new SuccessorTransitionProviderSplit<>(minuendStp, mUniversalLoopers, mMinuend);
+						new SuccessorTransitionProviderSplit<>(minuendStp, mUniversalLoopers);
 				if (split.getSuccTransProviderLetterInSet() != null) {
 					// copy from minuend, no need to synchronize
 					if (emtpyIntersectionWithMinuendMustPlaces) {
@@ -188,7 +188,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						// predecessor places is considered
 					} else {
 						result.add(new SimpleSuccessorTransitionProviderWithUsageInformation(
-								split.getSuccTransProviderLetterInSet().getTransitions(), mMinuend));
+								split.getSuccTransProviderLetterInSet().getTransitions()));
 					}
 				}
 				if (split.getSuccTransProviderLetterNotInSet() != null) {
@@ -421,9 +421,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			extends SimpleSuccessorTransitionProvider<LETTER, PLACE> {
 
 		public SimpleSuccessorTransitionProviderWithUsageInformation(
-				final Collection<Transition<LETTER, PLACE>> transitions,
-				final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
-			super(transitions, net);
+				final Collection<Transition<LETTER, PLACE>> transitions) {
+			super(transitions);
 		}
 
 		@Override

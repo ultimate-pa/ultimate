@@ -64,9 +64,8 @@ public final class PetriNetUtils {
 		// do not instantiate
 	}
 
-	public static <LETTER, PLACE> boolean similarPredecessorPlaces(
-			final Collection<Transition<LETTER, PLACE>> transitions,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
+	public static <LETTER, PLACE> boolean
+			similarPredecessorPlaces(final Collection<Transition<LETTER, PLACE>> transitions) {
 		if (transitions.isEmpty()) {
 			return true;
 		} else {

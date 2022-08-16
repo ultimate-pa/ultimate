@@ -104,7 +104,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetr
 		if (finPre != null) {
 			mFinPre = finPre;
 		} else {
-			mFinPre = new FinitePrefix<LETTER, PLACE>(services, operand).getResult();
+			mFinPre = new FinitePrefix<>(services, operand).getResult();
 		}
 		printStartMessage();
 		if (COMPUTE_VITAL_TRANSITIONS_VIA_UNFOLDING) {

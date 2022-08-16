@@ -148,7 +148,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	public Condition<LETTER, PLACE> constructCondition(final Event<LETTER, PLACE> predecessor, final PLACE place) {
-		return new Condition<LETTER, PLACE>(predecessor, place, mConditionSerialnumberCounter++);
+		return new Condition<>(predecessor, place, mConditionSerialnumberCounter++);
 	}
 
 	/**
@@ -189,23 +189,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			mCoRelation.update(event);
 		}
 		return someSuccessorIsAccepting;
-	}
-
-	/**
-	 * @deprecated Superseded by {@link ConditionMarking#getMarking()} which does not have additional costs.
-	 */
-	@Deprecated
-	private PLACE isOneSafe(final Event<LETTER, PLACE> event) {
-		for (final Condition<LETTER, PLACE> condition : event.getSuccessorConditions()) {
-			final Set<Condition<LETTER, PLACE>> existing = mPlace2Conds.getImage(condition.getPlace());
-			for (final Condition<LETTER, PLACE> c : existing) {
-				if (c != condition && mCoRelation.isInCoRelation(c, condition)) {
-					mLogger.debug(c + " in coRelation with " + condition + " but they belong to the same place.");
-					return c.getPlace();
-				}
-			}
-		}
-		return null;
 	}
 
 	/**

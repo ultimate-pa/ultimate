@@ -297,9 +297,9 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		}
 		final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
 		for (final Transition<LETTER, PLACE> transition : transitions) {
-			final Candidate<LETTER, PLACE> candidate = new Candidate<>(
-					new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), fullPetriNet),
-					event.getSuccessorConditions(), null);
+			final Candidate<LETTER, PLACE> candidate =
+					new Candidate<>(new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition)),
+							event.getSuccessorConditions(), null);
 			candidates.add(candidate);
 		}
 		return candidates;

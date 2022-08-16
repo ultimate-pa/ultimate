@@ -82,7 +82,7 @@ public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LET
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
 		for (final Set<PLACE> predecessors : predecessorPlaces2Transition.getDomain()) {
 			final Set<Transition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
-			result.add(new SimpleSuccessorTransitionProvider<>(transitions, this));
+			result.add(new SimpleSuccessorTransitionProvider<>(transitions));
 		}
 		return result;
 	}

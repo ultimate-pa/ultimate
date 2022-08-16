@@ -126,16 +126,6 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 		netTransitions.add(netTransition);
 	}
 
-	private void updateSymbol2nwaTransitions(final LETTER symbol, final AutomatonTransition nwaTransition) {
-		Collection<AutomatonTransition> nwaTransitions;
-		nwaTransitions = mSymbol2nwaTransitions.get(symbol);
-		if (nwaTransitions == null) {
-			nwaTransitions = new LinkedList<>();
-			mSymbol2nwaTransitions.put(symbol, nwaTransitions);
-		}
-		nwaTransitions.add(nwaTransition);
-	}
-
 	private BoundedPetriNet<LETTER, PLACE> computeResult() {
 		final HashSet<LETTER> netOnlyAlphabet = new HashSet<>(mOperand.getAlphabet());
 		netOnlyAlphabet.removeAll(mNwa.getVpAlphabet().getInternalAlphabet());

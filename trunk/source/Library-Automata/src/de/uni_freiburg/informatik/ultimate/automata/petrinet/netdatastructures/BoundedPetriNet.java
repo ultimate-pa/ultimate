@@ -161,7 +161,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			mLogger.info("Testing correctness of constructor" + getClass().getSimpleName());
 		}
 
-		final boolean correct = new IsEquivalent<LETTER, PLACE>(mServices, stateFactory, this, nwa).getResult();
+		final boolean correct = new IsEquivalent<>(mServices, stateFactory, this, nwa).getResult();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of constructor " + getClass().getSimpleName());
 		}
@@ -179,7 +179,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 *            {@code true} iff the place is final
 	 * @return true iff the place was not already contained
 	 */
-	@SuppressWarnings("squid:S2301")
 	public boolean addPlace(final PLACE place, final boolean isInitial, final boolean isAccepting) {
 		final boolean addedForFirstTime = mPlaces.add(place);
 		if (addedForFirstTime) {
