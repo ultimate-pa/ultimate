@@ -96,15 +96,15 @@ public final class PetriNetUtils {
 	 */
 	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 			boolean isEquivalent(final AutomataLibraryServices services, final CRSF stateFactory,
-					final IPetriNet<LETTER, PLACE> net1, final IPetriNet<LETTER, PLACE> net2)
-					throws AutomataLibraryException {
+					final IPetriNetSuccessorProvider<LETTER, PLACE> net1,
+					final IPetriNetSuccessorProvider<LETTER, PLACE> net2) throws AutomataLibraryException {
 		return new IsEquivalent<>(services, stateFactory, netToNwa(services, stateFactory, net1),
 				netToNwa(services, stateFactory, net2)).getResult();
 	}
 
 	private static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE>>
 			INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(final AutomataLibraryServices mServices,
-					final CRSF stateFactory, final IPetriNet<LETTER, PLACE> net)
+					final CRSF stateFactory, final IPetriNetSuccessorProvider<LETTER, PLACE> net)
 					throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
 	}
@@ -113,8 +113,7 @@ public final class PetriNetUtils {
 	 * List hash codes of Petri net's internal objects. Useful for detecting nondeterminism. Should only be used for
 	 * debugging.
 	 */
-	public static <LETTER, PLACE> String
-			printHashCodesOfInternalDataStructures(final BoundedPetriNet<LETTER, PLACE> net) {
+	public static <LETTER, PLACE> String printHashCodesOfInternalDataStructures(final IPetriNet<LETTER, PLACE> net) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("HashCodes of PetriNet data structures ");
 		sb.append(System.lineSeparator());

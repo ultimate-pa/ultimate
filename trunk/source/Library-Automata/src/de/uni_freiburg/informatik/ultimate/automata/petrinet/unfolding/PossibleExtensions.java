@@ -42,7 +42,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
@@ -243,8 +243,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				newInstantiated.add(condition);
 				final LinkedList<PLACE> newNotInstantiated = new LinkedList<>(cand.getNotInstantiated());
 				newNotInstantiated.remove(newNotInstantiated.size() - 1);
-				evolveCandidateWithForwardChecking(new Candidate<LETTER, PLACE>(cand.getTransition(),
-						newNotInstantiated, newInstantiated, newPossibleInstantiations));
+				evolveCandidateWithForwardChecking(new Candidate<>(cand.getTransition(), newNotInstantiated,
+						newInstantiated, newPossibleInstantiations));
 			}
 		}
 	}
@@ -284,29 +284,25 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 					.getSuccessorTransitionProviders(placesOfNewConditions, place2coRelatedConditions.getDomain());
 
 			final List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
-					.map(x -> new Candidate<LETTER, PLACE>(x, newConditions, place2coRelatedConditions))
+					.map(x -> new Candidate<>(x, newConditions, place2coRelatedConditions))
 					.collect(Collectors.toList());
 			return candidates;
-		} else {
-			if (!(mBranchingProcess.getNet() instanceof IPetriNet)) {
-				throw new AssertionError("non-lazy computation only available for fully constructed nets");
-			}
-			final IPetriNet<LETTER, PLACE> fullPetriNet = (IPetriNet<LETTER, PLACE>) mBranchingProcess.getNet();
-			final Set<Transition<LETTER, PLACE>> transitions = new HashSet<>();
-			for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
-				for (final Transition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {
-					transitions.add(t);
-				}
-			}
-			final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
-			for (final Transition<LETTER, PLACE> transition : transitions) {
-				final Candidate<LETTER, PLACE> candidate = new Candidate<>(
-						new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), fullPetriNet),
-						event.getSuccessorConditions(), null);
-				candidates.add(candidate);
-			}
-			return candidates;
 		}
+		final IPetriNetSuccessorProvider<LETTER, PLACE> fullPetriNet = mBranchingProcess.getNet();
+		final Set<Transition<LETTER, PLACE>> transitions = new HashSet<>();
+		for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
+			for (final Transition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {
+				transitions.add(t);
+			}
+		}
+		final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
+		for (final Transition<LETTER, PLACE> transition : transitions) {
+			final Candidate<LETTER, PLACE> candidate = new Candidate<>(
+					new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), fullPetriNet),
+					event.getSuccessorConditions(), null);
+			candidates.add(candidate);
+		}
+		return candidates;
 	}
 
 	@Override

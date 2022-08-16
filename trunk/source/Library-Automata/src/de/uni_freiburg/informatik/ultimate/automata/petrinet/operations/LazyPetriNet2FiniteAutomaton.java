@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
-	private final IPetriNet<L, S> mOperand;
+	private final IPetriNetSuccessorProvider<L, S> mOperand;
 	private final Predicate<Marking<?, S>> mIsKnownDeadEnd;
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
 	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
@@ -92,7 +92,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	 *             Petri Net has to be one-safe
 	 */
 	public LazyPetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet2FiniteAutomatonStateFactory<S> factory, final IPetriNet<L, S> operand,
+			final IPetriNet2FiniteAutomatonStateFactory<S> factory, final IPetriNetSuccessorProvider<L, S> operand,
 			final Predicate<Marking<?, S>> isKnownDeadEnd) throws PetriNetNot1SafeException {
 		mOperand = operand;
 		mIsKnownDeadEnd = isKnownDeadEnd;
