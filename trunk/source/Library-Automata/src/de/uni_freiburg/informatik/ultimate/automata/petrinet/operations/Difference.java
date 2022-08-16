@@ -180,7 +180,7 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 
 		final DifferencePairwiseOnDemand<LETTER, PLACE, ?> dpod;
 		if (inputDpod == null && COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
-			dpod = new DifferencePairwiseOnDemand<>(mServices, null, originalMinuend, subtrahendDfa);
+			dpod = new DifferencePairwiseOnDemand<>(mServices, originalMinuend, subtrahendDfa);
 		} else {
 			dpod = inputDpod;
 		}

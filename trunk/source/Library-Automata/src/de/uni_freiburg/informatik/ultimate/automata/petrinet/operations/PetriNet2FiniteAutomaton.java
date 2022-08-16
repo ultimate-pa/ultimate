@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
-	private final IPetriNet<LETTER, PLACE> mOperand;
+	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
 	private final NestedWordAutomaton<LETTER, PLACE> mResult;
 	private final Predicate<Marking<?, PLACE>> mIsKnownDeadEnd;
 
@@ -81,7 +81,8 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 	private final IPetriNet2FiniteAutomatonStateFactory<PLACE> mContentFactory;
 
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory, final IPetriNet<LETTER, PLACE> operand)
+			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> operand)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		this(services, factory, operand, null);
 	}
@@ -101,8 +102,8 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 	 * @throws AutomataOperationCanceledException
 	 */
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory, final IPetriNet<LETTER, PLACE> operand,
-			final Predicate<Marking<?, PLACE>> isKnownDeadEnd)
+			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> operand, final Predicate<Marking<?, PLACE>> isKnownDeadEnd)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -115,7 +116,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 		mContentFactory = factory;
 		final Set<LETTER> alphabet = new HashSet<>(operand.getAlphabet());
 		final VpAlphabet<LETTER> vpAlphabet =
-				new VpAlphabet<LETTER>(alphabet, Collections.emptySet(), Collections.emptySet());
+				new VpAlphabet<>(alphabet, Collections.emptySet(), Collections.emptySet());
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
 		getState(new Marking<>(ImmutableSet.of(operand.getInitialPlaces())), true);
 		while (!mWorklist.isEmpty()) {
@@ -198,7 +199,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 	}
 
 	@Override
-	protected IPetriNet<LETTER, PLACE> getOperand() {
+	protected IPetriNetSuccessorProvider<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 

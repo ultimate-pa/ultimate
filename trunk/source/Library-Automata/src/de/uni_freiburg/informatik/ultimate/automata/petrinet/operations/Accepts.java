@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public final class Accepts<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
-	private final IPetriNet<LETTER, PLACE> mOperand;
+	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
 	private final Word<LETTER> mWord;
 	private final boolean mResult;
 
@@ -72,7 +72,7 @@ public final class Accepts<LETTER, PLACE>
 	 *             if operation was canceled
 	 * @throws PetriNetNot1SafeException
 	 */
-	public Accepts(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
+	public Accepts(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> operand,
 			final Word<LETTER> word) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -100,7 +100,7 @@ public final class Accepts<LETTER, PLACE>
 	}
 
 	@Override
-	protected IPetriNet<LETTER, PLACE> getOperand() {
+	protected IPetriNetSuccessorProvider<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 

@@ -49,9 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
  *
@@ -75,10 +73,9 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDifferenceSynchronizationInformation;
-	private DifferencePetriNet mDifference;
+	private DifferencePetriNet<LETTER, PLACE> mDifference;
 
-	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
-			final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
+	public DifferencePairwiseOnDemand(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa,
 			final Set<LETTER> userProvidedUniversalSubtrahendLoopers)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -111,7 +108,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 			mLogger.info("Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
 		}
 		mDifference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend, universalSubtrahendLoopers);
-		mFinitePrefixOfDifference = new FinitePrefix<LETTER, PLACE>(mServices, mDifference);
+		mFinitePrefixOfDifference = new FinitePrefix<>(mServices, mDifference);
 		mResult = mDifference.getYetConstructedPetriNet();
 
 		final Set<Transition<LETTER, PLACE>> vitalTransitionsOfDifference =
@@ -133,8 +130,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		}
 	}
 
-	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
-			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
+	public DifferencePairwiseOnDemand(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, minuendNet, subtrahendDfa, null);
@@ -199,7 +195,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		if (mSubtrahend instanceof INestedWordAutomaton) {
 			subtrahend = (INestedWordAutomaton<LETTER, PLACE>) mSubtrahend;
 		} else {
-			subtrahend = new RemoveDeadEnds<LETTER, PLACE>(mServices, mSubtrahend).getResult();
+			subtrahend = new RemoveDeadEnds<>(mServices, mSubtrahend).getResult();
 		}
 
 		if (!(mMinuend instanceof BoundedPetriNet)) {

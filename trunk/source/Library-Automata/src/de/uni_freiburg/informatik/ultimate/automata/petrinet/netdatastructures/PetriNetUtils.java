@@ -139,8 +139,9 @@ public final class PetriNetUtils {
 	 */
 	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 			boolean doDifferenceLanguageCheck(final AutomataLibraryServices services, final CRSF stateFactory,
-					final BoundedPetriNet<LETTER, PLACE> minuend, final INestedWordAutomaton<LETTER, PLACE> subtrahend,
-					final BoundedPetriNet<LETTER, PLACE> result)
+					final IPetriNetSuccessorProvider<LETTER, PLACE> minuend,
+					final INestedWordAutomaton<LETTER, PLACE> subtrahend,
+					final IPetriNetSuccessorProvider<LETTER, PLACE> result)
 					throws PetriNetNot1SafeException, AutomataOperationCanceledException, AutomataLibraryException {
 		final AutomatonWithImplicitSelfloops<LETTER, PLACE> subtrahendWithSelfloopsInAcceptingStates =
 				new AutomatonWithImplicitSelfloops<>(services, subtrahend, subtrahend.getAlphabet(),

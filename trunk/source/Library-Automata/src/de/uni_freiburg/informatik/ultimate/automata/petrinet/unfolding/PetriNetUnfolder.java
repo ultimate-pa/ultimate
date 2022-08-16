@@ -311,18 +311,12 @@ public final class PetriNetUnfolder<L, P> {
 
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		if (!(mOperand instanceof IPetriNet)) {
-			mLogger.warn("Will not check Unfolding because operand is constructed on-demand");
-			return true;
-		}
-
 		mLogger.info("Testing correctness of emptinessCheck");
 
 		boolean correct;
 		if (mRun == null) {
 			final NestedRun<L, P> automataRun = (new IsEmpty<>(mServices,
-					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, (IPetriNet<L, P>) mOperand)).getResult()))
-							.getNestedRun();
+					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				// TODO Christian 2016-09-30: This assignment is useless - a bug?
 				correct = false;
@@ -331,7 +325,7 @@ public final class PetriNetUnfolder<L, P> {
 			correct = automataRun == null;
 		} else {
 			final Word<L> word = mRun.getWord();
-			if (new Accepts<>(mServices, (IPetriNet<L, P>) mOperand, word).getResult()) {
+			if (new Accepts<>(mServices, mOperand, word).getResult()) {
 				correct = true;
 			} else {
 				mLogger.error("Result of EmptinessCheck, but not accepted: " + word);
