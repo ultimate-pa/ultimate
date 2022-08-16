@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -73,7 +73,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDifferenceSynchronizationInformation;
-	private DifferencePetriNet<LETTER, PLACE> mDifference;
+	private Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mTransitionBacktranslation;
 
 	public DifferencePairwiseOnDemand(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa,
@@ -107,15 +107,17 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 			universalSubtrahendLoopers = null;
 			mLogger.info("Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
 		}
-		mDifference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend, universalSubtrahendLoopers);
-		mFinitePrefixOfDifference = new FinitePrefix<>(mServices, mDifference);
-		mResult = mDifference.getYetConstructedPetriNet();
+		final DifferencePetriNet<LETTER, PLACE> difference =
+				new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend, universalSubtrahendLoopers);
+		mFinitePrefixOfDifference = new FinitePrefix<>(mServices, difference);
+		mResult = difference.getYetConstructedPetriNet();
+		mTransitionBacktranslation = difference.getTransitionBacktranslation();
 
 		final Set<Transition<LETTER, PLACE>> vitalTransitionsOfDifference =
 				mFinitePrefixOfDifference.getResult().computeVitalTransitions();
 		mDifferenceSynchronizationInformation =
-				mDifference.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
-		final int allTransitions = mDifference.getYetConstructedPetriNet().getTransitions().size();
+				difference.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
+		final int allTransitions = difference.getYetConstructedPetriNet().getTransitions().size();
 		final int deadTransitions = allTransitions - vitalTransitionsOfDifference.size();
 		{
 			final int looperLetters =
@@ -137,7 +139,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	}
 
 	public Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> getTransitionBacktranslation() {
-		return mDifference.getTransitionBacktranslation();
+		return mTransitionBacktranslation;
 	}
 
 	@Override
@@ -216,25 +218,12 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
 			throw new UnsupportedOperationException("call and return not implemented yet");
 		}
-		final Set<LETTER> result = new HashSet<>();
-		for (final LETTER letter : nwa.getAlphabet()) {
-			final boolean isUniversalLooper = isUniversalLooper(letter, nwa);
-			if (isUniversalLooper) {
-				result.add(letter);
-			}
-		}
-		return result;
+		return nwa.getAlphabet().stream().filter(letter -> isUniversalLooper(letter, nwa)).collect(Collectors.toSet());
 	}
 
 	private static <LETTER, STATE> boolean isUniversalLooper(final LETTER letter,
 			final INestedWordAutomaton<LETTER, STATE> nwa) {
-		for (final STATE state : nwa.getStates()) {
-			final boolean hasSelfloop = hasSelfloop(letter, state, nwa);
-			if (!hasSelfloop) {
-				return false;
-			}
-		}
-		return true;
+		return nwa.getStates().stream().allMatch(state -> hasSelfloop(letter, state, nwa));
 	}
 
 	private static <LETTER, STATE> boolean hasSelfloop(final LETTER letter, final STATE state,
@@ -242,14 +231,12 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = nwa.internalSuccessors(state, letter).iterator();
 		if (!it.hasNext()) {
 			return false;
-		} else {
-			final OutgoingInternalTransition<LETTER, STATE> succTrans = it.next();
-			final boolean hasSelfloop = (succTrans.getSucc().equals(state));
-			if (it.hasNext()) {
-				throw new IllegalArgumentException("automaton is nondeterministic");
-			}
-			return hasSelfloop;
 		}
+		final OutgoingInternalTransition<LETTER, STATE> succTrans = it.next();
+		if (it.hasNext()) {
+			throw new IllegalArgumentException("automaton is nondeterministic");
+		}
+		return succTrans.getSucc().equals(state);
 	}
 
 }
