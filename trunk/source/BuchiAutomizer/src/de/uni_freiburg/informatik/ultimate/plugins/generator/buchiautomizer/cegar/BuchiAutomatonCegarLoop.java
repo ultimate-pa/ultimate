@@ -99,12 +99,10 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final NcsbImplementation ncsbImplementation =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_NCSB_IMPLEMENTATION, NcsbImplementation.class);
-		final boolean useDoubleDeckers =
-				!baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
 		final boolean difference =
 				baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
 		mRefineBuchi = new RefineBuchi<>(difference, stateFactoryForRefinement, stateFactoryForRefinement,
-				useDoubleDeckers, new AutomataLibraryServices(services), ncsbImplementation);
+				mUseDoubleDeckers, new AutomataLibraryServices(services), ncsbImplementation);
 		mComplementationConstruction =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 						BuchiComplementationConstruction.class);
