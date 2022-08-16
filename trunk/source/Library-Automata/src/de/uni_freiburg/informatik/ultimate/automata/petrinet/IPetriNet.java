@@ -84,7 +84,6 @@ public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LET
 			final Set<Transition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
 			result.add(new SimpleSuccessorTransitionProvider<>(transitions, this));
 		}
-		// System.out.println("NewSuccs " + mustPlaces.size() + " " + mayPlaces.size());
 		return result;
 	}
 
