@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -78,8 +77,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -284,22 +285,8 @@ public final class TransFormulaUtils {
 		}
 
 		if (tryAuxVarElimination) {
-			final Term eliminated;
-			// eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
-			// formula, services, logger, simplificationTechnique, xnfConversionTechnique);
-			final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, formula);
-			auxVars.clear();
-			final Term partiallyEliminated =
-					PartialQuantifierElimination.eliminate(services, mgdScript, quantified, simplificationTechnique);
-			final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
-			if (pnf instanceof QuantifiedFormula
-					&& ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
-				final QuantifiedFormula qf = (QuantifiedFormula) pnf;
-				auxVars.addAll(Arrays.asList(qf.getVariables()));
-				eliminated = qf.getSubformula();
-			} else {
-				eliminated = pnf;
-			}
+			final Term eliminated =
+					tryAuxVarElimination(services, mgdScript, simplificationTechnique, formula, auxVars);
 			if (logger.isDebugEnabled()) {
 				logger.debug("DAG size before PQE %s, DAG size after PQE %s", new DagSizePrinter(formula),
 						new DagSizePrinter(eliminated));
@@ -336,6 +323,23 @@ public final class TransFormulaUtils {
 		return tfb.finishConstruction(mgdScript);
 	}
 
+	public static Term tryAuxVarElimination(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final SimplificationTechnique simplificationTechnique, final Term formula,
+			final Set<TermVariable> auxVars) {
+		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, auxVars, formula);
+		auxVars.clear();
+
+		final Term partiallyEliminated =
+				PartialQuantifierElimination.eliminate(services, mgdScript, quantified, simplificationTechnique);
+		final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
+		if (pnf instanceof QuantifiedFormula && ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
+			final QuantifiedFormula qf = (QuantifiedFormula) pnf;
+			auxVars.addAll(Arrays.asList(qf.getVariables()));
+			return qf.getSubformula();
+		}
+		return pnf;
+	}
+
 	/**
 	 * The parallel composition of transFormulas is the disjunction of the underlying relations. If we check
 	 * satisfiability of a path which contains this transFormula we want know one disjuncts that is satisfiable. We use
@@ -361,14 +365,17 @@ public final class TransFormulaUtils {
 			throw new IllegalArgumentException();
 		}
 
+		final TransFormulaUnification unification = new TransFormulaUnification(mgdScript, transFormulas);
+		final Set<IProgramConst> consts = unification.getNonTheoryConsts();
+
 		final TransFormulaBuilder tfb;
 		if (useBranchEncoders) {
-			tfb = new TransFormulaBuilder(null, null, false, null, false, Arrays.asList(branchIndicators), false);
+			tfb = new TransFormulaBuilder(null, null, consts.isEmpty(), consts, false, Arrays.asList(branchIndicators),
+					false);
 		} else {
-			tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
+			tfb = new TransFormulaBuilder(null, null, consts.isEmpty(), consts, true, null, false);
 		}
 
-		final TransFormulaUnification unification = new TransFormulaUnification(mgdScript, transFormulas);
 		tfb.addInVars(unification.getInVars());
 		tfb.addOutVars(unification.getOutVars());
 		for (final TermVariable auxVar : unification.getAuxVars()) {
@@ -934,8 +941,9 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula intersect(final ManagedScript mgdScript,
 			final UnmodifiableTransFormula... tfs) {
 		final TransFormulaUnification tfu = new TransFormulaUnification(mgdScript, tfs);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(tfu.getInVars(), tfu.getOutVars(), true, null, true,
-				null, false);
+		final Set<IProgramConst> consts = tfu.getNonTheoryConsts();
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(tfu.getInVars(), tfu.getOutVars(), consts.isEmpty(), consts, true, null, false);
 		tfu.getAuxVars().stream().forEach(tfb::addAuxVar);
 		final Term[] terms = new Term[tfs.length];
 		for (int i = 0; i < tfs.length; i++) {
@@ -982,7 +990,7 @@ public final class TransFormulaUtils {
 	 */
 	public static <T extends IProgramConst> void addConstantsIfInFormula(final TransFormulaBuilder tfb,
 			final Term formula, final Set<T> progConsts) {
-		final Set<ApplicationTerm> constsInFormula = new ConstantFinder().findConstants(formula, false);
+		final Set<ApplicationTerm> constsInFormula = SmtUtils.extractConstants(formula, false);
 		for (final IProgramConst progConst : progConsts) {
 			if (constsInFormula.contains(progConst.getDefaultConstant())) {
 				tfb.addProgramConst(progConst);
@@ -1152,11 +1160,11 @@ public final class TransFormulaUtils {
 
 		// Get the core part of the transition formulas.
 		// The RHS formula must be explicitly quantified, as it will be negated.
-		final Term lhsClosedFormula = lhs.getClosedFormula();
-		final Term rhsQuantFormula =
-				SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, rhs.getAuxVars(), rhs.getFormula());
+		final Term lhsClosedFormula = getClosedFormulaWithBranchEncoderConstants(mgdScript, lhs, lhs);
+		final Term rhsQuantFormula = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
+				DataStructureUtils.union(rhs.getAuxVars(), rhs.getBranchEncoders()), rhs.getFormula());
 		final Term rhsClosedFormula = UnmodifiableTransFormula.computeClosedFormula(rhsQuantFormula, rhs.getInVars(),
-				rhs.getOutVars(), new HashSet<>(), mgdScript);
+				rhs.getOutVars(), Collections.emptySet(), mgdScript);
 
 		// Add explicit equalities for variables mentioned in one, but not the other,
 		// transition formula.
@@ -1174,11 +1182,28 @@ public final class TransFormulaUtils {
 		mgdScript.assertTerm(lhs, SmtUtils.not(script, rhsFormula));
 
 		final LBool result = mgdScript.checkSat(lhs);
+		mgdScript.echo(lhs, new QuotedObject("Implication check result was " + result));
 
 		mgdScript.pop(lhs, 1);
 		mgdScript.unlock(lhs);
 
 		return result;
+	}
+
+	private static Term getClosedFormulaWithBranchEncoderConstants(final ManagedScript mgdScript, final Object lock,
+			final UnmodifiableTransFormula tf) {
+		if (tf.getBranchEncoders().isEmpty()) {
+			return tf.getClosedFormula();
+		}
+		final Map<TermVariable, Term> substitutionMap = new HashMap<>();
+		int i = 0;
+		for (final TermVariable be : tf.getBranchEncoders()) {
+			final String name = be.getName() + "_be_" + i;
+			mgdScript.declareFun(lock, name, new Sort[0], be.getSort());
+			substitutionMap.put(be, mgdScript.term(lock, name));
+			i++;
+		}
+		return Substitution.apply(mgdScript, substitutionMap, tf.getClosedFormula());
 	}
 
 	private static Term constructExplicitEqualities(final Script script, final Set<IProgramVar> variables) {

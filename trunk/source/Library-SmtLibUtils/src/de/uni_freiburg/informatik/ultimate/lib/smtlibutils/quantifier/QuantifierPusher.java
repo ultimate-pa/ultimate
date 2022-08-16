@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -602,45 +601,22 @@ public class QuantifierPusher extends TermTransformer {
 
 	private static Term applyNewEliminationTechniquesExhaustively(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final PqeTechniques pqeTechniques, final EliminationTask inputEt) {
-		final List<DualJunctionQuantifierElimination> elimtechniques =
-				generateNewEliminationTechniques(pqeTechniques, mgdScript, services);
-		boolean successInLastIteration = false;
-		EliminationTask currentEt = inputEt;
-		int iterations = 0;
-		do {
-			final EliminationResult er = tryToEliminateOne(services, currentEt, elimtechniques);
-			successInLastIteration = (er != null);
-			if (er != null) {
-				currentEt = er.integrateNewEliminatees();
-				if (!currentEt.getBoundByAncestors().equals(inputEt.getBoundByAncestors())) {
-					throw new AssertionError("Illegal modification of banned variables.");
-				}
-				final Term simplifiedTerm = simplify(services, mgdScript,
-						SimplificationOccasion.AFTER_ELIMINATION_TECHNIQUES, SimplificationTechnique.POLY_PAC,
-						currentEt.getContext(), er.getEliminationTask().getTerm());
-				currentEt = currentEt.update(simplifiedTerm);
-				if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(), currentEt.getTerm())
-						|| currentEt.getTerm() instanceof QuantifiedFormula) {
-					return currentEt.toTerm(mgdScript.getScript());
-				}
-			}
-			iterations++;
-			if (iterations % 10 == 0) {
-				final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
-				logger.info(String.format(
-						"Run %s iterations of DualJunctionQuantifierElimination maybe there is a nontermination bug.",
-						iterations));
-			}
-			if (!services.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(QuantifierPusher.class,
-						String.format("running %s iterations of DualJunctionQuantifierElimination", iterations));
-			}
-		} while (successInLastIteration);
-		if (currentEt == inputEt) {
-			// only one non-successful iteration
+		final List<DualJunctionQuantifierElimination> elimtechniques = generateNewEliminationTechniques(pqeTechniques,
+				mgdScript, services);
+		final EliminationResult er = tryToEliminateOne(services, inputEt, elimtechniques);
+		if (er == null) {
+			// no elimination possible
 			return null;
 		} else {
-			return currentEt.toTerm(mgdScript.getScript());
+			EliminationTask resultEt = er.integrateNewEliminatees();
+			assert (resultEt.getContext() == inputEt.getContext()) : "Illegal modification of context";
+			// 20220807 Matthias: This simplification reduced the size of the formula in
+			// 32 of 191 regression tests.
+			final Term simplifiedTerm = simplify(services, mgdScript,
+					SimplificationOccasion.AFTER_ELIMINATION_TECHNIQUES, SimplificationTechnique.POLY_PAC,
+					resultEt.getContext(), resultEt.getTerm());
+			resultEt = resultEt.update(simplifiedTerm);
+			return resultEt.toTerm(mgdScript.getScript());
 		}
 	}
 

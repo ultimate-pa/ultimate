@@ -27,8 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
@@ -41,10 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -79,8 +76,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final TimedIndependenceStatisticsDataProvider mStatistics =
 			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
 
-	private final Map<IProgramVarOrConst, IProgramVarOrConst> mTransferCache = new HashMap<>();
-	private final TermTransferrer mTransferrer;
+	private final TransferrerWithVariableCache mTransferrer;
 
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric) {
@@ -98,7 +94,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 *            checked, which subsumes full commutativity.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean conditional, final boolean symmetric, final TermTransferrer transferrer) {
+			final boolean conditional, final boolean symmetric, final TransferrerWithVariableCache transferrer) {
 		mServices = services;
 		mManagedScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -162,11 +158,10 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		if (mTransferrer == null) {
 			return tf;
 		}
-		return TransFormulaBuilder.transferTransformula(mTransferrer, mManagedScript, mTransferCache, tf)
-				.getTransformula();
+		return mTransferrer.transferTransFormula(tf);
 	}
 
-	private final LBool performInclusionCheck(final IPredicate context, final UnmodifiableTransFormula a,
+	private final LBool performInclusionCheck(IPredicate context, final UnmodifiableTransFormula a,
 			final UnmodifiableTransFormula b) {
 		if (context != null && SmtUtils.isFalseLiteral(context.getFormula())) {
 			return LBool.UNSAT;
@@ -185,13 +180,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final UnmodifiableTransFormula transFormula2 = compose(b, a);
 
 		if (context != null) {
-			final UnmodifiableTransFormula guard;
-			if (mTransferrer == null) {
-				guard = TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
-			} else {
-				guard = TransFormulaBuilder.constructTransFormulaFromPredicate(mTransferrer, mTransferCache, context,
-						mManagedScript);
+			if (mTransferrer != null) {
+				context = mTransferrer.transferPredicate(context);
 			}
+			final UnmodifiableTransFormula guard =
+					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
 			transFormula1 = compose(getTransFormula(guard), transFormula1);
 		}
 		return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);

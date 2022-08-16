@@ -1030,6 +1030,55 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
+	public void tirDivisionForInequality00() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi") };
+		final String inputSTR = "(exists ((x Int) (y Int)) (and (<= (+ (* 17 lo) (* 17 y) 5) (* 17 x)) (<= (* 11 x) (+ (* 7 hi) (* 11 y) 9))))";
+		final String expectedResult = "(<= (+ (* lo 11) 2) (* 7 hi))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo1", "lo2", "hi") };
+		final String inputSTR = "(exists ((x Int)) (and (<= (+ (* 11 lo1) 4) (* 11 x)) (<= (+ (* 11 lo2) 22) (* 11 x))  (<= (* 2 x) hi)))";
+		final String expectedResult = "(and (<= (+ 4 (* lo2 2)) hi) (<= (+ 2 (* 2 lo1)) hi))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "lo", "hi1", "hi2") };
+		final String inputSTR = "(exists ((x Int)) (and (>= (+ (* 11 hi1) 4) (* 11 x)) (<= (+ (* 11 hi2) 22) (* 11 x))  (>= (* 2 x) lo)))";
+		final String expectedResult = "(and (<= (+ hi2 2) hi1) (<= lo (* hi1 2)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality03() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "hi1", "hi2", "lo") };
+		final String inputSTR = "(forall ((x Int)) (or (> (+ (* 11 hi1) 4) (* 11 x)) (> (+ (* 11 hi2) 22) (* 11 x))  (> (* 2 x) lo)))";
+		final String expectedResult = "(or (< lo (+ (* hi1 2) 2)) (< lo (+ (* hi2 2) 4)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality04() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "hi", "lo1", "lo2") };
+		final String inputSTR = "(forall ((x Int)) (or (< (+ (* 11 lo1) 4) (* 11 x)) (< (+ (* 11 lo2) 22) (* 11 x))  (< (* 2 x) hi)))";
+		final String expectedResult = "(or (< (* 2 lo1) hi) (< (+ 4 (* lo2 2)) hi))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void tirDivisionForInequality05PartialInvertibleDivision() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "hi1", "hi2", "lo") };
+		final String inputSTR = "(exists ((x Int)) (and (<= (* 6 lo) (* 4 x)) (<= (* 11 x) (* 5 hi1)) (<= (* 11 x) (* 5 hi2))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
 	public void bvuleTIR() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
 		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvule x hi ) (bvule lo x)))";
@@ -1292,7 +1341,6 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
 	@Test
 	public void bvTirIrd1() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "a", "b") };
@@ -1300,7 +1348,6 @@ public class QuantifierEliminationRegressionTest {
 		final String expectedResult = inputSTR;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void bvTirIrd3() {
@@ -1310,7 +1357,16 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
+	/**
+	 * Check that we do not accidentally divide by two in the first conjunct.
+	 */
+	@Test
+	public void bvTirNoInvertibleDivision() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "lo", "hi") };
+		final String inputSTR = "(exists ((x (_ BitVec 8))) (and (bvule (bvmul (_ bv2 8) lo) (bvmul (_ bv2 8) x)) (bvule x hi)))";
+		final String expectedResult = inputSTR;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	@Test
 	public void greaterTIRNegativeCoef() {
@@ -1921,7 +1977,7 @@ public class QuantifierEliminationRegressionTest {
 
 	/**
 	 * Formula that stems from the verification of SV-COMP benchmark
-	 * loop_lit_gsv2008 and demonstates that we need the "exact shadows" of the
+	 * loop_lit_gsv2008 and demonstrates that we need the "exact shadows" of the
 	 * omega test.
 	 */
 	@Test
@@ -1932,6 +1988,22 @@ public class QuantifierEliminationRegressionTest {
 		final String formulaAsString = "(exists ((x Int) (y Int)) (and (<= (+ 52 a) (+ y (* x 2))) (<= (+ y 1) b) (<= (+ x 4) (* 2 y))))";
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	/**
+	 * Problem: While eliminating eliminatee in dualFiniteJuncts new DER
+	 * possibilities for other eliminatee were introduced.
+	 */
+	@Test
+	public void shouldHaveBeenEliminatedByDer() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_cstrstr_~s#1.base", "ULTIMATE.start_cstrstr_~find#1.base", "ULTIMATE.start_cstrstr_~s#1.offset"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#length"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			};
+		final String formulaAsString = "(exists ((|v_#memory_int_34| (Array Int (Array Int Int))) (|ULTIMATE.start_main_~nondetString1~0#1.offset| Int) (v_ArrVal_219 (Array Int Int))) (and (<= |ULTIMATE.start_cstrstr_~s#1.offset| |ULTIMATE.start_main_~nondetString1~0#1.offset|) (or (exists ((|ULTIMATE.start_main_~length1~0#1| Int)) (and (<= 1 |ULTIMATE.start_main_~length1~0#1|) (<= 0 (select (select |v_#memory_int_34| |ULTIMATE.start_cstrstr_~s#1.base|) (+ (- 1) |ULTIMATE.start_main_~nondetString1~0#1.offset| |ULTIMATE.start_main_~length1~0#1|))) (<= |ULTIMATE.start_main_~length1~0#1| (select |#length| |ULTIMATE.start_cstrstr_~s#1.base|)))) (and (= |ULTIMATE.start_cstrstr_~find#1.base| |ULTIMATE.start_cstrstr_~s#1.base|) (exists ((|ULTIMATE.start_main_~length1~0#1| Int)) (and (<= 1 |ULTIMATE.start_main_~length1~0#1|) (<= 0 (select (select |v_#memory_int_34| |ULTIMATE.start_cstrstr_~s#1.base|) (+ (- 1) |ULTIMATE.start_main_~nondetString1~0#1.offset| |ULTIMATE.start_main_~length1~0#1|))))))) (<= |ULTIMATE.start_main_~nondetString1~0#1.offset| 0) (= |#memory_int| (store |v_#memory_int_34| |ULTIMATE.start_cstrstr_~find#1.base| v_ArrVal_219))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 

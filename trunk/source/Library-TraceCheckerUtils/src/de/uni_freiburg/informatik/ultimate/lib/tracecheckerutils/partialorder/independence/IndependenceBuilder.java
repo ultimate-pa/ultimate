@@ -40,13 +40,14 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndepend
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DisjunctiveConditionalIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IndependenceRelationWithAbstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -103,15 +104,14 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 *
 	 * @param mgdScript
 	 *            This script is used for SMT checks
-	 * @param originalScript
-	 *            TransFormulas of actions are created by this script, and must hence be transferred (using
-	 *            {@link TermTransferrer}) to the given mgdScript.
+	 * @param transferrer
+	 *            TransFormulas of input actions and the formulae of input conditions are assumed to not be created by
+	 *            the given {@code mgdScript}, this is used to transfer them.
 	 */
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final Script originalScript,
-			final boolean conditional, final boolean symmetric) {
-		final TermTransferrer independenceTransferrer = new TermTransferrer(originalScript, mgdScript.getScript());
-		return semantic(services, mgdScript, conditional, symmetric, independenceTransferrer);
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final TransferrerWithVariableCache transferrer, final boolean conditional, final boolean symmetric) {
+		return semantic(services, mgdScript, conditional, symmetric, transferrer);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 */
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
-			final boolean symmetric, final TermTransferrer transferrer) {
+			final boolean symmetric, final TransferrerWithVariableCache transferrer) {
 		return new PredicateActionIndependenceBuilder.Impl<>(
 				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, transferrer));
 	}
@@ -163,6 +163,36 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	public static <L extends IAction, S> ActionIndependenceBuilder.Impl<L, S>
 			fromActionIndependence(final IIndependenceRelation<S, L> relation) {
 		return new ActionIndependenceBuilder.Impl<>(relation);
+	}
+
+	/**
+	 * Conditionally apply a builder transformation.
+	 *
+	 * @param condition
+	 *            A condition to evaluate
+	 * @param then
+	 *            If the condition holds, apply this step. Otherwise do nothing.
+	 */
+	public B ifThen(final boolean condition, final Function<? super B, ? extends B> then) {
+		return ifThenElse(condition, then, Function.identity());
+	}
+
+	/**
+	 * Conditionally pick one of two builder transformations.
+	 *
+	 * @param condition
+	 *            A condition to evaluate
+	 * @param then
+	 *            If the condition holds, apply this step
+	 * @param otherwise
+	 *            If the condition does not hold, apply this step
+	 */
+	public <C extends IndependenceBuilder<L, S, C>> C ifThenElse(final boolean condition,
+			final Function<? super B, ? extends C> then, final Function<? super B, ? extends C> otherwise) {
+		if (condition) {
+			return then.apply(mCreator.apply(mRelation));
+		}
+		return otherwise.apply(mCreator.apply(mRelation));
 	}
 
 	/**
@@ -319,6 +349,13 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 */
 		public B threadSeparated() {
 			return mCreator.apply(new ThreadSeparatingIndependenceRelation<>(mRelation));
+		}
+
+		public <H> B withAbstraction(final IAbstraction<H, L> abstraction, final H level) {
+			if (abstraction == null) {
+				return mCreator.apply(mRelation);
+			}
+			return mCreator.apply(new IndependenceRelationWithAbstraction<>(mRelation, abstraction, level));
 		}
 
 		/**
