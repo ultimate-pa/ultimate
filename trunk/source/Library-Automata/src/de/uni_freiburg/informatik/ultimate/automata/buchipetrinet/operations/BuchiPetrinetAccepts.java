@@ -80,7 +80,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	}
 
 	@Override
-	public Object getResult() {
+	public Boolean getResult() {
 		return mResult;
 	}
 
