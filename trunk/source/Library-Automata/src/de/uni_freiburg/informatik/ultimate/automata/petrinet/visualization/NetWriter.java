@@ -97,15 +97,13 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 
 	private void printTransitions(final BoundedPetriNet<LETTER, STATE> net) {
 		printlnCollectionPrefix("transitions");
-		for (final Transition<LETTER, STATE> transition : net.getTransitions()) {
-			printTransition(transition, net);
-		}
+		net.getTransitions().forEach(this::printTransition);
 		printTransitionsSuffix();
 		print(',');
 		print(NEW_LINE);
 	}
 
-	private void printTransition(final Transition<LETTER, STATE> transition, final BoundedPetriNet<LETTER, STATE> net) {
+	private void printTransition(final Transition<LETTER, STATE> transition) {
 		printOneTransitionPrefix();
 		printMarking(transition.getPredecessors());
 		print(' ');

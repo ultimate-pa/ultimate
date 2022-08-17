@@ -79,7 +79,7 @@ public class PetriNetToUltimateModel<LETTER, PLACE> {
 
 			if (node instanceof Transition) {
 				transitionHandling(acceptingMarkings, place2placeNode, transition2transitionNode, queue,
-						(Transition<LETTER, PLACE>) node, net);
+						(Transition<LETTER, PLACE>) node);
 			} else {
 				placeHandling(net, place2placeNode, transition2transitionNode, queue, (PLACE) node);
 			}
@@ -116,7 +116,7 @@ public class PetriNetToUltimateModel<LETTER, PLACE> {
 	private void transitionHandling(final Collection<Collection<PLACE>> acceptingMarkings,
 			final Map<PLACE, PlaceNode> place2placeNode,
 			final Map<Transition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
-			final Transition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
+			final Transition<LETTER, PLACE> transition) {
 		final TransitionNode transitionNode = transition2transitionNode.get(transition);
 		for (final PLACE place : transition.getSuccessors()) {
 			PlaceNode placeNode = place2placeNode.get(place);

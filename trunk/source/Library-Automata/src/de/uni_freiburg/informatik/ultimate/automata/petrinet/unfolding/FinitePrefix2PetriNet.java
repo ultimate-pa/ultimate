@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
@@ -84,7 +83,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mOldToNewTransitions =
 			new HashRelation<>();
 	private final boolean mUsePetrification = false;
-	private final boolean mUseBackfoldingIds = false;
 	private final boolean mRemoveDeadTransitions;
 	private int mNumberOfCallsOfMergeCondidates = 0;
 	private int mNumberOfMergingCondidates = 0;
@@ -93,14 +91,13 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final Set<Event<LETTER, PLACE>> mVitalRepresentatives = new HashSet<>();
 
 	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
-			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp)
-			throws AutomataLibraryException {
+			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp) {
 		this(services, stateFactory, bp, false);
 	}
 
 	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
 			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp,
-			final boolean removeDeadTransitions) throws AutomataLibraryException {
+			final boolean removeDeadTransitions) {
 		super(services);
 		mStateFactory = stateFactory;
 		// TODO implement merging for markings?
@@ -122,7 +119,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), false);
 			mConditionRepresentatives = new UnionFind<>();
 			mEventRepresentatives = new UnionFind<>();
-			constructNet(bp, oldNet);
+			constructNet(bp);
 		}
 
 		if (mLogger.isInfoEnabled()) {
@@ -130,7 +127,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		}
 	}
 
-	private void constructNet(final BranchingProcess<LETTER, PLACE> bp, final BoundedPetriNet<LETTER, PLACE> oldNet) {
+	private void constructNet(final BranchingProcess<LETTER, PLACE> bp) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("CONDITIONS:");
 			for (final Condition<LETTER, PLACE> c : bp.getConditions()) {
@@ -141,17 +138,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				mLogger.debug(e.getPredecessorConditions() + " || " + e + " || " + e.getSuccessorConditions());
 			}
 		}
-
-		/*
-		 * final List<Event<LETTER, PLACE>> events = new ArrayList<>(); final List<Event<LETTER, PLACE>> worklist = new
-		 * LinkedList<Event<LETTER, PLACE>>(); final Set<Event<LETTER, PLACE>> visited = new HashSet<>();
-		 *
-		 * for (final Event<LETTER, PLACE> e : bp.getMinEvents()) { worklist.add(e); events.add(e); visited.add(e); }
-		 * while (!worklist.isEmpty()) { final Event<LETTER, PLACE> event = worklist.remove(0); for (final
-		 * Condition<LETTER, PLACE> c : event.getSuccessorConditions()) { for (final Event<LETTER, PLACE> e :
-		 * c.getSuccessorEvents()) { if (!visited.contains(e)) { worklist.add(e); events.add(e); visited.add(e); } } } }
-		 * for (final Event e : bp.getEvents()) { assert e == bp.getDummyRoot() || visited.contains(e); }
-		 */
 
 		for (final Event<LETTER, PLACE> e : bp.getEvents()) {
 			mEventRepresentatives.makeEquivalenceClass(e);
@@ -211,8 +197,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				}
 			}
 			final ArrayDeque<Event<LETTER, PLACE>> worklist = new ArrayDeque<>();
-			for (final Condition<LETTER, PLACE> c : bp.getAcceptingConditions()) {// TODO: Try if the condition
-																					// representatives are sufficient
+			// TODO: Try if the condition representatives are sufficient
+			for (final Condition<LETTER, PLACE> c : bp.getAcceptingConditions()) {
 				final Event<LETTER, PLACE> predRepresentative = mEventRepresentatives.find(c.getPredecessorEvent());
 				if (mVitalRepresentatives.add(predRepresentative)) {
 					worklist.add(predRepresentative);
@@ -243,27 +229,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			mVitalRepresentatives.remove(bp.getDummyRoot());
 			releventEvents.retainAll(mVitalRepresentatives);
 		}
-		/*
-		 * final Map<Event<LETTER, PLACE>, Integer> backfoldingId = new HashMap<>();
-		 *
-		 * if (mUseBackfoldingIds) { final ArrayList<Event<LETTER, PLACE>> eventList = new ArrayList<>(bp.getEvents());
-		 * eventList.sort(bp.getOrder()); int i = 0; int numberOfEventsWithLessAnsc = 0; int indexOfNextElemWithMoreAnsc
-		 * = 0;
-		 *
-		 * while (i < eventList.size()) { if (i == indexOfNextElemWithMoreAnsc) { numberOfEventsWithLessAnsc = i;
-		 * indexOfNextElemWithMoreAnsc = i + 1; while ((indexOfNextElemWithMoreAnsc < eventList.size()) &&
-		 * (eventList.get(i) .getAncestors() < eventList.get(indexOfNextElemWithMoreAnsc).getAncestors())) {
-		 * indexOfNextElemWithMoreAnsc++; } } final int respectiveBackfoldingId = eventList.size() -
-		 * indexOfNextElemWithMoreAnsc + i - numberOfEventsWithLessAnsc; backfoldingId.put(eventList.get(i),
-		 * respectiveBackfoldingId); i++; } }
-		 */
-		/*
-		 * for (Event<LETTER, PLACE>e1: releventEvents) { for (Event<LETTER, PLACE>e2: releventEvents) { assert
-		 * e1.equals(e2) ||
-		 * !(e1.getTransition().equals(e2.getTransition())&&(mConditionRepresentatives.find(e1.getPredecessorConditions(
-		 * )) .equals(mConditionRepresentatives.find(e2.getPredecessorConditions())))):
-		 * "There exists no 2 events with same predecessors conditions and transition"; } }
-		 */
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : mConditionRepresentatives.getAllRepresentatives()) {
 			final boolean isInitial =
@@ -277,20 +242,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 			placeMap.put(c, place);
 		}
-
-		/*
-		 * if (mUseBackfoldingIds) { final Comparator<Event<LETTER, PLACE>> idBasedComparator = new
-		 * IdBasedEventSorting(backfoldingId); final PriorityQueue<Event<LETTER, PLACE>> eventQueue = new
-		 * PriorityQueue<>(idBasedComparator); eventQueue.addAll(releventEvents); while (!eventQueue.isEmpty()) { final
-		 * Event<LETTER, PLACE> e = eventQueue.poll(); if (e == bp.getDummyRoot()) { continue; } final Set<PLACE> preds
-		 * = new HashSet<>(); final Set<PLACE> succs = new HashSet<>();
-		 *
-		 * for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) { final Condition<LETTER, PLACE>
-		 * representative = mConditionRepresentatives.find(c); preds.add(placeMap.get(representative)); } for (final
-		 * Condition<LETTER, PLACE> c : e.getSuccessorConditions()) { final Condition<LETTER, PLACE> representative =
-		 * mConditionRepresentatives.find(c); succs.add(placeMap.get(representative)); }
-		 * mNet.addTransition(e.getTransition().getSymbol(), preds, succs); } } else {
-		 */
 		for (final Event<LETTER, PLACE> e : releventEvents) {
 			final Set<PLACE> preds = new HashSet<>();
 			final Set<PLACE> succs = new HashSet<>();
@@ -307,37 +258,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 					mNet.addTransition(e.getTransition().getSymbol(), ImmutableSet.of(preds), ImmutableSet.of(succs));
 			mOldToNewTransitions.addPair(newTransition, e.getTransition());
 		}
-		// }
-		/*
-		 * { final TransitionSet transitionSet = new TransitionSet(); for (final Event<LETTER, PLACE> e :
-		 * releventEvents) { // equality intended here if (e == bp.getDummyRoot()) { continue; } final Set<PLACE> preds
-		 * = new HashSet<>(); final Set<PLACE> succs = new HashSet<>();
-		 *
-		 * for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) { final Condition<LETTER, PLACE>
-		 * representative = mConditionRepresentatives.find(c); preds.add(placeMap.get(representative)); }
-		 *
-		 * for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) { final Condition<LETTER, PLACE>
-		 * representative = mConditionRepresentatives.find(c); succs.add(placeMap.get(representative)); }
-		 * transitionSet.addTransition(e.getTransition().getSymbol(), preds, succs); //
-		 * mNet.addTransition(e.getTransition().getSymbol(), preds, succs); }
-		 * transitionSet.addAllTransitionsToNet(mNet); }
-		 */
-
-		/*
-		 * for (final Condition<LETTER, PLACE> c : bp.getConditions()) { if (!c.getPredecessorEvent().isCutoffEvent()) {
-		 * final PLACE place = mNet.addPlace(old_net.getStateFactory() .finitePrefix2net(c), bp.initialConditions()
-		 * .contains(c), bp.isAccepting(c)); placeMap.put(c, place); } } mLogger.debug("CONDITIONS TO PLACE:"); for
-		 * (final Map.Entry<Condition<LETTER, PLACE>, C> en : placeMap.entrySet()) { mLogger.debug(en); } for (final
-		 * Event<LETTER, PLACE> e : bp.getEvents()) { if (e.getTransition() == null) { continue; } final
-		 * ArrayList<PLACE> preds = new ArrayList<>(); final ArrayList<PLACE> succs = new ArrayList<>(); for (final
-		 * Condition<LETTER, PLACE> pc : e.getPredecessorConditions()) { assert placeMap.containsKey(pc) : pc.toString()
-		 * + " has successors, hence cannot be child of cut-off event." +
-		 * " So it must have been added, but it cannot be found."; preds.add(placeMap.get(pc)); } Event<LETTER, PLACE>
-		 * companionOrE = e; if (e.isCutoffEvent()) { companionOrE = e.getCompanion(); } for (final Condition<LETTER,
-		 * PLACE> sc : companionOrE.getSuccessorConditions()) { assert placeMap.containsKey(sc);
-		 * succs.add(placeMap.get(sc)); } final Transition<LETTER, PLACE> transition =
-		 * mNet.addTransition(e.getTransition() .getSymbol(), preds, succs); transitionMap.put(e, transition); }
-		 */
 	}
 
 	public Set<Transition<LETTER, PLACE>> computeVitalTransitions() {
@@ -348,11 +268,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private boolean containsInitial(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
 			final Collection<Condition<LETTER, PLACE>> initialConditions) {
 		return initialConditions.stream().anyMatch(x -> equivalenceClassMembers.contains(x));
-	}
-
-	private boolean containsAccepting(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
-		return equivalenceClassMembers.stream().anyMatch(x -> net.isAccepting(x.getPlace()));
 	}
 
 	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<LETTER, PLACE> oldNet,
@@ -401,12 +316,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	public BoundedPetriNet<LETTER, PLACE> getResult() {
 		return mNet;
 	}
-
-	/*
-	 * private Condition<LETTER, PLACE> getRepresentative(final Condition<LETTER, PLACE> c) { Condition<LETTER, PLACE>
-	 * result = c; while (result != representatives.get(result)) { result = representatives.get(result); assert result
-	 * != null; } return result; }
-	 */
 
 	private void mergeConditions(final Set<Condition<LETTER, PLACE>> set1, final Set<Condition<LETTER, PLACE>> set2) {
 		mNumberOfCallsOfMergeCondidates++;

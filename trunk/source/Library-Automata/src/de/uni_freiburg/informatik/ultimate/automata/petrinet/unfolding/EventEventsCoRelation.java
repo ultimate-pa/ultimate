@@ -164,14 +164,6 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 		}
 	}
 
-	private void addConflict(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
-		for (final Event<LETTER, PLACE> e : mBranchingProcess.getEvents().stream()
-				.filter(e3 -> e3.getLocalConfiguration().contains(e2)).collect(Collectors.toSet())) {
-			conflictRelation.addPair(e1, e);
-			conflictRelation.addPair(e, e1);
-		}
-	}
-
 	@Override
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		final Event<LETTER, PLACE> e1 = c1.getPredecessorEvent();
@@ -181,10 +173,6 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 				// we don't have to check this if we assume that c1 and c2 are not cutoff conditions
 				|| c1.getPredecessorEvent().conditionMarkContains(c2)
 				|| c2.getPredecessorEvent().conditionMarkContains(c1);
-		// if( result != isInCoRelationNaive(c1, c2)) {
-		// assert false: String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result,
-		// !result);
-		// }
 
 		if (result) {
 			mQueryCounterYes++;
@@ -192,10 +180,6 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 			mQueryCounterNo++;
 		}
 		return result;
-	}
-
-	private boolean isInCoRelationNaive(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
-		return !mBranchingProcess.inCausalRelation(c1, c2) && !mBranchingProcess.inConflict(c1, c2);
 	}
 
 	/**
