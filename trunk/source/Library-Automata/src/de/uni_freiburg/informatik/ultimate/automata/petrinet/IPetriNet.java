@@ -26,11 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -66,25 +64,16 @@ public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LET
 	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
 			getSuccessorTransitionProviders(final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
 		final HashRelation<Set<PLACE>, Transition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
-		final Set<Transition<LETTER, PLACE>> successorTransitions = new HashSet<>();
 		for (final PLACE p : mustPlaces) {
 			for (final Transition<LETTER, PLACE> t : getSuccessors(p)) {
-				successorTransitions.add(t);
+				final Set<PLACE> predeccesorOfT = t.getPredecessors();
+				if (mayPlaces.containsAll(predeccesorOfT)) {
+					predecessorPlaces2Transition.addPair(predeccesorOfT, t);
+				}
 			}
 		}
-		for (final Transition<LETTER, PLACE> t : successorTransitions) {
-			final Set<PLACE> predeccesorOfT = t.getPredecessors();
-			if (mayPlaces.containsAll(predeccesorOfT)) {
-				predecessorPlaces2Transition.addPair(predeccesorOfT, t);
-			}
-		}
-
-		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
-		for (final Set<PLACE> predecessors : predecessorPlaces2Transition.getDomain()) {
-			final Set<Transition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
-			result.add(new SimpleSuccessorTransitionProvider<>(transitions));
-		}
-		return result;
+		return predecessorPlaces2Transition.entrySet().stream()
+				.map(x -> new SimpleSuccessorTransitionProvider<>(x.getValue())).collect(Collectors.toList());
 	}
 
 	int flowSize();
