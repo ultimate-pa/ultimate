@@ -327,6 +327,38 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return eAncestors.contains(condition);
 	}
 
+	public boolean eventsInCausalRelation(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
+		final Set<Object> cAncestors = ancestorNodes(e1);
+		if (cAncestors.contains(e2)) {
+			return true;
+		}
+		final Set<Object> eAncestors = ancestorNodes(e2);
+		return eAncestors.contains(e1);
+	}
+
+	public boolean eventsInConcurrency(final Event<LETTER, PLACE> event1, final Event<LETTER, PLACE> event2) {
+		return (!eventsInConflict(event1, event2)) && (!eventsInCausalRelation(event1, event2));
+
+	}
+
+	public boolean eventsInConflict(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
+		if (e1 == e2) {
+			return false;
+		}
+		if (e1.getPredecessorConditions().stream().anyMatch(e2.getPredecessorConditions()::contains)) {
+			return true;
+		}
+		boolean result = false;
+		for (final Condition<LETTER, PLACE> e1Pred : e1.getPredecessorConditions()) {
+			for (final Condition<LETTER, PLACE> e2Pred : e2.getPredecessorConditions()) {
+				final Set<Object> e2Ancestors = ancestorNodes(e2);
+				result = result || conflictPathCheck(e1Pred, e2Pred, e2Ancestors);
+			}
+		}
+		return result;
+
+	}
+
 	/**
 	 * Check if the Conditions c1 and c2 are in conflict. In a branching process Conditions c1 and c2 are in conflict
 	 * iff c1 != c2 and there exist two paths leading to c1 and c2 which start at the same condition and diverge
@@ -376,7 +408,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @return Set containing all Conditions and Events which are (strict) ancestors of a Condition. The dummyRoot is
 	 *         not considered as an ancestor.
 	 */
-	private Set<Object> ancestorNodes(final Condition<LETTER, PLACE> condition) {
+	public Set<Object> ancestorNodes(final Condition<LETTER, PLACE> condition) {
 		final Event<LETTER, PLACE> pred = condition.getPredecessorEvent();
 		if (pred.equals(mDummyRoot)) {
 			return Collections.emptySet();
