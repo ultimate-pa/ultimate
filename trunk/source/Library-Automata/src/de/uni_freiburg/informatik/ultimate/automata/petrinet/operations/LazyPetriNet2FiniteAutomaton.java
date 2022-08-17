@@ -206,7 +206,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	private void createAutomatonTransition(final S state, final Marking<L, S> marking,
 			final Transition<L, S> transition) {
 		try {
-			final S successor = getOrConstructState(marking.fireTransition(transition, mOperand));
+			final S successor = getOrConstructState(marking.fireTransition(transition));
 			if (successor != null) {
 				mCache.addInternalTransition(state, transition.getSymbol(), successor);
 			}
@@ -244,7 +244,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	private Stream<Transition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
 		return marking.stream().flatMap(place -> mOperand.getSuccessors(place).stream())
-				.filter(t -> marking.isTransitionEnabled(t, mOperand));
+				.filter(marking::isTransitionEnabled);
 	}
 
 	private boolean isKnownDeadEnd(final Marking<?, S> marking) {

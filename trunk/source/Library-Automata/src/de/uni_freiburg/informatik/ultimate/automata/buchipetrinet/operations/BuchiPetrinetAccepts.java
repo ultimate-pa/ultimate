@@ -173,7 +173,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 		} else {
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
 		}
-		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition, mOperand),
+		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition),
 				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex);
 	}
 
@@ -182,8 +182,8 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 		final Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
 		for (final PLACE place : marking) {
 			mOperand.getSuccessors(place).stream().filter(transition -> transition.getSymbol().equals(symbol))
-					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))
-					.collect(Collectors.toSet()).forEach(activeTransitionsWithSymbol::add);
+					.filter((transition -> marking.isTransitionEnabled(transition))).collect(Collectors.toSet())
+					.forEach(activeTransitionsWithSymbol::add);
 		}
 		return activeTransitionsWithSymbol;
 	}

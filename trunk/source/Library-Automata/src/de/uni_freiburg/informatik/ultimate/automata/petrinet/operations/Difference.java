@@ -437,12 +437,12 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 	private void syncWithEachSelfloop(final Transition<LETTER, PLACE> oldTrans) {
 		// Relies on the special properties of the subtrahend L(A)◦Σ^*.
 		for (final PLACE state : mDsi.getSelfloops().getImage(oldTrans)) {
-			final Set<PLACE> predecessors = new HashSet<>();
-			final Set<PLACE> successors = new HashSet<>();
 			final PLACE wPlace = mWhitePlace.get(state);
 			if (wPlace == null) {
 				throw new AssertionError("No black place for " + state);
 			}
+			final Set<PLACE> predecessors = new HashSet<>();
+			final Set<PLACE> successors = new HashSet<>();
 			predecessors.add(wPlace);
 			predecessors.addAll(oldTrans.getPredecessors());
 			successors.add(wPlace);
@@ -574,8 +574,8 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 		}
 		final E result = iter.next();
 		if (iter.hasNext()) {
-			throw new AssertionError(
-					"Expected at most one element, found more, probably the second arguement of the difference operation is not deterministic.");
+			throw new AssertionError("Expected at most one element, found more, probably the second arguement"
+					+ " of the difference operation is not deterministic.");
 		}
 		return result;
 	}

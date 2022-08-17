@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 /**
  * Copies a Petri net N partially, creating a sub-net N'.
@@ -182,7 +181,7 @@ public class CopySubnet<LETTER, PLACE> {
 	}
 
 	private void rebuildTransition(final Transition<LETTER, PLACE> trans) {
-		final Set<PLACE> succ = SetOperations.intersection(trans.getSuccessors(), mResult.getPlaces());
+		final Set<PLACE> succ = DataStructureUtils.intersection(trans.getSuccessors(), mResult.getPlaces());
 		mResult.addTransition(trans.getSymbol(), trans.getPredecessors(), ImmutableSet.of(succ));
 	}
 

@@ -61,8 +61,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
-	private static final String EMPTY_INITIAL_ERROR_MESSAGE =
-			"Subtrahend has no initial states! We could soundly return the minuend as result (implement this if required). However we presume that in most cases, such a subtrahend was passed accidentally";
 	private final AutomataLibraryServices mServices;
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mMinuend;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
@@ -97,11 +95,13 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 	@Override
 	public Set<PLACE> getInitialPlaces() {
-		final Set<PLACE> result = new HashSet<>(mMinuend.getInitialPlaces());
 		final Iterator<PLACE> it = mSubtrahend.getInitialStates().iterator();
 		if (!it.hasNext()) {
-			throw new UnsupportedOperationException(EMPTY_INITIAL_ERROR_MESSAGE);
+			throw new UnsupportedOperationException(
+					"Subtrahend has no initial states! We could soundly return the minuend as result (implement this if required). "
+							+ "However we presume that in most cases, such a subtrahend was passed accidentally");
 		}
+		final Set<PLACE> result = new HashSet<>(mMinuend.getInitialPlaces());
 		final PLACE automatonInitialState = it.next();
 		result.add(automatonInitialState);
 		if (it.hasNext()) {
@@ -147,22 +147,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			return Collections.emptySet();
 		}
 		assert (mayPlaces.containsAll(mustPlaces)) : "some must place is not may place";
-		final Set<PLACE> minuendMustPlaces;
-		final Set<PLACE> subtrahendMustStates;
-		final Set<PLACE> minuendMayPlaces;
-		final Set<PLACE> subtrahendMayStates;
-		{
-			final Pair<Set<PLACE>, Set<PLACE>> split = split(mustPlaces);
-			minuendMustPlaces = split.getFirst();
-			subtrahendMustStates = split.getSecond();
-		}
-		{
-			final Pair<Set<PLACE>, Set<PLACE>> split = split(mayPlaces);
-			minuendMayPlaces = split.getFirst();
-			subtrahendMayStates = split.getSecond();
-		}
-		// System.out.println("ComputeDifferenceSuccs " + minuendMustPlaces.size() + "+" + subtrahendMustStates.size()
-		// + " " + minuendMayPlaces.size() + "+" + subtrahendMayStates.size());
+		final Pair<Set<PLACE>, Set<PLACE>> splitMust = split(mustPlaces);
+		final Set<PLACE> minuendMustPlaces = splitMust.getFirst();
+		final Set<PLACE> subtrahendMustStates = splitMust.getSecond();
+		final Pair<Set<PLACE>, Set<PLACE>> splitMay = split(mayPlaces);
+		final Set<PLACE> minuendMayPlaces = splitMay.getFirst();
+		final Set<PLACE> subtrahendMayStates = splitMay.getSecond();
 		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> minuendStps;
 		if (subtrahendMustStates.isEmpty()) {
 			minuendStps = mMinuend.getSuccessorTransitionProviders(minuendMustPlaces, minuendMayPlaces);

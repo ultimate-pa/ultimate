@@ -128,7 +128,7 @@ public final class Accepts<LETTER, PLACE>
 		boolean result = false;
 		Marking<LETTER, PLACE> nextMarking;
 		for (final Transition<LETTER, PLACE> transition : activeTransitionsWithSymbol(marking, symbol)) {
-			nextMarking = marking.fireTransition(transition, mOperand);
+			nextMarking = marking.fireTransition(transition);
 			if (getResultHelper(nextPosition, nextMarking)) {
 				result = true;
 			}
@@ -141,8 +141,7 @@ public final class Accepts<LETTER, PLACE>
 		final Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
 		for (final PLACE place : marking) {
 			mOperand.getSuccessors(place).stream().filter(transition -> transition.getSymbol().equals(symbol))
-					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))
-					.forEach(activeTransitionsWithSymbol::add);
+					.filter(marking::isTransitionEnabled).forEach(activeTransitionsWithSymbol::add);
 		}
 		return activeTransitionsWithSymbol;
 	}

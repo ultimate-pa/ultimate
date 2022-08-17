@@ -173,8 +173,8 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 
 		final Set<Transition<LETTER, PLACE>> outgoing = getOutgoingNetTransitions(marking);
 		for (final Transition<LETTER, PLACE> transition : outgoing) {
-			if (marking.isTransitionEnabled(transition, mOperand)) {
-				final Marking<LETTER, PLACE> succMarking = marking.fireTransition(transition, mOperand);
+			if (marking.isTransitionEnabled(transition)) {
+				final Marking<LETTER, PLACE> succMarking = marking.fireTransition(transition);
 				final PLACE succState = getState(succMarking, false);
 				if (succState != null) {
 					mResult.addInternalTransition(state, transition.getSymbol(), succState);

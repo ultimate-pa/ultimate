@@ -148,8 +148,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
+	public boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition) {
 		return mPlaces.containsAll(transition.getPredecessors());
 	}
 
@@ -159,10 +158,11 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 * @throws PetriNetNot1SafeException
 	 */
-	public Marking<LETTER, PLACE> fireTransition(final Transition<LETTER, PLACE> transition,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> net) throws PetriNetNot1SafeException {
+	public Marking<LETTER, PLACE> fireTransition(final Transition<LETTER, PLACE> transition)
+			throws PetriNetNot1SafeException {
 		final Set<PLACE> predecessors = transition.getPredecessors();
 		final Set<PLACE> successors = transition.getSuccessors();
+		// TODO 2022-08-17 Frank: Doesn't the distinct here make the try/catch useless?
 		final Object[] places =
 				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream()).distinct()
 						.toArray();

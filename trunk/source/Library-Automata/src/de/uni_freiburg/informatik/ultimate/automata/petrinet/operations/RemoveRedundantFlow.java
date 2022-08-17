@@ -185,8 +185,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return false;
 	}
 
-	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
-			throws AutomataOperationCanceledException {
+	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate) {
 		Boolean isRestrictor = mRestrictorPlaceCache.get(redundancyCandidate, restrictorCandidate);
 		if (isRestrictor == null) {
 			isRestrictor = checkRestrictorPlace(redundancyCandidate, restrictorCandidate);
@@ -195,8 +194,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return isRestrictor;
 	}
 
-	private boolean checkRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
-			throws AutomataOperationCanceledException {
+	private boolean checkRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate) {
 		for (final Condition<LETTER, PLACE> restrictorCandidateCondition : mFinPre.place2cond(restrictorCandidate)) {
 			if (restrictorCandidateCondition.getPredecessorEvent().isCutoffEvent()) {
 				// we may omit the check because if the the candidate is not a
@@ -215,8 +213,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	}
 
 	private boolean isRestrictorCondition(final Condition<LETTER, PLACE> restrictorCandidateCondition,
-			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation)
-			throws AutomataOperationCanceledException {
+			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation) {
 		mRestrictorConditionChecks++;
 		final Optional<Condition<LETTER, PLACE>> redundancyCandidateCondition =
 				restrictorCandidateCondition.getPredecessorEvent().getConditionMark().stream()
