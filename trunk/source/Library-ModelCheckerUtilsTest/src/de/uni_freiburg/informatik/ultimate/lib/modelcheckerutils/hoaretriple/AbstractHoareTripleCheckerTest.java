@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2021 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2021-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -29,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,39 +68,45 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
-public class HoareTripleCheckerTest {
+public abstract class AbstractHoareTripleCheckerTest {
 
-	private static final String PROCEDURE = HoareTripleCheckerTest.class.getSimpleName();
+	private static final String PROCEDURE = AbstractHoareTripleCheckerTest.class.getSimpleName();
 
-	private IUltimateServiceProvider mServices;
-	private Script mScript;
-	private ManagedScript mMgdScript;
-	private ILogger mLogger;
-	private PredicateUnifier mPredicateUnifier;
-	private CfgSmtToolkit mCsToolkit;
-	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
+	protected IUltimateServiceProvider mServices;
+	protected Script mScript;
+	protected ManagedScript mMgdScript;
+	protected ILogger mLogger;
+	protected PredicateUnifier mPredicateUnifier;
+	protected CfgSmtToolkit mCsToolkit;
+	protected final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 
 	private IProgramConst c;
+	private IProgramVar x;
+
+	protected abstract IHoareTripleChecker getHtc();
 
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
 		mScript = new HistoryRecordingScript(UltimateMocks.createZ3Script(LogLevel.INFO));
-		mLogger = mServices.getLoggingService().getLogger(HoareTripleCheckerTest.class);
+		mLogger = mServices.getLoggingService().getLogger(AbstractHoareTripleCheckerTest.class);
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 
 		c = constructConst("c", SmtSortUtils.getIntSort(mScript));
-
+		x = constructVar("x", SmtSortUtils.getIntSort(mScript));
 		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
 		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -112,25 +120,16 @@ public class HoareTripleCheckerTest {
 				Collections.emptyMap(), Collections.emptyMap(), icfgEdgeFactory, ci, smtFunctionsAndAxioms);
 	}
 
-	private void testInternal(final IHoareTripleChecker htc, final Validity expected, final String pre,
+	private void testInternal(final Validity validity, final Validity expected, final String pre,
 			final UnmodifiableTransFormula act, final String post) {
+		assert validity == expected || expected == Validity.UNKNOWN : "Inconsistent expected validity";
+
 		final IPredicate precond = pred(pre);
 		final IPredicate postcond = pred(post);
+		final IHoareTripleChecker htc = getHtc();
 		final Validity actual =
 				htc.checkInternal(precond, new BasicInternalAction(PROCEDURE, PROCEDURE, act), postcond);
-		switch (actual) {
-		case UNKNOWN:
-		case NOT_CHECKED:
-			if (actual != expected) {
-				mLogger.warn(htc.getClass().getSimpleName()
-						+ " was unable to check Hoare triple with expected validity " + expected);
-			}
-			break;
-		case VALID:
-		case INVALID:
-			Assert.assertEquals("Expected validity " + expected + " for Hoare triple, but was " + actual, expected,
-					actual);
-		}
+		Assert.assertEquals("Unexpected validity for Hoare triple:", expected, actual);
 	}
 
 	/*
@@ -146,19 +145,39 @@ public class HoareTripleCheckerTest {
 		return constant;
 	}
 
-	private IProgramVar constructVar(final String name, final String sort) {
-		final IProgramVar variable =
-				ProgramVarUtils.constructGlobalProgramVarPair(name, mScript.sort(sort), mMgdScript, null);
+	private IProgramVar constructVar(final String name, final Sort sort) {
+		final IProgramVar variable = ProgramVarUtils.constructGlobalProgramVarPair(name, sort, mMgdScript, null);
 		mSymbolTable.add(variable);
 		return variable;
 	}
 
-	private Term parseWithVariables(final String syntax) {
-		return SmtParserUtils.parseWithVariables(syntax, mServices, mCsToolkit);
+	private Term parseWithInOutVariables(final String syntax) {
+		final var inVars = suffixVars("_in");
+		final var outVars = suffixVars("_out");
+		return SmtParserUtils.parseWithVariables(syntax, mServices, mMgdScript,
+				DataStructureUtils.union(inVars, outVars));
 	}
 
-	protected IPredicate pred(final String formula) {
+	private Term parseWithVariables(final String syntax) {
+		return SmtParserUtils.parseWithVariables(syntax, mServices, mMgdScript, mSymbolTable);
+	}
+
+	private Set<TermVariable> suffixVars(final String suffix) {
+		return mSymbolTable.getGlobals().stream().map(
+				pv -> mScript.getTheory().createTermVariable(pv.getTermVariable().getName() + suffix, pv.getSort()))
+				.collect(Collectors.toSet());
+	}
+
+	private IPredicate pred(final String formula) {
 		return mPredicateUnifier.getOrConstructPredicate(parseWithVariables(formula));
+	}
+
+	private TermVariable outVar(final IProgramVar x) {
+		return mScript.variable(x.getTermVariable().getName() + "_out", x.getSort());
+	}
+
+	private TermVariable inVar(final IProgramVar x) {
+		return mScript.variable(x.getTermVariable().getName() + "_in", x.getSort());
 	}
 
 	/*
@@ -194,20 +213,69 @@ public class HoareTripleCheckerTest {
 	}
 
 	@Test
-	public void sdHtcTest02() {
+	public void disjointVarsButConst() {
 		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), false, Set.of(c), true, null, true);
-		tfb.setFormula(parseWithVariables("(>= c 0)"));
+		tfb.setFormula(parseWithInOutVariables("(>= c 0)"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		final var tf = tfb.finishConstruction(mMgdScript);
-		testInternal(new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier), Validity.VALID, "true", tf, "(>= c 0)");
+		testInternal(Validity.VALID, disjointVarsButConstVerdict(), "true", tf, "(>= c 0)");
+	}
+
+	protected Validity disjointVarsButConstVerdict() {
+		return Validity.VALID;
 	}
 
 	@Test
-	public void sdHtcTest03() {
+	public void disjointVarsButConstToFalse() {
 		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), false, Set.of(c), true, null, true);
-		tfb.setFormula(parseWithVariables("(>= c 0)"));
+		tfb.setFormula(parseWithInOutVariables("(>= c 0)"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		final var tf = tfb.finishConstruction(mMgdScript);
-		testInternal(new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier), Validity.VALID, "(< c 0)", tf, "false");
+		testInternal(Validity.VALID, disjointVarsButConstToFalseVerdict(), "(< c 0)", tf, "false");
+	}
+
+	protected Validity disjointVarsButConstToFalseVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void preImplPostNoAssign() {
+		final var tfb =
+				new TransFormulaBuilder(Map.of(x, inVar(x)), Map.of(x, inVar(x)), false, Set.of(), true, null, true);
+		tfb.setFormula(parseWithInOutVariables("(= x_in 3)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.VALID, preImplPostNoAssignVerdict(), "(>= x 2)", tf, "(>= x 0)");
+	}
+
+	protected Validity preImplPostNoAssignVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void preImplPostButAssigns() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(x, outVar(x)), false, Set.of(), true, null, true);
+		tfb.setFormula(parseWithInOutVariables("(= x_out 3)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.INVALID, preImplPostButAssignsVerdict(), "(= x 0)", tf, "(<= x 0)");
+	}
+
+	protected Validity preImplPostButAssignsVerdict() {
+		return Validity.INVALID;
+	}
+
+	@Test
+	public void noAssignAndNoImpl() {
+		final var tfb =
+				new TransFormulaBuilder(Map.of(x, inVar(x)), Map.of(x, inVar(x)), false, Set.of(), true, null, true);
+		tfb.setFormula(parseWithInOutVariables("(= x_in 11)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.INVALID, noAssignAndNoImplVerdict(), "(>= x 2)", tf, "(<= x 10)");
+	}
+
+	protected Validity noAssignAndNoImplVerdict() {
+		return Validity.INVALID;
 	}
 }
