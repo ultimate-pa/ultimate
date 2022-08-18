@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,11 +51,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -64,11 +63,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -86,8 +83,6 @@ public class HoareTripleCheckerTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
-	private Term mTrue;
-	private Term mFalse;
 	private PredicateUnifier mPredicateUnifier;
 	private CfgSmtToolkit mCsToolkit;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
@@ -101,15 +96,11 @@ public class HoareTripleCheckerTest {
 		mLogger = mServices.getLoggingService().getLogger(HoareTripleCheckerTest.class);
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
-		mTrue = mScript.term("true");
-		mFalse = mScript.term("false");
 
-		mScript.declareFun("c", new Sort[0], SmtSortUtils.getIntSort(mScript));
-		c = new ProgramConst("c", (ApplicationTerm) mScript.term("c"), false);
+		c = constructConst("c", SmtSortUtils.getIntSort(mScript));
 
-		final DefaultIcfgSymbolTable symbolTable = new DefaultIcfgSymbolTable();
-		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, symbolTable);
-		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, symbolTable,
+		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
+		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(new HashRelation<>());
@@ -117,7 +108,7 @@ public class HoareTripleCheckerTest {
 		final ConcurrencyInformation ci =
 				new ConcurrencyInformation(Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
 		final SmtFunctionsAndAxioms smtFunctionsAndAxioms = new SmtFunctionsAndAxioms(mMgdScript);
-		mCsToolkit = new CfgSmtToolkit(modGlobTab, mMgdScript, symbolTable, Collections.emptySet(),
+		mCsToolkit = new CfgSmtToolkit(modGlobTab, mMgdScript, mSymbolTable, Collections.emptySet(),
 				Collections.emptyMap(), Collections.emptyMap(), icfgEdgeFactory, ci, smtFunctionsAndAxioms);
 	}
 
@@ -148,6 +139,13 @@ public class HoareTripleCheckerTest {
 	 * ****************************************************************************************************************
 	 */
 
+	private IProgramConst constructConst(final String name, final Sort sort) {
+		mScript.declareFun(name, new Sort[0], sort);
+		final IProgramConst constant = new ProgramConst(name, (ApplicationTerm) mScript.term(name), false);
+		mSymbolTable.add(constant);
+		return constant;
+	}
+
 	private IProgramVar constructVar(final String name, final String sort) {
 		final IProgramVar variable =
 				ProgramVarUtils.constructGlobalProgramVarPair(name, mScript.sort(sort), mMgdScript, null);
@@ -156,13 +154,7 @@ public class HoareTripleCheckerTest {
 	}
 
 	private Term parseWithVariables(final String syntax) {
-		final String template = "(%1$s %2$s) (%1$s_in %2$s) (%1$s_out %2$s)";
-		final String declarations = mSymbolTable.getGlobals().stream()
-				.map(pv -> String.format(template, pv.getTermVariable().getName(), pv.getSort()))
-				.collect(Collectors.joining(" ")) + " (aux Int)";
-		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";
-		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
-		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
+		return SmtParserUtils.parseWithVariables(syntax, mServices, mCsToolkit);
 	}
 
 	protected IPredicate pred(final String formula) {

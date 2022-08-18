@@ -72,4 +72,6 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 	 */
 	A getInitialAbstraction(IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs)
 			throws AutomataLibraryException;
+
+	// TODO Add statistics support
 }

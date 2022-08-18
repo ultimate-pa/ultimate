@@ -1,8 +1,6 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -30,19 +28,13 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.ICoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -68,7 +60,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	 *            The predicate factory used to create new MLPredicates.
 	 */
 	public SleepSetStateFactoryForRefinement(final PredicateFactory predicateFactory) {
-		super();
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
 	}
 
@@ -122,95 +113,32 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		return new SleepPredicate<>((IMLPredicate) original, sleepset);
 	}
 
-	public static final class SleepPredicate<L> implements IMLPredicate {
-		private final IMLPredicate mUnderlying;
-		private final ImmutableSet<L> mSleepSet;
-
+	/**
+	 * A predicate annotated with a sleep set.
+	 *
+	 * @param <L>
+	 *            The type of letters in the sleep set
+	 */
+	public static final class SleepPredicate<L> extends AnnotatedMLPredicate<ImmutableSet<L>> {
+		/**
+		 * Create a new annotated predicate
+		 *
+		 * @param underlying
+		 *            The underlying predicate being annotated
+		 * @param sleepSet
+		 *            The sleep set annotating the predicate
+		 */
 		public SleepPredicate(final IMLPredicate underlying, final ImmutableSet<L> sleepSet) {
-			mUnderlying = underlying;
-			mSleepSet = sleepSet;
-		}
-
-		@Override
-		public IcfgLocation[] getProgramPoints() {
-			return mUnderlying.getProgramPoints();
-		}
-
-		@Override
-		public Term getFormula() {
-			return mUnderlying.getFormula();
-		}
-
-		@Override
-		public Term getClosedFormula() {
-			return mUnderlying.getClosedFormula();
-		}
-
-		@Override
-		public String[] getProcedures() {
-			return mUnderlying.getProcedures();
-		}
-
-		@Override
-		public Set<IProgramVar> getVars() {
-			return mUnderlying.getVars();
-		}
-
-		@Override
-		public Set<IProgramConst> getConstants() {
-			return mUnderlying.getConstants();
-		}
-
-		@Override
-		public Set<IProgramFunction> getFunctions() {
-			return mUnderlying.getFunctions();
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(mSleepSet, mUnderlying);
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final SleepPredicate<?> other = (SleepPredicate<?>) obj;
-			return Objects.equals(mSleepSet, other.mSleepSet) && Objects.equals(mUnderlying, other.mUnderlying);
-		}
-
-		public IMLPredicate getUnderlying() {
-			return mUnderlying;
+			super(underlying, sleepSet);
 		}
 
 		public ImmutableSet<L> getSleepSet() {
-			return mSleepSet;
-		}
-	}
-
-	public static class FactoryCoveringRelation<L> implements ICoveringRelation<IPredicate> {
-		private final SleepSetStateFactoryForRefinement<L> mFactory;
-
-		public FactoryCoveringRelation(final SleepSetStateFactoryForRefinement<L> factory) {
-			mFactory = factory;
+			return mAnnotation;
 		}
 
 		@Override
-		public boolean covers(final IPredicate oldState, final IPredicate newState) {
-			assert getKey(oldState) == getKey(newState);
-			return mFactory.getSleepSet(newState).containsAll(mFactory.getSleepSet(oldState));
-		}
-
-		@Override
-		public Object getKey(final IPredicate state) {
-			return mFactory.getOriginalState(state);
+		public String toString() {
+			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mAnnotation + "]";
 		}
 	}
 }

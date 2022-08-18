@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2020 Marcel Ebbinghaus
- * Copyright (C) 2020 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2020-2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2020-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -29,15 +29,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
@@ -45,8 +51,14 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimiz
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CoinFlipBudget;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -61,29 +73,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 /**
@@ -98,31 +103,62 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
-	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
-	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
-
 	private final PartialOrderMode mPartialOrderMode;
-	private final IIntersectionStateFactory<IPredicate> mFactory;
+	private final IIntersectionStateFactory<IPredicate> mFactory = new InformationStorageFactory();
+
 	private final PartialOrderReductionFacade<L> mPOR;
+	private final List<IRefinableIndependenceProvider<L>> mIndependenceProviders;
 
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
+
+	private final boolean mSupportsDeadEnds;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
 			final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final IUltimateServiceProvider services,
+			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
 				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
+
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
-		mFactory = new InformationStorageFactory();
+		if (mPref.applyOneShotLbe()) {
+			boolean hasAbstraction = false;
+			for (int i = 0; !hasAbstraction && i < mPref.getNumberOfIndependenceRelations(); ++i) {
+				hasAbstraction |= mPref.porIndependenceSettings(i).getAbstractionType() != AbstractionType.NONE;
+			}
+			if (mPartialOrderMode.hasPersistentSets() || hasAbstraction) {
+				throw new UnsupportedOperationException(
+						"Soundness is currently not guaranteed for this CEGAR loop if one-shot LBE is turned on.");
+			}
+		}
 
-		final IIndependenceRelation<IPredicate, L> independenceRelation = constructIndependence(csToolkit);
+		mIndependenceProviders = independenceProviders;
+
+		// Setup management of abstraction levels and corresponding independence relations.
+		final int numIndependenceRelations = mIndependenceProviders.size();
+		mLogger.info("Running %s with %d independence relations.", PartialOrderCegarLoop.class.getSimpleName(),
+				numIndependenceRelations);
+		if (numIndependenceRelations > 1) {
+			mLogger.warn("Attention: Unsuitable combinations of independence relations may be unsound!");
+			mLogger.warn("Only combine independence relations if you are sure the combination is sound.");
+		}
+		for (final var provider : mIndependenceProviders) {
+			provider.initialize();
+		}
+
+		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceProviders.stream()
+				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs,
-				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), independenceRelation);
+				mPref.getPartialOrderMode(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations,
+				this::makeBudget);
+
+		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
+				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
 	}
 
 	@Override
@@ -141,11 +177,40 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// Automaton must be total and deterministic
-		final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, mStateFactoryForRefinement, true);
-		assert !totalInterpol.nonDeterminismInInputDetected() : "interpolant automaton was nondeterministic";
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> determinized;
+		switch (mPref.interpolantAutomatonEnhancement()) {
+		case PREDICATE_ABSTRACTION:
+		case PREDICATE_ABSTRACTION_CANNIBALIZE:
+		case PREDICATE_ABSTRACTION_CONSERVATIVE:
+			// already total and deterministic
+			assert ia instanceof DeterministicInterpolantAutomaton<?>;
+			determinized = ia;
+			break;
+		case NONE:
+			// make automaton total
+			final IPredicate initialSink = DataStructureUtils.getOneAndOnly(ia.getInitialStates(), "initial state");
+			assert initialSink == predicateUnifier.getTruePredicate() : "initial state should be TRUE";
+			final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
+
+			// determinize total automaton
+			final var det = new PowersetDeterminizer<>(totalInterpol, false, new DeterminizationFactory());
+			determinized = new DeterminizeNwa<>(new AutomataLibraryServices(mServices), totalInterpol, det,
+					mStateFactoryForRefinement, null, false);
+			break;
+		default:
+			throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support enhancement "
+					+ mPref.interpolantAutomatonEnhancement());
+		}
 
 		// Actual refinement step
-		mAbstraction = new InformationStorage<>(mAbstraction, totalInterpol, mFactory, false);
+		mAbstraction = new InformationStorage<>(mAbstraction, determinized, mFactory, false);
+
+		// update independence relations (in case of abstract independence)
+		for (int i = 0; i < mIndependenceProviders.size(); ++i) {
+			final var container = mIndependenceProviders.get(i);
+			container.refine(mRefinementResult);
+			mPOR.replaceIndependence(i, container.retrieveIndependence());
+		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -154,9 +219,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		switchToOnDemandConstructionMode();
+
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
-		final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 		try {
+			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
@@ -169,17 +235,33 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 	}
 
+	private IBudgetFunction<L, IPredicate> makeBudget(final SleepMapReduction<L, IPredicate, IPredicate> reduction) {
+		final IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
+				mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor, reduction);
+		switch (mPref.useCoinflip()) {
+		case OFF:
+			return budget;
+		case FALLBACK:
+			return new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration), budget);
+		case PURE:
+			return new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration),
+					(s, l) -> 1);
+		}
+		throw new IllegalArgumentException("Unknown coinflip mode: " + mPref.useCoinflip());
+	}
+
 	@Override
 	public void finish() {
 		for (final AbstractInterpolantAutomaton<L> ia : mAbstractItpAutomata) {
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
 		mPOR.reportStatistics(Activator.PLUGIN_ID);
+
 		super.finish();
 	}
 
 	private IRun<L, IPredicate> getCounterexample(IDfsVisitor<L, IPredicate> visitor) {
-		while (visitor instanceof WrapperVisitor<?, ?, ?>) {
+		if (visitor instanceof WrapperVisitor<?, ?, ?>) {
 			visitor = ((WrapperVisitor<L, IPredicate, IDfsVisitor<L, IPredicate>>) visitor).getBaseVisitor();
 		}
 		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
@@ -194,60 +276,24 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
 			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
 			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
-			visitor = new SleepSetVisitorSearch<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
+			visitor = new SleepSetVisitorSearch<>(this::isGoalState, this::isProvenState);
 		} else {
-			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, PartialOrderCegarLoop::isProvenState);
+			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, this::isProvenState);
 		}
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
 		}
 
-		if (ENABLE_COVERING_OPTIMIZATION) {
-			visitor = new CoveringOptimizationVisitor<>(visitor,
-					new SleepSetStateFactoryForRefinement.FactoryCoveringRelation<>(
-							(SleepSetStateFactoryForRefinement<L>) mPOR.getSleepFactory()),
+		if (PartialOrderReductionFacade.ENABLE_COVERING_OPTIMIZATION) {
+			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
 		}
-		return new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore());
-	}
 
-	private IIndependenceRelation<IPredicate, L> constructIndependence(final CfgSmtToolkit csToolkit) {
-		final IndependenceSettings settings = mPref.porIndependenceSettings();
-		if (settings.getIndependenceType() == IndependenceType.SYNTACTIC) {
-			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
+		if (mSupportsDeadEnds) {
+			visitor = new DeadEndOptimizingSearchVisitor<>(visitor, mPOR.getDeadEndStore(), false);
 		}
 
-		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
-		return IndependenceBuilder
-				// Semantic independence forms the base.
-				.<L> semantic(getServices(), constructIndependenceScript(), csToolkit.getManagedScript().getScript(),
-						settings.useConditional(), !settings.useSemiCommutativity())
-				// Add syntactic independence check (cheaper sufficient condition).
-				.withSyntacticCheck()
-				// Cache independence query results.
-				.cached()
-				// Setup condition optimization (if conditional independence is enabled).
-				// =========================================================================
-				// NOTE: Soundness of the condition elimination here depends on the fact that all inconsistent
-				// predicates are syntactically equal to "false". Here, this is achieved by usage of
-				// #withDisjunctivePredicates: The only predicates we use as conditions are the original interpolants
-				// (i.e., not conjunctions of them), where we assume this constraint holds.
-				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
-				// We ignore "don't care" conditions stemming from the initial program automaton states.
-				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
-				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
-				// =========================================================================
-				// Never consider letters of the same thread to be independent.
-				.threadSeparated()
-				// Retrieve the constructed relation.
-				.build();
-	}
-
-	private ManagedScript constructIndependenceScript() {
-		final SolverSettings settings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_DefaultMode).setUseExternalSolver(ExternalSolver.Z3, 1000);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(getServices(), settings, "SemanticIndependence");
-		return new ManagedScript(getServices(), solver);
+		return visitor;
 	}
 
 	private void switchToOnDemandConstructionMode() {
@@ -262,7 +308,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 	}
 
-	private Boolean isGoalState(final IPredicate state) {
+	private boolean isGoalState(final IPredicate state) {
 		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
 				+ state.getClass();
 
@@ -275,7 +321,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return isErrorState && !isProvenState(state);
 	}
 
-	private static boolean isProvenState(final IPredicate state) {
+	private boolean isProvenState(IPredicate state) {
+		final PartialOrderReductionFacade.StateSplitter<IPredicate> splitter = mPOR.getStateSplitter();
+		if (splitter != null) {
+			state = splitter.getOriginal(state);
+		}
+		return isFalseLiteral(state);
+	}
+
+	public static boolean isFalseLiteral(final IPredicate state) {
 		if (state instanceof MLPredicateWithConjuncts) {
 			// By the way we create conjunctions in the state factory below, any conjunction that contains the conjunct
 			// "false" will contain no other conjuncts.
@@ -283,18 +337,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			return conjuncts.size() == 1 && isFalseLiteral(conjuncts.getHead());
 		}
 
-		// TODO use mPOR.mStateSplitter for this
-		if (state instanceof PredicateWithLastThread) {
-			return isProvenState(((PredicateWithLastThread) state).getUnderlying());
-		}
-		if (state instanceof SleepPredicate<?>) {
-			return isProvenState(((SleepPredicate<?>) state).getUnderlying());
-		}
-
-		return isFalseLiteral(state);
-	}
-
-	private static boolean isFalseLiteral(final IPredicate state) {
 		// We assume here that all inconsistent interpolant predicates are syntactically equal to "false".
 		return SmtUtils.isFalseLiteral(state.getFormula());
 	}
@@ -307,7 +349,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return SmtUtils.isTrueLiteral(state.getFormula());
 	}
 
-	private static List<IPredicate> getConjuncts(final IPredicate conjunction) {
+	public static List<IPredicate> getConjuncts(final IPredicate conjunction) {
 		if (conjunction == null) {
 			return ImmutableList.empty();
 		}
@@ -344,15 +386,20 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		@Override
 		public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
-			if (isProvenState(state1) || isTrueLiteral(state2)) {
-				// If state1 is "false", we add no other conjuncts, and do not create a new state.
-				// Similarly, there is no point in adding state2 as conjunct if it is "true".
-				return state1;
-			}
-
 			final IPredicate newState;
-			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
-				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isProvenState.
+			if (isFalseLiteral(state1) || isTrueLiteral(state2)) {
+				// If state1 is "false", we add no other conjuncts.
+				// Similarly, there is no point in adding state2 as conjunct if it is "true".
+				if (state1 instanceof MLPredicateWithConjuncts) {
+					final var mlState1 = (MLPredicateWithConjuncts) state1;
+					newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
+							mlState1.getProgramPoints(), mlState1.getConjuncts()));
+				} else {
+					newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
+							((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state1)));
+				}
+			} else if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
+				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
 				// As another (less important) optimization, we also ignore state1 if it is "true".
 				newState = mPredicateFactory.construct(id -> new MLPredicateWithConjuncts(id,
 						((IMLPredicate) state1).getProgramPoints(), ImmutableList.singleton(state2)));
@@ -362,8 +409,37 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						.construct(id -> new MLPredicateWithConjuncts(id, (IMLPredicate) state1, state2));
 			}
 
-			mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
+			if (mSupportsDeadEnds) {
+				mPOR.getDeadEndStore().copyDeadEndInformation(state1, newState);
+			}
+
 			return newState;
+		}
+	}
+
+	private final class DeterminizationFactory implements IDeterminizeStateFactory<IPredicate> {
+		@Override
+		public IPredicate createEmptyStackState() {
+			return mPredicateFactoryInterpolantAutomata.createEmptyStackState();
+		}
+
+		@Override
+		public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
+			// No support for calls and returns means the map should always have a simple structure.
+			assert down2up.size() == 1 && down2up.containsKey(createEmptyStackState());
+			final List<IPredicate> conjuncts = down2up.get(createEmptyStackState())
+					// sort predicates to ensure deterministic order
+					.stream().sorted(Comparator.comparingInt(Object::hashCode)).collect(Collectors.toList());
+
+			// Interpolant automaton should not have "don't care".
+			assert conjuncts.stream().noneMatch(mPredicateFactory::isDontCare);
+
+			// Don't create unnecessary conjunctions of single predicates.
+			if (conjuncts.size() == 1) {
+				return DataStructureUtils.getOneAndOnly(conjuncts, "predicate");
+			}
+
+			return mPredicateFactory.and(conjuncts);
 		}
 	}
 }
