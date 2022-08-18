@@ -48,7 +48,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Stemless Word is accepted in deterministic Petri net.", accepted);
 	}
@@ -77,7 +77,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in nontrivial Loop Petri net.", accepted);
 	}
@@ -106,7 +106,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in nontrivial Loop Petri net.", !accepted);
 	}
@@ -125,7 +125,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in nondeterministic Petri net.", accepted);
 	}
@@ -146,7 +146,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is not accepted in nondeterministic Petri net with unaccepting Loop.", !accepted);
 	}
@@ -166,7 +166,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in deterministic Petri net.", !accepted);
 	}
@@ -186,7 +186,7 @@ public class BuchiPetrinetAcceptsTest {
 
 		BuchiPetrinetAccepts<String, String> buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = (boolean) buchiPetriAccpts.getResult();
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in double Loop Petri net.", accepted);
 
@@ -197,7 +197,7 @@ public class BuchiPetrinetAcceptsTest {
 
 		for (NestedLassoWord<String> nestedLassoWord : wordsToTestLassoWords) {
 			buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, nestedLassoWord);
-			accepted = (boolean) buchiPetriAccpts.getResult();
+			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is accepted in double Loop Petri net.", accepted);
 		}
 
@@ -208,7 +208,7 @@ public class BuchiPetrinetAcceptsTest {
 
 		for (NestedLassoWord<String> nestedLassoWord : nonAcceptingWords) {
 			buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, nestedLassoWord);
-			accepted = (boolean) buchiPetriAccpts.getResult();
+			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is not accepted in double Loop Petri net.", !accepted);
 		}
 	}

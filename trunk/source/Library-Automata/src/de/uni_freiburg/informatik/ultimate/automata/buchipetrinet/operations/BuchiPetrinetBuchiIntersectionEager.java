@@ -20,9 +20,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStat
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
+// Generaloperatin
 public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
 
-	// TODO : make class safe, check for double initial place in buchi for example, ..
+	// TODO : make class safe, check for double initial place in buchi for example, .. excepetion
+	// und für 0
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomata;
 
@@ -165,12 +167,10 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetr
 				ImmutableSet.of(successorSet));
 	}
 
+	// booplean argument
 	private final Set<PLACE> getTransitionPredecessors(Transition<LETTER, PLACE> petriTransition,
 			PLACE buchiPredecessor) {
-		Set<PLACE> predecessorSet = new HashSet<>();
-		for (PLACE petriPredecessor : petriTransition.getPredecessors()) {
-			predecessorSet.add(petriPredecessor);
-		}
+		Set<PLACE> predecessorSet = new HashSet<>(petriTransition.getPredecessors());
 
 		if (mBuildingStateOneTransition) {
 			predecessorSet.add(mInputQGetQ1.get(buchiPredecessor));
@@ -183,10 +183,7 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetr
 
 	private final Set<PLACE> getTransitionSuccessors(Transition<LETTER, PLACE> petriTransition,
 			OutgoingInternalTransition<LETTER, PLACE> buchiTransition, Set<PLACE> predecessorSet) {
-		Set<PLACE> successorSet = new HashSet<>();
-		for (PLACE petriSuccessor : petriTransition.getSuccessors()) {
-			successorSet.add(petriSuccessor);
-		}
+		Set<PLACE> successorSet = new HashSet<>(petriTransition.getSuccessors());
 		if (mBuildingStateOneTransition) {
 			successorSet.add(getQSuccesorForStateOneTransition(petriTransition, buchiTransition));
 		} else {

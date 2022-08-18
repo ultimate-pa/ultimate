@@ -44,6 +44,8 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 	}
 
 	public final boolean update(BranchingProcess<LETTER, PLACE> unfolding) {
+		// nur event
+		//
 		mUnfolding = unfolding;
 		mUnfoldingEventsWithoutDummyRootEvent =
 				unfolding.getEvents().stream().filter(x -> x.getTransition() != null).collect(Collectors.toSet());
@@ -76,6 +78,7 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 		boolean lassoFound = false;
 		Set<Event<LETTER, PLACE>> reboundSet = new HashSet<>();
 		Set<Event<LETTER, PLACE>> headEvents = new HashSet<>();
+		// TODO: just check new one
 		for (Event<LETTER, PLACE> event : mNewEvents) {
 			if ((!localConfigContainsAcceptingPlace(event) || !localConfigContainsDoublePlace(event))) {
 				if (!createsConfigurationWithHeadEvent(event).isEmpty()) {
@@ -146,6 +149,7 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 	boolean fillPowerSetAndCheckForLasso(ArrayList<Event<LETTER, PLACE>> concurrentEventsOfNewEvent,
 			Event<LETTER, PLACE> event) {
 		boolean lassoFound = false;
+		// TODO: foreach
 		for (int i = 0; i < concurrentEventsOfNewEvent.size(); i++) {
 			Event<LETTER, PLACE> nextEvent = concurrentEventsOfNewEvent.get(i);
 			fillConcurrentPowerset(mConcurrentSubSets, nextEvent);
