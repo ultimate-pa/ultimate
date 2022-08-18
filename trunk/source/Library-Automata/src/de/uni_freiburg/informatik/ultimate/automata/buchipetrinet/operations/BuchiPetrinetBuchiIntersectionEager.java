@@ -1,30 +1,24 @@
 package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-// Generaloperatin
-public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
+public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
+		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
-	// TODO : make class safe, check for double initial place in buchi for example, .. excepetion
-	// und für 0
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomata;
 
@@ -34,84 +28,20 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetr
 	private final Map<PLACE, PLACE> mInputQGetQ2 = new HashMap<>();
 	private final Map<PLACE, PLACE> mInputQ2GetQ = new HashMap<>();
 
-	/*
-	 * Helper variable to avoid duplicate code during Transition creation in addTransitionsToIntersectionNet().
-	 */
-	private boolean mBuildingStateOneTransition = true;
-
 	private BoundedPetriNet<LETTER, PLACE> mIntersectionNet;
 
 	public BuchiPetrinetBuchiIntersectionEager(IPetriNet<LETTER, PLACE> petriNet,
 			INestedWordAutomaton<LETTER, PLACE> buchiAutomata, IBlackWhiteStateFactory<PLACE> factory,
 			final AutomataLibraryServices services) {
+		super(services);
 		mPetriNet = petriNet;
 		mBuchiAutomata = buchiAutomata;
+		if (buchiAutomata.getInitialStates().size() != 1) {
+			throw new IllegalArgumentException("Buchi with multiple initial states not supported.");
+		}
 		mLabeledBuchiPlaceFactory = factory;
 		mIntersectionNet = new BoundedPetriNet<>(services, petriNet.getAlphabet(), false);
 		constructIntersectionNet();
-	}
-
-	@Override
-	public Set<LETTER> getAlphabet() {
-		return mPetriNet.getAlphabet();
-	}
-
-	@Override
-	public int size() {
-		int flowRealtionSize = 0;
-		for (final Transition<LETTER, PLACE> transition : mIntersectionNet.getTransitions()) {
-			flowRealtionSize += transition.getPredecessors().toArray().length;
-			flowRealtionSize += transition.getSuccessors().toArray().length;
-		}
-		return flowRealtionSize;
-	}
-
-	@Override
-	public String sizeInformation() {
-		return "There are" + size() + "elements in flow relation, with " + mIntersectionNet.getPlaces().toArray().length
-				+ " places and " + mIntersectionNet.getTransitions().toArray().length + " transitions.";
-	}
-
-	@Override
-	public IElement transformToUltimateModel(AutomataLibraryServices services)
-			throws AutomataOperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Set<PLACE> getInitialPlaces() {
-		return mIntersectionNet.getInitialPlaces();
-	}
-
-	@Override
-	public Set<Transition<LETTER, PLACE>> getSuccessors(PLACE place) {
-		return mIntersectionNet.getSuccessors(place);
-	}
-
-	@Override
-	public Set<Transition<LETTER, PLACE>> getPredecessors(PLACE place) {
-		return mIntersectionNet.getPredecessors(place);
-	}
-
-	@Override
-	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
-			getSuccessorTransitionProviders(Set<PLACE> mustPlaces, Set<PLACE> mayPlaces) {
-		return mIntersectionNet.getSuccessorTransitionProviders(mustPlaces, mayPlaces);
-	}
-
-	/*
-	 * Markings of Buchipetrinets can't be accepting as the acceptance condition is defined with the firing of
-	 * transitions instead.
-	 */
-	@Override
-	public boolean isAccepting(Marking<LETTER, PLACE> marking) {
-		return false;
-	}
-
-	@Override
-	public boolean isAccepting(PLACE place) {
-		return mIntersectionNet.isAccepting(place);
 	}
 
 	private final void constructIntersectionNet() {
@@ -155,21 +85,18 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetr
 
 	private final void addStateOneAndTwoTransition(Transition<LETTER, PLACE> petriTransition,
 			OutgoingInternalTransition<LETTER, PLACE> buchiTransition, PLACE buchiPredecessor) {
-		mBuildingStateOneTransition = true;
-		Set<PLACE> predecessorSet = getTransitionPredecessors(petriTransition, buchiPredecessor);
-		Set<PLACE> successorSet = getTransitionSuccessors(petriTransition, buchiTransition, predecessorSet);
+		Set<PLACE> predecessorSet = getTransitionPredecessors(petriTransition, buchiPredecessor, true);
+		Set<PLACE> successorSet = getTransitionSuccessors(petriTransition, buchiTransition, predecessorSet, true);
 		mIntersectionNet.addTransition(petriTransition.getSymbol(), ImmutableSet.of(predecessorSet),
 				ImmutableSet.of(successorSet));
-		mBuildingStateOneTransition = false;
-		predecessorSet = getTransitionPredecessors(petriTransition, buchiPredecessor);
-		successorSet = getTransitionSuccessors(petriTransition, buchiTransition, predecessorSet);
+		predecessorSet = getTransitionPredecessors(petriTransition, buchiPredecessor, false);
+		successorSet = getTransitionSuccessors(petriTransition, buchiTransition, predecessorSet, false);
 		mIntersectionNet.addTransition(petriTransition.getSymbol(), ImmutableSet.of(predecessorSet),
 				ImmutableSet.of(successorSet));
 	}
 
-	// booplean argument
 	private final Set<PLACE> getTransitionPredecessors(Transition<LETTER, PLACE> petriTransition,
-			PLACE buchiPredecessor) {
+			PLACE buchiPredecessor, boolean mBuildingStateOneTransition) {
 		Set<PLACE> predecessorSet = new HashSet<>(petriTransition.getPredecessors());
 
 		if (mBuildingStateOneTransition) {
@@ -182,7 +109,8 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetr
 	}
 
 	private final Set<PLACE> getTransitionSuccessors(Transition<LETTER, PLACE> petriTransition,
-			OutgoingInternalTransition<LETTER, PLACE> buchiTransition, Set<PLACE> predecessorSet) {
+			OutgoingInternalTransition<LETTER, PLACE> buchiTransition, Set<PLACE> predecessorSet,
+			boolean mBuildingStateOneTransition) {
 		Set<PLACE> successorSet = new HashSet<>(petriTransition.getSuccessors());
 		if (mBuildingStateOneTransition) {
 			successorSet.add(getQSuccesorForStateOneTransition(petriTransition, buchiTransition));
@@ -211,5 +139,10 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE> implements IPetr
 			}
 		}
 		return mInputQGetQ2.get(buchiTransition.getSucc());
+	}
+
+	@Override
+	public Object getResult() {
+		return mIntersectionNet;
 	}
 }

@@ -59,9 +59,11 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
 				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
 
+		final BoundedPetriNet<String, String> intersection =
+				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("c", "c"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
@@ -102,8 +104,11 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
 				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
+
+		final BoundedPetriNet<String, String> intersection =
+				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("c", "c"));
@@ -145,8 +150,11 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
 				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
+
+		final BoundedPetriNet<String, String> intersection =
+				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
@@ -191,8 +199,11 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
 				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
+
+		final BoundedPetriNet<String, String> intersection =
+				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "b"));
@@ -237,8 +248,11 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
 				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
+
+		final BoundedPetriNet<String, String> intersection =
+				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
@@ -283,8 +297,11 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
 				new BuchiPetrinetBuchiIntersectionEager<>(petriNet, buchiAutomata, factory2, mServices);
+
+		final BoundedPetriNet<String, String> intersection =
+				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("e", "d", "e", "e"));
