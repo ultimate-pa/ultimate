@@ -1,0 +1,173 @@
+/*
+ * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2022 University of Freiburg
+ *
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+
+/**
+ * Abstract class for data-flow based Hoare triple checks. Subclasses are checks for internal, call, and return. Because
+ * we can only override methods with the same signature (in Java) we use the 3-parameter-signature for return (with
+ * hierarchical state) and use null as hierarchical state for call and internal.
+ */
+public abstract class SdHoareTripleCheckHelper {
+	/**
+	 *
+	 */
+	protected final IPredicateCoverageChecker mCoverage;
+	protected final IPredicate mFalsePredicate;
+	protected final IPredicate mTruePredicate;
+
+	/**
+	 * @param sdHoareTripleChecker
+	 */
+	SdHoareTripleCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
+			final IPredicate truePredicate) {
+		mCoverage = coverage;
+		mFalsePredicate = falsePredicate;
+		mTruePredicate = truePredicate;
+	}
+
+	public Validity check(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate succ) {
+		if (act instanceof IInternalAction) {
+			if (((IInternalAction) act).getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
+				return Validity.VALID;
+			}
+		}
+
+		boolean unknownCoverage = false;
+		// check if preLin is equivalent to false
+		switch (mCoverage.isCovered(preLin, mFalsePredicate)) {
+		case INVALID:
+			break;
+		case NOT_CHECKED:
+			throw new AssertionError("unchecked predicate");
+		case UNKNOWN:
+			unknownCoverage = true;
+			break;
+		case VALID:
+			return Validity.VALID;
+		default:
+			throw new AssertionError("unknown case");
+		}
+
+		// check if preHier is equivalent to false
+		if (preHier != null) {
+			switch (mCoverage.isCovered(preHier, mFalsePredicate)) {
+			case INVALID:
+				break;
+			case NOT_CHECKED:
+				throw new AssertionError("unchecked predicate");
+			case UNKNOWN:
+				unknownCoverage = true;
+				break;
+			case VALID:
+				return Validity.VALID;
+			default:
+				throw new AssertionError("unknown case");
+			}
+		}
+
+		// check if succ is equivalent to true
+		switch (mCoverage.isCovered(mTruePredicate, succ)) {
+		case INVALID:
+			break;
+		case NOT_CHECKED:
+			throw new AssertionError("unchecked predicate");
+		case UNKNOWN:
+			unknownCoverage = true;
+			break;
+		case VALID:
+			return Validity.VALID;
+		default:
+			throw new AssertionError("unknown case");
+		}
+		if (unknownCoverage) {
+			return Validity.UNKNOWN;
+		}
+		final boolean isInductiveSelfloop = isInductiveSefloop(preLin, preHier, act, succ);
+		if (isInductiveSelfloop) {
+			return Validity.VALID;
+		}
+		if (SmtUtils.isFalseLiteral(succ.getFormula())) {
+			final Validity toFalse = sdecToFalse(preLin, preHier, act);
+			if (toFalse == null) {
+				// we are unable to determine validity with SD checks
+				assert sdec(preLin, preHier, act, succ) == null : "inconsistent check results";
+				return Validity.UNKNOWN;
+			}
+			switch (toFalse) {
+			case INVALID:
+				return Validity.INVALID;
+			case NOT_CHECKED:
+				throw new AssertionError("unchecked predicate");
+			case UNKNOWN:
+				throw new AssertionError("this case should have been filtered out before");
+			case VALID:
+				throw new AssertionError("this case should have been filtered out before");
+			default:
+				throw new AssertionError("unknown case");
+			}
+		}
+		final Validity general;
+		if (SdHoareTripleChecker.LAZY_CHECKS) {
+			general = sdLazyEc(preLin, preHier, act, succ);
+		} else {
+			general = sdec(preLin, preHier, act, succ);
+		}
+		if (general != null) {
+			switch (general) {
+			case INVALID:
+				return Validity.INVALID;
+			case NOT_CHECKED:
+				throw new AssertionError("unchecked predicate");
+			case UNKNOWN:
+				throw new AssertionError("this case should have been filtered out before");
+			case VALID:
+				return Validity.VALID;
+			default:
+				throw new AssertionError("unknown case");
+			}
+		}
+		return Validity.UNKNOWN;
+	}
+
+	public abstract Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act);
+
+	public abstract boolean isInductiveSefloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+
+	public abstract Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+
+	public abstract Validity sdLazyEc(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+
+}
