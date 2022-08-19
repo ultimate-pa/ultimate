@@ -315,15 +315,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 				+ " flow";
 	}
 
-	/** @return Letters actually being used as a label of some transition in this net. */
-	public Set<LETTER> usedLetters() {
-		final Set<LETTER> usedLetters = new HashSet<>();
-		for (final Transition<LETTER, PLACE> trans : mTransitions) {
-			usedLetters.add(trans.getSymbol());
-		}
-		return usedLetters;
-	}
-
 	/** @return Number of edges in this net. */
 	@Override
 	public int flowSize() {
