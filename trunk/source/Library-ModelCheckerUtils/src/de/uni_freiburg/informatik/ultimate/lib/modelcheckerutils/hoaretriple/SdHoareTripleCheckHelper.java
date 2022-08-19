@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Abstract class for data-flow based Hoare triple checks. Subclasses are checks for internal, call, and return. Because
@@ -172,5 +173,9 @@ public abstract class SdHoareTripleCheckHelper {
 	public abstract Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
 
 	public abstract Validity sdLazyEc(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+
+	protected static boolean varsDisjointFromInVars(final IPredicate state, final UnmodifiableTransFormula tf) {
+		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getInVars().keySet());
+	}
 
 }

@@ -90,6 +90,7 @@ public class SdHoareTripleCheckerHelper {
 	 *
 	 * FIXME: Check for precondition false, not for precondition true.
 	 */
+	@Deprecated
 	public Validity sdecInternalToFalse(final IPredicate pre, final IInternalAction act) {
 		final Infeasibility infeasiblity = act.getTransformula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
@@ -134,6 +135,7 @@ public class SdHoareTripleCheckerHelper {
 	 *
 	 * FIXME: Check for preconditions, postcondition?
 	 */
+	@Deprecated
 	public Validity sdecInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		final UnmodifiableTransFormula tf = act.getTransformula();
 
@@ -214,6 +216,7 @@ public class SdHoareTripleCheckerHelper {
 	 * contains some variable that does not occur in the antecedent the implication
 	 * does not hold very often.
 	 */
+	@Deprecated
 	public Validity sdLazyEcInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		if (isOrIteFormula(post)) {
 			return sdecInternal(pre, act, post);
@@ -568,6 +571,7 @@ public class SdHoareTripleCheckerHelper {
 	 * If the assigned vars of cb are disjoint from the variables in p the selfloop (p,cb,p) is trivially inductive.
 	 * Returns HTTV.VALID if selfloop is inductive. Returns null if we are not able to determinie inductivity selfloop.
 	 */
+	@Deprecated
 	public Validity sdecInternalSelfloop(final IPredicate p, final IInternalAction act) {
 		final Set<IProgramVar> assignedVars = act.getTransformula().getAssignedVars();
 		final Set<IProgramVar> occVars = p.getVars();
@@ -632,7 +636,7 @@ public class SdHoareTripleCheckerHelper {
 	/**
 	 * Returns true if the formula of this predicate is an or-term or an ite-term.
 	 */
-	private static boolean isOrIteFormula(final IPredicate p) {
+	public static boolean isOrIteFormula(final IPredicate p) {
 		final Term formula = p.getFormula();
 		if (formula instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) formula;
