@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -94,10 +95,7 @@ public class Transition<LETTER, PLACE>
 	}
 
 	private int computeHashCode() {
-		final int prime1 = 13;
-		final int prime2 = 7;
-		final int prime3 = 3;
-		return prime1 * mPredecessors.hashCode() + prime2 * mSuccessors.hashCode() + prime3 * mSymbol.hashCode();
+		return HashUtils.hashJenkins(13, mTotalOrderId, mPredecessors, mSuccessors, mSymbol);
 	}
 
 	@Override
@@ -109,8 +107,8 @@ public class Transition<LETTER, PLACE>
 			return false;
 		}
 		final Transition<?, ?> other = (Transition<?, ?>) obj;
-		return mPredecessors.equals(other.mPredecessors) && mSuccessors.equals(other.mSuccessors)
-				&& mSymbol.equals(other.mSymbol);
+		return mTotalOrderId == other.mTotalOrderId && mPredecessors.equals(other.mPredecessors)
+				&& mSuccessors.equals(other.mSuccessors) && mSymbol.equals(other.mSymbol);
 	}
 
 	@Override
