@@ -39,14 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -65,7 +63,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	private static final boolean ADD_CUTOFF_EVENTS_TO_CORELATION = true;
 	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
 
 	private final Collection<Condition<LETTER, PLACE>> mConditions;
 	private final Collection<Event<LETTER, PLACE>> mEvents;
@@ -119,7 +116,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			final ConfigurationOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention,
 			final boolean useB32Optimization) throws PetriNetNot1SafeException {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
 		mOrder = order;
 		mPlace2Conds = new HashRelation<>();
