@@ -313,27 +313,4 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		assertThat("Intersection accepts word in intersection of nodeterministic inputs.", accepted);
 	}
-
-	/*
-	 * @Test public final void testGetAlphabet() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testSize() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testSizeInformation() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testTransformToUltimateModel() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testGetInitialPlaces() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testGetSuccessors() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testGetPredecessors() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testGetSuccessorTransitionProviders() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testIsAcceptingMarkingOfLETTERPLACE() { fail("Not yet implemented"); }
-	 *
-	 * @Test public final void testIsAcceptingPLACE() { fail("Not yet implemented"); }
-	 */
-
 }

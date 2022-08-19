@@ -83,8 +83,8 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 	public int size() {
 		int flowRealtionSize = 0;
 		for (final Transition<LETTER, PLACE> transition : mTransitions.values()) {
-			flowRealtionSize += transition.getPredecessors().toArray().length;
-			flowRealtionSize += transition.getSuccessors().toArray().length;
+			flowRealtionSize += transition.getPredecessors().size();
+			flowRealtionSize += transition.getSuccessors().size();
 		}
 		return flowRealtionSize;
 	}

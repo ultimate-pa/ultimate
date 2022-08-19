@@ -15,16 +15,16 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 	private Set<Event<LETTER, PLACE>> mAcceptingEvents = new HashSet<>();
 	private Set<Set<Event<LETTER, PLACE>>> mResultLassoConfigurations = new HashSet<>();
 
-	private Set<Event<LETTER, PLACE>> mSeenEvents = new HashSet<>();
-	private Set<Event<LETTER, PLACE>> mNewEvents = new HashSet<>();
-
 	private Set<Set<Event<LETTER, PLACE>>> mConcurrentSubSets = new HashSet<>();
 	private Set<Set<Event<LETTER, PLACE>>> mCheckedConfigurations = new HashSet<>();
 	private Set<Event<LETTER, PLACE>> mHeadEvents = new HashSet<>();
 
-	private boolean mfindAllLassoMarkings;
+	// Used for testing
+	private boolean mfindAllLassoMarkings = false;
 
 	/*
+	 * (Terms used in the following reference the "An Improvement of McMillan's Unfolding Algorithm" - Esparza paper.)
+	 * 
 	 * Computes the lasso configuration(s) of given Unfolding. The final state of a lasso configuration enables some
 	 * concurrent set of events in its configuration. Any nodes of the configuration beyond that concurrent set of the
 	 * configuration are the loop part of the lasso configuration and any nodes of the configuration before that
@@ -32,40 +32,32 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 	 * part of a lasso configuration.
 	 * 
 	 * A Buchipetri net accepts a word w iff there exists a lasso configuration in the Unfolding which includes w.
-	 * 
 	 */
-	public LassoConfigurationCheckerIterative(BranchingProcess<LETTER, PLACE> unfolding, boolean findAllLassoMarkings) {
+	public LassoConfigurationCheckerIterative(BranchingProcess<LETTER, PLACE> unfolding) {
 		mUnfolding = unfolding;
-		mfindAllLassoMarkings = findAllLassoMarkings;
+		mUnfoldingEventsWithoutDummyRootEvent =
+				unfolding.getEvents().stream().filter(x -> x.getTransition() != null).collect(Collectors.toSet());
 	}
 
 	public final Set<Set<Event<LETTER, PLACE>>> getLassoConfigurations() {
 		return mResultLassoConfigurations;
 	}
 
-	public final boolean update(BranchingProcess<LETTER, PLACE> unfolding) {
-		// nur event
-		//
-		mUnfolding = unfolding;
-		mUnfoldingEventsWithoutDummyRootEvent =
-				unfolding.getEvents().stream().filter(x -> x.getTransition() != null).collect(Collectors.toSet());
-		mNewEvents.addAll(mUnfoldingEventsWithoutDummyRootEvent);
-		mNewEvents.removeAll(mSeenEvents);
-		mSeenEvents.addAll(mUnfoldingEventsWithoutDummyRootEvent);
-		mConcurrentSubSets.clear();
-		return computeLassoConfigurations();
-	}
-
 	/*
-	 * Anytime an event that fullfills the requirements of a new lasso configuration is added, we first check if its
-	 * local configuration is a lasso configuration and then
+	 * This method is (meant to be) called anytime the {@link BuchiPetriNetUnfolder} adds an event to the Unfolding. We
+	 * then check if the prerequesites for a lasso configurations are met, and if so, compute if one exists.
 	 */
-	private final boolean computeLassoConfigurations() {
-		computeAcceptingEvents();
-		if (mAcceptingEvents.isEmpty()) {
+	public final boolean update(Event<LETTER, PLACE> event) {
+		if (event.getTransition() == null) {
 			return false;
 		}
-		return checkEachNewEvent();
+		mUnfoldingEventsWithoutDummyRootEvent.add(event);
+		return computeLassoConfigurations(event);
+	}
+
+	private final boolean computeLassoConfigurations(Event<LETTER, PLACE> event) {
+		computeAcceptingEvents();
+		return checkEvent(event);
 	}
 
 	private final void computeAcceptingEvents() {
@@ -74,43 +66,43 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 		}
 	}
 
-	private boolean checkEachNewEvent() {
+	private boolean checkEvent(Event<LETTER, PLACE> event) {
 		boolean lassoFound = false;
-		Set<Event<LETTER, PLACE>> reboundSet = new HashSet<>();
-		Set<Event<LETTER, PLACE>> headEvents = new HashSet<>();
-		// TODO: just check new one
-		for (Event<LETTER, PLACE> event : mNewEvents) {
-			if ((!localConfigContainsAcceptingPlace(event) || !localConfigContainsDoublePlace(event))) {
-				if (!createsConfigurationWithHeadEvent(event).isEmpty()) {
-					reboundSet.addAll(createsConfigurationWithHeadEvent(event));
-				}
-				continue;
-			}
-			headEvents.add(event);
-			ArrayList<Event<LETTER, PLACE>> concurrentEventsOfNewEvent = new ArrayList<>();
-			concurrentEventsOfNewEvent.add(event);
-
-			lassoFound = fillPowerSetAndCheckForLasso(concurrentEventsOfNewEvent, event);
-			if (lassoFound && !mfindAllLassoMarkings) {
-				return true;
-			}
-
-			for (Event<LETTER, PLACE> event2 : mUnfoldingEventsWithoutDummyRootEvent) {
-				if (mUnfolding.eventsInConcurrency(event, event2)) {
-					concurrentEventsOfNewEvent.add(event2);
+		// requirements for a lasso configuration
+		if ((!localConfigContainsAcceptingPlace(event) || !localConfigFinalStateContainsDuplicate(event))) {
+			// if this event is concurrent to previous checked events which have the requirements to build a lasso
+			// configuration, we must now check those events again with the new event(s) present, otherwise we might
+			// miss a lasso configuration
+			if (!createsConfigurationWithHeadEvent(event).isEmpty()) {
+				for (Event<LETTER, PLACE> headEvent : createsConfigurationWithHeadEvent(event)) {
+					checkEvent(headEvent);
 				}
 			}
-			lassoFound = fillPowerSetAndCheckForLasso(concurrentEventsOfNewEvent, event);
-			if (lassoFound && !mfindAllLassoMarkings) {
-				return true;
+			return false;
+		}
+		ArrayList<Event<LETTER, PLACE>> concurrentEventsOfNewEvent = new ArrayList<>();
+		concurrentEventsOfNewEvent.add(event);
+
+		// We do this call to try to make the common case faster, i.e. we test if the local configuration
+		// of the event is a lasso configuration before searching concurrent head events and other configuration
+		// combinations
+		lassoFound = fillPowerSetAndCheckForLasso(concurrentEventsOfNewEvent, event);
+		if (lassoFound && !mfindAllLassoMarkings) {
+			return true;
+		}
+
+		for (Event<LETTER, PLACE> event2 : mUnfoldingEventsWithoutDummyRootEvent) {
+			// Only events which local configs build loops can "help" our event to build a lasso configuration
+			if (localConfigFinalStateContainsDuplicate(event2) && mUnfolding.eventsInConcurrency(event, event2)) {
+				concurrentEventsOfNewEvent.add(event2);
 			}
 		}
-		mHeadEvents.addAll(headEvents);
-		if (!reboundSet.isEmpty()) {
-			mNewEvents.clear();
-			mNewEvents.addAll(reboundSet);
-			checkEachNewEvent();
+		lassoFound = fillPowerSetAndCheckForLasso(concurrentEventsOfNewEvent, event);
+		if (lassoFound && !mfindAllLassoMarkings) {
+			return true;
 		}
+
+		mHeadEvents.add(event);
 		return lassoFound;
 	}
 
@@ -118,7 +110,7 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 		return event.getLocalConfiguration().getEvents().stream().anyMatch(mAcceptingEvents::contains);
 	}
 
-	private boolean localConfigContainsDoublePlace(Event<LETTER, PLACE> event) {
+	private boolean localConfigFinalStateContainsDuplicate(Event<LETTER, PLACE> event) {
 		Set<PLACE> places = new HashSet<>();
 		for (Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
 			places.add(cond.getPlace());
@@ -133,7 +125,7 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 				}
 			}
 		}
-		return false;
+		return mUnfolding.initialConditions().stream().anyMatch(places::contains);
 	}
 
 	private Set<Event<LETTER, PLACE>> createsConfigurationWithHeadEvent(Event<LETTER, PLACE> event) {
@@ -149,10 +141,11 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 	boolean fillPowerSetAndCheckForLasso(ArrayList<Event<LETTER, PLACE>> concurrentEventsOfNewEvent,
 			Event<LETTER, PLACE> event) {
 		boolean lassoFound = false;
-		// TODO: foreach
-		for (int i = 0; i < concurrentEventsOfNewEvent.size(); i++) {
-			Event<LETTER, PLACE> nextEvent = concurrentEventsOfNewEvent.get(i);
-			fillConcurrentPowerset(mConcurrentSubSets, nextEvent);
+		// Computes concurrent subsets of configuration, one of which successor Conditions have to be contained in the
+		// final state of the configuration to make it a lasso configuration.
+		// In each iteration we check for lasso in hopes to make the common case faster.
+		for (Event<LETTER, PLACE> nextEvent : concurrentEventsOfNewEvent) {
+			fillConcurrentPowerset(nextEvent);
 			lassoFound = checkForLasso(event);
 			if (lassoFound && !mfindAllLassoMarkings) {
 				return true;
@@ -161,11 +154,12 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 		return lassoFound;
 	}
 
-	private final void fillConcurrentPowerset(Set<Set<Event<LETTER, PLACE>>> concurrentSubSets,
-			Event<LETTER, PLACE> headEvent) {
+	// Adds new concurrent subsets. These subsets are a subset of the powerset of all events which are concurrent to
+	// eachother.
+	private final void fillConcurrentPowerset(Event<LETTER, PLACE> headEvent) {
 		for (Event<LETTER, PLACE> event : headEvent.getLocalConfiguration().getEvents()) {
 			Set<Set<Event<LETTER, PLACE>>> subSetUpdateSet = new HashSet<>();
-			for (Set<Event<LETTER, PLACE>> set : concurrentSubSets) {
+			for (Set<Event<LETTER, PLACE>> set : mConcurrentSubSets) {
 				if ((!set.contains(event)) && fitsInEqualSet(event, set)) {
 					Set<Event<LETTER, PLACE>> newSubset = new HashSet<>();
 					newSubset.add(event);
@@ -173,10 +167,10 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 					subSetUpdateSet.add(newSubset);
 				}
 			}
-			concurrentSubSets.addAll(subSetUpdateSet);
+			mConcurrentSubSets.addAll(subSetUpdateSet);
 			Set<Event<LETTER, PLACE>> singletonSet = new HashSet<>();
 			singletonSet.add(event);
-			concurrentSubSets.add(singletonSet);
+			mConcurrentSubSets.add(singletonSet);
 		}
 	}
 
@@ -195,7 +189,7 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 			if (!configuration.contains(event) || mCheckedConfigurations.contains(configuration)) {
 				continue;
 			}
-			lassoFound = testConfiguration(configuration);
+			lassoFound = isConfigurationLasso(configuration);
 			if (lassoFound && !mfindAllLassoMarkings) {
 				return true;
 			}
@@ -204,10 +198,11 @@ public class LassoConfigurationCheckerIterative<LETTER, PLACE> {
 		return lassoFound;
 	}
 
-	private final boolean testConfiguration(Set<Event<LETTER, PLACE>> configuration) {
+	private final boolean isConfigurationLasso(Set<Event<LETTER, PLACE>> configuration) {
 		Set<PLACE> finalStateOfConfiguration = new HashSet<>();
 		Set<Event<LETTER, PLACE>> configurationEvents = new HashSet<>();
 
+		// compute finalStateOfConfiguration and configurationEvents
 		for (Event<LETTER, PLACE> event : configuration) {
 			configurationEvents.addAll(event.getLocalConfiguration().getEvents());
 			for (Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {

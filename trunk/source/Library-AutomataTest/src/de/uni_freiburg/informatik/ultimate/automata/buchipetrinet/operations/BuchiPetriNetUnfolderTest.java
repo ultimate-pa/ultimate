@@ -42,9 +42,8 @@ public class BuchiPetriNetUnfolderTest {
 		BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
 				BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, false);
 
-		boolean test = unfolder.getChecker().getLassoConfigurations().toArray().length == 4;
-		System.out.println(unfolder.getChecker().getLassoConfigurations().toString());
-		assertThat("Right amount of lasso configurations found.", test);
+		boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		assertThat("Lasso should be found.", test);
 	}
 
 	@Test
@@ -72,9 +71,8 @@ public class BuchiPetriNetUnfolderTest {
 		BuchiPetriNetUnfolder<String, String> unfolder =
 				new BuchiPetriNetUnfolder<>(mServices, petriNet, BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, true);
 
-		boolean test = unfolder.getChecker().getLassoConfigurations().toArray().length == 1;
-		System.out.println(unfolder.getChecker().getLassoConfigurations().toString());
-		assertThat("Right amount of lasso configurations found.", test);
+		boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		assertThat("Lasso should be found.", test);
 	}
 
 	@Test
@@ -104,8 +102,7 @@ public class BuchiPetriNetUnfolderTest {
 		BuchiPetriNetUnfolder<String, String> unfolder =
 				new BuchiPetriNetUnfolder<>(mServices, petriNet, BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, true);
 
-		boolean test = unfolder.getChecker().getLassoConfigurations().toArray().length == 0;
-		System.out.println(unfolder.getChecker().getLassoConfigurations().toString());
-		assertThat("Right amount of lasso configurations found.", test);
+		boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		assertThat("Lasso should not be found, language empty.", !test);
 	}
 }

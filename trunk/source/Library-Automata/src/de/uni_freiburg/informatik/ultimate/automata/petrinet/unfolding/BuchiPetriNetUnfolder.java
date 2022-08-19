@@ -119,7 +119,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 			throw new IllegalArgumentException();
 		}
 		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
-		mLassoChecker = new LassoConfigurationCheckerIterative<>(mUnfolding, !stopIfAcceptingRunFound);
+		mLassoChecker = new LassoConfigurationCheckerIterative<>(mUnfolding);
 		mPossibleExtensions =
 				new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
 
@@ -185,7 +185,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 		}
 		mUnfolding.addEvent(event);
 
-		boolean lassoFound = mLassoChecker.update(mUnfolding);
+		boolean lassoFound = mLassoChecker.update(event);
 		if (lassoFound && mRun == null) {
 			mRun = constructRun(event);
 			if (mStopIfAcceptingRunFound) {

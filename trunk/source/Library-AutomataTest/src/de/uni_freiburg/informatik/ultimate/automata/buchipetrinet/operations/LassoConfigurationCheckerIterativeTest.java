@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -55,12 +56,13 @@ public class LassoConfigurationCheckerIterativeTest {
 		BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
 		LassoConfigurationCheckerIterative<String, String> configurationChecker =
-				new LassoConfigurationCheckerIterative<>(mUnfolding, false);
-		configurationChecker.update(mUnfolding);
+				new LassoConfigurationCheckerIterative<>(mUnfolding);
+		for (Event<String, String> event : mUnfolding.getEvents()) {
+			configurationChecker.update(event);
+		}
 
-		boolean test = configurationChecker.getLassoConfigurations().toArray().length == 1;
-		System.out.println(configurationChecker.getLassoConfigurations().toString());
-		assertThat("Right amount of lasso configurations found.", test);
+		boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
+		assertThat("Lasso should be found.", test);
 	}
 
 	@Test
@@ -83,13 +85,13 @@ public class LassoConfigurationCheckerIterativeTest {
 		BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
 		LassoConfigurationCheckerIterative<String, String> configurationChecker =
-				new LassoConfigurationCheckerIterative<>(mUnfolding, true);
-		configurationChecker.update(mUnfolding);
+				new LassoConfigurationCheckerIterative<>(mUnfolding);
+		for (Event<String, String> event : mUnfolding.getEvents()) {
+			configurationChecker.update(event);
+		}
 
-		boolean test = configurationChecker.getLassoConfigurations().toArray().length == 4;
-		System.out.println(configurationChecker.getLassoConfigurations().toString());
-
-		assertThat("Right amount of lasso configurations found.", test);
+		boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
+		assertThat("Lasso should be found.", test);
 	}
 
 }
