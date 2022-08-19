@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -63,10 +62,8 @@ public abstract class SdHoareTripleCheckHelper {
 	}
 
 	public Validity check(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate succ) {
-		if (act instanceof IInternalAction) {
-			if (((IInternalAction) act).getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
-				return Validity.VALID;
-			}
+		if (act.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
+			return Validity.VALID;
 		}
 
 		boolean unknownCoverage = false;
