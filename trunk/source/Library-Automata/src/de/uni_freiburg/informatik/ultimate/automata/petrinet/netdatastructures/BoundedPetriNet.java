@@ -155,6 +155,11 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		return !constantTokenAmount() || transitionsPreserveTokenAmount();
 	}
 
+	private boolean transitionsPreserveTokenAmount() {
+		return mTransitions.parallelStream()
+				.allMatch(transition -> transition.getPredecessors().size() == transition.getSuccessors().size());
+	}
+
 	public boolean checkResult(final INestedWordAutomaton<LETTER, PLACE> nwa,
 			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
@@ -297,11 +302,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			}
 		}
 		return false;
-	}
-
-	boolean transitionsPreserveTokenAmount() {
-		return mTransitions.parallelStream()
-				.allMatch(transition -> transition.getPredecessors().size() == transition.getSuccessors().size());
 	}
 
 	@Override
