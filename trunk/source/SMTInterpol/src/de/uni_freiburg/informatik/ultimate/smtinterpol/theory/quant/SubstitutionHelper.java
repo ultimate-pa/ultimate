@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
 
@@ -78,7 +80,7 @@ public class SubstitutionHelper {
 	 * (2) Build the disjunction.<br>
 	 * (3) Remove duplicates and false literals.<br>
 	 * (4) Build the actual literals.
-	 * 
+	 *
 	 * @return the result of the substitution and simplification.
 	 */
 	public SubstitutionResult substituteInClause() {
@@ -113,14 +115,10 @@ public class SubstitutionHelper {
 				// Substitute variables.
 				final FormulaUnLet unletter = new FormulaUnLet();
 				unletter.addSubstitutions(mSigma);
-				final Term substituted = unletter.transform(qLit.getTerm()); // TODO Maybe we should substitute the
-																				// annotation as well (for aux-lits)
+				final Term substituted = unletter.transform(qLit.getSMTFormula(theory, true));
 				substitutedLitTerms.add(substituted);
 
-				// Simplify the resulting term.
-				assert substituted instanceof ApplicationTerm;
-
-				Term simplified = normalizeAndSimplifyLitTerm((ApplicationTerm) substituted);
+				Term simplified = normalizeAndSimplifyLitTerm(substituted);
 
 				if (mTracker.getProvedTerm(simplified) == theory.mTrue) { // Clause is trivially true.
 					return buildTrueResult();
@@ -147,7 +145,7 @@ public class SubstitutionHelper {
 								mClausifier.createMutableAffinTerm(lhs, mSource);
 						newAtom = mQuantTheory.getLinAr().generateConstraint(msum, false);
 					} else {
-						newAtom = mQuantTheory.getQuantInequality(isPos, atomApp.getParameters()[0]);
+						newAtom = mQuantTheory.getQuantInequality(isPos, atomApp.getParameters()[0], mSource);
 					}
 				} else if (atomApp.getFunction().getName() == "=") {
 					final Term lhs = atomApp.getParameters()[0];
@@ -157,7 +155,8 @@ public class SubstitutionHelper {
 						assert eq != EqualityProxy.getTrueProxy() && eq != EqualityProxy.getFalseProxy();
 						newAtom = eq.getLiteral(mSource);
 					} else {
-						newAtom = mQuantTheory.getQuantEquality(atomApp.getParameters()[0], atomApp.getParameters()[1]);
+						newAtom = mQuantTheory.getQuantEquality(atomApp.getParameters()[0], atomApp.getParameters()[1],
+								mSource);
 					}
 				} else { // Predicates
 					assert atomApp.getFreeVars().length == 0; // Quantified predicates are stored as equalities.
@@ -221,11 +220,17 @@ public class SubstitutionHelper {
 	 *
 	 * @return the simplified term and its rewrite proof.
 	 */
-	private Term normalizeAndSimplifyLitTerm(final ApplicationTerm litTerm) {
+	private Term normalizeAndSimplifyLitTerm(final Term litTerm) {
 		final Theory theory = mQuantTheory.getTheory();
 
-		final ApplicationTerm atomTerm =
-				litTerm.getFunction().getName() == "not" ? (ApplicationTerm) litTerm.getParameters()[0] : litTerm;
+		final boolean isNegated = (litTerm instanceof ApplicationTerm)
+				&& ((ApplicationTerm) litTerm).getFunction().getName() == "not";
+		final Term quotedAtomTerm = isNegated ? ((ApplicationTerm) litTerm).getParameters()[0] : litTerm;
+		assert quotedAtomTerm instanceof AnnotatedTerm
+				&& ((AnnotatedTerm) quotedAtomTerm).getAnnotations()[0].getKey().equals(":quotedQuant");
+
+		final ApplicationTerm atomTerm = (ApplicationTerm) ((AnnotatedTerm) quotedAtomTerm).getSubterm();
+		final Term atomRewrite = mTracker.buildRewrite(quotedAtomTerm, atomTerm, ProofConstants.RW_STRIP);
 
 		assert atomTerm.getFunction().getName() == "<=" || atomTerm.getFunction().getName() == "=";
 		final TermCompiler compiler = mClausifier.getTermCompiler();
@@ -239,33 +244,24 @@ public class SubstitutionHelper {
 		assert atomTerm.getFunction().getName() == "=";
 		final Term lhs = atomTerm.getParameters()[0];
 		final Term rhs = atomTerm.getParameters()[1];
-		if (QuantUtil.isAuxApplication(lhs)) {
-			return mTracker.reflexivity(litTerm);
-		}
-
-		// Normalize lhs and rhs separately
 		Term normalizedAtom;
-		final Term normalizedLhs = compiler.transform(lhs);
-		final Term normalizedRhs = compiler.transform(rhs);
-		normalizedAtom =
-				mTracker.congruence(mTracker.reflexivity(atomTerm), new Term[] { normalizedLhs, normalizedRhs });
+		if (QuantUtil.isAuxApplication(lhs)) {
+			normalizedAtom = atomRewrite;
+		} else {
+			// Normalize lhs and rhs separately
+			final Term normalizedLhs = compiler.transform(lhs);
+			final Term normalizedRhs = compiler.transform(rhs);
+			normalizedAtom = mTracker.congruence(atomRewrite, new Term[] { normalizedLhs, normalizedRhs });
 
-		// Simplify equality literals similar to EqualityProxy. (TermCompiler already takes care of <= literals).
-		Term simplifiedAtom = mTracker.getProvedTerm(normalizedAtom);
-		assert simplifiedAtom instanceof ApplicationTerm;
-		final ApplicationTerm appTerm = (ApplicationTerm) simplifiedAtom;
-		if (appTerm.getFunction().getName() == "=") {
-			final Term trivialEq = Clausifier.checkAndGetTrivialEquality(appTerm.getParameters()[0],
-					appTerm.getParameters()[1], theory);
+			// Simplify equality literals similar to EqualityProxy.
+			final Term trivialEq = Clausifier.checkAndGetTrivialEquality(mTracker.getProvedTerm(normalizedLhs),
+					mTracker.getProvedTerm(normalizedRhs), theory);
 			if (trivialEq != null) {
-				simplifiedAtom = trivialEq;
+				normalizedAtom = mTracker.transitivity(normalizedAtom,
+						mTracker.intern(mTracker.getProvedTerm(normalizedAtom), trivialEq));
 			}
 		}
-		if (simplifiedAtom != mTracker.getProvedTerm(normalizedAtom)) {
-			normalizedAtom = mTracker.transitivity(normalizedAtom,
-					mTracker.intern(mTracker.getProvedTerm(normalizedAtom), simplifiedAtom));
-		}
-		if (atomTerm != litTerm) {
+		if (isNegated) {
 			return mClausifier.getSimplifier()
 					.convertNot(mTracker.congruence(mTracker.reflexivity(litTerm), new Term[] { normalizedAtom }));
 		}
@@ -288,7 +284,7 @@ public class SubstitutionHelper {
 
 		/**
 		 * Build a new SubstitutionResult.
-		 * 
+		 *
 		 * @param substituted
 		 *            the substituted term.
 		 * @param simplified

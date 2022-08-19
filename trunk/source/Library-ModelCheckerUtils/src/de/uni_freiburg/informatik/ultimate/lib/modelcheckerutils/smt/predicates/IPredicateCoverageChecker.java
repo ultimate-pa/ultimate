@@ -55,7 +55,7 @@ public interface IPredicateCoverageChecker {
 	 * of states that is strictly greater (resp. smaller) than the set of states that is represented by p2. (E.g, "true"
 	 * is strictly greater than "false").
 	 */
-	IPartialComparator<IPredicate> getPartialComperator();
+	IPartialComparator<IPredicate> getPartialComparator();
 
 	/**
 	 * @return A relation between predicates where an element (A,B) of the relation means that A implies B and which can

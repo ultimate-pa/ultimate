@@ -35,12 +35,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * @author Luca Bruder (luca.bruder@gmx.de)
  *
  */
-final class StoreSelectEqualityCollector extends TermTransformer {
+public final class StoreSelectEqualityCollector extends TermTransformer {
 
-	final Set<Term> mStoreTerms = new HashSet<>();
-	final Set<Term> mSelectTerms = new HashSet<>();
-	final Set<Term> mEqualityTerms = new HashSet<>();
-	Boolean mMultDim = false;
+	private final Set<Term> mStoreTerms = new HashSet<>();
+	private final Set<Term> mSelectTerms = new HashSet<>();
+	private final Set<Term> mEqualityTerms = new HashSet<>();
+	private boolean mMultDim = false;
 
 	@Override
 	protected void convert(final Term term) {
@@ -52,14 +52,15 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 				// It's an equality term
 				if (checkAndAddIfParamIsStoreTerm(aterm)) {
 					// sideeffect in check
-				} else if (aterm.getParameters()[0].getSort().isArraySort() && aterm.getParameters()[1].getSort().isArraySort()) {
+				} else if (aterm.getParameters()[0].getSort().isArraySort()
+						&& aterm.getParameters()[1].getSort().isArraySort()) {
 					// its an equality term over arrays
 					mEqualityTerms.add(term);
 				}
 
 			} else if (funName.equals("select")) {
 				// It's a select term
-				Boolean localMult = false;
+				boolean localMult = false;
 				final Term[] params = aterm.getParameters();
 				for (int i = 0; i < params.length; ++i) {
 					if (params[i] instanceof ApplicationTerm) {
@@ -99,17 +100,29 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 	protected boolean isEmpty() {
 		return mSelectTerms.isEmpty() && mStoreTerms.isEmpty() && mEqualityTerms.isEmpty();
 	}
-	
+
 	protected boolean hasNoStoEqu() {
 		return mStoreTerms.isEmpty() && mEqualityTerms.isEmpty();
 	}
-	
-	public Boolean hasMultDim() {
+
+	public boolean hasMultDim() {
 		return mMultDim;
 	}
 
 	@Override
 	public String toString() {
 		return "Store " + mStoreTerms + " Select " + mSelectTerms + " Equals " + mEqualityTerms;
+	}
+
+	public Set<Term> getStoreTerms() {
+		return mStoreTerms;
+	}
+
+	public Set<Term> getSelectTerms() {
+		return mSelectTerms;
+	}
+
+	public Set<Term> getEqualityTerms() {
+		return mEqualityTerms;
 	}
 }

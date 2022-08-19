@@ -26,15 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceCheck} using
@@ -44,17 +47,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class CamelRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
+
+	public CamelRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
+			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
+		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+	}
 
 	@SuppressWarnings("unchecked")
-	public CamelRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
-			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory,
-				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_NestedInterpolation),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates) },
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
+
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
+		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 
 	@Override

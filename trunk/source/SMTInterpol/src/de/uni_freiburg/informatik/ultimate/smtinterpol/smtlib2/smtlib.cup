@@ -721,7 +721,7 @@ interpolantpartition
            ;
 
 sortDec ::= LPAR symbol:type NUMERAL:numParams RPAR
-            {: RESULT = parser.env.getScript().datatype(type, numParams.intValueExact()); :}
+            {: RESULT = parser.env.getScript().datatype(type, numParams.intValue()); :}
             ;
 
 /* sort declaration in declare-datatype is always of arity 0 */

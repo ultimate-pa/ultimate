@@ -100,9 +100,9 @@ public class NonIncrementalScriptor extends NoopScript {
 	 *             If the solver is not installed
 	 */
 	public NonIncrementalScriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
-			final String solverName, final boolean dumpFakeNonIncrementalScript, final String pathOfDumpedFakeNonIncrementalScript,
-			final String basenameOfDumpedFakeNonIcrementalScript)
-			throws IOException {
+			final String solverName, final boolean dumpFakeNonIncrementalScript,
+			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript,
+			final String fullPathOfDumpedFile) throws IOException {
 		if (dumpFakeNonIncrementalScript) {
 			mPathOfDumpedFakeNonIncrementalScript = pathOfDumpedFakeNonIncrementalScript;
 			mBasenameOfDumpedFakeNonIcrementalScript = basenameOfDumpedFakeNonIcrementalScript;
@@ -114,7 +114,7 @@ public class NonIncrementalScriptor extends NoopScript {
 			mPathOfDumpedFakeNonIncrementalScript = null;
 			mBasenameOfDumpedFakeNonIcrementalScript = null;
 		}
-		mExecutor = new Executor(command, this, logger, services, solverName);
+		mExecutor = new Executor(command, this, logger, services, solverName, fullPathOfDumpedFile);
 		mCommandStack = new LinkedList<>();
 		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
 	}
@@ -208,7 +208,7 @@ public class NonIncrementalScriptor extends NoopScript {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		(new ResetCommand()).executeWithExecutor(mExecutor, mPw);
+		new ResetCommand().executeWithExecutor(mExecutor, mPw);
 		if (mNewScriptAfterEachReset) {
 			try {
 				mPw = constructPrintWriter(constructFullFilenameForNewScript());
@@ -216,13 +216,13 @@ public class NonIncrementalScriptor extends NoopScript {
 				throw new AssertionError(e);
 			}
 		}
-		(new SetOptionCommand(PRINT_SUCCESS, true)).executeWithExecutor(mExecutor, mPw);
+		new SetOptionCommand(PRINT_SUCCESS, true).executeWithExecutor(mExecutor, mPw);
 		for (final ArrayList<ISmtCommand<?>> level : mCommandStack) {
 			for (final ISmtCommand<?> command : level) {
 				command.executeWithExecutor(mExecutor, mPw);
 			}
 		}
-		mStatus = (new SmtCommandUtils.CheckSatCommand()).executeWithExecutor(mExecutor, mPw);
+		mStatus = new SmtCommandUtils.CheckSatCommand().executeWithExecutor(mExecutor, mPw);
 		if (mPw != null) {
 			mPw.println("; response to preceding check-sat was " + mStatus + " when this script was constructed");
 		}
@@ -296,7 +296,7 @@ public class NonIncrementalScriptor extends NoopScript {
 	@Override
 	public void reset() {
 		super.reset();
-		(new SmtCommandUtils.ResetCommand()).executeWithExecutor(mExecutor, mPw);
+		new SmtCommandUtils.ResetCommand().executeWithExecutor(mExecutor, mPw);
 		resetAssertionStack();
 		if (mNewScriptAfterEachReset) {
 			try {

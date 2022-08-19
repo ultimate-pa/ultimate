@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -42,12 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Totalized automaton of input. 
- * 
- * Has a special mode in which it expects that input is deterministic. If then 
- * a transition is nondeterministic an empty transition set is returned and 
- * mNondeterminismInInputDetected is set to true.
- * 
+ * Totalized automaton of input.
+ *
+ * Has a special mode in which it expects that input is deterministic. If then a transition is nondeterministic an empty
+ * transition set is returned and mNondeterminismInInputDetected is set to true.
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
  *            letter type
@@ -59,24 +59,56 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	private final ISinkStateFactory<STATE> mStateFactory;
 	private STATE mSinkState;
 	private boolean mSinkStateWasConstructed;
+	private final boolean mSinkStateBelongsToOperand;
 	private boolean mNondeterministicTransitionsDetected;
 	private boolean mNondeterministicInitialsDetected;
 	private final boolean mStopIfNondeterminismWasDetected;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param operand
 	 *            operand
 	 * @param stateFactory
 	 *            state factory
-	 * @param stopIfNondeterminismWasDetected 
+	 * @param stopIfNondeterminismWasDetected
 	 */
 	public TotalizeNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final ISinkStateFactory<STATE> stateFactory, final boolean stopIfNondeterminismWasDetected) {
 		mOperand = operand;
 		mStateFactory = stateFactory;
 		mStopIfNondeterminismWasDetected = stopIfNondeterminismWasDetected;
+		mSinkStateBelongsToOperand = false;
+	}
+
+	/**
+	 * Variant of the constructor that allows an existing state of the automaton to be used as sink state.
+	 *
+	 * Note that the language recognized by an automaton created through this constructor is typically a superset of the
+	 * input automaton's language, in particular if the given sink state is accepting or has outgoing transitions.
+	 *
+	 * This mode is e.g. useful for interpolant automata, where we can use the initial state ("true") as sink state.
+	 *
+	 * @param operand
+	 *            The automaton to be totalized
+	 * @param sinkState
+	 *            The sink state, which must be an existing state of the operand
+	 * @param stopIfNondeterminismWasDetected
+	 *            as described above
+	 */
+	public TotalizeNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final STATE sinkState,
+			final boolean stopIfNondeterminismWasDetected) {
+		mOperand = operand;
+		mStateFactory = null;
+		mStopIfNondeterminismWasDetected = stopIfNondeterminismWasDetected;
+		mSinkState = Objects.requireNonNull(sinkState);
+		mSinkStateBelongsToOperand = true;
+		mSinkStateWasConstructed = true;
+
+		if (mOperand instanceof INestedWordAutomaton
+				&& !((INestedWordAutomaton<?, ?>) mOperand).getStates().contains(mSinkState)) {
+			throw new UnsupportedOperationException("Operand must contain the state " + mSinkState);
+		}
 	}
 
 	private void requestSinkState() {
@@ -100,12 +132,13 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	/**
 	 * @param state
 	 *            The candidate state.
-	 * @return {@code true} iff the sink state was constructed and is equal to the given state
+	 * @return {@code true} iff the sink state was constructed and is equal to the given state. If the sink state was
+	 *         given in the constructor and belongs to the operand, returns false.
 	 */
 	@SuppressWarnings("squid:S1698")
 	private boolean isNewSinkState(final STATE state) {
-		// equality intended here
-		return mSinkStateWasConstructed && state == mSinkState;
+		// reference equality intended here
+		return !mSinkStateBelongsToOperand && mSinkStateWasConstructed && state == mSinkState;
 	}
 
 	/**
@@ -196,7 +229,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getVpAlphabet().getCallAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		return mOperand.getVpAlphabet().getReturnAlphabet();

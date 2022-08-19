@@ -305,5 +305,9 @@
 		<plugin id="org.eclipse.tools.templates.core.source"/>
 		<plugin id="org.eclipse.ui.views.properties.tabbed" version="3.8.1000.v20200609-0849"/>
 		<plugin id="org.eclipse.ui.views.properties.tabbed.source" version="3.8.1000.v20200609-0849"/>
+		<plugin id="org.eclipse.pde.core"/>
+		<plugin id="org.eclipse.jdt.junit.runtime"/>
+		<plugin id="org.eclipse.pde.junit.runtime"/>
+		<plugin id="org.eclipse.jdt.junit4.runtime"/>
 	</includeBundles>
 </target>

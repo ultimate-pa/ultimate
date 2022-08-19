@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpgStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.ITraceCheckStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * {@link IRefinementStrategy} that provides only one element, namely the one selected in the Ultimate preferences.
@@ -45,14 +45,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  */
 public class FixedRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public FixedRefinementStrategy(final StrategyModuleFactory<L> factory,
+	public FixedRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
-			createModules(final StrategyModuleFactory<L> factory) {
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 		final IIpTcStrategyModule<?, L> preferenceIpTc = factory.createIpTcStrategyModulePreferences();
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { preferenceIpTc };
 		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { preferenceIpTc };

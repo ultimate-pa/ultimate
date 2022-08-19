@@ -71,8 +71,14 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 					.append(CoreUtil.getPlatformLineSeparator());
 			sb.append(indent).append(String.format("Test Suite Parameters: Timeout=%s s", mDeadline / 1000))
 					.append(CoreUtil.getPlatformLineSeparator());
-			sb.append(indent).append("Ultimate Git: " + CoreUtil.readGitVersion(getClass().getClassLoader()))
-					.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(indent).append("Ultimate Git: ");
+			final String version = CoreUtil.readGitVersion(getClass().getClassLoader());
+			if (version != null) {
+				sb.append(version);
+			} else {
+				sb.append("Unknown");
+			}
+			sb.append(CoreUtil.getPlatformLineSeparator());
 			mFirstRun = false;
 		}
 		sb.append(CoreUtil.getCurrentDateTimeAsString());

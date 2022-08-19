@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Use this to report that a user-specified limit was reached during the analysis of a certain error location.
@@ -41,12 +43,19 @@ public class UserSpecifiedLimitReachedResultAtElement<ELEM extends IElement> ext
 
 	private final String mLongDescription;
 	private final String mLimit;
+	private final String mProgramExecutionAsString;
 
 	public UserSpecifiedLimitReachedResultAtElement(final String limit, final ELEM element, final String plugin,
-			final IBacktranslationService translatorSequence, final String longDescription) {
+			final IBacktranslationService translatorSequence, final IProgramExecution<?, ?> programExecution,
+			final String longDescription) {
 		super(element, plugin, translatorSequence);
 		mLongDescription = longDescription;
 		mLimit = limit;
+		if (programExecution != null) {
+			mProgramExecutionAsString = translatorSequence.translateProgramExecution(programExecution).toString();
+		} else {
+			mProgramExecutionAsString = null;
+		}
 	}
 
 	@Override
@@ -56,7 +65,14 @@ public class UserSpecifiedLimitReachedResultAtElement<ELEM extends IElement> ext
 
 	@Override
 	public String getLongDescription() {
-		return mLongDescription;
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mLongDescription);
+		if (mProgramExecutionAsString != null) {
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append("Limit reached while looking at the following path:");
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(mProgramExecutionAsString);
+		}
+		return sb.toString();
 	}
-
 }

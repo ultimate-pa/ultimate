@@ -18,6 +18,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 /**
  * Represents a function symbol.  Each function symbol has a name, a sort and
  * zero or more parameter sorts.  A constant symbol is represented as a function
@@ -40,6 +42,7 @@ public class FunctionSymbol {
 	public static final int MODELVALUE = 32;
 	public static final int UNINTERPRETEDINTERNAL = 64;
 	public static final int CONSTRUCTOR = 128;
+	public static final int SELECTOR = 256;
 
 	final String mName;
 	final String[] mIndices;
@@ -48,6 +51,7 @@ public class FunctionSymbol {
 	final int mFlags;
 	final TermVariable[] mDefinitionVars;
 	final Term mDefinition;
+	final int mHash;
 
 	FunctionSymbol(String n, String[] i, Sort[] params, Sort result,
 			TermVariable[] definitionVars, Term definition, int flags) {
@@ -74,11 +78,19 @@ public class FunctionSymbol {
 			throw new IllegalArgumentException(
 					"Wrong sorts for chainable symbol");
 		}
+		int hash = HashUtils.hashJenkins(mName.hashCode(), (Object[]) mParamSort);
+		if (mIndices != null) {
+			hash = HashUtils.hashJenkins(hash, (Object[]) mIndices);
+		}
+		if (mReturnSort != null) {
+			hash = HashUtils.hashJenkins(hash, mReturnSort);
+		}
+		mHash = hash;
 	}
 
 	@Override
 	public int hashCode() {
-		return mName.hashCode();
+		return mHash;
 	}
 
 	/**
@@ -361,5 +373,13 @@ public class FunctionSymbol {
 	public boolean isInterpreted() {
 		return isModelValue()
 				|| (isIntern() && (mFlags & UNINTERPRETEDINTERNAL) == 0);
+	}
+
+	public boolean isConstructor() {
+		return (mFlags & CONSTRUCTOR) != 0;
+	}
+
+	public boolean isSelector() {
+		return (mFlags & SELECTOR) != 0;
 	}
 }

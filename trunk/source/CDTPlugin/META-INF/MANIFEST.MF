@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CDTPlugin
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.cdt;singleton:=true
-Bundle-Version: 0.2.0
+Bundle-Version: 0.2.2
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.cdt.Activator
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.gui.preferencepages,

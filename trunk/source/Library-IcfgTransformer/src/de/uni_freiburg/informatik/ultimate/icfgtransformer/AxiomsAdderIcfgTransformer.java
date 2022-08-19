@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
@@ -22,8 +24,7 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 
 	public AxiomsAdderIcfgTransformer(final ILogger logger, final String resultName, final Class<OUTLOC> outLocClazz,
 			final IIcfg<INLOC> inputCfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Term additionalAxioms) {
-		assert logger != null;
+			final IcfgTransformationBacktranslator backtranslationTracker, final Term additionalAxioms) {
 
 		final CfgSmtToolkit inputCfgCsToolkit = inputCfg.getCfgSmtToolkit();
 		final ManagedScript mgdScript = inputCfgCsToolkit.getManagedScript();
@@ -39,8 +40,8 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 		// make a copy of the input Icfg
 		// TODO: Seems really expensive
 		final ITransformulaTransformer noopTransformulaTransformer = new IdentityTransformer(inputCfgCsToolkit);
-		final IcfgTransformer<INLOC, OUTLOC> noopIcfgTransformer = new IcfgTransformer<>(logger, inputCfg, funLocFac,
-				backtranslationTracker, outLocClazz, resultName, noopTransformulaTransformer);
+		final IcfgTransformer<INLOC, OUTLOC> noopIcfgTransformer = new IcfgTransformer<>(Objects.requireNonNull(logger),
+				inputCfg, funLocFac, backtranslationTracker, outLocClazz, resultName, noopTransformulaTransformer);
 		final BasicIcfg<OUTLOC> copiedIcfg = (BasicIcfg<OUTLOC>) noopIcfgTransformer.getResult();
 		copiedIcfg.setCfgSmtToolkit(newToolkit);
 

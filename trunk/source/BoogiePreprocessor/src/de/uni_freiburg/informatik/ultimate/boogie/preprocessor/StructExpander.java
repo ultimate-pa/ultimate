@@ -277,9 +277,7 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 			for (final String id : input.getIdentifiers()) {
 				for (int j = 0; j < st.getFieldCount(); j++) {
 					newVarList[i++] = new VarList(input.getLocation(),
-							new String[] {
-									id + StructExpanderUtil.DOT + st.getFieldIds()[j]
-									},
+							new String[] { id + StructExpanderUtil.DOT + st.getFieldIds()[j] },
 							st.getFieldType(j).toASTType(input.getLocation()));
 				}
 			}
@@ -684,6 +682,23 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 	}
 
 	/**
+	 * Check if the attribute is a <code>{ :const_array }</code> attribute that must be expanded differently to help
+	 * translating const struct arrays.
+	 *
+	 * @param attribute
+	 *            The attribute to check
+	 * @return true, if and only if this is a builtin const attribute.
+	 */
+	private static boolean isConstArray(final Attribute attribute) {
+		if (!(attribute instanceof NamedAttribute)) {
+			return false;
+		}
+		final NamedAttribute namedAttr = (NamedAttribute) attribute;
+		final Expression[] values = namedAttr.getValues();
+		return namedAttr.getName().equals(StructExpanderUtil.ATTRIBUTE_CONST_ARRAY) && values.length == 0;
+	}
+
+	/**
 	 * Consume {:expand-struct "id"} attributes of a function by splitting the original attribute array into new ones
 	 * along the occurrences of {:expand-struct "id"} attributes.
 	 *
@@ -718,8 +733,8 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 		if (fieldCount == 0) {
 			if (Arrays.stream(attribs).filter(a -> a instanceof NamedAttribute).map(a -> ((NamedAttribute) a).getName())
 					.anyMatch(a -> a.equals(StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT))) {
-				throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
-						+ " attribute but no struct return type");
+				throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has "
+						+ StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT + " attribute but no struct return type");
 			}
 			final Attribute[][] rtr = new Attribute[1][];
 			rtr[0] = funDecl.getAttributes();
@@ -727,6 +742,18 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 		}
 
 		final Attribute[][] rtr = new Attribute[fieldCount][];
+
+		if (isConstArray(attribs[0])) {
+			for (int i = 0; i < fieldCount; i++) {
+				final ILocation loc = attribs[0].getLocation();
+				rtr[i] = new Attribute[2];
+				rtr[i][0] = attribs[0];
+				rtr[i][1] = new NamedAttribute(loc, StructExpanderUtil.ATTRIBUTE_STRUCTPOS,
+						new Expression[] { new StringLiteral(loc, Integer.toString(i)) });
+			}
+			return rtr;
+		}
+
 		int lastIdx = -1;
 
 		for (int i = 0; i < attribs.length; ++i) {
@@ -742,8 +769,9 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 
 			} else {
 				if (lastIdx == -1 && i != 0) {
-					throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
-							+ " attribute is not the first attribute; you will loose attributes");
+					throw new IllegalExpandStructUsageException(
+							funDecl.getIdentifier() + " " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
+									+ " attribute is not the first attribute; you will loose attributes");
 				}
 			}
 			lastIdx = i;
@@ -762,33 +790,35 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 			final Attribute[] attribs, final Attribute[][] rtr, final int lastIdx, final int i) {
 
 		if (lastIdx == -1) {
-			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has no " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
-					+ " attribute but struct return type");
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has no "
+					+ StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT + " attribute but struct return type");
 		}
 
 		final Expression[] expandStructAttribArgs = ((NamedAttribute) attribs[lastIdx]).getValues();
 		if (expandStructAttribArgs.length != 1) {
-			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
-					+ " attribute with wrong number of arguments: " + expandStructAttribArgs.length);
+			throw new IllegalExpandStructUsageException(
+					funDecl.getIdentifier() + " has " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
+							+ " attribute with wrong number of arguments: " + expandStructAttribArgs.length);
 		}
 		final Expression expandStructArg = expandStructAttribArgs[0];
 		if (!(expandStructArg instanceof StringLiteral)) {
-			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
-					+ " attribute but wrong attribute type");
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has "
+					+ StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT + " attribute but wrong attribute type");
 		}
 		final String expectedFieldName = ((StringLiteral) expandStructArg).getValue();
 		final int idx = Arrays.asList(st.getFieldIds()).indexOf(expectedFieldName);
 		if (idx == -1) {
-			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
-					+ " attribute but field name " + expectedFieldName + " does not exist in flattened struct");
+			throw new IllegalExpandStructUsageException(
+					funDecl.getIdentifier() + " has " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT
+							+ " attribute but field name " + expectedFieldName + " does not exist in flattened struct");
 		}
 		if (idx >= rtr.length) {
 			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " has too many "
 					+ StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT + " attributes for its return type");
 		}
 		if (rtr[idx] != null) {
-			throw new IllegalExpandStructUsageException(
-					funDecl.getIdentifier() + " " + StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT + " attribute occurs twice");
+			throw new IllegalExpandStructUsageException(funDecl.getIdentifier() + " "
+					+ StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT + " attribute occurs twice");
 		}
 
 		// copy all attributes after lastIdx and before i into a new array and save it at rtr[rtrIdx]

@@ -130,6 +130,8 @@ public final class SifaRunner<L extends IIcfgTransition<?>> implements IInterpol
 			mTraceCheckReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null,
 					ExceptionHandlingCategory.KNOWN_IGNORE);
 			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.ALGORITHM_FAILED, null);
+			logger.info("Sifa could not show that error location is unreachable, found '%s' at error location",
+					mPostcondition);
 		}
 		mTracecheckFinishedNormally = true;
 	}

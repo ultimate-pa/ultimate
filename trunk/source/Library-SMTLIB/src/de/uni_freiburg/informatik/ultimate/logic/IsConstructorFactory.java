@@ -3,12 +3,12 @@ package de.uni_freiburg.informatik.ultimate.logic;
 public class IsConstructorFactory extends FunctionSymbolFactory {
 
 	public IsConstructorFactory() {
-		super("is");
+		super(SMTLIBConstants.IS);
 	}
 
-	
+
 	@Override
-	public Sort getResultSort(String[] indices, Sort[] paramSorts, Sort resultSort) {
+	public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 		if (indices.length != 1 || paramSorts.length != 1) {
 			return null;
 		}
@@ -17,7 +17,7 @@ public class IsConstructorFactory extends FunctionSymbolFactory {
 			return null;
 		}
 
-		DataType datatype = (DataType) paramSorts[0].getSortSymbol();
+		final DataType datatype = (DataType) paramSorts[0].getSortSymbol();
 		for (int i = 0; i < datatype.getConstructors().length; i++) {
 			if (indices[0].equals(datatype.getConstructors()[i].getName())) {
 				return paramSorts[0].getTheory().getBooleanSort();

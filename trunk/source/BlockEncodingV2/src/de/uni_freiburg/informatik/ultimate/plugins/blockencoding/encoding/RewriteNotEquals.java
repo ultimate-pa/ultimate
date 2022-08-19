@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
@@ -105,7 +106,7 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 			if (!toRemove.add(edge)) {
 				continue;
 			}
-			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), edge.getTarget(),
+			final IcfgEdge newEdge = mEdgeBuilder.constructAndConnectInternalTransition(edge, edge.getSource(), edge.getTarget(),
 					TransFormulaBuilder.constructCopy(mgScript, rewrittenMtf, Collections.emptySet(),
 							Collections.emptySet(), Collections.emptyMap()));
 			rememberEdgeMapping(newEdge, edge);

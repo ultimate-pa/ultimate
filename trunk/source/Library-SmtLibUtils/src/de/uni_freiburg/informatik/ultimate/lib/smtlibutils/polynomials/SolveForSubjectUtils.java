@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -67,25 +69,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class SolveForSubjectUtils {
 
-	static MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
+	static MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel,
 			final Set<TermVariable> bannedForDivCapture) throws AssertionError {
 		MultiCaseSolvedBinaryRelation res;
 		if (SmtSortUtils.isNumericSort(subject.getSort())) {
-			res = findTreatableDivModSubterm(script, subject, polyRel.getPolynomialTerm(), null, xnf,
-					polyRel.positiveNormalForm(script), bannedForDivCapture);
+			res = findTreatableDivModSubterm(mgdScript, subject, polyRel.getPolynomialTerm(), null, xnf,
+					polyRel.positiveNormalForm(mgdScript.getScript()), bannedForDivCapture);
 		} else {
 			res = null;
 		}
 		if (res == null) {
-			res = solveForSubjectWithoutTreatableDivMod(script, subject, polyRel, xnf, bannedForDivCapture);
+			res = solveForSubjectWithoutTreatableDivMod(mgdScript.getScript(), subject, polyRel, xnf, bannedForDivCapture);
 		}
 		if (res == null) {
 			return null;
 		}
 		assert res.isSubjectOnlyOnRhs() : "subject not only LHS";
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(polyRel.positiveNormalForm(script),
-				res.asTerm(script), script) != LBool.SAT : "solveForSubject unsound";
+		assert mgdScript instanceof INonSolverScript || SmtUtils.checkEquivalence(polyRel.positiveNormalForm(mgdScript.getScript()),
+				res.asTerm(mgdScript.getScript()), mgdScript.getScript()) != LBool.SAT : "solveForSubject unsound";
 		return res;
 	}
 
@@ -177,10 +179,10 @@ public class SolveForSubjectUtils {
 				additionalIo);
 	}
 
-	private static MultiCaseSolvedBinaryRelation tryToHandleDivModSubterm(final Script script, final Term subject,
+	private static MultiCaseSolvedBinaryRelation tryToHandleDivModSubterm(final ManagedScript mgdScript, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final ApplicationTerm divModSubterm, final Term pnf,
 			final Set<TermVariable> bannedForDivCapture) {
-		final Term divisor = SmtUtils.mul(script, "*",
+		final Term divisor = SmtUtils.mul(mgdScript.getScript(), "*",
 				Arrays.copyOfRange(divModSubterm.getParameters(), 1, divModSubterm.getParameters().length));
 		assert (divisor instanceof ConstantTerm) : "not constant";
 		// Solve for subject in affineterm with a parameter of form (mod/div (subterm
@@ -190,9 +192,9 @@ public class SolveForSubjectUtils {
 		// made new each time
 		final int recVarName = divModSubterm.toString().length();
 		final TermVariable auxDiv =
-				script.variable(SmtUtils.removeSmtQuoteCharacters("aux_div_" + subject + "_" + recVarName), termSort);
+				mgdScript.variable(SmtUtils.removeSmtQuoteCharacters("aux_div_" + subject + "_" + recVarName), termSort);
 		final TermVariable auxMod =
-				script.variable(SmtUtils.removeSmtQuoteCharacters("aux_mod_" + subject + "_" + recVarName), termSort);
+				mgdScript.variable(SmtUtils.removeSmtQuoteCharacters("aux_mod_" + subject + "_" + recVarName), termSort);
 		if (Arrays.stream(pnf.getFreeVars()).anyMatch(x -> x.getName().equals(auxDiv.getName()))) {
 			throw new AssertionError("Possible infinite loop detected " + auxDiv + " already exists");
 		}
@@ -203,13 +205,16 @@ public class SolveForSubjectUtils {
 		final MultiCaseSolvedBinaryRelation solvedComparison;
 
 		{
-			final Term multiplication = SmtUtils.mul(script, termSort, divisor, auxDiv);
-			final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
-			final Term subtermSumComparison = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.EQ, xnf),
+			final Term multiplication = SmtUtils.mul(mgdScript.getScript(), termSort, divisor, auxDiv);
+			final Term sum = SmtUtils.sum(mgdScript.getScript(), termSort, auxMod, multiplication);
+			final Term subtermSumComparison = BinaryRelation.toTerm(mgdScript.getScript(), negateForCnf(RelationSymbol.EQ, xnf),
 					divModSubterm.getParameters()[0], sum);
 			// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
-			solvedComparison = PolynomialRelation.convert(script, subtermSumComparison).solveForSubject(script, subject,
-					xnf, bannedForDivCapture);
+			final HashSet<TermVariable> bannedForDivCaptureWithAuxiliary = new HashSet<>(bannedForDivCapture);
+			bannedForDivCaptureWithAuxiliary.add(auxDiv);
+			bannedForDivCaptureWithAuxiliary.add(auxMod);
+			solvedComparison = PolynomialRelation.convert(mgdScript.getScript(), subtermSumComparison).solveForSubject(mgdScript, subject,
+					xnf, bannedForDivCaptureWithAuxiliary);
 			if (solvedComparison == null) {
 				return null;
 			}
@@ -237,7 +242,7 @@ public class SolveForSubjectUtils {
 			if (c.getSolvedBinaryRelation() != null) {
 				substitutionMapping.put(subject, c.getSolvedBinaryRelation().getRightHandSide());
 			}
-			final Term auxModEqualsTerm = new Substitution(script, substitutionMapping).transform(pnf);
+			final Term auxModEqualsTerm = Substitution.apply(mgdScript, substitutionMapping, pnf);
 			if (c.getSolvedBinaryRelation() == null) {
 				final boolean containsSubject = SmtUtils.isSubterm(auxModEqualsTerm, subject);
 				if (containsSubject) {
@@ -266,22 +271,22 @@ public class SolveForSubjectUtils {
 		}
 
 		// construct SupportingTerm (0 <= aux_mod)
-		final Term auxModGreaterZeroTerm = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.LEQ, xnf),
+		final Term auxModGreaterZeroTerm = BinaryRelation.toTerm(mgdScript.getScript(), negateForCnf(RelationSymbol.LEQ, xnf),
 				Rational.ZERO.toTerm(termSort), auxMod);
 		final SupportingTerm auxModGreaterZero =
 				new SupportingTerm(auxModGreaterZeroTerm, IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
 		// construct SupportingTerm (aux_mod < abs(k))
-		final Term auxModLessCoefTerm = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.LESS, xnf), auxMod,
-				SmtUtils.abs(script, divisor));
+		final Term auxModLessCoefTerm = BinaryRelation.toTerm(mgdScript.getScript(), negateForCnf(RelationSymbol.LESS, xnf), auxMod,
+				SmtUtils.abs(mgdScript.getScript(), divisor));
 		final SupportingTerm auxModLessCoef =
 				new SupportingTerm(auxModLessCoefTerm, IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
 		mcsb.addAtoms(auxModLessCoef, auxModGreaterZero);
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		assert result.isSubjectOnlyOnRhs() : "subject not only LHS";
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(pnf, result.asTerm(script),
-				script) != LBool.SAT : "solveForSubject unsound";
+		assert mgdScript instanceof INonSolverScript || SmtUtils.checkEquivalence(pnf, result.asTerm(mgdScript.getScript()),
+				mgdScript.getScript()) != LBool.SAT : "solveForSubject unsound";
 		return result;
 	}
 
@@ -300,7 +305,8 @@ public class SolveForSubjectUtils {
 	 * and ensures that no information is lost.</li>
 	 * </ul>
 	 */
-	public static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb, final Term rhs,
+	@Deprecated
+	private static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb, final Term rhs,
 			final boolean divisorIsPositive, final Term divisor) {
 		final Term result;
 		switch (relSymb) {
@@ -354,6 +360,118 @@ public class SolveForSubjectUtils {
 	}
 
 	/**
+	 * If we divide an integer RHS, the result is nontrivial. If we just apply division some information related to
+	 * divisibility is lost.
+	 * <ul>
+	 * <li>If the relation symbol is EQ or DISTINCT, the lost information is that the RHS was (resp. was not) divisible
+	 * by the divisor. And can be added later.</li>
+	 * <li>Otherwise, the lost information is more complicated, we can not easily add it later. Instead, we construct a
+	 * more complicated quotient that depends on
+	 * <ul>
+	 * <li>the sign of the divident's values</li>
+	 * <li>the relation symbol</li>
+	 * </ul>
+	 * and ensures that no information is lost.</li>
+	 * </ul>
+	 */
+	public static IPolynomialTerm constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb,
+			final IPolynomialTerm rhs, final boolean divisorIsPositive, final Term divisor,
+			final Set<TermVariable> bannedForDivCapture) {
+		final Rational preDivisionOffset;
+		final Rational postDivisionOffset;
+		switch (relSymb) {
+		case LESS:
+			if (divisorIsPositive) {
+				// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.ONE;
+			} else {
+				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.MONE;
+			}
+			break;
+		case GREATER:
+			// k*x > t is equivalent to x > (t div k) for all k
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case LEQ:
+			// k*x <= t is equivalent to x <= (t div k) for all k
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case GEQ:
+			if (divisorIsPositive) {
+				// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.ONE;
+			} else {
+				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
+				preDivisionOffset = Rational.MONE;
+				postDivisionOffset = Rational.MONE;
+			}
+			break;
+		case EQ:
+			// Default quotient, additional divisibility information has to be added later
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case DISTINCT:
+			// Default quotient, additional divisibility information has to be added later
+			preDivisionOffset = Rational.ZERO;
+			postDivisionOffset = Rational.ZERO;
+			break;
+		case BVULE:
+		case BVULT:
+		case BVUGE:
+		case BVUGT:
+		case BVSLE:
+		case BVSLT:
+		case BVSGE:
+		case BVSGT:
+			throw new AssertionError("bitvector relation with integer not possible: " + relSymb);
+		default:
+			throw new AssertionError("unknown relation symbol: " + relSymb);
+		}
+		final IPolynomialTerm beforeDiv;
+		if (preDivisionOffset.equals(Rational.ZERO)) {
+			beforeDiv = rhs;
+		} else {
+			beforeDiv = ((AbstractGeneralizedAffineTerm<?>) rhs).add(preDivisionOffset);
+		}
+		final IPolynomialTerm afterDiv;
+		final Rational divisorAsRational = SmtUtils.tryToConvertToLiteral(divisor);
+		if (divisorAsRational == null) {
+			if (Arrays.stream(beforeDiv.toTerm(script).getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
+				afterDiv = null;
+			} else {
+				afterDiv = PolynomialTermOperations.convert(script,
+						SmtUtils.div(script, beforeDiv.toTerm(script), divisor));
+			}
+		} else {
+			if (!divisorAsRational.isIntegral()) {
+				throw new AssertionError("expected int");
+			}
+			if (divisorAsRational.isNegative() == divisorIsPositive) {
+				throw new AssertionError("inconsistent information on sign");
+			}
+			final BigInteger divisorAsInt = divisorAsRational.numerator();
+			afterDiv = ((AbstractGeneralizedAffineTerm<?>) beforeDiv).div(script, divisorAsInt, bannedForDivCapture);
+		}
+		if (afterDiv == null) {
+			return null;
+		}
+		final IPolynomialTerm result;
+		if (postDivisionOffset.equals(Rational.ZERO)) {
+			result = afterDiv;
+		} else {
+			result = ((AbstractGeneralizedAffineTerm<?>) afterDiv).add(postDivisionOffset);
+		}
+		return result;
+	}
+
+	/**
 	 * Construct quotient
 	 *
 	 * <pre>
@@ -366,6 +484,7 @@ public class SolveForSubjectUtils {
 	 *            value that is added after the division and that is determined from the relation symbol and the sign of
 	 *            the divisor's values.
 	 */
+	@Deprecated
 	private static Term constructRhsIntegerQuotientHelper(final Script script, final Term divident,
 			final Rational postDivisionOffset, final Term divisor) {
 		// The preDivisionOffset is always minus one.
@@ -437,7 +556,7 @@ public class SolveForSubjectUtils {
 	 * @param term
 	 *
 	 */
-	private static MultiCaseSolvedBinaryRelation findTreatableDivModSubterm(final Script script, final Term subject,
+	private static MultiCaseSolvedBinaryRelation findTreatableDivModSubterm(final ManagedScript mgdScript, final Term subject,
 			final IPolynomialTerm divident, final ApplicationTerm parentDivModTerm, final Xnf xnf,
 			final Term relationInPnf, final Set<TermVariable> bannedForDivCapture) {
 		for (final Monomial m : divident.getMonomial2Coefficient().keySet()) {
@@ -447,7 +566,7 @@ public class SolveForSubjectUtils {
 					final boolean dividentContainsSubject = SmtUtils.isSubterm(appTerm.getParameters()[0], subject);
 					final boolean tailIsConstant = tailIsConstant(Arrays.asList(appTerm.getParameters()));
 					if (dividentContainsSubject) {
-						final IPolynomialTerm innerDivident = (IPolynomialTerm) new PolynomialTermTransformer(script)
+						final IPolynomialTerm innerDivident = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 								.transform(appTerm.getParameters()[0]);
 						final ApplicationTerm suiteableDivModParent;
 						if (tailIsConstant) {
@@ -455,7 +574,7 @@ public class SolveForSubjectUtils {
 						} else {
 							suiteableDivModParent = null;
 						}
-						final MultiCaseSolvedBinaryRelation rec = findTreatableDivModSubterm(script, subject,
+						final MultiCaseSolvedBinaryRelation rec = findTreatableDivModSubterm(mgdScript, subject,
 								innerDivident, suiteableDivModParent, xnf, relationInPnf, bannedForDivCapture);
 						if (rec != null) {
 							return rec;
@@ -467,7 +586,7 @@ public class SolveForSubjectUtils {
 		if (parentDivModTerm == null) {
 			return null;
 		}
-		return tryToHandleDivModSubterm(script, subject, xnf, parentDivModTerm, relationInPnf, bannedForDivCapture);
+		return tryToHandleDivModSubterm(mgdScript, subject, xnf, parentDivModTerm, relationInPnf, bannedForDivCapture);
 	}
 
 	public static boolean isVariableDivCaptured(final SolvedBinaryRelation sbr, final Set<TermVariable> termVariables) {
@@ -480,7 +599,7 @@ public class SolveForSubjectUtils {
 
 	@Deprecated
 	private static boolean someGivenTermVariableOccursInTerm(final Term term, final Set<TermVariable> termVariables) {
-		final Set<Term> divSubterms = SmtUtils.extractApplicationTerms("div", term);
+		final Set<Term> divSubterms = SmtUtils.extractApplicationTerms("div", term, false);
 		return divSubterms.stream().anyMatch(x -> Arrays.stream(x.getFreeVars()).anyMatch(termVariables::contains));
 	}
 

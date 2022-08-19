@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
@@ -222,7 +221,7 @@ public final class MSODSolver {
 
 		// Get free variables and constants.
 		final List<Term> freeVariables = new ArrayList<>(Arrays.asList(term.getFreeVars()));
-		freeVariables.addAll((new ConstantFinder()).findConstants(term, true));
+		freeVariables.addAll((SmtUtils.extractConstants(term, true)));
 
 		// Project automaton onto free variables.
 		final Set<MSODAlphabetSymbol> alphabet = MSODUtils.createAlphabet(freeVariables);

@@ -36,13 +36,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
  * Creates external instance of CVC 4 using {@link TraceCheckSpWp}.
@@ -58,31 +56,29 @@ public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends I
 					InterpolationTechnique.FPandBP, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect };
 
 	private final InterpolationTechnique mInterpolationTechnique;
-	private final boolean mUseTimeout;
-	private final Logics mLogic;
+	private final long mTimeoutInMillis;
 
 	public IpTcStrategyModuleCvc4(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
 			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
-			final PredicateFactory predicateFactory, final boolean useTimeout,
-			final InterpolationTechnique interpolationTechnique, final Logics cvc4Logic) {
+			final PredicateFactory predicateFactory, final long timeoutInMillis,
+			final InterpolationTechnique interpolationTechnique) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
 				predicateUnifier, predicateFactory);
-		mUseTimeout = useTimeout;
+		mTimeoutInMillis = timeoutInMillis;
 		mInterpolationTechnique = interpolationTechnique;
-		mLogic = cvc4Logic;
 		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
 				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
 	}
 
 	@Override
 	protected ManagedScript constructManagedScript() {
-		final String command = mUseTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT : SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
+		final long timeout = computeTimeout(mTimeoutInMillis);
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
-				.setUseExternalSolver(true, command, mLogic).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
-		return createExternalManagedScript(solver);
+				.setUseExternalSolver(ExternalSolver.CVC4, timeout)
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+		return createExternalManagedScript(solverSettings);
 	}
 
 	@Override

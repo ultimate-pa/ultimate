@@ -59,14 +59,13 @@ public abstract class XnfTransformer extends NnfTransformer {
 
 	public static final boolean POSET_SIMPLIFICATION = true;
 
-	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
-			final boolean omitSoundnessCheck) {
-		super(script, services, QuantifierHandling.IS_ATOM, omitSoundnessCheck);
+	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
+		super(script, services, QuantifierHandling.IS_ATOM);
 	}
 
 	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
-			final boolean omitSoundnessCheck, final Function<Integer, Boolean> funAbortIfExponential) {
-		super(script, services, QuantifierHandling.IS_ATOM, omitSoundnessCheck, funAbortIfExponential);
+			final Function<Integer, Boolean> funAbortIfExponential) {
+		super(script, services, QuantifierHandling.IS_ATOM, funAbortIfExponential);
 	}
 
 	protected abstract class XnfTransformerHelper extends NnfTransformerHelper {

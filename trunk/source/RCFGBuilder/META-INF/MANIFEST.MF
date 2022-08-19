@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: RCFGBuilder
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;singleton:=true
-Bundle-Version: 0.2.0
+Bundle-Version: 0.2.2
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
@@ -14,7 +14,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.boogie.printer,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Import-Package: de.uni_freiburg.informatik.ultimate.boogie.type
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg,

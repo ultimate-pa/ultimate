@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Provides the information if we want to use fixed sizes for types. If yes an object of this class also provides the
@@ -322,6 +322,14 @@ public class TypeSizes {
 		return mSignednessOfChar;
 	}
 
+	public CPrimitive getSizeT() {
+		return new CPrimitive(CPrimitives.ULONG);
+	}
+
+	public CPrimitive getSsizeT() {
+		return new CPrimitive(CPrimitives.LONG);
+	}
+
 	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type,
 			final BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, mSettings.isBitvectorTranslation(), this, type,
@@ -414,7 +422,7 @@ public class TypeSizes {
 	 */
 	private Boolean extractBooleanValue(final Expression expr, final CType cType, final IASTNode hook) {
 		if (expr instanceof BooleanLiteral) {
-			return new Boolean(((BooleanLiteral) expr).getValue());
+			return Boolean.valueOf((((BooleanLiteral) expr).getValue()));
 		}
 
 		if (expr instanceof BinaryExpression) {
@@ -473,14 +481,14 @@ public class TypeSizes {
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
 				final String cId = mSymboltable.getCIdForBoogieId(bId);
 				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
-				if (stv.hasConstantValue()) {
+				if (stv != null && stv.hasConstantValue()) {
 					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			} else if (expr instanceof FunctionApplication) {
 				final FunctionApplication funApp = (FunctionApplication) expr;
 				final Expression[] args = funApp.getArguments();
 
-				final SupportedBitvectorOperations sbo =
+				final BvOp sbo =
 						getBitvectorSmtFunctionNameFromCFunctionName(funApp.getIdentifier());
 				if (sbo == null) {
 					return null;
@@ -518,10 +526,10 @@ public class TypeSizes {
 		return null;
 	}
 
-	private static SupportedBitvectorOperations getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
+	private static BvOp getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
 		final String funName = name.substring(1).replaceAll("\\d+", "");
 		try {
-			return BitvectorConstant.SupportedBitvectorOperations.valueOf(funName);
+			return BitvectorConstant.BvOp.valueOf(funName);
 		} catch (final IllegalArgumentException iae) {
 			return null;
 		}

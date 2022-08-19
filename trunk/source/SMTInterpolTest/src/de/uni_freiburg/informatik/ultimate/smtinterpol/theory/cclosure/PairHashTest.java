@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
 
 /**
  * Test Class for Pair Hash.
@@ -48,7 +49,7 @@ public final class PairHashTest {
 	public PairHashTest() {
 		mTheory = new Theory(Logics.QF_UF);
 		final DPLLEngine dpllEngine = new DPLLEngine(new DefaultLogger(), () -> false);
-		final Clausifier clausifier = new Clausifier(mTheory, dpllEngine, 0);
+		final Clausifier clausifier = new Clausifier(mTheory, dpllEngine, ProofMode.NONE);
 		mCClosure = new CClosure(clausifier);
 		createtermss();
 		dpllEngine.getLogger().setLoglevel(LogProxy.LOGLEVEL_DEBUG);

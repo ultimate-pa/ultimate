@@ -46,7 +46,7 @@ public interface IRunningTaskStackProvider {
 	 * Convert the current RunningTaskStack obtained with {@link #getRunningTaskStack()} to a human-readable error
 	 * message.
 	 */
-	default public String printRunningTaskMessage() {
+	default String printRunningTaskMessage() {
 		final StringBuilder sb = new StringBuilder();
 
 		final List<RunningTaskInfo> runningTaskStack = getRunningTaskStack();

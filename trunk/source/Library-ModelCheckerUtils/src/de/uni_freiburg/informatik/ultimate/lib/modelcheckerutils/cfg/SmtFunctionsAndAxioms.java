@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.NonDeclaringTermTransferrer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -48,11 +49,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols created throughout a toolchain.
+ * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols
+ * created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- *         TODO: Extend {@link HistoryRecordingScript} to be able to create a nicer term transferrer
+ *         TODO: Extend {@link HistoryRecordingScript} to be able to create a
+ *         nicer term transferrer
+ *
+ *         TODO 20220401 Matthias: It does not make sense to store axioms and
+ *         SMT function symbols that are created throughout a toolchain in the
+ *         ICFG. Each algorithm should store the function symbol that it
+ *         utilizes. FunctionSymbols that are utilized by the ICFG should be
+ *         stored in the symbol table of the ICFG.
  *
  */
 public class SmtFunctionsAndAxioms {
@@ -64,17 +73,18 @@ public class SmtFunctionsAndAxioms {
 	 * belongs.
 	 */
 	private final HistoryRecordingScript mScript;
+	private final ManagedScript mMgdScript;
 	private final IPredicate mAxioms;
 
 	/**
 	 * Create a {@link SmtFunctionsAndAxioms} instance with no axioms.
 	 *
-	 * @param script
-	 *            A {@link Script} instance that was used to build the ICFG to which this {@link SmtFunctionsAndAxioms}
-	 *            instance belongs.
+	 * @param mgdScript
+	 *            A {@link ManagedScript} instance that was used to build the ICFG to which this
+	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final Script script) {
-		this(script.term("true"), new String[0], script);
+	public SmtFunctionsAndAxioms(final ManagedScript mgdScript) {
+		this(mgdScript.getScript().term("true"), new String[0], mgdScript);
 	}
 
 	/**
@@ -86,12 +96,13 @@ public class SmtFunctionsAndAxioms {
 	 * @param defininingProcedures
 	 *            The procedures from which the axioms come or null.
 	 * @param script
-	 *            A {@link Script} instance that was used to build the axioms term and the ICFG to which this
+	 *            A {@link ManagedScript} instance that was used to build the axioms term and the ICFG to which this
 	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final Term axioms, final String[] defininingProcedures, final Script script) {
+	public SmtFunctionsAndAxioms(final Term axioms, final String[] defininingProcedures,
+			final ManagedScript mgdScript) {
 		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, defininingProcedures, axioms, Collections.emptySet(),
-				axioms), script);
+				axioms), mgdScript);
 	}
 
 	/**
@@ -100,13 +111,14 @@ public class SmtFunctionsAndAxioms {
 	 * @param axioms
 	 *            Axioms given as {@link IPredicate}
 	 * @param script
-	 *            A {@link Script} instance that was used to build the axioms and the ICFG to which this
+	 *            A {@link ManagedScript} instance that was used to build the axioms and the ICFG to which this
 	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final IPredicate axioms, final Script script) {
+	public SmtFunctionsAndAxioms(final IPredicate axioms, final ManagedScript mgdScript) {
 		mAxioms = Objects.requireNonNull(axioms);
-		mScript = Objects
-				.requireNonNull(HistoryRecordingScript.extractHistoryRecordingScript(Objects.requireNonNull(script)));
+		mMgdScript = mgdScript;
+		mScript = Objects.requireNonNull(
+				HistoryRecordingScript.extractHistoryRecordingScript(Objects.requireNonNull(mgdScript.getScript())));
 		assert axioms.getClosedFormula() == axioms.getFormula() : "Axioms are not closed";
 		assert axioms.getFormula().getFreeVars().length == 0 : "Axioms are not closed";
 		assert axioms.getProcedures() != null;
@@ -125,7 +137,7 @@ public class SmtFunctionsAndAxioms {
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
 		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0],
 				additionalAxioms, Collections.emptySet(), newAxioms);
-		return new SmtFunctionsAndAxioms(newAxiomsPred, mScript);
+		return new SmtFunctionsAndAxioms(newAxiomsPred, mMgdScript);
 	}
 
 	// TODO: We also want a transfer function that transfers only some variables s.t. trace checks can be more focused
@@ -142,10 +154,13 @@ public class SmtFunctionsAndAxioms {
 
 		final NonDeclaringTermTransferrer tt = new NonDeclaringTermTransferrer(script);
 		final Term transferredAxiom = tt.transform(mAxioms.getClosedFormula());
-		final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
-		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,
-		// we just want to be informed about them.
-		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
+		if (!SmtUtils.isTrueLiteral(transferredAxiom)) {
+			final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
+			// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent
+			// axioms,
+			// we just want to be informed about them.
+			assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
+		}
 	}
 
 	/**
@@ -155,7 +170,7 @@ public class SmtFunctionsAndAxioms {
 	 * TODO: Also inline axioms.
 	 */
 	public Term inline(final Term term) {
-		return new SmtFunctionInliner().inline(mScript, term);
+		return new SmtFunctionInliner().inline(mMgdScript, term);
 	}
 
 	public IPredicate getAxioms() {
@@ -170,7 +185,7 @@ public class SmtFunctionsAndAxioms {
 		return mScript.getSymbolTable().entrySet().stream()
 				.filter(a -> a.getValue() instanceof DeclarableFunctionSymbol)
 				.map(a -> (DeclarableFunctionSymbol) a.getValue()).filter(a -> a.getDefinition() != null)
-				.collect(Collectors.toMap(a -> a.getName(), a -> a));
+				.collect(Collectors.toMap(DeclarableFunctionSymbol::getName, a -> a));
 	}
 
 	/**
@@ -180,13 +195,15 @@ public class SmtFunctionsAndAxioms {
 	 */
 	private static class SmtFunctionInliner extends TermTransformer {
 
+		private ManagedScript mMgdScript;
 		private HistoryRecordingScript mScript;
 
-		public Term inline(final Script script, final Term term) {
-			mScript = HistoryRecordingScript.extractHistoryRecordingScript(script);
+		public Term inline(final ManagedScript mgdScript, final Term term) {
+			mMgdScript = mgdScript;
+			mScript = HistoryRecordingScript.extractHistoryRecordingScript(mgdScript.getScript());
 			if (mScript == null) {
 				throw new IllegalArgumentException(
-						script.getClass() + " does not contain a " + HistoryRecordingScript.class);
+						mgdScript.getScript().getClass() + " does not contain a " + HistoryRecordingScript.class);
 			}
 			return transform(term);
 		}
@@ -196,14 +213,14 @@ public class SmtFunctionsAndAxioms {
 			final String funName = appTerm.getFunction().getName();
 			final ISmtDeclarable decl = mScript.getSymbolTable().get(funName);
 			if (decl == null) {
-				super.convertApplicationTerm(appTerm, newArgs);
+				setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mScript));
 				return;
 			}
 			assert decl instanceof DeclarableFunctionSymbol;
 			final DeclarableFunctionSymbol funDecl = (DeclarableFunctionSymbol) decl;
 			final Term body = funDecl.getDefinition();
 			if (body == null) {
-				super.convertApplicationTerm(appTerm, newArgs);
+				setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mScript));
 				return;
 			}
 			if (appTerm.getParameters().length == 0) {
@@ -222,7 +239,7 @@ public class SmtFunctionsAndAxioms {
 				}
 				substitutionMapping.put(paramVar, newArgs[i]);
 			}
-			setResult(new Substitution(mScript, substitutionMapping).transform(body));
+			setResult(Substitution.apply(mMgdScript, substitutionMapping, body));
 		}
 	}
 

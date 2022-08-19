@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -48,7 +48,7 @@ final class ResultServiceMock implements IResultService {
 	}
 
 	@Override
-	public void registerTransformer(final String name, final Function<IResult, IResult> resultTransformer) {
+	public void registerTransformer(final String name, final UnaryOperator<IResult> resultTransformer) {
 		// do nothing
 	}
 }

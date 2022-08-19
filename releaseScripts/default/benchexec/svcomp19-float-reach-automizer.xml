@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="900" cpuCores="2">
+
     <rundefinition name="Automizer">
-        <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
         <option name="--full-output"/>
-        <option name="--architecture">32bit</option>
     </rundefinition>
 
-    <tasks name="Reach32bit">
+    <tasks name="Floats">
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
     </tasks>
 </benchmark>

@@ -31,9 +31,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -60,26 +62,22 @@ public class ArrayEqualityExplicator {
 
 	public ArrayEqualityExplicator(final ManagedScript mgdScript, final int quantifier, final TermVariable eliminatee,
 			final Term inputTerm, final List<BinaryEqualityRelation> bers) {
-		final List<TermVariable> newAuxVars = new ArrayList();
+		final List<TermVariable> newAuxVars = new ArrayList<TermVariable>();
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final BinaryEqualityRelation ber : bers) {
 			if (ber.getRelationSymbol() != getDerRelationSymbol(quantifier).negate()) {
 				throw new IllegalArgumentException("incompatible relation");
 			}
-			final Term elementwiseEquality = constructElementwiseEquality(mgdScript, ber.getLhs(), ber.getRhs(),
-					newAuxVars);
-			final Term replacement;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				replacement = elementwiseEquality;
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				// does not use SmtUtils method because no simplification possible
-				replacement = mgdScript.getScript().term("not", elementwiseEquality);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
-			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), replacement);
+			final Term elementwiseComparison = constructElementwiseEquality(mgdScript, quantifier, ber.getLhs(),
+					ber.getRhs(), newAuxVars);
+			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), elementwiseComparison);
 		}
-		mResultTerm = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(inputTerm);
+		mResultTerm = Substitution.apply(mgdScript, substitutionMapping, inputTerm);
+		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm,
+				CommuhashUtils.COMMUTATIVE_OPERATORS) : "input not in commuhash normal form";
+		if (mResultTerm.equals(inputTerm)) {
+			throw new AssertionError("Substitution failed: " + substitutionMapping);
+		}
 		mNewAuxVars = newAuxVars;
 	}
 
@@ -101,14 +99,31 @@ public class ArrayEqualityExplicator {
 		return mNewAuxVars;
 	}
 
-	private Term constructElementwiseEquality(final ManagedScript mgdScript, final Term lhsArray, final Term rhsArray,
-			final List<TermVariable> newAuxVars) {
+	private Term constructElementwiseEquality(final ManagedScript mgdScript, final int quantifier, final Term lhsArray,
+			final Term rhsArray, final List<TermVariable> newAuxVars) {
 		final MultiDimensionalSort mds = new MultiDimensionalSort(lhsArray.getSort());
 		final ArrayIndex auxIndex = constructAuxIndex(mgdScript, mds, newAuxVars);
 		final Term lhsSelect = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), lhsArray, auxIndex);
 		final Term rhsSelect = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), rhsArray, auxIndex);
-		// does not use SmtUtils method because no simplification possible
-		final Term result = mgdScript.getScript().term("=", lhsSelect, rhsSelect);
+		final Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			if (SmtSortUtils.isBoolSort(lhsSelect.getSort())) {
+				result = SmtUtils.binaryBooleanNotEquals(mgdScript.getScript(), lhsSelect, rhsSelect);
+			} else {
+				// does not use SmtUtils method because no simplification possible
+				result = mgdScript.getScript().term("not",
+						SmtUtils.equality(mgdScript.getScript(), lhsSelect, rhsSelect));
+			}
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			if (SmtSortUtils.isBoolSort(lhsSelect.getSort())) {
+				result = SmtUtils.binaryBooleanEquality(mgdScript.getScript(), lhsSelect, rhsSelect);
+			} else {
+				// does not use SmtUtils method because no simplification possible
+				result = SmtUtils.equality(mgdScript.getScript(), lhsSelect, rhsSelect);
+			}
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
 		return result;
 	}
 

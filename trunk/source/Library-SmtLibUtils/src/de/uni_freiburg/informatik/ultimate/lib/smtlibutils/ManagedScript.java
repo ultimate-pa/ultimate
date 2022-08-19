@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -227,6 +228,14 @@ public class ManagedScript {
 		return mVariableManager.constructFreshCopy(tv);
 	}
 
+	public Map<TermVariable, TermVariable> constructFreshCopies(final Set<TermVariable> tvs) {
+		final Map<TermVariable, TermVariable> result = new LinkedHashMap<>();
+		for (final TermVariable tv : tvs) {
+			result.put(tv, constructFreshCopy(tv));
+		}
+		return result;
+	}
+
 	/**
 	 * @param varname
 	 * @param sort
@@ -310,7 +319,7 @@ public class ManagedScript {
 		public TermVariable constructFreshCopy(final TermVariable tv) {
 			String basename = mTv2Basename.get(tv);
 			if (basename == null) {
-				mLogger.warn("TermVariabe " + tv
+				mLogger.warn("TermVariable " + tv
 						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
 			}

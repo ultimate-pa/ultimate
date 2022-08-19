@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * A Marking of an occurencenet which is a set of conditions.
@@ -181,7 +182,7 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 				throw new PetriNetNot1SafeException(this.getClass(), Collections.singleton(c.getPlace()));
 			}
 		}
-		return new Marking<>(mark);
+		return new Marking<>(ImmutableSet.of(mark));
 	}
 
 	public Stream<Condition<LETTER, PLACE>> stream() {

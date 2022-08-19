@@ -95,7 +95,6 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
 		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));
 		addEdgeData(graphWriter, "tokens", null, edge -> null);
-		addEdgeData(graphWriter, "control", null, edge -> edge.getControl());
 		addEdgeData(graphWriter, "startline", null, edge -> edge.getStartLineNumber());
 		addEdgeData(graphWriter, "endline", null, edge -> edge.getEndLineNumber());
 		addEdgeData(graphWriter, "originfile", StringEscapeUtils.escapeXml10(mTranslatedCFG.getFilename()),

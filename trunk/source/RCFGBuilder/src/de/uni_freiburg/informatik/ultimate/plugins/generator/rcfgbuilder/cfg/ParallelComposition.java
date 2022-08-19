@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -105,11 +106,16 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 		final boolean transformToCNF =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript,
-				null, transformToCNF, xnfConversionTechnique, transFormulas);
+		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript, null, transformToCNF,
+				xnfConversionTechnique, transFormulas);
 		mTransitionFormulaWithBranchEncoders =
-				TransFormulaUtils.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript, branchIndicator,
+				TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript, branchIndicator,
 						transformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
+
+		assert !Objects.equals(mSource.getProcedure(), mTarget.getProcedure())
+				|| TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
+		assert !Objects.equals(mSource.getProcedure(), mTarget.getProcedure()) || TransFormulaUtils
+				.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders) : "Expected TF in internal normal form";
 	}
 
 	@Override

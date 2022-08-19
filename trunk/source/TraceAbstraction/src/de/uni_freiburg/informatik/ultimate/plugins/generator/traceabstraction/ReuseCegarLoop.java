@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -50,13 +51,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.EfficientIgnoringHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -68,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
@@ -91,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L> {
 
 	public static boolean USE_AUTOMATA_WITH_UNMATCHED_PREDICATES = false;
 
@@ -102,15 +105,16 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 	protected final ReuseStatisticsGenerator mReuseStats;
 	private boolean mStatsAlreadyAggregated = false;
 
-	public ReuseCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+	public ReuseCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, compositionFactory, transitionClazz);
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mFloydHoareAutomataFromFile = new ArrayList<>();
@@ -118,8 +122,8 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 	}
 
 	@Override
-	protected void getInitialAbstraction() throws AutomataLibraryException {
-		super.getInitialAbstraction();
+	protected void initialize() throws AutomataLibraryException {
+		super.initialize();
 
 		mLogger.info(
 				"Constructing FH automata from " + mRawFloydHoareAutomataFromFile.size() + " parsed reuse automata");
@@ -142,7 +146,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			final INestedWordAutomaton<String, String> rawAutomatonFromFile) {
 		// Create map from strings to all equivalent "new" letters (abstraction letters)
 		final Map<String, Set<L>> mapStringToLetter = new HashMap<>();
-		final VpAlphabet<L> abstractionAlphabet = ((INestedWordAutomaton<L, IPredicate>) mAbstraction).getVpAlphabet();
+		final VpAlphabet<L> abstractionAlphabet = mAbstraction.getVpAlphabet();
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
 		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());
@@ -150,8 +154,8 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter);
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<L, IPredicate> resAutomaton = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
+				new AutomataLibraryServices(getServices()), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
+		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
 				mCsToolkit.getManagedScript(), mPredicateFactory, mCsToolkit.getSymbolTable(),
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
@@ -445,13 +449,13 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 		if (res.length == 1) {
 			mLogger.warn("String " + rawString + " doesn't have a # symbol in it. Kepping entire string.");
 			return res[0];
-		} else if (res.length == 2) {
+		}
+		if (res.length == 2) {
 			// res[0] is the serial number, res[1] is the string
 			return res[1];
-		} else {
-			mLogger.warn("Unexpected result from String's split function. String parsing failed.");
-			throw new UnsupportedOperationException("String parsing failed");
 		}
+		mLogger.warn("Unexpected result from String's split function. String parsing failed.");
+		throw new UnsupportedOperationException("String parsing failed");
 	}
 
 	/**
@@ -502,7 +506,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			case AS_USUAL:
 				// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
 				// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
-				return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 						mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
 			case ONLY_NEW_LETTERS:
 				return constructEfficientIgnoringHtc(false);
@@ -517,11 +521,19 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 
 		private IHoareTripleChecker constructEfficientIgnoringHtc(final boolean allowSdForProtectedActions)
 				throws AssertionError {
-			final IHoareTripleChecker smtHtc =
-					TraceAbstractionUtils.constructSmtHoareTripleChecker(mPref.getHoareTripleChecks(), mCsToolkit);
-			final EfficientIgnoringHoareTripleChecker eiHtc = new EfficientIgnoringHoareTripleChecker(smtHtc,
-					mCsToolkit, getPredicateUnifier(), constructOldAlphabet(), allowSdForProtectedActions);
-			return new CachingHoareTripleCheckerMap(mServices, eiHtc, getPredicateUnifier());
+
+			final Set<L> oldAlphabet = constructOldAlphabet();
+			final Predicate<IAction> isOldAction = oldAlphabet::contains;
+
+			ChainingHoareTripleChecker chain =
+					HoareTripleCheckerUtils.constructSdHoareTripleChecker(mLogger, mCsToolkit, getPredicateUnifier());
+			if (!allowSdForProtectedActions) {
+				chain = chain.actionsProtectedBy(isOldAction);
+			}
+			chain = chain.andThen(HoareTripleCheckerUtils.constructSmtHoareTripleChecker(mLogger,
+					HoareTripleChecks.INCREMENTAL, mCsToolkit, getPredicateUnifier()));
+
+			return new CachingHoareTripleCheckerMap(getServices(), chain, getPredicateUnifier());
 		}
 
 		private Set<L> constructOldAlphabet() {
@@ -534,11 +546,11 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 							mAutomaton.getVpAlphabet().getReturnAlphabet()));
 		}
 
-		public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+		public IStatisticsDataProvider getEdgeCheckerBenchmark() {
 			if (mHtc == null) {
 				return new HoareTripleCheckerStatisticsGenerator();
 			}
-			return mHtc.getEdgeCheckerBenchmark();
+			return mHtc.getStatistics();
 		}
 
 		public IPredicateUnifier getPredicateUnifier() {
@@ -615,10 +627,6 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop
 			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
 		}
 
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
 	}
 
 	public static final class ReuseStatisticsType extends StatisticsType<ReuseStatisticsDefinitions> {

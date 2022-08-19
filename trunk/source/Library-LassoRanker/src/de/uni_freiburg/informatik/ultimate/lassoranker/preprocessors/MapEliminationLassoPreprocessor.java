@@ -100,16 +100,16 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 				mReplacementVarFactory, Arrays.asList(lasso.getStem(), lasso.getLoop()), mSettings);
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
-				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+				mSymbolTable, mManagedScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
 		final EqualityAnalysisResult equalityAnalysisLoop = esia.getEqualityAnalysisResult();
 		mArrayIndexSupportingInvariants
 				.addAll(equalityAnalysisLoop.constructListOfEqualities(mManagedScript.getScript()));
 		mArrayIndexSupportingInvariants
 				.addAll(equalityAnalysisLoop.constructListOfNotEquals(mManagedScript.getScript()));
-		final ModifiableTransFormula newStem = elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem,
-				equalityAnalysisLoop);
-		final ModifiableTransFormula newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
-				equalityAnalysisLoop);
+		final ModifiableTransFormula newStem =
+				elim.eliminateMaps(lasso.getStem(), equalityAnalysisStem, equalityAnalysisLoop);
+		final ModifiableTransFormula newLoop =
+				elim.eliminateMaps(lasso.getLoop(), equalityAnalysisLoop, equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		assert RewriteArrays2.checkStemImplication(mServices, mLogger, lasso, newLasso, mSymbolTable,
 				mManagedScript) : "result of RewriteArrays too strong";

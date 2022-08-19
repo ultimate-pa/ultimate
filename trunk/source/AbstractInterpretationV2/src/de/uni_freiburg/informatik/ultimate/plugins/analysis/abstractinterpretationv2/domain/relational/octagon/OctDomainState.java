@@ -46,9 +46,9 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -249,8 +250,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	}
 
 	@Override
-	public Set<IProgramVarOrConst> getVariables() {
-		return Collections.unmodifiableSet(mVariables);
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
+		return ImmutableSet.of(mVariables);
 	}
 
 	/**
@@ -779,8 +780,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	private static Term getTermVar(final IProgramVarOrConst var) {
 		if (var instanceof IProgramVar) {
 			return ((IProgramVar) var).getTermVariable();
-		} else if (var instanceof BoogieConst) {
-			return ((BoogieConst) var).getDefaultConstant();
+		} else if (var instanceof ProgramConst) {
+			return ((ProgramConst) var).getDefaultConstant();
 		}
 		return null;
 	}

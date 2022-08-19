@@ -31,13 +31,22 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 /**
  * An {@link IIcfgTransition} that represents a Join. Edges of this type connect
  * the exit location of a forked procedure with the location directly after the
- * join statement.
+ * join statement. Conceptually, there is only one transition that represents
+ * the join and this transition has one target and one source for each forked
+ * procedure. The data structures of our {@link IIcfg} however do not support
+ * edges with serveral sources and as a workaround we implement the fork by the
+ * two edges {@link IIcfgJoinTransitionThreadCurrent} and
+ * {@link IIcfgJoinTransitionThreadOther}. If our "petrification" produces
+ * several thread instances for a thread template the resulting {@link IICFG}
+ * has only one {@link IIcfgJoinTransitionThreadCurrent} and many
+ * {@link IIcfgJoinTransitionThreadOther}.
  *
  * @author Lars Nitzke
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IIcfgJoinTransitionThreadOther<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IJoinActionThreadOther {
+public interface IIcfgJoinTransitionThreadOther<LOC extends IcfgLocation>
+		extends IIcfgTransition<LOC>, IJoinActionThreadOther {
 
 	IIcfgJoinTransitionThreadCurrent<LOC> getCorrespondingIIcfgJoinTransitionCurrentThread();
 }

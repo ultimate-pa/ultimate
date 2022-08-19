@@ -14,9 +14,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -28,11 +27,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -45,16 +43,14 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 	private final Class<OUTLOC> mOutLocationClass;
 	private final ILocationFactory<INLOC, OUTLOC> mFunLocFac;
 	private final String mNewIcfgIdentifier;
-	private final ITransformulaTransformer mTransformer;
-	private final IBacktranslationTracker mBacktranslationTracker;
+	private final IcfgTransformationBacktranslator mBacktranslationTracker;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgScript;
 	private final Script mScript;
 
 	public LoopInsertion(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker,
-			final IUltimateServiceProvider services) {
+			final IcfgTransformationBacktranslator backtranslationTracker, final IUltimateServiceProvider services) {
 
 		// Setup
 		mLogger = logger;
@@ -62,7 +58,6 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 		mOutLocationClass = outLocationClass;
 		mFunLocFac = funLocFac;
 		mNewIcfgIdentifier = newIcfgIdentifier;
-		mTransformer = transformer;
 		mBacktranslationTracker = backtranslationTracker;
 		mServices = services;
 		final CfgSmtToolkit mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
@@ -97,8 +92,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				}
 			}
 
-			Substitution sub = new Substitution(mMgScript, substitute);
-			final Term transformedExitFormula = sub.transform(exitTransformula.getFormula());
+
+			final Term transformedExitFormula = Substitution.apply(mMgScript, substitute, exitTransformula.getFormula());
 
 			// Quantifier - Start
 
@@ -106,8 +101,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final TermVariable j = script.variable("j", script.sort("Int"));
 			final Map<Term, Term> substituteJ = new HashMap<>();
 			substituteJ.put(n, j);
-			final Substitution subJ = new Substitution(mMgScript, substituteJ);
-			final Term transformedExitFormulaJ = subJ.transform(transformedExitFormula);
+			final Term transformedExitFormulaJ = Substitution.apply(mMgScript, substituteJ, transformedExitFormula);
 
 			final Term conditions = script.term("xor", script.term(">=", j, n),
 					script.term("or", script.term("<", j, zero), transformedExitFormulaJ));
@@ -132,14 +126,12 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 					}
 				}
 
-				sub = new Substitution(mMgScript, substitute);
-				final Term remainingTransformedExitFormula = sub.transform(remainingExitTransformula.getFormula());
+				final Term remainingTransformedExitFormula = Substitution.apply(mMgScript, substitute, remainingExitTransformula.getFormula());
 
 				// replace n with k
 				final Map<Term, Term> substituteK = new HashMap<>();
 				substituteK.put(n, k);
-				final Substitution subK = new Substitution(mMgScript, substituteK);
-				final Term transformedExitFormulaK = subK.transform(remainingTransformedExitFormula);
+				final Term transformedExitFormulaK = Substitution.apply(mMgScript, substituteK, remainingTransformedExitFormula);
 				remainingExitFormulas.add(transformedExitFormulaK);
 			}
 			Term quantifiedFormulaK = TransFormulaBuilder.getTrivialTransFormula(mMgScript).getFormula();
@@ -152,9 +144,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			}
 			final Term jointTerm = script.quantifier(Script.EXISTS, new TermVariable[] { n },
 					script.term("and", quantifiedFormula, quantifiedFormulaK, result));
-			final Term simplified = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgScript,
-					jointTerm, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript, SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
 
 			// Quantifier - End
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(originalLoopTransFormula.getInVars(), outVars,
@@ -174,8 +164,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, mFunLocFac,
-				mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(mLogger, mFunLocFac, mBacktranslationTracker, mOriginalIcfg, resultIcfg);
 		processLocations(mOriginalIcfg.getInitialNodes(), lst, loopHead, loopExits);
 		lst.finish();
 		return resultIcfg;
@@ -206,8 +196,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				}
 			}
 
-			final Substitution sub = new Substitution(mMgScript, substitute);
-			final Term transformedExitFormula = script.term("not", sub.transform(exitTransformula.getFormula()));
+			final Term transformedExitFormula = script.term("not",
+					Substitution.apply(mMgScript, substitute, exitTransformula.getFormula()));
 
 			// Quantifier - Start
 
@@ -215,8 +205,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final TermVariable j = script.variable("j", script.sort("Int"));
 			final Map<Term, Term> substituteJ = new HashMap<>();
 			substituteJ.put(n, j);
-			final Substitution subJ = new Substitution(mMgScript, substituteJ);
-			final Term transformedExitFormulaJ = subJ.transform(transformedExitFormula);
+			final Term transformedExitFormulaJ = Substitution.apply(mMgScript, substituteJ, transformedExitFormula);
 
 			final Term zero = Rational.ZERO.toTerm(script.sort("Int"));
 
@@ -225,9 +214,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final Term quantifiedFormula = script.quantifier(Script.FORALL, new TermVariable[] { j }, conditions);
 			final Term jointTerm = script.quantifier(Script.EXISTS, new TermVariable[] { n },
 					script.term("and", quantifiedFormula, result));
-			final Term simplified = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgScript,
-					jointTerm, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript, SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
 
 			// Quantifier - End
 
@@ -246,8 +233,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, mFunLocFac,
-				mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(mLogger, mFunLocFac, mBacktranslationTracker, mOriginalIcfg, resultIcfg);
 		processLocations(mOriginalIcfg.getInitialNodes(), lst, loopHead, loopExits);
 		lst.finish();
 		return resultIcfg;

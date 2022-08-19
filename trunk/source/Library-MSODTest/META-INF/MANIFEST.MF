@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-MSOTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.mso.test
-Bundle-Version: 0.2.0
+Bundle-Version: 0.2.2
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.mso
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.test,

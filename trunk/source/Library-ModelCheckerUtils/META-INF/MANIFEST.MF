@@ -2,8 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-ModelCheckerUtils
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
-Bundle-Version: 0.2.0
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-Version: 0.2.2
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain,
@@ -20,12 +20,12 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.biesenb,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant,
- de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.xnf
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
@@ -34,6 +34,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- net.sf.javabdd
-Import-Package: org.apache.commons.lang3
+ net.sf.javabdd,
+ org.apache.commons.lang
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.modelcheckerutils

@@ -61,6 +61,14 @@ public class OccurrenceCounter extends NonRecursive {
 		}
 
 		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
+			if (++term.mTmpCtr == 1) {
+				occ.enqueueWalker(new CountWalker(term.getSubterm()));
+			}
+		}
+
+		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
 			++term.mTmpCtr;
 		}
@@ -70,7 +78,7 @@ public class OccurrenceCounter extends NonRecursive {
 			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (++term.mTmpCtr == 1) {
 				occ.enqueueWalker(new CountWalker(term.getDataTerm()));
-				for (Term t : term.getCases()) {
+				for (final Term t : term.getCases()) {
 					occ.enqueueWalker(new CountWalker(t));
 				}
 			}
@@ -108,6 +116,16 @@ public class OccurrenceCounter extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new InternalError("Term should be unletted before counting");
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			// TODO Do we really want to descent into quantified formulas???
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
+			if (term.mTmpCtr != 0) {
+				occ.enqueueWalker(new ResetWalker(term.getSubterm()));
+				term.mTmpCtr = 0;
+			}
 		}
 
 		@Override

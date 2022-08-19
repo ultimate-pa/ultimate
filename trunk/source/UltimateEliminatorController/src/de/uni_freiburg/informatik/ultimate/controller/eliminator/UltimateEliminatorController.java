@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ExceptionThrowingSMTLIB2Parser;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateEliminator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
@@ -207,10 +208,12 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 			final Script solver;
 			if (externalSolverCommand == null) {
-				solver = new SMTInterpol(null, options);
+				solver = new HistoryRecordingScript(new SMTInterpol(null, options));
 			} else {
-				solver = new Scriptor(externalSolverCommand, mLogger, services, "External Solver");
+				solver = new HistoryRecordingScript(
+						new Scriptor(externalSolverCommand, mLogger, services, "External Solver", null));
 			}
+
 			final Script eliminator = new UltimateEliminator(services, mLogger, solver);
 			final int exitCode = parser.run(eliminator, filename, options);
 			core.releaseToolchain(tc);

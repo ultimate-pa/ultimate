@@ -47,6 +47,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
+	private static final String UNKNOWN_CASE = "unknown case";
+	private static final String CASE_MUST_NOT_OCCUR = "case must not occur";
+
 	public CachingHoareTripleCheckerMap(final IUltimateServiceProvider services,
 			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer) {
 		super(services, protectedHoareTripleChecker, predicateUnifer);
@@ -64,30 +67,32 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 	@Override
 	protected Validity extendedBinaryCacheCheck(final IPredicate pre, final IAction act, final IPredicate succ,
 			final NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache) {
-		boolean someResultWasUnknown = false;
+
 		final NestedMap2<IPredicate, IPredicate, Validity> pred2succ = binaryCache.get(act);
 		if (pred2succ == null) {
 			// cannot get any information from cache
 			return null;
 		}
+
+		boolean someResultWasUnknown = false;
 		{
 			final Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
 			final Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
 			final Validity validity = new PreIterator(strongerThanPre, pred2succ, weakerThanSucc,
-					this::evaluteResult_StrongerThanPreAndWeakerThanSucc).iterate();
+					this::evaluteResultStrongerThanPreAndWeakerThanSucc).iterate();
 			if (validity != null) {
 				switch (validity) {
 				case VALID:
-					throw new AssertionError("case must nor occur");
+					throw new AssertionError(CASE_MUST_NOT_OCCUR);
 				case UNKNOWN:
 					someResultWasUnknown = true;
 					break;
 				case INVALID:
 					return validity;
 				case NOT_CHECKED:
-					throw new AssertionError("case must nor occur");
+					throw new AssertionError(CASE_MUST_NOT_OCCUR);
 				default:
-					throw new AssertionError("unknown case");
+					throw new AssertionError(UNKNOWN_CASE);
 				}
 			}
 
@@ -96,7 +101,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 			final Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
 			final Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
 			final Validity validity = new PreIterator(weakerThanPre, pred2succ, strongerThanSucc,
-					this::evaluteResult_WeakerThanPreAndStrongerThanSucc).iterate();
+					this::evaluteResultWeakerThanPreAndStrongerThanSucc).iterate();
 			if (validity != null) {
 				switch (validity) {
 				case VALID:
@@ -107,9 +112,9 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 				case INVALID:
 					break;
 				case NOT_CHECKED:
-					throw new AssertionError("case must nor occur");
+					throw new AssertionError(CASE_MUST_NOT_OCCUR);
 				default:
-					throw new AssertionError("unknown case");
+					throw new AssertionError(UNKNOWN_CASE);
 				}
 			}
 		}
@@ -145,7 +150,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
 	}
 
-	private Validity evaluteResult_WeakerThanPreAndStrongerThanSucc(final Validity validity) {
+	private Validity evaluteResultWeakerThanPreAndStrongerThanSucc(final Validity validity) {
 		if (validity == null) {
 			return validity;
 		}
@@ -163,11 +168,11 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 		case NOT_CHECKED:
 			return null;
 		default:
-			throw new AssertionError("unknown case");
+			throw new AssertionError(UNKNOWN_CASE);
 		}
 	}
 
-	private Validity evaluteResult_StrongerThanPreAndWeakerThanSucc(final Validity validity) {
+	private Validity evaluteResultStrongerThanPreAndWeakerThanSucc(final Validity validity) {
 		if (validity == null) {
 			return validity;
 		}
@@ -185,7 +190,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 		case NOT_CHECKED:
 			return null;
 		default:
-			throw new AssertionError("unknown case");
+			throw new AssertionError(UNKNOWN_CASE);
 		}
 	}
 
@@ -213,7 +218,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
 	@FunctionalInterface
 	public interface IResultEvaluator {
-		public Validity evaluateResult(Validity validity);
+		Validity evaluateResult(Validity validity);
 	}
 
 	/**
@@ -224,13 +229,12 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 	 * @param <E>
 	 *            type of set elements
 	 */
-	private static abstract class IntersectionIterator<E, R> {
+	private abstract static class IntersectionIterator<E, R> {
 		private final Set<E> mSmallerSet;
 		private final Set<E> mLargerSet;
 		protected R mResult;
 
 		public IntersectionIterator(final Set<E> set1, final Set<E> set2) {
-			super();
 			if (set1.size() >= set2.size()) {
 				mSmallerSet = set2;
 				mLargerSet = set1;

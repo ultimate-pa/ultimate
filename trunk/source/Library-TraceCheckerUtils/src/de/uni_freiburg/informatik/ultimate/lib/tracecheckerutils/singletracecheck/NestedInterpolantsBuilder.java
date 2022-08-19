@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -45,8 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -58,10 +57,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck.TraceCheckLock;
@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ConstantTermNormalizer;
@@ -126,7 +125,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 
 	private final boolean mTreeInterpolation;
 
-	private final TermTransformer mConst2RepTvSubst;
+	private final Function<Term, Term> mConst2RepTvSubst;
 
 	private final boolean mInstantiateArrayExt;
 
@@ -157,10 +156,10 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mMgdScriptTc != mgdScriptCfg) {
-			mConst2RepTvSubst =
-					new TermTransferrer(mMgdScriptTc.getScript(), mMgdScriptCfg.getScript(), const2RepTv, true);
+			mConst2RepTvSubst = (x -> new TermTransferrer(mMgdScriptTc.getScript(), mMgdScriptCfg.getScript(),
+					const2RepTv, true).transform(x));
 		} else {
-			mConst2RepTvSubst = new SubstitutionWithLocalSimplification(mMgdScriptCfg, const2RepTv);
+			mConst2RepTvSubst = (x -> Substitution.apply(mMgdScriptCfg, const2RepTv, x));
 		}
 
 		computeCraigInterpolants();
@@ -570,19 +569,18 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 					 * implement support for let terms in SafeSubstitution
 					 */
 					withIndices = new FormulaUnLet().transform(withIndices);
-					Term withoutIndices = mConst2RepTvSubst.transform(withIndices);
+					Term withoutIndices = mConst2RepTvSubst.apply(withIndices);
 					if (mInstantiateArrayExt) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
 					if (!ALLOW_AT_DIFF
-							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isPropertySatisfied(withoutIndices)) {
+							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isSatisfiedBySomeSubterm(withoutIndices)) {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
 					Term lessQuantifiers;
 					try {
-						lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScriptCfg,
-								withoutIndicesNormalized, mSimplificationTechnique, mXnfConversionTechnique);
+						lessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScriptCfg, mSimplificationTechnique, withoutIndicesNormalized);
 					} catch (final AssertionError ae) {
 						if (IGNORE_PQE_ERROR) {
 							lessQuantifiers = withoutIndicesNormalized;
@@ -619,7 +617,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		// not needed, at the moment our NNF transformation also produces
 		// Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(),
 		// mCsToolkitPredicates.getVariableManager())).transform(nnf);
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScriptCfg.getScript(), nnf);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScriptCfg, nnf);
 		// The quantifier-free part of of formula in prenex normal form is called
 		// matrix
 		final Term matrix = qs.getInnerTerm();
@@ -640,7 +638,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
 			offset++;
 		}
-		Term result = new Substitution(mMgdScriptCfg.getScript(), substitutionMapping).transform(matrix);
+		Term result = Substitution.apply(mMgdScriptCfg, substitutionMapping, matrix);
 		result = SmtUtils.and(mMgdScriptCfg.getScript(), result, SmtUtils.and(mMgdScriptCfg.getScript(), implications));
 		result = mMgdScriptCfg.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
 		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(),

@@ -200,7 +200,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 
 	private static boolean isMessageSolverCannotInterpolate(final String message) {
 		return message.startsWith("Cannot interpolate") || message.equals(NestedInterpolantsBuilder.DIFF_IS_UNSUPPORTED)
-				|| message.startsWith("Unknown lemma type!");
+				|| message.startsWith("Unknown lemma type!")
+				|| message.startsWith("Interpolation not supported for quantified formulae");
 	}
 
 	/**
@@ -339,7 +340,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getSucceedingProcedure();
 			final TermVarsProc oldVarsEquality = TraceCheckUtils.getOldVarsEquality(calledMethod,
-					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript.getScript());
+					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript);
 
 			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 
@@ -385,7 +386,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError(
 						"has to be unsat by construction, we do check only for interpolant computation");
-			} else if (isSafe == LBool.UNKNOWN) {
+			}
+			if (isSafe == LBool.UNKNOWN) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(), "construction of nested interpolants");
 

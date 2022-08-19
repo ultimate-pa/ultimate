@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUti
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -73,45 +74,33 @@ public class Boogie2SMT {
 
 	private final IUltimateServiceProvider mServices;
 
-	public Boogie2SMT(final ManagedScript maScript, final BoogieDeclarations boogieDeclarations,
-			final boolean bitvectorInsteadOfInt, final IUltimateServiceProvider services,
-			final boolean simplePartialSkolemization) {
+	public Boogie2SMT(final ManagedScript mgdScript, final BoogieDeclarations boogieDeclarations,
+			final IUltimateServiceProvider services, final boolean simplePartialSkolemization) {
 		mServices = services;
 		mBoogieDeclarations = boogieDeclarations;
-		mScript = maScript;
+		mScript = mgdScript;
 		final Script script = mScript.getScript();
 
-		if (bitvectorInsteadOfInt) {
-			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
-					script, mServices);
-			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
-			// TODO: add concurIdVars to mBoogie2SmtSymbolTable
-			mOperationTranslator = new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, script);
-			mExpression2Term = new Expression2Term(mServices, script, mTypeSortTranslator, mBoogie2SmtSymbolTable,
-					mOperationTranslator, mScript);
-		} else {
-			mTypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), script, mServices);
-			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
+		mTypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), script, mServices);
+		mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 
-			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, script);
-			mExpression2Term = new Expression2Term(mServices, script, mTypeSortTranslator, mBoogie2SmtSymbolTable,
-					mOperationTranslator, mScript);
-		}
+		mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, script);
+		mExpression2Term = new Expression2Term(mServices, script, mTypeSortTranslator, mBoogie2SmtSymbolTable,
+				mOperationTranslator, mScript);
 
-		final List<Term> axiomList =
-				declareAxioms(boogieDeclarations, script, mExpression2Term, mBoogie2SmtSymbolTable);
-		final TermVarsProc tvp =
-				TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), script, mBoogie2SmtSymbolTable);
+		final List<Term> axiomList = declareAxioms(boogieDeclarations, script, mExpression2Term,
+				mBoogie2SmtSymbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), mScript,
+				mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
 		if (!(script instanceof HistoryRecordingScript)) {
 			throw new AssertionError("need HistoryRecordingScript");
 		}
-		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(), script);
+		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(), mScript);
 
-		mStatements2TransFormula =
-				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);
+		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term,
+				simplePartialSkolemization);
 		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, mScript);
-
 	}
 
 	private static List<Term> declareAxioms(final BoogieDeclarations boogieDeclarations, final Script script,
@@ -184,7 +173,7 @@ public class Boogie2SMT {
 
 	public static final class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {
 
-		private final Set<BoogieConst> mNonTheoryConsts = new HashSet<>();
+		private final Set<ProgramConst> mNonTheoryConsts = new HashSet<>();
 		private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
 		public ConstOnlyIdentifierTranslator(final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
@@ -197,14 +186,14 @@ public class Boogie2SMT {
 			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
 				throw new AssertionError();
 			}
-			final BoogieConst bc = mBoogie2SmtSymbolTable.getBoogieConst(id);
-			if (!bc.belongsToSmtTheory()) {
-				mNonTheoryConsts.add(bc);
+			final ProgramConst pc = mBoogie2SmtSymbolTable.getBoogieConst(id);
+			if (!pc.belongsToSmtTheory()) {
+				mNonTheoryConsts.add(pc);
 			}
-			return bc.getDefaultConstant();
+			return pc.getDefaultConstant();
 		}
 
-		public Set<BoogieConst> getNonTheoryConsts() {
+		public Set<ProgramConst> getNonTheoryConsts() {
 			return mNonTheoryConsts;
 		}
 

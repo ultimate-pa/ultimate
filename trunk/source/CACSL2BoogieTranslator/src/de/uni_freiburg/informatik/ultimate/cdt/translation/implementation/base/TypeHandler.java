@@ -288,18 +288,27 @@ public class TypeHandler implements ITypeHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (node instanceof CASTTypedefNameSpecifier) {
 			final String cId = node.getName().toString();
-
 			// quick solution --> TODO: maybe make this dependent on includes,
 			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
-			if (cId.equals("size_t") || cId.equals("ssize_t")) {
+			if (cId.equals("size_t")) {
 				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						new CPrimitive(CPrimitives.UINT)));
+						mTypeSizes.getSizeT()));
+			} else if (cId.equals("ssize_t")) {
+				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+						mTypeSizes.getSsizeT()));
 			} else if (cId.equals("__builtin_va_list")) {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.CHAR))));
 			} else if (cId.equals("__pthread_list_t")) {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
+			} else if (cId.equals("__float128")) {
+				// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
+				// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
+				// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
+				final CPrimitive cType = new CPrimitive(CPrimitives.LONGDOUBLE);
+				final ASTType astType = cType2AstType(loc, cType);
+				return (new TypesResult(astType, node.isConst(), false, cType));
 			} else {
 				final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 				final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
@@ -747,7 +756,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public BoogieType getBoogieTypeForSizeT() {
-		return BoogieType.TYPE_INT;
+		return getBoogieTypeForCType(mTypeSizes.getSizeT());
 	}
 
 	@Override
@@ -774,11 +783,8 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
-
-			// may have to change this from int to something depending on bitvector settings and stuff..
-			final BoogieType[] indexTypes =
-					new BoogieType[] { getBoogieTypeForCType(new CPrimitive(CPrimitives.UINT)) };
-
+			final BoogieType[] indexTypes = new BoogieType[] {
+					getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {

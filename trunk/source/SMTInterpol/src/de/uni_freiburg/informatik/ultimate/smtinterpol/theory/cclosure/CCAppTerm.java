@@ -49,16 +49,13 @@ public class CCAppTerm extends CCTerm {
 	}
 
 	public CCAppTerm(final boolean isFunc, final int parentPos, final CCTerm func, final CCTerm arg,
-			final CClosure engine) {
-		super(isFunc, parentPos, HashUtils.hashJenkins(func.hashCode(), arg));
+			final CClosure engine, final boolean isFromQuant) {
+		super(isFunc, parentPos, HashUtils.hashJenkins(func.hashCode(), arg),
+				(!isFromQuant ? 0 : Math.max(func.mAge, arg.mAge + 1)));
 		mFunc = func;
 		mArg = arg;
-		// firstFormula = Integer.MAX_VALUE; lastFormula = -1;
 		mLeftParInfo = new Parent();
 		mRightParInfo = new Parent();
-
-		// func.addParentInfo(0, leftParInfo, engine);
-		// arg.addParentInfo(func.parentPosition, rightParInfo, engine);
 	}
 
 	public CCTerm getFunc() {

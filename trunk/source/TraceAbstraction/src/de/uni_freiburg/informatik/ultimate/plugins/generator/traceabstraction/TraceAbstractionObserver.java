@@ -41,8 +41,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.IcfgCompositionFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
@@ -119,10 +120,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 		final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile =
 				constructRawNestedWordAutomata(mAutomataTestFileAsts);
-		final IcfgCompositionFactory compositionFactory =
-				new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit());
-		final TraceAbstractionStarter<IcfgEdge> tas = new TraceAbstractionStarter<>(mServices, rcfgRootNode,
-				witnessAutomaton, rawFloydHoareAutomataFromFile, compositionFactory, IcfgEdge.class);
+		final TraceAbstractionStarter<IcfgEdge> tas =
+				new TraceAbstractionStarter<>(mServices, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile,
+						() -> new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit()),
+						new IcfgCopyFactory(mServices, rcfgRootNode.getCfgSmtToolkit()), IcfgEdge.class);
 		mRootOfNewModel = tas.getRootOfNewModel();
 	}
 

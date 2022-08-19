@@ -25,15 +25,16 @@ package de.uni_freiburg.informatik.ultimate.logic;
 public enum Logics {
 	CORE(0),// Pure Boolean logic
 	ALL       (Features.QU + Features.NA + Features.IA + Features.RA +
-			   Features.BV + Features.UF + Features.AX + Features.FP),
+			Features.BV + Features.UF + Features.AX + Features.FP + Features.DT + Features.S),
 	HORN      (Features.QU + Features.NA + Features.IA + Features.RA +
-			   Features.BV + Features.UF + Features.AX + Features.FP),
+			Features.BV + Features.UF + Features.AX + Features.FP + Features.DT + Features.S),
 	QF_ABV    (Features.AX + Features.BV),
 	QF_ABVFP  (Features.AX + Features.BV + Features.FP),
 	QF_ABVFPLRA (Features.AX + Features.BV + Features.FP + Features.LA + Features.RA),
 	QF_ALIA   (Features.AX + Features.LA + Features.IA),
 	QF_ANIA   (Features.AX + Features.NA + Features.IA),
 	QF_AUFBV  (Features.AX + Features.UF + Features.BV),
+	QF_AUFBVFP (Features.AX + Features.UF + Features.BV + Features.FP),
 	QF_AUFBVLIA (Features.AX + Features.UF + Features.BV + Features.LA + Features.IA),
 	QF_AUFBVNIA (Features.AX + Features.UF + Features.BV + Features.NA + Features.IA),
 	QF_AUFLIA (Features.AX + Features.UF + Features.LA + Features.IA),
@@ -57,11 +58,16 @@ public enum Logics {
 	QF_RDL    (Features.DL + Features.RA),
 	QF_S      (Features.S),
 	QF_SLIA   (Features.S + Features.LA + Features.IA),
+	QF_SNIA   (Features.S + Features.NA + Features.IA),
 	QF_UF     (Features.UF),
 	QF_UFBV   (Features.UF + Features.BV),
 	QF_UFBVLIA (Features.UF + Features.BV + Features.LA + Features.IA),
+	QF_UFDT   (Features.UF + Features.DT),
 	QF_UFDTLIA (Features.UF + Features.DT + Features.LA + Features.IA),
+	QF_UFDTLIRA (Features.UF + Features.DT + Features.LA + Features.IA + Features.RA),
 	QF_UFFP   (Features.UF + Features.FP),
+	QF_UFFPDTLIRA (Features.UF + Features.FP + Features.DT + Features.LA + Features.IA + Features.RA),
+	QF_UFFPDTNIRA (Features.UF + Features.FP + Features.DT + Features.NA + Features.IA + Features.RA),
 	QF_UFIDL  (Features.UF + Features.DL + Features.IA),
 	QF_UFLIA  (Features.UF + Features.LA + Features.IA),
 	QF_UFLIRA (Features.UF + Features.LA + Features.IA + Features.RA),
@@ -77,6 +83,7 @@ public enum Logics {
 	AUFBV     (Features.QU + Features.AX + Features.UF + Features.BV),
 	AUFBVDTLIA (Features.QU + Features.AX + Features.UF + Features.BV + Features.DT + Features.LA + Features.IA),
 	AUFBVDTNIA (Features.QU + Features.AX + Features.UF + Features.BV + Features.DT + Features.NA + Features.IA),
+	AUFBVFP   (Features.QU + Features.AX + Features.UF + Features.BV + Features.FP),
 	AUFDTLIA  (Features.QU + Features.AX + Features.UF + Features.DT + Features.LA + Features.IA),
 	AUFDTNIA  (Features.QU + Features.AX + Features.UF + Features.DT + Features.NA + Features.IA),
 	AUFDTLIRA (Features.QU + Features.AX + Features.UF + Features.DT + Features.LA + Features.IA + Features.RA),
@@ -98,6 +105,8 @@ public enum Logics {
 	NRA       (Features.QU + Features.NA + Features.RA),
 	UF        (Features.QU + Features.UF),
 	UFBV      (Features.QU + Features.UF + Features.BV),
+	UFBVFP    (Features.QU + Features.UF + Features.BV + Features.FP),
+	UFBVLIA   (Features.QU + Features.UF + Features.BV + Features.LA + Features.IA),
 	UFDT      (Features.QU + Features.UF + Features.DT),
 	UFDTLIA   (Features.QU + Features.DT + Features.UF + Features.LA + Features.IA),
 	UFDTLIRA  (Features.QU + Features.DT + Features.UF + Features.LA + Features.IA + Features.RA),
@@ -205,7 +214,7 @@ public enum Logics {
 	}
 	/**
 	 * Is this logic restricted to linear arithmetic?
-	 * @return <code>true</code> if and only if this logic is restricted to linear arithmetic. 
+	 * @return <code>true</code> if and only if this logic is restricted to linear arithmetic.
 	 */
 	public boolean isLinearArithmetic() {
 		return (mFeatures & (Features.LA | Features.DL)) != 0;

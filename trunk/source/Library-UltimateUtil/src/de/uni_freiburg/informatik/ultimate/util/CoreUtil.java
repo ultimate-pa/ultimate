@@ -37,15 +37,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +59,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -79,11 +81,15 @@ public class CoreUtil {
 	}
 
 	public static String getIsoUtcTimestamp() {
-		final TimeZone tz = TimeZone.getTimeZone("UTC");
-		// Quoted "Z" to indicate UTC, no timezone offset
-		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-		df.setTimeZone(tz);
-		return df.format(new Date());
+		final Instant now = Instant.now();
+		final DateTimeFormatter format = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC"));
+		return format.format(now.truncatedTo(ChronoUnit.SECONDS)) + "Z";
+	}
+
+	public static String getIsoUtcTimestampWithUtcOffset() {
+		final ZonedDateTime zdt = ZonedDateTime.now();
+		final DateTimeFormatter format = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+		return format.format(zdt.truncatedTo(ChronoUnit.SECONDS));
 	}
 
 	/**
@@ -120,20 +126,37 @@ public class CoreUtil {
 	 */
 	public static String readGitVersion(final ClassLoader cl) {
 		final Properties properties = new Properties();
+		final String unknown = "?";
+		final String dirtyFormat = "%s-%s-m";
 		try {
 			final InputStream prop = cl.getResourceAsStream("version.properties");
 			if (prop == null) {
-				return "?-m";
+				return String.format(dirtyFormat, unknown, unknown);
 			}
 			properties.load(prop);
 		} catch (final IOException e) {
 			return null;
 		}
 
-		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
-		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
+		final String branch = properties.getProperty("git.branch", unknown).replace('/', '.');
+		final String fullHash = properties.getProperty("git.commit.id", unknown).replace('/', '.');
+		final String hash = properties.getProperty("git.commit.id.abbrev", unknown);
+		final String dirty = properties.getProperty("git.dirty", unknown);
 
-		return hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
+		final String actualBranch;
+		if (fullHash.equals(branch)) {
+			actualBranch = unknown;
+		} else {
+			actualBranch = branch;
+		}
+
+		final String format;
+		if ("true".equals(dirty)) {
+			format = dirtyFormat;
+		} else {
+			format = "%s-%s";
+		}
+		return String.format(format, actualBranch, hash);
 	}
 
 	/**
@@ -452,6 +475,16 @@ public class CoreUtil {
 		return sb.toString();
 	}
 
+	/**
+	 * Add file separator if last symbol is not already file separator.
+	 */
+	public static String addFileSeparator(final String string) {
+		if (string.endsWith(System.getProperty("file.separator"))) {
+			return string;
+		}
+		return string + System.getProperty("file.separator");
+	}
+
 	public static String getCurrentDateTimeAsString() {
 		return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(Calendar.getInstance().getTime());
 	}
@@ -615,11 +648,11 @@ public class CoreUtil {
 	public static String humanReadableByteCount(final long bytes, final boolean si) {
 		final int unit = si ? 1000 : 1024;
 		if (bytes < unit) {
-			return bytes + " B";
+			return bytes + "B";
 		}
 		final int exp = (int) (Math.log(bytes) / Math.log(unit));
 		final String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
-		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+		return String.format("%.1f%sB", bytes / Math.pow(unit, exp), pre);
 	}
 
 	public static String humanReadableNumber(final long number) {
@@ -629,7 +662,7 @@ public class CoreUtil {
 		}
 		final int exp = (int) (Math.log(number) / Math.log(unit));
 		final String pre = String.valueOf("KMGTPE".charAt(exp - 1));
-		return String.format("%.1f %s", number / Math.pow(unit, exp), pre);
+		return String.format("%.1f%s", number / Math.pow(unit, exp), pre);
 	}
 
 	/***
@@ -671,7 +704,7 @@ public class CoreUtil {
 	 * @param unit
 	 *            The unit of the amount.
 	 * @param decimal
-	 *            The decimal accurracy of the ouptut.
+	 *            The decimal accuracy of the output.
 	 * @return A String with unit symbol.
 	 */
 	public static String humanReadableTime(final long time, final TimeUnit unit, final int decimal) {
@@ -688,47 +721,111 @@ public class CoreUtil {
 	 * @param unit
 	 *            The unit of the amount.
 	 * @param decimal
-	 *            The decimal accurracy of the ouptut.
+	 *            The decimal accuracy of the output.
 	 * @return A String with unit symbol.
 	 */
 	public static String humanReadableTime(final double time, final TimeUnit unit, final int decimal) {
-		final String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
+		final TimeUnit targetUnit = findLargestTargetUnit(time, unit);
+		return toTimeString(time, unit, targetUnit, decimal);
+	}
 
+	/**
+	 * Returns a String representation of time and performs conversion and rounding.
+	 *
+	 * @param time
+	 *            The amount of time
+	 * @param sourceUnit
+	 *            The unit of the amount of time.
+	 * @param targetUnit
+	 *            The unit in which the amount should be converted and which should be displayed.
+	 * @param decimal
+	 *            The decimal accuracy of the output.
+	 * @return A String with unit symbol.
+	 */
+	public static String toTimeString(final double time, final TimeUnit sourceUnit, final TimeUnit targetUnit,
+			final int decimal) {
+		final String formatString = "%." + decimal + "f%s";
+		return String.format(formatString, convertTimeUnit(time, sourceUnit, targetUnit),
+				getTimeUnitSymbol(targetUnit));
+	}
+
+	/**
+	 * Convert time to string with unit symbol rounded to two decimals.
+	 */
+	public static String toTimeString(final double time, final TimeUnit unit) {
+		return toTimeString(time, unit, unit, 2);
+	}
+
+	/**
+	 * Convert time durations represented as double to different units.
+	 */
+	public static double convertTimeUnit(final double amount, final TimeUnit from, final TimeUnit to) {
+		if (from == to) {
+			return amount;
+		}
+		if (from.ordinal() < to.ordinal()) {
+			return amount / from.convert(1, to);
+		}
+		return amount * to.convert(1, from);
+	}
+
+	public static TimeUnit findLargestTargetUnit(final double amount, final TimeUnit unit) {
 		switch (unit) {
 		case DAYS:
-			return String.format("%." + decimal + "f %s", time, units[6]);
+			return TimeUnit.DAYS;
 		case HOURS:
-			if (time > 24) {
-				return humanReadableTime(time / 24.0, TimeUnit.DAYS, decimal);
+			if (amount >= 24) {
+				return findLargestTargetUnit(amount / 24.0, TimeUnit.DAYS);
 			}
-			return String.format("%." + decimal + "f %s", time, units[5]);
+			return TimeUnit.HOURS;
 		case MINUTES:
-			if (time > 60) {
-				return humanReadableTime(time / 60.0, TimeUnit.HOURS, decimal);
+			if (amount >= 60) {
+				return findLargestTargetUnit(amount / 60.0, TimeUnit.HOURS);
 			}
-			return String.format("%." + decimal + "f %s", time, units[4]);
+			return TimeUnit.MINUTES;
 		case SECONDS:
-			if (time > 60) {
-				return humanReadableTime(time / 60.0, TimeUnit.MINUTES, decimal);
+			if (amount >= 60) {
+				return findLargestTargetUnit(amount / 60.0, TimeUnit.MINUTES);
 			}
-			return String.format("%." + decimal + "f %s", time, units[3]);
+			return TimeUnit.SECONDS;
 		case MILLISECONDS:
-			if (time > 1000) {
-				return humanReadableTime(time / 1000.0, TimeUnit.SECONDS, decimal);
+			if (amount >= 1000) {
+				return findLargestTargetUnit(amount / 1000.0, TimeUnit.SECONDS);
 			}
-			return String.format("%." + decimal + "f %s", time, units[2]);
+			return TimeUnit.MILLISECONDS;
 		case MICROSECONDS:
-			if (time > 1000) {
-				return humanReadableTime(time / 1000.0, TimeUnit.MILLISECONDS, decimal);
+			if (amount >= 1000) {
+				return findLargestTargetUnit(amount / 1000.0, TimeUnit.MILLISECONDS);
 			}
-			return String.format("%." + decimal + "f %s", time, units[1]);
+			return TimeUnit.MICROSECONDS;
 		case NANOSECONDS:
-			if (time > 1000) {
-				return humanReadableTime(time / 1000.0, TimeUnit.MICROSECONDS, decimal);
+			if (amount >= 1000) {
+				return findLargestTargetUnit(amount / 1000.0, TimeUnit.NANOSECONDS);
 			}
-			return String.format("%." + decimal + "f %s", time, units[0]);
+			return TimeUnit.NANOSECONDS;
 		default:
-			throw new UnsupportedOperationException(unit + " TimeUnit not yet implemented");
+			throw new UnsupportedOperationException("TimeUnit not yet implemented: " + unit);
+		}
+	}
+
+	public static String getTimeUnitSymbol(final TimeUnit unit) {
+		switch (unit) {
+		case NANOSECONDS:
+			return "ns";
+		case MICROSECONDS:
+			return "µs";
+		case MILLISECONDS:
+			return "ms";
+		case SECONDS:
+			return "s";
+		case MINUTES:
+			return "m";
+		case HOURS:
+			return "h";
+		case DAYS:
+			return "d";
+		default:
+			throw new UnsupportedOperationException("TimeUnit not yet implemented: " + unit);
 		}
 	}
 
@@ -766,11 +863,8 @@ public class CoreUtil {
 			for (final File f : files) {
 				if (f.isDirectory()) {
 					deleteDirectory(f);
-				} else {
-					if (!f.delete()) {
-						f.deleteOnExit();
-					}
-
+				} else if (!f.delete()) {
+					f.deleteOnExit();
 				}
 			}
 		}

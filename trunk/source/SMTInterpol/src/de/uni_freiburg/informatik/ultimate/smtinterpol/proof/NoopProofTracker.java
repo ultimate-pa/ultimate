@@ -18,12 +18,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -53,12 +53,6 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term flatten(final Term orig, final Set<Term> flattenedOrs) {
-		/* nobody cares about this */
-		return orig;
-	}
-
-	@Override
 	public Term orSimpClause(final Term rewrite) {
 		return rewrite;
 	}
@@ -81,14 +75,6 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term orMonotony(Term a, Term[] b) {
-		assert a instanceof ApplicationTerm && ((ApplicationTerm) a).getFunction().getName() == "or";
-		assert b.length > 1;
-		final Theory theory = a.getSort().getTheory();
-		return theory.term("or", b);
-	}
-
-	@Override
 	public Term modusPonens(final Term asserted, final Term simpFormula) {
 		return simpFormula;
 	}
@@ -104,13 +90,8 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term auxAxiom(final Term axiom, final Annotation auxRule) {
+	public Term tautology(final Term axiom, final Annotation auxRule) {
 		return axiom;
-	}
-
-	@Override
-	public Term split(final Term input, final Term splitTerm, final Annotation splitKind) {
-		return splitTerm;
 	}
 
 	@Override
@@ -119,20 +100,38 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term exists(final QuantifiedFormula quant, final Term newBody) {
+	public Term quantCong(final QuantifiedFormula quant, final Term newBody) {
 		final Theory theory = quant.getTheory();
-		return theory.exists(quant.getVariables(), newBody);
-	}
-	@Override
-	public Term forall(final QuantifiedFormula quant, final Term negNewBody) {
-		final Theory theory = quant.getTheory();
-		return theory.term("not", theory.exists(quant.getVariables(), negNewBody));
+		final boolean isForall = quant.getQuantifier() == QuantifiedFormula.FORALL;
+		return isForall ? theory.forall(quant.getVariables(), getProvedTerm(newBody))
+				: theory.exists(quant.getVariables(), getProvedTerm(newBody));
 	}
 
 	@Override
-	public Term allIntro(Term formula, TermVariable[] vars) {
+	public Term match(final MatchTerm oldMatch, final Term newData, final Term[] newCases) {
+		final Theory theory = oldMatch.getTheory();
+		return theory.match(newData, oldMatch.getVariables(), newCases, oldMatch.getConstructors());
+	}
+
+	@Override
+	public Term allIntro(final Term formula, final TermVariable[] vars) {
 		final Theory theory = formula.getTheory();
-		return theory.annotatedTerm(new Annotation[] { new Annotation(":quoted", null) },
-				theory.forall(vars, formula));
+		return theory.forall(vars, formula);
+	}
+
+	@Override
+	public Term resolution(final Term asserted, final Term tautology) {
+		final Theory theory = tautology.getTheory();
+		final ApplicationTerm tautApp = (ApplicationTerm) getProvedTerm(tautology);
+		assert tautApp.getFunction().getName() == SMTLIBConstants.OR;
+		final Term[] clause = tautApp.getParameters();
+		assert clause.length >= 2;
+		if (clause.length == 2) {
+			return clause[1];
+		} else {
+			final Term[] stripped = new Term[clause.length - 1];
+			System.arraycopy(clause, 1, stripped, 0, stripped.length);
+			return theory.term("or", stripped);
+		}
 	}
 }

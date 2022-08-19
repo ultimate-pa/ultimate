@@ -83,7 +83,7 @@ public class MainMultipleFiles {
 			count++;
 			Script benchmark;
 			if (!command.equals("SMTInterpol")) {
-				benchmark = new Scriptor(command, logger, null, "external in solverbridge (multiple files)");
+				benchmark = new Scriptor(command, logger, null, "external in solverbridge (multiple files)", null);
 			} else {
 				benchmark = new SMTInterpol(logProxy);
 			}

@@ -97,9 +97,13 @@ public class AuxVarInfoBuilder {
 	}
 
 	public AuxVarInfo constructGlobalAuxVarInfo(final ILocation loc, final CType cType, final AUXVAR auxVarType) {
-		final String id = mNameHandler.getTempVarUID(auxVarType, cType);
 		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+		return constructGlobalAuxVarInfo(loc, cType, astType, auxVarType);
+	}
 
+	public AuxVarInfo constructGlobalAuxVarInfo(final ILocation loc, final CType cType, final ASTType astType,
+			final AUXVAR auxVarType) {
+		final String id = mNameHandler.getTempVarUID(auxVarType, cType);
 		return constructAuxVarHelper(loc, id, astType, true);
 	}
 

@@ -79,7 +79,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	public CounterExampleResult(final ELEM position, final String plugin,
 			final IBacktranslationService translatorSequence, final IProgramExecution<TE, E> pe) {
 		super(position, plugin, translatorSequence);
-		mCheckedSpecification = ResultUtil.getCheckedSpecification(position);
+		mCheckedSpecification = Check.getAnnotation(position);
 		mProgramExecution = pe;
 		mFailurePath = ResultUtil.getLocationSequence(pe);
 	}
@@ -100,7 +100,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	@Override
 	public String getShortDescription() {
 		if (mCheckedSpecification == null) {
-			return "some specification holds - ERROR (information lost during translation process)";
+			return "some specification is violated - ERROR (information lost during translation process)";
 		}
 		return mCheckedSpecification.getNegativeMessage();
 	}

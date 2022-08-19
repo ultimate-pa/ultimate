@@ -38,6 +38,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -48,17 +50,25 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.Equivalence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStore3;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyDDAWithTimeout;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyQuick;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -74,10 +84,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.AritmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -92,8 +103,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class SmtUtils {
 
-	private final static String[] EMPTY_INDICES = new String[0];
-	private final static BigInteger[] EMPTY_INDICES_BI = new BigInteger[0];
+	private static final String[] EMPTY_INDICES = new String[0];
+	private static final BigInteger[] EMPTY_INDICES_BI = new BigInteger[0];
 
 	private static final String ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT = "unknown enum constant ";
 	private static final String ERROR_MSG_UNKNOWN_SORT = "unknown sort ";
@@ -112,7 +123,27 @@ public final class SmtUtils {
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
+		SIMPLIFY_BDD_PROP(false),
+
+		SIMPLIFY_BDD_FIRST_ORDER(false),
+
+		SIMPLIFY_QUICK(true),
+
+		SIMPLIFY_DDA(true),
+
+		POLY_PAC(false),
+
+		NONE(false);
+
+		private final boolean mDecidesFeasibility;
+
+		SimplificationTechnique(final boolean decidesFeasibility) {
+			mDecidesFeasibility = decidesFeasibility;
+		}
+
+		public boolean decidesFeasibility() {
+			return mDecidesFeasibility;
+		}
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
@@ -122,29 +153,31 @@ public final class SmtUtils {
 	 * {@link ElimStorePlain}.
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
-	private static final boolean LOG_SIMPLIFICATION_CALL_ORIGIN = false;
 	private static final boolean DEBUG_ASSERT_ULTIMATE_NORMAL_FORM = false;
+	private static final boolean DEBUG_CHECK_EVERY_SIMPLIFICATION = false;
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
 	}
 
-	public static Term simplify(final ManagedScript mgScript, final Term formula,
+	public static Term simplify(final ManagedScript mgdScript, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
-		return simplify(mgScript, formula, null, services, simplificationTechnique);
+		return simplify(mgdScript, formula, mgdScript.getScript().term("true"), services, simplificationTechnique);
 	}
 
 	public static Term simplify(final ManagedScript mgScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		if (simplificationTechnique == SimplificationTechnique.NONE) {
+			return formula;
+		}
+		Objects.requireNonNull(context);
 		final ILogger logger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}
-		if (LOG_SIMPLIFICATION_CALL_ORIGIN) {
-			logger.info(String.format("Current caller to simplify is %s",
-					ReflectionUtil.getCallerClassName(3).getSimpleName()));
-		}
-		if (context != null && simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA) {
+		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
+				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
@@ -161,13 +194,17 @@ public final class SmtUtils {
 				simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
 				break;
 			case SIMPLIFY_DDA:
-				simplified = new SimplifyDDAWithTimeout(script.getScript(), services).getSimplifiedTerm(formula);
+				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
+						.getSimplifiedTerm(formula);
 				break;
 			case SIMPLIFY_QUICK:
 				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
 				break;
 			case NONE:
 				return formula;
+			case POLY_PAC:
+				simplified = PolyPacSimplificationTermWalker.simplify(services, script, context, formula);
+				break;
 			default:
 				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 			}
@@ -177,7 +214,8 @@ public final class SmtUtils {
 			}
 			final long endTime = System.nanoTime();
 			final long overallTimeMs = (endTime - startTime) / 1_000_000;
-			if (overallTimeMs >= 100) {
+			// write warning if simplification takes more than 5 seconds
+			if (overallTimeMs >= 5000) {
 				final StringBuilder sb = new StringBuilder();
 				sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
 						.append(" on a formula simplification");
@@ -190,6 +228,8 @@ public final class SmtUtils {
 					sb.append(" DAG size of output: ");
 					sb.append(new DagSizePrinter(simplified));
 				}
+				sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+						.append(")");
 				logger.warn(sb);
 			}
 			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
@@ -200,9 +240,8 @@ public final class SmtUtils {
 				// conjunctions or disjunctions. Use UnfTransformer to get
 				// rid of these.
 				return new UnfTransformer(mgScript.getScript()).transform(simplified);
-			} else {
-				return simplified;
 			}
+			return simplified;
 		} catch (final ToolchainCanceledException t) {
 			// we try to preserve the script if a timeout occurred
 			final int dirtyLevels = undoableScript.restore();
@@ -214,11 +253,16 @@ public final class SmtUtils {
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		return simplifyWithStatistics(script, formula, script.term(null, "true"), services, simplificationTechnique);
+	}
+
+	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
 			final Term context, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
-		final Term simplified = simplify(script, formula, services, simplificationTechnique);
+		final Term simplified = simplify(script, formula, context, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		return new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter,
@@ -271,15 +315,13 @@ public final class SmtUtils {
 			final BinaryNumericRelation bnr = BinaryNumericRelation.convert(conjunct);
 			if (bnr == null) {
 				result.add(conjunct);
+			} else if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
+				final Term leq = script.term("<=", bnr.getLhs(), bnr.getRhs());
+				result.add(leq);
+				final Term geq = script.term(">=", bnr.getLhs(), bnr.getRhs());
+				result.add(geq);
 			} else {
-				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
-					final Term leq = script.term("<=", bnr.getLhs(), bnr.getRhs());
-					result.add(leq);
-					final Term geq = script.term(">=", bnr.getLhs(), bnr.getRhs());
-					result.add(geq);
-				} else {
-					result.add(conjunct);
-				}
+				result.add(conjunct);
 			}
 		}
 		return result.toArray(new Term[result.size()]);
@@ -446,25 +488,25 @@ public final class SmtUtils {
 
 			if (SmtSortUtils.isIntSort(sort) || SmtSortUtils.isRealSort(sort)) {
 				return Rational.ZERO.toTerm(sort);
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
+			}
+			if (SmtSortUtils.isBitvecSort(sort)) {
 				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
-			} else {
-				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 			}
-		} else if (summands.length == 1) {
-			return summands[0];
-		} else {
-			if (SmtSortUtils.isNumericSort(sort)) {
-				return script.term("+", summands);
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				if (BINARY_BITVECTOR_SUM_WORKAROUND) {
-					return binaryBitvectorSum(script, sort, summands);
-				}
-				return script.term("bvadd", summands);
-			} else {
-				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
-			}
+			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 		}
+		if (summands.length == 1) {
+			return summands[0];
+		}
+		if (SmtSortUtils.isNumericSort(sort)) {
+			return script.term("+", CommuhashUtils.sortByHashCode(summands));
+		}
+		if (!SmtSortUtils.isBitvecSort(sort)) {
+			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
+		}
+		if (BINARY_BITVECTOR_SUM_WORKAROUND) {
+			return binaryBitvectorSum(script, sort, summands);
+		}
+		return script.term("bvadd", CommuhashUtils.sortByHashCode(summands));
 	}
 
 	/**
@@ -478,26 +520,26 @@ public final class SmtUtils {
 	public static Term binaryBitvectorSum(final Script script, final Sort sort, final Term... summands) {
 		if (summands.length == 0) {
 			return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
-		} else if (summands.length == 1) {
-			return summands[0];
-		} else {
-			Term result = script.term("bvadd", summands[0], summands[1]);
-			for (int i = 2; i < summands.length; i++) {
-				result = script.term("bvadd", result, summands[i]);
-			}
-			return result;
 		}
+		if (summands.length == 1) {
+			return summands[0];
+		}
+		Term result = script.term("bvadd", summands[0], summands[1]);
+		for (int i = 2; i < summands.length; i++) {
+			result = script.term("bvadd", result, summands[i]);
+		}
+		return result;
 	}
 
 	public static Term mul(final Script script, final Rational rational, final Term term) {
 		if (rational.equals(Rational.ONE)) {
 			return term;
-		} else if (rational.equals(Rational.MONE)) {
-			return SmtUtils.neg(script, term);
-		} else {
-			final Term coefficient = SmtUtils.rational2Term(script, rational, term.getSort());
-			return SmtUtils.mul(script, term.getSort(), coefficient, term);
 		}
+		if (rational.equals(Rational.MONE)) {
+			return SmtUtils.neg(script, term);
+		}
+		final Term coefficient = SmtUtils.rational2Term(script, rational, term.getSort());
+		return SmtUtils.mul(script, term.getSort(), coefficient, term);
 	}
 
 	/**
@@ -509,17 +551,17 @@ public final class SmtUtils {
 		if (factors.length == 0) {
 			final BigInteger one = BigInteger.ONE;
 			return constructIntegerValue(script, sort, one);
-		} else if (factors.length == 1) {
-			return factors[0];
-		} else {
-			if (SmtSortUtils.isNumericSort(sort)) {
-				return script.term("*", factors);
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				return script.term("bvmul", factors);
-			} else {
-				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
-			}
 		}
+		if (factors.length == 1) {
+			return factors[0];
+		}
+		if (SmtSortUtils.isNumericSort(sort)) {
+			return script.term("*", CommuhashUtils.sortByHashCode(factors));
+		}
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return script.term("bvmul", CommuhashUtils.sortByHashCode(factors));
+		}
+		throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 	}
 
 	/**
@@ -549,10 +591,11 @@ public final class SmtUtils {
 		final Term product;
 		if (factors.length == 0) {
 			throw new UnsupportedOperationException("Method does not support empty factors.");
-		} else if (factors.length == 1) {
+		}
+		if (factors.length == 1) {
 			product = factors[0];
 		} else {
-			product = script.term(funcname, factors);
+			product = script.term(funcname, CommuhashUtils.sortByHashCode(factors));
 		}
 		final AffineTerm affine = (AffineTerm) new AffineTermTransformer(script).transform(product);
 		if (affine.isErrorTerm()) {
@@ -591,38 +634,38 @@ public final class SmtUtils {
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (SmtSortUtils.isNumericSort(sort)) {
 			return unaryNumericMinus(script, operand);
-		} else if (SmtSortUtils.isBitvecSort(sort)) {
-			return BitvectorUtils.termWithLocalSimplification(script, "bvneg", null, operand);
-		} else {
-			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 		}
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return BitvectorUtils.termWithLocalSimplification(script, "bvneg", null, operand);
+		}
+		throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 	}
 
 	public static Term unaryNumericMinus(final Script script, final Term operand) {
 		if (operand instanceof ConstantTerm) {
 			final ConstantTerm ct = (ConstantTerm) operand;
-			final Rational value = convertConstantTermToRational(ct);
+			final Rational value = toRational(ct);
 			return value.negate().toTerm(operand.getSort());
-		} else if (operand instanceof ApplicationTerm) {
+		}
+		if (operand instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) operand;
 			if (appTerm.getFunction().isIntern()) {
 				if (isUnaryNumericMinus(appTerm.getFunction())) {
 					return appTerm.getParameters()[0];
-				} else if (appTerm.getFunction().getName().equals("+")) {
+				}
+				if (appTerm.getFunction().getName().equals("+")) {
 					return sum(script, operand.getSort(), Arrays.stream(appTerm.getParameters())
 							.map(x -> unaryNumericMinus(script, x)).toArray(Term[]::new));
-				} else {
-					// TODO: handle all theory-defined functions
-					return script.term("-", operand);
 				}
+				// TODO: handle all theory-defined functions
+				return script.term("-", operand);
 			}
 			return script.term("-", operand);
-		} else if (operand instanceof TermVariable) {
-			return script.term("-", operand);
-		} else {
-			throw new UnsupportedOperationException(
-					"cannot apply unary minus to " + operand.getClass().getSimpleName());
 		}
+		if (operand instanceof TermVariable) {
+			return script.term("-", operand);
+		}
+		throw new UnsupportedOperationException("cannot apply unary minus to " + operand.getClass().getSimpleName());
 	}
 
 	/**
@@ -647,23 +690,38 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * TODO 20210516 Matthias: Extend optimizations of the methods called by {@link SmtUtils#binaryEquality} to this
+	 * method. Currently, this is not very important since we have mainly binary equalities in program verification.
+	 *
+	 */
+	public static Term equality(final Script script, final Term... params) {
+		if (params.length == 2) {
+			return binaryEquality(script, params[0], params[1]);
+		}
+		return script.term("=", CommuhashUtils.sortByHashCode(params));
+	}
+
+	/**
 	 * Returns the equality ("=" lhs rhs), or true resp. false if some simple checks detect validity or unsatisfiablity
 	 * of the equality.
 	 */
 	public static Term binaryEquality(final Script script, final Term lhs, final Term rhs) {
 		if (lhs == rhs) {
 			return script.term("true");
-		} else if (lhs.getSort().isNumericSort()) {
-			return numericEquality(script, lhs, rhs);
-		} else if (SmtSortUtils.isBoolSort(lhs.getSort())) {
-			return booleanEquality(script, lhs, rhs);
-		} else if (SmtSortUtils.isBitvecSort(lhs.getSort())) {
-			return bitvectorEquality(script, lhs, rhs);
-		} else if (SmtSortUtils.isArraySort(lhs.getSort())) {
-			return arrayEquality(script, lhs, rhs);
-		} else {
-			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
+		if (lhs.getSort().isNumericSort()) {
+			return numericEquality(script, lhs, rhs);
+		}
+		if (SmtSortUtils.isBoolSort(lhs.getSort())) {
+			return booleanEquality(script, lhs, rhs);
+		}
+		if (SmtSortUtils.isBitvecSort(lhs.getSort())) {
+			return bitvectorEquality(script, lhs, rhs);
+		}
+		if (SmtSortUtils.isArraySort(lhs.getSort())) {
+			return arrayEquality(script, lhs, rhs);
+		}
+		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 	}
 
 	/**
@@ -681,15 +739,17 @@ public final class SmtUtils {
 	private static Term booleanEquality(final Script script, final Term lhs, final Term rhs) {
 		if (isTrueLiteral(lhs)) {
 			return rhs;
-		} else if (isFalseLiteral(lhs)) {
-			return SmtUtils.not(script, rhs);
-		} else if (isTrueLiteral(rhs)) {
-			return lhs;
-		} else if (isFalseLiteral(rhs)) {
-			return SmtUtils.not(script, lhs);
-		} else {
-			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
+		if (isFalseLiteral(lhs)) {
+			return SmtUtils.not(script, rhs);
+		}
+		if (isTrueLiteral(rhs)) {
+			return lhs;
+		}
+		if (isFalseLiteral(rhs)) {
+			return SmtUtils.not(script, lhs);
+		}
+		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 	}
 
 	/**
@@ -734,8 +794,8 @@ public final class SmtUtils {
 		}
 		final ConstantTerm lhsConst = (ConstantTerm) lhs;
 		final ConstantTerm rhsConst = (ConstantTerm) rhs;
-		final Rational lhsValue = convertConstantTermToRational(lhsConst);
-		final Rational rhsValue = convertConstantTermToRational(rhsConst);
+		final Rational lhsValue = toRational(lhsConst);
+		final Rational rhsValue = toRational(rhsConst);
 		if (!lhsValue.getClass().isAssignableFrom(rhsValue.getClass())
 				&& rhsValue.getClass().isAssignableFrom(lhs.getClass())) {
 			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
@@ -784,14 +844,6 @@ public final class SmtUtils {
 		return SmtUtils.binaryEquality(script, select, value);
 	}
 
-	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
-		final List<Term> result = new ArrayList<>();
-		for (int i = 0; i < subtituents.size(); i++) {
-			result.add(subst.transform(subtituents.get(i)));
-		}
-		return result;
-	}
-
 	/**
 	 * Removes vertical bars from a String. In SMT-LIB identifiers can be quoted using | (vertical bar) and vertical
 	 * bars must not be nested.
@@ -824,14 +876,14 @@ public final class SmtUtils {
 	 * Returns true, iff the term contains an application of the given functionName
 	 */
 	public static boolean containsFunctionApplication(final Term term, final String functionName) {
-		return !new ApplicationTermFinder(functionName, true).findMatchingSubterms(term).isEmpty();
+		return !extractApplicationTerms(functionName, term, true).isEmpty();
 	}
 
 	/**
 	 * Returns true, iff the term contains an application of at least one of the the given functionNames
 	 */
 	public static boolean containsFunctionApplication(final Term term, final Collection<String> functionNames) {
-		return !new ApplicationTermFinder(new HashSet<>(functionNames), true).findMatchingSubterms(term).isEmpty();
+		return functionNames.stream().anyMatch(x -> containsFunctionApplication(term, x));
 	}
 
 	public static boolean containsArrayVariables(final Term... terms) {
@@ -901,11 +953,11 @@ public final class SmtUtils {
 			final Object value = ((ConstantTerm) term).getValue();
 			if (value instanceof Rational) {
 				return value.equals(Rational.valueOf(number, BigInteger.ONE));
-			} else if (value instanceof BigInteger) {
-				return value.equals(number);
-			} else {
-				throw new AssertionError("unknown type of integer value " + value.getClass().getSimpleName());
 			}
+			if (value instanceof BigInteger) {
+				return value.equals(number);
+			}
+			throw new AssertionError("unknown type of integer value " + value.getClass().getSimpleName());
 		}
 		return false;
 	}
@@ -920,15 +972,22 @@ public final class SmtUtils {
 	 *         parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
-		if (isTrueLiteral(term) || isFalseLiteral(term) || isConstant(term)) {
-			return true;
+		if (SmtSortUtils.isBoolSort(term.getSort())) {
+			if (isTrueLiteral(term) || isFalseLiteral(term)) {
+				return true;
+			}
+			if (term instanceof TermVariable || isConstant(term)) {
+				return true;
+			}
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
+					return false;
+				}
+				return true;
+			}
 		}
-		if (term instanceof ApplicationTerm) {
-			// Note that this is only correct because we checked for constant terms (i.e.,
-			// unary function symbols) above.
-			return !allParamsAreBool((ApplicationTerm) term);
-		}
-		return term instanceof TermVariable;
+		return false;
 	}
 
 	/**
@@ -937,14 +996,14 @@ public final class SmtUtils {
 	 */
 	public static boolean isNNF(final Term term) {
 		for (final String f : Arrays.asList("=", "=>", "xor", "distinct", "ite")) {
-			for (final ApplicationTerm a : new ApplicationTermFinder(f, true).findMatchingSubterms(term)) {
-				if (allParamsAreBool(a)) {
+			for (final Term t : extractApplicationTerms(f, term, true)) {
+				if (allParamsAreBool((ApplicationTerm) t)) {
 					return false;
 				}
 			}
 		}
-		for (final ApplicationTerm a : new ApplicationTermFinder("not", true).findMatchingSubterms(term)) {
-			if (!isAtomicFormula(a.getParameters()[0])) {
+		for (final Term t : extractApplicationTerms("not", term, true)) {
+			if (!isAtomicFormula(((ApplicationTerm) t).getParameters()[0])) {
 				return false;
 			}
 		}
@@ -1008,15 +1067,16 @@ public final class SmtUtils {
 		}
 		if (resultJuncts.isEmpty()) {
 			return script.term("true");
-		} else if (resultJuncts.size() == 1) {
-			return resultJuncts.iterator().next();
-		} else {
-			final boolean applyDistributivity = false;
-			if (applyDistributivity && idjt.getInnerDualJuncts() != null && !idjt.getInnerDualJuncts().isEmpty()) {
-				return applyDistributivity(script, resultJuncts, connective, idjt.getInnerDualJuncts());
-			}
-			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
+		if (resultJuncts.size() == 1) {
+			return resultJuncts.iterator().next();
+		}
+		final boolean applyDistributivity = false;
+		if (applyDistributivity && idjt.getInnerDualJuncts() != null && !idjt.getInnerDualJuncts().isEmpty()) {
+			return applyDistributivity(script, resultJuncts, connective, idjt.getInnerDualJuncts());
+		}
+		return script.term(connective,
+				CommuhashUtils.sortByHashCode(resultJuncts.toArray(new Term[resultJuncts.size()])));
 	}
 
 	private static Term applyDistributivity(final Script script, final Set<Term> dualJunctions,
@@ -1038,7 +1098,8 @@ public final class SmtUtils {
 			}
 			if (remainingInnerDualJuncts.length == 0) {
 				throw new AssertionError("optimization!!");
-			} else if (remainingInnerDualJuncts.length == 1) {
+			}
+			if (remainingInnerDualJuncts.length == 1) {
 				resultDualJunctions[outerOffset] = remainingInnerDualJuncts[0];
 			} else {
 				resultDualJunctions[outerOffset] = script.term(innerConnective, remainingInnerDualJuncts);
@@ -1066,11 +1127,12 @@ public final class SmtUtils {
 		}
 		if (resultJuncts.isEmpty()) {
 			return script.term("false");
-		} else if (resultJuncts.size() == 1) {
-			return resultJuncts.iterator().next();
-		} else {
-			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
+		if (resultJuncts.size() == 1) {
+			return resultJuncts.iterator().next();
+		}
+		return script.term(connective,
+				CommuhashUtils.sortByHashCode(resultJuncts.toArray(new Term[resultJuncts.size()])));
 	}
 
 	/**
@@ -1110,32 +1172,33 @@ public final class SmtUtils {
 			if (isNeutral.test(junct)) {
 				// do nothing, junct will not contribute to result
 				continue;
-			} else if (isAbsorbing.test(junct)) {
+			}
+			if (isAbsorbing.test(junct)) {
 				// result will be equivalent to absorbing element
 				return true;
-			} else {
-				if (junct instanceof ApplicationTerm) {
-					final ApplicationTerm appTerm = (ApplicationTerm) junct;
-					if (appTerm.getFunction().getName().equals(connective)) {
-						// current junct has same connective as result
-						// descend recusively to check and add its subjuncts
-						final boolean resultIsAbsorbingElement =
-								recursiveAndOrSimplificationHelper(script, connective, isNeutral, isAbsorbing,
-										Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts, idjt);
-						if (resultIsAbsorbingElement) {
-							return true;
-						}
-						// the recursive all added all subjuncts,
-						// no need to add the junct itself
-						continue;
-					} else if ("not".equals(appTerm.getFunction().getName())) {
-						if (resultJuncts.contains(appTerm.getParameters()[0])) {
-							// we already have the argument of this not term in the resultJuncts,
-							// hence the result will be equivalent to the absorbing element
-							return true;
-						}
-						negatedJuncts.add(appTerm.getParameters()[0]);
+			}
+			if (junct instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) junct;
+				if (appTerm.getFunction().getName().equals(connective)) {
+					// current junct has same connective as result
+					// descend recusively to check and add its subjuncts
+					final boolean resultIsAbsorbingElement =
+							recursiveAndOrSimplificationHelper(script, connective, isNeutral, isAbsorbing,
+									Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts, idjt);
+					if (resultIsAbsorbingElement) {
+						return true;
 					}
+					// the recursive all added all subjuncts,
+					// no need to add the junct itself
+					continue;
+				}
+				if ("not".equals(appTerm.getFunction().getName())) {
+					if (resultJuncts.contains(appTerm.getParameters()[0])) {
+						// we already have the argument of this not term in the resultJuncts,
+						// hence the result will be equivalent to the absorbing element
+						return true;
+					}
+					negatedJuncts.add(appTerm.getParameters()[0]);
 				}
 			}
 			if (negatedJuncts.contains(junct)) {
@@ -1147,6 +1210,27 @@ public final class SmtUtils {
 			idjt.addOuterJunct(junct, connective);
 		}
 		return false;
+	}
+
+	/**
+	 * Copy of {@link Util#ite} that uses our library methods for the construction
+	 * of terms.
+	 */
+	public static Term ite(final Script script, final Term cond, final Term thenPart, final Term elsePart) {
+		if (isTrueLiteral(cond)|| thenPart == elsePart) {
+			return thenPart;
+		} else if (isFalseLiteral(cond)) {
+			return elsePart;
+		} else if (isTrueLiteral(thenPart)) {
+			return or(script, cond, elsePart);
+		} else if (isFalseLiteral(elsePart)) {
+			return and(script, cond, thenPart);
+		} else if (isFalseLiteral(thenPart)) {
+			return and(script, not(script, cond), elsePart);
+		} else if (isTrueLiteral(elsePart)) {
+			return or(script, not(script, cond), thenPart);
+		}
+		return script.term("ite", cond, thenPart, elsePart);
 	}
 
 	/**
@@ -1241,9 +1325,8 @@ public final class SmtUtils {
 		final PolynomialRelation polyRel = PolynomialRelation.convert(script, rawTerm);
 		if (polyRel == null) {
 			return rawTerm;
-		} else {
-			return polyRel.positiveNormalForm(script);
 		}
+		return polyRel.positiveNormalForm(script);
 	}
 
 	/**
@@ -1260,6 +1343,31 @@ public final class SmtUtils {
 	public static ApplicationTerm buildNewConstant(final Script script, final String name, final String sortname) {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return (ApplicationTerm) script.term(name);
+	}
+
+	/**
+	 * Auxiliary method for {@link TermTransformer}. The method {@link TermTransformer#convertApplicationTerm}
+	 * constructs new terms that may violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}. Classes in
+	 * Ultimate that inherit {@link TermTransformer} should overwrite {@link TermTransformer#convertApplicationTerm} by
+	 * a method that uses this method for the construction of new terms. See e.g.,
+	 * {@link Substitution}.
+	 *
+	 * @param appTerm
+	 *            original ApplicationTerm
+	 * @param newArgs
+	 *            parameters of the transformed ApplicationTerm
+	 */
+	public static Term convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs,
+			final Script script) {
+		final Term result;
+		final Term[] oldArgs = appTerm.getParameters();
+		if (oldArgs == newArgs) {
+			// no argument was changed, we can return the original term
+			result = appTerm;
+		} else {
+			result = SmtUtils.termWithLocalSimplification(script, appTerm.getFunction(), newArgs);
+		}
+		return result;
 	}
 
 	/**
@@ -1315,7 +1423,7 @@ public final class SmtUtils {
 			if (params.length != 3) {
 				throw new IllegalArgumentException("no ite");
 			}
-			result = Util.ite(script, params[0], params[1], params[2]);
+			result = SmtUtils.ite(script, params[0], params[1], params[2]);
 			break;
 		case "+":
 		case "bvadd":
@@ -1368,6 +1476,7 @@ public final class SmtUtils {
 		case "bvurem":
 		case "bvsdiv":
 		case "bvsrem":
+		case "bvsmod":
 		case "bvand":
 		case "bvor":
 		case "bvxor":
@@ -1392,28 +1501,55 @@ public final class SmtUtils {
 		}
 		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
 				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
+
+		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION
+				|| Util.checkSat(script, script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
 		return result;
 	}
 
 	public static Term select(final Script script, final Term array, final Term index) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for select-over-store
-				if (nestedIdx.equals(index)) {
-					// Found select-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					// => transform into value
-					result = appArray.getParameters()[2];
-				} else {
-					result = script.term("select", array, index);
-				}
+			final ArrayStore as = ArrayStore.convert(array);
+			if (as != null) {
+				result = selectOverStore(script, as, index);
 			} else {
 				result = script.term("select", array, index);
 			}
 		} else {
 			result = script.term("select", array, index);
+		}
+		return result;
+	}
+
+	private static Term selectOverStore(final Script script, final ArrayStore as, final Term index) {
+		final Term result;
+		// Check for select-over-store
+		if (as.getIndex().equals(index)) {
+			// Found select-over-store => ignore inner store
+			// => transform into value
+			result = as.getValue();
+		} else {
+			final IPolynomialTerm selectIndex = PolynomialTermTransformer.convert(script, index);
+			final IPolynomialTerm storeIndex = PolynomialTermTransformer.convert(script, as.getIndex());
+			if (selectIndex == null || storeIndex == null) {
+				result = script.term("select", as.asTerm(), index);
+			} else {
+				final Equivalence comparison = selectIndex.compare(storeIndex);
+				switch (comparison) {
+				case DISTINCT:
+					result = select(script, as.getArray(), index);
+					break;
+				case EQUALS:
+					result = as.getValue();
+					break;
+				case INCOMPARABLE:
+					result = script.term("select", as.asTerm(), index);
+					break;
+				default:
+					throw new AssertionError("unknown value " + comparison);
+				}
+			}
 		}
 		return result;
 	}
@@ -1516,8 +1652,8 @@ public final class SmtUtils {
 	public static Term div(final Script script, final Term dividend, final Term divisor) {
 		if (dividend instanceof ConstantTerm && dividend.getSort().isNumericSort() && divisor instanceof ConstantTerm
 				&& divisor.getSort().isNumericSort()) {
-			final Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) dividend);
-			final Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divisor);
+			final Rational dividentAsRational = toRational((ConstantTerm) dividend);
+			final Rational divisorAsRational = toRational((ConstantTerm) divisor);
 			final Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
 			Rational result;
 			if (divisorAsRational.isNegative()) {
@@ -1532,11 +1668,10 @@ public final class SmtUtils {
 
 	public static Term abs(final Script script, final Term operand) {
 		if (operand instanceof ConstantTerm && SmtSortUtils.isIntSort(operand.getSort())) {
-			final Rational operandAsRational = convertConstantTermToRational((ConstantTerm) operand);
+			final Rational operandAsRational = toRational((ConstantTerm) operand);
 			return operandAsRational.abs().toTerm(operand.getSort());
-		} else {
-			return script.term("abs", operand);
 		}
+		return script.term("abs", operand);
 	}
 
 	/**
@@ -1564,57 +1699,52 @@ public final class SmtUtils {
 			if (nextAsRational == null) {
 				// cannot simplify - is not at literal
 				resultParams.add(inputParams[i]);
+			} else if (nextAsRational.numerator() == BigInteger.ZERO) {
+				// cannot simplify
+				resultParams.add(inputParams[i]);
+			} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
+				// do nothing
 			} else {
-				if (nextAsRational.numerator() == BigInteger.ZERO) {
+				final Rational lastSimplifiedParam;
+				if (resultParams.isEmpty()) {
+					lastSimplifiedParam = null;
+				} else {
+					final Rational tmp = tryToConvertToLiteral(resultParams.get(resultParams.size() - 1));
+					if (tmp == null) {
+						lastSimplifiedParam = null;
+					} else // if parameter at position i-1 is zero we can use
+					// it for simplification iff it will be the first
+					// parameter of the result (i.e., we do not divide
+					// by 0)
+					if (!tmp.numerator().equals(BigInteger.ZERO) || resultParams.size() == 1) {
+						lastSimplifiedParam = tmp;
+					} else {
+						lastSimplifiedParam = null;
+					}
+				}
+				if (lastSimplifiedParam != null) {
+					// if parameter at position i-1 is the first parameter
+					// (i.e., i=1) we divide it by the next parameter
+					// otherwise we multiply with the next parameter
+					// e.g., 54/2 becomes 23, but x/21/2 becomes x/42
+					final Rational resultRat;
+					if (resultParams.size() == 1) {
+						resultRat = lastSimplifiedParam.div(nextAsRational);
+					} else {
+						resultRat = lastSimplifiedParam.mul(nextAsRational);
+					}
+					final Term resultTerm = resultRat.toTerm(SmtSortUtils.getRealSort(script));
+					resultParams.set(resultParams.size() - 1, resultTerm);
+				} else {
 					// cannot simplify
 					resultParams.add(inputParams[i]);
-				} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
-					// do nothing
-				} else {
-					final Rational lastSimplifiedParam;
-					if (resultParams.isEmpty()) {
-						lastSimplifiedParam = null;
-					} else {
-						final Rational tmp = tryToConvertToLiteral(resultParams.get(resultParams.size() - 1));
-						if (tmp == null) {
-							lastSimplifiedParam = null;
-						} else {
-							// if parameter at position i-1 is zero we can use
-							// it for simplification iff it will be the first
-							// parameter of the result (i.e., we do not divide
-							// by 0)
-							if (!tmp.numerator().equals(BigInteger.ZERO) || resultParams.size() == 1) {
-								lastSimplifiedParam = tmp;
-							} else {
-								lastSimplifiedParam = null;
-							}
-						}
-					}
-					if (lastSimplifiedParam != null) {
-						// if parameter at position i-1 is the first parameter
-						// (i.e., i=1) we divide it by the next parameter
-						// otherwise we multiply with the next parameter
-						// e.g., 54/2 becomes 23, but x/21/2 becomes x/42
-						final Rational resultRat;
-						if (resultParams.size() == 1) {
-							resultRat = lastSimplifiedParam.div(nextAsRational);
-						} else {
-							resultRat = lastSimplifiedParam.mul(nextAsRational);
-						}
-						final Term resultTerm = resultRat.toTerm(SmtSortUtils.getRealSort(script));
-						resultParams.set(resultParams.size() - 1, resultTerm);
-					} else {
-						// cannot simplify
-						resultParams.add(inputParams[i]);
-					}
 				}
 			}
 		}
 		if (resultParams.size() == 1) {
 			return resultParams.get(0);
-		} else {
-			return script.term("/", resultParams.toArray(new Term[resultParams.size()]));
 		}
+		return script.term("/", resultParams.toArray(new Term[resultParams.size()]));
 	}
 
 	/**
@@ -1644,50 +1774,45 @@ public final class SmtUtils {
 					// cannot simplify - is not at literal
 					resultParams.add(inputParams[i]);
 					simplificationPossible = false;
+				} else if (nextAsRational.numerator() == BigInteger.ZERO) {
+					// cannot simplify
+					resultParams.add(inputParams[i]);
+					simplificationPossible = false;
+				} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
+					// do nothing
 				} else {
-					if (nextAsRational.numerator() == BigInteger.ZERO) {
+					final Rational numerator = tryToConvertToLiteral(resultParams.get(0));
+					if (numerator == null) {
 						// cannot simplify
 						resultParams.add(inputParams[i]);
 						simplificationPossible = false;
-					} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
-						// do nothing
 					} else {
-						final Rational numerator = tryToConvertToLiteral(resultParams.get(0));
-						if (numerator == null) {
-							// cannot simplify
-							resultParams.add(inputParams[i]);
-							simplificationPossible = false;
-						} else {
-							if (!numerator.isIntegral() || !nextAsRational.isIntegral()) {
-								throw new AssertionError("no integers");
-							}
-							// Euclidean division. E.g. (div -5 2) is -3
-							final BigInteger div =
-									AritmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
-							final Term resultTerm = SmtUtils.rational2Term(script,
-									Rational.valueOf(div, BigInteger.ONE), resultParams.get(0).getSort());
-							resultParams.set(0, resultTerm);
+						if (!numerator.isIntegral() || !nextAsRational.isIntegral()) {
+							throw new AssertionError("no integers");
 						}
+						// Euclidean division. E.g. (div -5 2) is -3
+						final BigInteger div =
+								ArithmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
+						final Term resultTerm = SmtUtils.rational2Term(script, Rational.valueOf(div, BigInteger.ONE),
+								resultParams.get(0).getSort());
+						resultParams.set(0, resultTerm);
 					}
 				}
 			} else {
 				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
 				if (nextAsRational == null) {
 					resultParams.add(inputParams[i]);
+				} else if (nextAsRational.numerator() == BigInteger.ONE) {
+					// do nothing
 				} else {
-					if (nextAsRational.numerator() == BigInteger.ONE) {
-						// do nothing
-					} else {
-						resultParams.add(inputParams[i]);
-					}
+					resultParams.add(inputParams[i]);
 				}
 			}
 		}
 		if (resultParams.size() == 1) {
 			return resultParams.get(0);
-		} else {
-			return script.term("div", resultParams.toArray(new Term[resultParams.size()]));
 		}
+		return script.term("div", resultParams.toArray(new Term[resultParams.size()]));
 	}
 
 	/**
@@ -1696,16 +1821,18 @@ public final class SmtUtils {
 	public static Term division(final Script script, final Sort sort, final Term... params) {
 		if (SmtSortUtils.isRealSort(sort)) {
 			return SmtUtils.divReal(script, params);
-		} else if (SmtSortUtils.isIntSort(sort)) {
+		}
+		if (SmtSortUtils.isIntSort(sort)) {
 			return SmtUtils.divInt(script, params);
-		} else if (SmtSortUtils.isBitvecSort(sort)) {
+		}
+		if (SmtSortUtils.isBitvecSort(sort)) {
 			throw new UnsupportedOperationException(
 					"Division with simplifications for bitvectors is not yet supported");
-		} else if (SmtSortUtils.isFloatingpointSort(sort)) {
-			throw new UnsupportedOperationException("Division with simplifications for floats is not yet supported");
-		} else {
-			throw new AssertionError("Division does not make sense for sort " + sort);
 		}
+		if (SmtSortUtils.isFloatingpointSort(sort)) {
+			throw new UnsupportedOperationException("Division with simplifications for floats is not yet supported");
+		}
+		throw new AssertionError("Division does not make sense for sort " + sort);
 	}
 
 	/**
@@ -1726,21 +1853,21 @@ public final class SmtUtils {
 			return script.term("mod", divident, divisor);
 		}
 		if (affineDivisor.isConstant()) {
-			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
+			// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
+			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant()).abs();
 			if (affineDivident.isConstant()) {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
-				final BigInteger modulus = AritmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
+				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return constructIntValue(script, modulus);
 			}
 			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
-			if (simplifiedNestedModulo == null) {
-				// no simplification was possible, continue
-			} else {
+			if (simplifiedNestedModulo != null) {
 				return simplifiedNestedModulo;
 			}
 			final AffineTerm moduloApplied =
 					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
-			return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
+			return script.term("mod", moduloApplied.toTerm(script),
+					affineDivisor.getConstant().abs().toTerm(affineDivisor.getSort()));
 		}
 		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
 	}
@@ -1764,7 +1891,8 @@ public final class SmtUtils {
 				final AffineTerm affineInnerDivisor =
 						(AffineTerm) new AffineTermTransformer(script).transform(innerDivident);
 				if (!affineInnerDivisor.isErrorTerm() && affineInnerDivisor.isConstant()) {
-					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant());
+					// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
+					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant()).abs();
 					if (bigIntInnerDivisor.mod(bigIntDivisor).equals(BigInteger.ZERO)
 							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
 						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
@@ -1777,16 +1905,19 @@ public final class SmtUtils {
 		return null;
 	}
 
-	public static BigDecimal toDecimal(final Rational rational) {
+	/**
+	 * @return A BigDecimal if this rational is representable as a finite BigDecimal, nothing otherwise.
+	 */
+	public static Optional<BigDecimal> toDecimal(final Rational rational) {
 		if (!rational.isRational()) {
-			throw new IllegalArgumentException("rational has to be finite");
+			return Optional.empty();
 		}
-		return new BigDecimal(rational.numerator()).divide(new BigDecimal(rational.denominator()));
+		return Optional.of(new BigDecimal(rational.numerator()).divide(new BigDecimal(rational.denominator())));
 	}
 
 	public static BigInteger toInt(final Rational integralRational) {
 		if (!integralRational.isIntegral()) {
-			throw new IllegalArgumentException("divident has to be integral");
+			throw new IllegalArgumentException("dividend has to be integral");
 		}
 		if (!integralRational.denominator().equals(BigInteger.ONE)) {
 			throw new IllegalArgumentException("denominator has to be zero");
@@ -1808,14 +1939,14 @@ public final class SmtUtils {
 	public static Term rational2Term(final Script script, final Rational rational, final Sort sort) {
 		if (SmtSortUtils.isNumericSort(sort)) {
 			return rational.toTerm(sort);
-		} else if (SmtSortUtils.isBitvecSort(sort)) {
-			if (rational.isIntegral() && rational.isRational()) {
-				return BitvectorUtils.constructTerm(script, rational.numerator(), sort);
-			}
-			throw new IllegalArgumentException("unable to convert rational to bitvector if not integer");
-		} else {
+		}
+		if (!SmtSortUtils.isBitvecSort(sort)) {
 			throw new AssertionError(ERROR_MSG_UNKNOWN_SORT + sort);
 		}
+		if (rational.isIntegral() && rational.isRational()) {
+			return BitvectorUtils.constructTerm(script, rational.numerator(), sort);
+		}
+		throw new IllegalArgumentException("unable to convert rational to bitvector if not integer");
 	}
 
 	/**
@@ -1833,7 +1964,7 @@ public final class SmtUtils {
 			}
 		} else if (SmtSortUtils.isNumericSort(term.getSort())) {
 			if (term instanceof ConstantTerm) {
-				result = SmtUtils.convertConstantTermToRational((ConstantTerm) term);
+				result = SmtUtils.toRational((ConstantTerm) term);
 			} else {
 				result = null;
 			}
@@ -1863,7 +1994,7 @@ public final class SmtUtils {
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
 			for (int i = 0; i < conjuncts.length; i++) {
-				final Term conjunct = new Substitution(script, substitutionMapping).transform(conjuncts[i]);
+				final Term conjunct = new PureSubstitution(script, substitutionMapping).transform(conjuncts[i]);
 				final String name = "conjunct" + i;
 				final Annotation annot = new Annotation(":named", name);
 				final Term annotTerm = script.annotate(conjunct, annot);
@@ -1903,21 +2034,24 @@ public final class SmtUtils {
 	 * @throws UnsupportedOperationException
 	 *             if ConstantTerm cannot converted to Rational
 	 */
-	public static Rational convertConstantTermToRational(final ConstantTerm constTerm) {
+	public static Rational toRational(final ConstantTerm constTerm) {
 		assert SmtSortUtils.isNumericSort(constTerm.getSort());
 		final Object value = constTerm.getValue();
 		if (SmtSortUtils.isIntSort(constTerm.getSort())) {
 			if (value instanceof BigInteger) {
 				return Rational.valueOf((BigInteger) value, BigInteger.ONE);
-			} else if (value instanceof Rational) {
+			}
+			if (value instanceof Rational) {
 				return (Rational) value;
 			}
 		} else if (SmtSortUtils.isRealSort(constTerm.getSort())) {
 			if (value instanceof BigDecimal) {
 				return toRational((BigDecimal) value);
-			} else if (value instanceof Rational) {
+			}
+			if (value instanceof Rational) {
 				return (Rational) value;
-			} else if (value instanceof BigInteger) {
+			}
+			if (value instanceof BigInteger) {
 				return toRational((BigInteger) value);
 			}
 		}
@@ -1943,15 +2077,6 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
-	 * quantified formula with same quantifier both are merged.
-	 */
-	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
-			final Term body) {
-		return quantifier(script, quantifier, new ArrayList<>(vars), body);
-	}
-
-	/**
 	 * Returns a quantified formula with the following two optimizations.
 	 * <ul>
 	 * <li>Nested quantified formulas that have the same quantifier are merged.
@@ -1960,7 +2085,7 @@ public final class SmtUtils {
 	 * The order of the quantified variables is preserved. If quantified formulas are merged, the variables of the outer
 	 * formula come before the variables of the inner formula.
 	 */
-	public static Term quantifier(final Script script, final int quantifier, final List<TermVariable> vars,
+	public static Term quantifier(final Script script, final int quantifier, final Collection<TermVariable> vars,
 			final Term subformula) {
 		final LinkedHashMap<String, TermVariable> varMap = new LinkedHashMap<>();
 		Term currentSubformula = subformula;
@@ -1978,11 +2103,9 @@ public final class SmtUtils {
 		}
 		if (varMap.isEmpty()) {
 			return subformula;
-		} else {
-			final TermVariable[] resultVars =
-					varMap.entrySet().stream().map(x -> x.getValue()).toArray(TermVariable[]::new);
-			return script.quantifier(quantifier, resultVars, currentSubformula);
 		}
+		final TermVariable[] resultVars = varMap.entrySet().stream().map(Entry::getValue).toArray(TermVariable[]::new);
+		return script.quantifier(quantifier, resultVars, currentSubformula);
 	}
 
 	/**
@@ -2035,7 +2158,7 @@ public final class SmtUtils {
 			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = new Substitution(mgdScript, substitutionMapping).transform(qFormula.getSubformula());
+		final Term newBody = Substitution.apply(mgdScript, substitutionMapping, qFormula.getSubformula());
 
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
 		for (int i = 0; i < vars.length; i++) {
@@ -2077,16 +2200,14 @@ public final class SmtUtils {
 	 * @return true iff term is a div from the theory of Ints
 	 */
 	public static boolean isIntDiv(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
-			if (fun.isIntern()) {
-				return ((ApplicationTerm) term).getFunction().getName().equals("div");
-			} else {
-				return false;
-			}
-		} else {
+		if (!(term instanceof ApplicationTerm)) {
 			return false;
 		}
+		final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+		if (fun.isIntern()) {
+			return ((ApplicationTerm) term).getFunction().getName().equals("div");
+		}
+		return false;
 	}
 
 	/**
@@ -2094,16 +2215,14 @@ public final class SmtUtils {
 	 * @return true iff term is a mod from the theory of Ints
 	 */
 	public static boolean isIntMod(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
-			if (fun.isIntern()) {
-				return ((ApplicationTerm) term).getFunction().getName().equals("mod");
-			} else {
-				return false;
-			}
-		} else {
+		if (!(term instanceof ApplicationTerm)) {
 			return false;
 		}
+		final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+		if (fun.isIntern()) {
+			return ((ApplicationTerm) term).getFunction().getName().equals("mod");
+		}
+		return false;
 	}
 
 	/**
@@ -2209,11 +2328,11 @@ public final class SmtUtils {
 	public static int getOtherQuantifier(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return QuantifiedFormula.FORALL;
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			return QuantifiedFormula.EXISTS;
-		} else {
-			throw new AssertionError("unknown quantifier");
 		}
+		if (quantifier == QuantifiedFormula.FORALL) {
+			return QuantifiedFormula.EXISTS;
+		}
+		throw new AssertionError("unknown quantifier");
 	}
 
 	/**
@@ -2222,11 +2341,11 @@ public final class SmtUtils {
 	public static String getCorrespondingFiniteConnective(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return "or";
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			return "and";
-		} else {
-			throw new AssertionError("unknown quantifier");
 		}
+		if (quantifier == QuantifiedFormula.FORALL) {
+			return "and";
+		}
+		throw new AssertionError("unknown quantifier");
 	}
 
 	/**
@@ -2243,13 +2362,14 @@ public final class SmtUtils {
 	public static Term constructIntegerValue(final Script script, final Sort sort, final BigInteger integer) {
 		if (SmtSortUtils.isIntSort(sort)) {
 			return SmtUtils.constructIntValue(script, integer);
-		} else if (SmtSortUtils.isRealSort(sort)) {
-			return script.decimal(new BigDecimal(integer));
-		} else if (SmtSortUtils.isBitvecSort(sort)) {
-			return BitvectorUtils.constructTerm(script, integer, sort);
-		} else {
-			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 		}
+		if (SmtSortUtils.isRealSort(sort)) {
+			return script.decimal(new BigDecimal(integer));
+		}
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return BitvectorUtils.constructTerm(script, integer, sort);
+		}
+		throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 	}
 
 	/**
@@ -2280,8 +2400,47 @@ public final class SmtUtils {
 	 *         was able to prove that both formulas are not equivalent, and LBool.UNKNOWN otherwise.
 	 */
 	public static LBool checkEquivalence(final Term formula1, final Term formula2, final Script script) {
-		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
+		final Term notEq = script.term("distinct", formula1, formula2);
 		return Util.checkSat(script, notEq);
+	}
+
+	/**
+	 * Returns true iff the boolean formulas formula1 and formula2 are equivalent under the given assumption w.r.t
+	 * script.
+	 */
+	public static LBool checkEquivalenceUnderAssumption(final Term formula1, final Term formula2, final Term assumption,
+			final Script script) {
+		final Term eq = binaryEquality(script, formula1, formula2);
+		final Term impl = implies(script, assumption, eq);
+		return Util.checkSat(script, not(script, impl));
+	}
+
+	public static void checkLogicalEquivalenceForDebugging(final Script script, final Term result, final Term input,
+			final Class<?> checkedClass, final boolean tolerateUnknown) {
+		script.echo(new QuotedObject(String.format("Start correctness check for %s.", checkedClass.getSimpleName())));
+		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
+		script.echo(new QuotedObject(
+				String.format("Finished correctness check for %s. Result: " + lbool, checkedClass.getSimpleName())));
+		final String errorMessage;
+		switch (lbool) {
+		case SAT:
+			errorMessage = String.format("%s: Not equivalent to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNKNOWN:
+			errorMessage = String.format(
+					"%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s",
+					checkedClass.getSimpleName(), result, input);
+			break;
+		case UNSAT:
+			errorMessage = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+		if (lbool == LBool.SAT || !tolerateUnknown && lbool == LBool.UNKNOWN) {
+			throw new AssertionError(errorMessage);
+		}
 	}
 
 	/**
@@ -2367,7 +2526,15 @@ public final class SmtUtils {
 	}
 
 	public static boolean isSubterm(final Term term, final Term subterm) {
-		return new SubtermPropertyChecker(x -> x.equals(subterm)).isPropertySatisfied(term);
+		return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedBySomeSubterm(term);
+	}
+
+	public static Rational toRational(final long val) {
+		return Rational.valueOf(val, 1L);
+	}
+
+	public static Rational toRational(final int val) {
+		return Rational.valueOf(val, 1L);
 	}
 
 	public static Rational toRational(final BigInteger bigInt) {
@@ -2387,14 +2554,71 @@ public final class SmtUtils {
 		return rat;
 	}
 
+	/**
+	 * Associative extension of {@link #gcd(Rational, Rational)}.
+	 */
+	public static Rational gcd(final Collection<Rational> rationals) {
+		if (rationals.isEmpty()) {
+			throw new IllegalArgumentException("Need at least one rational");
+		}
+		return rationals.stream().reduce(SmtUtils::gcd).orElseThrow();
+	}
+
+	/**
+	 * Compute the greatest common divisor of two rationals with
+	 *
+	 * gcd( (a/b), (c/d) ) = gcd(a*d,c*b) / b * d
+	 */
+	public static Rational gcd(final Rational r1, final Rational r2) {
+		final BigInteger numerator =
+				Rational.gcd(r1.numerator().multiply(r2.denominator()), r2.numerator().multiply(r1.denominator()));
+		final BigInteger denominator = r1.denominator().multiply(r2.denominator());
+		return Rational.valueOf(numerator, denominator);
+	}
+
+	public static String toString(final Rational r) {
+		final Optional<BigDecimal> dec = toDecimal(r);
+		return dec.isPresent() ? dec.get().toPlainString() : r.toString();
+	}
+
 	public static Set<FunctionSymbol> extractNonTheoryFunctionSymbols(final Term term) {
-		final Set<Term> appTerms = new SubTermFinder(x -> (x instanceof ApplicationTerm)).findMatchingSubterms(term);
+		final Set<Term> appTerms = SubTermFinder.find(term, x -> (x instanceof ApplicationTerm), false);
 		return appTerms.stream().map(x -> ((ApplicationTerm) x).getFunction()).filter(x -> !x.isIntern())
 				.collect(Collectors.toSet());
 	}
 
-	public static Set<Term> extractApplicationTerms(final String fun, final Term term) {
-		return new SubTermFinder(x -> isFunctionApplication(x, fun)).findMatchingSubterms(term);
+	/**
+	 *
+	 * @param onlyOutermost
+	 *            if set to true we do not descend to subterms of a term that has been found
+	 */
+	public static Set<Term> extractApplicationTerms(final String fun, final Term term, final boolean onlyOutermost) {
+		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
+	}
+
+	/**
+	 * Find all subterms of the given term that are constants (i.e.
+	 * {@link ApplicationTerm}s with zero parameters).
+	 *
+	 * @param restrictToNonTheoryConstants If set to true, we omit constants that
+	 *                                     are defined by the SMT that our solver is
+	 *                                     using. E.g. for the theory of floats, we
+	 *                                     omit roundTowardZero which is a constant
+	 *                                     that defines a certain rounding mode.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Set<ApplicationTerm> extractConstants(final Term term, final boolean restrictToNonTheoryConstants) {
+		final Predicate<Term> p;
+		if (restrictToNonTheoryConstants) {
+			p = (x -> SmtUtils.isConstant(x) && (x instanceof ApplicationTerm)
+					&& !((ApplicationTerm) x).getFunction().isIntern());
+		} else {
+			p = SmtUtils::isConstant;
+
+		}
+		// hack for casting a Set<Term> which contains only ApplicationTerms into a
+		// Set<ApplicationTerm>
+		return (Set) SubTermFinder.find(term, p, false);
 	}
 
 	public static Term unzipNot(final Term term) {
@@ -2412,7 +2636,7 @@ public final class SmtUtils {
 	 * convert them to strings. This function performs this conversion, until we can decide for each place which
 	 * handling is better.
 	 */
-	public static final Term oldAPITerm(final Script script, final String funName, final BigInteger[] indices,
+	public static Term oldAPITerm(final Script script, final String funName, final BigInteger[] indices,
 			final Sort returnSort, final Term[] params) {
 		return script.term(funName, toStringArray(indices), returnSort, params);
 	}
@@ -2476,7 +2700,6 @@ public final class SmtUtils {
 
 		public ExtendedSimplificationResult(final Term simplifiedTerm, final long simplificationTimeNano,
 				final long reductionOfTreeSize, final double reductionRatioPercent) {
-			super();
 			mSimplifiedTerm = simplifiedTerm;
 			mSimplificationTimeNano = simplificationTimeNano;
 			mReductionOfTreeSize = reductionOfTreeSize;
@@ -2499,6 +2722,11 @@ public final class SmtUtils {
 			return mReductionRatioInPercent;
 		}
 
+		public String buildSizeReductionMessage() {
+			return String.format("treesize reduction %d, result has %2.1f percent of original size",
+					getReductionOfTreeSize(), getReductionRatioInPercent());
+		}
+
 	}
 
 	/**
@@ -2509,11 +2737,22 @@ public final class SmtUtils {
 	// TODO #bvineq 20201017 Matthias:
 	// The name of this method might be misleading.
 	// </pre>
-
 	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
-		final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
+		if (number.equals(Rational.MONE)) {
+			return true;
+		}
+		final int vecSize = SmtSortUtils.getBitvectorLength(bvSort);
 		final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
 		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
 		return number.equals(rationalMinusOne);
 	}
+
+	public BigInteger computeSmallestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
+		return null;
+	}
+
+	public BigInteger computeLargestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
+		return null;
+	}
+
 }

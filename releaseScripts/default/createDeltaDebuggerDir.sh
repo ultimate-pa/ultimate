@@ -39,7 +39,7 @@ elif [ "$1" == "win32" ]; then
 	ARCHPATH="products/DeltaDebugger/win32/win32/x86_64"
 	Z3PATH="adds/z3.exe"
 	CVC4PATH="adds/cvc4.exe"
-	MATHSATPATH="adds/mathsat.exe adds/mpir.dll"
+	MATHSATPATH="adds/mathsat.exe adds/mpir.dll adds/mathsat.dll"
 else
     echo "Wrong argument: ""$1"" -- use 'linux' or 'win32'"		
 	exit 1

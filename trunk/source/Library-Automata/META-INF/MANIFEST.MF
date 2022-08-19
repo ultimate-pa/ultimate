@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Automata
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.automata
-Bundle-Version: 0.2.0
+Bundle-Version: 0.2.2
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
@@ -251,6 +251,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata,
    de.uni_freiburg.informatik.ultimate.core.model.models",
  de.uni_freiburg.informatik.ultimate.automata.partialorder,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction,
  de.uni_freiburg.informatik.ultimate.automata.petrinet;
   uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures,
    de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
@@ -298,7 +300,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance;uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,de.uni_freiburg.informatik.ultimate.automata.tree,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.tree.visualization;uses:="de.uni_freiburg.informatik.ultimate.automata.tree,de.uni_freiburg.informatik.ultimate.core.model.models,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.util;uses:="de.uni_freiburg.informatik.ultimate.util.datastructures.relation,de.uni_freiburg.informatik.ultimate.util.datastructures"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/petruchio/petruchio.jar,
                   src/de/uni_freiburg/informatik/ultimate/automata/nestedword/operations/optncsb/trove-3.0.3.jar,
  .

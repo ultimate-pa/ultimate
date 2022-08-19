@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.util;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Maps elements of an Iterable to the number of its occurrence. Visualizes this in a sorted array that lists the
@@ -54,7 +56,7 @@ public class HistogramOfIterable<E> {
 		mVisualizationArray = generateVisualizationArray(mHistogramMap);
 	}
 
-	private Integer[] generateVisualizationArray(final Map<E, Integer> histogramMap) {
+	public static <E> Integer[] generateVisualizationArray(final Map<E, Integer> histogramMap) {
 		final Integer[] result = histogramMap.values().toArray(new Integer[histogramMap.size()]);
 		Arrays.sort(result, Collections.reverseOrder());
 		return result;
@@ -73,17 +75,21 @@ public class HistogramOfIterable<E> {
 	 * @return return the highest occurrence, return 0 if there are no elements
 	 */
 	public int getMax() {
-		if (getVisualizationArray().length == 0) {
+		return getMaxOfVisualizationArray(Arrays.asList(getVisualizationArray()));
+	}
+
+	public static int getMaxOfVisualizationArray(final List<Integer> visualizationArray) {
+		if (visualizationArray.isEmpty()) {
 			return 0;
 		}
-		return getVisualizationArray()[0];
+		return visualizationArray.get(0);
 	}
 
 	public static <E> Map<E, Integer> generateHistogramMap(final Iterable<E> iterable) {
 		final Map<E, Integer> result = new HashMap<>();
 		for (final E e : iterable) {
 			if (result.containsKey(e)) {
-				result.put(e, Integer.valueOf(result.get(e).intValue() + 1));
+				result.put(e, result.get(e).intValue() + 1);
 			} else {
 				result.put(e, 1);
 			}
@@ -93,10 +99,7 @@ public class HistogramOfIterable<E> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mHistogramMap == null) ? 0 : mHistogramMap.hashCode());
-		return result;
+		return Objects.hash(mHistogramMap);
 	}
 
 	@Override
@@ -104,18 +107,11 @@ public class HistogramOfIterable<E> {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
 		final HistogramOfIterable<?> other = (HistogramOfIterable<?>) obj;
-		if (mHistogramMap == null) {
-			if (other.mHistogramMap != null) {
-				return false;
-			}
-		} else if (!mHistogramMap.equals(other.mHistogramMap)) {
+		if (!Objects.equals(mHistogramMap, other.mHistogramMap)) {
 			return false;
 		}
 		return true;

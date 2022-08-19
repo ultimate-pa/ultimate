@@ -41,9 +41,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -61,11 +62,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -86,7 +87,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 	public IcfgLoopTransformerMohr(final ILogger logger, final IUltimateServiceProvider services,
 			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier) {
 
 		// Notes:
@@ -239,14 +240,19 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			// xxx outvar occurs in several conjuncts" still persists. I have to check with Matthias if we can fix this.
 			// Until then, you can just ignore these errors.
 
-			final SimultaneousUpdate su = new SimultaneousUpdate(path, mManagedScript);
-			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
+			final SimultaneousUpdate su;
+			try {
+				su = SimultaneousUpdate.fromTransFormula(path, mManagedScript);
+			} catch (final SimultaneousUpdateException e) {
+				throw new IllegalArgumentException(e.getMessage());
+			}
+			final Map<IProgramVar, Term> varUpdates = su.getDeterministicAssignment();
 			final Set<IProgramVar> havocVars = su.getHavocedVars();
 			mLogger.debug("Updates: " + varUpdates + " havocs: " + havocVars);
 			if (!havocVars.isEmpty()) {
 				mOverApproximation.put(loop.getHead(), true);
 			}
-			pathGuards.add(TransFormulaUtils.computeGuard((UnmodifiableTransFormula) path, mManagedScript, mServices, mLogger));
+			pathGuards.add(TransFormulaUtils.computeGuard((UnmodifiableTransFormula) path, mManagedScript, mServices));
 
 			// calculate symbolic memory of the path
 			for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {
@@ -287,9 +293,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
 		final Set<TermVariable> aux = symbolicMemory.getKappas();
 		aux.addAll(symbolicMemory.getTaus());
-		final Term quantFreeFormula = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
-				loopSummary, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term quantFreeFormula = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, SimplificationTechnique.SIMPLIFY_DDA, loopSummary);
 		tfb.setFormula(quantFreeFormula);
 		tfb.addAuxVarsButRenameToFreshCopies(aux, mManagedScript);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);

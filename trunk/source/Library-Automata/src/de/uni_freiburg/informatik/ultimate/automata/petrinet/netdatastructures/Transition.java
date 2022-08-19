@@ -28,11 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * A Petri net transition.
@@ -44,13 +43,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
  * @param <PLACE>
  *            place content type
  */
-public class Transition<LETTER, PLACE> implements ITransition<LETTER, PLACE>, Serializable, Comparable<Transition<LETTER, PLACE>> {
+public class Transition<LETTER, PLACE>
+		implements ITransition<LETTER, PLACE>, Serializable, Comparable<Transition<LETTER, PLACE>> {
 	private static final long serialVersionUID = 5948089529814334197L;
 
 	private final int mHashCode;
 	private final LETTER mSymbol;
-	private final Set<PLACE> mPredecessors;
-	private final Set<PLACE> mSuccessors;
+	private final ImmutableSet<PLACE> mPredecessors;
+	private final ImmutableSet<PLACE> mSuccessors;
 
 	private final int mTotalOrderId;
 
@@ -66,11 +66,12 @@ public class Transition<LETTER, PLACE> implements ITransition<LETTER, PLACE>, Se
 	 * @param totalOrderId
 	 *            total order ID
 	 */
-	public Transition(final LETTER symbol, final Set<PLACE> predecessors,
-			final Set<PLACE> successors, final int totalOrderId) {
+	public Transition(final LETTER symbol, final ImmutableSet<PLACE> predecessors, final ImmutableSet<PLACE> successors,
+			final int totalOrderId) {
 		mSymbol = Objects.requireNonNull(symbol, "Transition must not be labeled with null");
-		mPredecessors = Collections.unmodifiableSet(predecessors);
-		mSuccessors = Collections.unmodifiableSet(successors);
+		;
+		mPredecessors = predecessors;
+		mSuccessors = successors;
 		mHashCode = computeHashCode();
 		mTotalOrderId = totalOrderId;
 	}
@@ -80,11 +81,11 @@ public class Transition<LETTER, PLACE> implements ITransition<LETTER, PLACE>, Se
 		return mSymbol;
 	}
 
-	public Set<PLACE> getPredecessors() {
+	public ImmutableSet<PLACE> getPredecessors() {
 		return mPredecessors;
 	}
 
-	public Set<PLACE> getSuccessors() {
+	public ImmutableSet<PLACE> getSuccessors() {
 		return mSuccessors;
 	}
 

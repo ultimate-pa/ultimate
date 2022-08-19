@@ -148,7 +148,14 @@ public class Check extends ModernAnnotations {
 		/**
 		 * Check if a petrified ICFG does provide enough thread instances.
 		 */
-		SUFFICIENT_THREAD_INSTANCES
+		SUFFICIENT_THREAD_INSTANCES,
+
+		DATA_RACE,
+
+		/***
+		 * Satisfiability of constraint Horn clauses
+		 */
+		CHC_SATISFIABILITY,
 
 	}
 
@@ -173,10 +180,10 @@ public class Check extends ModernAnnotations {
 	}
 
 	public Check(final Set<Spec> newSpec) {
-		this(newSpec, Check::getPositiveMessage, Check::getNegativeMessage);
+		this(newSpec, Check::getDefaultPositiveMessage, Check::getDefaultNegativeMessage);
 	}
 
-	protected Check(final Set<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
+	public Check(final Set<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
 			final Function<Spec, String> funNegativeMessageProvider) {
 		assert !newSpec.isEmpty();
 		mSpec = newSpec;
@@ -210,7 +217,7 @@ public class Check extends ModernAnnotations {
 		return sb.toString();
 	}
 
-	protected static String getPositiveMessage(final Spec spec) {
+	public static String getDefaultPositiveMessage(final Spec spec) {
 		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index is always in bounds";
@@ -237,7 +244,7 @@ public class Check extends ModernAnnotations {
 		case ILLEGAL_POINTER_ARITHMETIC:
 			return "pointer arithmetic is always legal";
 		case ERROR_FUNCTION:
-			return "call of __VERIFIER_error() unreachable";
+			return "call to the error function is unreachable";
 		case WITNESS_INVARIANT:
 			return "invariant of correctness witness holds";
 		case UNKNOWN:
@@ -253,15 +260,19 @@ public class Check extends ModernAnnotations {
 		case CONSISTENCY:
 			return "consistent";
 		case INCOMPLETE:
-			return "incomplete";
+			return "complete";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
+		case DATA_RACE:
+			return "there are no data races";
+		case CHC_SATISFIABILITY:
+			return "the set of constraint Horn clauses is satisfiable";
 		default:
 			return "a specification is correct but has no positive message: " + spec;
 		}
 	}
 
-	protected static String getNegativeMessage(final Spec spec) {
+	public static String getDefaultNegativeMessage(final Spec spec) {
 		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index can be out of bounds";
@@ -288,7 +299,7 @@ public class Check extends ModernAnnotations {
 		case ILLEGAL_POINTER_ARITHMETIC:
 			return "comparison of incompatible pointers";
 		case ERROR_FUNCTION:
-			return "a call of __VERIFIER_error() is reachable";
+			return "a call to the error function is reachable";
 		case WITNESS_INVARIANT:
 			return "invariant of correctness witness can be violated";
 		case UNKNOWN:
@@ -307,6 +318,10 @@ public class Check extends ModernAnnotations {
 			return "incomplete";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
+		case DATA_RACE:
+			return "the program contains a data race";
+		case CHC_SATISFIABILITY:
+			return "the set of constraint Horn clauses is unsatisfiable";
 		default:
 			return "a specification may be violated but has no negative message: " + spec;
 		}
@@ -341,6 +356,9 @@ public class Check extends ModernAnnotations {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
+	/**
+	 * Return the checked specification that is checked at this location or null.
+	 */
 	public static Check getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (Check) a);
 	}

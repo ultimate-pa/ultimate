@@ -32,24 +32,33 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CoinflipMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InsufficientError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.McrInterpolantMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 
 public final class TAPreferences {
 	private static final boolean SEPARATE_VIOLATION_CHECK = true;
@@ -65,13 +74,14 @@ public final class TAPreferences {
 	private final InterpolantAutomatonEnhancement mDeterminiation;
 	private final Minimization mMinimize;
 	private final boolean mHoare;
-	private final Concurrency mConcurrency;
+	private final Concurrency mAutomataTypeConcurrency;
 	private final HoareTripleChecks mHoareTripleChecks;
+	@Reflected(excluded = true)
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
 	private final boolean mDumpOnlyReuseAutomata;
 	private final int mLimitTraceHistogram;
-	private final int mLimitAnalysisTime;
+	private final int mErrorLocTimeLimit;
 	private final int mLimitPathProgramCount;
 	private final boolean mCollectInterpolantStatistics;
 	private final boolean mHeuristicEmptinessCheck;
@@ -83,6 +93,9 @@ public final class TAPreferences {
 	private final boolean mOverrideInterpolantAutomaton;
 	private final McrInterpolantMethod mMcrInterpolantMethod;
 
+	private final IndependenceSettings[] mPorIndependenceSettings;
+	private final IndependenceSettings mLbeIndependenceSettings;
+
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
 	}
@@ -93,7 +106,7 @@ public final class TAPreferences {
 	}
 
 	public enum Concurrency {
-		FINITE_AUTOMATA, PETRI_NET
+		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA
 	}
 
 	public enum LooperCheck {
@@ -138,10 +151,11 @@ public final class TAPreferences {
 
 		mMinimize = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE, Minimization.class);
 
-		mConcurrency = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
+		mAutomataTypeConcurrency =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
 
 		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
-		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
+		mErrorLocTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
 		mLimitPathProgramCount = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_PATH_PROGRAM);
 
 		mCollectInterpolantStatistics =
@@ -179,6 +193,14 @@ public final class TAPreferences {
 		mMcrInterpolantMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_INTERPOLANT_METHOD,
 				McrInterpolantMethod.class);
 
+		mPorIndependenceSettings = new IndependenceSettings[getNumberOfIndependenceRelations()];
+		mLbeIndependenceSettings = new IndependenceSettings(
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_PLBE, IndependenceType.class),
+				AbstractionType.NONE /* currently hard-coded; will be changed for repeated Petri net LBE */,
+				false /* currently hard-coded; will be changed for repeated Petri net LBE */,
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
+				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
+				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 	}
 
 	/**
@@ -188,8 +210,17 @@ public final class TAPreferences {
 		return mInterprocedural;
 	}
 
-	public boolean allErrorLocsAtOnce() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
+	public boolean stopAfterFirstViolation() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_STOP_AFTER_FIRST_VIOLATION);
+	}
+
+	public InsufficientError insufficientThreadErrorsVsProgramErrors() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
+				InsufficientError.class);
+	}
+
+	public boolean readInitialProof() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE);
 	}
 
 	public FloydHoareAutomataReuse getFloydHoareAutomataReuse() {
@@ -312,8 +343,8 @@ public final class TAPreferences {
 		return mMinimize;
 	}
 
-	public Concurrency getConcurrency() {
-		return mConcurrency;
+	public Concurrency getAutomataTypeConcurrency() {
+		return mAutomataTypeConcurrency;
 	}
 
 	public boolean computeHoareAnnotation() {
@@ -344,8 +375,90 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LOOPER_CHECK_PETRI, LooperCheck.class);
 	}
 
-	public PetriNetLbe useLbeInConcurrentAnalysis() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY, PetriNetLbe.class);
+	public boolean applyOneShotLbe() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PETRI_LBE_ONESHOT);
+	}
+
+	public boolean applyOneShotPOR() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_POR_ONESHOT);
+	}
+
+	public PartialOrderMode getPartialOrderMode() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_MODE, PartialOrderMode.class);
+	}
+
+	public boolean dumpIndependenceScript() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_INDEPENDENCE_SCRIPT);
+	}
+
+	public String independenceScriptDumpPath() {
+		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH);
+	}
+
+	public OrderType getDfsOrderType() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.class);
+	}
+
+	public long getDfsOrderSeed() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
+	}
+
+	public CoinflipMode useCoinflip() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE, CoinflipMode.class);
+	}
+
+	public double getCoinflipProbability(final int iteration) {
+		final double prob = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_PROB) / 100.0D;
+		final CoinflipMode mode =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE, CoinflipMode.class);
+		switch (mode) {
+		case OFF:
+			return 0;
+		case FALLBACK:
+		case PURE:
+			return prob;
+		default:
+			throw new IllegalStateException();
+		}
+	}
+
+	public int coinflipSeed() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_SEED);
+	}
+
+	public int getNumberOfIndependenceRelations() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_NUM_INDEPENDENCE);
+	}
+
+	public IndependenceSettings porIndependenceSettings(final int index) {
+		if (index < 0 || index >= getNumberOfIndependenceRelations()) {
+			throw new IllegalArgumentException(
+					"Index out of range: " + index + " not between 0 and " + getNumberOfIndependenceRelations());
+		}
+		if (mPorIndependenceSettings[index] == null) {
+			mPorIndependenceSettings[index] = new IndependenceSettings(
+					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_POR, index),
+							IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, IndependenceType.class),
+					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_POR_ABSTRACTION, index),
+							IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, AbstractionType.class),
+					mPrefs.getBoolean(getLabel(TraceAbstractionPreferenceInitializer.LABEL_COND_POR, index),
+							IndependenceSettings.DEFAULT_USE_CONDITIONAL),
+					mPrefs.getBoolean(getLabel(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_POR, index),
+							IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY),
+					mPrefs.getEnum(getLabel(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_POR, index),
+							IndependenceSettings.DEFAULT_SOLVER, ExternalSolver.class),
+					mPrefs.getLong(getLabel(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR,
+							index), IndependenceSettings.DEFAULT_SOLVER_TIMEOUT));
+		}
+		return mPorIndependenceSettings[index];
+	}
+
+	private static String getLabel(final String label, final int index) {
+		return TraceAbstractionPreferenceInitializer.getSuffixedLabel(label, index);
+	}
+
+	public IndependenceSettings lbeIndependenceSettings() {
+		return mLbeIndependenceSettings;
 	}
 
 	public SimplificationTechnique getSimplificationTechnique() {
@@ -372,6 +485,11 @@ public final class TAPreferences {
 				RefinementStrategy.class);
 	}
 
+	public RefinementStrategy getAcceleratedInterpolationRefinementStrategy() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ACIP_REFINEMENT_STRATEGY,
+				RefinementStrategy.class);
+	}
+
 	public RefinementStrategyExceptionBlacklist getRefinementStrategyExceptionSpecification() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 				RefinementStrategyExceptionBlacklist.class);
@@ -385,16 +503,21 @@ public final class TAPreferences {
 		return mLimitTraceHistogram;
 	}
 
-	public boolean hasLimitAnalysisTime() {
-		return mLimitAnalysisTime > 0;
+	public boolean hasErrorLocTimeLimit() {
+		return mErrorLocTimeLimit > 0;
+	}
+
+	public LoopAccelerators getLoopAccelerationTechnique() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE,
+				LoopAccelerators.class);
 	}
 
 	/**
 	 * @return A positive integer that specifies a time limit in seconds for the analysis of an error location or zero
 	 *         if no limit is set.
 	 */
-	public int getLimitAnalysisTime() {
-		return mLimitAnalysisTime;
+	public int getErrorLocTimeLimit() {
+		return mErrorLocTimeLimit;
 	}
 
 	public boolean hasLimitPathProgramCount() {
@@ -440,4 +563,5 @@ public final class TAPreferences {
 	public McrInterpolantMethod getMcrInterpolantMethod() {
 		return mMcrInterpolantMethod;
 	}
+
 }

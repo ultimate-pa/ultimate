@@ -4,6 +4,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,9 +35,9 @@ public class BoogieRequirementsParserTestAllPatterns {
 
 	@Test
 	public void testPatternParse() throws Exception {
-		final PatternType[] parsedPatterns = genPatterns(mActualTest.mTestString);
+		final PatternType<?>[] parsedPatterns = genPatterns(mActualTest.mTestString);
 		Assert.assertNotNull("Pattern is null", parsedPatterns);
-		Assert.assertThat("Is not only one pattern", parsedPatterns.length, Is.is(1));
+		MatcherAssert.assertThat("Is not only one pattern", parsedPatterns.length, Is.is(1));
 		Assert.assertNotNull("Failed parsing: " + mActualTest.mTestString, parsedPatterns[0]);
 		Assert.assertTrue("Fail recognize: " + mActualTest.mScopeClazz.toString() + "[" + mActualTest.mScopeClazz
 				+ "]:\n" + mActualTest.mTestString, parsedPatterns[0].getScope().getClass() == mActualTest.mScopeClazz);
@@ -53,13 +54,13 @@ public class BoogieRequirementsParserTestAllPatterns {
 	 * @return
 	 * @throws Exception
 	 */
-	private PatternType[] genPatterns(final String testInput) throws Exception {
+	private PatternType<?>[] genPatterns(final String testInput) throws Exception {
 		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 		final StringReader sr = new StringReader(testInput);
-		final ReqParser parser = new ReqParser(services, services.getLoggingService().getLogger(getClass()), sr, "");
+		final ReqParser parser = new ReqParser(services.getLoggingService().getLogger(getClass()), sr, "");
 
 		final Symbol goal = parser.parse();
-		final PatternType[] patterns = (PatternType[]) goal.value;
+		final PatternType<?>[] patterns = (PatternType<?>[]) goal.value;
 
 		return patterns;
 	}
@@ -87,10 +88,10 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds for at least 2000 time units",
 				"it is always the case that after \"y >= 5\" holds for at least 2000 time units, then \"y <= 5\" holds",
 				"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well" };
-		final String[] patternNames = new String[] { "BndInvariancePattern", "InstAbsPattern", "UniversalityPattern",
-				"BndExistencePattern", "PrecedencePattern", "MinDurationPattern", "MaxDurationPattern",
-				"BndRecurrencePattern", "BndResponsePatternUT", "BndInvariancePattern", "BndEntryConditionPattern",
-				"InvariantPattern" };
+		final String[] patternNames = new String[] { "InvarianceBoundL2Pattern", "AbsencePattern", "UniversalityPattern",
+				"ExistenceBoundUPattern", "PrecedencePattern", "DurationBoundLPattern", "DurationBoundUPattern",
+				"ReccurrenceBoundLPattern", "ResponseDelayPattern", "InvarianceBoundL2Pattern", "BndEntryConditionPattern",
+				"InvariancePattern" };
 
 		for (int i = 0; i < scope.length; i++) {
 			for (int j = 0; j < pattern.length; j++) {

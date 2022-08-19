@@ -33,9 +33,27 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 
 /**
+ * Represents a string literal according to 6.4.5 of C11.
+ *
+ * <br />
+ *
+ * TODO 20211106 Matthias: Our handling of wchar_t, char16_t and char32_t is
+ * probably incorrect (especially the mNumericalValues and mByteValues) the aim
+ * of the current implementation is to umsoundly handle all multibyte characters
+ * as chars.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class CStringLiteral {
+
+	public enum CharacterType {
+		CHAR, WCHAR_T, CHAR16_T, CHAR32_T
+	};
+
+	/**
+	 * Type of this string's characters.
+	 */
+	private final CharacterType mCharacterType;
 
 	/**
 	 * Input string from the source character set (characters that can occur in strings of source file, e.g., no line
@@ -62,7 +80,25 @@ public class CStringLiteral {
 	private final Signedness mSignednessOfChar;
 
 	public CStringLiteral(final char[] quotedSourceCodeStringLiteral, final Signedness signednessOfChar) {
-		mSourceCharacterString = stripQuotes(new String(quotedSourceCodeStringLiteral));
+		if (quotedSourceCodeStringLiteral.length == 0) {
+			throw new AssertionError("No string literal");
+		}
+		if (quotedSourceCodeStringLiteral[0] == 'L') {
+			mCharacterType = CharacterType.WCHAR_T;
+			mSourceCharacterString = stripQuotes(quotedSourceCodeStringLiteral, 1);
+		} else if (quotedSourceCodeStringLiteral[0] == 'u') {
+			if (quotedSourceCodeStringLiteral[1] == '8') {
+				throw new UnsupportedOperationException("utf8 string");
+			}
+			mCharacterType = CharacterType.CHAR16_T;
+			mSourceCharacterString = stripQuotes(quotedSourceCodeStringLiteral, 1);
+		} else if (quotedSourceCodeStringLiteral[0] == 'U') {
+			mCharacterType = CharacterType.CHAR32_T;
+			mSourceCharacterString = stripQuotes(quotedSourceCodeStringLiteral, 1);
+		} else {
+			mCharacterType = CharacterType.CHAR;
+			mSourceCharacterString = stripQuotes(quotedSourceCodeStringLiteral, 0);
+		}
 		mSignednessOfChar = signednessOfChar;
 		mNumericalValues = ISOIEC9899TC3.parseCharacterSequence(mSourceCharacterString);
 		// string literals are "nullterminated" i.e., suffixed by 0
@@ -70,16 +106,13 @@ public class CStringLiteral {
 		mByteValues = ISOIEC9899TC3.convertCharacterSequenceToByteSequence(mNumericalValues, mSignednessOfChar);
 	}
 
-	private String stripQuotes(final String quotedSourceCodeStringLiteral) {
-		String result;
-		if (quotedSourceCodeStringLiteral.length() >= 2 && quotedSourceCodeStringLiteral.charAt(0) == '\"'
-				&& quotedSourceCodeStringLiteral.charAt(quotedSourceCodeStringLiteral.length() - 1) == '\"') {
-			result = quotedSourceCodeStringLiteral.substring(1, quotedSourceCodeStringLiteral.length() - 1);
+	private String stripQuotes(final char[] chars, final int offset) {
+		if (chars[offset] == '\"' && chars[chars.length-1] == '\"') {
+			return new String(chars, offset+1, chars.length-2-offset);
 		} else {
 			throw new UnsupportedOperationException(
-					"unsupported representation of string literal " + quotedSourceCodeStringLiteral);
+					"unsupported representation of string literal " + chars);
 		}
-		return result;
 	}
 
 	public List<BigInteger> getByteValues() {

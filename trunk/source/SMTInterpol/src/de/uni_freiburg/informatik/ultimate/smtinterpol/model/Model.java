@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.FunctionValue.Index;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.DataTypeTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprTheorySettings;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
@@ -108,6 +109,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 				if (!EprTheorySettings.FullInstatiationMode) {
 					throw new UnsupportedOperationException("Modelproduction for EPR theory not implemented.");
 				}
+			} else if (theorySolver instanceof DataTypeTheory) {
+				// handled by CC theory
 			} else {
 				throw new InternalError("Unknown theory: " + theorySolver);
 			}

@@ -1,5 +1,6 @@
 #Mon Nov 27 17:23:30 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ class=de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher\=ERROR;
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.1.22
 
@@ -35,7 +36,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_DefaultMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Logic\ for\ external\ solver=ALL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=./dump/
 
 
 #Thu Nov 06 16:26:23 CET 2014
@@ -47,7 +47,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Logic\ for\ external\ solver=AUFBV
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=cvc4 --incremental --rewrite-divk --print-success --lang smt 
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=cvc4 --incremental --print-success --lang smt 
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstract\ interpretation\ Mode=NONE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=WALRUS
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=NONE
@@ -80,5 +80,5 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.1.9
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list\ type=DISABLED
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ calls\ to\ implemented\ procedures=ONLY_FOR_CONCURRENT_PROGRAMS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
 

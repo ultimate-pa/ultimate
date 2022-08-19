@@ -20,12 +20,9 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashSet;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
 
 /**
@@ -105,12 +102,12 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public FunctionSymbol getFunctionSymbol(String constructor) {
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
 		return mTheory.getFunctionSymbol(constructor);
 	}
 
 	@Override
-	public DataType.Constructor constructor(String name, String[] selectors, Sort[] argumentSorts) {
+	public DataType.Constructor constructor(final String name, final String[] selectors, final Sort[] argumentSorts) {
 		if (name == null) {
 			throw new SMTLIBException(
 					"Invalid input to declare a datatype");
@@ -120,7 +117,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public DataType datatype(String typename, int numParams) {
+	public DataType datatype(final String typename, final int numParams) {
 		if (typename == null) {
 			throw new SMTLIBException(
 					"Invalid input to declare a datatype");
@@ -130,45 +127,12 @@ public class NoopScript implements Script {
 	}
 
 	/**
-	 * Check if a constructor of a datatype needs to be declared with RETURNOVERLOAD. This is the case if its arguments
-	 * do not contain all sort parameters.
-	 *
-	 * @param sortParams
-	 *            The sort parameters of the datatype.
-	 * @param argumentSorts
-	 *            The arguments of the constructor.
-	 * @return 0 or RETURNOVERLOAD, depending on if the flag is needed.
-	 */
-	private int checkReturnOverload(Sort[] sortParams, Sort[] argumentSorts) {
-		final BitSet unused = new BitSet();
-		unused.set(0, sortParams.length);
-		final ArrayDeque<Sort> todo = new ArrayDeque<>();
-		final HashSet<Sort> seen = new HashSet<>();
-		todo.addAll(Arrays.asList(argumentSorts));
-		while (!todo.isEmpty()) {
-			final Sort sort = todo.removeFirst();
-			if (seen.add(sort)) {
-				if (sort.isParametric()) {
-					for (int i = 0; i < sortParams.length; i++) {
-						if (sort == sortParams[i]) {
-							unused.clear(i);
-							break;
-						}
-					}
-				} else {
-					todo.addAll(Arrays.asList(sort.getArguments()));
-				}
-			}
-		}
-		return unused.isEmpty() ? 0 : FunctionSymbol.RETURNOVERLOAD;
-	}
-	/**
 	 * Declare internal functions for the constructors and selectors of the datatype.
 	 * @param datatype The datatype.
 	 * @param constrs The constructors.
 	 * @throws SMTLIBException
 	 */
-	private void declareConstructorFunctions(DataType datatype, DataType.Constructor[] constrs, Sort[] sortParams) {
+	private void declareConstructorFunctions(final DataType datatype, final DataType.Constructor[] constrs, final Sort[] sortParams) {
 		final String[] indices = null;
 		Sort datatypeSort;
 		if (sortParams == null) {
@@ -184,39 +148,41 @@ public class NoopScript implements Script {
 		}
 		final Sort[] selectorParamSorts = new Sort[] { datatypeSort };
 
-		for (int i = 0; i < constrs.length; i++) {
+		for (final Constructor cons : constrs) {
 
-			final String constrName = constrs[i].getName();
-			final String[] selectors = constrs[i].getSelectors();
-			final Sort[] argumentSorts = constrs[i].getArgumentSorts();
+			final String constrName = cons.getName();
+			final String[] selectors = cons.getSelectors();
+			final Sort[] argumentSorts = cons.getArgumentSorts();
 
 			if (sortParams == null) {
 				getTheory().declareInternalFunction(constrName, argumentSorts, datatypeSort, FunctionSymbol.CONSTRUCTOR);
 
 				for (int j = 0; j < selectors.length; j++) {
-					getTheory().declareInternalFunction(selectors[j], selectorParamSorts, argumentSorts[j], 0);
+					getTheory().declareInternalFunction(selectors[j], selectorParamSorts, argumentSorts[j], FunctionSymbol.SELECTOR);
 				}
 			} else {
+				final int constrFlags = FunctionSymbol.CONSTRUCTOR
+						+ (cons.needsReturnOverload() ? FunctionSymbol.RETURNOVERLOAD : 0);
 				getTheory().declareInternalPolymorphicFunction(constrName, sortParams, argumentSorts,
-						datatypeSort, checkReturnOverload(sortParams, argumentSorts)+ FunctionSymbol.CONSTRUCTOR);
+						datatypeSort, constrFlags);
 
 				for (int j = 0; j < selectors.length; j++) {
 					getTheory().declareInternalPolymorphicFunction(selectors[j], sortParams, selectorParamSorts,
-							argumentSorts[j], 0);
+							argumentSorts[j], FunctionSymbol.SELECTOR);
 				}
 			}
 		}
 	}
 
 	@Override
-	public void declareDatatype(DataType datatype, DataType.Constructor[] constrs) {
+	public void declareDatatype(final DataType datatype, final DataType.Constructor[] constrs) {
 		assert datatype.mNumParams == 0;
 		datatype.setConstructors(new Sort[0], constrs);
 		declareConstructorFunctions(datatype, constrs, null);
 	}
 
 	@Override
-	public void declareDatatypes(DataType[] datatypes, DataType.Constructor[][] constrs, Sort[][] sortParams) {
+	public void declareDatatypes(final DataType[] datatypes, final DataType.Constructor[][] constrs, final Sort[][] sortParams) {
 		for (int i = 0; i < datatypes.length; i++) {
 			datatypes[i].setConstructors(sortParams[i], constrs[i]);
 			declareConstructorFunctions(datatypes[i], constrs[i], sortParams[i]);
@@ -393,7 +359,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree, Term proofTree)
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
 			throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
@@ -432,59 +398,7 @@ public class NoopScript implements Script {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
-
-		// Special case for normalizing rationals: we want to use ConstantValue with Rational, for things
-		// like (/ 1.0 2.0), to avoid the overhead of parsing them again. To avoid two terms that look identical but are
-		// not equal, we don't create an ApplicationTerm when parsing rational constants.
-		if (funcname.equals("/") && indices == null && returnSort == null && params.length == 2
-				&& params[0] instanceof ConstantTerm && params[1] instanceof ConstantTerm
-				&& params[0].getSort() == mTheory.getRealSort() && params[1].getSort() == mTheory.getRealSort()) {
-			final ConstantTerm numTerm = (ConstantTerm) params[0];
-			final ConstantTerm denomTerm = (ConstantTerm) params[1];
-			if (numTerm.getValue() instanceof Rational && denomTerm.getValue() instanceof Rational) {
-				final Rational num = (Rational) numTerm.getValue();
-				final Rational denom = (Rational) denomTerm.getValue();
-				// make sure that num and denom have the right form such that the created rational term would be
-				// completely identical
-				if (num.isIntegral() && denom.isIntegral() && denom.signum() > 0 && !denom.equals(Rational.ONE)
-						&& num.gcd(denom).equals(Rational.ONE)) {
-					final Rational value = Rational.valueOf(num.numerator(), denom.numerator());
-					return mTheory.constant(value, mTheory.getRealSort());
-				}
-			}
-		}
-		if (funcname.equals("-") && indices == null && returnSort == null && params.length == 1
-				&& params[0] instanceof ConstantTerm
-				&& (params[0].getSort() == mTheory.getNumericSort() || params[0].getSort() == mTheory.getRealSort())) {
-			final ConstantTerm numTerm = (ConstantTerm) params[0];
-			if (numTerm.getValue() instanceof Rational) {
-				final Rational num = (Rational) numTerm.getValue();
-				// make sure that num has the right form. In particular we only allow negating integrals, as the
-				// normal form of -.5 is (/ (- 1.0) 2.0).
-				if (num.isIntegral() && num.signum() > 0) {
-					return mTheory.constant(num.negate(), numTerm.getSort());
-				}
-			}
-		}
-
-		// Not a rational term to normalize
-		final Sort[] sorts = params.length == 0 ? Script.EMPTY_SORT_ARRAY : new Sort[params.length];
-		for (int i = 0; i < sorts.length; i++) {
-			sorts[i] = params[i].getSort();
-		}
-		final FunctionSymbol fsym = mTheory.getFunctionWithResult(funcname, indices, returnSort, sorts);
-		if (fsym == null) {
-			final StringBuilder sb = new StringBuilder();
-			final PrintTerm pt = new PrintTerm();
-			sb.append("Undeclared function symbol (").append(funcname);
-			for (final Sort s: sorts) {
-				sb.append(' ');
-				pt.append(sb, s);
-			}
-			sb.append(')');
-			throw new SMTLIBException(sb.toString());
-		}
-		return mTheory.term(fsym, params);
+		return mTheory.term(funcname, indices, returnSort, params);
 	}
 
 	@Override

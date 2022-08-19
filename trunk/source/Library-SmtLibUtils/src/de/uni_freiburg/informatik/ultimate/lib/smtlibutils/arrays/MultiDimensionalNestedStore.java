@@ -129,7 +129,7 @@ public class MultiDimensionalNestedStore {
 		assert mArray == mds.getArray();
 		return mds;
 	}
-	
+
 	public MultiDimensionalStore getInnermost() {
 		MultiDimensionalStore mds = MultiDimensionalStore.convert(mTerm);
 		while (mds.getArray() != mArray) {
@@ -174,6 +174,10 @@ public class MultiDimensionalNestedStore {
 			Term innerArray = result.getArray();
 			MultiDimensionalNestedStore innerArrayMds = convert1mdseq(script, innerArray);
 			while (innerArrayMds != null) {
+				if (innerArrayMds.getDimension() != result.getDimension()) {
+					// incompatible dimensions, cannot concatenate both sequences
+					return result;
+				}
 				innerArray = innerArrayMds.getArray();
 				result = result.addInnerSequence(script, innerArrayMds);
 				innerArrayMds = convert1mdseq(script, innerArray);

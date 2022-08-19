@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: BoogiePrinter Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.req.printer;singleton:=true
-Bundle-Version: 0.2.0
+Bundle-Version: 0.2.2
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.pea2boogie,
@@ -10,5 +10,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.srparse
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.req.printer
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.req.printer

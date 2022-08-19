@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -35,22 +34,22 @@ public class SpInterpolantProvider<LETTER extends IIcfgTransition<?>> extends Sp
 	protected <STATE> Term calculateTerm(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE state,
 			final Map<STATE, IPredicate> stateMap) {
 		final List<Term> disjuncts = new ArrayList<>();
-		for (final IncomingInternalTransition<LETTER, STATE> edge : automaton.internalPredecessors(state)) {
+		for (final var edge : automaton.internalPredecessors(state)) {
 			final IPredicate pred = stateMap.get(edge.getPred());
 			if (pred != null) {
 				disjuncts.add(mPredicateTransformer.strongestPostcondition(pred, edge.getLetter().getTransformula()));
 			}
 		}
-		return disjuncts.isEmpty() ? null : SmtUtils.or(mScript, disjuncts);
-	}
-
-	@Override
-	protected int getQuantifier() {
-		return QuantifiedFormula.EXISTS;
+		return SmtUtils.or(mScript, disjuncts);
 	}
 
 	@Override
 	protected boolean useReversedOrder() {
 		return false;
+	}
+
+	@Override
+	protected int getQuantifier() {
+		return QuantifiedFormula.EXISTS;
 	}
 }

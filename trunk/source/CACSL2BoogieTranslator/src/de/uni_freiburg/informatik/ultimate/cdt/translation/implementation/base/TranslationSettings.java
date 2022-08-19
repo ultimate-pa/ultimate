@@ -68,13 +68,14 @@ public final class TranslationSettings {
 	private final MemoryModel mMemoryModelPreference;
 	private final boolean mFpToIeeeBvExtension;
 	private final boolean mSmtBoolArraysWorkaround;
-	private final String mCheckedMethod;
+	private final String mEntryMethod;
 	private final TranslationMode mTranslationMode;
 	private final boolean mCheckSvcompErrorFunction;
 	private final boolean mIsSvcompMemtrackCompatibilityMode;
 	private final boolean mCheckAllocationPurity;
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mCheckSignedIntegerBounds;
+	private final boolean mCheckDataRaces;
 	private final boolean mUseConstantArrays;
 	private final boolean mUseStoreChains;
 	private final boolean mEnableFesetround;
@@ -83,13 +84,14 @@ public final class TranslationSettings {
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
+		mCheckDataRaces = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_DATA_RACES);
 		mIsSvcompMemtrackCompatibilityMode =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE);
 		mCheckAllocationPurity = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY);
 		mCheckMemoryLeakInMain = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN);
 
 		mCheckSvcompErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
-		mCheckedMethod = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
+		mEntryMethod = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
 		mTranslationMode = ups.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mCheckIfFreedPointerIsValid = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
@@ -142,8 +144,9 @@ public final class TranslationSettings {
 			final boolean smtBoolArraysWorkaround, final String checkedMethod, final TranslationMode translationMode,
 			final boolean checkSvcompErrorFunction, final boolean isSvcompMemtrackCompatibilityMode,
 			final boolean checkAllocationPurity, final boolean checkMemoryLeakInMain,
-			final boolean checkSignedIntegerBounds, final boolean useConstantArrays, final boolean useStoreChains,
-			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
+			final boolean checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
+			final boolean useStoreChains, final boolean enableFesetround,
+			final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryModelResolutionOnPointerCasts) {
 		super();
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
@@ -162,13 +165,14 @@ public final class TranslationSettings {
 		mMemoryModelPreference = memoryModelPreference;
 		mFpToIeeeBvExtension = fpToIeeeBvExtension;
 		mSmtBoolArraysWorkaround = smtBoolArraysWorkaround;
-		mCheckedMethod = checkedMethod;
+		mEntryMethod = checkedMethod;
 		mTranslationMode = translationMode;
 		mCheckSvcompErrorFunction = checkSvcompErrorFunction;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
 		mCheckAllocationPurity = checkAllocationPurity;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
 		mCheckSignedIntegerBounds = checkSignedIntegerBounds;
+		mCheckDataRaces = checkDataRaces;
 		mUseConstantArrays = useConstantArrays;
 		mUseStoreChains = useStoreChains;
 		mEnableFesetround = enableFesetround;
@@ -201,12 +205,6 @@ public final class TranslationSettings {
 	}
 
 	public CPrimitive getCTypeOfPointerComponents() {
-		if (mBitvectorTranslation) {
-			// 2015-10-29 Matthias: using int is unsound on 64bit systems, but it
-			// probably saves a lot of conversions and I guess this unsoundness
-			// is never a problem in the SV-COMP and most other code
-			return new CPrimitive(CPrimitives.INT);
-		}
 		return new CPrimitive(CPrimitives.LONG);
 	}
 
@@ -254,8 +252,8 @@ public final class TranslationSettings {
 		return mSmtBoolArraysWorkaround;
 	}
 
-	public String getCheckedMethod() {
-		return mCheckedMethod;
+	public String getEntryMethod() {
+		return mEntryMethod;
 	}
 
 	public boolean isSvcompMode() {
@@ -289,6 +287,10 @@ public final class TranslationSettings {
 		return mCheckSignedIntegerBounds;
 	}
 
+	public boolean checkDataRaces() {
+		return mCheckDataRaces;
+	}
+
 	public boolean useConstantArrays() {
 		return mUseConstantArrays;
 	}
@@ -319,10 +321,10 @@ public final class TranslationSettings {
 				mCheckArrayAccessOffHeap, mUnsignedTreatment, mInRange, mPointerIntegerConversion,
 				mCheckIfFreedPointerIsValid, mPointerBaseValidity, mPointerTargetFullyAllocated,
 				mCheckPointerSubtractionAndComparisonValidity, memoryModel, mFpToIeeeBvExtension,
-				mSmtBoolArraysWorkaround, mCheckedMethod, mTranslationMode, mCheckSvcompErrorFunction,
+				mSmtBoolArraysWorkaround, mEntryMethod, mTranslationMode, mCheckSvcompErrorFunction,
 				mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
-				mCheckSignedIntegerBounds, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
-				mAdaptMemoryModelResolutionOnPointerCasts);
+				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
+				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts);
 	}
 
 	/**

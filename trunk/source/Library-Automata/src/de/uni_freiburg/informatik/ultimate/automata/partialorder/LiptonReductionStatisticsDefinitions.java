@@ -71,8 +71,7 @@ public enum LiptonReductionStatisticsDefinitions implements IStatisticsElement {
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
 
-	private LiptonReductionStatisticsDefinitions(final Class<?> clazz,
-			final Function<Object, Function<Object, Object>> aggr,
+	LiptonReductionStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
 		mClazz = clazz;
 		mAggr = aggr;
@@ -87,10 +86,5 @@ public enum LiptonReductionStatisticsDefinitions implements IStatisticsElement {
 	@Override
 	public String prettyprint(final Object o) {
 		return mPrettyprinter.apply(name()).apply(o);
-	}
-
-	@Override
-	public Class<?> getDataType() {
-		return mClazz;
 	}
 }

@@ -28,12 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 /**
  * Creates {@link IInterpolatingTraceCheck} using {@link Pdr}.
@@ -51,11 +53,13 @@ public class IpTcStrategyModulePdr<L extends IIcfgTransition<?>>
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final Class<L> mTransitionClazz;
+	private final IUltimateServiceProvider mServices;
 
-	public IpTcStrategyModulePdr(final ILogger logger, final IPredicate precondition, final IPredicate postcondition,
-			final IRun<L, ?> counterexample, final IPredicateUnifier predicateUnifier,
-			final TaCheckAndRefinementPreferences<L> prefs, final Class<L> transitionClazz) {
-		super();
+	public IpTcStrategyModulePdr(final IUltimateServiceProvider services, final ILogger logger,
+			final IPredicate precondition, final IPredicate postcondition, final IRun<L, ?> counterexample,
+			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<L> prefs,
+			final Class<L> transitionClazz) {
+		mServices = services;
 		mCounterExample = counterexample;
 		mPredicateUnifier = predicateUnifier;
 		mLogger = logger;
@@ -67,7 +71,7 @@ public class IpTcStrategyModulePdr<L extends IIcfgTransition<?>>
 
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
-		return new Pdr<>(mLogger, mPrefs, mPredicateUnifier, mPrecondition, mPostcondition,
+		return new Pdr<>(mServices, mLogger, mPrefs, mPredicateUnifier, mPrecondition, mPostcondition,
 				mCounterExample.getWord().asList(), mTransitionClazz);
 	}
 

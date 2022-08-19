@@ -31,23 +31,25 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class MammothRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class MammothRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public MammothRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public MammothRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_TreeInterpolation),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+				new IIpTcStrategyModule[] {
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
+								InterpolationTechnique.Craig_TreeInterpolation),
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP) },
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

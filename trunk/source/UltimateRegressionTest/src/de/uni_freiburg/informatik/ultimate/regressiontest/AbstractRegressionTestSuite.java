@@ -92,7 +92,6 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected String[] mFiletypesToConsider;
 
 	public AbstractRegressionTestSuite() {
-		super();
 		mTimeout = 1000;
 		mExcludeFilterRegexToolchain = "";
 		mExcludeFilterRegexInput = "";
@@ -107,9 +106,9 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		final List<UltimateTestCase> rtr = new ArrayList<>();
 
-		final Collection<Pair> runConfigurations = getRunConfiguration();
+		final Collection<Config> runConfigurations = getRunConfiguration();
 		final Predicate<File> filesRegexFilter = getFilesRegexFilter();
-		for (final Pair runConfiguration : runConfigurations) {
+		for (final Config runConfiguration : runConfigurations) {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
 
 			for (final File inputFile : inputFiles) {
@@ -127,10 +126,10 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 *
 	 * @param regexFilter
 	 *
-	 * @return A collection of {@link Pair}s of files. The first file represents a toolchain and the second represents
+	 * @return A collection of {@link Config}s of files. The first file represents a toolchain and the second represents
 	 *         settings.
 	 */
-	protected Collection<Pair> getRunConfiguration() {
+	protected Collection<Config> getRunConfiguration() {
 		final File root = getRootFolder(mRootFolder);
 		if (root == null) {
 			return Collections.emptySet();
@@ -138,7 +137,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 		final Predicate<File> tcRegexFilter = getToolchainRegexFilter();
 		final Predicate<File> settingsRegexFilter = getSettingsRegexFilter();
-		final List<File> tcAndSettingsFiles = TestUtil.getFiles(root, new String[] { ".xml", ".epf" });
+		final List<File> tcAndSettingsFiles = TestUtil.getFiles(root, ".xml", ".epf");
 
 		final Collection<File> toolchainFiles =
 				tcAndSettingsFiles.stream().filter(FILTER_XML.and(tcRegexFilter)).collect(Collectors.toSet());
@@ -149,7 +148,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			return Collections.emptySet();
 		}
 
-		final Set<Pair> rtr = new HashSet<>();
+		final Set<Config> rtr = new HashSet<>();
 		for (final File toolchain : toolchainFiles) {
 			final String toolchainName = toolchain.getName().replaceAll("\\..*", "");
 			final String localRegex = Matcher.quoteReplacement(toolchain.getParent()) + ".*";
@@ -160,7 +159,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 				final String settingsName = settings.getName().replaceAll("\\..*", "");
 
 				if (settingsName.startsWith(toolchainName) || toolchainName.startsWith(settingsName)) {
-					rtr.add(new Pair(toolchain, settings));
+					rtr.add(new Config(toolchain, settings));
 				}
 			}
 		}
@@ -247,7 +246,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 *         be found recursively under the folder in which the deeper file (settings or toolchain, specified in
 	 *         runConfiguration) lies and that have the endings specified by mFileTypesToConsider.
 	 */
-	protected Collection<File> getInputFiles(final Predicate<File> regexFilter, final Pair runConfiguration) {
+	protected Collection<File> getInputFiles(final Predicate<File> regexFilter, final Config runConfiguration) {
 		final File tcParent = runConfiguration.getToolchainFile().getParentFile();
 		final File settingParent = runConfiguration.getSettingsFile().getParentFile();
 		final File parent;
@@ -262,67 +261,25 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
 
-	public static final class Pair {
+	public static final class Config
+			extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {
 
-		private final File mToolchainFile;
-		private final File mSettingsFile;
-
-		public Pair(final File toolchain, final File settings) {
-			mToolchainFile = toolchain;
-			mSettingsFile = settings;
+		public Config(final File toolchain, final File settings) {
+			super(toolchain, settings);
 		}
 
 		public File getToolchainFile() {
-			return mToolchainFile;
+			return getFirst();
 		}
 
 		public File getSettingsFile() {
-			return mSettingsFile;
+			return getSecond();
 		}
 
 		@Override
 		public String toString() {
 			return "Toolchain:" + getToolchainFile() + " Settings:" + getSettingsFile();
 		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + (mSettingsFile == null ? 0 : mSettingsFile.hashCode());
-			result = prime * result + (mToolchainFile == null ? 0 : mToolchainFile.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final Pair other = (Pair) obj;
-			if (mSettingsFile == null) {
-				if (other.mSettingsFile != null) {
-					return false;
-				}
-			} else if (!mSettingsFile.equals(other.mSettingsFile)) {
-				return false;
-			}
-			if (mToolchainFile == null) {
-				if (other.mToolchainFile != null) {
-					return false;
-				}
-			} else if (!mToolchainFile.equals(other.mToolchainFile)) {
-				return false;
-			}
-			return true;
-		}
-
 	}
 
 }

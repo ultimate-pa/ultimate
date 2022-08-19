@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AbstractInterpretation
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;singleton:=true
-Bundle-Version: 0.2.0
+Bundle-Version: 0.2.2
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
@@ -16,7 +16,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies,
  de.uni_freiburg.informatik.ultimate.lib.automata
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow,

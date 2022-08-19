@@ -100,7 +100,7 @@ public class PredicateFactory extends BasicPredicateFactory {
 
 	public HoareAnnotation getNewHoareAnnotation(final IcfgLocation pp,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, mScript);
+		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, mMgdScript);
 	}
 
 	private static final class NoCallerDebugIdentifier extends DebugIdentifier {

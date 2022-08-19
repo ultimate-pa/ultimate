@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -128,8 +129,10 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 		} else if (cb instanceof Summary) {
 			final Summary sum = (Summary) cb;
 			matchLocations(sum.getCallStatement());
+		} else if (cb instanceof GotoEdge) {
+			matchLocations((GotoEdge) cb);
 		} else {
-			throw new AssertionError("unknown type of CodeBlock");
+			throw new AssertionError("Unknown type of CodeBlock: " + cb.getClass().getSimpleName());
 		}
 	}
 
@@ -144,6 +147,10 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private void matchLocations(final Return ret) {
+		matchLocations(ILocation.getAnnotation(ret));
+	}
+
+	private void matchLocations(final GotoEdge ret) {
 		matchLocations(ILocation.getAnnotation(ret));
 	}
 

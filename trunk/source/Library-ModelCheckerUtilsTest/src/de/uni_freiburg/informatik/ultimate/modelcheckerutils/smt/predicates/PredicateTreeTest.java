@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,11 +37,10 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTree;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -50,14 +48,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -77,11 +74,7 @@ public class PredicateTreeTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
-		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, "z3");
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
+		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 
@@ -93,24 +86,24 @@ public class PredicateTreeTest {
 		final PredicateTree<TestPredicate> ptree = new PredicateTree<>(mMgdScript);
 		mMgdScript.lock(this);
 		final Set<IProgramVar> vars = new HashSet<>();
-		final BoogieNonOldVar a = constructProgramVar("a");
-		final BoogieNonOldVar b = constructProgramVar("b");
+		final ProgramNonOldVar a = constructProgramVar("a");
+		final ProgramNonOldVar b = constructProgramVar("b");
 		vars.add(a);
 		vars.add(b);
 		final TestPredicate pred1 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
+				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
 		final TestPredicate pred2 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
+				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
 		final TestPredicate pred3 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mScript);
+				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mMgdScript);
 		final TestPredicate pred4 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mScript);
+				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mMgdScript);
 		final TestPredicate pred5 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
+				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
 		final TestPredicate pred6 =
-				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mScript);
+				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mMgdScript);
 		final TestPredicate pred7 =
-				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mScript);
+				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mMgdScript);
 		mMgdScript.unlock(this);
 
 		Assert.assertTrue(pred1 != pred2);
@@ -155,8 +148,10 @@ public class PredicateTreeTest {
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info(formulaAsTerm);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdScript;
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 		mLogger.info(result);
 	}
 
@@ -165,8 +160,8 @@ public class PredicateTreeTest {
 		mScript.exit();
 	}
 
-	private BoogieNonOldVar constructProgramVar(final String identifier) {
-		BoogieOldVar oldVar;
+	private ProgramNonOldVar constructProgramVar(final String identifier) {
+		ProgramOldVar oldVar;
 		final Sort sort = SmtSortUtils.getIntSort(mMgdScript);
 		{
 			final boolean isOldVar = true;
@@ -177,9 +172,9 @@ public class PredicateTreeTest {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
 
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+			oldVar = new ProgramOldVar(identifier, termVariable, defaultConstant, primedConstant);
 		}
-		BoogieNonOldVar nonOldVar;
+		ProgramNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
@@ -189,7 +184,7 @@ public class PredicateTreeTest {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
 
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+			nonOldVar = new ProgramNonOldVar(identifier, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
@@ -201,10 +196,10 @@ public class PredicateTreeTest {
 		private final Term mClosedFormula;
 		private final Term mFormula;
 
-		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Script script) {
+		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final ManagedScript mgdScript) {
 			mVars = vars;
 			mFormula = formula;
-			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, script);
+			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, mgdScript);
 		}
 
 		@Override

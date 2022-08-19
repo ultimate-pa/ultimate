@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -15,7 +17,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 public final class ExtractedWitnessInvariant {
 
 	private final String mInvariant;
-	private final Set<String> mNodeLabels;
+	private final ImmutableSet<String> mNodeLabels;
 	private final IASTNode mMatchedAstNode;
 	private final boolean mIsBefore;
 	private final boolean mIsAfter;
@@ -24,8 +26,7 @@ public final class ExtractedWitnessInvariant {
 	public ExtractedWitnessInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match,
 			final boolean isBefore, final boolean isAfter, final boolean isAt) {
 		mInvariant = invariant;
-		mNodeLabels = new HashSet<String>();
-		mNodeLabels.addAll(nodeLabel);
+		mNodeLabels = ImmutableSet.copyOf(nodeLabel);
 		mMatchedAstNode = match;
 		mIsBefore = isBefore;
 		mIsAfter = isAfter;
@@ -36,7 +37,7 @@ public final class ExtractedWitnessInvariant {
 		return mInvariant;
 	}
 
-	public Set<String> getNodeLabels() {
+	public ImmutableSet<String> getNodeLabels() {
 		return mNodeLabels;
 	}
 

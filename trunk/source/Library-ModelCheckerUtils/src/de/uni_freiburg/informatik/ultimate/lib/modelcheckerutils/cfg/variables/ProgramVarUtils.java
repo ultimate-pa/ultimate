@@ -31,12 +31,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -157,12 +156,12 @@ public class ProgramVarUtils {
 		final Set<IProgramNonOldVar> nonOldVars = extractNonOldVars(term, symbolTable);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramNonOldVar pv : nonOldVars) {
-			if (pv instanceof IProgramNonOldVar) {
+			if (pv != null) {
 				final IProgramOldVar oldVar = pv.getOldVar();
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		return result;
 	}
 
@@ -171,12 +170,12 @@ public class ProgramVarUtils {
 		final Set<IProgramOldVar> oldVars = extractOldVars(term, symbolTable);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramOldVar pv : oldVars) {
-			if (pv instanceof IProgramOldVar) {
+			if (pv != null) {
 				final IProgramNonOldVar nonoldVar = pv.getNonOldVar();
 				substitutionMapping.put(pv.getTermVariable(), nonoldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		return result;
 	}
 
@@ -198,13 +197,13 @@ public class ProgramVarUtils {
 	}
 
 	/**
-	 * Construct global {@link BoogieNonOldVar} together with corresponding {@link BoogieOldVar} and return the
-	 * {@link BoogieNonOldVar}
+	 * Construct global {@link ProgramNonOldVar} together with corresponding {@link ProgramOldVar} and return the
+	 * {@link ProgramNonOldVar}
 	 */
-	public static BoogieNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort,
+	public static ProgramNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
 		final String procedure = null;
-		BoogieOldVar oldVar;
+		ProgramOldVar oldVar;
 		{
 			final boolean isOldVar = true;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
@@ -214,9 +213,9 @@ public class ProgramVarUtils {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
 
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+			oldVar = new ProgramOldVar(identifier, termVariable, defaultConstant, primedConstant);
 		}
-		BoogieNonOldVar nonOldVar;
+		ProgramNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
@@ -226,7 +225,7 @@ public class ProgramVarUtils {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
 
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+			nonOldVar = new ProgramNonOldVar(identifier, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
@@ -244,7 +243,292 @@ public class ProgramVarUtils {
 				ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
 		final ApplicationTerm primedConstant =
 				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
-		return new LocalBoogieVar(identifier, procedure, null, termVariable, defaultConstant, primedConstant);
+		return new LocalProgramVar(identifier, procedure, termVariable, defaultConstant, primedConstant);
+	}
+
+	/**
+	 * Apply a {@link TermTransferrer} to an {@link IProgramVar} to transfer a programvar representation between
+	 * solvers.
+	 *
+	 * Note that this method does not provide a cache, i.e., if you call it multiple times on the same <code>pv</code>
+	 * instance, you get multiple instances back. You need to use your own caching based on your context to avoid this.
+	 */
+	public static IProgramVar transferProgramVar(final TermTransferrer tt, final IProgramVar pv) {
+		if (pv instanceof ILocalProgramVar) {
+			return new TransferredLocalProgramVar((ILocalProgramVar) pv, tt);
+		} else if (pv instanceof IProgramNonOldVar) {
+			return new TransferredProgramNonOldVar((IProgramNonOldVar) pv, tt);
+		} else if (pv instanceof IProgramOldVar) {
+			return new TransferredProgramNonOldVar(((IProgramOldVar) pv).getNonOldVar(), tt).getOldVar();
+		} else if (pv instanceof IReplacementVar) {
+			return new TransferredReplacementVar((IReplacementVar) pv, tt);
+		} else {
+			return new TransferredProgramVar<>(pv, tt);
+		}
+	}
+
+	/**
+	 * Apply a {@link TermTransferrer} to an {@link IProgramConst} to transfer a program constant representation between
+	 * solvers.
+	 *
+	 * Note that this method does not provide a cache, i.e., if you call it multiple times on the same
+	 * <code>progConst</code> instance, you get multiple instances back. You need to use your own caching based on your
+	 * context to avoid this.
+	 */
+
+	public static IProgramConst transferProgramConst(final TermTransferrer tt, final IProgramConst progConst) {
+		return new TransferredProgramConst(progConst, tt);
+	}
+
+	private static final class TransferredProgramConst implements IProgramConst {
+		private final IProgramConst mProgConst;
+		private final Term mTerm;
+		private final ApplicationTerm mDefaultConst;
+		private static final long serialVersionUID = 1L;
+
+		private TransferredProgramConst(final IProgramConst progConst, final TermTransferrer tt) {
+			mProgConst = progConst;
+			mTerm = tt.transform(progConst.getTerm());
+			mDefaultConst = (ApplicationTerm) tt.transform(progConst.getDefaultConstant());
+		}
+
+		@Override
+		public String getGloballyUniqueId() {
+			return mProgConst.getGloballyUniqueId();
+		}
+
+		@Override
+		public boolean isGlobal() {
+			return mProgConst.isGlobal();
+		}
+
+		@Override
+		public Term getTerm() {
+			return mTerm;
+		}
+
+		@Override
+		public String getIdentifier() {
+			return mProgConst.getIdentifier();
+		}
+
+		@Override
+		public ApplicationTerm getDefaultConstant() {
+			return mDefaultConst;
+		}
+
+		@Override
+		public String toString() {
+			return mProgConst.toString();
+		}
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static class TransferredProgramVar<L extends IProgramVar> implements IProgramVar {
+		private static final long serialVersionUID = 1L;
+		protected final L mOriginalProgramVar;
+		private final Term mTerm;
+		private final TermVariable mTermVar;
+		private final ApplicationTerm mPrimedConstant;
+		private final ApplicationTerm mDefaultConstant;
+
+		private TransferredProgramVar(final L pv, final TermTransferrer tt) {
+			mOriginalProgramVar = pv;
+			mTerm = tt.transform(pv.getTerm());
+			mTermVar = (TermVariable) tt.transform(pv.getTermVariable());
+			mPrimedConstant = (ApplicationTerm) tt.transform(pv.getPrimedConstant());
+			mDefaultConstant = (ApplicationTerm) tt.transform(pv.getDefaultConstant());
+
+		}
+
+		@Override
+		public String getGloballyUniqueId() {
+			return mOriginalProgramVar.getGloballyUniqueId();
+		}
+
+		@Override
+		public boolean isGlobal() {
+			return mOriginalProgramVar.isGlobal();
+		}
+
+		@Override
+		public Term getTerm() {
+			return mTerm;
+		}
+
+		@Override
+		public boolean isOldvar() {
+			return mOriginalProgramVar.isOldvar();
+		}
+
+		@Override
+		public TermVariable getTermVariable() {
+			return mTermVar;
+		}
+
+		@Override
+		public String getProcedure() {
+			return mOriginalProgramVar.getProcedure();
+		}
+
+		@Override
+		public ApplicationTerm getPrimedConstant() {
+			return mPrimedConstant;
+		}
+
+		@Override
+		public ApplicationTerm getDefaultConstant() {
+			return mDefaultConstant;
+		}
+
+		@Override
+		public String toString() {
+			return mOriginalProgramVar.toString();
+		}
+	}
+
+	private static class TransferredLocalProgramVar extends TransferredProgramVar<ILocalProgramVar>
+			implements ILocalProgramVar {
+
+		private static final long serialVersionUID = 1L;
+
+		public TransferredLocalProgramVar(final ILocalProgramVar pv, final TermTransferrer tt) {
+			super(pv, tt);
+		}
+
+		@Override
+		public String getIdentifier() {
+			return mOriginalProgramVar.getIdentifier();
+		}
+	}
+
+	private static class TransferredProgramNonOldVar implements IProgramNonOldVar {
+
+		private static final long serialVersionUID = 1L;
+		private final IProgramVar mNonOld;
+		private final IProgramOldVar mOld;
+		private final String mIdentifier;
+
+		public TransferredProgramNonOldVar(final IProgramNonOldVar nonOldPv, final TermTransferrer tt) {
+			mNonOld = new TransferredProgramVar<IProgramVar>(nonOldPv, tt);
+			mOld = new TransferredProgramOldVar(this, nonOldPv.getOldVar(), tt);
+			mIdentifier = nonOldPv.getIdentifier();
+		}
+
+		@Override
+		public TermVariable getTermVariable() {
+			return mNonOld.getTermVariable();
+		}
+
+		@Override
+		public ApplicationTerm getDefaultConstant() {
+			return mNonOld.getDefaultConstant();
+		}
+
+		@Override
+		public ApplicationTerm getPrimedConstant() {
+			return mNonOld.getPrimedConstant();
+		}
+
+		@Override
+		public Term getTerm() {
+			return mNonOld.getTerm();
+		}
+
+		@Override
+		public String getIdentifier() {
+			return mIdentifier;
+		}
+
+		@Override
+		public IProgramOldVar getOldVar() {
+			return mOld;
+		}
+
+		@Override
+		public String toString() {
+			return mNonOld.toString();
+		}
+	}
+
+	private static class TransferredProgramOldVar implements IProgramOldVar {
+
+		private static final long serialVersionUID = 1L;
+		private final IProgramVar mOld;
+		private final IProgramNonOldVar mNonOld;
+
+		/**
+		 * Note that you **must** create this class by creating a TransferredProgramNonOldVar, i.e., you should never
+		 * call this constructor directly.
+		 *
+		 * @param newNonOldVar
+		 *            An already transferred {@link IProgramNonOldVar}
+		 * @param oldOldVar
+		 *            a non-transferred {@link IProgramOldVar}
+		 * @param tt
+		 *            a {@link TermTransferrer} instance
+		 */
+		private TransferredProgramOldVar(final IProgramNonOldVar newNonOldVar, final IProgramOldVar oldOldVar,
+				final TermTransferrer tt) {
+			mOld = new TransferredProgramVar<IProgramVar>(oldOldVar, tt);
+			mNonOld = newNonOldVar;
+		}
+
+		@Override
+		public TermVariable getTermVariable() {
+			return mOld.getTermVariable();
+		}
+
+		@Override
+		public ApplicationTerm getDefaultConstant() {
+			return mOld.getDefaultConstant();
+		}
+
+		@Override
+		public ApplicationTerm getPrimedConstant() {
+			return mOld.getPrimedConstant();
+		}
+
+		@Override
+		public Term getTerm() {
+			return mOld.getTerm();
+		}
+
+		@Override
+		public String getIdentifierOfNonOldVar() {
+			return mNonOld.getIdentifier();
+		}
+
+		@Override
+		public IProgramNonOldVar getNonOldVar() {
+			return mNonOld;
+		}
+
+		@Override
+		public String toString() {
+			return mOld.toString();
+		}
+	}
+
+	private static class TransferredReplacementVar extends TransferredProgramVar<IReplacementVar>
+			implements IReplacementVar {
+
+		private static final long serialVersionUID = 1L;
+		private final Term mDefinition;
+
+		public TransferredReplacementVar(final IReplacementVar pv, final TermTransferrer tt) {
+			super(pv, tt);
+			mDefinition = tt.transform(pv.getDefinition());
+		}
+
+		@Override
+		public Term getDefinition() {
+			return mDefinition;
+		}
 	}
 
 }

@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -77,21 +76,22 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 	private static final boolean IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA = false;
 
 	// TODO can this method be removed?
-	public EagerReuseCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+	public EagerReuseCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFile, compositionFactory,
-				transitionClazz);
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation, hoareAnnotationLocs, services, floydHoareAutomataFromOtherLocations,
+				rawFloydHoareAutomataFromFile, transitionClazz, stateFactoryForRefinement);
 	}
 
 	@Override
-	protected void getInitialAbstraction() throws AutomataLibraryException {
-		super.getInitialAbstraction();
+	protected void initialize() throws AutomataLibraryException {
+		super.initialize();
 
 		mReuseStats.continueTime();
 
@@ -134,7 +134,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 				new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
 		final boolean explointSigmaStarConcatOfIA = true;
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
-				new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+				new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 						(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, reuseAut, psd,
 						explointSigmaStarConcatOfIA);
 
@@ -145,8 +145,8 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		}
 
 		// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
-		assert new InductivityCheck<>(mServices,
-				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(), false, true,
+		assert new InductivityCheck<>(getServices(),
+				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), reuseAut).getResult(), false, true,
 				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 
 		if (mPref.dumpAutomata()) {
@@ -168,10 +168,9 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		}
 
 		if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
-			final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
-			final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
-					(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, diff.getResult())
-							.getResult();
+			final AutomataLibraryServices als = new AutomataLibraryServices(getServices());
+			final Boolean noTraceExcluded =
+					new IsIncluded<>(als, mPredicateFactoryResultChecking, mAbstraction, diff.getResult()).getResult();
 			if (noTraceExcluded) {
 				mLogger.warn("Floyd-Hoare automaton" + iteration
 						+ " did not remove an error trace from abstraction and was hence useless for this error location.");

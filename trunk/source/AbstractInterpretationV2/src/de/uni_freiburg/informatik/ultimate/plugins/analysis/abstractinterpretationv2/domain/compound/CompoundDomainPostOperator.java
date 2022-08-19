@@ -244,8 +244,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		stmtLists.addAll(mStatementExtractor.process(transition));
 		final CodeBlock result =
 				mCodeBlockFactory.constructStatementSequence(null, null, stmtLists, Origin.IMPLEMENTATION);
-		mTransformulaBuilder.addTransitionFormulas(result, transition.getPrecedingProcedure(), mXnfConversionTechnique,
-				mSimplificationTechnique);
+		mTransformulaBuilder.addTransitionFormulas(result, transition.getPrecedingProcedure(), mSimplificationTechnique);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(AbsIntPrefInitializer.INDENT + " Created new transition for domain " + index);

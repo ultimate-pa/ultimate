@@ -173,7 +173,7 @@ public class MainTranslator {
 			final PreRunnerResult preRunnerResult = preRunner.getResult();
 
 			final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
-					preRunnerResult.getFunctionToIndex(), translationSettings.getCheckedMethod());
+					preRunnerResult.getFunctionToIndex(), translationSettings.getEntryMethod());
 
 			mLogger.info("Built tables and reachable declarations");
 			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);

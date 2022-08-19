@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -50,66 +50,6 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		mRhs = rhs;
 	}
 
-	public BinaryRelation(final Term term) throws NoRelationOfThisKindException {
-		if (!(term instanceof ApplicationTerm)) {
-			throw new NoRelationOfThisKindException("no ApplicationTerm");
-		}
-		ApplicationTerm appTerm = (ApplicationTerm) term;
-		String functionSymbolName = appTerm.getFunction().getName();
-		Term[] params = appTerm.getParameters();
-		boolean isNegated;
-		if (functionSymbolName.equals("not")) {
-			assert params.length == 1;
-			final Term notTerm = params[0];
-			if (!(notTerm instanceof ApplicationTerm)) {
-				throw new NoRelationOfThisKindException("no ApplicationTerm");
-			}
-			isNegated = true;
-			appTerm = (ApplicationTerm) notTerm;
-			functionSymbolName = appTerm.getFunction().getName();
-			params = appTerm.getParameters();
-		} else {
-			isNegated = false;
-		}
-		if (appTerm.getParameters().length != 2) {
-			throw new NoRelationOfThisKindException("not binary");
-		}
-		checkSort(appTerm.getParameters());
-
-		RelationSymbol relSymb = getRelationSymbol(functionSymbolName, isNegated);
-		for (final RelationSymbol symb : RelationSymbol.values()) {
-			if (symb.toString().equals(functionSymbolName)) {
-				relSymb = isNegated ? symb.negate() : symb;
-				break;
-			}
-		}
-		if (relSymb == null) {
-			throw new NoRelationOfThisKindException("no binary numeric relation symbol");
-		}
-		mRelationSymbol = relSymb;
-		mLhs = params[0];
-		mRhs = params[1];
-	}
-
-	/**
-	 * Check if Sort of parameters is compatible. Throw Exception if not.
-	 *
-	 * @throws NoRelationOfThisKindException
-	 */
-	abstract protected void checkSort(Term[] params) throws NoRelationOfThisKindException;
-
-	/**
-	 * Return the RelationSymbol for this relation resolve negation
-	 *
-	 * @param functionSymbolName
-	 *            function symbol name of the original term
-	 * @param isNegated
-	 *            true iff the original term is negated
-	 * @throws NoRelationOfThisKindException
-	 */
-	abstract protected RelationSymbol getRelationSymbol(String functionSymbolName, boolean isNegated)
-			throws NoRelationOfThisKindException;
-
 	public RelationSymbol getRelationSymbol() {
 		return mRelationSymbol;
 	}
@@ -123,8 +63,9 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a greater-than relation symbol.
-	 * Otherwise returns an equivalent term where relation symbol and parameters are swapped.
+	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a
+	 * greater-than relation symbol. Otherwise returns an equivalent term where
+	 * relation symbol and parameters are swapped.
 	 */
 	public static Term constructLessNormalForm(final Script script, final RelationSymbol relationSymbol,
 			final Term lhsTerm, final Term rhsTerm) throws AssertionError {
@@ -133,6 +74,10 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		switch (relationSymbol) {
 		case DISTINCT:
 		case EQ:
+			// make sure that result respects the {@link CommuhashNormalForm}
+			final Term[] sortedOperands = CommuhashUtils.sortByHashCode(lhsTerm, rhsTerm);
+			result = toTerm(script, relationSymbol, sortedOperands[0], sortedOperands[1]);
+			break;
 		case BVULE:
 		case BVULT:
 		case BVSLE:
@@ -157,7 +102,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	}
 
 	public Term toTerm(final Script script) {
-		return toTerm(script, getRelationSymbol(), getLhs(), getRhs());
+		return constructLessNormalForm(script, getRelationSymbol(), getLhs(), getRhs());
 	}
 
 	public static Term toTerm(final Script script, final RelationSymbol relationSymbol, final Term lhsTerm,
@@ -165,7 +110,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		Term result;
 		switch (relationSymbol) {
 		case DISTINCT:
-			final Term eq = script.term("=", lhsTerm, rhsTerm);
+			final Term eq = SmtUtils.binaryEquality(script, lhsTerm, rhsTerm);
 			result = script.term("not", eq);
 			break;
 		case EQ:
@@ -205,15 +150,6 @@ public abstract class BinaryRelation implements IBinaryRelation {
 			}
 		} else {
 			return null;
-		}
-	}
-
-	public static class NoRelationOfThisKindException extends Exception {
-
-		private static final long serialVersionUID = 1L;
-
-		public NoRelationOfThisKindException(final String message) {
-			super(message);
 		}
 	}
 

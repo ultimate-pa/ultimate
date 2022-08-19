@@ -158,7 +158,7 @@ public class LiptonReduction<L, P> {
 
 	private void transferMoverProperties(final L composition, final L t1, final L t2) {
 		if (mMoverCheck instanceof CachedIndependenceRelation<?, ?>) {
-			((CachedIndependenceRelation<P, L>) mMoverCheck).mergeIndependencies(t1, t2, composition);
+			((CachedIndependenceRelation<P, L>) mMoverCheck).getCache().mergeIndependencies(t1, t2, composition);
 		}
 	}
 

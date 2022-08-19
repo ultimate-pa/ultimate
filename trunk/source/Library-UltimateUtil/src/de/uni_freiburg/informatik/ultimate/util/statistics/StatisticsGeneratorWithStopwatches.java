@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,8 +43,6 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	private final Map<String, Boolean> mRunningStopwatches;
 	private final Benchmark mBenchmark;
 
-	public abstract String[] getStopwatches();
-
 	public StatisticsGeneratorWithStopwatches() {
 		mRunningStopwatches = new HashMap<>(getStopwatches().length);
 		mBenchmark = new Benchmark();
@@ -52,6 +51,8 @@ public abstract class StatisticsGeneratorWithStopwatches {
 			mBenchmark.register(name);
 		}
 	}
+
+	public abstract String[] getStopwatches();
 
 	public void start(final Object stopwatchName) {
 		start(stopwatchName.toString());
@@ -76,7 +77,8 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	}
 
 	public void stopAllStopwatches() {
-		mRunningStopwatches.entrySet().stream().filter(a -> a.getValue()).map(a -> a.getKey()).forEach(a -> stop(a));
+		mRunningStopwatches.entrySet().stream().filter(Entry<String, Boolean>::getValue)
+				.map(Entry<String, Boolean>::getKey).forEach(this::stop);
 	}
 
 	protected long getElapsedTime(final String stopwatchName) throws StopwatchStillRunningException {

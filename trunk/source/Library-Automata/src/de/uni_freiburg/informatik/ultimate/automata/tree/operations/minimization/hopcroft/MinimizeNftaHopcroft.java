@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance.SinkMergeIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -415,7 +416,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 				}
 			}
 			// In the paper this block is often referred to as B
-			final Set<STATE> block = this.mPartition.getContainingSet(representativeOfBlock);
+			final ImmutableSet<STATE> block = this.mPartition.getContainingSet(representativeOfBlock);
 
 			final Iterator<RuleContext<LETTER, STATE>> contexts = collectContexts(block);
 			refineBasedOnContexts(contexts, block, isLastRound);
@@ -491,8 +492,8 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 		// Setup the initial partition
 		this.mPartition = new UnionFind<>();
-		this.mPartition.addEquivalenceClass(finalBlock);
-		this.mPartition.addEquivalenceClass(nonFinalBlock);
+		this.mPartition.addEquivalenceClass(ImmutableSet.of(finalBlock));
+		this.mPartition.addEquivalenceClass(ImmutableSet.of(nonFinalBlock));
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Initial partition is: " + this.mPartition);
 		}
@@ -501,7 +502,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Creating initial progress partition");
 		}
-		this.mProgressPartition.addEquivalenceClass(this.mOperand.getStates());
+		this.mProgressPartition.addEquivalenceClass(ImmutableSet.of(this.mOperand.getStates()));
 		final STATE representativeOfProgressBlock = this.mProgressPartition.getAllRepresentatives().stream().findFirst()
 				.get();
 		if (this.mLogger.isDebugEnabled()) {
@@ -628,7 +629,8 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 *             framework.
 	 */
 	private void refineBasedOnContexts(final Iterator<RuleContext<LETTER, STATE>> contexts,
-			final Set<STATE> destinationBlock, final boolean isLastRound) throws AutomataOperationCanceledException {
+			final ImmutableSet<STATE> destinationBlock, final boolean isLastRound)
+			throws AutomataOperationCanceledException {
 		// Based on the previously collected context objects we now find differences in
 		// the behavior of states that are currently in the same block of the regular
 		// relation. States that are listed in the same block but behave differently
@@ -724,8 +726,8 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 					// Split the block by removing and re-adding
 					refinedPartition.removeAll(refinedBlock);
-					refinedPartition.addEquivalenceClass(refinedStatesAtSourcePosition);
-					refinedPartition.addEquivalenceClass(refinedStatesNotAtSourcePosition);
+					refinedPartition.addEquivalenceClass(ImmutableSet.of(refinedStatesAtSourcePosition));
+					refinedPartition.addEquivalenceClass(ImmutableSet.of(refinedStatesNotAtSourcePosition));
 
 					if (this.mLogger.isDebugEnabled()) {
 						this.mLogger.debug("Split block into: " + refinedStatesAtSourcePosition + " and "
@@ -865,7 +867,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	private void updateCompoundBlocksAndProgressPartition(final Set<STATE> blockToSplitOff)
+	private void updateCompoundBlocksAndProgressPartition(final ImmutableSet<STATE> blockToSplitOff)
 			throws AutomataOperationCanceledException {
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Starting to update compound blocks and progress partition");

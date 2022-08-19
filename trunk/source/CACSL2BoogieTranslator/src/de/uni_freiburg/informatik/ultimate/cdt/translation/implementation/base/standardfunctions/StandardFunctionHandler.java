@@ -34,8 +34,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -116,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnn
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -159,17 +163,23 @@ public class StandardFunctionHandler {
 
 	private final ITypeHandler mTypeHandler;
 
-	private int mPthreadCreateCounter = 0;
-
 	private final CExpressionTranslator mCEpressionTranslator;
 
-	public StandardFunctionHandler(final Map<String, IASTNode> functionTable, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final INameHandler nameHandler, final ExpressionTranslation expressionTranslation,
-			final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ProcedureManager procedureManager, final CTranslationResultReporter reporter,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory,
-			final ITypeHandler typeHandler, final CExpressionTranslator cEpressionTranslator) {
+	private final ThreadIdManager mThreadIdManager;
+
+	private final ILogger mLogger;
+
+	private final Set<String> mOverwrittenFunctionNames;
+
+	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
+			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
+			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
+			final LocationFactory locationFactory, final ITypeHandler typeHandler,
+			final CExpressionTranslator cEpressionTranslator) {
+		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
@@ -186,6 +196,9 @@ public class StandardFunctionHandler {
 		mTypeHandler = typeHandler;
 		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
+		mOverwrittenFunctionNames = getOverwrittenFunctionNames(settings);
+		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
+				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
 	}
 
 	/**
@@ -211,7 +224,12 @@ public class StandardFunctionHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				return null;
+				if (!mOverwrittenFunctionNames.contains(transformedName)) {
+					return null;
+				}
+				mLogger.warn(String.format(
+						"Function %s is already implemented but we override the implementation for the call at %s",
+						transformedName, node.getFileLocation()));
 			}
 			final ILocation loc = getLoc(main, node);
 			return functionModel.handleFunction(main, node, loc, name);
@@ -219,9 +237,21 @@ public class StandardFunctionHandler {
 		return null;
 	}
 
+	private static Set<String> getOverwrittenFunctionNames(final TranslationSettings settings) {
+		if (!settings.isSvcompMode()) {
+			return Collections.emptySet();
+		}
+
+		final Set<String> rtr = new HashSet<>();
+		rtr.add("reach_error");
+		return rtr;
+	}
+
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
 		final Map<String, IFunctionModelHandler> map = new HashMap<>();
 
+		// Do not use skip for functions that have return values, use constructUnsoundOverapproximationForFunctionCall
+		// instead
 		final IFunctionModelHandler skip = (main, node, loc, name) -> handleByIgnore(main, loc, name);
 		final IFunctionModelHandler die = (main, node, loc, name) -> handleByUnsupportedSyntaxException(loc, name);
 		final IFunctionModelHandler dieFloat =
@@ -236,6 +266,7 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_join", this::handlePthread_join);
 		fill(map, "pthread_mutex_init", this::handlePthread_mutex_init);
 		fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
+		fill(map, "pthread_mutex_trylock", this::handlePthread_mutex_trylock);
 		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
 		fill(map, "pthread_exit", this::handlePthread_exit);
 		fill(map, "pthread_cond_init", this::handlePthread_success);
@@ -244,6 +275,9 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_cond_broadcast", this::handlePthread_success);
 		fill(map, "pthread_cond_destroy", this::handlePthread_success);
 		fill(map, "pthread_mutex_destroy", this::handlePthread_success);
+		fill(map, "pthread_rwlock_rdlock", this::handlePthread_rwlock_rdlock);
+		fill(map, "pthread_rwlock_wrlock", this::handlePthread_rwlock_wrlock);
+		fill(map, "pthread_rwlock_unlock", this::handlePthread_rwlock_unlock);
 		// the following three occur at SV-COMP 2019 only in one benchmark
 		fill(map, "pthread_attr_init", die);
 		fill(map, "pthread_attr_setdetachstate", die);
@@ -252,8 +286,26 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_key_create", die);
 		fill(map, "pthread_getspecific", die);
 		fill(map, "pthread_setspecific", die);
+		// further unsupported pthread functions
+		fill(map, "pthread_rwlock_init", die);
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		// TODO 20211105 Matthias: Unsound because our implementation of printf is
+		// unsound and because we consider wchars as chars.
+		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		// TODO 20211106 Matthias: Set to "die" by Dominik because scanf caused
+		// unoundness in datarace benchmarks
+		fill(map, "scanf", die);
+
+		// TODO 20211105 Matthias: Unsound because depending on its first argument,
+		// the *scanf functions manipulate memory addressed by the other arguments.
+		// see https://en.cppreference.com/w/c/io/fscanf and https://en.cppreference.com/w/c/io/fwscanf
+		fill(map, "sscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
+				new CPrimitive(CPrimitive.CPrimitives.INT)));
+		fill(map, "swscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
+				new CPrimitive(CPrimitive.CPrimitives.INT)));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -301,6 +353,37 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__builtin_bswap64", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.ULONG)));
+
+		/*
+		 * 6.56 Built-in Functions to Perform Arithmetic with Overflow Checking
+		 * https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+		 */
+		final IFunctionModelHandler overapproximateGccOverflowCheck = (main, node, loc,
+				name) -> handleByOverapproximation(main, node, loc, name, 3, new CPrimitive(CPrimitives.BOOL));
+		fill(map, "__builtin_add_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_sadd_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_saddl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_saddll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_uadd_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_uaddl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_uaddll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_sub_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_ssub_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_ssubl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_ssubll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_usub_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_usubl_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_usubll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_mul_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_smul_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_smull_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_smulll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_umul_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_umull_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_umulll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_add_overflow_p", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_sub_overflow_p", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_mul_overflow_p", overapproximateGccOverflowCheck);
 
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
@@ -467,7 +550,9 @@ public class StandardFunctionHandler {
 
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
-		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
+		fill(map, "__VERIFIER_error", this::handleErrorFunction);
+		fill(map, "reach_error", this::handleErrorFunction);
+
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
 
 		fill(map, "__VERIFIER_nondet_bool",
@@ -962,20 +1047,11 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
-		final ExpressionResult argThreadIdPointer;
-		{
-			final ExpressionResult tmp =
-					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-			// TODO 2018-10-25 Matthias: conversion not correct
-			// we do not have a void pointer but a pthread_t pointer
-			// but this incorrectness will currently not have a
-			// negative effect
-			argThreadIdPointer = mExprResultTransformer.performImplicitConversion(tmp,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
-		}
+
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
 		final ExpressionResult argThreadAttributes =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
 		final ExpressionResult argStartRoutine =
@@ -987,59 +1063,9 @@ public class StandardFunctionHandler {
 			startRoutineArguments = mExprResultTransformer.performImplicitConversion(tmp,
 					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
 		}
-		// We hope that the function is not given by a function pointer that is stored
-		// in a variable but directly by the function name
-		final String rawProcName;
-		if (arguments[2] instanceof CASTIdExpression) {
-			final CASTIdExpression castIdExpr = (CASTIdExpression) arguments[2];
-			rawProcName = castIdExpr.getName().toString();
-		} else if (arguments[2] instanceof CASTUnaryExpression) {
-			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) arguments[2];
-			if (castUnaryExpr.getOperator() == IASTUnaryExpression.op_amper) {
-				// function foo is probably given as a function pointer of the form & foo
-				if (castUnaryExpr.getOperand() instanceof CASTIdExpression) {
-					final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
-					rawProcName = castIdExpr.getName().toString();
-				} else {
-					throw new UnsupportedOperationException("Third argument of pthread_create is: "
-							+ castUnaryExpr.getOperand().getClass().getSimpleName());
-				}
-			} else {
-				throw new UnsupportedOperationException(
-						"Third argument of pthread_create is: " + arguments[2].getClass().getSimpleName());
-			}
-		} else {
-			throw new UnsupportedOperationException(
-					"Third argument of pthread_create is " + arguments[2].getClass().getSimpleName());
-		}
+		builder.addAllExceptLrValue(argThreadAttributes, argStartRoutine, startRoutineArguments);
 
-		final String multiParseProcedureName =
-				mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
-		if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
-			throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
-					+ " Ultimate does not support pthread_create in combination with function pointers");
-		}
-
-		final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
-		final String prefix = idExpr.getIdentifier().substring(0, 9);
-		if (!prefix.equals("#funAddr~")) {
-			throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
-		}
-		final String methodName = idExpr.getIdentifier().substring(9);
-
-		final HeapLValue heapLValue;
-		if (argThreadIdPointer.getLrValue() instanceof HeapLValue) {
-			heapLValue = (HeapLValue) argThreadIdPointer.getLrValue();
-		} else {
-			heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argThreadIdPointer.getLrValue().getValue(),
-					argThreadIdPointer.getLrValue().getCType(), false, null);
-		}
-
-		final Expression threadId = mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.ULONG),
-				BigInteger.valueOf(mPthreadCreateCounter++));
-		final List<Statement> writeCall =
-				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, new CPrimitive(CPrimitives.ULONG), false, node);
-
+		final String methodName = getForkedProcedure(node, arguments[2], argStartRoutine);
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
 		final Expression[] forkArguments;
@@ -1050,12 +1076,11 @@ public class StandardFunctionHandler {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "pthread_create calls function with more than one argument");
 		}
-		final ForkStatement fs = new ForkStatement(loc, new Expression[] { threadId }, methodName, forkArguments);
-		mProcedureManager.registerForkStatement(fs);
 
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadIdPointer, argThreadAttributes, argStartRoutine, startRoutineArguments);
-		builder.addStatements(writeCall);
+		final Expression[] threadId = mThreadIdManager.updateForkedThreadId(arguments[0], main, loc, node, builder);
+		final ForkStatement fs = new ForkStatement(loc, threadId, methodName, forkArguments);
+		mProcedureManager.registerForkStatement(fs);
+		builder.addStatement(fs);
 
 		final boolean letPthreadCreateAlwaysReturnZero = false;
 		final CPrimitive returnValueCType = new CPrimitive(CPrimitive.CPrimitives.INT);
@@ -1073,8 +1098,52 @@ public class StandardFunctionHandler {
 		final LRValue val = new RValue(returnValue, returnValueCType);
 
 		builder.setLrValue(val);
-		builder.addStatement(fs);
 		return builder.build();
+	}
+
+	private String getForkedProcedure(final IASTFunctionCallExpression node, final IASTInitializerClause argument,
+			final ExpressionResult argStartRoutine) {
+		final String methodName;
+		{
+			// We hope that the function is not given by a function pointer that is stored
+			// in a variable but directly by the function name
+			final String rawProcName;
+			if (argument instanceof CASTIdExpression) {
+				final CASTIdExpression castIdExpr = (CASTIdExpression) argument;
+				rawProcName = castIdExpr.getName().toString();
+			} else if (argument instanceof CASTUnaryExpression) {
+				final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
+				if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
+					throw new UnsupportedOperationException(
+							"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
+				}
+				// function foo is probably given as a function pointer of the form & foo
+				if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
+					throw new UnsupportedOperationException("Third argument of pthread_create is: "
+							+ castUnaryExpr.getOperand().getClass().getSimpleName());
+				}
+				final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
+				rawProcName = castIdExpr.getName().toString();
+			} else {
+				throw new UnsupportedOperationException(
+						"Third argument of pthread_create is " + argument.getClass().getSimpleName());
+			}
+
+			final String multiParseProcedureName =
+					mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
+			if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
+				throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
+						+ " Ultimate does not support pthread_create in combination with function pointers");
+			}
+
+			final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
+			final String prefix = idExpr.getIdentifier().substring(0, 9);
+			if (!prefix.equals(SFO.FUNCTION_ADDRESS)) {
+				throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
+			}
+			methodName = idExpr.getIdentifier().substring(9);
+		}
+		return methodName;
 	}
 
 	// We assume success and return 0 without any additional checks.
@@ -1096,30 +1165,25 @@ public class StandardFunctionHandler {
 		// get arguments
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
-		final ExpressionResult argThreadId;
-		{
-			final ExpressionResult tmp =
-					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-			// TODO 2018-10-26 Matthias: we presume that pthread_t is unsigned long
-			argThreadId = mExprResultTransformer.performImplicitConversion(tmp, new CPrimitive(CPrimitives.ULONG), loc);
-		}
-		final ExpressionResult argAddressOfResultPointer;
-		{
-			// final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main,
-			// loc,
-			// arguments[1]);
-			final ExpressionResult tmp = (ExpressionResult) main.dispatch(arguments[1]);
-			argAddressOfResultPointer = mExprResultTransformer.performImplicitConversion(tmp,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
-		}
 
 		// Object that will build our result
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(argThreadId, argAddressOfResultPointer);
+		final Expression[] threadId = mThreadIdManager.getJoinedThreadId(arguments[0], main, loc, builder);
+
+		final LRValue argAddressOfResultPointerLr;
+		{
+			// final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main,
+			// loc, arguments[1]);
+			final ExpressionResult tmp = (ExpressionResult) main.dispatch(arguments[1]);
+			final ExpressionResult argAddressOfResultPointer = mExprResultTransformer.performImplicitConversion(tmp,
+					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			builder.addAllExceptLrValue(argAddressOfResultPointer);
+			argAddressOfResultPointerLr = argAddressOfResultPointer.getLrValue();
+		}
 
 		final JoinStatement js;
-		if (argAddressOfResultPointer.getLrValue().isNullPointerConstant()) {
-			js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() }, new VariableLHS[0]);
+		if (argAddressOfResultPointerLr.isNullPointerConstant()) {
+			js = new JoinStatement(loc, threadId, new VariableLHS[0]);
 			builder.addStatement(js);
 		} else {
 			// auxvar for joined procedure's return value
@@ -1127,15 +1191,14 @@ public class StandardFunctionHandler {
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 			builder.addDeclaration(auxvarinfo.getVarDec());
 			builder.addAuxVar(auxvarinfo);
-			js = new JoinStatement(loc, new Expression[] { argThreadId.getLrValue().getValue() },
-					new VariableLHS[] { auxvarinfo.getLhs() });
+			js = new JoinStatement(loc, threadId, new VariableLHS[] { auxvarinfo.getLhs() });
 			builder.addStatement(js);
 			final HeapLValue heapLValue;
-			if (argAddressOfResultPointer.getLrValue() instanceof HeapLValue) {
-				heapLValue = (HeapLValue) argAddressOfResultPointer.getLrValue();
+			if (argAddressOfResultPointerLr instanceof HeapLValue) {
+				heapLValue = (HeapLValue) argAddressOfResultPointerLr;
 			} else {
-				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler,
-						argAddressOfResultPointer.getLrValue().getValue(), cType, false, null);
+				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argAddressOfResultPointerLr.getValue(),
+						cType, false, null);
 			}
 			final List<Statement> wc =
 					mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false, node);
@@ -1213,6 +1276,26 @@ public class StandardFunctionHandler {
 		return createPthread_mutex_lock(main, loc, arguments[0]);
 	}
 
+	private Result handlePthread_mutex_trylock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexTryLockCall);
+	}
+
+	private Result handlePthread_rwlock_rdlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockReadLockCall);
+	}
+
+	private Result handlePthread_rwlock_wrlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockWriteLockCall);
+	}
+
+	private Result handlePthread_rwlock_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockUnlockCall);
+	}
+
 	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause mutex) {
 		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
@@ -1242,6 +1325,32 @@ public class StandardFunctionHandler {
 		// erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
 		// new CPrimitive(CPrimitives.INT)));
 		return erb.build();
+	}
+
+	private Result handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final ILockCallFactory callFactory) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final IASTInitializerClause lock = arguments[0];
+
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, lock);
+		final Expression index = arg.getLrValue().getValue();
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
+		// auxvar for procedure's return value
+		final CType cType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		erb.addDeclaration(auxvarinfo.getVarDec());
+		erb.addAuxVar(auxvarinfo);
+
+		erb.addStatement(callFactory.apply(loc, index, auxvarinfo.getLhs()));
+		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
+		return erb.build();
+
+	}
+
+	private interface ILockCallFactory {
+		CallStatement apply(ILocation loc, Expression index, VariableLHS lhs);
 	}
 
 	/**
@@ -1339,22 +1448,13 @@ public class StandardFunctionHandler {
 		for (final IASTInitializerClause argument : arguments) {
 			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
 		}
-		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
-				.addStatement(createReachabilityAssert(loc)).build();
-	}
 
-	private Result handleAssert(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
-
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 4, name, arguments);
-
-		final List<ExpressionResult> argDispatchResults = new ArrayList<>();
-		for (final IASTInitializerClause argument : arguments) {
-			argDispatchResults.add((ExpressionResult) main.dispatch(argument));
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
+		if (mSettings.isSvcompMode()) {
+			final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+			return erb.addStatement(new AssumeStatement(loc, falseLiteral)).build();
 		}
-		return new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults)
-				.addStatement(createReachabilityAssert(loc)).build();
+		return erb.addStatement(createReachabilityAssert(loc, name)).build();
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1491,6 +1591,8 @@ public class StandardFunctionHandler {
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		erb.addDeclaration(auxvar.getVarDec());
+		erb.addAuxVar(auxvar);
+
 		final MemoryArea memArea;
 		if (methodName.equals("malloc")) {
 			memArea = MemoryArea.HEAP;
@@ -1499,8 +1601,8 @@ public class StandardFunctionHandler {
 		} else {
 			throw new IllegalArgumentException("unknown allocation method; " + methodName);
 		}
-		erb.addStatement(
-				mMemoryHandler.getUltimateMemAllocCall(exprRes.getLrValue().getValue(), auxvar.getLhs(), loc, memArea));
+		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(exprResConverted.getLrValue().getValue(),
+				auxvar.getLhs(), loc, memArea));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the
@@ -1844,11 +1946,8 @@ public class StandardFunctionHandler {
 		// Read https://gcc.gnu.org/onlinedocs/gcc/Object-Size-Checking.html
 		// For testing, overapproximate and do not dispatch arguments (I understand the spec as this is whats happening,
 		// but I am not sure)
-		return handleByOverapproximationWithoutDispatch(main, node, loc, name, 2, new CPrimitive(CPrimitives.INT));
-		// main.warn(loc, "used trivial implementation of __builtin_object_size");
-		// final CPrimitive cType = new CPrimitive(CPrimitives.INT);
-		// final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
-		// return new ExpressionResult(new RValue(zero, cType));
+		return handleUnsoundByOverapproximationWithoutDispatch(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.INT));
 	}
 
 	private Result handlePrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
@@ -1921,8 +2020,8 @@ public class StandardFunctionHandler {
 	}
 
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc) {
-		final Statement st = createReachabilityAssert(loc);
+			final ILocation loc, final String name) {
+		final Statement st = createReachabilityAssert(loc, name);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
@@ -1931,7 +2030,7 @@ public class StandardFunctionHandler {
 	 * settings. If we want to check reachability, an assert false will be generated. If not, (e.g., if we only want to
 	 * check memsafety), an assume false will be generated.
 	 */
-	private Statement createReachabilityAssert(final ILocation loc) {
+	private Statement createReachabilityAssert(final ILocation loc, final String functionName) {
 		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
@@ -1950,16 +2049,22 @@ public class StandardFunctionHandler {
 		// https://github.com/sosy-lab/sv-benchmarks/pull/1001
 		final Check check;
 		if (checkSvcompErrorfunction) {
+			final Function<Spec, String> funPosMessage =
+					s -> s == Spec.ERROR_FUNCTION ? "call to " + functionName + " is unreachable"
+							: Check.getDefaultPositiveMessage(s);
+			final Function<Spec, String> funNegMessage =
+					s -> s == Spec.ERROR_FUNCTION ? "a call to " + functionName + " is reachable"
+							: Check.getDefaultNegativeMessage(s);
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK));
+				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK), funPosMessage, funNegMessage);
 			} else {
-				check = new Check(Spec.ERROR_FUNCTION);
+				check = new Check(Spec.ERROR_FUNCTION, funPosMessage, funNegMessage);
 			}
 		} else {
 			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
 		}
-		final Statement st = new AssertStatement(loc, new NamedAttribute[] {
-				new NamedAttribute(loc, "reach", new Expression[] { new StringLiteral(loc, check.toString()) }) },
+		final Statement st = new AssertStatement(loc, new NamedAttribute[] { new NamedAttribute(loc, "reach",
+				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },
 				falseLiteral);
 		check.annotate(st);
 		if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
@@ -2017,8 +2122,7 @@ public class StandardFunctionHandler {
 			results.add((ExpressionResult) main.dispatch(argument));
 		}
 
-		final ExpressionResult overapproxCall =
-				constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		final ExpressionResult overapproxCall = constructOverapproximationForFunctionCall(loc, methodName, resultType);
 		results.add(overapproxCall);
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).setLrValue(overapproxCall.getLrValue())
 				.build();
@@ -2041,12 +2145,12 @@ public class StandardFunctionHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
-	private Result handleByOverapproximationWithoutDispatch(final IDispatcher main,
+	private Result handleUnsoundByOverapproximationWithoutDispatch(final IDispatcher main,
 			final IASTFunctionCallExpression node, final ILocation loc, final String methodName, final int numberOfArgs,
 			final CType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
-		return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		return constructOverapproximationForFunctionCall(loc, methodName, resultType);
 	}
 
 	/**
@@ -2059,16 +2163,27 @@ public class StandardFunctionHandler {
 	 * @param resultType
 	 *            CType that determinies the type of the auxiliary variable
 	 */
-	private ExpressionResult constructOverapproximationForFunctionCall(final IDispatcher main, final ILocation loc,
-			final String functionName, final CType resultType) {
+	private ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
+			final CType resultType) {
+		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
+	}
+
+	/**
+	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will **NOT** be
+	 * marked as an overapproximation, which is always unsound.
+	 */
+	private ExpressionResult constructUnsoundOverapproximationForFunctionCall(final ILocation loc,
+			final CType resultType) {
+		return buildFunctionCall(loc, resultType).build();
+	}
+
+	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		// introduce fresh aux variable
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvar.getVarDec());
 		builder.addAuxVar(auxvar);
-		builder.addOverapprox(new Overapprox(functionName, loc));
 		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
-		return builder.build();
+		return builder;
 	}
 
 	private static void checkArguments(final ILocation loc, final int expectedArgs, final String name,

@@ -105,11 +105,6 @@ public final class PdrBenchmark extends StatisticsGeneratorWithStopwatches imple
 		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
 		}
-
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
 	}
 
 	/**

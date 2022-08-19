@@ -31,9 +31,11 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
@@ -82,7 +85,7 @@ public class TermCompiler extends TermTransformer {
 
 	public void setAssignmentProduction(final boolean on) {
 		if (on) {
-			mNames = new HashMap<Term, Set<String>>();
+			mNames = new HashMap<>();
 		} else {
 			mNames = null;
 		}
@@ -167,10 +170,10 @@ public class TermCompiler extends TermTransformer {
 				for (int i = 0; i < params.length - 1; i++) {
 					conjs[i] = theory.term(fsym, params[i], params[i + 1]);
 				}
-				final ApplicationTerm rhs = theory.term("and", conjs);
+				final Term rhs = theory.term("and", conjs);
 				final Term rewrite = mTracker.buildRewrite(appTerm, rhs, ProofConstants.RW_EXPAND);
 				enqueueWalker(new TransitivityStep(rewrite));
-				enqueueWalker(new BuildApplicationTerm(rhs));
+				enqueueWalker(new BuildApplicationTerm((ApplicationTerm) rhs));
 				pushTerms(conjs);
 				return;
 			}
@@ -190,7 +193,11 @@ public class TermCompiler extends TermTransformer {
 		final FunctionSymbol fsym = appTerm.getFunction();
 		final Theory theory = appTerm.getTheory();
 
-		final Term convertedApp = mTracker.congruence(mTracker.reflexivity(appTerm), args);
+		Term convertedApp = mTracker.congruence(mTracker.reflexivity(appTerm), args);
+		if (mTracker.getProvedTerm(convertedApp) instanceof ConstantTerm) {
+			setResult(convertedApp);
+			return;
+		}
 
 		final Term[] params = ((ApplicationTerm) mTracker.getProvedTerm(convertedApp)).getParameters();
 
@@ -209,7 +216,7 @@ public class TermCompiler extends TermTransformer {
 			return;
 		}
 
-		if (fsym.isIntern()) {
+		if (fsym.isIntern() && !fsym.getName().matches("@.*skolem.*")) {
 			switch (fsym.getName()) {
 			case "not":
 				setResult(mUtils.convertNot(convertedApp));
@@ -446,7 +453,7 @@ public class TermCompiler extends TermTransformer {
 				BigInteger divisor1;
 				try {
 					divisor1 = new BigInteger(fsym.getIndices()[0]);
-				} catch(NumberFormatException e){
+				} catch(final NumberFormatException e){
 					throw new SMTLIBException("index must be numeral", e);
 				}
 				final Rational divisor = Rational.valueOf(divisor1, BigInteger.ONE);
@@ -487,34 +494,40 @@ public class TermCompiler extends TermTransformer {
 				break;
 			}
 			case "select": {
-				final Term lhs = mTracker.getProvedTerm(convertedApp);
-				final Term array = params[0];
+				Term lhs = mTracker.getProvedTerm(convertedApp);
+				Term array = params[0];
 				final Term idx = params[1];
-				final Term nestedIdx = getArrayStoreIdx(array);
-				if (nestedIdx != null) {
-					// Check for select-over-store
-					final SMTAffineTerm diff = new SMTAffineTerm(idx);
-					diff.negate();
-					diff.add(new SMTAffineTerm(nestedIdx));
-					if (diff.isConstant()) {
-						// Found select-over-store
-						final ApplicationTerm store = (ApplicationTerm) array;
-						final Term rhs;
-						if (diff.getConstant().equals(Rational.ZERO)) {
-							// => transform into value
-							rhs = store.getParameters()[2];
-						} else { // Both indices are numerical and distinct.
-							// => transform into (select a idx)
-							rhs = theory.term("select", store.getParameters()[0], idx);
+				boolean isSelect = true;
+				while (isSelect) {
+					isSelect = false;
+					final Term nestedIdx = getArrayStoreIdx(array);
+					if (nestedIdx != null) {
+						// Check for select-over-store
+						final SMTAffineTerm diff = new SMTAffineTerm(idx);
+						diff.negate();
+						diff.add(new SMTAffineTerm(nestedIdx));
+						if (diff.isConstant()) {
+							// Found select-over-store
+							final ApplicationTerm store = (ApplicationTerm) array;
+							final Term rhs;
+							if (diff.getConstant().equals(Rational.ZERO)) {
+								// => transform into value
+								rhs = store.getParameters()[2];
+							} else { // Both indices are numerical and distinct.
+								// => transform into (select a idx)
+								isSelect = true;
+								array = store.getParameters()[0];
+								rhs = theory.term("select", array, idx);
+							}
+							final Term rewrite = mTracker.buildRewrite(lhs, rhs, ProofConstants.RW_SELECT_OVER_STORE);
+							lhs = rhs;
+							convertedApp = mTracker.transitivity(convertedApp, rewrite);
 						}
-						final Term rewrite = mTracker.buildRewrite(lhs, rhs, ProofConstants.RW_SELECT_OVER_STORE);
-						setResult(mTracker.transitivity(convertedApp, rewrite));
-						return;
 					}
 				}
 				break;
 			}
-			case "const": {
+			case SMTLIBConstants.CONST: {
 				final Sort sort = mTracker.getProvedTerm(convertedApp).getSort();
 				assert sort.isArraySort();
 				if (!isInfinite(sort.getArguments()[0])) {
@@ -528,12 +541,16 @@ public class TermCompiler extends TermTransformer {
 			}
 			case "true":
 			case "false":
-			case "@diff":
+			case SMTInterpolConstants.DIFF:
 			case "@0": // lambda for QuantifierTheory
+			case "is":
 			case Interpolator.EQ:
 				/* nothing to do */
 				break;
 			default:
+				if (fsym.isConstructor() || fsym.isSelector()) {
+					break;
+				}
 				throw new UnsupportedOperationException("Unsupported internal function " + fsym.getName());
 			}
 		}
@@ -577,20 +594,17 @@ public class TermCompiler extends TermTransformer {
 	}
 
 	@Override
+	public void postConvertMatch(final MatchTerm oldMatch, final Term newDataTerm, final Term[] newCases) {
+		setResult(mTracker.match(oldMatch, newDataTerm, newCases));
+	}
+
+	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		final Theory theory = old.getTheory();
 		if (!theory.getLogic().isQuantified()) {
 			throw new SMTLIBException("Quantifier in quantifier-free logic");
 		}
-		if (old.getQuantifier() == QuantifiedFormula.EXISTS) {
-			setResult(mTracker.exists(old, newBody));
-		} else {
-			// We should create (forall (x) (newBody x))
-			// This becomes (not (exists (x) (not (newBody x))))
-			final Term notNewBody = mUtils.convertNot(mTracker
-					.congruence(mTracker.reflexivity(theory.term("not", old.getSubformula())), new Term[] { newBody }));
-			setResult(mUtils.convertNot(mTracker.forall(old, notNewBody)));
-		}
+		setResult(mTracker.quantCong(old, newBody));
 	}
 
 	@Override
@@ -601,7 +615,7 @@ public class TermCompiler extends TermTransformer {
 				if (annot.getKey().equals(":named")) {
 					Set<String> oldNames = mNames.get(newBody);
 					if (oldNames == null) {
-						oldNames = new HashSet<String>();
+						oldNames = new HashSet<>();
 						mNames.put(newBody, oldNames);
 					}
 					oldNames.add(annot.getValue().toString());

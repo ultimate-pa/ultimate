@@ -31,27 +31,27 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * {@link IRefinementStrategy} used by ReqChecker.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class BadgerRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class BadgerRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public BadgerRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public BadgerRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
 								InterpolationTechnique.Craig_NestedInterpolation),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates),
+						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates),
 						factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}

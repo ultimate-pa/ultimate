@@ -28,24 +28,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SmtInterpolRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class SmtInterpolRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
-	public SmtInterpolRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public SmtInterpolRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
 								InterpolationTechnique.Craig_NestedInterpolation),
-						factory.createIpTcStrategyModuleSmtInterpolSpWp(false, InterpolationTechnique.ForwardPredicates) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+						factory.createIpTcStrategyModuleSmtInterpolSpWp(InterpolationTechnique.ForwardPredicates) },
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

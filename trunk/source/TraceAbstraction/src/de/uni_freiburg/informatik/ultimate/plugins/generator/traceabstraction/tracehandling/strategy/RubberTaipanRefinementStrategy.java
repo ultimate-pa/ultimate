@@ -31,34 +31,32 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpgStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.ITraceCheckStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class RubberTaipanRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public RubberTaipanRefinementStrategy(final StrategyModuleFactory<L> factory,
+	public RubberTaipanRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
-			createModules(final StrategyModuleFactory<L> factory) {
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final IIpTcStrategyModule<?, L> smtinterpol =
-				factory.createIpTcStrategyModuleSmtInterpolCraig(false, InterpolationTechnique.Craig_TreeInterpolation);
-		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP);
-		final IIpTcStrategyModule<?, L> cvc4 = factory.createIpTcStrategyModuleCVC4(false,
-				InterpolationTechnique.FPandBP, SolverBuilder.LOGIC_CVC4_DEFAULT);
+				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation);
+		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP);
+		final IIpTcStrategyModule<?, L> cvc4 = factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP);
 
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3, cvc4 };
 		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { smtinterpol, z3, cvc4 };

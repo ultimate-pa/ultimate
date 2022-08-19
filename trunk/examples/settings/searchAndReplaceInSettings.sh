@@ -30,6 +30,6 @@ echo "OLDSTRING: $1"
 echo "NEWSTRING: $2"
 old="$(sedQuote "$1")"
 new="$(sedQuote "$2")"
-find . ../../source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/ \
+find .. ../../source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/ \
 	-name \*.epf -exec sed -i -e "s/$old/$new/g" {} +
 

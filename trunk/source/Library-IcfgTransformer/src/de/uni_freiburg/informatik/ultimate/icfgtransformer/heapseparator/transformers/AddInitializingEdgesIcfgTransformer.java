@@ -33,10 +33,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
@@ -82,9 +82,9 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 	private final IIcfg<INLOC> mInputIcfg;
 
 	public AddInitializingEdgesIcfgTransformer(final ILogger logger, final CfgSmtToolkit oldCsToolkit,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-			final Class<OUTLOC> outLocationClass, final IIcfg<INLOC> originalIcfg,
-			final UnmodifiableTransFormula initTf, final String newIcfgName) {
+			final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final IIcfg<INLOC> originalIcfg, final UnmodifiableTransFormula initTf, final String newIcfgName) {
 
 		mInitializingTransformula = initTf;
 
@@ -101,7 +101,7 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 	}
 
 	private void process(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass) {
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass) {
 
 		processLocationsOmitInitEdges(originalIcfg.getInitialNodes(), mBuilder);
 

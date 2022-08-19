@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.TerminationAnalysisTestR
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.HTMLSummary;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexDetailedSumm
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractModelCheckerTestSuite;
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheckerTestSuite {
 
 	@Override
-	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
 		return new TerminationAnalysisTestResultDecider(ultimateRunDefinition, true);
 	}
 
@@ -119,9 +119,9 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 								ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
 						new ColumnDefinition("LassoNonterminationAnalysisUnknown", "gnta unknown",
 								ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
-						new ColumnDefinition(BuchiCegarLoopBenchmark.s_MinimizationsOfDetermnisticAutomatomata,
+						new ColumnDefinition(BuchiCegarLoopBenchmark.MINIMIZATION_OF_DETERMINISTIC_AUTOMATA,
 								"mnmz det", ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
-						new ColumnDefinition(BuchiCegarLoopBenchmark.s_MinimizationsOfNondetermnisticAutomatomata,
+						new ColumnDefinition(BuchiCegarLoopBenchmark.MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA,
 								"mnmz nondet", ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum), };
 
 		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),

@@ -53,7 +53,7 @@ elif [ "$2" == "win32" ]; then
 	echo "Building .zip for win32..."
 	ARCH="win32"
 	ARCHPATH="products/CLI-E4/win32/win32/x86_64"
-    ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll") 
+    ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll") 
 else
     echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"		
 	exit 1
@@ -152,7 +152,7 @@ done
 
 echo "Modifying Ultimate.py with version and toolname"
 ## replacing version value in Ultimate.py
-test sed "s/version =.*/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
+test sed "s/^version =.*$/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
 ## replacing toolname value in Ultimate.py
 test sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py

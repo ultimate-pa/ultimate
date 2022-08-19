@@ -97,6 +97,12 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 		return create(trace, partialProgramStateMapping, branchEncoders, null, getClassFromTrace(trace));
 	}
 
+	public static <L extends IAction> IcfgProgramExecution<L> create(final List<L> trace,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
+			final Map<TermVariable, Boolean>[] branchEncoders, final Class<L> clazz) {
+		return create(trace, partialProgramStateMapping, branchEncoders, null, clazz);
+	}
+
 	@SuppressWarnings("unchecked")
 	private static <L extends IAction> Class<L> getClassFromTrace(final List<L> trace) {
 		return (Class<L>) trace.stream().findFirst()
@@ -116,6 +122,13 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
 		return create(trace, partialProgramStateMapping,
 				new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null, getClassFromTrace(trace));
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <L extends IAction> IcfgProgramExecution<L> create(final List<L> trace,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping, final Class<L> clazz) {
+		return create(trace, partialProgramStateMapping,
+				new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null, clazz);
 	}
 
 	public static <L extends IAction> IcfgProgramExecution<L> create(final List<L> trace,

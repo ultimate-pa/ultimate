@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -39,14 +40,23 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  *
  */
 public final class IcfgInternalTransition extends AbstractIcfgTransition
-		implements IIcfgInternalTransition<IcfgLocation> {
+		implements IIcfgInternalTransition<IcfgLocation>, IActionWithBranchEncoders {
 	private static final long serialVersionUID = -4893486021673688404L;
+
 	private final UnmodifiableTransFormula mTransFormula;
+	private final UnmodifiableTransFormula mTransFormulaWithBranchEncoders;
 
 	protected IcfgInternalTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula transFormula, final int id) {
+			final UnmodifiableTransFormula transFormula, final UnmodifiableTransFormula transFormulaWithBranchEncoders,
+			final int id) {
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
+		mTransFormulaWithBranchEncoders =
+				Objects.requireNonNull(transFormulaWithBranchEncoders, "A transformula is missing");
+
+		assert TransFormulaUtils.hasInternalNormalForm(mTransFormula) : "Expected TF in internal normal form";
+		assert TransFormulaUtils
+				.hasInternalNormalForm(mTransFormulaWithBranchEncoders) : "Expected TF in internal normal form";
 	}
 
 	@Override
@@ -58,5 +68,10 @@ public final class IcfgInternalTransition extends AbstractIcfgTransition
 	@Override
 	public String toString() {
 		return toDebugString(mTransFormula.toString());
+	}
+
+	@Override
+	public UnmodifiableTransFormula getTransitionFormulaWithBranchEncoders() {
+		return mTransFormulaWithBranchEncoders;
 	}
 }

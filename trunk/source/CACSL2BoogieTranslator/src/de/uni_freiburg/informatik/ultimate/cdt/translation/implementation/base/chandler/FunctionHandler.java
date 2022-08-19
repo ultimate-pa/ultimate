@@ -296,8 +296,8 @@ public class FunctionHandler {
 
 		if (!definedProcInfo.hasDeclaration()) {
 			// we have not seen this procedure yet, make a new declaration, register the procedure
-			final Attribute[] attr = new Attribute[0];
-			final String[] typeParams = new String[0];
+			final Attribute[] attr = {};
+			final String[] typeParams = {};
 			final Procedure proc = new Procedure(loc, attr, definedProcName, typeParams, in, out, spec, null);
 			definedProcInfo.setDeclaration(proc);
 		} else {
@@ -308,16 +308,15 @@ public class FunctionHandler {
 			boolean checkInParams = true;
 			if (in.length != procDecl.getInParams().length || out.length != procDecl.getOutParams().length
 					|| isInParamVoid(procDecl.getInParams())) {
-				if (procDecl.getInParams().length == 0) {
-					// the implementation can have 0 to n in parameters!
-					// do not check, but use the in params of the implementation
-					// as we will take the ones of the implementation anyway
-					checkInParams = false;
-					declIn = in;
-				} else {
+				if (procDecl.getInParams().length != 0) {
 					final String msg = "Implementation does not match declaration!";
 					throw new IncorrectSyntaxException(loc, msg);
 				}
+				// the implementation can have 0 to n in parameters!
+				// do not check, but use the in params of the implementation
+				// as we will take the ones of the implementation anyway
+				checkInParams = false;
+				declIn = in;
 			}
 
 			if (checkInParams) {
@@ -375,7 +374,8 @@ public class FunctionHandler {
 			// 3) ,4)
 			mCHandler.updateStmtsAndDeclsAtScopeEnd(bodyResultBuilder, node);
 
-			assert bodyResultBuilder.getAuxVars().isEmpty();
+			assert bodyResultBuilder.getAuxVars().isEmpty() : String.format("Body still contains aux vars: %s",
+					bodyResultBuilder.getAuxVars());
 			assert bodyResultBuilder.getOverappr().isEmpty();
 			assert bodyResultBuilder.getLrValue() == null;
 
@@ -540,7 +540,8 @@ public class FunctionHandler {
 					mExprResultTransformer, loc, main.dispatch(node.getReturnValue()), node.getReturnValue());
 
 			// functions cannot return arrays but only pointers
-			returnValue = mExprResultTransformer.transformDecaySwitchRexBoolToInt(returnValue, loc, node.getReturnValue());
+			returnValue =
+					mExprResultTransformer.transformDecaySwitchRexBoolToInt(returnValue, loc, node.getReturnValue());
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
@@ -569,18 +570,16 @@ public class FunctionHandler {
 				final VariableLHS lhs = ExpressionFactory.constructVariableLHS(loc,
 						mTypeHandler.getBoogieTypeForCType(functionResultType), id, new DeclarationInformation(
 								StorageClass.IMPLEMENTATION_OUTPARAM, mProcedureManager.getCurrentProcedureID()));
-				final VariableLHS[] lhss = new VariableLHS[] { lhs };
+				final VariableLHS[] lhss = { lhs };
 
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construct a copy of returnValueSwitched
 				returnValue = mExprResultTransformer.performImplicitConversion(returnValue, functionResultType, loc);
 
 				resultBuilder.addAllIncludingLrValue(returnValue);
-
 				final RValue castExprResultRVal = (RValue) returnValue.getLrValue();
-				resultBuilder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhss,
+				resultBuilder.addStatementAndAnnotateOverapprox(StatementFactory.constructAssignmentStatement(loc, lhss,
 						new Expression[] { castExprResultRVal.getValue() }));
-				// assuming that we need no auxvars or overappr, here
 			}
 		}
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
@@ -738,10 +737,7 @@ public class FunctionHandler {
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
 			final IASTInitializerClause[] arguments, final Procedure calleeProcDecl, final CFunction calleeProcCType,
 			final boolean isCalleeSignatureNotYetDetermined) {
-		if (isCalleeSignatureNotYetDetermined) {
-			return;
-		}
-		if (arguments.length == calleeProcDecl.getInParams().length) {
+		if (isCalleeSignatureNotYetDetermined || (arguments.length == calleeProcDecl.getInParams().length)) {
 			return;
 		}
 		if (calleeProcDecl.getInParams().length == 1 && calleeProcDecl.getInParams()[0].getType() == null
@@ -785,9 +781,7 @@ public class FunctionHandler {
 					procInfo.setModifiedGlobalsIsUsedDefined(true);
 					final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
 					final LinkedHashSet<VariableLHS> modifiedSet = new LinkedHashSet<>();
-					for (final VariableLHS var : ms.getIdentifiers()) {
-						modifiedSet.add(var);
-					}
+					Collections.addAll(modifiedSet, ms.getIdentifiers());
 					procInfo.addModifiedGlobals(modifiedSet);
 				}
 			}
@@ -875,15 +869,13 @@ public class FunctionHandler {
 
 			}
 			paramDecs = new IASTParameterDeclaration[0];
+		} else if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
+			paramDecs = ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters();
+		} else if (parent.getDeclarator() instanceof ICASTKnRFunctionDeclarator) {
+			paramDecs = ((ICASTKnRFunctionDeclarator) parent.getDeclarator()).getParameterDeclarations();
 		} else {
-			if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
-				paramDecs = ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters();
-			} else if (parent.getDeclarator() instanceof ICASTKnRFunctionDeclarator) {
-				paramDecs = ((ICASTKnRFunctionDeclarator) parent.getDeclarator()).getParameterDeclarations();
-			} else {
-				paramDecs = null;
-				assert false : "are we missing a type of function declarator??";
-			}
+			paramDecs = null;
+			assert false : "are we missing a type of function declarator??";
 		}
 
 		assert inparamVarListArray.length == paramDecs.length;
@@ -989,8 +981,8 @@ public class FunctionHandler {
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
 
-		final Attribute[] attr = new Attribute[0];
-		final String[] typeParams = new String[0];
+		final Attribute[] attr = {};
+		final String[] typeParams = {};
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, procInfo);
 
 		if (funcType.getResultType() instanceof CPrimitive
@@ -1365,7 +1357,7 @@ public class FunctionHandler {
 
 		private void updateResult(final boolean value) {
 			mResult = mResult && value;
-			if (mResult == false) {
+			if (!mResult) {
 				mIsFinished = true;
 			}
 		}
@@ -1378,10 +1370,7 @@ public class FunctionHandler {
 			if (one == null && other == null) {
 				return true;
 			}
-			if (one == null) {
-				return false;
-			}
-			if (other == null) {
+			if ((one == null) || (other == null)) {
 				return false;
 			}
 			throw new IllegalArgumentException("Both arguments are non-null");

@@ -2,22 +2,22 @@
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IIncomingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Given a nested word automaton, this class computes a binary equivalence relation over the states where pairs of
@@ -70,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
  * <li>for each common internal and call symbol there is a successor pair {@code (p', q')} in the output</li>
  * <li>(optionally) {@code p} is accepting iff {@code q} is accepting</li>
  * </ul>
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -120,7 +121,7 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 
 	/**
 	 * Constructor with an initial partition.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -165,7 +166,7 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 
 	@Override
 	protected void initializeAllNonreflexivePairsRespectingAcceptance() throws AutomataOperationCanceledException {
-		final Collection<Set<STATE>> newBlocks = new ArrayList<>();
+		final Collection<ImmutableSet<STATE>> newBlocks = new ArrayList<>();
 		for (final Iterator<Set<STATE>> iter = mPartition.iterator(); iter.hasNext();) {
 			final Set<STATE> block = iter.next();
 			assert !block.isEmpty() : "The input sets should not be empty.";
@@ -182,8 +183,8 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 
 			// add accepting and nonaccepting blocks if non-empty
 			if (!finals.isEmpty() && !nonfinals.isEmpty()) {
-				newBlocks.add(finals);
-				newBlocks.add(nonfinals);
+				newBlocks.add(ImmutableSet.of(finals));
+				newBlocks.add(ImmutableSet.of(nonfinals));
 				iter.remove();
 			}
 		}
@@ -234,8 +235,9 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 		// split into new blocks
 		mPartition.remove(block);
 		for (final Set<STATE> newBlock : letters2states.values()) {
-			mPartition.add(newBlock);
-			queue.add(newBlock);
+			final ImmutableSet<STATE> immBlock = ImmutableSet.of(newBlock);
+			mPartition.add(immBlock);
+			queue.add(immBlock);
 		}
 		return true;
 	}
@@ -321,18 +323,21 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 			return;
 		}
 		mPartition.remove(block);
-		updatePartitionAndMap(state2block, markedStatesInBlock);
-		updatePartitionAndMap(state2block, unmarkedStatesInBlock);
+
+		final ImmutableSet<STATE> immMarkedStatesInBlock = ImmutableSet.of(markedStatesInBlock);
+		updatePartitionAndMap(state2block, immMarkedStatesInBlock);
+		final ImmutableSet<STATE> immUnmarkedStatesInBlock = ImmutableSet.of(unmarkedStatesInBlock);
+		updatePartitionAndMap(state2block, ImmutableSet.of(immUnmarkedStatesInBlock));
 
 		// add smaller block to worklist
-		if (markedStatesInBlock.size() < unmarkedStatesInBlock.size()) {
-			queue.add(markedStatesInBlock);
+		if (immMarkedStatesInBlock.size() < immUnmarkedStatesInBlock.size()) {
+			queue.add(immMarkedStatesInBlock);
 		} else {
-			queue.add(unmarkedStatesInBlock);
+			queue.add(immUnmarkedStatesInBlock);
 		}
 	}
 
-	private void updatePartitionAndMap(final Map<STATE, Set<STATE>> state2block, final Set<STATE> newBlock) {
+	private void updatePartitionAndMap(final Map<STATE, Set<STATE>> state2block, final ImmutableSet<STATE> newBlock) {
 		mPartition.add(newBlock);
 		for (final STATE state : newBlock) {
 			state2block.put(state, newBlock);
@@ -341,7 +346,7 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 
 	private static <STATE> Collection<Set<STATE>> createSingleBlockPartition(final Set<STATE> states) {
 		final Set<Set<STATE>> result = new HashSet<>();
-		result.add(states);
+		result.add(ImmutableSet.of(states));
 		return result;
 	}
 

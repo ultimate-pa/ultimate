@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -164,7 +165,12 @@ public class LoopAcceleratorLite {
 	 * @param loop
 	 */
 	private void calculateSymbolicMemory(final Backbone backbone, final Loop loop) {
-		final SimultaneousUpdate update = new SimultaneousUpdate(backbone.getFormula(), mScript);
+		final SimultaneousUpdate update;
+		try {
+			update = SimultaneousUpdate.fromTransFormula(backbone.getFormula(), mScript);
+		} catch (final SimultaneousUpdateException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
 		final Set<TermVariable> aux = new HashSet<>(loop.getVars());
 		final TransFormula tf = buildFormula(mScript, loop.updateVars(backbone.getFormula().getFormula(),
 				backbone.getFormula().getInVars(), backbone.getFormula().getOutVars()), loop.getInVars(),
@@ -173,10 +179,10 @@ public class LoopAcceleratorLite {
 		backbone.setFormula(tf);
 
 		final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mServices, tf, mOldSymbolTable);
-		symbolicMemory.updateVars(update.getUpdatedVars());
+		symbolicMemory.updateVars(update.getDeterministicAssignment());
 
 		final UnmodifiableTransFormula condition = symbolicMemory.updateCondition(
-				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices, mLogger));
+				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices));
 
 		final TermVariable backbonePathCounter =
 				mScript.constructFreshTermVariable("kappa", mScript.getScript().sort(SmtSortUtils.INT_SORT));

@@ -49,14 +49,14 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopsAndPotentialCycles
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Large\ block\ encoding\ in\ concurrent\ analysis=OFF
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=false
 
 
 #Thu Oct 29 23:01:13 CET 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/...\ calls\ to\ implemented\ procedures=ONLY_FOR_CONCURRENT_PROGRAMS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
 
 
 #Tue Nov 21 08:04:41 CET 2017

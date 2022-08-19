@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.TransitionUnifier;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -133,14 +134,10 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			}
 			state2place.put(nwaState, nwaState);
 		}
-		Set<PLACE> succPlace;
-		Set<PLACE> predPlace;
 		for (final PLACE content : nwa.getStates()) {
-			predPlace = new HashSet<>();
-			predPlace.add(state2place.get(content));
+			final ImmutableSet<PLACE> predPlace = ImmutableSet.singleton(state2place.get(content));
 			for (final OutgoingInternalTransition<LETTER, PLACE> trans : nwa.internalSuccessors(content)) {
-				succPlace = new HashSet<>();
-				succPlace.add(state2place.get(trans.getSucc()));
+				final ImmutableSet<PLACE> succPlace = ImmutableSet.singleton(state2place.get(trans.getSucc()));
 				addTransition(trans.getLetter(), predPlace, succPlace);
 			}
 		}
@@ -148,12 +145,12 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	@Override
-	public Set<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition) {
+	public ImmutableSet<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition) {
 		return cast(transition).getSuccessors();
 	}
 
 	@Override
-	public Set<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition) {
+	public ImmutableSet<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition) {
 		return cast(transition).getPredecessors();
 	}
 
@@ -237,8 +234,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 *            successor places
 	 * @return the newly added transition
 	 */
-	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
-			final Set<PLACE> succs, final int transitionId){
+	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final ImmutableSet<PLACE> preds,
+			final ImmutableSet<PLACE> succs, final int transitionId) {
 		assert mAlphabet.contains(letter) : "Letter not in alphabet: " + letter;
 		if (mTransitionIds.contains(transitionId)) {
 			throw new IllegalArgumentException("Transition with id " + transitionId + " was already added.");
@@ -263,8 +260,9 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		return transition;
 
 	}
-	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
-			final Set<PLACE> succs) {
+
+	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final ImmutableSet<PLACE> preds,
+			final ImmutableSet<PLACE> succs) {
 		return addTransition(letter, preds, succs, mTransitions.size());
 	}
 

@@ -9,28 +9,26 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 
 /**
  * IInterpolantProvider using sp or wp. For better interpolants, we abstract all variables away, that are not read
@@ -40,14 +38,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.Topological
  */
 public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		implements IInterpolantProvider<LETTER> {
-
-	private final ManagedScript mManagedScript;
-	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final IPredicateUnifier mPredicateUnifier;
 	private final ArrayIndexEqualityManager mAiem;
+	private final ManagedScript mManagedScript;
+	private final IUltimateServiceProvider mServices;
+	private final IPredicateUnifier mPredicateUnifier;
 
 	protected final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 	protected final Script mScript;
@@ -56,7 +53,7 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IPredicateUnifier predicateUnifier) {
 		mManagedScript = managedScript;
-		mScript = mManagedScript.getScript();
+		mScript = managedScript.getScript();
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = simplificationTechnique;
@@ -70,25 +67,6 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		mAiem.unlockSolver();
 	}
 
-	private static <STATE> List<STATE> revTopSort(final INestedWordAutomaton<?, STATE> automaton,
-			final Map<STATE, ?> stateMap) {
-		final Map<STATE, Set<STATE>> successors = new HashMap<>();
-		for (final STATE state : automaton.getStates()) {
-			if (stateMap.containsKey(state)) {
-				continue;
-			}
-			final Set<STATE> succs = new HashSet<>();
-			for (final OutgoingInternalTransition<?, STATE> edge : automaton.internalSuccessors(state)) {
-				final STATE succ = edge.getSucc();
-				if (!stateMap.containsKey(succ)) {
-					succs.add(succ);
-				}
-			}
-			successors.put(state, succs);
-		}
-		return new TopologicalSorter<>(successors::get).reversedTopologicalOrdering(successors.keySet()).get();
-	}
-
 	@Override
 	public <STATE> void addInterpolants(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Map<STATE, IPredicate> states2Predicates) {
@@ -100,10 +78,10 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 			ipVars.addAll(vars);
 			liveIpVariables.put(entry.getKey(), vars);
 		}
-		final List<STATE> order = revTopSort(automaton, states2Predicates);
+		final List<STATE> order = McrUtils.reversedTopologicalOrdering(automaton, states2Predicates::containsKey);
 		for (final STATE state : order) {
 			final Set<TermVariable> vars = new HashSet<>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : automaton.internalSuccessors(state)) {
+			for (final var edge : automaton.internalSuccessors(state)) {
 				vars.addAll(McrUtils.getTermVariables(edge.getLetter().getTransformula().getInVars().keySet()));
 				vars.addAll(liveIpVariables.get(edge.getSucc()));
 			}
@@ -116,30 +94,32 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		// Caluculate sp/wp for all states in the given order
 		for (final STATE state : order) {
 			final Term term = calculateTerm(automaton, state, states2Predicates);
-			if (term == null) {
-				continue;
+			final IPredicate predicate = getPredicateWithAbstraction(term, liveIpVariables.get(state));
+			if (predicate != null) {
+				states2Predicates.put(state, predicate);
 			}
-			// Abstract all variables away that are not read afterwards and do not occur in the original interpolants
-			Term result = McrUtils.abstractVariables(term, liveIpVariables.get(state), getQuantifier(), mServices,
-					mLogger, mManagedScript, mSimplificationTechnique, mXnfConversionTechnique);
-			// Ignore the interpolant, if it still contains quantifiers
-			if (!QuantifierUtils.isQuantifierFree(result)) {
-				continue;
-			}
-			// Eliminate all stores (using case distinction on index equalities)
-			final List<MultiDimensionalSelectOverNestedStore> stores =
-					MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, result);
-			for (final MultiDimensionalSelectOverNestedStore m : stores) {
-				result = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, result, m);
-			}
-			states2Predicates.put(state, mPredicateUnifier.getOrConstructPredicate(result));
 		}
+	}
+
+	private IPredicate getPredicateWithAbstraction(final Term term, final Set<TermVariable> importantVars) {
+		Term result = McrUtils.abstractVariables(term, importantVars, getQuantifier(), mManagedScript, mServices,
+				mLogger, mSimplificationTechnique, mXnfConversionTechnique);
+		if (!QuantifierUtils.isQuantifierFree(result)) {
+			return null;
+		}
+		// Eliminate all stores (using case distinction on index equalities)
+		final var stores =
+				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, result);
+		for (final var m : stores) {
+			result = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, result, m);
+		}
+		return mPredicateUnifier.getOrConstructPredicate(result);
 	}
 
 	protected abstract <STATE> Term calculateTerm(final INestedWordAutomaton<LETTER, STATE> automaton, STATE state,
 			Map<STATE, IPredicate> stateMap);
 
-	protected abstract int getQuantifier();
-
 	protected abstract boolean useReversedOrder();
+
+	protected abstract int getQuantifier();
 }

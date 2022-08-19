@@ -24,16 +24,22 @@ public class CCBaseTerm extends CCTerm {
 	Object mSymbol;
 
 	public CCBaseTerm(final boolean isFunc, final int parentPos, final Object symb) {
-		super(isFunc, parentPos, symb.hashCode());
+		super(isFunc, parentPos, symb.hashCode(), 0);
 		mSymbol = symb;
 	}
 
 	@Override
 	public String toString() {
+		String res = mSymbol.toString();
 		if (mSymbol instanceof FunctionSymbol) {
-			return ((FunctionSymbol)mSymbol).getName();
+			res = ((FunctionSymbol) mSymbol).getName();
+			if (((FunctionSymbol) mSymbol).getIndices() != null) {
+				for (String ind : ((FunctionSymbol) mSymbol).getIndices()) {
+					res = res + "_" + ind;
+				}
+			}
 		}
-		return mSymbol.toString();
+		return res;
 	}
 
 	public FunctionSymbol getFunctionSymbol() {

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2014-2021 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2013-2021 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -62,6 +62,9 @@ public final class ResultUtil {
 	}
 
 	public static <TE extends IElement, E> List<ILocation> getLocationSequence(final IProgramExecution<TE, E> pe) {
+		if (pe == null) {
+			return Collections.emptyList();
+		}
 		final List<ILocation> result = new ArrayList<>();
 		for (int i = 0; i < pe.getLength(); i++) {
 			final AtomicTraceElement<TE> te = pe.getTraceElement(i);
@@ -144,21 +147,6 @@ public final class ResultUtil {
 	}
 
 	/**
-	 * Return the checked specification that is checked at the error location.
-	 */
-	public static <ELEM extends IElement> Check getCheckedSpecification(final ELEM element) {
-		final Check check = Check.getAnnotation(element);
-		if (check != null) {
-			return check;
-		}
-		final ILocation loc = ILocation.getAnnotation(element);
-		if (loc == null) {
-			return null;
-		}
-		return null;
-	}
-
-	/**
 	 * Write all results contained in the {@link IResultService} instance to a logger instance.
 	 *
 	 * @param logger
@@ -202,7 +190,7 @@ public final class ResultUtil {
 				sb.append(" [Line: ");
 				sb.append(loc.getStartLine()).append("]");
 			} else {
-				sb.append(" [UNKNOWN] ");
+				sb.append(" [Unknown line] ");
 			}
 		}
 		sb.append(": ");
@@ -237,5 +225,36 @@ public final class ResultUtil {
 			}
 		}
 		return filteredList;
+	}
+
+	/**
+	 * Combines results for multiple petrification-created copies of a location, for a fixed number of thread instances.
+	 * <ul>
+	 * <li>Only if both results are positive, a positive result is returned.</li>
+	 * <li>If at least one of the results is negative (a counterexample), then a negative result is returned.</li>
+	 * <li>Otherwise, the old result is returned.</li>
+	 * </ul>
+	 *
+	 * @param oldResult
+	 *            The first computed result
+	 * @param newResult
+	 *            A new result computed for another copy of the location
+	 * @return the combined result
+	 */
+	public static IResult combineLocationResults(final IResult oldResult, final IResult newResult) {
+		if (oldResult instanceof DataRaceFoundResult<?, ?, ?>) {
+			return oldResult;
+		}
+		if (newResult instanceof CounterExampleResult<?, ?, ?> || newResult instanceof DataRaceFoundResult<?, ?, ?>) {
+			return newResult;
+		}
+		if (oldResult instanceof TimeoutResultAtElement<?>
+				|| oldResult instanceof UserSpecifiedLimitReachedResultAtElement<?>
+				|| oldResult instanceof CounterExampleResult<?, ?, ?>
+				|| oldResult instanceof UnprovableResult<?, ?, ?>) {
+			return oldResult;
+		}
+		assert oldResult instanceof PositiveResult<?> : "Unsupported location-specific result: " + oldResult;
+		return newResult;
 	}
 }

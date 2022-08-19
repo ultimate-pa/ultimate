@@ -40,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -89,10 +90,14 @@ public class DataStructureUtils {
 	}
 
 	/**
-	 * @return an Optional<T> that contains an element that is contained in set1 and contained in set2 and that does not
-	 *         contain en element otherwise.
+	 * @return an Optional<T> that contains an element that is contained in both sets or is empty if both sets do not
+	 *         have a common element.
 	 */
 	public static <T> Optional<T> getSomeCommonElement(final Set<T> set1, final Set<T> set2) {
+		if (set1.isEmpty() || set2.isEmpty()) {
+			// at least one is empty, there is no common element
+			return Optional.empty();
+		}
 		final Set<T> larger;
 		final Set<T> smaller;
 		if (set1.size() > set2.size()) {
@@ -109,6 +114,12 @@ public class DataStructureUtils {
 	 * Construct a {@link Set} that contains all elements of set1 that are not in set2.
 	 */
 	public static <T> Set<T> difference(final Set<T> a, final Set<T> b) {
+		if (a.isEmpty()) {
+			return Collections.emptySet();
+		}
+		if (b.isEmpty()) {
+			return new HashSet<>(a);
+		}
 		return a.stream().filter(elem -> !b.contains(elem)).collect(Collectors.toSet());
 	}
 
@@ -135,7 +146,7 @@ public class DataStructureUtils {
 			return Collections.emptySet();
 		}
 
-		final int size = Arrays.stream(a).mapToInt(set -> set.size()).sum();
+		final int size = Arrays.stream(a).mapToInt(Set::size).sum();
 
 		final Set<T> rtr = DataStructureUtils.getFreshSet(a[0], size);
 		Arrays.stream(a).forEach(rtr::addAll);
@@ -168,14 +179,23 @@ public class DataStructureUtils {
 	 * @return
 	 */
 	public static <T> boolean haveNonEmptyIntersection(final Set<T> set1, final Set<T> set2) {
-		return getSomeCommonElement(set1, set2).isPresent();
+		final Set<T> larger;
+		final Set<T> smaller;
+		if (set1.size() > set2.size()) {
+			larger = set1;
+			smaller = set2;
+		} else {
+			larger = set2;
+			smaller = set1;
+		}
+		return smaller.stream().anyMatch(larger::contains);
 	}
 
 	/**
 	 * @return Both sets are disjunct
 	 */
 	public static <T> boolean haveEmptyIntersection(final Set<T> set1, final Set<T> set2) {
-		return !getSomeCommonElement(set1, set2).isPresent();
+		return !haveNonEmptyIntersection(set1, set2);
 	}
 
 	public static <E> String prettyPrint(final Set<E> set) {
@@ -352,4 +372,50 @@ public class DataStructureUtils {
 		return rtr;
 	}
 
+	/**
+	 * Gets an element from a given {@link Iterable}, and checks (with assertions) that this element is the only one.
+	 *
+	 * @param <E>
+	 *            The type of elements
+	 *
+	 * @param elements
+	 *            The {@link Iterable} from which the first element is retrieved.
+	 * @param thing
+	 *            A string describing the kind of element that is retrieved. Used in the assertion error messages
+	 * @return The first (and only) element
+	 */
+	public static <E> E getOneAndOnly(final Iterable<E> elements, final String thing) {
+		final Iterator<E> iterator = elements.iterator();
+		assert iterator.hasNext() : "Must have at least one " + thing;
+		final E elem = iterator.next();
+		assert !iterator.hasNext() : "Only one " + thing + " allowed";
+		return elem;
+	}
+
+	/**
+	 * Gets an element from a given {@link Iterable}, if there is one. Also checks (with assertions) that there are not
+	 * more than one elements.
+	 *
+	 * @param <E>
+	 *            The type of elements
+	 *
+	 * @param elements
+	 *            The {@link Iterable} from which the first element is retrieved.
+	 * @param errMsg
+	 *            An error message used in the assertion that there are not more elements
+	 * @return The first (and only) element, if there is one
+	 */
+	public static <E> Optional<E> getOnly(final Iterable<E> elements, final String errMsg) {
+		final Iterator<E> iterator = elements.iterator();
+		if (!iterator.hasNext()) {
+			return Optional.empty();
+		}
+		final E elem = iterator.next();
+		assert !iterator.hasNext() : errMsg;
+		return Optional.of(elem);
+	}
+
+	public static <E> Stream<E> filteredCast(final Stream<?> s, final Class<E> c) {
+		return s.filter(a -> c.isAssignableFrom(a.getClass())).map(c::cast);
+	}
 }

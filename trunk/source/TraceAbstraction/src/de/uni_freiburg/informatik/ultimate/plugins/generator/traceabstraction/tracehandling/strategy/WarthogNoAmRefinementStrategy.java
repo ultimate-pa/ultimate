@@ -33,15 +33,14 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
@@ -51,28 +50,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class WarthogNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class WarthogNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public WarthogNoAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+	public WarthogNoAmRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
-			createModules(final StrategyModuleFactory<LETTER> factory) {
+	private static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
-		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoFloats(tc)) {
-			rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.ForwardPredicates,
-					SolverBuilder.LOGIC_CVC4_BITVECTORS, AssertCodeBlockOrder.NOT_INCREMENTALLY));
+			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// floats, but no quantifiers and no extensions
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.ForwardPredicates,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		}
-		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}

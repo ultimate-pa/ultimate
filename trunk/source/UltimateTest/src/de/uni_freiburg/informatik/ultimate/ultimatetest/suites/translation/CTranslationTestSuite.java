@@ -57,7 +57,6 @@ public class CTranslationTestSuite extends AbstractEvalTestSuite {
 
 	// @formatter:off
 
-	@SuppressWarnings("unchecked")
 	private static final String[] TOOLCHAINS = new String[] {
 			"CTranslationTest.xml","CTranslationBETest.xml"
 	};

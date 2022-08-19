@@ -18,8 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.math.BigInteger;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

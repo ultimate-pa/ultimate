@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -57,18 +58,14 @@ public class SubtermPropertyChecker extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker) {
-			if (mFoundInCurrentSeach) {
+			if (mFoundInCurrentSeach || mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
 				// do nothing
 			} else {
-				if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
-					// do nothing
+				if (mProperty.test(getTerm())) {
+					mFoundInCurrentSeach = true;
+					reset();
 				} else {
-					if (mProperty.test(getTerm())) {
-						mFoundInCurrentSeach = true;
-						reset();
-					} else {
-						super.walk(walker);
-					}
+					super.walk(walker);
 				}
 			}
 		}
@@ -111,20 +108,25 @@ public class SubtermPropertyChecker extends NonRecursive {
 		public void walk(final NonRecursive walker, final MatchTerm term) {
 			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	private final Predicate<Term> mProperty;
 	private boolean mFoundInCurrentSeach;
 
 	public SubtermPropertyChecker(final Predicate<Term> property) {
-		super();
 		mProperty = property;
 	}
 
 	/**
 	 * Returns true iff this term contains the subterm of this ContainsSubterm object.
 	 */
-	public boolean isPropertySatisfied(final Term term) {
+	public boolean isSatisfiedBySomeSubterm(final Term term) {
 		mFoundInCurrentSeach = false;
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
 		run(new MyWalker(term));

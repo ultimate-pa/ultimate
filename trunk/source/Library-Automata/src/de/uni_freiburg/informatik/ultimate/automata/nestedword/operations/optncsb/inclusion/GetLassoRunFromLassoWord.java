@@ -38,7 +38,7 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiToGeneralizedBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -52,54 +52,55 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
-public class GetLassoRunFromLassoWord<LETTER, STATE> extends AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> {
-	
+public class GetLassoRunFromLassoWord<LETTER, STATE>
+		extends AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> {
+
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
-	
+
 	protected final IStateFactory<STATE> mStateFactory;
 
 	private final Map<STATE, StateContainer<LETTER, STATE>> mStates = new HashMap<>();
-	
+
 	private final ReachableStatesComputationTarjan mReach;
-	
+
 	private final NestedWord<LETTER> mStem;
 	private final NestedWord<LETTER> mLoop;
-	
-	@SuppressWarnings("unchecked")
-	public GetLassoRunFromLassoWord(AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> operand, NestedLassoWord<LETTER> lassoWord)  throws AutomataOperationCanceledException {
+
+	public GetLassoRunFromLassoWord(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final NestedLassoWord<LETTER> lassoWord) throws AutomataOperationCanceledException {
 		super(services, operand.getVpAlphabet());
 		mStateFactory = operand.getStateFactory();
 		mDownStates.add(operand.getEmptyStackState());
-		if(operand instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-			mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)operand;
-//			IBuchiIntersectStateFactory<STATE> sf = (IBuchiIntersectStateFactory<STATE>)operand.getStateFactory();
-//			GeneralizedBuchiToBuchi<LETTER, STATE> buchi = new GeneralizedBuchiToBuchi<>(sf, mOperand);
-//			BuchiAccepts<LETTER, STATE> checker;
-//			try {
-//				checker = new BuchiAccepts<>(services,buchi, lassoWord);
-//				System.err.println("Accepts: " + checker.getResult());
-//			} catch (AutomataLibraryException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-		}else {
-			mOperand = new BuchiToGeneralizedBuchi<LETTER, STATE>(operand);
-//			try {
-//				BuchiAccepts<LETTER, STATE> checker = new BuchiAccepts<>(services, operand, lassoWord);
-//				System.err.println("Accepts: " + checker.getResult());
-//			} catch (AutomataLibraryException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
+		if (operand instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+			mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) operand;
+			// IBuchiIntersectStateFactory<STATE> sf = (IBuchiIntersectStateFactory<STATE>)operand.getStateFactory();
+			// GeneralizedBuchiToBuchi<LETTER, STATE> buchi = new GeneralizedBuchiToBuchi<>(sf, mOperand);
+			// BuchiAccepts<LETTER, STATE> checker;
+			// try {
+			// checker = new BuchiAccepts<>(services,buchi, lassoWord);
+			// System.err.println("Accepts: " + checker.getResult());
+			// } catch (AutomataLibraryException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// }
+		} else {
+			mOperand = new BuchiToGeneralizedBuchi<>(operand);
+			// try {
+			// BuchiAccepts<LETTER, STATE> checker = new BuchiAccepts<>(services, operand, lassoWord);
+			// System.err.println("Accepts: " + checker.getResult());
+			// } catch (AutomataLibraryException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// }
 		}
 		mStem = lassoWord.getStem();
 		mLoop = lassoWord.getLoop();
-		if(!mOperand.getVpAlphabet().getCallAlphabet().isEmpty()
-		|| !mOperand.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+		if (!mOperand.getVpAlphabet().getCallAlphabet().isEmpty()
+				|| !mOperand.getVpAlphabet().getReturnAlphabet().isEmpty()) {
 			throw new UnsupportedOperationException("Calls or Returns are not empty");
 		}
-		if(mLoop.length() == 0) {
+		if (mLoop.length() == 0) {
 			throw new UnsupportedOperationException("Loop is empty");
 		}
 		try {
@@ -113,187 +114,190 @@ public class GetLassoRunFromLassoWord<LETTER, STATE> extends AbstractGeneralized
 			mLogger.debug(stateContainerInformation());
 		}
 	}
-	
+
 	// -------- use following like we have an automaton
 	// 0->st[1]->1->...->st[m]->m -> lp[1] -> m+1 -> ... -> lp[n] -> m+n -> lp[1] -> m+1
-	protected int getNextState(int index) {
-		if(index < mStem.length() + mLoop.length()) {
+	protected int getNextState(final int index) {
+		if (index < mStem.length() + mLoop.length()) {
 			return index + 1;
 		}
 		assert index == mStem.length() + mLoop.length();
 		return mStem.length() + 1;
 	}
-	
-	protected LETTER getNextLetter(int state) {
+
+	protected LETTER getNextLetter(final int state) {
 		assert state <= mStem.length() + mLoop.length();
-		if(state < mStem.length()) {
+		if (state < mStem.length()) {
 			return mStem.getSymbol(state);
 		}
-		if(state < mStem.length() + mLoop.length()) {
+		if (state < mStem.length() + mLoop.length()) {
 			return mLoop.getSymbol(state - mStem.length());
 		}
 		assert state == mStem.length() + mLoop.length();
 		return mLoop.getSymbol(0);
 	}
-	
+
 	@Override
-	protected StateContainer<LETTER, STATE> getStateContainer(STATE state) {
+	protected StateContainer<LETTER, STATE> getStateContainer(final STATE state) {
 		return mStates.get(state);
 	}
-	
+
 	private String stateContainerInformation() {
 		return mStates.size() + " StateContainers ";
 	}
-	
-	private StateContainer<LETTER, STATE> getOrAddState(STATE state) {
+
+	private StateContainer<LETTER, STATE> getOrAddState(final STATE state) {
 		StateContainer<LETTER, STATE> cont = mStates.get(state);
-		if(cont == null) {
+		if (cont == null) {
 			cont = new StateContainer<>(state);
 			mStates.put(state, cont);
 		}
 		return cont;
 	}
-	
+
 	@Override
 	public Boolean isEmpty() {
 		return mReach.isEmpty();
 	}
-		
+
 	// have to use information in tarjan
 	@Override
 	public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws AutomataOperationCanceledException {
-		if(mReach.isEmpty()) return null;
+		if (mReach.isEmpty()) {
+			return null;
+		}
 		// construct lasso run
-		if(mLasso == null) {
-			for(List<STATE> scc : mReach.getLoopList()) {
-				LassoConstructor<LETTER, STATE> lc = new LassoConstructor<>(mServices, this, scc);
-				NestedLassoRun<LETTER, STATE> lasso = lc.getNestedLassoRun();
-				if(mLasso == null
-				|| (mLasso.getStem().getLength() + mLasso.getLoop().getLength()
-						> lasso.getStem().getLength() + lasso.getLoop().getLength())) {
+		if (mLasso == null) {
+			for (final List<STATE> scc : mReach.getLoopList()) {
+				final LassoConstructor<LETTER, STATE> lc = new LassoConstructor<>(mServices, this, scc);
+				final NestedLassoRun<LETTER, STATE> lasso = lc.getNestedLassoRun();
+				if (mLasso == null || mLasso.getStem().getLength()
+						+ mLasso.getLoop().getLength() > lasso.getStem().getLength() + lasso.getLoop().getLength()) {
 					mLasso = lasso;
 				}
 			}
 		}
 		return mLasso;
 	}
-	
+
 	class ReachableStatesComputationTarjan {
-		private Tarjan mTarjan ;
-		
+		private final Tarjan mTarjan;
+
 		public ReachableStatesComputationTarjan() throws AutomataOperationCanceledException {
 			mNumberOfConstructedStates = 0;
 			mTarjan = new Tarjan();
 		}
-		
+
 		public Boolean isEmpty() {
 			return mTarjan.mIsEmpty;
 		}
-		
+
 		public List<List<STATE>> getLoopList() {
 			return mTarjan.mSCC;
 		}
 
-	    private class Tarjan {
-	        
-	        private int mIndex;
-	        private final Stack<STATE> mStack;             // tarjan's stack
-	    	private final TObjectIntMap<STATE> mIndexMap ;
-	    	private final TObjectIntMap<STATE> mLowlinkMap;
-	        private List<List<STATE>> mSCC;
-	        private Boolean mIsEmpty = null;
-	                
-	        public Tarjan() throws AutomataOperationCanceledException {
-	            
-	            this.mStack = new Stack<>();
-	            this.mIndexMap = new TObjectIntHashMap<>();
-	            this.mLowlinkMap = new TObjectIntHashMap<>();
-	            this.mSCC = new ArrayList<>();
-	            this.mIndex = 0;
-	            for(STATE state : mOperand.getInitialStates()) {
-	            	mInitialStates.add(state);
-	                if(! mIndexMap.containsKey(state)){
-	                    strongConnect(state, 0);
-	                }
-	            }
-	            
-	            if(mIsEmpty == null) {
-	                mIsEmpty = true;
-	            }
-	        }
-	        
-	        void strongConnect(STATE state, int wordState) throws AutomataOperationCanceledException {
-	            
-	    		mStack.push(state);
-	    		mIndexMap.put(state, mIndex);
-	    		mLowlinkMap.put(state, mIndex);
-	    		
-	    		++ mIndex;	
-	            ++ mNumberOfConstructedStates;
-	            
-	            StateContainer<LETTER, STATE> cont = getOrAddState(state);
-	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state, getNextLetter(wordState))) {
-					if (! getServices().getProgressAwareTimer().continueProcessing()) {
+		private class Tarjan {
+
+			private int mIndex;
+			private final Stack<STATE> mStack; // tarjan's stack
+			private final TObjectIntMap<STATE> mIndexMap;
+			private final TObjectIntMap<STATE> mLowlinkMap;
+			private final List<List<STATE>> mSCC;
+			private Boolean mIsEmpty = null;
+
+			public Tarjan() throws AutomataOperationCanceledException {
+
+				this.mStack = new Stack<>();
+				this.mIndexMap = new TObjectIntHashMap<>();
+				this.mLowlinkMap = new TObjectIntHashMap<>();
+				this.mSCC = new ArrayList<>();
+				this.mIndex = 0;
+				for (final STATE state : mOperand.getInitialStates()) {
+					mInitialStates.add(state);
+					if (!mIndexMap.containsKey(state)) {
+						strongConnect(state, 0);
+					}
+				}
+
+				if (mIsEmpty == null) {
+					mIsEmpty = true;
+				}
+			}
+
+			private AutomataLibraryServices getServices() {
+				return mServices;
+			}
+
+			private RunningTaskInfo constructRunningTaskInfo() {
+				final String taskDescription =
+						constructRunningTaskInfoMessage(mNumberOfConstructedStates, mOperand.getClass());
+				return new RunningTaskInfo(getClass(), taskDescription);
+			}
+
+			void strongConnect(final STATE state, final int wordState) throws AutomataOperationCanceledException {
+
+				mStack.push(state);
+				mIndexMap.put(state, mIndex);
+				mLowlinkMap.put(state, mIndex);
+
+				++mIndex;
+				++mNumberOfConstructedStates;
+
+				final StateContainer<LETTER, STATE> cont = getOrAddState(state);
+				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state,
+						getNextLetter(wordState))) {
+					if (!getServices().getProgressAwareTimer().continueProcessing()) {
 						final RunningTaskInfo rti = constructRunningTaskInfo();
 						throw new AutomataOperationCanceledException(rti);
 					}
-					STATE succ = trans.getSucc();
-					if(! mIndexMap.containsKey(succ)) {
+					final STATE succ = trans.getSucc();
+					if (!mIndexMap.containsKey(succ)) {
 						strongConnect(succ, getNextState(wordState)); // did not visit succ before
-	                    mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mLowlinkMap.get(succ)));					
-					}else if(mStack.contains(succ)) {
-					    mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mIndexMap.get(succ)));					
+						mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mLowlinkMap.get(succ)));
+					} else if (mStack.contains(succ)) {
+						mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mIndexMap.get(succ)));
 					}
 					// explore new states, then we should add state information
 					cont.addInternalOutgoing(trans);
-					StateContainer<LETTER, STATE> succSc = getOrAddState(succ);
+					final StateContainer<LETTER, STATE> succSc = getOrAddState(succ);
 					succSc.addInternalIncoming(new IncomingInternalTransition<>(state, trans.getLetter()));
-                }
+				}
 
-	    		// found one strongly connected component
-	    		if(mLowlinkMap.get(state) == mIndexMap.get(state)){
-	    			
-	    			Set<Integer> labels = new HashSet<>();
-	    			List<STATE> sccList = new ArrayList<>();
-	    			
-	    			while(! mStack.empty()){
-	    				STATE stackTop = mStack.pop();
-	    				labels.addAll(mOperand.getAcceptanceLabels(stackTop));
-	    				sccList.add(stackTop);
-	    				if(stackTop.equals(state))
-	    					break;
-	    			}
+				// found one strongly connected component
+				if (mLowlinkMap.get(state) == mIndexMap.get(state)) {
 
-	    			boolean hasAcc = mOperand.getAcceptanceSize() == labels.size();	    			
-	    			if(sccList.size() == 1 // only has a single state
-	    					&& hasAcc            // it is an accepting states
-	    					) {
-	    				// if there is no self loop
-	    				if(! cont.hashSelfloop()) hasAcc = false;
-	    			}
-	    							
-	    			if(hasAcc) {
-	    				mIsEmpty = false;
-	    				mSCC.add(sccList);
-	    				if(Options.verbose) {
-	    					System.out.println("Loop: " + sccList);
-	    				}
-	    			}
-	    		}
-	        }
-	    }
-	}
+					final Set<Integer> labels = new HashSet<>();
+					final List<STATE> sccList = new ArrayList<>();
 
+					while (!mStack.empty()) {
+						final STATE stackTop = mStack.pop();
+						labels.addAll(mOperand.getAcceptanceLabels(stackTop));
+						sccList.add(stackTop);
+						if (stackTop.equals(state)) {
+							break;
+						}
+					}
 
-	private AutomataLibraryServices getServices() {
-		return mServices;
-	}
-	
-	private RunningTaskInfo constructRunningTaskInfo() {
-		final String taskDescription = "computing reachable states (" + mNumberOfConstructedStates
-				+ " states constructed" + "input type " + mOperand.getClass().getSimpleName() + ")";
-		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-		return rti;
+					boolean hasAcc = mOperand.getAcceptanceSize() == labels.size();
+					if (sccList.size() == 1 // only has a single state
+							&& hasAcc // it is an accepting states
+					) {
+						// if there is no self loop
+						if (!cont.hashSelfloop()) {
+							hasAcc = false;
+						}
+					}
+
+					if (hasAcc) {
+						mIsEmpty = false;
+						mSCC.add(sccList);
+						if (Options.verbose) {
+							System.out.println("Loop: " + sccList);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -302,23 +306,24 @@ public class GetLassoRunFromLassoWord<LETTER, STATE> extends AbstractGeneralized
 	}
 
 	@Override
-	public Set<LETTER> lettersInternalIncoming(STATE state) {
+	public Set<LETTER> lettersInternalIncoming(final STATE state) {
 		return mStates.get(state).lettersInternalIncoming();
 	}
 
-
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(STATE succ, LETTER letter) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
+			final LETTER letter) {
 		return mStates.get(succ).internalPredecessors(letter);
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(STATE succ) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
 		return mStates.get(succ).internalPredecessors();
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(STATE state, LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		return mStates.get(state).internalSuccessors(letter);
 	}
 
@@ -343,10 +348,9 @@ public class GetLassoRunFromLassoWord<LETTER, STATE> extends AbstractGeneralized
 	}
 
 	@Override
-	public boolean isInitial(STATE state) {
+	public boolean isInitial(final STATE state) {
 		return mOperand.isInitial(state);
 	}
-
 
 	@Override
 	public int getAcceptanceSize() {
@@ -354,18 +358,17 @@ public class GetLassoRunFromLassoWord<LETTER, STATE> extends AbstractGeneralized
 	}
 
 	@Override
-	public boolean isFinal(STATE state, int index) {
+	public boolean isFinal(final STATE state, final int index) {
 		return mOperand.isFinal(state, index);
 	}
 
 	@Override
-	public Set<Integer> getAcceptanceLabels(STATE state) {
+	public Set<Integer> getAcceptanceLabels(final STATE state) {
 		return mOperand.getAcceptanceLabels(state);
 	}
-	
 
 	@Override
-	public boolean isFinal(STATE state) {
+	public boolean isFinal(final STATE state) {
 		return !getAcceptanceLabels(state).isEmpty();
 	}
 

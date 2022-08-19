@@ -26,38 +26,45 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} similar to {@link CamelRefinementStrategy}, except that it does not modulate the
- * assertion order.
- * 
+ * {@link IRefinementStrategy} similar to {@link CamelRefinementStrategy}, except that it does modulate the assertion
+ * order according to a SMT feature heuristic.
+ *
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class CamelSmtAmRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class CamelSmtAmRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
+
+	public CamelSmtAmRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
+			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
+		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+	}
 
 	@SuppressWarnings("unchecked")
-	public CamelSmtAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
-			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory,
-				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_NestedInterpolation,
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)),
-						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)) },
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
+
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
+		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
+				new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
+				new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)));
+		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 
 	@Override

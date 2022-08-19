@@ -156,6 +156,7 @@ public class CACSL2BoogieBacktranslator
 	private final CACSL2BoogieBacktranslatorMapping mMapping;
 
 	private boolean mGenerateBacktranslationWarnings;
+	private boolean mBacktranslationWarned;
 
 	public CACSL2BoogieBacktranslator(final IUltimateServiceProvider services, final TypeSizes typeSizes,
 			final CACSL2BoogieBacktranslatorMapping mapping, final LocationFactory locationFactory) {
@@ -163,7 +164,8 @@ public class CACSL2BoogieBacktranslator
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMapping = mapping;
-		mGenerateBacktranslationWarnings = true;
+		mGenerateBacktranslationWarnings = false;
+		mBacktranslationWarned = false;
 		mTypeSizes = typeSizes;
 		mLocationFactory = locationFactory;
 	}
@@ -327,6 +329,11 @@ public class CACSL2BoogieBacktranslator
 		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
 		assert checkCallStackTarget(mLogger,
 				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
+		if (mBacktranslationWarned) {
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION,
+							"The program execution was not completely translated back.", Severity.WARNING));
+		}
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates,
 				oldPE.isConcurrent());
 	}
@@ -746,6 +753,7 @@ public class CACSL2BoogieBacktranslator
 		// mLogger.info("################# Input: " + cfg.getClass().getSimpleName());
 		// printHondas(cfg, mLogger::info);
 		// printCFG(cfg, mLogger::info);
+		final boolean oldValue = mGenerateBacktranslationWarnings;
 		mGenerateBacktranslationWarnings = false;
 		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c),
 				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger, mServices));
@@ -753,7 +761,7 @@ public class CACSL2BoogieBacktranslator
 		// mLogger.info("################# Output: " + translated.getClass().getSimpleName());
 		// printHondas(translated, mLogger::info);
 		// printCFG(translated, mLogger::info);
-		mGenerateBacktranslationWarnings = true;
+		mGenerateBacktranslationWarnings = oldValue;
 		return translated;
 	}
 
@@ -1292,11 +1300,13 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
-		mLogger.warn(message);
-		if (mGenerateBacktranslationWarnings) {
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION, message, Severity.WARNING));
+		mBacktranslationWarned = true;
+		if (!mGenerateBacktranslationWarnings) {
+			return;
 		}
+		mLogger.warn(message);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION, message, Severity.WARNING));
 	}
 
 	private TranslatedVariable translateIdentifierExpression(final IdentifierExpression expr) {

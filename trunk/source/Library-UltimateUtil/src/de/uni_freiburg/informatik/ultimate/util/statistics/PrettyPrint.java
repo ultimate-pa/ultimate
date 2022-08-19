@@ -26,12 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * Functions to pretty print statistics defined by a single {@link IStatisticsElement}.
- * You probably want to use these functions as references (for instance
- * {@code BiFunction<String, Object, String> pprint = PrettyPrint::dataThenKey})
+ * Functions to pretty print statistics defined by a single {@link IStatisticsElement}. You probably want to use these
+ * functions as references (for instance {@code BiFunction<String, Object, String> pprint = PrettyPrint::dataThenKey})
  * instead of calling them directly.
  *
  * @author schaetzc@tf.uni-freiburg.de
@@ -51,15 +56,23 @@ public final class PrettyPrint {
 	}
 
 	/**
-	 * Wraps another pretty printer to represent time data (given as nano seconds) in a way
-	 * such that the user can recognize the data as time.
+	 * Wraps another pretty printer to represent time data (given as nano seconds) in a way such that the user can
+	 * recognize the data as time.
 	 *
-	 * @param pprinter Pretty printer to be wrapped
+	 * @param pprinter
+	 *            Pretty printer to be wrapped
 	 * @return Pretty printer printing times by interpreting the data as nano seconds first
 	 */
 	public static BiFunction<String, Object, String> dataAsTime(final BiFunction<String, Object, String> pprinter) {
 		// having the unit in the field name rather than in the data makes processing easier
-		return (key, data) -> pprinter.apply(key + "[ms]", Math.round((long) data * 1e-6));
+		return (key, data) -> pprinter.apply(key,
+				CoreUtil.toTimeString((long) data, TimeUnit.NANOSECONDS, TimeUnit.SECONDS, 1));
+	}
+
+	public static BiFunction<String, Object, String> list(final BiFunction<String, Object, String> pprinter,
+			final Function<Object, String> elemPrinter) {
+		return (key, data) -> pprinter.apply(key,
+				((List) data).stream().map(elemPrinter).collect(Collectors.joining(", ", "[ ", " ]")));
 	}
 
 }

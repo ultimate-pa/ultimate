@@ -20,13 +20,16 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 
 /**
  * This class contains helper methods to classify quantified terms and literals.
@@ -148,6 +151,75 @@ public class QuantUtil {
 		}
 		varTerms.removeAll(varsInApps);
 		return varTerms.isEmpty();
+	}
+
+	/**
+	 * Check if a quantified atom is an equality between two variables.
+	 * @param atom the QuantLiteral atom
+	 * @return true if the atom is an equality between two variables, false else.
+	 */
+	public static boolean isVarEq(final QuantLiteral atom) {
+		assert !atom.isNegated();
+		if (atom instanceof QuantEquality) {
+			final QuantEquality eq = (QuantEquality) atom;
+			return eq.getLhs() instanceof TermVariable && eq.getRhs() instanceof TermVariable;
+		}
+		return false;
+	}
+
+	/**
+	 * For an arithmetical literal, get the terms t1, t2, such that the literal t1<t2 has form var<ground, ground<var,
+	 * var<var, or t1=t2 has form var=ground.
+	 * 
+	 * @param arithLit
+	 *            an arithmetical literal
+	 * @return the array [t1,t2]
+	 */
+	public static Term[] getArithmeticalTermLtTerm(final QuantLiteral arithLit, final TermCompiler compiler) {
+		assert arithLit.isArithmetical();
+		Term t1 = null;
+		Term t2 = null;
+		if (arithLit instanceof QuantEquality) {
+			final QuantEquality eq = (QuantEquality) arithLit;
+			assert eq.getLhs() instanceof TermVariable && eq.getRhs().getFreeVars().length == 0;
+			t1 = eq.getLhs();
+			t2 = eq.getRhs();
+		} else {
+			assert arithLit.isNegated();
+			final QuantBoundConstraint bc = (QuantBoundConstraint) arithLit.getAtom();
+			TermVariable lowerVar = null;
+			TermVariable upperVar = null;
+			SMTAffineTerm remainder = new SMTAffineTerm();
+			SMTAffineTerm aff = bc.getAffineTerm();
+			for (final Entry<Term, Rational> smd : aff.getSummands().entrySet()) {
+				if (smd.getKey() instanceof TermVariable) {
+					if (smd.getValue().signum() < 0) {
+						assert t1 == null;
+						lowerVar = (TermVariable) smd.getKey();
+					} else {
+						assert upperVar == null;
+						upperVar = (TermVariable) smd.getKey();
+					}
+				} else {
+					remainder.add(smd.getValue(), smd.getKey());
+				}
+			}
+			remainder.add(aff.getConstant());
+			assert lowerVar != null || upperVar != null;
+			if (lowerVar != null && upperVar != null) {
+				assert remainder.isConstant() && remainder.getConstant() == Rational.ZERO;
+				t1 = lowerVar;
+				t2 = upperVar;
+			} else if (lowerVar != null) {
+				t1 = lowerVar;
+				t2 = remainder.toTerm(compiler, lowerVar.getSort());
+			} else {
+				remainder.negate();
+				t1 = remainder.toTerm(compiler, upperVar.getSort());
+				t2 = upperVar;
+			}
+		}
+		return new Term[] { t1, t2 };
 	}
 
 	/**

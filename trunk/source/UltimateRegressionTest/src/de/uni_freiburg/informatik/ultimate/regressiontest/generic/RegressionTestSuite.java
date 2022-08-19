@@ -45,17 +45,17 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	private static final long DEFAULT_TIMEOUT = 20 * 1000L;
 
 	public RegressionTestSuite() {
-		super();
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		// exclude paths that match the following regex
 		mExcludeFilterRegexToolchain =
-				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL).*";
+				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL|DataRace).*";
 	}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new SafetyCheckTestResultDecider(runDefinition, false);
 	}
+
 }

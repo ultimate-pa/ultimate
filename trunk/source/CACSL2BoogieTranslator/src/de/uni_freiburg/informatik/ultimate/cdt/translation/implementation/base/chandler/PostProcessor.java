@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -97,10 +98,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class caring for some post processing steps, like creating an initializer procedure and the start procedure.
@@ -200,7 +204,7 @@ public class PostProcessor {
 		final Set<String> undefinedTypes = mTypeHandler.getUndefinedTypes();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 
-		final String checkedMethod = mSettings.getCheckedMethod();
+		final String checkedMethod = mSettings.getEntryMethod();
 
 		if (!checkedMethod.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(checkedMethod)) {
 			mLogger.info("Analyzing one entry point: " + checkedMethod);
@@ -240,8 +244,8 @@ public class PostProcessor {
 					decl.addAll(declareCurrentRoundingModeVar(loc));
 				}
 			}
-			final String[] importantFunctions = new String[] { "bvadd" };
-			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
+			final BvOp[] importantBvOperations = new BvOp[] { BvOp.bvadd, BvOp.bvneg };
+			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantBvOperations);
 		}
 		assert decl.stream().allMatch(Objects::nonNull);
 		return decl;
@@ -780,10 +784,22 @@ public class PostProcessor {
 							DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 					if (mCHandler.isHeapVar(id)) {
-						final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-						staticObjectInitStatements.add(
-								mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook, MemoryArea.STACK));
-						proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+						final CallStatement ultimateAllocCall;
+						if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
+							final Pair<RValue, CallStatement> pair = mMemoryHandler
+									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType(), hook);
+							final RValue addressRValue = pair.getFirst();
+							ultimateAllocCall = pair.getSecond();
+							final AssignmentStatement pointerAssignment = new AssignmentStatement(currentDeclsLoc,
+									new LeftHandSide[] { lhs }, new Expression[] { addressRValue.getValue() });
+							staticObjectInitStatements.add(pointerAssignment);
+						} else {
+							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
+							ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook,
+									MemoryArea.STACK);
+							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+						}
+						staticObjectInitStatements.add(ultimateAllocCall);
 					}
 
 					final ExpressionResult initRex =
@@ -803,7 +819,22 @@ public class PostProcessor {
 		}
 		if (mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 
-			{
+			// TODO 20211115 Matthias: added the following assume-base initialization for
+			// #valid[0] == 0. I presume that the assignment-case initialization is not
+			// needed in any approach and can be dropped.
+			if (true) {
+				// assume #valid[0] == 0 (i.e., the memory at the NULL-pointer is
+				// not allocated)
+				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
+				final Expression eq = ExpressionFactory.newBinaryExpression(translationUnitLoc, Operator.COMPEQ,
+						ExpressionFactory.constructNestedArrayAccessExpression(translationUnitLoc,
+								mMemoryHandler.getValidArray(translationUnitLoc), new Expression[] { zero }),
+						literalThatRepresentsFalse);
+				final AssumeStatement assume = new AssumeStatement(translationUnitLoc, eq);
+				initStatements.add(0, assume);
+			} else {
 				// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is
 				// not allocated)
 				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
@@ -899,7 +930,7 @@ public class PostProcessor {
 		final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
 		startStmt.add(
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT, new Expression[0]));
-		final String checkedMethod = mSettings.getCheckedMethod();
+		final String checkedMethod = mSettings.getEntryMethod();
 		final VarList[] checkedMethodOutParams =
 				mProcedureManager.getProcedureDeclaration(checkedMethod).getOutParams();
 		final VarList[] checkedMethodInParams = mProcedureManager.getProcedureDeclaration(checkedMethod).getInParams();

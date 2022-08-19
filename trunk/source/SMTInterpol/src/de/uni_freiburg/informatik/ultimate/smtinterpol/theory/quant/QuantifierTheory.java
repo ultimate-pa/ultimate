@@ -18,14 +18,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -36,9 +40,11 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
@@ -47,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.DestructiveEqualityReasoning.DERResult;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching.EMatching;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 
 /**
  * Solver for quantified formulas within the almost uninterpreted fragment (Restrictions on terms and literals are
@@ -82,34 +88,36 @@ public class QuantifierTheory implements ITheory {
 	private final ScopedArrayList<QuantClause> mQuantClauses;
 
 	/**
-	 * Literals (not atoms!) mapped to potential conflict and unit clauses that they are contained in. At creation, the
-	 * clauses would have been conflicts or unit clauses if the corresponding theories had already known the contained
-	 * literals. In the next checkpoint, false literals should have been propagated by the other theories, but we might
-	 * still have one undefined literal (and hence the clause is a unit clause).
+	 * Instances of quantified clauses that may be added to the DPLL engine in the future. The keys are undecided
+	 * literals (not atoms!) mapped to the instances they are contained in. The instances must not contain literals that
+	 * are currently set to true. This map should be used to return conflicts or propagate literals when an InstClause
+	 * becomes a conflict or unit clause.
 	 */
-	private final Map<Literal, Set<InstClause>> mPotentialConflictAndUnitClauses;
+	private final Map<Literal, Set<InstClause>> mPendingInstances;
 	private int mDecideLevelOfLastCheckpoint;
 
 	// Statistics
-	long mNumInstancesProduced, mNumInstancesDER, mNumInstancesProducedCP, mNumInstancesProducedFC;
+	long mNumInstancesProduced, mNumInstancesDER, mNumInstancesProducedConfl, mNumInstancesProducedEM,
+			mNumInstancesProducedEnum;
 	private long mNumCheckpoints, mNumCheckpointsWithNewEval, mNumConflicts, mNumProps, mNumFinalcheck;
 	private long mCheckpointTime, mFindEmatchingTime, mFinalCheckTime, mEMatchingTime, mDawgTime;
+	int[] mNumInstancesOfAge, mNumInstancesOfAgeEnum;
 
 	// Options
-	boolean mUseEMatching;
+	InstantiationMethod mInstantiationMethod;
 	boolean mUseUnknownTermValueInDawgs;
 	boolean mPropagateNewAux;
 	boolean mPropagateNewTerms;
 
 	public QuantifierTheory(final Theory th, final DPLLEngine engine, final Clausifier clausifier,
-			final boolean useEMatching, final boolean useUnknownTermDawgs, final boolean propagateNewTerms,
+			final InstantiationMethod instMethod, final boolean useUnknownTermDawgs, final boolean propagateNewTerms,
 			final boolean propagateNewAux) {
 		mClausifier = clausifier;
 		mLogger = clausifier.getLogger();
 		mTheory = th;
 		mEngine = engine;
 
-		mUseEMatching = useEMatching;
+		mInstantiationMethod = instMethod;
 		mUseUnknownTermValueInDawgs = useUnknownTermDawgs;
 		mPropagateNewTerms = propagateNewTerms;
 		mPropagateNewAux = propagateNewAux;
@@ -123,8 +131,11 @@ public class QuantifierTheory implements ITheory {
 
 		mQuantClauses = new ScopedArrayList<>();
 
-		mPotentialConflictAndUnitClauses = new LinkedHashMap<>();
+		mPendingInstances = new LinkedHashMap<>();
 		mDecideLevelOfLastCheckpoint = mEngine.getDecideLevel();
+
+		mNumInstancesOfAge = new int[Integer.SIZE];
+		mNumInstancesOfAgeEnum = new int[Integer.SIZE];
 	}
 
 	@Override
@@ -141,17 +152,21 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public Clause setLiteral(final Literal literal) {
+		if (mQuantClauses.isEmpty()) {
+			assert mPendingInstances.isEmpty();
+			return null;
+		}
 		// Remove clauses that have become true from potential conflict and unit clauses.
-		if (mPotentialConflictAndUnitClauses.containsKey(literal)) {
-			for (final InstClause instClause : mPotentialConflictAndUnitClauses.remove(literal)) {
+		if (mPendingInstances.containsKey(literal)) {
+			for (final InstClause instClause : mPendingInstances.remove(literal)) {
 				assert instClause.mLits.contains(literal);
 				for (final Literal otherLit : instClause.mLits) {
 					if (otherLit != literal) {
-						final Set<InstClause> clauses = mPotentialConflictAndUnitClauses.get(otherLit);
+						final Set<InstClause> clauses = mPendingInstances.get(otherLit);
 						if (clauses != null) {
 							clauses.remove(instClause);
 							if (clauses.isEmpty()) {
-								mPotentialConflictAndUnitClauses.remove(otherLit);
+								mPendingInstances.remove(otherLit);
 							}
 						}
 					}
@@ -160,8 +175,8 @@ public class QuantifierTheory implements ITheory {
 		}
 		// Remove former undef negated lit (now false) from map and decrease number of undef lits in clauses containing
 		// the negated lit.
-		if (mPotentialConflictAndUnitClauses.containsKey(literal.negate())) {
-			for (final InstClause instClause : mPotentialConflictAndUnitClauses.remove(literal.negate())) {
+		if (mPendingInstances.containsKey(literal.negate())) {
+			for (final InstClause instClause : mPendingInstances.remove(literal.negate())) {
 				assert instClause.mNumUndefLits > 0;
 				instClause.mNumUndefLits -= 1;
 				if (instClause.isConflict()) {
@@ -177,49 +192,72 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public void backtrackLiteral(final Literal literal) {
-		// we throw the potential conflict and unit clauses away after backtracking.
+		// we throw the pending clause instances away after backtracking.
 	}
 
 	@Override
 	public Clause checkpoint() {
-		mNumCheckpoints++;
 		long time;
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
 		}
-		// Don't search for new conflict and unit clauses if there are still potential conflict and unit clauses in the
-		// queue.
-		if (mLinArSolve == null) {
-			assert mPotentialConflictAndUnitClauses.isEmpty()
-					|| mEngine.getDecideLevel() <= mDecideLevelOfLastCheckpoint;
-		}
-		mDecideLevelOfLastCheckpoint = mEngine.getDecideLevel();
-		if (!mPotentialConflictAndUnitClauses.isEmpty()) {
-			return null;
-		}
+		mNumCheckpoints++;
+		Clause conflict = null;
+		if (!mQuantClauses.isEmpty()) {
 
-		mNumCheckpointsWithNewEval++;
-		final Collection<InstClause> conflictAndUnitInstances;
-		if (mUseEMatching) {
-			mEMatching.run();
-			conflictAndUnitInstances = mInstantiationManager.findConflictAndUnitInstancesWithEMatching();
-			if (Config.PROFILE_TIME) {
-				mFindEmatchingTime += System.nanoTime() - time;
+			// Don't search for new conflict and unit clauses if there are still potential conflict and unit clauses in
+			// the queue.
+
+			// TODO: This does not hold any more when we add instances from final check to the pendingInstances.
+			// if (mLinArSolve == null) {
+			// assert mPendingInstances.isEmpty() || mInstantiationMethod == InstantiationMethod.E_MATCHING_EAGER
+			// || mInstantiationMethod == InstantiationMethod.E_MATCHING_LAZY
+			// || mEngine.getDecideLevel() <= mDecideLevelOfLastCheckpoint;
+			// }
+			mDecideLevelOfLastCheckpoint = mEngine.getDecideLevel();
+			if (!mPendingInstances.isEmpty()) {
+				return null;
 			}
-		} else { // TODO for comparison
-			for (final QuantClause clause : mQuantClauses) {
-				if (mEngine.isTerminationRequested()) {
-					return null;
+
+			final Collection<InstClause> potentiallyInterestingInstances;
+			switch (mInstantiationMethod) {
+			case E_MATCHING_CONFLICT:
+				mNumCheckpointsWithNewEval++;
+				mEMatching.run();
+				potentiallyInterestingInstances = mInstantiationManager.findConflictAndUnitInstancesWithEMatching();
+				if (Config.PROFILE_TIME) {
+					mFindEmatchingTime += System.nanoTime() - time;
 				}
-				clause.updateInterestingTermsAllVars();
+				break;
+			case AUF_CONFLICT:
+				mNumCheckpointsWithNewEval++;
+				potentiallyInterestingInstances = mInstantiationManager.findConflictAndUnitInstances();
+				break;
+			case E_MATCHING_EAGER:
+				mNumCheckpointsWithNewEval++;
+				mEMatching.run();
+				potentiallyInterestingInstances = mInstantiationManager.computeEMatchingInstances();
+				if (Config.PROFILE_TIME) {
+					mFindEmatchingTime += System.nanoTime() - time;
+				}
+				break;
+			case E_MATCHING_LAZY:
+				// Nothing to do, only in final check
+				potentiallyInterestingInstances = null;
+				break;
+			case E_MATCHING_CONFLICT_LAZY:
+				// Nothing to do, only in final check
+				potentiallyInterestingInstances = null;
+				break;
+			default:
+				throw new InternalError("Unknown instantiation method");
 			}
-			conflictAndUnitInstances = mInstantiationManager.findConflictAndUnitInstances();
-		}
-		final Clause conflict = addPotentialConflictAndUnitClauses(conflictAndUnitInstances);
-		if (conflict != null) {
-			mLogger.debug("Quant conflict: %s", conflict);
-			mEngine.learnClause(conflict);
-			mNumConflicts++;
+			conflict = addInstClausesToPending(potentiallyInterestingInstances);
+			if (conflict != null) {
+				mLogger.debug("Quant conflict: %s", conflict);
+				mEngine.learnClause(conflict);
+				mNumConflicts++;
+			}
 		}
 		if (Config.PROFILE_TIME) {
 			mCheckpointTime += System.nanoTime() - time;
@@ -234,17 +272,53 @@ public class QuantifierTheory implements ITheory {
 			time = System.nanoTime();
 		}
 		mNumFinalcheck++;
-		assert mPotentialConflictAndUnitClauses.isEmpty();
-		for (final QuantClause clause : mQuantClauses) {
-			if (mEngine.isTerminationRequested()) {
+		assert mPendingInstances.isEmpty();
+		Clause conflict = null;
+
+		if (!mQuantClauses.isEmpty()) {
+			Collection<InstClause> potentiallyInterestingInstances = new LinkedHashSet<>();
+
+			boolean foundNonSat = false;
+			if (mInstantiationMethod == InstantiationMethod.E_MATCHING_LAZY) {
+				mEMatching.run();
+				potentiallyInterestingInstances = mInstantiationManager.computeEMatchingInstances();
+				if (Config.PROFILE_TIME) {
+					mFindEmatchingTime += System.nanoTime() - time;
+				}
+				for (final InstClause i : potentiallyInterestingInstances) {
+					if (i.countAndSetUndefLits() != -1) {
+						// Don't search for other instances if E-matching found one that is not yet satisfied.
+						foundNonSat = true;
+						break;
+					}
+				}
+			} else if (mInstantiationMethod == InstantiationMethod.E_MATCHING_CONFLICT_LAZY) {
+				mEMatching.run();
+				potentiallyInterestingInstances = mInstantiationManager.findConflictAndUnitInstancesWithEMatching();
+				if (Config.PROFILE_TIME) {
+					mFindEmatchingTime += System.nanoTime() - time;
+				}
+				for (final InstClause i : potentiallyInterestingInstances) {
+					if (i.countAndSetUndefLits() != -1) {
+						// Don't search for other instances if E-matching based conflict/unit search found one that is
+						// not
+						// yet satisfied. (The method might miss some true literals, so we need to check this here.)
+						foundNonSat = true;
+						break;
+					}
+				}
+			}
+			if (mClausifier.getEngine().isTerminationRequested()) {
 				return null;
 			}
-			clause.updateInterestingTermsAllVars();
-		}
-		final Clause conflict = mInstantiationManager.instantiateSomeNotSat();
-		if (conflict != null) {
-			mNumConflicts++;
-			mEngine.learnClause(conflict);
+			if (potentiallyInterestingInstances.isEmpty() || !foundNonSat) {
+				potentiallyInterestingInstances = mInstantiationManager.instantiateSomeNotSat();
+			}
+			conflict = addInstClausesToPending(potentiallyInterestingInstances);
+			if (conflict != null) {
+				mNumConflicts++;
+				mEngine.learnClause(conflict);
+			}
 		}
 		if (Config.PROFILE_TIME) {
 			mFinalCheckTime += System.nanoTime() - time;
@@ -254,7 +328,12 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public Literal getPropagatedLiteral() {
-		for (final Map.Entry<Literal, Set<InstClause>> entry : mPotentialConflictAndUnitClauses.entrySet()) {
+		if (mQuantClauses.isEmpty()) {
+			assert mPendingInstances.isEmpty();
+			return null;
+		}
+
+		for (final Map.Entry<Literal, Set<InstClause>> entry : mPendingInstances.entrySet()) {
 			if (mEngine.isTerminationRequested()) {
 				return null;
 			}
@@ -269,7 +348,10 @@ public class QuantifierTheory implements ITheory {
 					mLogger.debug("Quant Prop: %s Reason: %s", lit, lit.getAtom().mExplanation);
 					return lit;
 				} else {
-					mLogger.debug("Not propagated: %s Clause: %s", lit, inst.mLits);
+					if (mInstantiationMethod != InstantiationMethod.E_MATCHING_EAGER
+							&& mInstantiationMethod != InstantiationMethod.E_MATCHING_LAZY) {
+						mLogger.debug("Not propagated: %s Clause: %s", lit, inst.mLits);
+					}
 				}
 			}
 		}
@@ -291,14 +373,20 @@ public class QuantifierTheory implements ITheory {
 	@Override
 	public void printStatistics(final LogProxy logger) {
 		logger.info("Quant: DER produced %d ground clause(s).", mNumInstancesDER);
-		logger.info("Quant: Instances produced: %d (Checkpoint: %d, Final check: %d)", mNumInstancesProduced,
-				mNumInstancesProducedCP, mNumInstancesProducedFC);
+		logger.info("Quant: Instances produced: %d (Conflict/Unit: %d, E-Matching: %d, Enumeration: %d)",
+				mNumInstancesProduced, mNumInstancesProducedConfl, mNumInstancesProducedEM, mNumInstancesProducedEnum);
+		logger.info(
+				"Quant: Subs of age 0, 1, 2-3, 4-7, ... : %s, (Enumeration: %s)", Arrays.toString(mNumInstancesOfAge),
+				Arrays.toString(mNumInstancesOfAgeEnum));
 		logger.info("Quant: Conflicts: %d Props: %d Checkpoints (with new evaluation): %d (%d) Final Checks: %d",
 				mNumConflicts, mNumProps, mNumCheckpoints, mNumCheckpointsWithNewEval, mNumFinalcheck);
 		logger.info(
-				"Quant times: Checkpoint: %.3f Find with E-matching: %.3f E-Matching: %.3f Dawg: %.3f Final Check: %.3f",
-				mCheckpointTime / 1000 / 1000.0, mFindEmatchingTime / 1000 / 1000.0, mEMatchingTime / 1000 / 1000.0,
-				mDawgTime / 1000 / 1000.0, mFinalCheckTime / 1000 / 1000.0);
+				"Quant times: Checkpoint: %d.%03d Find with E-matching: %d.%03d E-Matching: %d.%03d Dawg: %d.%03d Final Check: %d.%03d",
+				mCheckpointTime / 1000 / 1000, mCheckpointTime /1000 % 1000,
+				mFindEmatchingTime / 1000 / 1000, mFindEmatchingTime / 1000 % 1000,
+				mEMatchingTime / 1000 / 1000, mEMatchingTime / 1000 % 1000,
+				mDawgTime / 1000 / 1000, mDawgTime / 1000 % 1000,
+				mFinalCheckTime / 1000 / 1000, mFinalCheckTime / 1000 % 1000);
 	}
 
 	@Override
@@ -323,7 +411,7 @@ public class QuantifierTheory implements ITheory {
 	public void backtrackAll() {
 		mEMatching.removeAllTriggers();
 		mInstantiationManager.resetInterestingTerms();
-		mPotentialConflictAndUnitClauses.clear();
+		mPendingInstances.clear();
 	}
 
 	@Override
@@ -331,7 +419,8 @@ public class QuantifierTheory implements ITheory {
 		final int decisionLevel = mClausifier.getEngine().getDecideLevel();
 		mEMatching.undo(decisionLevel);
 		mInstantiationManager.resetInterestingTerms();
-		mPotentialConflictAndUnitClauses.clear();
+		mInstantiationManager.resetSubsAgeForFinalCheck();
+		mPendingInstances.clear();
 		return null;
 	}
 
@@ -354,7 +443,7 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public void pop() {
-		assert mPotentialConflictAndUnitClauses.isEmpty(); // backtrackComplete() is called before pop()
+		assert mPendingInstances.isEmpty(); // backtrackComplete() is called before pop()
 		mInstantiationManager.removeAllInstClauses();
 		mEMatching.removeAllTriggers();
 		for (final QuantClause quantClause : mQuantClauses.currentScope()) {
@@ -370,16 +459,29 @@ public class QuantifierTheory implements ITheory {
 		return new Object[] { ":Quant",
 				new Object[][] { { "DER ground results", mNumInstancesDER },
 						{ "Instances produced", mNumInstancesProduced },
-						{ "thereof in checkpoint", mNumInstancesProducedCP },
-						{ "and in final check", mNumInstancesProducedFC }, { "Conflicts", mNumConflicts },
-						{ "Propagations", mNumProps }, { "Checkpoints", mNumCheckpoints },
+						{ "thereof by conflict/unit search", mNumInstancesProducedConfl },
+						{ "and by E-matching", mNumInstancesProducedEM },
+						{ "and by enumeration", mNumInstancesProducedEnum },
+						{ "Subs of age 0, 1, 2-3, 4-7, ...", Arrays.toString(mNumInstancesOfAge) },
+						{ "thereof for enumeration", Arrays.toString(mNumInstancesOfAgeEnum) },
+						{ "Conflicts", mNumConflicts }, { "Propagations", mNumProps },
+						{ "Checkpoints", mNumCheckpoints },
 						{ "Checkpoints with new evaluation", mNumCheckpointsWithNewEval },
 						{ "Final Checks", mNumFinalcheck },
 						{ "Times",
 								new Object[][] { { "Checkpoint", mCheckpointTime },
 										{ "Find E-matching", mFindEmatchingTime }, { "E-Matching", mEMatchingTime },
 										{ "Final Check", mFinalCheckTime } } } } };
+	}
 
+	public ILiteral createAuxLiteral(final Term auxTerm, final TermVariable[] freeVars, final Term definingTerm,
+			final SourceAnnotation source) {
+		final Term newTerm = mTheory.term("=", auxTerm, mTheory.mTrue);
+		final QuantLiteral atom = new QuantAuxEquality(newTerm, auxTerm, mTheory.mTrue, definingTerm);
+
+		// The atom is almost uninterpreted.
+		atom.mIsEssentiallyUninterpreted = atom.negate().mIsEssentiallyUninterpreted = true;
+		return atom;
 	}
 
 	/**
@@ -396,7 +498,7 @@ public class QuantifierTheory implements ITheory {
 	 *            the right side of the equality.
 	 * @return a QuantEquality atom for the equality lhs = rhs.
 	 */
-	public QuantLiteral getQuantEquality(final Term lhs, final Term rhs) {
+	public QuantLiteral getQuantEquality(final Term lhs, final Term rhs, final SourceAnnotation source) {
 		// Bring atom to form (var = term) if there exists a variable at "top level".
 		Term newLhs = lhs;
 		Term newRhs = rhs;
@@ -411,6 +513,7 @@ public class QuantifierTheory implements ITheory {
 			final SMTAffineTerm linAdded = SMTAffineTerm.create(lhs);
 			linAdded.add(Rational.MONE, SMTAffineTerm.create(rhs));
 			Rational fac = Rational.ONE;
+			final TermCompiler compiler = mClausifier.getTermCompiler();
 			for (final Term smd : linAdded.getSummands().keySet()) {
 				if (smd instanceof TermVariable) {
 					fac = linAdded.getSummands().get(smd);
@@ -418,7 +521,7 @@ public class QuantifierTheory implements ITheory {
 						newLhs = smd;
 						linAdded.add(fac.negate(), smd);
 						linAdded.mul(fac.negate());
-						newRhs = linAdded.toTerm(lhs.getSort());
+						newRhs = linAdded.toTerm(compiler, lhs.getSort());
 						break;
 					} else {
 						if (fac.abs() == Rational.ONE) {
@@ -428,7 +531,7 @@ public class QuantifierTheory implements ITheory {
 							if (fac == Rational.ONE) {
 								linAdded.negate();
 							}
-							newRhs = linAdded.toTerm(lhs.getSort());
+							newRhs = linAdded.toTerm(compiler, lhs.getSort());
 							break;
 						}
 					}
@@ -436,6 +539,8 @@ public class QuantifierTheory implements ITheory {
 			}
 		}
 		final Term newTerm = mTheory.term("=", newLhs, newRhs);
+		addGroundCCTerms(newLhs, source);
+		addGroundCCTerms(newRhs, source);
 		final QuantLiteral atom = new QuantEquality(newTerm, newLhs, newRhs);
 
 		// Check if the atom is almost uninterpreted or can be used for DER.
@@ -475,7 +580,7 @@ public class QuantifierTheory implements ITheory {
 	 *            the left side of the inequality (t <= 0)
 	 * @return a QuantLiteral, possibly negated, of the form (t <= 0) or ~(t' <= 0)
 	 */
-	public QuantLiteral getQuantInequality(final boolean positive, final Term lhs) {
+	public QuantLiteral getQuantInequality(final boolean positive, final Term lhs, final SourceAnnotation source) {
 
 		boolean rewrite = false; // Set to true when rewriting positive (x-t<=0) into ~(t+1<=x) for x integer
 		final SMTAffineTerm linTerm = SMTAffineTerm.create(lhs);
@@ -518,7 +623,10 @@ public class QuantifierTheory implements ITheory {
 			linTerm.div(fac.abs());
 		}
 
-		final Term newTerm = mTheory.term("<=", linTerm.toTerm(lhs.getSort()), Rational.ZERO.toTerm(lhs.getSort()));
+		final TermCompiler compiler = mClausifier.getTermCompiler();
+		final Term newLhs = linTerm.toTerm(compiler, lhs.getSort());
+		addGroundCCTerms(newLhs, source);
+		final Term newTerm = mTheory.term("<=", newLhs, Rational.ZERO.toTerm(lhs.getSort()));
 		final QuantLiteral atom = new QuantBoundConstraint(newTerm, linTerm);
 
 		// Check if the atom is almost uninterpreted.
@@ -537,7 +645,7 @@ public class QuantifierTheory implements ITheory {
 			if (!hasUpperBound) {
 				remainderAff.negate();
 			}
-			final Term remainder = remainderAff.toTerm(lhs.getSort());
+			final Term remainder = remainderAff.toTerm(compiler, lhs.getSort());
 			if (remainder instanceof TermVariable || remainder.getFreeVars().length == 0) {
 				atom.negate().mIsArithmetical = true;
 			}
@@ -561,6 +669,10 @@ public class QuantifierTheory implements ITheory {
 			final QuantLiteral clauseAtom;
 			if (atom instanceof QuantBoundConstraint) {
 				clauseAtom = new QuantBoundConstraint(atom.getTerm(), ((QuantBoundConstraint) atom).getAffineTerm());
+			} else if (atom instanceof QuantAuxEquality) {
+				final QuantAuxEquality auxAtom = (QuantAuxEquality) atom;
+				clauseAtom = new QuantAuxEquality(auxAtom.getTerm(), auxAtom.getLhs(), auxAtom.getRhs(),
+						auxAtom.getDefinition());
 			} else {
 				clauseAtom = new QuantEquality(atom.getTerm(), ((QuantEquality) atom).getLhs(),
 						((QuantEquality) atom).getRhs());
@@ -690,6 +802,10 @@ public class QuantifierTheory implements ITheory {
 		return mTheory;
 	}
 
+	public InstantiationMethod getInstantiationMethod() {
+		return mInstantiationMethod;
+	}
+
 	protected Term getLambda(final Sort sort) {
 		if (mLambdas.containsKey(sort)) {
 			return mLambdas.get(sort);
@@ -734,14 +850,16 @@ public class QuantifierTheory implements ITheory {
 	}
 
 	/**
-	 * Add potential conflict and unit clauses to the map from undefined literals to clauses. We stop as soon as we find
-	 * an actual conflict.
+	 * Add InstClauses to the internal map that manages which instances to add as clause to the DPLL engine. Each
+	 * undecided literal in an InstClause is used as a key, and maps to the InstClauses it is contained in. This method
+	 * also counts the number of undecided literals in an InstClause, makes sure not to add currently satisfied
+	 * instances to the map, and if it finds a conflict in the given InstClauses, returns it as an actual Clause.
 	 *
 	 * @param instances
-	 *            a set of potential conflict and unit clauses
+	 *            the InstClauses to add.
 	 * @return a conflict, if it exists.
 	 */
-	private Clause addPotentialConflictAndUnitClauses(final Collection<InstClause> instances) {
+	private Clause addInstClausesToPending(final Collection<InstClause> instances) {
 		if (instances == null) {
 			return null;
 		}
@@ -758,10 +876,10 @@ public class QuantifierTheory implements ITheory {
 			}
 			for (final Literal lit : inst.mLits) {
 				if (lit.getAtom().getDecideStatus() == null) {
-					if (!mPotentialConflictAndUnitClauses.containsKey(lit)) {
-						mPotentialConflictAndUnitClauses.put(lit, new LinkedHashSet<>());
+					if (!mPendingInstances.containsKey(lit)) {
+						mPendingInstances.put(lit, new LinkedHashSet<>());
 					}
-					mPotentialConflictAndUnitClauses.get(lit).add(inst);
+					mPendingInstances.get(lit).add(inst);
 				}
 			}
 		}
@@ -781,11 +899,32 @@ public class QuantifierTheory implements ITheory {
 		return ccTerm == null ? term : ccTerm.getRepresentative().getFlatTerm();
 	}
 
+	private void addGroundCCTerms(final Term term, final SourceAnnotation source) {
+		final HashSet<Term> seen = new HashSet<>();
+		final Deque<Term> todo = new ArrayDeque<>();
+		todo.add(term);
+		while (!todo.isEmpty()) {
+			final Term subTerm = todo.pop();
+			if (subTerm instanceof ApplicationTerm && seen.add(subTerm)) {
+				if (subTerm.getFreeVars().length == 0) {
+					final CCTerm ccTerm = mClausifier.getCCTerm(subTerm);
+					if (ccTerm == null && (Clausifier.needCCTerm(subTerm) || subTerm.getSort().isArraySort())) {
+						mClausifier.createCCTerm(subTerm, source);
+					}
+				} else {
+					for (final Term arg : ((ApplicationTerm) subTerm).getParameters()) {
+						todo.add(arg);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * The origin of an instance of a quantified clause.
 	 */
 	public enum InstanceOrigin {
-		CHECKPOINT(":Checkpoint"), FINALCHECK(":Finalcheck");
+		CONFLICT(":conflict"), EMATCHING(":e-matching"), ENUMERATION(":enumeration");
 		String mOrigin;
 
 		private InstanceOrigin(final String origin) {
@@ -798,5 +937,32 @@ public class QuantifierTheory implements ITheory {
 		public String getOrigin() {
 			return mOrigin;
 		}
+	}
+
+	/**
+	 * Different instantiation methods for quantified formulae.
+	 */
+	public static enum InstantiationMethod {
+		/**
+		 * In checkpoint, build potential conflict and unit instances found by checking the substitutions determined by
+		 * the almost uninterpreted fragment.
+		 */
+		AUF_CONFLICT,
+		/**
+		 * In checkpoint, build potential conflict and unit instances found by E-matching.
+		 */
+		E_MATCHING_CONFLICT,
+		/**
+		 * In checkpoint, build instances found by E-matching (don't build terms without equivalent known term).
+		 */
+		E_MATCHING_EAGER,
+		/**
+		 * In final check, build instances found by E-matching (don't build terms without equivalent known term).
+		 */
+		E_MATCHING_LAZY,
+		/**
+		 * In final check, build potential conflict and unit instances found by E-matching.
+		 */
+		E_MATCHING_CONFLICT_LAZY;
 	}
 }

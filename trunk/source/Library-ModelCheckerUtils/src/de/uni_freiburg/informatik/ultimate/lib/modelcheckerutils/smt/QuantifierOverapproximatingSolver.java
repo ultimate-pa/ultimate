@@ -36,17 +36,18 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -119,7 +120,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 
 	private Term skolemizeOA(final QuantifiedFormula inputFormula) {
 
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), inputFormula);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, inputFormula);
 
 		final QuantifiedVariables qb = qs.getQuantifierBlocks().get(0);
 		Term newInnerTerm = qs.getInnerTerm();
@@ -133,7 +134,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 					final Term newConst = SmtUtils.termVariable2constant(mMgdScript.getScript(), ctv, true);
 					subMap.put(qtv, newConst);
 				}
-				newInnerTerm = new Substitution(mMgdScript, subMap).transform(newInnerTerm);
+				newInnerTerm = Substitution.apply(mMgdScript, subMap, newInnerTerm);
 			}
 		}
 		final Term reAddQuantifiers = QuantifierSequence.prependQuantifierSequence(mMgdScript.getScript(),
@@ -144,7 +145,8 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 	private Term overApproximate(final Term term) {
 		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true).transform(term);
 		// Optimization 2
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(nnf);
+		final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, true,
+				PqeTechniques.ALL_LOCAL, SimplificationTechnique.NONE, nnf);
 		Term qfree = mMgdScript.getScript().term("true");
 		for (Term cojunct : SmtUtils.getConjuncts(pushed)) {
 			if (!QuantifierUtils.isQuantifierFree(cojunct)) {

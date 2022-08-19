@@ -26,20 +26,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -52,7 +62,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <AVAR>
  *            type of the variables
  */
-public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends Term implements IPolynomialTerm {
+public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implements IPolynomialTerm {
+
+	public enum Equivalence { EQUALS, DISTINCT, INCOMPARABLE };
 
 	/**
 	 * Map from abstract variables to coeffcients. Coefficient zero is forbidden.
@@ -84,13 +96,20 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	protected AbstractGeneralizedAffineTerm(final Sort s, final Rational constant,
 			final Map<AVAR, Rational> variables2coeffcient) {
 		super(0);
-		Objects.nonNull(s);
-		Objects.nonNull(constant);
-		Objects.nonNull(variables2coeffcient);
+		Objects.requireNonNull(s);
+		Objects.requireNonNull(constant);
+		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
 		mAbstractVariable2Coefficient = variables2coeffcient;
 	}
+
+	protected abstract IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+			final Map<AVAR, Rational> variables2coeffcient);
+
+	protected abstract AVAR constructAbstractVar(Term term);
+
+	protected abstract Collection<Term> getFreeVars(AVAR var);
 
 	/**
 	 * True if this represents not an legal term of its kind but an error during the translation process, e.g., if
@@ -174,7 +193,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	 */
 	Monomial getExclusiveMonomialOfSubject(final Term subject) {
 		Monomial result = null;
-		for (final Term abstractVar : getAbstractVariable2Coefficient().keySet()) {
+		for (final AVAR abstractVar : getAbstractVariable2Coefficient().keySet()) {
 			if (abstractVar instanceof Monomial) {
 				final Monomial monomial = (Monomial) abstractVar;
 				switch (monomial.isExclusiveVariable(subject)) {
@@ -199,11 +218,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 						// not exclusive
 						return null;
 					} else {
-						result = new Monomial(abstractVar, Rational.ONE);
+						result = new Monomial(subject, Rational.ONE);
 					}
 				} else {
 					final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
-							.isPropertySatisfied(abstractVar);
+							.isSatisfiedBySomeSubterm((Term) abstractVar);
 					if (subjectOccursAsSubterm) {
 						return null;
 					}
@@ -291,6 +310,14 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
 
+	public Map<Term, Rational> getAbstractVariableAsTerm2Coefficient(final Script script) {
+		final HashMap<Term, Rational> result = new HashMap<>();
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			result.put(abstractVariableToTerm(script, entry.getKey()), entry.getValue());
+		}
+		return result;
+	}
+
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");
@@ -365,4 +392,598 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 
 	public abstract AbstractGeneralizedAffineTerm<?> removeAndNegate(Monomial monomialOfSubject);
 
+	public IPolynomialTerm div(final Script script, final BigInteger divisor, final Set<TermVariable> bannedForDivCapture) {
+		if (!SmtSortUtils.isIntSort(getSort())) {
+			throw new AssertionError("only for int");
+		}
+		final Map<AVAR, Rational> variables2coeffcient = new HashMap<>();
+		final List<Term> summandsOfDiv = new ArrayList<>();
+		for (final Entry<AVAR, Rational> entry : getAbstractVariable2Coefficient().entrySet()) {
+			final Rational divisorAsRational = toRational(divisor);
+			final Rational quotient = entry.getValue().div(divisorAsRational);
+			if (quotient.isIntegral()) {
+				final Rational euclideanQuotient = euclideanDivision(entry.getValue(), divisor);
+				variables2coeffcient.put(entry.getKey(), euclideanQuotient);
+			} else {
+				if (getFreeVars(entry.getKey()).stream().anyMatch(bannedForDivCapture::contains)) {
+					return null;
+				}
+				summandsOfDiv.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
+			}
+		}
+		final Rational constant;
+		if (summandsOfDiv.isEmpty()) {
+			constant = euclideanDivision(getConstant(), divisor);
+		} else {
+			constant = Rational.ZERO;
+			if (!getConstant().equals(Rational.ZERO)) {
+				summandsOfDiv.add(getConstant().toTerm(getSort()));
+			}
+			final Term sum = SmtUtils.sum(script, getSort(), summandsOfDiv.toArray(new Term[summandsOfDiv.size()]));
+
+			final Term div = SmtUtils.div(script, sum, SmtUtils.constructIntegerValue(script, getSort(), divisor));
+			final AVAR avar = constructAbstractVar(div);
+			variables2coeffcient.put(avar, Rational.ONE);
+		}
+		return constructNew(getSort(), constant, variables2coeffcient);
+	}
+
+	protected Rational euclideanDivision(final Rational divident, final BigInteger divisor) {
+		if (!divident.isIntegral()) {
+			throw new AssertionError();
+		}
+		return toRational(ArithmeticUtils.euclideanDiv(divident.numerator(), divisor));
+	}
+
+	private static Rational toRational(final BigInteger bi) {
+		return Rational.valueOf(bi, BigInteger.ONE);
+	}
+
+	@Override
+	public IPolynomialTerm add(final Rational offset) {
+		final Rational newConstant;
+		if (SmtSortUtils.isRealSort(getSort())) {
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isIntSort(getSort())) {
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isBitvecSort(getSort())) {
+			newConstant = PolynomialTermUtils.bringValueInRange(getConstant().add(offset), getSort());
+		} else {
+			throw new AssertionError("unsupported Sort " + getSort());
+		}
+		return constructNew(getSort(), newConstant, getAbstractVariable2Coefficient());
+	}
+
+
+	@Override
+	public Equivalence compare(final IPolynomialTerm otherTerm) {
+		final Equivalence result;
+		if (otherTerm instanceof AbstractGeneralizedAffineTerm) {
+			final AbstractGeneralizedAffineTerm<?> otherPoly = (AbstractGeneralizedAffineTerm<?>) otherTerm;
+			if (this.getAbstractVariable2Coefficient().equals(otherPoly.getAbstractVariable2Coefficient())) {
+				if (this.getConstant().equals(otherPoly.getConstant())) {
+					result = Equivalence.EQUALS;
+				} else {
+					result = Equivalence.DISTINCT;
+				}
+			} else {
+				result = Equivalence.INCOMPARABLE;
+			}
+		} else {
+			result = Equivalence.INCOMPARABLE;
+		}
+		return result;
+	}
+
+
+	public enum ComparisonResult {
+		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT;
+
+		public ComparisonResult switchDiection() {
+			final ComparisonResult result;
+			switch (this) {
+			case EQUIVALENT:
+				result = this;
+				break;
+			case EXPLIES:
+				result = IMPLIES;
+				break;
+			case IMPLIES:
+				result = EXPLIES;
+				break;
+			case INCONSISTENT:
+				result = this;
+				break;
+			default:
+				throw new AssertionError("unknown value " + this);
+			}
+			return result;
+		}
+	}
+
+
+	public static ComparisonResult compareRepresentation(final PolynomialRelation lhs, final PolynomialRelation rhs) {
+		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
+		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
+		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
+			throw new AssertionError("incomparable");
+		}
+		final RelationSymbol lhsRelationSymbol = lhs.getRelationSymbol();
+		final RelationSymbol rhsRelationSymbol = rhs.getRelationSymbol();
+		final Rational lhsConstant = lhs.getPolynomialTerm().getConstant();
+		final Rational rhsConstant = rhs.getPolynomialTerm().getConstant();
+		final ComparisonResult result = compare(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant);
+		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant,
+				result) : "double check failed";
+		return result;
+	}
+
+	private static boolean doubleCheck(final RelationSymbol lhsRelationSymbol, final RelationSymbol rhsRelationSymbol,
+			final Rational lhsConstant, final Rational rhsConstant, final ComparisonResult result) {
+		final ComparisonResult otherDirection = compare(rhsRelationSymbol, lhsRelationSymbol, rhsConstant, lhsConstant);
+		if (result == null) {
+			return (otherDirection == null);
+		} else {
+			return result.switchDiection().equals(otherDirection);
+		}
+	}
+
+	/**
+	 * Compare the relations lc lrel 0 and rc rrel 0
+	 */
+	private static ComparisonResult compare(final RelationSymbol lhsRelationSymbol,
+			final RelationSymbol rhsRelationSymbol, final Rational lhsConstant, final Rational rhsConstant)
+			throws AssertionError {
+		final ComparisonResult result;
+		switch (lhsRelationSymbol) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			result = compareDistinct(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case EQ:
+			result = compareEq(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case GEQ:
+			result = compareGeq(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case GREATER:
+			result = compareGreater(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case LEQ:
+			result = compareLeq(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		case LESS:
+			result = compareLess(lhsConstant, rhsRelationSymbol, rhsConstant);
+			break;
+		default:
+			throw new AssertionError("unknown value: " + lhsRelationSymbol);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc neq 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareDistinct(final Rational lhsConstant, final RelationSymbol relationSymbol,
+			final Rational rhsConstant) {
+		final ComparisonResult result;
+		switch (relationSymbol) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lhsConstant.equals(rhsConstant)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lhsConstant.equals(rhsConstant)) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lhsConstant.compareTo(rhsConstant) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case GREATER:
+			if (lhsConstant.compareTo(rhsConstant) >= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+
+			break;
+		case LEQ:
+			if (lhsConstant.compareTo(rhsConstant) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case LESS:
+			if (lhsConstant.compareTo(rhsConstant) <= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + relationSymbol);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc = 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareEq(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.equals(rc)) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case EQ:
+			if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.INCONSISTENT;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc >= 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareGeq(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc > 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareGreater(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc <= 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareLeq(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) > 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) <= 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * Compare the relations lc < 0 and rc rrel 0
+	 */
+	public static ComparisonResult compareLess(final Rational lc, final RelationSymbol rRel, final Rational rc) {
+		final ComparisonResult result;
+		switch (rRel) {
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new AssertionError("not in PolynomialRelation");
+		case DISTINCT:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.IMPLIES;
+			} else {
+				result = null;
+			}
+			break;
+		case EQ:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = ComparisonResult.EXPLIES;
+			}
+			break;
+		case GEQ:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case GREATER:
+			if (lc.compareTo(rc) >= 0) {
+				result = ComparisonResult.INCONSISTENT;
+			} else {
+				result = null;
+			}
+			break;
+		case LEQ:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		case LESS:
+			if (lc.compareTo(rc) < 0) {
+				result = ComparisonResult.EXPLIES;
+			} else if (lc.equals(rc)) {
+				result = ComparisonResult.EQUIVALENT;
+			} else {
+				result = ComparisonResult.IMPLIES;
+			}
+			break;
+		default:
+			throw new AssertionError("unknown value: " + rRel);
+		}
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Rational computeGcdOfCoefficients() {
+		Rational gcd = Rational.ZERO;
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			gcd = gcd.gcd(entry.getValue());
+		}
+		return gcd;
+	}
+
+	@Override
+	public TermVariable[] getFreeVars() {
+		throw new UnsupportedOperationException(
+				"AbstractGeneralizedAffineTerm is not a proper Term of our SMT library");
+	}
+
+	@Override
+	public Theory getTheory() {
+		throw new UnsupportedOperationException(
+				"AbstractGeneralizedAffineTerm is not a proper Term of our SMT library");
+	}
+
+	@Override
+	public String toStringDirect() {
+		throw new UnsupportedOperationException(
+				"AbstractGeneralizedAffineTerm is not a proper Term of our SMT library");
+	}
 }

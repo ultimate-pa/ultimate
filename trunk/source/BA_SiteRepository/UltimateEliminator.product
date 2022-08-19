@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.0" useFeatures="false" includeLaunchers="true">
+<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.2" useFeatures="false" includeLaunchers="true">
 
    <aboutInfo>
       <text>
@@ -53,7 +53,6 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlib"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlibutils"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.lib.test"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.util"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol"/>

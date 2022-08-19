@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * {scope}, it is always the case that "R" holds
@@ -49,14 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 public class UniversalityPattern extends PatternType<UniversalityPattern> {
 
 	public UniversalityPattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		super(scope, id, cdds, durations);
-	}
-
-	@Override
-	public UniversalityPattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<String> durations) {
-		return new UniversalityPattern(scope, id, cdds, durations);
+			final List<Rational> durations, final List<String> durationNames) {
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override
@@ -107,11 +102,6 @@ public class UniversalityPattern extends PatternType<UniversalityPattern> {
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds");
 		return sb.toString();
-	}
-
-	@Override
-	public UniversalityPattern rename(final String newName) {
-		return new UniversalityPattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override

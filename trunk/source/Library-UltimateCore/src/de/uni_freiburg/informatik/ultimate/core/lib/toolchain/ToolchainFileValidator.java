@@ -77,8 +77,8 @@ public class ToolchainFileValidator {
 	@SuppressWarnings({ "unchecked" })
 	public RunDefinition loadValidatedToolchain(final String xmlfile)
 			throws JAXBException, FileNotFoundException, SAXException {
-		
-		final JAXBContext jc = JAXBContext.newInstance(TOOLCHAIN_PACKAGE, ObjectFactory.class.getClassLoader());
+
+		final JAXBContext jc = createJAXBContext();
 		final Unmarshaller unmarshaller = jc.createUnmarshaller();
 		final URL fullPathString = getClass().getResource(TOOLCHAIN_URI);
 		unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(fullPathString));
@@ -107,14 +107,18 @@ public class ToolchainFileValidator {
 		if (toolchainName == null) {
 			throw new IllegalArgumentException();
 		}
-		final ObjectFactory mObjectFactory = new ObjectFactory();
-		final JAXBContext jc = JAXBContext.newInstance(TOOLCHAIN_PACKAGE);
-		final RunDefinition rundef = mObjectFactory.createRunDefinition();
+		final ObjectFactory objectFactory = new ObjectFactory();
+		final JAXBContext jc = createJAXBContext();
+		final RunDefinition rundef = objectFactory.createRunDefinition();
 		rundef.setToolchain(toolchainInstance);
 		rundef.setName(toolchainName);
-		final JAXBElement<RunDefinition> newdoc = mObjectFactory.createRundefinition(rundef);
+		final JAXBElement<RunDefinition> newdoc = objectFactory.createRundefinition(rundef);
 		final Marshaller marshaller = jc.createMarshaller();
 		marshaller.marshal(newdoc, new FileOutputStream(xmlfile));
+	}
+
+	private static JAXBContext createJAXBContext() throws JAXBException {
+		return JAXBContext.newInstance(TOOLCHAIN_PACKAGE, ObjectFactory.class.getClassLoader());
 	}
 
 }

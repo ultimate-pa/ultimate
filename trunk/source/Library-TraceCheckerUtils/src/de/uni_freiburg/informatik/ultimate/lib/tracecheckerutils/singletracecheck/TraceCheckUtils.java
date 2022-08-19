@@ -36,22 +36,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -68,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -258,11 +264,13 @@ public final class TraceCheckUtils {
 		final IPredicate successor = ipp.getPredicate(pos + 1);
 		final IAction cb = trace.getSymbol(pos);
 		final Validity result;
+		final Function<Validity, LogLevel> toLevel =
+				x -> x == Validity.INVALID ? LogLevel.ERROR : (x == Validity.VALID ? LogLevel.INFO : LogLevel.WARN);
 		if (trace.isCallPosition(pos)) {
 			assert cb instanceof ICallAction : "not Call at call position";
 			result = htc.checkCall(predecessor, (ICallAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos, predecessor, cb,
-					successor, result));
+			logger.log(toLevel.apply(result), new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos,
+					predecessor, cb, successor, result));
 		} else if (trace.isReturnPosition(pos)) {
 			assert cb instanceof IReturnAction : "not Call at call position";
 			IPredicate hierarchicalPredecessor;
@@ -273,13 +281,15 @@ public final class TraceCheckUtils {
 				hierarchicalPredecessor = ipp.getPredicate(callPosition);
 			}
 			result = htc.checkReturn(predecessor, hierarchicalPredecessor, (IReturnAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", pos,
-					predecessor, cb, successor, result, hierarchicalPredecessor));
+			logger.log(toLevel.apply(result),
+					new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", pos, predecessor,
+							cb, successor, result, hierarchicalPredecessor));
 		} else if (trace.isInternalPosition(pos)) {
 			assert cb instanceof IInternalAction;
 			result = htc.checkInternal(predecessor, (IInternalAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos, predecessor, cb,
-					successor, result));
+			logger.log(toLevel.apply(result), new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos,
+					predecessor, cb, successor, result));
+
 		} else {
 			throw new AssertionError("unsupported position");
 		}
@@ -294,7 +304,17 @@ public final class TraceCheckUtils {
 	public static <L extends IAction> IcfgProgramExecution<L>
 			computeSomeIcfgProgramExecutionWithoutValues(final Word<L> trace) {
 		@SuppressWarnings("unchecked")
-		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
+		final Map<TermVariable, Boolean>[] branchEncoders = new Map[trace.length()];
+		for (int i = 0; i < branchEncoders.length; ++i) {
+			final L letter = trace.getSymbol(i);
+			if (letter instanceof IActionWithBranchEncoders) {
+				final Set<TermVariable> enc = ((IActionWithBranchEncoders) letter)
+						.getTransitionFormulaWithBranchEncoders().getBranchEncoders();
+				branchEncoders[i] = enc.stream().collect(Collectors.toUnmodifiableMap(x -> x, x -> true));
+			} else {
+				branchEncoders[i] = Collections.emptyMap();
+			}
+		}
 		return IcfgProgramExecution.create(trace.asList(), Collections.emptyMap(), branchEncoders);
 	}
 
@@ -324,22 +344,54 @@ public final class TraceCheckUtils {
 	 * according to ModifiableGlobalVariableManager modGlobVarManager.
 	 */
 	public static TermVarsProc getOldVarsEquality(final String proc,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final Script script) {
+			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript) {
 		final Set<IProgramVar> vars = new HashSet<>();
-		Term term = script.term("true");
+		Term term = mgdScript.getScript().term("true");
 		for (final IProgramVar bv : modifiableGlobalsTable.getModifiedBoogieVars(proc)) {
 			vars.add(bv);
 			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
 			final TermVariable tv = bv.getTermVariable();
 			final TermVariable tvOld = bvOld.getTermVariable();
-			final Term equality = script.term("=", tv, tvOld);
-			term = SmtUtils.and(script, term, equality);
+			final Term equality = SmtUtils.binaryEquality(mgdScript.getScript(), tv, tvOld);
+			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}
 		final String[] procs = new String[0];
-		final TermVarsProc result =
-				new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars, script));
+		final TermVarsProc result = new TermVarsProc(term, vars, procs,
+				PredicateUtils.computeClosedFormula(term, vars, mgdScript));
 		return result;
+	}
 
+	/**
+	 * See {@link TransFormulaUtils#decoupleArrayValues}
+	 */
+	public static <L extends IAction> NestedFormulas<L, UnmodifiableTransFormula, IPredicate> decoupleArrayValues(
+			final ManagedScript mgdScript, final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf) {
+		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result = new ModifiableNestedFormulas<>(
+				nf.getTrace(), new TreeMap<>());
+		result.setPrecondition(nf.getPrecondition());
+		result.setPostcondition(nf.getPostcondition());
+		for (int i = 0; i < nf.getTrace().length(); i++) {
+			if (nf.getTrace().isCallPosition(i)) {
+				{
+					final UnmodifiableTransFormula decoupledLocalVarAssignment = TransFormulaUtils
+							.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
+					result.setLocalVarAssignmentAtPos(i, decoupledLocalVarAssignment);
+				}
+				// globalVarAssignment and oldVarAssignment are equalities an cannot be affected
+				// by decoupling
+				result.setGlobalVarAssignmentAtPos(i, nf.getGlobalVarAssignment(i));
+				result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
+			} else {
+				final UnmodifiableTransFormula decoupled = TransFormulaUtils
+						.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
+				result.setFormulaAtNonCallPos(i, decoupled);
+				if (nf.getTrace().isPendingReturn(i)) {
+					result.setPendingContext(i, nf.getPendingContext(i));
+					result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
+				}
+			}
+		}
+		return result;
 	}
 }

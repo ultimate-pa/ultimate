@@ -307,9 +307,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		if (automata.length == ONE) {
 			printAutomaton(services, new NamedAutomaton<>(automatonName, automata[0]), format, printWriter);
-		}
-		for (int i = 0; i < automata.length; i++) {
-			printAutomaton(services, new NamedAutomaton<>(automatonName + i, automata[i]), format, printWriter);
+		} else {
+			for (int i = 0; i < automata.length; i++) {
+				printAutomaton(services, new NamedAutomaton<>(automatonName + i, automata[i]), format, printWriter);
+			}
 		}
 		printWriter.close();
 	}

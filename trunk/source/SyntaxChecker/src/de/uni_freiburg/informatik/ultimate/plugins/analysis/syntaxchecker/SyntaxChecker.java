@@ -183,7 +183,7 @@ public class SyntaxChecker implements IAnalysis {
 			throw new IllegalStateException(errorMsg);
 		}
 		// Let all processes terminate when the toolchain terminates
-		mProcess.setTerminationAfterToolchainTimeout(SYNTAX_CHECKER_TIMEOUT_MS);
+		mProcess.setTerminationAfterTimeout(SYNTAX_CHECKER_TIMEOUT_MS);
 
 		final String stderr = convert(mProcess.getErrorStream());
 		return stderr;

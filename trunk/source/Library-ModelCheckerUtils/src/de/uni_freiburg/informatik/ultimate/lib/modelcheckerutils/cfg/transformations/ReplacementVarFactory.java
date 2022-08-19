@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -57,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Factory for constructing ReplacementVars ensures that for each defining Term exactly one ReplacementVar is
  * constructed.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -81,21 +80,26 @@ public class ReplacementVarFactory {
 		mUseIntraproceduralReplacementVar = useIntraproceduralReplacementVars;
 	}
 
+	public IReplacementVarOrConst getOrConstuctReplacementVar(final Term definition,
+			final boolean useGlobalVarInsteadOfConstant) {
+		return getOrConstuctReplacementVar(definition, useGlobalVarInsteadOfConstant, definition.getSort());
+	}
+
 	/**
 	 * Get the ReplacementVar that is used as a replacement for the Term definition. Construct this ReplacementVar if it
 	 * does not exist yet.
-	 * 
+	 *
 	 * @param useGlobalVarInsteadOfConstant
 	 *            do not construct constant, construct global var (and corresponding oldvar) instead.
 	 */
 	public IReplacementVarOrConst getOrConstuctReplacementVar(final Term definition,
-			final boolean useGlobalVarInsteadOfConstant) {
+			final boolean useGlobalVarInsteadOfConstant, final Sort sort) {
 		final IReplacementVarOrConst repVar = mRepVarMapping.get(definition);
 		if (repVar != null) {
 			return repVar;
 		}
 		final String nameCandidate = "rep" + SmtUtils.removeSmtQuoteCharacters(definition.toString());
-		final TermVariable tv = mMgdScript.constructFreshTermVariable(nameCandidate, definition.getSort());
+		final TermVariable tv = mMgdScript.constructFreshTermVariable(nameCandidate, sort);
 
 		final IReplacementVarOrConst newRepVar;
 		if (mUseIntraproceduralReplacementVar) {
@@ -140,7 +144,7 @@ public class ReplacementVarFactory {
 			}
 		}
 		assert checkOldVar(newRepVar) : newRepVar + " breaks oldVar-nonOldVar relation";
-		
+
 		return newRepVar;
 
 	}
@@ -157,7 +161,7 @@ public class ReplacementVarFactory {
 		return true;
 	}
 
-	
+
 	/**
 	 * Construct both, the oldVar and the non-oldVar for a definition that
 	 * represents the oldVar
@@ -173,7 +177,7 @@ public class ReplacementVarFactory {
 				mMgdScript.constructFreshTermVariable("nonold(" + oldVar.getIdentifierOfNonOldVar() + ")", definition.getSort());
 		constructReplacementNonOldVar(nonOldVarDefinition, nonoldVarTv, oldVar);
 		return oldVar;
-		
+
 	}
 
 	/**
@@ -268,7 +272,7 @@ public class ReplacementVarFactory {
 				throw new AssertionError("unknown kind of variable");
 			}
 		}
-		final Set<ApplicationTerm> constants = new ConstantFinder().findConstants(definition, true);
+		final Set<ApplicationTerm> constants = SmtUtils.extractConstants(definition, true);
 		if (!constants.isEmpty()) {
 			constOrVarKinds.add(IProgramConst.class);
 		}

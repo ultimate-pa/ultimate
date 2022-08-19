@@ -37,19 +37,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRCore;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -85,12 +86,12 @@ public class FastUprTest {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = new ConsoleLogger(LogLevel.DEBUG);
 
-		final SolverSettings solverSettingsZ3 = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setSolverLogics(Logics.ALL)
-				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL)
-				.setSolverLogger(UltimateMocks.createUltimateServiceProviderMock(LogLevel.WARN).getLoggingService()
-						.getLogger(getClass()))
-				.setDumpSmtScriptToFile(DUMP, DUMP_PATH, getClass().getSimpleName() + "_z3", false);
+		final SolverSettings solverSettingsZ3 =
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
+						.setSolverLogics(Logics.ALL).setUseExternalSolver(ExternalSolver.Z3)
+						.setSolverLogger(UltimateMocks.createUltimateServiceProviderMock(LogLevel.WARN)
+								.getLoggingService().getLogger(getClass()))
+						.setDumpSmtScriptToFile(DUMP, DUMP_PATH, getClass().getSimpleName() + "_z3", false);
 
 		mZ3 = SolverBuilder.buildAndInitializeSolver(mServices, solverSettingsZ3, "Z3");
 		mMgdZ3 = new ManagedScript(mServices, mZ3);
@@ -110,7 +111,7 @@ public class FastUprTest {
 	 * The expected formulas for {@link #tfEx01_Z3()} and {@link #tfEx01_SmtInterpol()} are equivalent according to
 	 * SmtInterpol (Z3 says unknown)
 	 */
-	@Test
+	// @Test disable because it also takes ~4h on jenkins
 	public void tfEx01_Z3() {
 		runAndTestAcceleration(this::getTfEx01LoopBody,
 				"(or (and (<= (+ (* (- 1) c_x_primed) c_x) (- 1)) (<= (+ (* (- 1) c_x) c_x_primed) 1)) "
@@ -166,12 +167,12 @@ public class FastUprTest {
 		runAndTestAcceleration(this::getTfEx05LoopBody, "false", mMgdSmtInterpol);
 	}
 
-	// @Test disabled because Z3 runs out of ressources during acceleration
+	// @Test disabled because Z3 runs out of resources during acceleration
 	public void tfEx02_Z3() {
 		runAndTestAcceleration(this::getTfEx02LoopBody, "???", mMgdZ3);
 	}
 
-	@Test
+	// @Test test disabled because Z3 runs out of resources during acceleration
 	public void compareTfEx01() {
 		compareAccelerations(this::getTfEx01LoopBody);
 	}
@@ -192,10 +193,11 @@ public class FastUprTest {
 
 		final Script z3 = mMgdZ3.getScript();
 		final Script smtInterpol = mMgdSmtInterpol.getScript();
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final ManagedScript mgdScript = mMgdZ3;
 
-		final Term pqeZ3 = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdZ3,
-				acceleratedZ3.getClosedFormula(), SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term pqeZ3 = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, acceleratedZ3.getClosedFormula());
 		final Term z3SimpTerm = SmtUtils.simplify(mMgdZ3, pqeZ3, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 		final Term smtInterpolSimpTerm = SmtUtils.simplify(mMgdSmtInterpol, acceleratedSmtInterpol.getClosedFormula(),
 				mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -218,7 +220,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx01LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -242,7 +244,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx02LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -275,7 +277,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx03LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -308,7 +310,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx04LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -348,7 +350,7 @@ public class FastUprTest {
 	private UnmodifiableTransFormula getTfEx05LoopBody(final ManagedScript managedScript) {
 		final Script script = managedScript.getScript();
 		managedScript.lock(this);
-		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+		final ProgramNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
 				managedScript, this);
 		managedScript.unlock(this);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -394,8 +396,9 @@ public class FastUprTest {
 		final Script script = managedScript.getScript();
 		if (PQE_AND_SIMPLIFY) {
 			mLogger.info("Running PQE");
-			final Term pqe = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript, actualT,
-					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final IUltimateServiceProvider services = mServices;
+			final ILogger logger = mLogger;
+			final Term pqe = PartialQuantifierElimination.eliminateCompat(services, managedScript, SimplificationTechnique.SIMPLIFY_DDA, actualT);
 			mLogger.info("Running simplify");
 			final Term simpTerm =
 					SmtUtils.simplify(managedScript, pqe, mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -407,12 +410,14 @@ public class FastUprTest {
 			final LBool isDistinct = script.checkSat();
 			script.pop(1);
 			mLogger.info("isDistinct %s", isDistinct);
-			Assert.assertEquals(LBool.UNSAT, isDistinct);
+			Assert.assertEquals("Simplification and actual term are not equal", LBool.UNSAT, isDistinct);
 		}
 
 		final Term expectedT = TermParseUtils.parseTerm(script, expected);
 		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", expectedT, actualT));
-		Assert.assertEquals(LBool.UNSAT, isDistinct);
+		Assert.assertEquals(String.format("(E)xpected result %s and (A)ctual result %s are not equal. (distict E A): ",
+				expectedT, actualT), LBool.UNSAT, isDistinct);
+
 	}
 
 	// @Test not necessary, was just trying to look at possible error sources
@@ -433,9 +438,9 @@ public class FastUprTest {
 				script.term("=", x, script.term("+", script.term("*", k, script.numeral("3")), script.numeral("6")));
 		final Term quantified =
 				script.quantifier(Script.EXISTS, new TermVariable[] { k }, script.term("and", con1, con2, con3));
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript,
-				quantified, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
+		final Term eliminated = PartialQuantifierElimination.eliminateCompat(services, managedScript, SimplificationTechnique.SIMPLIFY_DDA, quantified);
 
 		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", quantified, eliminated));
 		mLogger.info("Term     : %s", quantified.toStringDirect());
@@ -473,9 +478,10 @@ public class FastUprTest {
 				script.quantifier(Script.EXISTS, new TermVariable[] { k }, script.term("and", qcon1, qcon2, qcon3));
 
 		final Term term = script.term("or", disj1, disj2);
+		final IUltimateServiceProvider services = mServices;
+		final ILogger logger = mLogger;
 
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript, term,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term eliminated = PartialQuantifierElimination.eliminateCompat(services, managedScript, SimplificationTechnique.SIMPLIFY_DDA, term);
 
 		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", term, eliminated));
 		mLogger.info("Term     : %s", term.toStringDirect());
@@ -494,13 +500,12 @@ public class FastUprTest {
 
 	@FunctionalInterface
 	private interface TestAcceleration {
-		public void testAcceleration(final ManagedScript script, final UnmodifiableTransFormula input,
-				final String expected);
+		void testAcceleration(final ManagedScript script, final UnmodifiableTransFormula input, final String expected);
 	}
 
 	@FunctionalInterface
 	private interface TestData {
-		public UnmodifiableTransFormula getLoopBody(final ManagedScript script);
+		UnmodifiableTransFormula getLoopBody(final ManagedScript script);
 	}
 
 }

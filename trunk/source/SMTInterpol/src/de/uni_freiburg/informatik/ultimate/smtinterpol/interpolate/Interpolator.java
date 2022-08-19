@@ -29,11 +29,18 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -64,6 +71,7 @@ public class Interpolator extends NonRecursive {
 	private final TerminationRequest mCancel;
 
 	InterpolantChecker mChecker;
+	final Collection<Term> mAllAssertions;
 
 	LogProxy mLogger;
 	Theory mTheory;
@@ -100,6 +108,8 @@ public class Interpolator extends NonRecursive {
 	HashMap<Term, Term[]> mInterpolants;
 	HashMap<Term, InterpolatorClauseTermInfo> mClauseTermInfos;
 	HashMap<Term, InterpolatorAtomInfo> mLiteralTermInfos;
+	HashMap<FunctionSymbol, Occurrence> mFunctionSymbolOccurrenceInfos;
+	HashMap<Term, TermVariable> mMixedTermAuxEq;
 
 	/**
 	 * The interpolants which have already been computed. Used to store the interpolants preceding a resolution before
@@ -191,6 +201,7 @@ public class Interpolator extends NonRecursive {
 			mChecker = new InterpolantChecker(this, checkingSolver);
 			mChecker.assertUnpartitionedFormulas(allAssertions, mPartitions.keySet());
 		}
+		mAllAssertions = allAssertions;
 		mTheory = theory;
 		mNumInterpolants = partitions.length - 1;
 		mFullOccurrence = new Occurrence();
@@ -202,6 +213,8 @@ public class Interpolator extends NonRecursive {
 		mInterpolants = new HashMap<>();
 		mClauseTermInfos = new HashMap<>();
 		mLiteralTermInfos = new HashMap<>();
+		mFunctionSymbolOccurrenceInfos = new HashMap<>();
+		mMixedTermAuxEq = new HashMap<>();
 	}
 
 	public LogProxy getLogger() {
@@ -209,6 +222,7 @@ public class Interpolator extends NonRecursive {
 	}
 
 	public Term[] getInterpolants(final Term proofTree) {
+		colorTermsInAssertions();
 		colorLiterals(proofTree);
 		final Term[] interpolants = interpolate(proofTree);
 		for (int i = 0; i < interpolants.length; i++) {
@@ -283,6 +297,9 @@ public class Interpolator extends NonRecursive {
 		Term[] interpolants;
 		final InterpolatorClauseTermInfo leafTermInfo = getClauseTermInfo(leaf);
 		if (leafTermInfo.getLeafKind().equals(ProofConstants.FN_CLAUSE)) {
+			if (isSkolemizedFormula(leaf)) {
+				throw new UnsupportedOperationException("Interpolation not supported for quantified formulae.");
+			}
 			final String source = leafTermInfo.getSource();
 			final int partition = mPartitions.containsKey(source) ? mPartitions.get(source) : 0;
 			interpolants = new Term[mNumInterpolants];
@@ -429,16 +446,24 @@ public class Interpolator extends NonRecursive {
 	class Occurrence {
 		BitSet mInA;
 		BitSet mInB;
+		BitSet mContainsMixedTerm;
 
 		public Occurrence() {
 			mInA = new BitSet(mNumInterpolants + 1);
 			mInA.set(mNumInterpolants);
 			mInB = new BitSet(mNumInterpolants + 1);
+			mContainsMixedTerm = new BitSet(mNumInterpolants + 1);
 		}
 
 		public Occurrence(final BitSet inA, final BitSet inB) {
 			mInA = inA;
 			mInB = inB;
+		}
+
+		public Occurrence(final BitSet inA, final BitSet inB, final BitSet containsMixedTerm) {
+			mInA = inA;
+			mInB = inB;
+			mContainsMixedTerm = containsMixedTerm;
 		}
 
 		public void occursIn(final int partition) {
@@ -493,9 +518,11 @@ public class Interpolator extends NonRecursive {
 		public Occurrence intersect(final Occurrence other) {
 			final BitSet inA = (BitSet) mInA.clone();
 			final BitSet inB = (BitSet) mInB.clone();
+			final BitSet containsMixedTerm = (BitSet) mContainsMixedTerm.clone();
 			inA.and(other.mInA);
 			inB.and(other.mInB);
-			return new Occurrence(inA, inB);
+			containsMixedTerm.and(other.mContainsMixedTerm);
+			return new Occurrence(inA, inB, containsMixedTerm);
 		}
 
 		public boolean isAorShared(final int partition) {
@@ -564,6 +591,10 @@ public class Interpolator extends NonRecursive {
 			super(inA, inB);
 		}
 
+		public LitInfo(final BitSet inA, final BitSet inB, final BitSet containsMixedTerm) {
+			super(inA, inB, containsMixedTerm);
+		}
+
 		public TermVariable getMixedVar() {
 			return mMixedVar;
 		}
@@ -588,6 +619,118 @@ public class Interpolator extends NonRecursive {
 			}
 		};
 		return substitutor.transform(interpolant);
+	}
+
+	private void colorTermsInAssertions() {
+		for (final Term a : mAllAssertions) {
+			int part = -1;
+			Term subTerm = a;
+			if (a instanceof AnnotatedTerm) {
+				final AnnotatedTerm annTerm = (AnnotatedTerm) a;
+				for (final Annotation an : annTerm.getAnnotations()) {
+					if (SMTLIBConstants.NAMED.equals(an.getKey()) && mPartitions.containsKey(an.getValue())) {
+						part = mPartitions.get(an.getValue());
+					}
+				}
+				subTerm = annTerm.getSubterm();
+			}
+			new ColorAssertion().color(subTerm, part);
+		}
+	}
+
+	private class ColorAssertion extends NonRecursive {
+		private HashSet<Term> mSeen;
+
+		void color(final Term term, final int part) {
+			mSeen = new HashSet<>();
+			run(new ColorTerm(term, part));
+		}
+
+		/**
+		 * Color all ground terms occurring in a given term according to the given partition.
+		 */
+		private class ColorTerm extends NonRecursive.TermWalker {
+
+			final int mPart;
+
+			public ColorTerm(final Term term, final int part) {
+				super(term);
+				mPart = part;
+			}
+
+			@Override
+			public void walk(final NonRecursive walker) {
+				if (mSeen.add(mTerm)) {
+					super.walk(walker);
+				}
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final ConstantTerm term) {
+				// Nothing to do
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final AnnotatedTerm term) {
+				walker.enqueueWalker(new ColorTerm(term.getSubterm(), mPart));
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final ApplicationTerm term) {
+				final FunctionSymbol fsym = term.getFunction();
+				final Term def = fsym.getDefinition();
+				if (def != null) {
+					final Term[] params = term.getParameters();
+					final HashMap<TermVariable, Term> subs = new HashMap<>();
+					for (int i = 0; i < params.length; i++) {
+						subs.put(term.getFunction().getDefinitionVars()[i], params[i]);
+					}
+					final FormulaUnLet unletter = new FormulaUnLet();
+					unletter.addSubstitutions(subs);
+					final Term expanded = unletter.unlet(def);
+					walker.enqueueWalker(new ColorTerm(expanded, mPart));
+				} else {
+					if (!term.getFunction().isIntern()) {
+						if (term.getFreeVars().length == 0) {
+							addOccurrence(term, mPart);
+						}
+						// Color function symbol for quantified interpolation
+						addOccurrence(fsym, mPart);
+					}
+					for (final Term param : ((ApplicationTerm) mTerm).getParameters()) {
+						walker.enqueueWalker(new ColorTerm(param, mPart));
+					}
+				}
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final LetTerm term) {
+				walker.enqueueWalker(new ColorTerm(new FormulaUnLet().unlet(term), mPart));
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final LambdaTerm term) {
+				walker.enqueueWalker(new ColorTerm(term.getSubterm(), mPart));
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final QuantifiedFormula term) {
+				walker.enqueueWalker(new ColorTerm(term.getSubformula(), mPart));
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final TermVariable term) {
+				// Nothing to do
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final MatchTerm term) {
+				walker.enqueueWalker(new ColorTerm(term.getDataTerm(), mPart));
+				for (final Term t : term.getCases()) {
+					walker.enqueueWalker(new ColorTerm(t, mPart));
+				}
+			}
+		}
 	}
 
 	/**
@@ -652,9 +795,13 @@ public class Interpolator extends NonRecursive {
 		}
 		Occurrence result = mSymbolPartition.get(term);
 		if (result == null) {
-			if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()) {
+			if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()
+					&& !((ApplicationTerm) term).getFunction().getName().startsWith("@AUX")) {
 				final Term[] subTerms = ((ApplicationTerm) term).getParameters();
 				result = mFullOccurrence;
+				if (result.mContainsMixedTerm == null) {
+					result.mContainsMixedTerm = new BitSet(mNumInterpolants + 1);
+				}
 				if (subTerms.length == 0) {
 					return result;
 				}
@@ -663,7 +810,8 @@ public class Interpolator extends NonRecursive {
 					result = result.intersect(occ);
 				}
 			} else {
-				result = new Occurrence();
+				// Compute occurrence of unknown term.
+				result = getOccurrenceOfUnknownTerm(term);
 			}
 			mSymbolPartition.put(term, result);
 		}
@@ -686,9 +834,17 @@ public class Interpolator extends NonRecursive {
 			for (final Term p : at.getParameters()) {
 				addOccurrence(p, part);
 			}
-			if (at.getFunction().isIntern()) {
-				return;
+			/* AUX and skolem functions must be colored for the quantifier interpolation */
+			final FunctionSymbol fsym = at.getFunction();
+			if (!fsym.isIntern() || fsym.getName().startsWith("@AUX") || fsym.getName().contains("skolem")) {
+				final Occurrence focc = mFunctionSymbolOccurrenceInfos.get(fsym);
+				if (focc != null && focc.contains(part)) {
+					/* Already colored correctly */
+					return;
+				}
+				addOccurrence(fsym, part);
 			}
+			return;
 		}
 		/* Create occurrence if it is *not* an internal function and if it does not exists yet */
 		if (occ == null) {
@@ -697,9 +853,66 @@ public class Interpolator extends NonRecursive {
 		occ.occursIn(part);
 	}
 
+	/**
+	 * Compute the occurrence of a term seen for the first time.
+	 */
+	Occurrence getOccurrenceOfUnknownTerm(final Term term) {
+		/* Collect all function symbols occurring in a term */
+		final SymbolCollector collector = new SymbolCollector();
+		collector.collect(term);
+		final Set<FunctionSymbol> fsyms = collector.getSymbols();
+		Occurrence result = mFullOccurrence;
+		for (final FunctionSymbol fsym : fsyms) {
+			if (!mFunctionSymbolOccurrenceInfos.containsKey(fsym)) {
+				/* If symbol is unknown, set symbol occurrence to root partition. */
+				mFunctionSymbolOccurrenceInfos.put(fsym, new Occurrence());
+			}
+			result = result.intersect(mFunctionSymbolOccurrenceInfos.get(fsym));
+		}
+
+		final BitSet mixed = new BitSet(mNumInterpolants);
+		for (int part = 0; part < mNumInterpolants; part++) {
+			/*
+			 * For a mixed term, set its occurrence to the occurrence of the outermost
+			 * function symbol.
+			 */
+			if (result.isMixed(part)) {
+				final Occurrence purOcc = mFunctionSymbolOccurrenceInfos.get(((ApplicationTerm) term).getFunction());
+				if (purOcc.mInA.get(part)) {
+					result.mInA.set(part);
+				}
+				if (purOcc.mInB.get(part)) {
+					result.mInB.set(part);
+				}
+				mixed.set(part);
+			}
+		}
+		result.mContainsMixedTerm = mixed;
+
+		return result;
+	}
+
+	/**
+	 * Add the occurrence of non-intern function symbols and of the intern AUX and
+	 * skolem function symbols, needed for quantifier interpolation.
+	 */
+	void addOccurrence(final FunctionSymbol symbol, final int part) {
+		Occurrence occ = mFunctionSymbolOccurrenceInfos.get(symbol);
+		if (occ != null && occ.contains(part)) {
+			/* Already colored correctly */
+			return;
+		}
+		/* Create occurrence if it does not exist yet */
+		if (occ == null) {
+			occ = new Occurrence();
+		}
+		occ.occursIn(part);
+		mFunctionSymbolOccurrenceInfos.put(symbol, occ);
+	}
+
 	HashSet<Term> getSubTerms(final Term literal) {
 		final HashSet<Term> subTerms = new HashSet<>();
-		final ArrayDeque<Term> todo = new ArrayDeque<Term>();
+		final ArrayDeque<Term> todo = new ArrayDeque<>();
 		todo.addLast(literal);
 		while (!todo.isEmpty()) {
 			final Term term = todo.removeLast();
@@ -800,12 +1013,14 @@ public class Interpolator extends NonRecursive {
 		inA.set(0, mNumInterpolants + 1);
 		final BitSet inB = new BitSet(mNumInterpolants + 1);
 		inB.set(0, mNumInterpolants);
+		final BitSet containsMixedTerm = new BitSet(mNumInterpolants + 1);
 		for (final Term st : subterms) {
 			final Occurrence occInfo = getOccurrence(st);
 			inA.and(occInfo.mInA);
 			inB.and(occInfo.mInB);
+			containsMixedTerm.or(occInfo.mContainsMixedTerm);
 		}
-		info = new LitInfo(inA, inB);
+		info = new LitInfo(inA, inB, containsMixedTerm);
 		return info;
 	}
 
@@ -828,12 +1043,12 @@ public class Interpolator extends NonRecursive {
 			mReplacement = replacement;
 		}
 
-		private static boolean isSMTAffineTerm(Term term) {
+		private static boolean isSMTAffineTerm(final Term term) {
 			if (!term.getSort().isNumericSort()) {
 				return false;
 			}
 			if (term instanceof ApplicationTerm) {
-				FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
+				final FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
 				return fsym.isIntern() && (fsym.getName() == "+" || fsym.getName() == "-" || fsym.getName() == "*"
 						|| fsym.getName() == "to_real");
 			} else if (term instanceof ConstantTerm) {
@@ -1245,5 +1460,31 @@ public class Interpolator extends NonRecursive {
 
 	public Term getAtom(final Term literal) {
 		return isNegatedTerm(literal) ? ((ApplicationTerm) literal).getParameters()[0] : literal;
+	}
+
+	private boolean isSkolemizedFormula(final Term leaf) {
+		final InterpolatorClauseTermInfo info = getClauseTermInfo(leaf);
+		for (final Term lit : info.getLiterals()) {
+			if (containsSkolemVar(lit)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean containsSkolemVar(final Term t) {
+		if (t instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) t;
+			final String f = appTerm.getFunction().getName();
+			if (f.matches("@.*skolem.*")) {
+				return true;
+			}
+			for (final Term arg : appTerm.getParameters()) {
+				if (containsSkolemVar(arg)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

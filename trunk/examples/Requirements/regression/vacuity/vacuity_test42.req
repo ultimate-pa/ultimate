@@ -1,4 +1,4 @@
-// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; results:-1
+// #TestSpec: rt-inconsistent:req1; vacuous:; inconsistent:; results:-1
 Input var3 is bool
 CONST time_every is 10.0
 

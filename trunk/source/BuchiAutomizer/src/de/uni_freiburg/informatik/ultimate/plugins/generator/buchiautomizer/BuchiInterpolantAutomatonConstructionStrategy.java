@@ -52,11 +52,11 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 			final boolean mScroogeNondeterminismLoop = 
 					pp.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SCROOGE_NONDETERMINISM_LOOP);
 			if ((mScroogeNondeterminismStem || mScroogeNondeterminismLoop)
-					&& mInterpolantAutomaton != BuchiInterpolantAutomaton.ScroogeNondeterminism) {
+					&& mInterpolantAutomaton != BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM) {
 				throw new IllegalArgumentException("illegal combination of settings");
 			}
 			if ((!mScroogeNondeterminismStem && !mScroogeNondeterminismLoop)
-					&& mInterpolantAutomaton == BuchiInterpolantAutomaton.ScroogeNondeterminism) {
+					&& mInterpolantAutomaton == BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM) {
 				throw new IllegalArgumentException("illegal combination of settings");
 			}
 			final boolean mBouncerStem = pp.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_BOUNCER_STEM);
@@ -72,15 +72,15 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.DETERMINISTIC,
 							true, false, false, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.DETERMINISTIC,
 							true, true, false, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							true, false, true, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							true, true, true, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, false, true, true, false),
 			});
 		}
@@ -90,11 +90,11 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							true, false, true, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							true, true, true, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, false, true, true, false),
 			});
 		}
@@ -105,11 +105,11 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, false, true, false, true),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, true, true, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, false, true, true, true),
 			});
 		}
@@ -119,7 +119,7 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, false, true, true, false), //NBA
 			});
 		}
@@ -129,11 +129,11 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.DETERMINISTIC,
 							true, false, false, false, false), //DBA
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.DETERMINISTIC,
 							true, true, false, false, false),  //DBA
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, false, true, true, false),  //NBA
 			});
 		}
@@ -143,11 +143,11 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							true, false, true, false, true),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							true, true, true, false, false),
-					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.SCROOGE_NONDETERMINISM, 
 							false, false, true, true, true),
 			});
 		}

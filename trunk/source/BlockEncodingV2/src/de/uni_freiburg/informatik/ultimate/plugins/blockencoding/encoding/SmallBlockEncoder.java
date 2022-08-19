@@ -38,8 +38,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
@@ -125,6 +127,11 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 				// summaries are not supported
 				continue;
 			}
+			if (edge instanceof IActionWithBranchEncoders && !((IActionWithBranchEncoders) edge)
+					.getTransitionFormulaWithBranchEncoders().getBranchEncoders().isEmpty()) {
+				mLogger.warn("Skipping small block encoding for transition with branch encoders: " + edge);
+				continue;
+			}
 
 			final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
 			Term term;
@@ -198,7 +205,7 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 				newSource = createNewLocation(icfg, edge.getTarget());
 				final Term prefixTerm = SmtUtils.and(mScript, prefix);
 				final IcfgEdge newEdge =
-						mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), newSource, prefixTerm);
+						mEdgeBuilder.constructAndConnectInternalTransition(edge, edge.getSource(), newSource, prefixTerm);
 				rememberEdgeMapping(newEdge, edge);
 			}
 
@@ -210,13 +217,13 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 				newTarget = createNewLocation(icfg, edge.getTarget());
 				final Term suffixTerm = SmtUtils.and(mScript, suffix);
 				final IcfgEdge newEdge =
-						mEdgeBuilder.constructInternalTransition(edge, newTarget, edge.getTarget(), suffixTerm);
+						mEdgeBuilder.constructAndConnectInternalTransition(edge, newTarget, edge.getTarget(), suffixTerm);
 				rememberEdgeMapping(newEdge, edge);
 			}
 
 			// finally, we add the disjunctions between newsource and newtarget
 			for (final Term disjunct : disjunction) {
-				final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(edge, newSource, newTarget, disjunct);
+				final IcfgEdge newEdge = mEdgeBuilder.constructAndConnectInternalTransition(edge, newSource, newTarget, disjunct);
 				rememberEdgeMapping(newEdge, edge);
 			}
 		}
@@ -278,7 +285,7 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 		final IcfgLocation source = oldEdge.getSource();
 		final IcfgLocation target = oldEdge.getTarget();
 		for (final Term disjunct : disjuncts) {
-			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(oldEdge, source, target, disjunct);
+			final IcfgEdge newEdge = mEdgeBuilder.constructAndConnectInternalTransition(oldEdge, source, target, disjunct);
 			rememberEdgeMapping(newEdge, oldEdge);
 		}
 	}

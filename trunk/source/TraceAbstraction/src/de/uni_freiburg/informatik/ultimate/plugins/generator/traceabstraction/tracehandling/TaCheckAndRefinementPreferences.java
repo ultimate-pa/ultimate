@@ -30,6 +30,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -75,6 +76,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final String mPathOfDumpedScript;
 	private final Logics mLogicForExternalSolver;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
+	private final LoopAccelerators mLoopAccelerationTechnique;
 
 	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlockOrder;
@@ -87,12 +89,13 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mComputeCounterexample;
 	private final boolean mCollectInterpolantStatistics;
-	private final IUltimateServiceProvider mServices;
 	private final boolean mUsePredicateTrieBasedPredicateUnifier;
 	private final String mFeatureVectorDumpPath;
 	private final boolean mDumpFeatureVectors;
 	private final boolean mCompressDumpedScript;
 	private final Map<String, String> mAdditionalSolverOptions;
+	private final boolean mUseMinimalUnsatCoreEnumerationForSmtInterpol;
+	private final RefinementStrategy mAcceleratedInterpolationRefinementStrategy;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -120,7 +123,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer) {
-		mServices = services;
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -130,6 +132,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
 		mMcrRefinementStrategy = taPrefs.getMcrRefinementStrategy();
+		mAcceleratedInterpolationRefinementStrategy = taPrefs.getAcceleratedInterpolationRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
 		mFakeNonIncrementalSolver = taPrefs.fakeNonIncrementalSolver();
@@ -142,6 +145,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mCollectInterpolantStatistics = taPrefs.collectInterpolantStatistics();
 		mDumpFeatureVectors = taPrefs.useSMTFeatureExtraction();
 		mFeatureVectorDumpPath = taPrefs.getSMTFeatureExtractionDumpPath();
+		mLoopAccelerationTechnique = taPrefs.getLoopAccelerationTechnique();
 
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlockOrder = new TaAssertCodeBlockOrder(ultimatePrefs);
@@ -162,6 +166,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
 		mUsePredicateTrieBasedPredicateUnifier = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER);
+		mUseMinimalUnsatCoreEnumerationForSmtInterpol = ultimatePrefs.getBoolean(
+				TraceAbstractionPreferenceInitializer.LABEL_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL);
 		mAdditionalSolverOptions =
 				ultimatePrefs.getKeyValueMap(TraceAbstractionPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 	}
@@ -180,6 +186,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public RefinementStrategy getMcrRefinementStrategy() {
 		return mMcrRefinementStrategy;
+	}
+
+	public RefinementStrategy getAcceleratedInterpolationRefinementStrategy() {
+		return mAcceleratedInterpolationRefinementStrategy;
 	}
 
 	@Override
@@ -255,6 +265,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mUnsatCores;
 	}
 
+	public LoopAccelerators getLoopAccelerationTechnique() {
+		return mLoopAccelerationTechnique;
+	}
+
 	@Override
 	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
@@ -298,11 +312,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mCollectInterpolantStatistics;
 	}
 
-	@Override
-	public IUltimateServiceProvider getUltimateServices() {
-		return mServices;
-	}
-
 	public boolean usePredicateTrieBasedPredicateUnifier() {
 		return mUsePredicateTrieBasedPredicateUnifier;
 	}
@@ -314,14 +323,19 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 						compressDumpedScript())
 				.setUseExternalSolver(getUseSeparateSolverForTracechecks(), getCommandExternalSolver(),
 						getLogicForExternalSolver())
-				.setSolverMode(getSolverMode()).setAdditionalOptions(getAdditionalSolverOptions());
+				.setSolverMode(getSolverMode()).setAdditionalOptions(getAdditionalSolverOptions())
+				.setUseMinimalUnsatCoreEnumerationForSmtInterpol(getUseMinimalUnsatCoreEnumerationForSmtInterpol());
+	}
+
+	private boolean getUseMinimalUnsatCoreEnumerationForSmtInterpol() {
+		return mUseMinimalUnsatCoreEnumerationForSmtInterpol;
 	}
 
 	public Map<String, String> getAdditionalSolverOptions() {
 		return mAdditionalSolverOptions;
 	}
 
-	public class TaAssertCodeBlockOrder extends AssertCodeBlockOrder {
+	public static class TaAssertCodeBlockOrder extends AssertCodeBlockOrder {
 
 		public TaAssertCodeBlockOrder(final AssertCodeBlockOrderType assertCodeBlockOrderType,
 				final SmtFeatureHeuristicPartitioningType smtFeatureHeuristicPartitioningType,

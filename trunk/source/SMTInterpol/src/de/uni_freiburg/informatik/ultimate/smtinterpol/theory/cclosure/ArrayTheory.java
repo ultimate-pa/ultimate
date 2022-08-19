@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -46,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpreta
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedLinkedHashSet;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedLinkedHashSet;
 
 /**
  * Array theory solver based on weak equivalence classes. The underlying data structure is explained in our paper
@@ -785,10 +786,12 @@ public class ArrayTheory implements ITheory {
 			logger.info("Array: #Arrays: %d, #BuildWeakEQ: %d, #ModEdges: %d, " + "#addStores: %d, #merges: %d",
 					mArrays.size(), mNumBuildWeakEQ, mNumModuloEdges, mNumAddStores, mNumMerges);
 			logger.info("Insts: ReadOverWeakEQ: %d, WeakeqExt: %d", mNumInstsSelect, mNumInstsEq);
-			logger.info("Time: BuildWeakEq: %.3f ms, BuildWeakEqi: %.3f ms", mTimeBuildWeakEq / 1e6,
-					mTimeBuildWeakEqi / 1e6);
-			logger.info("Time: Propagation %.3f ms, Explanations: %.3f ms", mTimePropagation / 1e6,
-					mTimeExplanations / 1e6);
+			logger.info("Time: BuildWeakEq: %d.%03d ms, BuildWeakEqi: %d.%03d ms",
+					mTimeBuildWeakEq / 1000000, mTimeBuildWeakEq / 1000 % 1000,
+					mTimeBuildWeakEqi / 1000000, mTimeBuildWeakEqi / 1000 % 1000);
+			logger.info("Time: Propagation %d.%03d ms, Explanations: %d.%03d ms",
+					mTimePropagation / 1000000, mTimePropagation / 1000 % 1000,
+					mTimeExplanations / 1000000, mTimeExplanations / 1000 % 1000);
 		}
 
 	}
@@ -927,7 +930,8 @@ public class ArrayTheory implements ITheory {
 							todoQueue.addLast(node);
 							continue;
 						}
-						final FunctionSymbol constFunc = t.getFunctionWithResult("const", null, arraySort, valueSort);
+						final FunctionSymbol constFunc = t.getFunctionWithResult(SMTLIBConstants.CONST, null, arraySort,
+								valueSort);
 						final Term nodeValue = t.term(constFunc, value);
 						builder.setModelValue(node.mTerm, nodeValue);
 					} else {

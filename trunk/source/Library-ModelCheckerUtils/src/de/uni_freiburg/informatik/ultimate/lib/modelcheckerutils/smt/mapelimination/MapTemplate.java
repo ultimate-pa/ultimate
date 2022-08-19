@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -49,6 +50,8 @@ public abstract class MapTemplate {
 
 	@Override
 	public abstract String toString();
+
+	public abstract boolean isAssigned(TransFormula transformula);
 
 	@Override
 	public boolean equals(final Object other) {
@@ -92,6 +95,11 @@ class ArrayTemplate extends MapTemplate {
 	public String toString() {
 		return "(select " + mArray + " ...)";
 	}
+
+	@Override
+	public boolean isAssigned(final TransFormula transformula) {
+		return transformula.getAssignedVars().stream().anyMatch(x -> x.getTermVariable().equals(mArray));
+	}
 }
 
 /**
@@ -122,5 +130,10 @@ class UFTemplate extends MapTemplate {
 	@Override
 	public String toString() {
 		return "(" + mFunctionName + " ...)";
+	}
+
+	@Override
+	public boolean isAssigned(final TransFormula transformula) {
+		return false;
 	}
 }

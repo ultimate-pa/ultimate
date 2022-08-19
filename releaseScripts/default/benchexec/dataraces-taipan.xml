@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimatetaipan" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+	<option name="--full-output" />
+
+	<rundefinition name="Taipan"/>
+
+	<tasks name="SVCOMP NoDataRace.NEW">
+		<includesfile>../../../trunk/examples/svcomp/NoDataRace-ConcurrencySafety.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+	</tasks>
+
+	<resultfiles></resultfiles>
+
+</benchmark>

@@ -29,46 +29,31 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 import java.util.Collections;
 
 public class Transition {
-	Phase src, dest;
-	CDD guard;
-	String[] resets;
-
-	/**
-	 * @return Returns the guard.
-	 */
-	public CDD getGuard() {
-		return guard;
-	}
-
-	/**
-	 * @param guard
-	 *            The guard to set.
-	 */
-	public void setGuard(final CDD guard) {
-		this.guard = guard;
-	}
+	private final Phase mSrc;
+	private final Phase mDest;
+	private final String[] mResets;
+	private CDD mGuard;
 
 	public Transition(final Phase src, final CDD guard, final String[] resets, final Phase dest) {
-
-		this.src = src;
-		this.guard = guard;
-		this.resets = resets;
-		this.dest = dest;
+		mSrc = src;
+		mGuard = guard;
+		mResets = resets;
+		mDest = dest;
 	}
 
 	@Override
 	public String toString() {
-		String destName = dest.toString();
+		String destName = mDest.toString();
 		if (destName.length() < 33) {
 			destName = (destName + "                                 ").substring(0, 33);
 		}
-		final StringBuffer result = new StringBuffer(" -> ").append(destName).append(" guard ").append(guard);
+		final StringBuffer result = new StringBuffer(" -> ").append(destName).append(" guard ").append(mGuard);
 
-		if (resets.length > 0) {
+		if (getResets().length > 0) {
 			result.append(" resets {");
 			String comma = "";
-			for (int i = 0; i < resets.length; i++) {
-				result.append(comma).append(resets[i]);
+			for (int i = 0; i < getResets().length; i++) {
+				result.append(comma).append(getResets()[i]);
 				comma = ",";
 			}
 			result.append("}");
@@ -76,32 +61,11 @@ public class Transition {
 		return result.toString();
 	}
 
-	/**
-	 * @return Returns the dest.
-	 */
-	public Phase getDest() {
-		return dest;
-	}
-
-	/**
-	 * @return Returns the resets.
-	 */
-	public String[] getResets() {
-		return resets;
-	}
-
-	/**
-	 * @return Returns the src.
-	 */
-	public Phase getSrc() {
-		return src;
-	}
-
 	// Für den Fall dass ein Guard eine ODER Verknüpfung hat werden die Transitionen manchmal nicht korrekt
 	// vereinfacht; Bsp: ein Guard der Form "\neg P || c<10 " auf einer Transition mit dest.StateInvariant = P
 	// sollte auf "c<10" vereinfacht werden
 	public void simplifyGuard() {
-		final CDD[] guardDNF = guard.toDNF();
+		final CDD[] guardDNF = mGuard.toDNF();
 		final int length = guardDNF.length;
 		if (length >= 1) // for 1: although no "OR" is used in the guard, we need to prime it again
 		{
@@ -116,7 +80,7 @@ public class Transition {
 				CDD guardPart = guardDNF[i];
 				final CDD guardPartUnprimed = guardPart.unprime(Collections.emptySet());
 
-				if (dest.getStateInvariant().and(guardPartUnprimed) != CDD.FALSE) {
+				if (mDest.getStateInvariant().and(guardPartUnprimed) != CDD.FALSE) {
 					final String guardPartString = guardPart.toString();
 					if (guardPartString.matches(guardPartUnprimed.toString())) {
 						// Spezialfall für clockinvariante!
@@ -131,9 +95,29 @@ public class Transition {
 					j++;
 				}
 			}
-			setGuard(simplifiedGuard);
+			mGuard = simplifiedGuard;
 
 		}
 
+	}
+
+	public Phase getDest() {
+		return mDest;
+	}
+
+	public String[] getResets() {
+		return mResets;
+	}
+
+	public Phase getSrc() {
+		return mSrc;
+	}
+
+	public CDD getGuard() {
+		return mGuard;
+	}
+
+	public void setGuard(final CDD guard) {
+		mGuard = guard;
 	}
 }
