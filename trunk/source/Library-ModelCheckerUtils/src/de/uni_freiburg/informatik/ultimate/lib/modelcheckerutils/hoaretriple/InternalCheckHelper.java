@@ -37,8 +37,9 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	private final SdHoareTripleCheckerHelper mHelper;
 
 	InternalCheckHelper(final IPredicateCoverageChecker coverage, final SdHoareTripleCheckerHelper helper,
-			final IPredicate falsePredicate, final IPredicate truePredicate) {
-		super(coverage, falsePredicate, truePredicate);
+			final IPredicate falsePredicate, final IPredicate truePredicate,
+			final HoareTripleCheckerStatisticsGenerator statistics) {
+		super(coverage, falsePredicate, truePredicate, statistics);
 		mHelper = helper;
 	}
 

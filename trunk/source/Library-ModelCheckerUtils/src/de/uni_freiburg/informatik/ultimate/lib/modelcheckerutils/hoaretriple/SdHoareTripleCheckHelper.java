@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
@@ -47,15 +48,17 @@ public abstract class SdHoareTripleCheckHelper {
 	protected final IPredicateCoverageChecker mCoverage;
 	protected final IPredicate mFalsePredicate;
 	protected final IPredicate mTruePredicate;
+	protected final HoareTripleCheckerStatisticsGenerator mStatistics;
 
 	/**
 	 * @param sdHoareTripleChecker
 	 */
 	SdHoareTripleCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
-			final IPredicate truePredicate) {
+			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics) {
 		mCoverage = coverage;
 		mFalsePredicate = falsePredicate;
 		mTruePredicate = truePredicate;
+		mStatistics = statistics;
 	}
 
 	public Validity check(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate succ) {
