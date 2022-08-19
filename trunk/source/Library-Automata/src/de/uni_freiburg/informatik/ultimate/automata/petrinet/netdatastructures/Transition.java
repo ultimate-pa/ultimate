@@ -69,7 +69,6 @@ public class Transition<LETTER, PLACE>
 	public Transition(final LETTER symbol, final ImmutableSet<PLACE> predecessors, final ImmutableSet<PLACE> successors,
 			final int totalOrderId) {
 		mSymbol = Objects.requireNonNull(symbol, "Transition must not be labeled with null");
-		;
 		mPredecessors = predecessors;
 		mSuccessors = successors;
 		mHashCode = computeHashCode();
