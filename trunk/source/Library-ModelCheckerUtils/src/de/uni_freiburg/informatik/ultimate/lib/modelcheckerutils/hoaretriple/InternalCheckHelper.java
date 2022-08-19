@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -121,7 +120,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 		final UnmodifiableTransFormula tf = act.getTransformula();
 
 		// If pre implies post, and act does not modify any variable in pre, then the Hoare triple is valid.
-		if (mCoverage != null && mCoverage.isCovered(preLin, succ) == Validity.VALID
+		if (mCoverage.isCovered(preLin, succ) == Validity.VALID
 				&& DataStructureUtils.haveEmptyIntersection(preLin.getVars(), tf.getAssignedVars())) {
 			mStatistics.getSDsluCounter().incIn();
 			return Validity.VALID;
@@ -143,32 +142,28 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 		// Now, we know that the variables of pre and post are both disjoint from the variables of act, and act does not
 		// constrain the value of any program constants.
 		// Hence the Hoare triple is valid iff pre implies post.
-		if (mCoverage != null) {
-			final Validity sat = mCoverage.isCovered(preLin, succ);
-			if (sat == Validity.VALID) {
-				mStatistics.getSDsluCounter().incIn();
-				return Validity.VALID;
-			}
-			if (sat == Validity.UNKNOWN) {
-				return null;
-			}
-			if (sat == Validity.NOT_CHECKED) {
-				return null;
-			}
-			if (sat == Validity.INVALID) {
-				final String proc = act.getPrecedingProcedure();
-				assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
-						|| act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
-
-				// TODO Commented out per discussion with Matthias. Run tests to see effects, then delete.
-				// if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(preLin, proc)
-				// || mModifiableGlobalVariableManager.containsNonModifiableOldVars(succ, proc)) {
-				// return null;
-				// }
-				// // continue and return Validity.INVALID
-			}
-		} else if (!Collections.disjoint(preLin.getVars(), succ.getVars())) {
+		final Validity sat = mCoverage.isCovered(preLin, succ);
+		if (sat == Validity.VALID) {
+			mStatistics.getSDsluCounter().incIn();
+			return Validity.VALID;
+		}
+		if (sat == Validity.UNKNOWN) {
 			return null;
+		}
+		if (sat == Validity.NOT_CHECKED) {
+			return null;
+		}
+		if (sat == Validity.INVALID) {
+			final String proc = act.getPrecedingProcedure();
+			assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
+					|| act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
+
+			// TODO Commented out per discussion with Matthias. Run tests to see effects, then delete.
+			// if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(preLin, proc)
+			// || mModifiableGlobalVariableManager.containsNonModifiableOldVars(succ, proc)) {
+			// return null;
+			// }
+			// // continue and return Validity.INVALID
 		}
 
 		mStatistics.getSDsCounter().incIn();

@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -55,7 +57,7 @@ public abstract class SdHoareTripleCheckHelper {
 	 */
 	SdHoareTripleCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
 			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics) {
-		mCoverage = coverage;
+		mCoverage = Objects.requireNonNull(coverage);
 		mFalsePredicate = falsePredicate;
 		mTruePredicate = truePredicate;
 		mStatistics = statistics;
