@@ -68,10 +68,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * https://github.com/ultimate-pa/ultimate/issues/448
 	 */
 	private static final boolean USE_FORWARD_CHECKING = false;
+	private static final boolean USE_PQ = true;
+	private final static boolean LAZY_SUCCESSOR_COMPUTATION = true;
+
 	private final Queue<Event<LETTER, PLACE>> mPe;
 	private final Map<Marking<LETTER, PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
-	private int mMaximalSize = 0;
-	private static final boolean USE_PQ = true;
+	private int mMaximalSize;
 	private final boolean mUseFirstbornCutoffCheck;
 	private final boolean mUseB32Optimization;
 	private int mNumberOfGeneratedExtensions = 0;
@@ -84,13 +86,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private final Comparator<Event<LETTER, PLACE>> mOrder;
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
-	private final static boolean LAZY_SUCCESSOR_COMPUTATION = true;
 
 	/**
 	 * A candidate is useful if it lead to at least one new possible extension.
 	 */
-	private int mUsefulExtensionCandidates = 0;
-	private int mUselessExtensionCandidates = 0;
+	private int mUsefulExtensionCandidates;
+	private int mUselessExtensionCandidates;
 
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess,
 			final ConfigurationOrder<LETTER, PLACE> order, final boolean useFirstbornCutoffCheck,
@@ -116,9 +117,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	public Event<LETTER, PLACE> remove() {
 		if (mFastpathCutoffEventList.isEmpty()) {
 			return mPe.remove();
-		} else {
-			return mFastpathCutoffEventList.removeFirst();
 		}
+		return mFastpathCutoffEventList.removeFirst();
 	}
 
 	@Override
@@ -151,14 +151,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		if (mOrder.compare(newEvent, eventWithSameMarking) > 0) {
 			newEvent.setCompanion(eventWithSameMarking);
 			return true;
-		} else {
-			boolean eventWithSameMarkingWasInTheMainQueu;
-			eventWithSameMarkingWasInTheMainQueu = mPe.remove(eventWithSameMarking);
-			assert (eventWithSameMarkingWasInTheMainQueu);
-			mFastpathCutoffEventList.add(eventWithSameMarking);
-			eventWithSameMarking.setCompanion(newEvent);
-			return false;
 		}
+		final boolean eventWithSameMarkingWasInTheMainQueu = mPe.remove(eventWithSameMarking);
+		assert eventWithSameMarkingWasInTheMainQueu;
+		mFastpathCutoffEventList.add(eventWithSameMarking);
+		eventWithSameMarking.setCompanion(newEvent);
+		return false;
 	}
 
 	/**
@@ -192,7 +190,6 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		}
 	}
 
-	@SuppressWarnings("squid:S1698")
 	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
 		if (cand.isFullyInstantiated()) {
 			addFullyInstantiatedCandidate(cand);

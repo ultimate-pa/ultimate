@@ -67,6 +67,9 @@ public final class PetriNetUnfolder<L, P> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
 	private static final boolean B32_OPTIMIZATION = true;
 
+	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = true;
+	private static final boolean DEBUG_LOG_CO_RELATION_DEGREE_HISTOGRAM = false;
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
@@ -79,9 +82,6 @@ public final class PetriNetUnfolder<L, P> {
 	private PetriNetRun<L, P> mRun;
 
 	private final PetriNetUnfolder<L, P>.Statistics mStatistics = new Statistics();
-
-	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = true;
-	private static final boolean DEBUG_LOG_CO_RELATION_DEGREE_HISTOGRAM = false;
 
 	/**
 	 * Build the finite Prefix of PetriNet net.
