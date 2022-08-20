@@ -153,6 +153,10 @@ public class IcfgUtils {
 		return result;
 	}
 
+	/**
+	 * Collects all program variables, both globals and local variables of all procedures. For global variables, both
+	 * oldvar and non-oldvar are included.
+	 */
 	public static Set<IProgramVar> collectAllProgramVars(final CfgSmtToolkit csToolkit) {
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramNonOldVar nonold : csToolkit.getSymbolTable().getGlobals()) {
