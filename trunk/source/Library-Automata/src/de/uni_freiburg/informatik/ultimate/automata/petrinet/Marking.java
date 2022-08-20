@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -162,16 +163,16 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 			final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
 		final Set<PLACE> predecessors = net.getPredecessors(transition);
 		final Set<PLACE> successors = net.getSuccessors(transition);
-		final Object[] places =
-				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream()).distinct()
-						.toArray();
+		final Stream<PLACE> places =
+				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream());
 
 		final Set<PLACE> resultSet;
 		try {
-			// Using Set#of should be more memory-efficient than HashSet, and avoiding HashSet copies should be faster.
-			resultSet = (Set<PLACE>) Set.of(places);
+			// Using DataStructureUtils is more memory-efficient than HashSet,
+			// and avoiding HashSet copies should be faster.
+			resultSet = DataStructureUtils.asSet(places);
 		} catch (final IllegalArgumentException e) {
-			// thrown if the "places" array contains duplicate elements
+			// thrown if the "places" stream contains duplicate elements
 			// see https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Set.html#unmodifiable
 			final List<PLACE> unsafePlaces = mPlaces.stream().filter(x -> !predecessors.contains(x))
 					.filter(successors::contains).collect(Collectors.toList());
