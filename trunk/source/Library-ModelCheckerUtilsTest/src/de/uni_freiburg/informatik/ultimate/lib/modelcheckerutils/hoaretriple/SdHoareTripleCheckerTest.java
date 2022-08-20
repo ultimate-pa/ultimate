@@ -63,4 +63,14 @@ public class SdHoareTripleCheckerTest extends AbstractHoareTripleCheckerTest {
 	protected Validity noAssignAndNoImplVerdict() {
 		return Validity.UNKNOWN;
 	}
+
+	@Override
+	protected Validity nonModifiableOldVarVerdict() {
+		return Validity.UNKNOWN;
+	}
+
+	@Override
+	protected Validity nonModifiedOldVarVerdict() {
+		return Validity.UNKNOWN;
+	}
 }

@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
@@ -93,7 +94,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 	protected final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 
 	private IProgramConst c;
-	private IProgramVar x;
+	private IProgramNonOldVar x, y;
 
 	protected abstract IHoareTripleChecker getHtc();
 
@@ -107,11 +108,15 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 		c = constructConst("c", SmtSortUtils.getIntSort(mScript));
 		x = constructVar("x", SmtSortUtils.getIntSort(mScript));
+		y = constructVar("y", SmtSortUtils.getIntSort(mScript));
 		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
 		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
+		final var modifiable = new HashRelation<String, IProgramNonOldVar>();
+		modifiable.addPair(PROCEDURE, x);
 		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(new HashRelation<>());
+
 		final IcfgEdgeFactory icfgEdgeFactory = new IcfgEdgeFactory(new SerialProvider());
 		final ConcurrencyInformation ci =
 				new ConcurrencyInformation(Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
@@ -122,6 +127,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	private void testInternal(final Validity validity, final Validity expected, final String pre,
 			final UnmodifiableTransFormula act, final String post) {
+		assert validity == Validity.VALID || validity == Validity.INVALID : "Triple must be either valid or invalid";
 		assert validity == expected || expected == Validity.UNKNOWN : "Inconsistent expected validity";
 
 		final IPredicate precond = pred(pre);
@@ -129,7 +135,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 		final IHoareTripleChecker htc = getHtc();
 		final Validity actual =
 				htc.checkInternal(precond, new BasicInternalAction(PROCEDURE, PROCEDURE, act), postcond);
-		Assert.assertEquals("Unexpected validity for Hoare triple:", expected, actual);
+		Assert.assertEquals("Unexpected validity for " + validity + " Hoare triple:", expected, actual);
 	}
 
 	/*
@@ -145,8 +151,8 @@ public abstract class AbstractHoareTripleCheckerTest {
 		return constant;
 	}
 
-	private IProgramVar constructVar(final String name, final Sort sort) {
-		final IProgramVar variable = ProgramVarUtils.constructGlobalProgramVarPair(name, sort, mMgdScript, null);
+	private IProgramNonOldVar constructVar(final String name, final Sort sort) {
+		final IProgramNonOldVar variable = ProgramVarUtils.constructGlobalProgramVarPair(name, sort, mMgdScript, null);
 		mSymbolTable.add(variable);
 		return variable;
 	}
@@ -268,7 +274,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 	@Test
 	public void noAssignAndNoImpl() {
 		final var tfb =
-				new TransFormulaBuilder(Map.of(x, inVar(x)), Map.of(x, inVar(x)), false, Set.of(), true, null, true);
+				new TransFormulaBuilder(Map.of(x, inVar(x)), Map.of(x, inVar(x)), true, Set.of(), true, null, true);
 		tfb.setFormula(parseWithInOutVariables("(= x_in 11)"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		final var tf = tfb.finishConstruction(mMgdScript);
@@ -277,5 +283,31 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	protected Validity noAssignAndNoImplVerdict() {
 		return Validity.INVALID;
+	}
+
+	@Test
+	public void nonModifiableOldVar() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
+		tfb.setFormula(mScript.term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.VALID, nonModifiableOldVarVerdict(), "(= y 42)", tf, "(= |old(y)| 42)");
+	}
+
+	protected Validity nonModifiableOldVarVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void nonModifiedOldVar() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
+		tfb.setFormula(mScript.term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.VALID, nonModifiedOldVarVerdict(), "(= x 42)", tf, "(= |old(x)| 42)");
+	}
+
+	protected Validity nonModifiedOldVarVerdict() {
+		return Validity.VALID;
 	}
 }
