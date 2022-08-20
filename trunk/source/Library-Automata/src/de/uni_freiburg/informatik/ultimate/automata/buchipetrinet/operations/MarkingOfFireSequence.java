@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Object containing the marking at some index of some (imagined) firing sequence, the (indexed) honda marking(s) of
  * that fire sequence and an index denoting when in the firing sequence an accpeting place was last fired into with a
  * token.
- * 
+ *
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
  * @param <STATE>
@@ -20,18 +20,18 @@ public class MarkingOfFireSequence<LETTER, PLACE> {
 	/*
 	 * Indexed hondamarkings of firing sequence of marking.
 	 */
-	private Set<Pair<Marking<LETTER, PLACE>, Integer>> mHondaMarkingsOfFireSequence;
+	private final Set<Pair<Marking<LETTER, PLACE>, Integer>> mHondaMarkingsOfFireSequence;
 	private final int mFireSequenceIndex;
 	private final int mLastIndexOfShootingAcceptingStateInFireSequence;
 
 	/*
 	 * Constructor.
-	 * 
+	 *
 	 * @param <marking> The marking with {@link Marking}.
-	 * 
+	 *
 	 * @param <hondaMarking> A marking which is produced after the firing of the loop part of a word during the a fire
 	 * sequence. We also denote the index of the firing sequence when this marking is produced.
-	 * 
+	 *
 	 * @param <lastIndexOfShootingAcceptingStateInFireSequence> denoting at what index of a firing sequence an accepting
 	 * place was last shot with a token.
 	 */
@@ -52,7 +52,8 @@ public class MarkingOfFireSequence<LETTER, PLACE> {
 		return mHondaMarkingsOfFireSequence;
 	}
 
-	public void addHondaMarkingOfFireSequence(Marking<LETTER, PLACE> newHondaMarking, int hondaMarkingIndex) {
+	public void addHondaMarkingOfFireSequence(final Marking<LETTER, PLACE> newHondaMarking,
+			final int hondaMarkingIndex) {
 		mHondaMarkingsOfFireSequence.add(new Pair<>(newHondaMarking, hondaMarkingIndex));
 	}
 

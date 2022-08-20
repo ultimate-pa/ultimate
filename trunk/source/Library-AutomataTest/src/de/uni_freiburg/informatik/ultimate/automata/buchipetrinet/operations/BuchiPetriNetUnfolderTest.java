@@ -28,7 +28,7 @@ public class BuchiPetriNetUnfolderTest {
 
 	@Test
 	public final void test1() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
-		Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
+		final Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -39,16 +39,16 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p2")));
 
-		BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
+		final BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
 				BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, false);
 
-		boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
 		assertThat("Lasso should be found.", test);
 	}
 
 	@Test
 	public final void test2() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
-		Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
+		final Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -68,16 +68,16 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p5")));
 		petriNet.addTransition("f", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 
-		BuchiPetriNetUnfolder<String, String> unfolder =
+		final BuchiPetriNetUnfolder<String, String> unfolder =
 				new BuchiPetriNetUnfolder<>(mServices, petriNet, BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, true);
 
-		boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
 		assertThat("Lasso should be found.", test);
 	}
 
 	@Test
 	public final void test3() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
-		Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f", "g");
+		final Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f", "g");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -99,10 +99,10 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("f", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p6")));
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		BuchiPetriNetUnfolder<String, String> unfolder =
+		final BuchiPetriNetUnfolder<String, String> unfolder =
 				new BuchiPetriNetUnfolder<>(mServices, petriNet, BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, true);
 
-		boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
 		assertThat("Lasso should not be found, language empty.", !test);
 	}
 }

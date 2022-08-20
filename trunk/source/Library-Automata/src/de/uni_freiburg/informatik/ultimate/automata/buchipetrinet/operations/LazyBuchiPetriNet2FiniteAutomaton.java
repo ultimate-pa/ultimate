@@ -230,7 +230,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 		}
 	}
 
-	private S getOrConstructState(final Marking<L, S> marking, boolean isAccepting) {
+	private S getOrConstructState(final Marking<L, S> marking, final boolean isAccepting) {
 		// Do not use computeIfAbsent, because constructState may return null.
 		if (isAccepting) {
 			if (!mMarking2AcceptingState.containsKey(marking)) {

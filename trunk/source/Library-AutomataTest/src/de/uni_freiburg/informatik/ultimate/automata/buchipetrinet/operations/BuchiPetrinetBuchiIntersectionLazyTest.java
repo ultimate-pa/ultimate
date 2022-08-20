@@ -32,7 +32,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 
 	@Test
 	public final void testBuchiPetrinetBuchiIntersectionLazyWithDoubleSelfLoopNet() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -41,9 +41,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 
-		StringFactory factory = new StringFactory();
+		final StringFactory factory = new StringFactory();
 
-		VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
+		final VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
 
 		final NestedWordAutomaton<String, String> buchiAutomata =
 				new NestedWordAutomaton<>(mServices, buchiAlphabet, factory);
@@ -57,9 +57,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q2");
 
-		StringFactory factory2 = new StringFactory();
+		final StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
 				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
@@ -68,14 +68,14 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Intersection doesn't accept word only accepted by Buchi.", !accepted);
 	}
 
 	@Test
 	public final void testBuchiPetrinetBuchiIntersectionLazyWithDoubleSelfLoopNet2() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -84,9 +84,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 
-		StringFactory factory = new StringFactory();
+		final StringFactory factory = new StringFactory();
 
-		VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
+		final VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
 
 		final NestedWordAutomaton<String, String> buchiAutomata =
 				new NestedWordAutomaton<>(mServices, buchiAlphabet, factory);
@@ -100,9 +100,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q2");
 
-		StringFactory factory2 = new StringFactory();
+		final StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
 				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
@@ -111,14 +111,14 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Intersection doesn't accept word only accepted by Petri.", !accepted);
 	}
 
 	@Test
 	public final void testBuchiPetrinetBuchiIntersectionLazyWithDoubleSelfLoopNet3() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -127,9 +127,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 
-		StringFactory factory = new StringFactory();
+		final StringFactory factory = new StringFactory();
 
-		VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
+		final VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
 
 		final NestedWordAutomaton<String, String> buchiAutomata =
 				new NestedWordAutomaton<>(mServices, buchiAlphabet, factory);
@@ -143,9 +143,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q2");
 
-		StringFactory factory2 = new StringFactory();
+		final StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
 				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
@@ -154,7 +154,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		// TODO: is test or class faulty ?
 		// assertThat("Intersection accepts word in intersection.", accepted);
@@ -163,7 +163,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	@Test
 	public final void testBuchiPetrinetBuchiIntersectionLazyWithLongDoubleSelfLoopNet()
 			throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -176,9 +176,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p5")));
 
-		StringFactory factory = new StringFactory();
+		final StringFactory factory = new StringFactory();
 
-		VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
+		final VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
 
 		final NestedWordAutomaton<String, String> buchiAutomata =
 				new NestedWordAutomaton<>(mServices, buchiAlphabet, factory);
@@ -190,9 +190,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		buchiAutomata.addInternalTransition("q2", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "b", "q2");
 
-		StringFactory factory2 = new StringFactory();
+		final StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
 				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
@@ -201,7 +201,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Intersection accepts word in intersection from longer self loop Petri net.", accepted);
 	}
@@ -209,7 +209,7 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 	@Test
 	public final void testBuchiPetrinetBuchiIntersectionLazyWithLongDoubleSelfLoopNet2()
 			throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -222,9 +222,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p5")));
 
-		StringFactory factory = new StringFactory();
+		final StringFactory factory = new StringFactory();
 
-		VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
+		final VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
 
 		final NestedWordAutomaton<String, String> buchiAutomata =
 				new NestedWordAutomaton<>(mServices, buchiAlphabet, factory);
@@ -236,9 +236,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		buchiAutomata.addInternalTransition("q2", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "b", "q2");
 
-		StringFactory factory2 = new StringFactory();
+		final StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
 				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
@@ -247,14 +247,14 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Intersection doesn't accept word in intersection from longer self loop Petri net.", !accepted);
 	}
 
 	@Test
 	public final void testBuchiPetrinetBuchiIntersectionLazyWithNonDetermInputs() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c", "d", "e");
+		final Set<String> alphabet = Set.of("a", "b", "c", "d", "e");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -268,9 +268,9 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p5")));
 
-		StringFactory factory = new StringFactory();
+		final StringFactory factory = new StringFactory();
 
-		VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
+		final VpAlphabet<String> buchiAlphabet = new VpAlphabet<>(alphabet);
 
 		final NestedWordAutomaton<String, String> buchiAutomata =
 				new NestedWordAutomaton<>(mServices, buchiAlphabet, factory);
@@ -282,18 +282,18 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		buchiAutomata.addInternalTransition("q1", "d", "q1");
 		buchiAutomata.addInternalTransition("q1", "e", "q1");
 
-		StringFactory factory2 = new StringFactory();
+		final StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
+		final BuchiPetrinetBuchiIntersectionLazy<String, String> intersection =
 				new BuchiPetrinetBuchiIntersectionLazy<>(petriNet, buchiAutomata, factory2);
 
-		NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
-		NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("e", "d", "e", "e"));
-		NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
+		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
+		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("e", "d", "e", "e"));
+		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
+		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Intersection accepts word in intersection of nodeterministic inputs.", accepted);
 	}

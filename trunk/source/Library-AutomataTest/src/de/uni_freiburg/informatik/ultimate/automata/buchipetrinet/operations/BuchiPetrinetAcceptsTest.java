@@ -36,7 +36,7 @@ public class BuchiPetrinetAcceptsTest {
 
 	@Test
 	public void testGetResultWithEmptyStem() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("b", "c");
+		final Set<String> alphabet = Set.of("b", "c");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p2", true, false);
 		net1.addPlace("p3", false, true);
@@ -48,14 +48,14 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Stemless Word is accepted in deterministic Petri net.", accepted);
 	}
 
 	@Test
 	public void testGetResultWithNonTrivialLoopPlaces() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b");
+		final Set<String> alphabet = Set.of("a", "b");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
@@ -77,14 +77,14 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in nontrivial Loop Petri net.", accepted);
 	}
 
 	@Test
 	public void testGetResultWithNonTrivialLoopPlaces2() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b");
+		final Set<String> alphabet = Set.of("a", "b");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
@@ -106,14 +106,14 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in nontrivial Loop Petri net.", !accepted);
 	}
 
 	@Test
 	public void testGetResultWithNondeterministicTransitions() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
@@ -125,14 +125,14 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in nondeterministic Petri net.", accepted);
 	}
 
 	@Test
 	public void testGetResultWithNondeterministicTransitionsAndNonAcceptingLoop() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
@@ -146,14 +146,14 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is not accepted in nondeterministic Petri net with unaccepting Loop.", !accepted);
 	}
 
 	@Test
 	public void testGetResultWithAcceptingPlaceInStem() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, true);
@@ -166,14 +166,14 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
 				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
-		boolean accepted = buchiPetriAccpts.getResult();
+		final boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Word is accepted in deterministic Petri net.", !accepted);
 	}
 
 	@Test
 	public void testGetResultWithDoubleLoop() throws PetriNetNot1SafeException {
-		Set<String> alphabet = Set.of("a", "b", "c");
+		final Set<String> alphabet = Set.of("a", "b", "c");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p0", true, false);
 		net1.addPlace("p1", true, false);
@@ -182,7 +182,7 @@ public class BuchiPetrinetAcceptsTest {
 		net1.addTransition("a", ImmutableSet.of(Set.of("p1", "p0")), ImmutableSet.of(Set.of("p2", "p3")));
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
-		NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
+		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
 
 		BuchiPetrinetAccepts<String, String> buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
 
@@ -195,7 +195,7 @@ public class BuchiPetrinetAcceptsTest {
 		wordsToTestLassoWords.add(getLassoWord("a", "b c b"));
 		wordsToTestLassoWords.add(getLassoWord("a", "c c b"));
 
-		for (NestedLassoWord<String> nestedLassoWord : wordsToTestLassoWords) {
+		for (final NestedLassoWord<String> nestedLassoWord : wordsToTestLassoWords) {
 			buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is accepted in double Loop Petri net.", accepted);
@@ -206,7 +206,7 @@ public class BuchiPetrinetAcceptsTest {
 		nonAcceptingWords.add(getLassoWord("a", "c"));
 		nonAcceptingWords.add(getLassoWord("a", "c c"));
 
-		for (NestedLassoWord<String> nestedLassoWord : nonAcceptingWords) {
+		for (final NestedLassoWord<String> nestedLassoWord : nonAcceptingWords) {
 			buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is not accepted in double Loop Petri net.", !accepted);

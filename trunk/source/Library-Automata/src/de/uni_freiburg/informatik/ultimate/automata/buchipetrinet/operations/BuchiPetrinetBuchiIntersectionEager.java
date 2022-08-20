@@ -28,10 +28,10 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 	private final Map<PLACE, PLACE> mInputQGetQ2 = new HashMap<>();
 	private final Map<PLACE, PLACE> mInputQ2GetQ = new HashMap<>();
 
-	private BoundedPetriNet<LETTER, PLACE> mIntersectionNet;
+	private final BoundedPetriNet<LETTER, PLACE> mIntersectionNet;
 
-	public BuchiPetrinetBuchiIntersectionEager(IPetriNet<LETTER, PLACE> petriNet,
-			INestedWordAutomaton<LETTER, PLACE> buchiAutomata, IBlackWhiteStateFactory<PLACE> factory,
+	public BuchiPetrinetBuchiIntersectionEager(final IPetriNet<LETTER, PLACE> petriNet,
+			final INestedWordAutomaton<LETTER, PLACE> buchiAutomata, final IBlackWhiteStateFactory<PLACE> factory,
 			final AutomataLibraryServices services) {
 		super(services);
 		mPetriNet = petriNet;
@@ -55,15 +55,15 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 	}
 
 	private final void addOriginalPetriPlaces() {
-		for (PLACE place : mPetriNet.getPlaces()) {
+		for (final PLACE place : mPetriNet.getPlaces()) {
 			mIntersectionNet.addPlace(place, mPetriNet.getInitialPlaces().contains(place), false);
 		}
 	}
 
 	private final void addOriginalBuchiPlaces() {
-		for (PLACE place : mBuchiAutomata.getStates()) {
-			PLACE stateOnePlace = mLabeledBuchiPlaceFactory.getWhiteContent(place);
-			PLACE stateTwoPlace = mLabeledBuchiPlaceFactory.getBlackContent(place);
+		for (final PLACE place : mBuchiAutomata.getStates()) {
+			final PLACE stateOnePlace = mLabeledBuchiPlaceFactory.getWhiteContent(place);
+			final PLACE stateTwoPlace = mLabeledBuchiPlaceFactory.getBlackContent(place);
 			mIntersectionNet.addPlace(stateOnePlace, mBuchiAutomata.isInitial(place), false);
 			mIntersectionNet.addPlace(stateTwoPlace, false, mBuchiAutomata.isFinal(place));
 			mInputQGetQ1.put(place, stateOnePlace);
@@ -73,9 +73,9 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 	}
 
 	private final void addTransitionsToIntersectionNet() {
-		for (Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
-			for (PLACE buchiPlace : mBuchiAutomata.getStates()) {
-				for (OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
+		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
+			for (final PLACE buchiPlace : mBuchiAutomata.getStates()) {
+				for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
 						.internalSuccessors(buchiPlace, petriTransition.getSymbol())) {
 					addStateOneAndTwoTransition(petriTransition, buchiTransition, buchiPlace);
 				}
@@ -83,8 +83,8 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 		}
 	}
 
-	private final void addStateOneAndTwoTransition(Transition<LETTER, PLACE> petriTransition,
-			OutgoingInternalTransition<LETTER, PLACE> buchiTransition, PLACE buchiPredecessor) {
+	private final void addStateOneAndTwoTransition(final Transition<LETTER, PLACE> petriTransition,
+			final OutgoingInternalTransition<LETTER, PLACE> buchiTransition, final PLACE buchiPredecessor) {
 		Set<PLACE> predecessorSet = getTransitionPredecessors(petriTransition, buchiPredecessor, true);
 		Set<PLACE> successorSet = getTransitionSuccessors(petriTransition, buchiTransition, predecessorSet, true);
 		mIntersectionNet.addTransition(petriTransition.getSymbol(), ImmutableSet.of(predecessorSet),
@@ -95,9 +95,9 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 				ImmutableSet.of(successorSet));
 	}
 
-	private final Set<PLACE> getTransitionPredecessors(Transition<LETTER, PLACE> petriTransition,
-			PLACE buchiPredecessor, boolean mBuildingStateOneTransition) {
-		Set<PLACE> predecessorSet = new HashSet<>(petriTransition.getPredecessors());
+	private final Set<PLACE> getTransitionPredecessors(final Transition<LETTER, PLACE> petriTransition,
+			final PLACE buchiPredecessor, final boolean mBuildingStateOneTransition) {
+		final Set<PLACE> predecessorSet = new HashSet<>(petriTransition.getPredecessors());
 
 		if (mBuildingStateOneTransition) {
 			predecessorSet.add(mInputQGetQ1.get(buchiPredecessor));
@@ -108,10 +108,10 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 		return predecessorSet;
 	}
 
-	private final Set<PLACE> getTransitionSuccessors(Transition<LETTER, PLACE> petriTransition,
-			OutgoingInternalTransition<LETTER, PLACE> buchiTransition, Set<PLACE> predecessorSet,
-			boolean mBuildingStateOneTransition) {
-		Set<PLACE> successorSet = new HashSet<>(petriTransition.getSuccessors());
+	private final Set<PLACE> getTransitionSuccessors(final Transition<LETTER, PLACE> petriTransition,
+			final OutgoingInternalTransition<LETTER, PLACE> buchiTransition, final Set<PLACE> predecessorSet,
+			final boolean mBuildingStateOneTransition) {
+		final Set<PLACE> successorSet = new HashSet<>(petriTransition.getSuccessors());
 		if (mBuildingStateOneTransition) {
 			successorSet.add(getQSuccesorForStateOneTransition(petriTransition, buchiTransition));
 		} else {
@@ -121,9 +121,9 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 		return successorSet;
 	}
 
-	private PLACE getQSuccesorForStateOneTransition(Transition<LETTER, PLACE> petriTransition,
-			OutgoingInternalTransition<LETTER, PLACE> buchiTransition) {
-		for (PLACE place : petriTransition.getSuccessors()) {
+	private PLACE getQSuccesorForStateOneTransition(final Transition<LETTER, PLACE> petriTransition,
+			final OutgoingInternalTransition<LETTER, PLACE> buchiTransition) {
+		for (final PLACE place : petriTransition.getSuccessors()) {
 			if (mPetriNet.getAcceptingPlaces().contains(place)) {
 				return mInputQGetQ2.get(buchiTransition.getSucc());
 			}
@@ -131,9 +131,9 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 		return mInputQGetQ1.get(buchiTransition.getSucc());
 	}
 
-	private PLACE getQSuccesorForStateTwoTransition(Set<PLACE> predecessorSet,
-			OutgoingInternalTransition<LETTER, PLACE> buchiTransition) {
-		for (PLACE place : predecessorSet) {
+	private PLACE getQSuccesorForStateTwoTransition(final Set<PLACE> predecessorSet,
+			final OutgoingInternalTransition<LETTER, PLACE> buchiTransition) {
+		for (final PLACE place : predecessorSet) {
 			if (mInputQ2GetQ.containsKey(place) && mBuchiAutomata.getFinalStates().contains(mInputQ2GetQ.get(place))) {
 				return mInputQGetQ1.get(buchiTransition.getSucc());
 			}

@@ -30,7 +30,7 @@ public class LassoConfigurationCheckerIterativeTest {
 	@Test
 	public final void testLassoConfigurationCheckerIterative()
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
-		Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
+		final Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -50,25 +50,25 @@ public class LassoConfigurationCheckerIterativeTest {
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p5")));
 		petriNet.addTransition("f", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 
-		PetriNetUnfolder<String, String> unfolder =
+		final PetriNetUnfolder<String, String> unfolder =
 				new PetriNetUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
 
-		BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
+		final BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
-		LassoConfigurationCheckerIterative<String, String> configurationChecker =
+		final LassoConfigurationCheckerIterative<String, String> configurationChecker =
 				new LassoConfigurationCheckerIterative<>(mUnfolding);
-		for (Event<String, String> event : mUnfolding.getEvents()) {
+		for (final Event<String, String> event : mUnfolding.getEvents()) {
 			configurationChecker.update(event);
 		}
 
-		boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
+		final boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
 		assertThat("Lasso should be found.", test);
 	}
 
 	@Test
 	public final void testLassoConfigurationChecker2()
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
-		Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
+		final Set<String> alphabet = Set.of("a", "b", "bb", "c", "cc", "d", "e", "f");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
 		petriNet.addPlace("p2", false, false);
@@ -79,18 +79,18 @@ public class LassoConfigurationCheckerIterativeTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p2")));
 
-		PetriNetUnfolder<String, String> unfolder =
+		final PetriNetUnfolder<String, String> unfolder =
 				new PetriNetUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
 
-		BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
+		final BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
-		LassoConfigurationCheckerIterative<String, String> configurationChecker =
+		final LassoConfigurationCheckerIterative<String, String> configurationChecker =
 				new LassoConfigurationCheckerIterative<>(mUnfolding);
-		for (Event<String, String> event : mUnfolding.getEvents()) {
+		for (final Event<String, String> event : mUnfolding.getEvents()) {
 			configurationChecker.update(event);
 		}
 
-		boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
+		final boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
 		assertThat("Lasso should be found.", test);
 	}
 
