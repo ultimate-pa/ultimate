@@ -115,7 +115,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 		final var modifiable = new HashRelation<String, IProgramNonOldVar>();
 		modifiable.addPair(PROCEDURE, x);
-		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(new HashRelation<>());
+		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(modifiable);
 
 		final IcfgEdgeFactory icfgEdgeFactory = new IcfgEdgeFactory(new SerialProvider());
 		final ConcurrencyInformation ci =
@@ -287,10 +287,16 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	@Test
 	public void nonModifiableOldVar() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
+				PROCEDURE) : "Test requires y to be non-modifiable";
+
+		// Build "assume true" statement
 		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
 		tfb.setFormula(mScript.term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		final var tf = tfb.finishConstruction(mMgdScript);
+
+		// This Hoare triple is valid because y is not modifiable in the procedure.
 		testInternal(Validity.VALID, nonModifiableOldVarVerdict(), "(= y 42)", tf, "(= |old(y)| 42)");
 	}
 
@@ -300,14 +306,19 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	@Test
 	public void nonModifiedOldVar() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, PROCEDURE) : "Test requires x to be modifiable";
+
+		// Build "assume true" statement
 		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
 		tfb.setFormula(mScript.term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		final var tf = tfb.finishConstruction(mMgdScript);
-		testInternal(Validity.VALID, nonModifiedOldVarVerdict(), "(= x 42)", tf, "(= |old(x)| 42)");
+
+		// This Hoare triple is invalid, because x is modifiable in the procedure.
+		testInternal(Validity.INVALID, nonModifiedOldVarVerdict(), "(= x 42)", tf, "(= |old(x)| 42)");
 	}
 
 	protected Validity nonModifiedOldVarVerdict() {
-		return Validity.VALID;
+		return Validity.INVALID;
 	}
 }
