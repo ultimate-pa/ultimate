@@ -108,7 +108,7 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 		return mResult;
 	}
 
-	private boolean getResultHelper(final int position, final Marking<LETTER, PLACE> marking)
+	private boolean getResultHelper(final int position, final Marking<PLACE> marking)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		if (position >= mWord.length()) {
 			return mOperand.isAccepting(marking);
@@ -125,7 +125,7 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 
 		final int nextPosition = position + 1;
 		boolean result = false;
-		Marking<LETTER, PLACE> nextMarking;
+		Marking<PLACE> nextMarking;
 		for (final ITransition<LETTER, PLACE> transition : activeTransitionsWithSymbol(marking, symbol)) {
 			nextMarking = marking.fireTransition(transition, mOperand);
 			if (getResultHelper(nextPosition, nextMarking)) {
@@ -135,11 +135,11 @@ public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLAC
 		return result;
 	}
 
-	private Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking, final LETTER symbol) {
+	private Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<PLACE> marking,
+			final LETTER symbol) {
 		final Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
 		for (final PLACE place : marking) {
-			mOperand.getSuccessors(place).stream()
-					.filter(transition -> transition.getSymbol().equals(symbol))
+			mOperand.getSuccessors(place).stream().filter(transition -> transition.getSymbol().equals(symbol))
 					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))
 					.forEach(activeTransitionsWithSymbol::add);
 		}

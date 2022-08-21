@@ -69,7 +69,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private final Configuration<LETTER, PLACE> mLocalConfiguration;
 	// private final Event<LETTER, PLACE>[] mLocalConfiguration;
 	// private final ArrayList<Event<LETTER, PLACE>> mLocalConfiguration;
-	private final Marking<LETTER, PLACE> mMark;
+	private final Marking<PLACE> mMark;
 	private final ConditionMarking<LETTER, PLACE> mConditionMark;
 
 	private Event<LETTER, PLACE> mCompanion;
@@ -258,7 +258,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	/**
 	 * @return marking of the local configuration of this.
 	 */
-	public Marking<LETTER, PLACE> getMark() {
+	public Marking<PLACE> getMark() {
 		return mMark;
 	}
 

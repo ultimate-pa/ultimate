@@ -44,12 +44,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * @param <LETTER>
- *            symbols type
+ *
  * @param <PLACE>
  *            place content type
  */
-public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
+public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
 	private final ImmutableSet<PLACE> mPlaces;
@@ -127,7 +126,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final Marking<LETTER, PLACE> other = (Marking<LETTER, PLACE>) obj;
+		final Marking<PLACE> other = (Marking<PLACE>) obj;
 		if (mPlaces == null) {
 			if (other.mPlaces != null) {
 				return false;
@@ -148,7 +147,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
+	public <LETTER> boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
 			final IPetriNet<LETTER, PLACE> net) {
 		return mPlaces.containsAll(net.getPredecessors(transition));
 	}
@@ -159,7 +158,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 * @throws PetriNetNot1SafeException
 	 */
-	public Marking<LETTER, PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
+	public <LETTER> Marking<PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
 			final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
 		final Set<PLACE> predecessors = net.getPredecessors(transition);
 		final Set<PLACE> successors = net.getSuccessors(transition);
