@@ -119,6 +119,14 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	private static final boolean USE_COUNTEREXAMPLE_CACHE = true;
 
 	public int mCoRelationQueries = 0;
+	/**
+	 * Alternative measure to
+	 * {@link CegarLoopStatisticsDefinitions#BiggestAbstraction} which currently
+	 * counts the number of places.
+	 * TODO 20220821 Matthias: Find out whether counting transitions instead of
+	 * places is helpful. An alternative might be to count flow. In the long
+	 * run the most suitable measure should be utilized in the statistics.
+	 */
 	public int mBiggestAbstractionTransitions;
 	/**
 	 * Do not enhance the interpolant automaton into a total automaton but construct the enhancement only on-demand and
@@ -333,12 +341,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		}
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-		// if (mBiggestAbstractionSize < mAbstraction.size()){
-		// mBiggestAbstractionSize = mAbstraction.size();
-		// mBiggestAbstractionTransitions =
-		// abstraction.getTransitions().size();
-		// mBiggestAbstractionIteration = mIteration;
-		// }
+		mBiggestAbstractionTransitions = mAbstraction.getTransitions().size();
 
 		assert !acceptsPetriViaFA(getServices(), mAbstraction, mCounterexample.getWord()) : "Intersection broken!";
 
