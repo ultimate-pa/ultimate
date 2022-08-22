@@ -227,7 +227,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 
 	}
 
-	public static <LETTER, STATE> Set<LETTER> determineUniversalLoopers(final INestedWordAutomaton<LETTER, STATE> nwa) {
+	private static <LETTER, STATE> Set<LETTER>
+			determineUniversalLoopers(final INestedWordAutomaton<LETTER, STATE> nwa) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
 			throw new UnsupportedOperationException("call and return not implemented yet");
 		}

@@ -114,12 +114,8 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 	}
 
 	private void updateSymbol2netTransitions(final LETTER symbol, final Transition<LETTER, PLACE> netTransition) {
-		Collection<Transition<LETTER, PLACE>> netTransitions;
-		netTransitions = mSymbol2netTransitions.get(symbol);
-		if (netTransitions == null) {
-			netTransitions = new LinkedList<>();
-			mSymbol2netTransitions.put(symbol, netTransitions);
-		}
+		final Collection<Transition<LETTER, PLACE>> netTransitions =
+				mSymbol2netTransitions.computeIfAbsent(symbol, x -> new LinkedList<>());
 		netTransitions.add(netTransition);
 	}
 
@@ -148,11 +144,8 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 			for (final OutgoingInternalTransition<LETTER, PLACE> trans : mNwa.internalSuccessors(state)) {
 				final LETTER letter = trans.getLetter();
 				final PLACE succ = trans.getSucc();
-				Collection<AutomatonTransition> automatonTransitions = mSymbol2nwaTransitions.get(letter);
-				if (automatonTransitions == null) {
-					automatonTransitions = new HashSet<>();
-					mSymbol2nwaTransitions.put(letter, automatonTransitions);
-				}
+				final Collection<AutomatonTransition> automatonTransitions =
+						mSymbol2nwaTransitions.computeIfAbsent(letter, x -> new HashSet<>());
 				automatonTransitions.add(new AutomatonTransition(state, letter, succ));
 			}
 		}

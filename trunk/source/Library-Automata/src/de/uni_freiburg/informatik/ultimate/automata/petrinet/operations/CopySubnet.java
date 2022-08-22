@@ -50,13 +50,38 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            Type of places in Petri net
  */
-public class CopySubnet<LETTER, PLACE> {
+public final class CopySubnet<LETTER, PLACE> {
 
 	/** The Petri Net for which we copy partially to create a sub-net. */
 	private final IPetriNet<LETTER, PLACE> mSuperNet;
 	private final boolean mKeepSuccessorPlaces;
 	private final Set<Transition<LETTER, PLACE>> mTransitionSubset;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
+
+	/**
+	 * Copies a net partially, creating a sub-net.
+	 *
+	 * @param services
+	 *            Services for logging and so on
+	 * @param superNet
+	 *            Petri net N to be copied partially
+	 * @param transitionSubset
+	 *            Subset of transitions of net N forming the transitions of sub-net N'
+	 * @param keepSuccessorPlaces
+	 *            Whether or not to keep successor places for all included transitions. Setting this to false may result
+	 *            in transitions with an empty post-set.
+	 */
+	private CopySubnet(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> superNet,
+			final Set<Transition<LETTER, PLACE>> transitionSubset, final Set<LETTER> newAlphabet,
+			final boolean keepSuccessorPlaces) {
+		mSuperNet = superNet;
+		mKeepSuccessorPlaces = keepSuccessorPlaces;
+		mTransitionSubset = transitionSubset;
+
+		final boolean constantTokenAmount = false;
+		mResult = new BoundedPetriNet<>(services, newAlphabet, constantTokenAmount);
+		copySubnet();
+	}
 
 	/**
 	 * Copies a net partially, creating a sub-net. The sub-net is defined in terms of transitions. Places that are no
@@ -130,31 +155,6 @@ public class CopySubnet<LETTER, PLACE> {
 	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> copy(final AutomataLibraryServices services,
 			final IPetriNet<LETTER, PLACE> superNet, final Set<Transition<LETTER, PLACE>> transitionSubset) {
 		return copy(services, superNet, transitionSubset, superNet.getAlphabet());
-	}
-
-	/**
-	 * Copies a net partially, creating a sub-net.
-	 *
-	 * @param services
-	 *            Services for logging and so on
-	 * @param superNet
-	 *            Petri net N to be copied partially
-	 * @param transitionSubset
-	 *            Subset of transitions of net N forming the transitions of sub-net N'
-	 * @param keepSuccessorPlaces
-	 *            Whether or not to keep successor places for all included transitions. Setting this to false may result
-	 *            in transitions with an empty post-set.
-	 */
-	private CopySubnet(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> superNet,
-			final Set<Transition<LETTER, PLACE>> transitionSubset, final Set<LETTER> newAlphabet,
-			final boolean keepSuccessorPlaces) {
-		mSuperNet = superNet;
-		mKeepSuccessorPlaces = keepSuccessorPlaces;
-		mTransitionSubset = transitionSubset;
-
-		final boolean constantTokenAmount = false;
-		mResult = new BoundedPetriNet<>(services, newAlphabet, constantTokenAmount);
-		copySubnet();
 	}
 
 	/**
