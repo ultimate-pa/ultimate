@@ -412,7 +412,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @return Set containing all Conditions and Events which are (strict) ancestors of a Condition. The dummyRoot is
 	 *         not considered as an ancestor.
 	 */
-	public Set<Object> ancestorNodes(final Condition<LETTER, PLACE> condition) {
+	private Set<Object> ancestorNodes(final Condition<LETTER, PLACE> condition) {
 		final Event<LETTER, PLACE> pred = condition.getPredecessorEvent();
 		if (pred.equals(mDummyRoot)) {
 			return Collections.emptySet();
