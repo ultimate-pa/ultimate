@@ -204,7 +204,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			final boolean sameTransitionCutOff) {
 		for (final Event<LETTER, PLACE> ev : mMarkingNonCutoffEventRelation.getImage(event.getMark().hashCode())) {
 			if (mNewFiniteComprehensivePrefixMode) {
-				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, this, sameTransitionCutOff)) {
+				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, sameTransitionCutOff)) {
 					return true;
 				}
 			} else if (event.checkCutOffAndSetCompanion(ev, order, sameTransitionCutOff)) {

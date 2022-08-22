@@ -178,41 +178,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	}
 
 	/**
-	 * @param events
-	 *            A set of events.
-	 * @param <LETTER>
-	 *            symbol type
-	 * @param <PLACE>
-	 *            place content type
-	 * @return The Set of all successor events of all successor conditions of {@code events}.
-	 */
-	public static <LETTER, PLACE> Set<Event<LETTER, PLACE>> getSuccessorEvents(final Set<Event<LETTER, PLACE>> events) {
-		final HashSet<Event<LETTER, PLACE>> result = new HashSet<>();
-		for (final Event<LETTER, PLACE> e : events) {
-			result.addAll(e.getSuccessorEvents());
-		}
-		return result;
-	}
-
-	/**
-	 * @param events
-	 *            A set of events.
-	 * @param <LETTER>
-	 *            symbol type
-	 * @param <PLACE>
-	 *            place content type
-	 * @return The Set of all predecessor events of all predecessor conditions of {@code events}.
-	 */
-	public static <LETTER, PLACE> Set<Event<LETTER, PLACE>>
-			getPredecessorEvents(final Set<Event<LETTER, PLACE>> events) {
-		final HashSet<Event<LETTER, PLACE>> result = new HashSet<>();
-		for (final Event<LETTER, PLACE> e : events) {
-			result.addAll(e.getPredecessorEvents());
-		}
-		return result;
-	}
-
-	/**
 	 * @return The Set of all predecessor events of all predecessor conditions of the event.
 	 */
 	public Set<Event<LETTER, PLACE>> getPredecessorEvents() {
@@ -310,8 +275,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * #Backfolding
 	 */
 	public boolean checkCutOffAndSetCompanionForComprehensivePrefix(final Event<LETTER, PLACE> companionCandidate,
-			final Comparator<Event<LETTER, PLACE>> order, final BranchingProcess<LETTER, PLACE> bp,
-			final boolean sameTransitionCutOff) {
+			final Comparator<Event<LETTER, PLACE>> order, final boolean sameTransitionCutOff) {
 		// by comparing the hashmaps we check simultaneously if they have the same marking (set of keys of the map)
 		if (sameTransitionCutOff) {
 			if (!getTransition().equals(companionCandidate.getTransition())) {
@@ -402,16 +366,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	@Override
 	public String toString() {
 		return mSerialNumber + ":" + +mLocalConfiguration.size() + "A:" + getTransition().toString();
-	}
-
-	private int computeHashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mPredecessors == null) ? 0 : mPredecessors.hashCode());
-		// TODO remove successors from here later since they're not needed.
-		result = prime * result + ((mSuccessors == null) ? 0 : mSuccessors.hashCode());
-		result = prime * result + ((mTransition == null) ? 0 : mTransition.hashCode());
-		return result;
 	}
 
 	@Override
