@@ -291,15 +291,15 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	 * FIXME documentation.
 	 */
 	public class Statistics {
-		private final Map<Transition<L, P>, Map<Marking<L, P>, Set<Event<L, P>>>> mTrans2Mark2Events = new HashMap<>();
+		private final Map<Transition<L, P>, Map<Marking<P>, Set<Event<L, P>>>> mTrans2Mark2Events = new HashMap<>();
 		private int mCutOffEvents;
 		private int mNonCutOffEvents;
 
 		public void add(final Event<L, P> event) {
 			// TODO: The hash operations here take A LOT of time (~20% on the VMCAI2021) benchmarks
-			final Marking<L, P> marking = event.getMark();
+			final Marking<P> marking = event.getMark();
 			final Transition<L, P> transition = event.getTransition();
-			Map<Marking<L, P>, Set<Event<L, P>>> mark2Events = mTrans2Mark2Events.get(transition);
+			Map<Marking<P>, Set<Event<L, P>>> mark2Events = mTrans2Mark2Events.get(transition);
 			if (mark2Events == null) {
 				mark2Events = new HashMap<>();
 				mTrans2Mark2Events.put(transition, mark2Events);

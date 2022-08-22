@@ -222,7 +222,7 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 
 	// We have no accepting markings in a BuchiPetriNet
 	@Override
-	public boolean isAccepting(final Marking<LETTER, PLACE> marking) {
+	public boolean isAccepting(final Marking<PLACE> marking) {
 		return false;
 	}
 

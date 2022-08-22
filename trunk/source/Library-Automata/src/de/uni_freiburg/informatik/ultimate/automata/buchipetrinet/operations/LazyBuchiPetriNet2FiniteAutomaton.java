@@ -66,17 +66,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final IPetriNetSuccessorProvider<L, S> mOperand;
-	private final Predicate<Marking<?, S>> mIsKnownDeadEnd;
+	private final Predicate<Marking<S>> mIsKnownDeadEnd;
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
 
 	private final IBlackWhiteStateFactory<S> mAcceptingOrNonAcceptingStateFactory;
 
-	private final Map<Marking<L, S>, S> mMarking2AcceptingState = new HashMap<>();
-	private final Map<Marking<L, S>, S> mMarking2NonAcceptingState = new HashMap<>();
+	private final Map<Marking<S>, S> mMarking2AcceptingState = new HashMap<>();
+	private final Map<Marking<S>, S> mMarking2NonAcceptingState = new HashMap<>();
 
 	// Needed to compute outgoing transitions. If all outgoing transitions of a state have been computed, we remove the
 	// state from this map (to save on memory).
-	private final Map<S, Marking<L, S>> mState2Marking = new HashMap<>();
+	private final Map<S, Marking<S>> mState2Marking = new HashMap<>();
 
 	private final NwaCacheBookkeeping<L, S> mCacheBookkeeping = new NwaCacheBookkeeping<>();
 	private final NestedWordAutomatonCache<L, S> mCache;
@@ -100,7 +100,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 	public LazyBuchiPetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
 			final IBlackWhiteStateFactory<S> acceptingNonacceptingFactory,
-			final IPetriNetSuccessorProvider<L, S> operand, final Predicate<Marking<?, S>> isKnownDeadEnd)
+			final IPetriNetSuccessorProvider<L, S> operand, final Predicate<Marking<S>> isKnownDeadEnd)
 			throws PetriNetNot1SafeException {
 		mOperand = operand;
 		mIsKnownDeadEnd = isKnownDeadEnd;
@@ -155,7 +155,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 
 	@Override
 	public Set<L> lettersInternal(final S state) {
-		final Marking<L, S> marking = mState2Marking.get(state);
+		final Marking<S> marking = mState2Marking.get(state);
 		if (marking == null) {
 			// All outgoing transitions already cached.
 			return mCache.lettersInternal(state);
@@ -203,7 +203,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 	}
 
 	private void computeOutgoingTransitions(final S state, final L letter) {
-		final Marking<L, S> marking = mState2Marking.get(state);
+		final Marking<S> marking = mState2Marking.get(state);
 		if (marking == null) {
 			// All outgoing transitions already cached.
 			return;
@@ -212,8 +212,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 				.forEach(t -> createAutomatonTransition(state, marking, t));
 	}
 
-	private void createAutomatonTransition(final S state, final Marking<L, S> marking,
-			final Transition<L, S> transition) {
+	private void createAutomatonTransition(final S state, final Marking<S> marking, final Transition<L, S> transition) {
 		try {
 			boolean firesIntoAcceptingPlace = false;
 			if (transition.getSuccessors().stream().anyMatch(mOperand::isAccepting)) {
@@ -230,7 +229,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 		}
 	}
 
-	private S getOrConstructState(final Marking<L, S> marking, final boolean isAccepting) {
+	private S getOrConstructState(final Marking<S> marking, final boolean isAccepting) {
 		// Do not use computeIfAbsent, because constructState may return null.
 		if (isAccepting) {
 			if (!mMarking2AcceptingState.containsKey(marking)) {
@@ -248,7 +247,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 		return mMarking2NonAcceptingState.get(marking);
 	}
 
-	private S constructState(final Marking<L, S> marking, final boolean isInitial, final boolean isAccepting) {
+	private S constructState(final Marking<S> marking, final boolean isInitial, final boolean isAccepting) {
 		if (isKnownDeadEnd(marking)) {
 			return null;
 		}
@@ -270,12 +269,12 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 		return state;
 	}
 
-	private Stream<Transition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
+	private Stream<Transition<L, S>> getOutgoingNetTransitions(final Marking<S> marking) {
 		return marking.stream().flatMap(place -> mOperand.getSuccessors(place).stream())
 				.filter(marking::isTransitionEnabled);
 	}
 
-	private boolean isKnownDeadEnd(final Marking<?, S> marking) {
+	private boolean isKnownDeadEnd(final Marking<S> marking) {
 		if (mIsKnownDeadEnd == null) {
 			return false;
 		}

@@ -16,11 +16,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Content. Type of the labels ("the content") of the automata states.
  */
 public class MarkingOfFireSequence<LETTER, PLACE> {
-	private final Marking<LETTER, PLACE> mMarking;
+	private final Marking<PLACE> mMarking;
 	/*
 	 * Indexed hondamarkings of firing sequence of marking.
 	 */
-	private final Set<Pair<Marking<LETTER, PLACE>, Integer>> mHondaMarkingsOfFireSequence;
+	private final Set<Pair<Marking<PLACE>, Integer>> mHondaMarkingsOfFireSequence;
 	private final int mFireSequenceIndex;
 	private final int mLastIndexOfShootingAcceptingStateInFireSequence;
 
@@ -35,25 +35,23 @@ public class MarkingOfFireSequence<LETTER, PLACE> {
 	 * @param <lastIndexOfShootingAcceptingStateInFireSequence> denoting at what index of a firing sequence an accepting
 	 * place was last shot with a token.
 	 */
-	public MarkingOfFireSequence(final Marking<LETTER, PLACE> marking,
-			final Set<Pair<Marking<LETTER, PLACE>, Integer>> hondaMarkings, final int fireSequenceIndex,
-			final int lastIndexOfShootingAcceptingStateInFireSequence) {
+	public MarkingOfFireSequence(final Marking<PLACE> marking, final Set<Pair<Marking<PLACE>, Integer>> hondaMarkings,
+			final int fireSequenceIndex, final int lastIndexOfShootingAcceptingStateInFireSequence) {
 		mMarking = marking;
 		mHondaMarkingsOfFireSequence = hondaMarkings;
 		mFireSequenceIndex = fireSequenceIndex;
 		mLastIndexOfShootingAcceptingStateInFireSequence = lastIndexOfShootingAcceptingStateInFireSequence;
 	}
 
-	public final Marking<LETTER, PLACE> getMarking() {
+	public final Marking<PLACE> getMarking() {
 		return mMarking;
 	}
 
-	public Set<Pair<Marking<LETTER, PLACE>, Integer>> getHondaMarkingsOfFireSequence() {
+	public Set<Pair<Marking<PLACE>, Integer>> getHondaMarkingsOfFireSequence() {
 		return mHondaMarkingsOfFireSequence;
 	}
 
-	public void addHondaMarkingOfFireSequence(final Marking<LETTER, PLACE> newHondaMarking,
-			final int hondaMarkingIndex) {
+	public void addHondaMarkingOfFireSequence(final Marking<PLACE> newHondaMarking, final int hondaMarkingIndex) {
 		mHondaMarkingsOfFireSequence.add(new Pair<>(newHondaMarking, hondaMarkingIndex));
 	}
 

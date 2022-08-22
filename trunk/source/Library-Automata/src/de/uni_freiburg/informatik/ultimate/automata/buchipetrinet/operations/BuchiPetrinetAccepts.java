@@ -29,7 +29,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	 * The Petri net which we check acceptance for.
 	 */
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
-	private final Marking<LETTER, PLACE> mInitialMarking;
+	private final Marking<PLACE> mInitialMarking;
 	/*
 	 * The word we check acceptance for.
 	 */
@@ -177,7 +177,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex);
 	}
 
-	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking,
+	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<PLACE> marking,
 			final LETTER symbol) {
 		final Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
 		for (final PLACE place : marking) {
@@ -203,7 +203,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 			containsLoopingFiresequence(final Set<MarkingOfFireSequence<LETTER, PLACE>> markingSet) {
 		final Set<Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer>> loopingFiringSequences = new HashSet<>();
 		for (final MarkingOfFireSequence<LETTER, PLACE> marking : markingSet) {
-			for (final Pair<Marking<LETTER, PLACE>, Integer> hondaMarking : marking.getHondaMarkingsOfFireSequence()) {
+			for (final Pair<Marking<PLACE>, Integer> hondaMarking : marking.getHondaMarkingsOfFireSequence()) {
 				final Set<PLACE> comparedMarkingPlaceSet = hondaMarking.getFirst().stream().collect(Collectors.toSet());
 				if (marking.getMarking().containsAll(comparedMarkingPlaceSet)) {
 					loopingFiringSequences.add(new Pair<>(marking, hondaMarking.getSecond()));
