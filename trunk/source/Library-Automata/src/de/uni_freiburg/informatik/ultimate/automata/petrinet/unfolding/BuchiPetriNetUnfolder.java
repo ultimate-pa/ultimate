@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  * @param <P>
  *            place content type
  */
+// TODO: This class is just a slight modification of PetriNetUnfolder.
+// To reduce duplicate code we should use an abstract class for the common code.
 public final class BuchiPetriNetUnfolder<L, P> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
 	private static final boolean B32_OPTIMIZATION = true;
@@ -73,7 +75,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	private final IPossibleExtensions<L, P> mPossibleExtensions;
 	private final BranchingProcess<L, P> mUnfolding;
 	private PetriNetRun<L, P> mRun;
-	private LassoConfigurationCheckerIterative<L, P> mLassoChecker;
+	private final LassoConfigurationCheckerIterative<L, P> mLassoChecker;
 
 	private final BuchiPetriNetUnfolder<L, P>.Statistics mStatistics = new Statistics();
 
@@ -185,7 +187,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 		}
 		mUnfolding.addEvent(event);
 
-		boolean lassoFound = mLassoChecker.update(event);
+		final boolean lassoFound = mLassoChecker.update(event);
 		if (lassoFound && mRun == null) {
 			mRun = constructRun(event);
 			if (mStopIfAcceptingRunFound) {

@@ -63,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <S>
  *            The type of places in the Petri net, and also the type of states in the resulting finite automaton.
  */
+// TODO: This class is just a slight modification of LazyPetriNet2FiniteAutomaton.
+// To reduce duplicate code we should use an abstract class for the common code.
 public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final IPetriNetSuccessorProvider<L, S> mOperand;
