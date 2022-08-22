@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private final NestedWordAutomaton<LETTER, PLACE> mResult;
-	private final Predicate<Marking<?, PLACE>> mIsKnownDeadEnd;
+	private final Predicate<Marking<PLACE>> mIsKnownDeadEnd;
 
 	/**
 	 * List of markings for which
@@ -72,11 +72,11 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	 * <li>outgoing transitions of this state have not yet been constructed.
 	 * </ul>
 	 */
-	private final List<Marking<LETTER, PLACE>> mWorklist = new LinkedList<>();
+	private final List<Marking<PLACE>> mWorklist = new LinkedList<>();
 	/**
 	 * Maps a marking to the automaton state that represents this marking.
 	 */
-	private final Map<Marking<LETTER, PLACE>, PLACE> mMarking2State = new HashMap<>();
+	private final Map<Marking<PLACE>, PLACE> mMarking2State = new HashMap<>();
 	private final IPetriNet2FiniteAutomatonStateFactory<PLACE> mContentFactory;
 
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
@@ -101,7 +101,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	 */
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory, final IPetriNet<LETTER, PLACE> operand,
-			final Predicate<Marking<?, PLACE>> isKnownDeadEnd)
+			final Predicate<Marking<PLACE>> isKnownDeadEnd)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -118,7 +118,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
 		getState(new Marking<>(ImmutableSet.of(operand.getInitialPlaces())), true);
 		while (!mWorklist.isEmpty()) {
-			final Marking<LETTER, PLACE> marking = mWorklist.remove(0);
+			final Marking<PLACE> marking = mWorklist.remove(0);
 			constructOutgoingTransitions(marking);
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
@@ -143,7 +143,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	 * Returns the automaton state that represents marking. If this state is not yet constructed, construct it and
 	 * enqueue the marking. If it has to be constructed it is an initial state iff isInitial is true.
 	 */
-	private PLACE getState(final Marking<LETTER, PLACE> marking, final boolean isInitial) {
+	private PLACE getState(final Marking<PLACE> marking, final boolean isInitial) {
 		if (isKnownDeadEnd(marking)) {
 			return null;
 		}
@@ -165,14 +165,14 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	 *
 	 * @throws PetriNetNot1SafeException
 	 */
-	private void constructOutgoingTransitions(final Marking<LETTER, PLACE> marking) throws PetriNetNot1SafeException {
+	private void constructOutgoingTransitions(final Marking<PLACE> marking) throws PetriNetNot1SafeException {
 		final PLACE state = getState(marking, false);
 		assert state != null : "Dead-end marking should never be on worklist";
 
 		final Set<ITransition<LETTER, PLACE>> outgoing = getOutgoingNetTransitions(marking);
 		for (final ITransition<LETTER, PLACE> transition : outgoing) {
 			if (marking.isTransitionEnabled(transition, mOperand)) {
-				final Marking<LETTER, PLACE> succMarking = marking.fireTransition(transition, mOperand);
+				final Marking<PLACE> succMarking = marking.fireTransition(transition, mOperand);
 				final PLACE succState = getState(succMarking, false);
 				if (succState != null) {
 					mResult.addInternalTransition(state, transition.getSymbol(), succState);
@@ -181,7 +181,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 		}
 	}
 
-	private Set<ITransition<LETTER, PLACE>> getOutgoingNetTransitions(final Marking<LETTER, PLACE> marking) {
+	private Set<ITransition<LETTER, PLACE>> getOutgoingNetTransitions(final Marking<PLACE> marking) {
 		final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
 		for (final PLACE place : marking) {
 			transitions.addAll(mOperand.getSuccessors(place));
@@ -189,7 +189,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 		return transitions;
 	}
 
-	private boolean isKnownDeadEnd(final Marking<?, PLACE> state) {
+	private boolean isKnownDeadEnd(final Marking<PLACE> state) {
 		if (mIsKnownDeadEnd == null) {
 			return false;
 		}

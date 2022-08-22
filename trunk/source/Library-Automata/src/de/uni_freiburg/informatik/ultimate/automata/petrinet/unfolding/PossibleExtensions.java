@@ -69,7 +69,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 */
 	private static final boolean USE_FORWARD_CHECKING = false;
 	private final Queue<Event<LETTER, PLACE>> mPe;
-	private final Map<Marking<LETTER, PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
+	private final Map<Marking<PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
 	private int mMaximalSize = 0;
 	private static final boolean USE_PQ = true;
 	private final boolean mUseFirstbornCutoffCheck;

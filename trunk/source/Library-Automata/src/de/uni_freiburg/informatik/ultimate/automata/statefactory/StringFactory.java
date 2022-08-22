@@ -166,7 +166,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	 */
 
 	@Override
-	public String getContentOnPetriNet2FiniteAutomaton(final Marking<?, String> marking) {
+	public String getContentOnPetriNet2FiniteAutomaton(final Marking<String> marking) {
 		final StringBuilder builder = new StringBuilder(marking.size() * MINIMUM_LIST_SIZE);
 		builder.append(OPEN_BRACE);
 		boolean firstElement = true;
