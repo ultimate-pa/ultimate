@@ -252,12 +252,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 */
 	public boolean checkCutOffAndSetCompanion(final Event<LETTER, PLACE> event,
 			final Comparator<Event<LETTER, PLACE>> order, final boolean sameTransitionCutOff) {
-		if (sameTransitionCutOff) {
-			// additional requirement for cut-off events.
-			// TODO: tests to compare prefix sizes.
-			if (!getTransition().equals(event.getTransition())) {
-				return false;
-			}
+		// additional requirement for cut-off events.
+		// TODO: tests to compare prefix sizes.
+		if (sameTransitionCutOff && !getTransition().equals(event.getTransition())) {
+			return false;
 		}
 		if (!getMark().equals(event.getMark())) {
 			return false;
@@ -277,10 +275,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public boolean checkCutOffAndSetCompanionForComprehensivePrefix(final Event<LETTER, PLACE> companionCandidate,
 			final Comparator<Event<LETTER, PLACE>> order, final boolean sameTransitionCutOff) {
 		// by comparing the hashmaps we check simultaneously if they have the same marking (set of keys of the map)
-		if (sameTransitionCutOff) {
-			if (!getTransition().equals(companionCandidate.getTransition())) {
-				return false;
-			}
+		if (sameTransitionCutOff && !getTransition().equals(companionCandidate.getTransition())) {
+			return false;
 		}
 
 		if (order.compare(companionCandidate, this) >= 0) {

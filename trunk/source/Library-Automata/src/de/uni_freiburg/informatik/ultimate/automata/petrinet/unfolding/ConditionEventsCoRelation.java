@@ -311,7 +311,6 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		}
 		final Iterator<Condition<LETTER, PLACE>> it = succCond.iterator();
 		final Condition<LETTER, PLACE> firstCond = it.next();
-		streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
 		final Set<Event<LETTER, PLACE>> result = streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
 		while (it.hasNext()) {
 			final Condition<LETTER, PLACE> c = it.next();

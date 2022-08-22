@@ -97,14 +97,14 @@ public class Candidate<LETTER, PLACE> {
 	}
 
 	public PLACE getNextUninstantiatedPlace() {
-		return mNotInstantiated.get(mNotInstantiated.size() - 1);
+		return mNotInstantiated.getLast();
 	}
 
 	public Map<PLACE, Set<Condition<LETTER, PLACE>>> getPossibleInstantiationsMap() {
 		return mPossibleInstantiationsMap;
 	}
 
-	public LinkedList<PLACE> getNotInstantiated() {
+	public List<PLACE> getNotInstantiated() {
 		return mNotInstantiated;
 	}
 

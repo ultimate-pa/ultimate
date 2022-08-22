@@ -239,7 +239,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				final LinkedList<Condition<LETTER, PLACE>> newInstantiated = new LinkedList<>(cand.getInstantiated());
 				newInstantiated.add(condition);
 				final LinkedList<PLACE> newNotInstantiated = new LinkedList<>(cand.getNotInstantiated());
-				newNotInstantiated.remove(newNotInstantiated.size() - 1);
+				newNotInstantiated.removeLast();
 				evolveCandidateWithForwardChecking(new Candidate<>(cand.getTransition(), newNotInstantiated,
 						newInstantiated, newPossibleInstantiations));
 			}

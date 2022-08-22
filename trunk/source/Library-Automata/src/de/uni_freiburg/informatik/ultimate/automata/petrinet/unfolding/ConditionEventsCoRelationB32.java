@@ -94,7 +94,8 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 	}
 
 	private Stream<Event<LETTER, PLACE>> streamCoRelatedEvents(final Condition<LETTER, PLACE> c) {
-		return Stream.concat(mCoRelatedCutoffEvents.getImage(c).stream(), mCoRelatedNonCutoffEvents.getImage(c).stream());
+		return Stream.concat(mCoRelatedCutoffEvents.getImage(c).stream(),
+				mCoRelatedNonCutoffEvents.getImage(c).stream());
 	}
 
 	private Stream<Event<LETTER, PLACE>> streamNonCutoffCoRelatedEvents(final Condition<LETTER, PLACE> c) {
@@ -313,7 +314,6 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 		}
 		final Iterator<Condition<LETTER, PLACE>> it = succCond.iterator();
 		final Condition<LETTER, PLACE> firstCond = it.next();
-		streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
 		final Set<Event<LETTER, PLACE>> result = streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
 		while (it.hasNext()) {
 			final Condition<LETTER, PLACE> c = it.next();

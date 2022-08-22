@@ -494,12 +494,10 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		final Set<Event<LETTER, PLACE>> vitalEvents = new HashSet<>();
 		final ArrayDeque<Event<LETTER, PLACE>> worklist = new ArrayDeque<>();
 		for (final Condition<LETTER, PLACE> c : acceptingConditions) {
-			{
-				final Event<LETTER, PLACE> pred = c.getPredecessorEvent();
-				if (!vitalEvents.contains(pred)) {
-					vitalEvents.add(pred);
-					worklist.add(pred);
-				}
+			final Event<LETTER, PLACE> pred = c.getPredecessorEvent();
+			if (!vitalEvents.contains(pred)) {
+				vitalEvents.add(pred);
+				worklist.add(pred);
 			}
 		}
 		computeAncestors(companion2cutoff, vitalEvents, worklist);
