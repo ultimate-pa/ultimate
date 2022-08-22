@@ -67,18 +67,14 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
 	/**
-	 * If set, we add the statistics of the finite prefix to the statistics of this
-	 * operation. This is helpful for debugging and analyzing the results. The
-	 * statistics of the finite prefix are however computed on demand and this
+	 * If set, we add the statistics of the finite prefix to the statistics of this operation. This is helpful for
+	 * debugging and analyzing the results. The statistics of the finite prefix are however computed on demand and this
 	 * computation comes with minor costs. <br>
-	 * If we want to evaluate the speed of this algorithm the generation of
-	 * statistics can be switched off. The automata script interpreter calls the
-	 * following method, which triggers the computation of the finite prefix's
-	 * statistics. Applications, like our software verification, typically do not
-	 * call this method.
-	 * {@link DifferencePairwiseOnDemand#getAutomataOperationStatistics()} Hence, an
-	 * evaluation without the finite prefix's statistics gives a better impression
-	 * about the performance in practice. See
+	 * If we want to evaluate the speed of this algorithm the generation of statistics can be switched off. The automata
+	 * script interpreter calls the following method, which triggers the computation of the finite prefix's statistics.
+	 * Applications, like our software verification, typically do not call this method.
+	 * {@link DifferencePairwiseOnDemand#getAutomataOperationStatistics()} Hence, an evaluation without the finite
+	 * prefix's statistics gives a better impression about the performance in practice. See
 	 * https://github.com/ultimate-pa/ultimate/issues/448#issuecomment-603025477 and
 	 * https://github.com/ultimate-pa/ultimate/issues/448#issuecomment-608669868
 	 */
@@ -136,14 +132,12 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 				difference.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
 		final int allTransitions = difference.getYetConstructedPetriNet().getTransitions().size();
 		final int deadTransitions = allTransitions - vitalTransitionsOfDifference.size();
-		{
-			final int looperLetters =
-					mMinuend.getAlphabet().size() - mDifferenceSynchronizationInformation.getChangerLetters().size();
-			mLogger.info(looperLetters + "/" + mMinuend.getAlphabet().size() + " looper letters, "
-					+ mDifferenceSynchronizationInformation.getSelfloops().size() + " selfloop transitions, "
-					+ mDifferenceSynchronizationInformation.getStateChangers().size() + " changer transitions "
-					+ deadTransitions + "/" + allTransitions + " dead transitions.");
-		}
+		final int looperLetters =
+				mMinuend.getAlphabet().size() - mDifferenceSynchronizationInformation.getChangerLetters().size();
+		mLogger.info(looperLetters + "/" + mMinuend.getAlphabet().size() + " looper letters, "
+				+ mDifferenceSynchronizationInformation.getSelfloops().size() + " selfloop transitions, "
+				+ mDifferenceSynchronizationInformation.getStateChangers().size() + " changer transitions "
+				+ deadTransitions + "/" + allTransitions + " dead transitions.");
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}

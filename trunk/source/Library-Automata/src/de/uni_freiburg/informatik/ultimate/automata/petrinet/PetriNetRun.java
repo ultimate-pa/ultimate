@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> {
 
 	private final Word<LETTER> mWord;
-	private final ArrayList<Marking<PLACE>> mMarkingSequence;
+	private final List<Marking<PLACE>> mMarkingSequence;
 
 	/**
 	 * Construct Petri net run of length 0.
@@ -84,7 +84,7 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 	 * @param word
 	 *            corresponding word
 	 */
-	public PetriNetRun(final ArrayList<Marking<PLACE>> sequenceOfMarkings, final Word<LETTER> word) {
+	public PetriNetRun(final List<Marking<PLACE>> sequenceOfMarkings, final Word<LETTER> word) {
 		if (sequenceOfMarkings.size() - 1 != word.length()) {
 			throw new IllegalArgumentException("run consists of word length +1 markings");
 		}

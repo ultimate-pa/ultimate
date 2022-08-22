@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
-import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  *            Type of letters from the alphabet used to label transitions
  */
 public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LETTER, PLACE> {
-	Collection<PLACE> getPlaces();
+	Set<PLACE> getPlaces();
 
-	Collection<Transition<LETTER, PLACE>> getTransitions();
+	Set<Transition<LETTER, PLACE>> getTransitions();
 
-	Collection<PLACE> getAcceptingPlaces();
+	Set<PLACE> getAcceptingPlaces();
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)

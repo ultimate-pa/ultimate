@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
@@ -135,8 +136,8 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 	 */
 	private final boolean mRemoveRedundantFlow;
 
-	private final BoundedPetriNet<LETTER, PLACE> mInputMinuend;
-	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
+	private final IPetriNet<LETTER, PLACE> mInputMinuend;
+	private final IPetriNet<LETTER, PLACE> mMinuend;
 	private final INestedWordAutomaton<LETTER, PLACE> mSubtrahend;
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
@@ -147,25 +148,22 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
 
-	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
-			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa)
+	public Difference(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
+			final IPetriNet<LETTER, PLACE> minuendNet, final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null, false);
 	}
 
-	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
-			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa, final String loopSyncMethod)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+	public Difference(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
+			final IPetriNet<LETTER, PLACE> minuendNet, final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
+			final String loopSyncMethod) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod), null, false);
 	}
 
-	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
-			final SF factory, final BoundedPetriNet<LETTER, PLACE> originalMinuend,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa, final LoopSyncMethod loopSyncMethod,
-			final DifferencePairwiseOnDemand<LETTER, PLACE, ?> inputDpod, final boolean removeRedundantFlow)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+	public Difference(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
+			final IPetriNet<LETTER, PLACE> originalMinuend, final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
+			final LoopSyncMethod loopSyncMethod, final DifferencePairwiseOnDemand<LETTER, PLACE, ?> inputDpod,
+			final boolean removeRedundantFlow) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mSubtrahend = subtrahendDfa;
 		mContentFactory = factory;
@@ -537,7 +535,7 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 		return correct;
 	}
 
-	private static <LETTER, PLACE> int computeNumberOfDeadTransitions(final BoundedPetriNet<LETTER, PLACE> result,
+	private static <LETTER, PLACE> int computeNumberOfDeadTransitions(final IPetriNet<LETTER, PLACE> result,
 			final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final int transitionsBefore = (result.getTransitions()).size();
@@ -547,8 +545,8 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 		return transitionsRemovedByMinimization;
 	}
 
-	private static <LETTER, PLACE> int computeNumberOfUnreachableTransitions(
-			final BoundedPetriNet<LETTER, PLACE> result, final AutomataLibraryServices services)
+	private static <LETTER, PLACE> int computeNumberOfUnreachableTransitions(final IPetriNet<LETTER, PLACE> result,
+			final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final int transitionsBefore = (result.getTransitions()).size();
 		final BoundedPetriNet<LETTER, PLACE> removeUnreachableResult =

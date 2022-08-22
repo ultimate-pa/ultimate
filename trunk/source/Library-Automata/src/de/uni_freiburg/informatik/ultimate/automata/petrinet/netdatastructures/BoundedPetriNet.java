@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -71,8 +70,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	private final Set<PLACE> mPlaces = new HashSet<>();
 	private final Set<PLACE> mInitialPlaces = new HashSet<>();
-	private final Collection<PLACE> mAcceptingPlaces = new HashSet<>();
-	private final Collection<Transition<LETTER, PLACE>> mTransitions = new HashSet<>();
+	private final Set<PLACE> mAcceptingPlaces = new HashSet<>();
+	private final Set<Transition<LETTER, PLACE>> mTransitions = new HashSet<>();
 	private final Set<Integer> mTransitionIds = new HashSet<>();
 	private final TransitionUnifier<LETTER, PLACE> mTransitionUnifier = new TransitionUnifier<>();
 	/**
@@ -265,12 +264,12 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	@Override
-	public Collection<PLACE> getAcceptingPlaces() {
+	public Set<PLACE> getAcceptingPlaces() {
 		return mAcceptingPlaces;
 	}
 
 	@Override
-	public Collection<Transition<LETTER, PLACE>> getTransitions() {
+	public Set<Transition<LETTER, PLACE>> getTransitions() {
 		return mTransitions;
 	}
 
