@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -211,13 +209,6 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 			}
 		}
 		return predecessorTransitions;
-	}
-
-	@Override
-	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
-			getSuccessorTransitionProviders(final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	// We have no accepting markings in a BuchiPetriNet

@@ -27,17 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * General Petri net interface.
@@ -58,22 +53,6 @@ public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LET
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
 		return new PetriNetToUltimateModel<LETTER, PLACE>().transformToUltimateModel(this);
-	}
-
-	@Override
-	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
-			getSuccessorTransitionProviders(final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
-		final HashRelation<Set<PLACE>, Transition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
-		for (final PLACE p : mustPlaces) {
-			for (final Transition<LETTER, PLACE> t : getSuccessors(p)) {
-				final Set<PLACE> predeccesorOfT = t.getPredecessors();
-				if (mayPlaces.containsAll(predeccesorOfT)) {
-					predecessorPlaces2Transition.addPair(predeccesorOfT, t);
-				}
-			}
-		}
-		return predecessorPlaces2Transition.entrySet().stream()
-				.map(x -> new SimpleSuccessorTransitionProvider<>(x.getValue())).collect(Collectors.toList());
 	}
 
 	int flowSize();
