@@ -221,14 +221,14 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	}
 
 	@Override
-	public boolean isAccepting(final Marking<LETTER, PLACE> marking) {
+	public boolean isAccepting(final Marking<PLACE> marking) {
 		final Set<PLACE> petriNetPlaces = new HashSet<>();
 		for (final PLACE place : marking) {
 			if (mMinuendPlaces.contains(place)) {
 				petriNetPlaces.add(place);
 			}
 		}
-		final Marking<LETTER, PLACE> filteredMarking = new Marking<>(ImmutableSet.of(petriNetPlaces));
+		final Marking<PLACE> filteredMarking = new Marking<>(ImmutableSet.of(petriNetPlaces));
 		return mMinuend.isAccepting(filteredMarking);
 	}
 

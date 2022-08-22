@@ -109,7 +109,7 @@ public final class Accepts<LETTER, PLACE>
 		return mResult;
 	}
 
-	private boolean getResultHelper(final int position, final Marking<LETTER, PLACE> marking)
+	private boolean getResultHelper(final int position, final Marking<PLACE> marking)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		if (position >= mWord.length()) {
 			return mOperand.isAccepting(marking);
@@ -126,7 +126,7 @@ public final class Accepts<LETTER, PLACE>
 
 		final int nextPosition = position + 1;
 		boolean result = false;
-		Marking<LETTER, PLACE> nextMarking;
+		Marking<PLACE> nextMarking;
 		for (final Transition<LETTER, PLACE> transition : activeTransitionsWithSymbol(marking, symbol)) {
 			nextMarking = marking.fireTransition(transition);
 			if (getResultHelper(nextPosition, nextMarking)) {
@@ -136,7 +136,7 @@ public final class Accepts<LETTER, PLACE>
 		return result;
 	}
 
-	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking,
+	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<PLACE> marking,
 			final LETTER symbol) {
 		final Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
 		for (final PLACE place : marking) {

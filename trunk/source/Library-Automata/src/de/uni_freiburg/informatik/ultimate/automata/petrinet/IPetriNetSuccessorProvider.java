@@ -30,7 +30,7 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 	 *            A marking.
 	 * @return {@code true} iff the marking is accepting.
 	 */
-	boolean isAccepting(Marking<LETTER, PLACE> marking);
+	boolean isAccepting(Marking<PLACE> marking);
 
 	boolean isAccepting(PLACE place);
 

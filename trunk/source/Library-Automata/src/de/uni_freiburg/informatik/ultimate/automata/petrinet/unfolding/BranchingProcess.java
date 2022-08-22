@@ -378,26 +378,34 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @return if c1 != c2 and c2 is no ancestor of c1 the result is true iff there is a path from a condition in
 	 *         c2Ancestors to c1 that does not contain other elements of c2Ancestors.
 	 */
-	private boolean conflictPathCheck(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2,
+	private boolean conflictPathCheck(final Condition<LETTER, PLACE> c1In, final Condition<LETTER, PLACE> c2,
 			final Set<Object> c2Ancestors) {
-		if (c1 == c2) {
-			throw new IllegalArgumentException(c1 + " ancestor of " + c2);
+		final ArrayDeque<Condition<LETTER, PLACE>> worklist = new ArrayDeque<>();
+		final Set<Condition<LETTER, PLACE>> done = new HashSet<>();
+		worklist.add(c1In);
+
+		while (!worklist.isEmpty()) {
+			final Condition<LETTER, PLACE> c1 = worklist.pop();
+			if (done.contains(c1)) {
+				continue;
+			}
+			done.add(c1);
+
+			if (c1 == c2) {
+				throw new IllegalArgumentException(c1 + " ancestor of " + c2);
+			}
+			if (c2Ancestors.contains(c1)) {
+				return true;
+			}
+
+			final Event<LETTER, PLACE> pred = c1.getPredecessorEvent();
+			if (c2Ancestors.contains(pred) || pred == mDummyRoot) {
+				continue;
+			}
+
+			worklist.addAll(pred.getPredecessorConditions());
 		}
-		if (c2Ancestors.contains(c1)) {
-			return true;
-		}
-		final Event<LETTER, PLACE> pred = c1.getPredecessorEvent();
-		if (c2Ancestors.contains(pred)) {
-			return false;
-		}
-		if (pred == mDummyRoot) {
-			return false;
-		}
-		boolean result = false;
-		for (final Condition<LETTER, PLACE> cPred : pred.getPredecessorConditions()) {
-			result = result || conflictPathCheck(cPred, c2, c2Ancestors);
-		}
-		return result;
+		return false;
 	}
 
 	/**
@@ -408,9 +416,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		final Event<LETTER, PLACE> pred = condition.getPredecessorEvent();
 		if (pred.equals(mDummyRoot)) {
 			return Collections.emptySet();
-		} else {
-			return ancestorNodes(pred);
 		}
+		return ancestorNodes(pred);
 	}
 
 	/**

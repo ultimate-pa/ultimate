@@ -295,7 +295,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	@Override
-	public boolean isAccepting(final Marking<LETTER, PLACE> marking) {
+	public boolean isAccepting(final Marking<PLACE> marking) {
 		for (final PLACE place : marking) {
 			if (getAcceptingPlaces().contains(place)) {
 				return true;

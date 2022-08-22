@@ -68,7 +68,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private final Configuration<LETTER, PLACE> mLocalConfiguration;
 	// private final Event<LETTER, PLACE>[] mLocalConfiguration;
 	// private final ArrayList<Event<LETTER, PLACE>> mLocalConfiguration;
-	private final Marking<LETTER, PLACE> mMark;
+	private final Marking<PLACE> mMark;
 	private final ConditionMarking<LETTER, PLACE> mConditionMark;
 
 	private Event<LETTER, PLACE> mCompanion;
@@ -148,6 +148,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mTransition = null;
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>(), 0);
 		mMark = new Marking<>(ImmutableSet.of(bp.getNet().getInitialPlaces()));
+
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();
@@ -256,7 +257,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	/**
 	 * @return marking of the local configuration of this.
 	 */
-	public Marking<LETTER, PLACE> getMark() {
+	public Marking<PLACE> getMark() {
 		return mMark;
 	}
 
@@ -416,5 +417,18 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	@Override
 	public int hashCode() {
 		return mHashCode;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Event<?, ?> other = (Event<?, ?>) obj;
+		return mPredecessors.equals(other.mPredecessors) && mSuccessors.equals(other.mSuccessors)
+				&& mTransition.equals(other.mTransition);
 	}
 }

@@ -64,13 +64,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final IPetriNetSuccessorProvider<L, S> mOperand;
-	private final Predicate<Marking<?, S>> mIsKnownDeadEnd;
+	private final Predicate<Marking<S>> mIsKnownDeadEnd;
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
-	private final Map<Marking<L, S>, S> mMarking2State = new HashMap<>();
+	private final Map<Marking<S>, S> mMarking2State = new HashMap<>();
 
 	// Needed to compute outgoing transitions. If all outgoing transitions of a state have been computed, we remove the
 	// state from this map (to save on memory).
-	private final Map<S, Marking<L, S>> mState2Marking = new HashMap<>();
+	private final Map<S, Marking<S>> mState2Marking = new HashMap<>();
 
 	private final NwaCacheBookkeeping<L, S> mCacheBookkeeping = new NwaCacheBookkeeping<>();
 	private final NestedWordAutomatonCache<L, S> mCache;
@@ -93,7 +93,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	 */
 	public LazyPetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet2FiniteAutomatonStateFactory<S> factory, final IPetriNetSuccessorProvider<L, S> operand,
-			final Predicate<Marking<?, S>> isKnownDeadEnd) throws PetriNetNot1SafeException {
+			final Predicate<Marking<S>> isKnownDeadEnd) throws PetriNetNot1SafeException {
 		mOperand = operand;
 		mIsKnownDeadEnd = isKnownDeadEnd;
 		mStateFactory = factory;
@@ -146,7 +146,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public Set<L> lettersInternal(final S state) {
-		final Marking<L, S> marking = mState2Marking.get(state);
+		final Marking<S> marking = mState2Marking.get(state);
 		if (marking == null) {
 			// All outgoing transitions already cached.
 			return mCache.lettersInternal(state);
@@ -194,7 +194,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	private void computeOutgoingTransitions(final S state, final L letter) {
-		final Marking<L, S> marking = mState2Marking.get(state);
+		final Marking<S> marking = mState2Marking.get(state);
 		if (marking == null) {
 			// All outgoing transitions already cached.
 			return;
@@ -203,7 +203,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 				.forEach(t -> createAutomatonTransition(state, marking, t));
 	}
 
-	private void createAutomatonTransition(final S state, final Marking<L, S> marking,
+	private void createAutomatonTransition(final S state, final Marking<S> marking,
 			final Transition<L, S> transition) {
 		try {
 			final S successor = getOrConstructState(marking.fireTransition(transition));
@@ -216,7 +216,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 		}
 	}
 
-	private S getOrConstructState(final Marking<L, S> marking) {
+	private S getOrConstructState(final Marking<S> marking) {
 		// Do not use computeIfAbsent, because constructState may return null.
 		if (!mMarking2State.containsKey(marking)) {
 			final S state = constructState(marking, false);
@@ -226,7 +226,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 		return mMarking2State.get(marking);
 	}
 
-	private S constructState(final Marking<L, S> marking, final boolean isInitial) {
+	private S constructState(final Marking<S> marking, final boolean isInitial) {
 		if (isKnownDeadEnd(marking)) {
 			return null;
 		}
@@ -242,12 +242,12 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 		return state;
 	}
 
-	private Stream<Transition<L, S>> getOutgoingNetTransitions(final Marking<L, S> marking) {
+	private Stream<Transition<L, S>> getOutgoingNetTransitions(final Marking<S> marking) {
 		return marking.stream().flatMap(place -> mOperand.getSuccessors(place).stream())
 				.filter(marking::isTransitionEnabled);
 	}
 
-	private boolean isKnownDeadEnd(final Marking<?, S> marking) {
+	private boolean isKnownDeadEnd(final Marking<S> marking) {
 		if (mIsKnownDeadEnd == null) {
 			return false;
 		}

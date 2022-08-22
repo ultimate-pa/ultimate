@@ -72,7 +72,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private final static boolean LAZY_SUCCESSOR_COMPUTATION = true;
 
 	private final Queue<Event<LETTER, PLACE>> mPe;
-	private final Map<Marking<LETTER, PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
+	private final Map<Marking<PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
 	private int mMaximalSize;
 	private final boolean mUseFirstbornCutoffCheck;
 	private final boolean mUseB32Optimization;

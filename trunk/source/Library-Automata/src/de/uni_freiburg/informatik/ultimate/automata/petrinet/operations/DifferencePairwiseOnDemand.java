@@ -66,6 +66,23 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
+	/**
+	 * If set, we add the statistics of the finite prefix to the statistics of this
+	 * operation. This is helpful for debugging and analyzing the results. The
+	 * statistics of the finite prefix are however computed on demand and this
+	 * computation comes with minor costs. <br>
+	 * If we want to evaluate the speed of this algorithm the generation of
+	 * statistics can be switched off. The automata script interpreter calls the
+	 * following method, which triggers the computation of the finite prefix's
+	 * statistics. Applications, like our software verification, typically do not
+	 * call this method.
+	 * {@link DifferencePairwiseOnDemand#getAutomataOperationStatistics()} Hence, an
+	 * evaluation without the finite prefix's statistics gives a better impression
+	 * about the performance in practice. See
+	 * https://github.com/ultimate-pa/ultimate/issues/448#issuecomment-603025477 and
+	 * https://github.com/ultimate-pa/ultimate/issues/448#issuecomment-608669868
+	 */
+	private static final boolean ADD_FINITE_PREFIX_STATISTICS = true;
 	private final IPetriNet<LETTER, PLACE> mMinuend;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
 
@@ -156,7 +173,9 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
-		statistics.addAllStatistics(mFinitePrefixOfDifference.getAutomataOperationStatistics());
+		if (ADD_FINITE_PREFIX_STATISTICS) {
+			statistics.addAllStatistics(mFinitePrefixOfDifference.getAutomataOperationStatistics());
+		}
 		statistics.addKeyValuePair(StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());

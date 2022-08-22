@@ -28,7 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.io.Serializable;
+import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -53,9 +55,6 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 
 	/**
 	 * Constructor.
-	 * <p>
-	 * TODO Christian 2016-08-16: The code assumes that the Collection parameters are of type List. Why not explicitly
-	 * type-check this?
 	 *
 	 * @param symbol
 	 *            symbol
@@ -68,7 +67,7 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 	 */
 	public Transition(final LETTER symbol, final ImmutableSet<PLACE> predecessors, final ImmutableSet<PLACE> successors,
 			final int totalOrderId) {
-		mSymbol = symbol;
+		mSymbol = Objects.requireNonNull(symbol, "Transition must not be labeled with null");
 		mPredecessors = predecessors;
 		mSuccessors = successors;
 		mHashCode = computeHashCode();
@@ -93,10 +92,20 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 	}
 
 	private int computeHashCode() {
-		final int prime1 = 13;
-		final int prime2 = 7;
-		final int prime3 = 3;
-		return prime1 * mPredecessors.hashCode() + prime2 * mSuccessors.hashCode() + prime3 * mSymbol.hashCode();
+		return HashUtils.hashJenkins(13, mTotalOrderId, mPredecessors, mSuccessors, mSymbol);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Transition<?, ?> other = (Transition<?, ?>) obj;
+		return mTotalOrderId == other.mTotalOrderId && mPredecessors.equals(other.mPredecessors)
+				&& mSuccessors.equals(other.mSuccessors) && mSymbol.equals(other.mSymbol);
 	}
 
 	@Override
