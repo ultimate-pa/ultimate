@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -991,7 +990,7 @@ public final class TransFormulaUtils {
 	 */
 	public static <T extends IProgramConst> void addConstantsIfInFormula(final TransFormulaBuilder tfb,
 			final Term formula, final Set<T> progConsts) {
-		final Set<ApplicationTerm> constsInFormula = new ConstantFinder().findConstants(formula, false);
+		final Set<ApplicationTerm> constsInFormula = SmtUtils.extractConstants(formula, false);
 		for (final IProgramConst progConst : progConsts) {
 			if (constsInFormula.contains(progConst.getDefaultConstant())) {
 				tfb.addProgramConst(progConst);

@@ -387,6 +387,7 @@
 					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
 					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
 					<format>properties</format>
+					<useNativeGit>true</useNativeGit>
 
 					<skipPoms>false</skipPoms>
 					<runOnlyOnce>true</runOnlyOnce>

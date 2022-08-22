@@ -25,10 +25,9 @@
  * to convey the resulting work.
  */
 /**
- * Provides classes for computing and providing a relation that states which
- * transitions of a concurrent system are independent in the sense that the
- * execution order does not affect the result. 
- * 
+ * Provides classes for computing and providing a relation that states which transitions of a concurrent system are
+ * independent in the sense that the execution order does not affect the result.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *

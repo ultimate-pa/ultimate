@@ -36,12 +36,13 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
 			final Set<PLACE> mustPlaces,
 			final Set<PLACE> mayPlaces);
+
 	/**
 	 * @param marking
 	 *            A marking.
 	 * @return {@code true} iff the marking is accepting.
 	 */
-	boolean isAccepting(Marking<LETTER, PLACE> marking);
+	boolean isAccepting(Marking<PLACE> marking);
 
 	boolean isAccepting(PLACE place);
 

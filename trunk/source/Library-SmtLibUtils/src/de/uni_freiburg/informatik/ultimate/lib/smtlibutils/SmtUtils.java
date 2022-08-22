@@ -2596,6 +2596,31 @@ public final class SmtUtils {
 		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
 	}
 
+	/**
+	 * Find all subterms of the given term that are constants (i.e.
+	 * {@link ApplicationTerm}s with zero parameters).
+	 *
+	 * @param restrictToNonTheoryConstants If set to true, we omit constants that
+	 *                                     are defined by the SMT that our solver is
+	 *                                     using. E.g. for the theory of floats, we
+	 *                                     omit roundTowardZero which is a constant
+	 *                                     that defines a certain rounding mode.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Set<ApplicationTerm> extractConstants(final Term term, final boolean restrictToNonTheoryConstants) {
+		final Predicate<Term> p;
+		if (restrictToNonTheoryConstants) {
+			p = (x -> SmtUtils.isConstant(x) && (x instanceof ApplicationTerm)
+					&& !((ApplicationTerm) x).getFunction().isIntern());
+		} else {
+			p = SmtUtils::isConstant;
+
+		}
+		// hack for casting a Set<Term> which contains only ApplicationTerms into a
+		// Set<ApplicationTerm>
+		return (Set) SubTermFinder.find(term, p, false);
+	}
+
 	public static Term unzipNot(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;

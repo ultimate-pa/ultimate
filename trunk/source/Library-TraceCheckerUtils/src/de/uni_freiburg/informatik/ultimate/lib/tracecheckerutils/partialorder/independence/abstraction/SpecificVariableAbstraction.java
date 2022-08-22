@@ -44,11 +44,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -225,7 +225,7 @@ public class SpecificVariableAbstraction<L extends IAction>
 		// Collect the non-theory constants that (actually) appear in the (possibly simplified) formula.
 		Set<IProgramConst> ntc = utf.getNonTheoryConsts();
 		if (!ntc.isEmpty()) {
-			final Set<ApplicationTerm> constantsInFormula = new ConstantFinder().findConstants(formula, true);
+			final Set<ApplicationTerm> constantsInFormula = SmtUtils.extractConstants(formula, true);
 			ntc = ntc.stream().filter(c -> constantsInFormula.contains(c.getDefaultConstant()))
 					.collect(Collectors.toSet());
 		}

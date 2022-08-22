@@ -44,11 +44,6 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
  */
 public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionTestSuite {
 
-	@Override
-	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
-	}
-
 	// @formatter:off
 	private static final String[] SETTINGS_DIRS = { "automizer/concurrent/", "gemcutter/" };
 
@@ -69,7 +64,12 @@ public class ConcurrencyConfigurationQuickTest extends AbstractTraceAbstractionT
 
 	@Override
 	protected long getTimeout() {
-		return 30000L;
+		return 30_000L;
+	}
+
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
 	}
 
 	@Override

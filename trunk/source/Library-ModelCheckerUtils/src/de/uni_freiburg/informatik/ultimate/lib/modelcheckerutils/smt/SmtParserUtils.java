@@ -43,16 +43,53 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 
-public class SmtParserUtils {
+/**
+ * A helper class to parse strings into {@link Term}s.
+ *
+ * Specifically, the class helps with parsing into terms that contain {@code TermVariable}s rather than constant
+ * symbols. This is helpful when creating {@code UnmodifiableTransFormula}s or {@code IPredicate}s.
+ *
+ * The returned terms are in Ultimate normal form, and should be usable directly to create Ultimate date structures.
+ *
+ * This class can be helpful for instance (but not exclusively) to create test suites.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
+public final class SmtParserUtils {
 	private SmtParserUtils() {
 		// no instances for static class
 	}
 
+	/**
+	 * Parse a term using the script and symbol table of the given {@link CfgSmtToolkit}.
+	 *
+	 * @param syntax
+	 *            A string denoting an SMT-LIB term
+	 * @param services
+	 *            Used to transform the result into Ultimate normal form
+	 * @param csToolkit
+	 *            A toolkit containing a script and a symbol table. The syntax may refer to variables for any global
+	 *            variable in this symbol table.
+	 * @return the parsed term
+	 */
 	public static Term parseWithVariables(final String syntax, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit) {
 		return parseWithVariables(syntax, services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
 
+	/**
+	 * Parse a term using a given script and symbol table.
+	 *
+	 * @param syntax
+	 *            A string denoting an SMT-LIB term
+	 * @param services
+	 *            Used to transform the result into Ultimate normal form
+	 * @param mgdScript
+	 *            A script used for parsing
+	 * @param symbolTable
+	 *            The syntax may refer to variables for any global variable in this symbol table.
+	 * @return the parsed term
+	 */
 	public static Term parseWithVariables(final String syntax, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable) {
 		final var termVars =
@@ -60,6 +97,19 @@ public class SmtParserUtils {
 		return parseWithVariables(syntax, services, mgdScript, termVars);
 	}
 
+	/**
+	 * Parse a term using a given script and given variables.
+	 *
+	 * @param syntax
+	 *            A string denoting an SMT-LIB term
+	 * @param services
+	 *            Used to transform the result into Ultimate normal form
+	 * @param mgdScript
+	 *            A script used for parsing
+	 * @param variables
+	 *            A set of variables to which the syntax may refer
+	 * @return the parsed term
+	 */
 	public static Term parseWithVariables(final String syntax, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final Set<TermVariable> variables) {
 		if (variables.isEmpty()) {
@@ -75,6 +125,17 @@ public class SmtParserUtils {
 		return normalize(quant.getSubformula(), services, mgdScript);
 	}
 
+	/**
+	 * Parse a term (without any variables)
+	 *
+	 * @param syntax
+	 *            A string denoting an SMT-LIB term
+	 * @param services
+	 *            Used to transform the result into Ultimate normal form
+	 * @param mgdScript
+	 *            A script used for parsing
+	 * @return the parsed term
+	 */
 	public static Term parse(final String syntax, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript) {
 		final Term parsed = TermParseUtils.parseTerm(mgdScript.getScript(), syntax);
