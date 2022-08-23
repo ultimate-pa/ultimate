@@ -66,8 +66,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private final Set<Condition<LETTER, PLACE>> mPredecessors;
 	private final Set<Condition<LETTER, PLACE>> mSuccessors;
 	private final Configuration<LETTER, PLACE> mLocalConfiguration;
-	// private final Event<LETTER, PLACE>[] mLocalConfiguration;
-	// private final ArrayList<Event<LETTER, PLACE>> mLocalConfiguration;
 	private final Marking<PLACE> mMark;
 	private final ConditionMarking<LETTER, PLACE> mConditionMark;
 
@@ -86,6 +84,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * @param transition
 	 *            homomorphism transition
 	 */
+	// TODO Frank 2022-08-23: Providing the hashCode in the constructor does not seem like a good idea...
 	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final Transition<LETTER, PLACE> transition,
 			final BranchingProcess<LETTER, PLACE> bp, final int hashCode) throws PetriNetNot1SafeException {
 		assert conditionToPlaceEqual(predecessors,
@@ -93,13 +92,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
 						+ "\n  " + "transitions predecessors:" + transition.getPredecessors();
 		mPredecessors = new HashSet<>(predecessors);
-		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
 
 		mTransition = transition;
-		mSuccessors = new HashSet<>();
-		for (final PLACE p : transition.getSuccessors()) {
-			mSuccessors.add(bp.constructCondition(this, p));
-		}
+		mSuccessors = transition.getSuccessors().stream().map(p -> bp.constructCondition(this, p))
+				.collect(Collectors.toSet());
 		mHashCode = hashCode;
 
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
@@ -152,12 +148,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();
-		mSuccessors = new HashSet<>();
-		for (final PLACE p : mMark) {
-			final Condition<LETTER, PLACE> c = bp.constructCondition(this, p);
-			mSuccessors.add(c);
-			conditionMarkSet.add(c);
-		}
+		mSuccessors = mMark.stream().map(p -> bp.constructCondition(this, p)).collect(Collectors.toSet());
+		conditionMarkSet.addAll(mSuccessors);
 		mHashCode = 0;
 		mPlaceCorelationMap = new HashMap<>();
 		if (bp.getNewFiniteComprehensivePrefixMode()) {

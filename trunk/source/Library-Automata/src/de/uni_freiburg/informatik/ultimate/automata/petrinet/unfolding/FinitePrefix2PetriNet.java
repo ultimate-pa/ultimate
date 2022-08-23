@@ -30,7 +30,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -57,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Converts to Petri net.
@@ -433,11 +431,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			computeEquivalenceClasses(final Collection<Condition<LETTER, PLACE>> conditions) {
 		final Map<PLACE, UnionFind<Condition<LETTER, PLACE>>> result = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : conditions) {
-			final PLACE p = c.getPlace();
-			if (!result.containsKey(p)) {
-				result.put(p, new UnionFind<>());
-			}
-			final UnionFind<Condition<LETTER, PLACE>> uf = result.get(p);
+			final UnionFind<Condition<LETTER, PLACE>> uf = result.computeIfAbsent(c.getPlace(), x -> new UnionFind<>());
 			final List<Condition<LETTER, PLACE>> mergeRequired = new ArrayList<>();
 			for (final Set<Condition<LETTER, PLACE>> eqClass : uf.getAllEquivalenceClasses()) {
 				for (final Condition<LETTER, PLACE> otherCond : eqClass) {
@@ -463,8 +457,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				computeEquivalenceClasses(relevantConditions);
 		final Map<Condition<LETTER, PLACE>, PLACE> condition2Place =
 				computeCondition2Place(equivalenceClasses, mStateFactory);
-		final HashRelation3<LETTER, ImmutableSet<PLACE>, ImmutableSet<PLACE>> letterPredecessorsSuccessors =
-				computeTransitions(bp.getEvents(), condition2Place);
 
 		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, bp.getAlphabet(), false);
 
@@ -478,9 +470,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				}
 			}
 		}
-		for (final Triple<LETTER, ImmutableSet<PLACE>, ImmutableSet<PLACE>> triple : letterPredecessorsSuccessors) {
-			result.addTransition(triple.getFirst(), triple.getSecond(), triple.getThird());
-		}
+		computeTransitions(bp.getEvents(), condition2Place)
+				.forEach(x -> result.addTransition(x.getFirst(), x.getSecond(), x.getThird()));
 		return result;
 	}
 
@@ -491,7 +482,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		for (final Event<LETTER, PLACE> event : events) {
 			// skip auxiliary initial event
 			if (event.getTransition() != null) {
-				final LETTER letter = event.getTransition().getSymbol();
 				final ImmutableSet<PLACE> predecessors = event.getPredecessorConditions().stream()
 						.map(condition2Place::get).collect(ImmutableSet.collector());
 				assert !predecessors.contains(null);
@@ -508,7 +498,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 							.collect(ImmutableSet.collector());
 				}
 				assert !successors.contains(null);
-				letterPredecessorsSuccessors.addTriple(letter, predecessors, successors);
+				letterPredecessorsSuccessors.addTriple(event.getTransition().getSymbol(), predecessors, successors);
 			}
 		}
 		return letterPredecessorsSuccessors;
@@ -532,41 +522,16 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	@Override
 	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
-		BoundedPetriNet<LETTER, PLACE> originalNet;
 		if (!(mInput.getNet() instanceof BoundedPetriNet)) {
 			throw new AssertionError("implement result checking for on-demand inputs");
 		}
-		originalNet = (BoundedPetriNet<LETTER, PLACE>) mInput.getNet();
+		final BoundedPetriNet<LETTER, PLACE> originalNet = (BoundedPetriNet<LETTER, PLACE>) mInput.getNet();
 		final boolean languagesEquivalent = petriNetLanguageEquivalence(originalNet, mNet, stateFactory);
 		if (!languagesEquivalent) {
 			mLogger.error("The result of the " + FinitePrefix2PetriNet.class.getSimpleName()
 					+ " recognizes a different language than the original net.");
 		}
 		return languagesEquivalent;
-	}
-
-	class IdBasedEventSorting implements Comparator<Event<LETTER, PLACE>> {
-		private final Map<Event<LETTER, PLACE>, Integer> mEventIdMap;
-
-		public IdBasedEventSorting(final Map<Event<LETTER, PLACE>, Integer> eventIdMap) {
-			mEventIdMap = eventIdMap;
-		}
-
-		@Override
-		public int compare(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
-			return mEventIdMap.get(e1) - mEventIdMap.get(e2);
-		}
-	}
-
-	class DepthBasedOrder implements Comparator<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> {
-
-		@Override
-		public int compare(final Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p1,
-				final Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p2) {
-			return Math.min(p1.getFirst().getDepth(), p1.getSecond().getDepth())
-					- Math.min(p2.getFirst().getDepth(), p2.getSecond().getDepth());
-		}
-
 	}
 
 }
