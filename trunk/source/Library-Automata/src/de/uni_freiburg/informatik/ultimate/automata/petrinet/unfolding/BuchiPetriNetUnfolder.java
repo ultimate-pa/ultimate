@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.LassoConfigurationCheckerIterative;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.UnfoldingLassoChecker;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -75,7 +75,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	private final IPossibleExtensions<L, P> mPossibleExtensions;
 	private final BranchingProcess<L, P> mUnfolding;
 	private PetriNetRun<L, P> mRun;
-	private final LassoConfigurationCheckerIterative<L, P> mLassoChecker;
+	private final UnfoldingLassoChecker<L, P> mLassoChecker;
 
 	private final BuchiPetriNetUnfolder<L, P>.Statistics mStatistics = new Statistics();
 
@@ -122,7 +122,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 			throw new IllegalArgumentException();
 		}
 		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
-		mLassoChecker = new LassoConfigurationCheckerIterative<>(mUnfolding);
+		mLassoChecker = new UnfoldingLassoChecker<>(mUnfolding);
 		mPossibleExtensions =
 				new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
 
@@ -146,7 +146,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 		return mStatistics;
 	}
 
-	public LassoConfigurationCheckerIterative<L, P> getChecker() {
+	public UnfoldingLassoChecker<L, P> getChecker() {
 		return mLassoChecker;
 	}
 
