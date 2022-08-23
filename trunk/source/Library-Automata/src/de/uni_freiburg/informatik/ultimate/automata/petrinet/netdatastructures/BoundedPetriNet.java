@@ -89,7 +89,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 */
 	private final boolean mConstantTokenAmount;
 
-	private int mSizeOfFlowRelation = 0;
+	private int mSizeOfFlowRelation;
 
 	/**
 	 * Standard constructor.

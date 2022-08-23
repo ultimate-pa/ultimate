@@ -32,6 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * A Petri net run is a sequence of markings <tt>m0 ... m_{n+1}</tt> and a word <tt>w_0 ... w_n</tt>.
@@ -111,28 +112,18 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 		return mMarkingSequence.get(pos);
 	}
 
-	/*
-	 * // use this method only if needed public ArrayList<Marking<S,C>> getMarkingSequence() { return mMarkingSequence;
-	 * }
-	 */
-
 	/**
 	 * @param run2
 	 *            Another run.
 	 * @return A new run which is the concatenation of this and run2. This is not changed.
 	 */
 	public PetriNetRun<LETTER, PLACE> concatenate(final PetriNetRun<LETTER, PLACE> run2) {
-		final ArrayList<Marking<PLACE>> concatMarkingSequence = new ArrayList<>();
-		for (int i = 0; i < mMarkingSequence.size(); i++) {
-			concatMarkingSequence.add(this.getMarking(i));
-		}
 		if (!getMarking(mMarkingSequence.size() - 1).equals(run2.getMarking(0))) {
 			throw new IllegalArgumentException("can only concatenate runs where last Marking of first run and first "
 					+ "Marking of second run coincide");
 		}
-		for (int i = 1; i < run2.mMarkingSequence.size(); i++) {
-			concatMarkingSequence.add(run2.getMarking(i));
-		}
+		final List<Marking<PLACE>> concatMarkingSequence =
+				DataStructureUtils.concat(mMarkingSequence, run2.mMarkingSequence.subList(1, run2.getLength()));
 		final Word<LETTER> concatWord = mWord.concatenate(run2.getWord());
 		return new PetriNetRun<>(concatMarkingSequence, concatWord);
 	}

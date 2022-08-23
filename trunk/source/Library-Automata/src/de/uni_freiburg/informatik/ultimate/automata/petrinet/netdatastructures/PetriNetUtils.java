@@ -68,16 +68,9 @@ public final class PetriNetUtils {
 			similarPredecessorPlaces(final Collection<Transition<LETTER, PLACE>> transitions) {
 		if (transitions.isEmpty()) {
 			return true;
-		} else {
-			final Set<PLACE> predecessorPlaces = transitions.iterator().next().getPredecessors();
-			for (final Transition<LETTER, PLACE> transition : transitions) {
-				final Set<PLACE> transPredPlaces = transition.getPredecessors();
-				if (!predecessorPlaces.equals(transPredPlaces)) {
-					return false;
-				}
-			}
-			return true;
 		}
+		final Set<PLACE> predecessorPlaces = transitions.iterator().next().getPredecessors();
+		return transitions.stream().allMatch(x -> predecessorPlaces.equals(x.getPredecessors()));
 	}
 
 	/**
@@ -145,12 +138,12 @@ public final class PetriNetUtils {
 				new AutomatonWithImplicitSelfloops<>(services, subtrahend, subtrahend.getAlphabet(),
 						subtrahend::isFinal);
 		final INestedWordAutomaton<LETTER, PLACE> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<>(services, stateFactory, minuend)).getResult();
+				new PetriNet2FiniteAutomaton<>(services, stateFactory, minuend).getResult();
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> rcResult =
-				(new DifferenceDD<>(services, stateFactory, op1AsNwa, subtrahendWithSelfloopsInAcceptingStates))
+				new DifferenceDD<>(services, stateFactory, op1AsNwa, subtrahendWithSelfloopsInAcceptingStates)
 						.getResult();
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> resultAsNwa =
-				(new PetriNet2FiniteAutomaton<>(services, stateFactory, result)).getResult();
+				new PetriNet2FiniteAutomaton<>(services, stateFactory, result).getResult();
 
 		final IsIncluded<LETTER, PLACE> isSubset = new IsIncluded<>(services, stateFactory, resultAsNwa, rcResult);
 		if (!isSubset.getResult()) {

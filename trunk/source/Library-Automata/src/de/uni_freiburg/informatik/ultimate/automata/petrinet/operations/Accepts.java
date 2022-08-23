@@ -82,17 +82,12 @@ public final class Accepts<LETTER, PLACE>
 			mLogger.info(startMessage());
 		}
 
-		// this.marking = new HashSet<PLACE>(net.getInitialMarking());
-		// this.position = 0;
 		mResult = getResultHelper(0, new Marking<>(ImmutableSet.of(operand.getInitialPlaces())));
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-
-	// private Collection<PLACE> marking;
-	// private int position;
 
 	@Override
 	public String startMessage() {

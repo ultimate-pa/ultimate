@@ -71,7 +71,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private final Set<PLACE> mSubtrahendStates = new HashSet<>();
 	private final NestedMap2<Transition<LETTER, PLACE>, PLACE, Transition<LETTER, PLACE>> mInputTransition2State2OutputTransition =
 			new NestedMap2<>();
-	private int mNumberOfConstructedTransitions = 0;
+	private int mNumberOfConstructedTransitions;
 	/**
 	 * Letters for which the subtrahend DFA has a selfloop in every state. This set is provided by the user of
 	 * {@link DifferencePetriNet} it can be an underapproximation of the letters that have a selfloop, we do not check

@@ -91,7 +91,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 	private final ConfigurationOrder<LETTER, PLACE> mOrder;
 
-	private int mConditionSerialnumberCounter = 0;
+	private int mConditionSerialnumberCounter;
 
 	/**
 	 * Relation between the hashcode of {@link Event} {@link Marking}s and all non-cut-off Events that have this
