@@ -871,6 +871,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		// TODO: compute post-dominates over whole program
+
+		final HashRelation<ACTION, ACTION> postDominates = computePostDominates();
+
 		// TODO: compute control-dependency for forks -> all writes in procedure are than also control dependent
 		// TODO: compute control-dependency for writes from (assumes, procedures)
 
@@ -880,5 +883,78 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private boolean isWrite(final IcfgEdge edge) {
 		return !edge.getTransformula().getAssignedVars().isEmpty();
+	}
+
+	private HashRelation<ACTION, ACTION> computePostDominates() {
+		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
+		final Set<LOC> loopHeads = (Set<LOC>) mIcfg.getLoopLocations();
+
+		for (final var procedure : mTopologicalOrder) {
+			final Queue<LOC> workList = new ArrayDeque<>();
+			// final Queue<LOC> skipped = new ArrayDeque<>();
+			final Set<LOC> done = new HashSet<>();
+
+			final LOC exit = (LOC) mIcfg.getProcedureExitNodes().get(procedure);
+			// initialize to exit node
+			for (final var action : mTransitionProvider.getPredecessorActions(exit)) {
+				result.addPair(action, action);
+				workList.add(mTransitionProvider.getSource(action));
+				done.add(mTransitionProvider.getTarget(action));
+			}
+
+			// add ErrorLocations
+			final var errors = mIcfg.getProcedureErrorNodes().get(procedure);
+			if (errors != null) {
+				for (final var error : errors) {
+					for (final var action : mTransitionProvider.getPredecessorActions((LOC) error)) {
+						result.addPair(action, action);
+						done.add(mTransitionProvider.getTarget(action));
+					}
+				}
+			}
+
+			while (!workList.isEmpty()) {
+				final LOC item = workList.poll();
+
+				if (!nodeReady(item, result) && !loopHeads.contains(item)) {
+					continue;
+				}
+
+				Set<ACTION> intersection = new HashSet<>();
+				for (final var action : mTransitionProvider.getSuccessorActions(item)) {
+					final Set<ACTION> temp = result.getImage(action);
+					if (temp.isEmpty()) {
+						continue;
+					}
+					if (intersection.isEmpty()) {
+						intersection = temp;
+						continue;
+					}
+					intersection = DataStructureUtils.intersection(intersection, temp);
+				}
+
+				for (final var action : mTransitionProvider.getPredecessorActions(item)) {
+					result.addPair(action, action);
+					result.addAllPairs(action, intersection);
+					final LOC source = mTransitionProvider.getSource(action);
+					if (!done.contains(source)) {
+						workList.add(source);
+					}
+				}
+
+				done.add(item);
+			}
+		}
+		return result;
+	}
+
+	private boolean nodeReady(final LOC node, final HashRelation<ACTION, ACTION> relation) {
+		for (final var action : mTransitionProvider.getSuccessorActions(node)) {
+			if (relation.getImage(action).isEmpty()) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }
