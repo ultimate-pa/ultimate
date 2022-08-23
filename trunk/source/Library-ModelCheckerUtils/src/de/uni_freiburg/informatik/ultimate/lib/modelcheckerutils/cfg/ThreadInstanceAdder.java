@@ -89,10 +89,12 @@ public class ThreadInstanceAdder {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final boolean mAddSelfLoops;
 
-	public ThreadInstanceAdder(final IUltimateServiceProvider services) {
+	public ThreadInstanceAdder(final IUltimateServiceProvider services, final boolean addSelfLoops) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mAddSelfLoops = addSelfLoops;
 	}
 
 	public IIcfg<IcfgLocation> connectThreadInstances(final IIcfg<IcfgLocation> icfg,
@@ -107,8 +109,15 @@ public class ThreadInstanceAdder {
 			final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 			final UnmodifiableTransFormula errorTransformula =
 					TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
-			final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
-					new Payload(), errorTransformula, errorTransformula);
+			final IcfgInternalTransition errorTransition =
+					ef.createInternalTransition(callerNode, errorNode, new Payload(), errorTransformula);
+			// Add a self loop to the in-use-error location, necessary for termination
+			if (mAddSelfLoops) {
+				final IcfgInternalTransition errorLoop =
+						ef.createInternalTransition(errorNode, errorNode, new Payload(), errorTransformula);
+				errorNode.addIncoming(errorLoop);
+				errorNode.addOutgoing(errorLoop);
+			}
 			integrateForkEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
 			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
 				addForkOtherThreadTransition(fct, ti.getIdVars(), icfg, ti.getThreadInstanceName(), backtranslator);

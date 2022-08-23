@@ -87,7 +87,7 @@ public interface IDeadEndStore<S, R> {
 	 * @param <S>
 	 *            The type of states
 	 */
-	public static final class SimpleDeadEndStore<S> implements IDeadEndStore<S, S> {
+	final class SimpleDeadEndStore<S> implements IDeadEndStore<S, S> {
 		private final Set<S> mDeadEndSet = new HashSet<>();
 
 		@Override
@@ -120,7 +120,7 @@ public interface IDeadEndStore<S, R> {
 	 * @param <R>
 	 *            The type of states for which dead end information is stored
 	 */
-	public static final class ProductDeadEndStore<S, R> implements IDeadEndStore<S, R> {
+	final class ProductDeadEndStore<S, R> implements IDeadEndStore<S, R> {
 		private final Function<R, S> mState2Original;
 		private final Function<R, Object> mState2ExtraInfo;
 		private final HashRelation<S, Object> mDeadEndRelation = new HashRelation<>();

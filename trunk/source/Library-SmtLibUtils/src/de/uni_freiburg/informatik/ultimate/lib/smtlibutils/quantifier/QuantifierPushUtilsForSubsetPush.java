@@ -107,13 +107,6 @@ public class QuantifierPushUtilsForSubsetPush {
 		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
 		}
-		{
-			final Pair<Term, Set<TermVariable>> pair = QuantifierPushUtilsForLocalEliminatees
-					.findSomePushableLocalEliminateeSet(et);
-			if (pair != null) {
-				throw new AssertionError("Contains local eliminatees");
-			}
-		}
 		if (!QuantifierPushUtils.isFlattened(et.getQuantifier(), currentDualFiniteJuncts)) {
 			throw new AssertionError("Not flattened");
 		}
@@ -136,11 +129,14 @@ public class QuantifierPushUtilsForSubsetPush {
 				// TODO change to logging output
 				throw new AssertionError("Maybe an infinite loop");
 			}
-			final TermVariable eliminatee = QuantifierPusher.selectBestEliminatee(mgdScript.getScript(),
+			final TermVariable eliminatee = XnfScout.selectBestEliminatee(mgdScript.getScript(),
 					et.getQuantifier(), currentSuitableEliminatees, currentDualFiniteJuncts);
 			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteJuncts,
 					eliminatee);
-			// may include failedEliminatees
+			// Note 1: minionEliminatees may include failedEliminatees
+			// Note 2: in subsequent calls the selected eliminatee may occur in all params
+			// hence we have to recurse on proper minions even if they have a smaller
+			// expected chance for getting eliminated #overtakingMinionProblem
 			final List<TermVariable> minionEliminatees = QuantifierPusher.determineMinionEliminatees(currentEliminatees,
 					parti.getFiniteDualJunctsWithoutEliminatee());
 			if (!minionEliminatees.contains(eliminatee)) {
@@ -201,10 +197,11 @@ public class QuantifierPushUtilsForSubsetPush {
 			{
 				final EliminationTask etForPreprocessing = new EliminationTask(et.getQuantifier(),
 						new HashSet<>(currentEliminatees), currentDualFiniteJunction, et.getContext());
+				final boolean pushLocalEliminatees = false;
 				final boolean pushDualQuantifiersInParams = true;
 				final Pair<Boolean, Term> pair = QuantifierPushUtils.preprocessDualFiniteJunction(services, mgdScript,
 						applyDistributivity, pqeTechniques, simplificationTechnique, etForPreprocessing, qe,
-						pushDualQuantifiersInParams);
+						pushLocalEliminatees, pushDualQuantifiersInParams);
 				if (!pair.getFirst()) {
 					return pair.getSecond();
 				}
@@ -284,6 +281,11 @@ public class QuantifierPushUtilsForSubsetPush {
 	 * <li>occurs in at least on dualFiniteJunct that is a corresponding
 	 * finiteJunction (i.e., applying distributivity to a subset makes sense).
 	 * </ul>
+	 * Note: If we would allow eliminatees that occur in all subformulas we can run
+	 * into an infinite loop (of subset pushes). If we however allow eliminatees to
+	 * be not suitable for that reason a selected eliminatee with good score (wrt.
+	 * expected eliminatability) may be be replaced by one of its minion with lower
+	 * score in subsequent calls. #overtakingMinionProblem
 	 *
 	 */
 	private static List<TermVariable> findSuitableEliminatees(final List<TermVariable> currentEliminatees,

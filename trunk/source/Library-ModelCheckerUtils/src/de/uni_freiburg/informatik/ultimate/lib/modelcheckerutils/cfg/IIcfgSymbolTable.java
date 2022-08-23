@@ -77,6 +77,7 @@ public interface IIcfgSymbolTable {
 	Set<IProgramConst> getConstants();
 
 	/**
+	 * TODO 20220401 Matthias: Generic auxiliary methods should not be required by an interface.
 	 *
 	 * @return a Set containing the default constants of all {@link IProgramVar}s saved in this {@link IIcfgSymbolTable}
 	 *         (e.g., the ones obtainable by calling getGlobals or getLocals).

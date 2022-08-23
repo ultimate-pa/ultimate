@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -71,11 +70,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -83,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsDefinitions;
@@ -95,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -521,99 +516,20 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	private Set<L> determineUniversalSubtrahendLoopers(final Set<L> alphabet, final Set<IPredicate> states,
 			final IHoareTripleChecker htc, final IPredicateCoverageChecker coverage) {
-		final Set<L> result = new HashSet<>();
-		for (final L letter : alphabet) {
-			final boolean isUniversalLooper;
-			switch (mPref.looperCheck()) {
-			case SEMANTIC:
-				isUniversalLooper = isUniversalLooper(letter, states, htc, coverage);
-				break;
-			case SYNTACTIC:
-				isUniversalLooper = isIndependentLooper(letter, states);
-				break;
-			default:
-				throw new AssertionError("Unsupported looper check");
-			}
-			if (isUniversalLooper) {
-				result.add(letter);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Conservatively checks if the given letter is a universal looper. A looper has to be invariant under all
-	 * predicates, and it may never introduce a new predicate (i.e., have a postcondition which is not implied by the
-	 * precondition).
-	 *
-	 * @param letter
-	 *            The letter to check
-	 * @param states
-	 *            The set of predicates to consider
-	 * @param htc
-	 * @param coverage
-	 *
-	 * @return true if the letter can be guaranteed to be a looper.
-	 */
-	private boolean isUniversalLooper(final L letter, final Set<IPredicate> states, final IHoareTripleChecker htc,
-			final IPredicateCoverageChecker coverage) {
-		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
-			return false;
-		}
-		if (isIndependentLooper(letter, states)) {
-			return true;
+		ILooperCheck<L> looperCheck;
+		switch (mPref.looperCheck()) {
+		case SEMANTIC:
+			looperCheck = new ILooperCheck.HoareLooperCheck<>(htc, coverage);
+			break;
+		case SYNTACTIC:
+			looperCheck = new ILooperCheck.IndependentLooperCheck<>();
+			break;
+		default:
+			throw new AssertionError("Unsupported looper check");
 		}
 
-		for (final IPredicate predicate : states) {
-			final boolean isInvariant =
-					htc.checkInternal(predicate, (IInternalAction) letter, predicate) == Validity.VALID;
-			if (!isInvariant) {
-				return false;
-			}
-
-			for (final IPredicate post : states) {
-				if (coverage.isCovered(predicate, post) == Validity.VALID) {
-					continue;
-				}
-				final boolean mayIntroduce =
-						htc.checkInternal(predicate, (IInternalAction) letter, post) != Validity.INVALID;
-				if (mayIntroduce) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * An efficient sound but (very) incomplete check for loopers: A letter is considered a looper, if it does not share
-	 * any variables with any predicate.
-	 *
-	 * @param letter
-	 *            The letter to check
-	 * @param states
-	 *            The set of predicates to consider
-	 *
-	 * @return true if the letter does not read nor write any variables used in the given predicates
-	 */
-	private boolean isIndependentLooper(final L letter, final Set<IPredicate> states) {
-		if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
-			return false;
-		}
-		for (final IPredicate predicate : states) {
-			final boolean isIndependent = isIndependent(letter, predicate);
-			if (!isIndependent) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean isIndependent(final L letter, final IPredicate predicate) {
-		final Set<IProgramVar> in = letter.getTransformula().getInVars().keySet();
-		final Set<IProgramVar> out = letter.getTransformula().getOutVars().keySet();
-		return !DataStructureUtils.haveNonEmptyIntersection(in, predicate.getVars())
-				&& !DataStructureUtils.haveNonEmptyIntersection(out, predicate.getVars());
+		return alphabet.stream().filter(letter -> looperCheck.isUniversalLooper(letter, states))
+				.collect(Collectors.toSet());
 	}
 
 	@Override

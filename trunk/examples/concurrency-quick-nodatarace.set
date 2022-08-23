@@ -1,0 +1,10 @@
+svcomp/goblint-regression/06-symbeq_07-tricky_address2.yml
+svcomp/ldv-races/race-2_3b-container_of.yml
+svcomp/ldv-races/race-2_5-container_of.yml
+svcomp/pthread-atomic/read_write_lock-2.yml
+svcomp/pthread-wmm/rfi006_power.oepc.yml
+svcomp/weaver/parallel-ticket-4.wvr.yml
+svcomp/weaver/popl20-counter-fun.wvr.yml
+svcomp/weaver/popl20-horseshoe.wvr.yml
+svcomp/weaver/unroll-3.wvr.yml
+

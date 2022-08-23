@@ -76,6 +76,10 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 		INTSET_LAZY2, INTSET_LAZY3
 	}
 
+	public enum AutomatonTypeConcurrent {
+		BUCHI_AUTOMATON, BUCHI_PETRI_NET, RABIN_PETRI_NET
+	}
+
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";
 	public static final String LABEL_DETERMINIZATION_ON_DEMAND = "Determinization on demand";
 	public static final String LABEL_BIA_CONSTRUCTION_STRATEGY = "Buchi interpolant automaton construction strategy";
@@ -138,6 +142,8 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	private static final boolean DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS = true;
 	public static final String LABEL_NCSB_IMPLEMENTATION = "NCSB implementation";
 	private static final NcsbImplementation DEF_NCSB_IMPLEMENTATION = NcsbImplementation.ORIGINAL;
+	public static final String LABEL_AUTOMATON_TYPE = "Automaton type for concurrent programs";
+	private static final AutomatonTypeConcurrent DEF_AUTOMATON_TYPE = AutomatonTypeConcurrent.BUCHI_AUTOMATON;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -200,6 +206,8 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS,
 						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_NCSB_IMPLEMENTATION, DEF_NCSB_IMPLEMENTATION, PreferenceType.Combo,
-						NcsbImplementation.values()) };
+						NcsbImplementation.values()),
+				new UltimatePreferenceItem<>(LABEL_AUTOMATON_TYPE, DEF_AUTOMATON_TYPE, PreferenceType.Combo,
+						AutomatonTypeConcurrent.values()) };
 	}
 }

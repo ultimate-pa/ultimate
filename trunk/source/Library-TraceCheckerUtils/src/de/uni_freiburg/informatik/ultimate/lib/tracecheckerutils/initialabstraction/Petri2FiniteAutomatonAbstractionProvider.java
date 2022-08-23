@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  */
 public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTransition<?>, A extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 		implements IInitialAbstractionProvider<L, A> {
-	private final Map<IcfgLocation, Boolean> mHopelessCache = new HashMap<>();
 
 	protected final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> mUnderlying;
 	protected final AutomataLibraryServices mServices;
@@ -82,12 +81,12 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	 * Determines if the locations belonging to the given marking are all hopeless. In this case, the state
 	 * corresponding to this marking can be omitted from the program automaton.
 	 */
-	protected boolean areAllLocationsHopeless(final Set<? extends IcfgLocation> errorLocs,
-			final Marking<?, IPredicate> marking) {
+	protected boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
+			final Set<? extends IcfgLocation> errorLocs, final Marking<?, IPredicate> marking) {
 		for (final IPredicate place : marking) {
 			if (place instanceof ISLPredicate) {
 				final IcfgLocation location = ((ISLPredicate) place).getProgramPoint();
-				if (!isLocationHopeless(errorLocs, location)) {
+				if (!isLocationHopeless(hopelessCache, errorLocs, location)) {
 					return false;
 				}
 			}
@@ -98,19 +97,20 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	/**
 	 * A location is hopeless if in the CFG there is no path from this location to an error location.
 	 */
-	private boolean isLocationHopeless(final Set<? extends IcfgLocation> errorLocs, final IcfgLocation loc) {
+	private static boolean isLocationHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
+			final Set<? extends IcfgLocation> errorLocs, final IcfgLocation loc) {
 		if (errorLocs.contains(loc)) {
 			return false;
 		}
 		return !IcfgUtils.canReachCached(loc, e -> errorLocs.contains(e.getTarget()), e -> false, l -> {
-			if (!mHopelessCache.containsKey(l)) {
+			if (!hopelessCache.containsKey(l)) {
 				return LBool.UNKNOWN;
 			}
-			return mHopelessCache.get(l) ? LBool.SAT : LBool.UNSAT;
+			return hopelessCache.get(l) ? LBool.SAT : LBool.UNSAT;
 		}, (l, res) -> {
-			assert mHopelessCache.getOrDefault(l, res) == res : "contradictory reachability";
+			assert hopelessCache.getOrDefault(l, res) == res : "contradictory reachability";
 			assert res != null;
-			mHopelessCache.put(l, res);
+			hopelessCache.put(l, res);
 		});
 	}
 
@@ -147,8 +147,9 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 			try {
+				final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
 				return new PetriNet2FiniteAutomaton<>(mServices, mStateFactory, net,
-						s -> areAllLocationsHopeless(errorLocs, s)).getResult();
+						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s)).getResult();
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
 				if (unsafePlaces == null) {
@@ -194,8 +195,9 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final IIcfg<? extends IcfgLocation> icfg, final Set<? extends IcfgLocation> errorLocs)
 				throws AutomataLibraryException {
 			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
+			final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
 			return new LazyPetriNet2FiniteAutomaton<>(mServices, mStateFactory, net,
-					s -> areAllLocationsHopeless(errorLocs, s));
+					s -> areAllLocationsHopeless(hopelessCache, errorLocs, s));
 		}
 	}
 }
