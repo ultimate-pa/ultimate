@@ -216,11 +216,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 
 	private void createAutomatonTransition(final S state, final Marking<S> marking, final Transition<L, S> transition) {
 		try {
-			boolean firesIntoAcceptingPlace = false;
-			if (transition.getSuccessors().stream().anyMatch(mOperand::isAccepting)) {
-				firesIntoAcceptingPlace = true;
-				System.out.println("accepting" + transition.toString());
-			}
+			final boolean firesIntoAcceptingPlace = transition.getSuccessors().stream().anyMatch(mOperand::isAccepting);
 			final S successor = getOrConstructState(marking.fireTransition(transition), firesIntoAcceptingPlace);
 			if (successor != null) {
 				mCache.addInternalTransition(state, transition.getSymbol(), successor);
