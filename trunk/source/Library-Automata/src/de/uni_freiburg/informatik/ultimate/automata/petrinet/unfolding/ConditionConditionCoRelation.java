@@ -114,15 +114,11 @@ public class ConditionConditionCoRelation<LETTER, PLACE> implements ICoRelation<
 			}
 		}
 
-		final List<Set<Condition<LETTER, PLACE>>> coRelatedEventsToE = e.getPredecessorConditions().stream()
-				.map(x -> mCoRelatedConditions.getImage(x)).collect(Collectors.toList());
+		final List<Set<Condition<LETTER, PLACE>>> coRelatedEventsToE =
+				e.getPredecessorConditions().stream().map(mCoRelatedConditions::getImage).collect(Collectors.toList());
 		final Set<Condition<LETTER, PLACE>> intersection = DataStructureUtils.intersection(coRelatedEventsToE);
-		for (final Condition<LETTER, PLACE> coRelatedCondition : intersection) {
-			mCoRelatedConditions.addAllPairs(coRelatedCondition, e.getSuccessorConditions());
-		}
-		for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
-			mCoRelatedConditions.addAllPairs(c, intersection);
-		}
+		intersection.forEach(x -> mCoRelatedConditions.addAllPairs(x, e.getSuccessorConditions()));
+		e.getSuccessorConditions().forEach(x -> mCoRelatedConditions.addAllPairs(x, intersection));
 
 	}
 
