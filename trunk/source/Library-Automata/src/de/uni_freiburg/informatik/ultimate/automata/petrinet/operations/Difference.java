@@ -549,9 +549,7 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 			final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final int transitionsBefore = (result.getTransitions()).size();
-		final BoundedPetriNet<LETTER, PLACE> removeUnreachableResult =
-				new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(services,
-						result).getResult();
+		final IPetriNet<LETTER, PLACE> removeUnreachableResult = new RemoveUnreachable<>(services, result).getResult();
 		final int transitionsAfterwards = (removeUnreachableResult.getTransitions().size());
 		final int transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
 		return transitionsRemovedByMinimization;

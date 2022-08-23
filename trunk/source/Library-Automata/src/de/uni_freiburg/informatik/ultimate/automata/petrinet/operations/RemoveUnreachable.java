@@ -171,7 +171,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutom
 	}
 
 	@Override
-	public BoundedPetriNet<LETTER, PLACE> getResult() {
+	public IPetriNet<LETTER, PLACE> getResult() {
 		return mResult;
 	}
 
