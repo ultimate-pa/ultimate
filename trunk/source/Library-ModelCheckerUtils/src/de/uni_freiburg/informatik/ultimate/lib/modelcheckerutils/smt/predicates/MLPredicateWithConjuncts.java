@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
+@Deprecated
 public final class MLPredicateWithConjuncts extends PredicateWithConjuncts implements IMLPredicate {
 	private final IcfgLocation[] mProgramPoints;
 

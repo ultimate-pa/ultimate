@@ -105,7 +105,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final ISleepMapStateFactory<L, IPredicate, IPredicate> mSleepMapFactory;
 
 	private StateSplitter<IPredicate> mStateSplitter;
-	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
+	private final IDeadEndStore<?, IPredicate> mDeadEndStore;
 
 	private final IIcfg<?> mIcfg;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
@@ -121,7 +121,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
 			final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
-			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget) {
+			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget,
+			final Function<StateSplitter<IPredicate>, IDeadEndStore<?, IPredicate>> getDeadEndStore) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
@@ -138,7 +139,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
-		mDeadEndStore = createDeadEndStore();
+
+		// TODO decouple dead end support from this class
+		mDeadEndStore = getDeadEndStore == null ? null : getDeadEndStore.apply(mStateSplitter);
 
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
@@ -325,17 +328,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore() {
-		if (mStateSplitter == null) {
-			return new IDeadEndStore.SimpleDeadEndStore<>();
-		}
-		return new IDeadEndStore.ProductDeadEndStore<>(mStateSplitter::getOriginal, mStateSplitter::getExtraInfo);
-	}
-
-	public IDeadEndStore<IPredicate, IPredicate> getDeadEndStore() {
-		return mDeadEndStore;
-	}
-
 	/**
 	 * Constructs the reduced automaton explicitly.
 	 *
@@ -447,7 +439,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return mGetOriginal.apply(t);
 		}
 
-		Object getExtraInfo(final S t) {
+		public Object getExtraInfo(final S t) {
 			return mGetExtraInfo.apply(t);
 		}
 
