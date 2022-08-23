@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -81,6 +83,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final Set<String> mParallelProcedures;
 	private final List<String> mTopologicalOrder;
 
+	private final Collection<Set<IProgramVarOrConst>> mDependenciesBetweenVars;
+
 	private final Map<String, Set<Map<LOC, Set<ACTION>>>> mCrossProducts;
 
 	public FixpointEngineConcurrentUtils(final IIcfg<?> icfg, final ITransitionProvider<ACTION, LOC> transProvider,
@@ -104,6 +108,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mCrossProducts = new HashMap<>();
 
 		mTopologicalOrder = new ArrayList<>();
+
+		mDependenciesBetweenVars = new HashSet<>();
 
 		initialize(mIcfg.getProcedureEntryNodes());
 	}
@@ -308,7 +314,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	public Set<Map<LOC, Set<ACTION>>> getCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
 		final var crossProduct = mCrossProducts.get(procedure);
 		if (crossProduct == null) {
-			return computeCrossProduct(filter, procedure);
+			return computeCrossProduct(filter, procedure, mDependenciesBetweenVars);
 		}
 		return crossProduct;
 	}
@@ -455,6 +461,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		computeTopologicalOrder(entryNodes.keySet());
+
+		computeDependenciesBetweenVars();
 	}
 
 	private static Map<String, Set<String>> closure(final Map<String, Set<String>> map) {
@@ -590,8 +598,26 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return edgeIterator.asStream().anyMatch(edge -> edge.equals(action));
 	}
 
-	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
+	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure,
+			final Collection<Set<IProgramVarOrConst>> sets) {
+		Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
+		for (final var variables : sets) {
+			final Set<Map<LOC, Set<ACTION>>> temp = computeCrossProductForSetOfVars(filter, procedure, variables);
+			if (result.isEmpty()) {
+				result.addAll(temp);
+				continue;
+			}
+			result = mergeCombinations(result, temp);
+		}
+
+		mCrossProducts.put(procedure, result);
+		return result;
+	}
+
+	private Set<Map<LOC, Set<ACTION>>> computeCrossProductForSetOfVars(final IFilter<ACTION, LOC> filter,
+			final String procedure, final Set<IProgramVarOrConst> variables) {
 		mLogger.info("Cross Product Computation started for " + procedure);
+		// TODO: log the variables
 		final Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
 		// reads can read from several global variables -> should LOC - Set<ACTION>
@@ -606,8 +632,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					continue;
 				}
 
+				if (DataStructureUtils.haveEmptyIntersection(getReadVars(read), variables)) {
+					// read is independent from variables
+					continue;
+				}
+
 				final LOC source = mTransitionProvider.getSource(read);
 				if (writes.containsKey(source)) {
+					// read is an assume and counterpart of the assume has the same writes
 					continue;
 				}
 
@@ -639,7 +671,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 		}
 
-		mCrossProducts.put(procedure, result);
 		mLogger.info("Cross Product Computation finished. Number of Combinations: " + result.size());
 		return result;
 	}
@@ -725,6 +756,31 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
+	private Set<Map<LOC, Set<ACTION>>> mergeCombinations(final Set<Map<LOC, Set<ACTION>>> comb1,
+			final Set<Map<LOC, Set<ACTION>>> comb2) {
+		final Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
+		Iterator<Map<LOC, Set<ACTION>>> bigger;
+		Iterator<Map<LOC, Set<ACTION>>> smaller;
+
+		if (comb1.size() >= comb2.size()) {
+			bigger = comb1.iterator();
+			smaller = comb2.iterator();
+		} else {
+			bigger = comb2.iterator();
+			smaller = comb1.iterator();
+		}
+
+		while (smaller.hasNext()) {
+			final Map<LOC, Set<ACTION>> map1 = smaller.next();
+			final Map<LOC, Set<ACTION>> map2 = bigger.next();
+			// keys in map1 and map2 are independent, because they resulted from disjunct sets of variables
+			map1.putAll(map2);
+			result.add(map1);
+		}
+		bigger.forEachRemaining(map -> result.add(map));
+		return result;
+	}
+
 	private Set<ACTION> getFirstActions() {
 		final IcfgLocation start = mIcfg.getProcedureEntryNodes().get(mTopologicalOrder.get(0));
 		return new HashSet<>(mTransitionProvider.getSuccessorActions((LOC) start));
@@ -774,5 +830,55 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 			break;
 		}
+	}
+
+	private void computeDependenciesBetweenVars() {
+		final UnionFind<IProgramVarOrConst> result = new UnionFind<>();
+		final Set<IProgramVarOrConst> nonGlobalVars = new HashSet<>();
+
+		// compute data-dependency between writes
+		for (final var procedure : mTopologicalOrder) {
+			for (final var variable : mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
+					.getModifiedBoogieVars(procedure)) {
+				if (result.find(variable) == null) {
+					result.makeEquivalenceClass(variable);
+				}
+			}
+
+			// Iterate over CFG
+			final IcfgEdgeIterator iterator =
+					new IcfgEdgeIterator(mIcfg.getProcedureEntryNodes().get(procedure).getOutgoingEdges());
+			while (iterator.hasNext()) {
+				final IcfgEdge edge = iterator.next();
+				if (isWrite(edge)) {
+					final Set<IProgramVarOrConst> variables = new HashSet<>();
+					DataStructureUtils.union(edge.getTransformula().getAssignedVars(),
+							edge.getTransformula().getInVars().keySet()).forEach(x -> variables.add(x));
+					for (final var variable : variables) {
+						if (result.find(variable) == null) {
+							nonGlobalVars.add(variable);
+							result.makeEquivalenceClass(variable);
+						}
+					}
+					result.union(variables);
+				}
+			}
+		}
+
+		if (result.size() == 1) {
+			mDependenciesBetweenVars.addAll(result.getAllEquivalenceClasses());
+			return;
+		}
+
+		// TODO: compute post-dominates over whole program
+		// TODO: compute control-dependency for forks -> all writes in procedure are than also control dependent
+		// TODO: compute control-dependency for writes from (assumes, procedures)
+
+		result.removeAll(nonGlobalVars);
+		mDependenciesBetweenVars.addAll(result.getAllEquivalenceClasses());
+	}
+
+	private boolean isWrite(final IcfgEdge edge) {
+		return !edge.getTransformula().getAssignedVars().isEmpty();
 	}
 }

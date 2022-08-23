@@ -6,10 +6,9 @@
  */
 
 var flag : bool;
-var y : int;
 var x : int;
 procedure ULTIMATE.start() returns()
-modifies flag, x, y;
+modifies flag, x;
 {
   flag := false;
   x := 0;
@@ -19,7 +18,7 @@ modifies flag, x, y;
 
 
 procedure thread1() returns()
-modifies flag, x, y;
+modifies flag, x;
 {
   x := 4;
   x := 5;
@@ -28,7 +27,7 @@ modifies flag, x, y;
 
 
 procedure thread2() returns()
-modifies flag, x, y;
+modifies flag, x;
 {
   var b : bool;
   var t : int;
