@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEqui
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -95,15 +95,15 @@ public final class PetriNetUtils {
 	 */
 	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 			boolean isEquivalent(final AutomataLibraryServices services, final CRSF stateFactory,
-					final IPetriNetSuccessorProvider<LETTER, PLACE> net1,
-					final IPetriNetSuccessorProvider<LETTER, PLACE> net2) throws AutomataLibraryException {
+					final IPetriNetTransitionProvider<LETTER, PLACE> net1,
+					final IPetriNetTransitionProvider<LETTER, PLACE> net2) throws AutomataLibraryException {
 		return new IsEquivalent<>(services, stateFactory, netToNwa(services, stateFactory, net1),
 				netToNwa(services, stateFactory, net2)).getResult();
 	}
 
 	private static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE>>
 			INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> netToNwa(final AutomataLibraryServices mServices,
-					final CRSF stateFactory, final IPetriNetSuccessorProvider<LETTER, PLACE> net)
+					final CRSF stateFactory, final IPetriNetTransitionProvider<LETTER, PLACE> net)
 					throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
 	}
@@ -137,9 +137,9 @@ public final class PetriNetUtils {
 	 */
 	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 			boolean doDifferenceLanguageCheck(final AutomataLibraryServices services, final CRSF stateFactory,
-					final IPetriNetSuccessorProvider<LETTER, PLACE> minuend,
+					final IPetriNetTransitionProvider<LETTER, PLACE> minuend,
 					final INestedWordAutomaton<LETTER, PLACE> subtrahend,
-					final IPetriNetSuccessorProvider<LETTER, PLACE> result)
+					final IPetriNetTransitionProvider<LETTER, PLACE> result)
 					throws PetriNetNot1SafeException, AutomataOperationCanceledException, AutomataLibraryException {
 		final AutomatonWithImplicitSelfloops<LETTER, PLACE> subtrahendWithSelfloopsInAcceptingStates =
 				new AutomatonWithImplicitSelfloops<>(services, subtrahend, subtrahend.getAlphabet(),

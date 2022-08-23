@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
-	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private final NestedWordAutomaton<LETTER, PLACE> mResult;
 	private final Predicate<Marking<PLACE>> mIsKnownDeadEnd;
 
@@ -82,7 +82,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> operand)
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		this(services, factory, operand, null);
 	}
@@ -103,7 +103,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 	 */
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> operand, final Predicate<Marking<PLACE>> isKnownDeadEnd)
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final Predicate<Marking<PLACE>> isKnownDeadEnd)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -199,7 +199,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 	}
 
 	@Override
-	protected IPetriNetSuccessorProvider<LETTER, PLACE> getOperand() {
+	protected IPetriNetTransitionProvider<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 

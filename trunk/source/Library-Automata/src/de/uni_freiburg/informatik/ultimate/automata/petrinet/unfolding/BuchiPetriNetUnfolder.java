@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.LassoConfigurationCheckerIterative;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
@@ -68,7 +68,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final IPetriNetSuccessorProvider<L, P> mOperand;
+	private final IPetriNetTransitionProvider<L, P> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
 	private final ConfigurationOrder<L, P> mOrder;
@@ -96,8 +96,9 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	 *             if timeout exceeds
 	 * @throws PetriNetNot1SafeException
 	 */
-	public BuchiPetriNetUnfolder(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<L, P> operand,
-			final EventOrderEnum order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
+	public BuchiPetriNetUnfolder(final AutomataLibraryServices services,
+			final IPetriNetTransitionProvider<L, P> operand, final EventOrderEnum order,
+			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);

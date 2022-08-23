@@ -42,7 +42,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
@@ -285,7 +285,11 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 					.collect(Collectors.toList());
 			return candidates;
 		}
-		final IPetriNetSuccessorProvider<LETTER, PLACE> fullPetriNet = mBranchingProcess.getNet();
+		if (!(mBranchingProcess.getNet() instanceof IPetriNetTransitionProvider)) {
+			throw new AssertionError("non-lazy computation only available for fully constructed nets");
+		}
+		final IPetriNetTransitionProvider<LETTER, PLACE> fullPetriNet =
+				(IPetriNetTransitionProvider<LETTER, PLACE>) mBranchingProcess.getNet();
 		final Set<Transition<LETTER, PLACE>> transitions = new HashSet<>();
 		for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
 			for (final Transition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {

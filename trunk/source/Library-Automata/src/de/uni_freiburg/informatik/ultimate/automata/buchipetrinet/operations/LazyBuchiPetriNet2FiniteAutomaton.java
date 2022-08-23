@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 // To reduce duplicate code we should use an abstract class for the common code.
 public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
-	private final IPetriNetSuccessorProvider<L, S> mOperand;
+	private final IPetriNetTransitionProvider<L, S> mOperand;
 	private final Predicate<Marking<S>> mIsKnownDeadEnd;
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
 
@@ -102,7 +102,7 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 	public LazyBuchiPetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
 			final IBlackWhiteStateFactory<S> acceptingNonacceptingFactory,
-			final IPetriNetSuccessorProvider<L, S> operand, final Predicate<Marking<S>> isKnownDeadEnd)
+			final IPetriNetTransitionProvider<L, S> operand, final Predicate<Marking<S>> isKnownDeadEnd)
 			throws PetriNetNot1SafeException {
 		mOperand = operand;
 		mIsKnownDeadEnd = isKnownDeadEnd;

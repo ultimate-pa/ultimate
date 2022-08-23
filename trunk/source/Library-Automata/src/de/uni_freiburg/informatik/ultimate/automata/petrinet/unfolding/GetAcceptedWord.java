@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  */
 public final class GetAcceptedWord<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
-	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private final Word<LETTER> mAcceptedWord;
 
 	public GetAcceptedWord(final AutomataLibraryServices services,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> operand)
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -72,7 +72,7 @@ public final class GetAcceptedWord<LETTER, PLACE>
 	}
 
 	@Override
-	protected IPetriNetSuccessorProvider<LETTER, PLACE> getOperand() {
+	protected IPetriNetTransitionProvider<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 

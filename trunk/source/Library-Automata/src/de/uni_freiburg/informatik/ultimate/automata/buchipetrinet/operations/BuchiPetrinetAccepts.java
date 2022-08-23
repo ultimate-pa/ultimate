@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
@@ -28,7 +28,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	/*
 	 * The Petri net which we check acceptance for.
 	 */
-	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private final Marking<PLACE> mInitialMarking;
 	/*
 	 * The word we check acceptance for.
@@ -59,7 +59,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	 * @param <word> Input word.
 	 */
 	public BuchiPetrinetAccepts(final AutomataLibraryServices services,
-			final IPetriNetSuccessorProvider<LETTER, PLACE> operand, final NestedLassoWord<LETTER> word)
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final NestedLassoWord<LETTER> word)
 			throws PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -85,7 +85,7 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	}
 
 	@Override
-	protected IPetriNetSuccessorProvider<LETTER, PLACE> getOperand() {
+	protected IPetriNetTransitionProvider<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 

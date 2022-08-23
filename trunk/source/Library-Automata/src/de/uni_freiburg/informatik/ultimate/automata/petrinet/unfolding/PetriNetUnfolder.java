@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
@@ -312,11 +313,15 @@ public final class PetriNetUnfolder<L, P> {
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger.info("Testing correctness of emptinessCheck");
+		if (!(mOperand instanceof IPetriNetTransitionProvider)) {
+			mLogger.warn("Will not check Unfolding because operand is constructed on-demand");
+			return true;
+		}
 
 		boolean correct;
 		if (mRun == null) {
-			final NestedRun<L, P> automataRun = (new IsEmpty<>(mServices,
-					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult())).getNestedRun();
+			final NestedRun<L, P> automataRun = (new IsEmpty<>(mServices, (new PetriNet2FiniteAutomaton<>(mServices,
+					stateFactory, (IPetriNetTransitionProvider<L, P>) mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				// TODO Christian 2016-09-30: This assignment is useless - a bug?
 				correct = false;
@@ -325,7 +330,7 @@ public final class PetriNetUnfolder<L, P> {
 			correct = automataRun == null;
 		} else {
 			final Word<L> word = mRun.getWord();
-			if (new Accepts<>(mServices, mOperand, word).getResult()) {
+			if (new Accepts<>(mServices, (IPetriNetTransitionProvider<L, P>) mOperand, word).getResult()) {
 				correct = true;
 			} else {
 				mLogger.error("Result of EmptinessCheck, but not accepted: " + word);

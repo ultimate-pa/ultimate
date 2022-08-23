@@ -447,17 +447,4 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		}
 
 	}
-
-	@Override
-	public Set<Transition<LETTER, PLACE>> getSuccessors(final PLACE place) {
-		// TODO: We could return mYetConstructedResult.getSuccesors(), but they are only added in an inner class.
-		throw new UnsupportedOperationException("On demand construction of transitions is currently not supported.");
-	}
-
-	@Override
-	public Set<Transition<LETTER, PLACE>> getPredecessors(final PLACE place) {
-		// TODO: We could return mYetConstructedResult.getPredecessors(), but they are only added in an inner class.
-		throw new UnsupportedOperationException("On demand construction of transitions is currently not supported.");
-	}
-
 }

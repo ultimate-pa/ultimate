@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
  */
-public interface IPetriNet<LETTER, PLACE> extends IPetriNetSuccessorProvider<LETTER, PLACE> {
+public interface IPetriNet<LETTER, PLACE> extends IPetriNetTransitionProvider<LETTER, PLACE> {
 	Set<PLACE> getPlaces();
 
 	Set<Transition<LETTER, PLACE>> getTransitions();

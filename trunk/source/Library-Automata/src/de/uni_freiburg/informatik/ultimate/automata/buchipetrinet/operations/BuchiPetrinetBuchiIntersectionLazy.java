@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
@@ -17,9 +17,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
-public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetriNetSuccessorProvider<LETTER, PLACE> {
+public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetriNetTransitionProvider<LETTER, PLACE> {
 
-	private final IPetriNetSuccessorProvider<LETTER, PLACE> mPetriNet;
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mPetriNet;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mBuchiAutomata;
 
 	private final IBlackWhiteStateFactory<PLACE> mBuchiPlaceFactory;
@@ -61,7 +61,7 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 	private int mNextTransitionId = 0;
 
 	// TODO call this clas slazy, and maybe make new one with ipetrinet..
-	public BuchiPetrinetBuchiIntersectionLazy(final IPetriNetSuccessorProvider<LETTER, PLACE> petriNet,
+	public BuchiPetrinetBuchiIntersectionLazy(final IPetriNetTransitionProvider<LETTER, PLACE> petriNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> automaton,
 			final IBlackWhiteStateFactory<PLACE> factory) {
 		mPetriNet = petriNet;
