@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -91,6 +90,12 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 			currentCodeblock.disconnectTarget();
 			transFormulas[i] = currentCodeblock.getTransformula();
 			transFormulasWithBranchEncoders[i] = currentCodeblock.getTransitionFormulaWithBranchEncoders();
+
+			assert TransFormulaUtils
+					.hasInternalNormalForm(transFormulas[i]) : "Cannot parallely compose: not in internal normal form";
+			assert TransFormulaUtils.hasInternalNormalForm(
+					transFormulasWithBranchEncoders[i]) : "Cannot parallely compose: not in internal normal form";
+
 			final String varname = "LBE" + currentCodeblock.getSerialNumber();
 			final Sort boolSort = SmtSortUtils.getBoolSort(script);
 			final TermVariable tv = script.variable(varname, boolSort);
@@ -107,14 +112,12 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript, null, transformToCNF,
-				xnfConversionTechnique, transFormulas);
-		mTransitionFormulaWithBranchEncoders =
-				TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript, branchIndicator,
-						transformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
+				xnfConversionTechnique, true, transFormulas);
+		mTransitionFormulaWithBranchEncoders = TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript,
+				branchIndicator, transformToCNF, xnfConversionTechnique, true, transFormulasWithBranchEncoders);
 
-		assert !Objects.equals(mSource.getProcedure(), mTarget.getProcedure())
-				|| TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
-		assert !Objects.equals(mSource.getProcedure(), mTarget.getProcedure()) || TransFormulaUtils
+		assert TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
+		assert TransFormulaUtils
 				.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders) : "Expected TF in internal normal form";
 	}
 

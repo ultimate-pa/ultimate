@@ -155,7 +155,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 			}
 			final UnmodifiableTransFormula loopDisjunction =
 					TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, distinctPathsFormulas);
+							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, distinctPathsFormulas);
 			mLogger.warn(loopDisjunction.toStringDirect());
 			loopsWithLoopHead.put((INLOC) loopMap.getKey(), loopDisjunction);
 		}

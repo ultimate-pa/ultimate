@@ -489,7 +489,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			return;
 		}
 		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices,
-				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false,
 				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
 		Set<List<L>> nestingLoop;
 		if (mLoops.containsKey(nestingLoophead)) {
