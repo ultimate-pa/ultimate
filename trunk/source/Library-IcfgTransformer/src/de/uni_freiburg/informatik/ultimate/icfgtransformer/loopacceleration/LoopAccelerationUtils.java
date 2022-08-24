@@ -86,7 +86,7 @@ public class LoopAccelerationUtils {
 			if (lbool == LBool.SAT) {
 				throw new AssertionError("Not reflexive");
 			} else if (lbool == LBool.UNKNOWN) {
-				logger.warn("Insufficient resssources to check reflexivity");
+				logger.warn("Insufficient resources to check reflexivity");
 			}
 		}
 
@@ -99,7 +99,7 @@ public class LoopAccelerationUtils {
 			if (lbool == LBool.SAT) {
 				throw new AssertionError("Input relation is not a subset of the result");
 			} else if (lbool == LBool.UNKNOWN) {
-				logger.warn("Insufficient resssources to check whether input relation is a subset of the result");
+				logger.warn("Insufficient resources to check whether input relation is a subset of the result");
 			}
 		}
 
@@ -117,7 +117,7 @@ public class LoopAccelerationUtils {
 				throw new AssertionError("Concatenation of input relation with itself is not a subset of the result");
 			} else if (lbool == LBool.UNKNOWN) {
 				logger.warn(
-						"Insufficient resssources to check whether concatenation of input relation with itself is a subset of the result");
+						"Insufficient resources to check whether concatenation of input relation with itself is a subset of the result");
 			}
 		}
 
@@ -144,7 +144,7 @@ public class LoopAccelerationUtils {
 				throw new AssertionError("Result is not a subset of the input relation's guarded havoc");
 			} else if (lbool == LBool.UNKNOWN) {
 				logger.warn(
-						"Insufficient resssources to check whether result is a subset of the input relation's guarded havoc");
+						"Insufficient resources to check whether result is a subset of the input relation's guarded havoc");
 			}
 		}
 		return true;
