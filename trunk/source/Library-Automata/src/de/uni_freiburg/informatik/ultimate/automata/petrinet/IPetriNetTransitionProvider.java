@@ -20,12 +20,12 @@ public interface IPetriNetTransitionProvider<LETTER, PLACE> extends IPetriNetSuc
 	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>>
 			getSuccessorTransitionProviders(final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
 		final HashRelation<Set<PLACE>, Transition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
-		for (final PLACE p : mustPlaces) {
-			for (final Transition<LETTER, PLACE> t : getSuccessors(p)) {
-				final Set<PLACE> predeccesorOfT = t.getPredecessors();
-				if (mayPlaces.containsAll(predeccesorOfT)) {
-					predecessorPlaces2Transition.addPair(predeccesorOfT, t);
-				}
+		final Set<Transition<LETTER, PLACE>> successorTransitions =
+				mustPlaces.stream().flatMap(x -> getSuccessors(x).stream()).collect(Collectors.toSet());
+		for (final Transition<LETTER, PLACE> t : successorTransitions) {
+			final Set<PLACE> predeccesorOfT = t.getPredecessors();
+			if (mayPlaces.containsAll(predeccesorOfT)) {
+				predecessorPlaces2Transition.addPair(predeccesorOfT, t);
 			}
 		}
 		return predecessorPlaces2Transition.entrySet().stream()
