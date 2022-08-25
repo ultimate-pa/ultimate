@@ -72,10 +72,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -373,8 +375,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	public static ImmutableList<IPredicate> getConjuncts(final IPredicate conjunction) {
-		if (conjunction == null) {
-			return ImmutableList.empty();
+		assert conjunction != null : "Cannot split 'null' into conjuncts";
+
+		if (conjunction instanceof MLPredicateWithInterpolants) {
+			final var predicate = (MLPredicateWithInterpolants) conjunction;
+			return new ImmutableList<>(predicate.getUnderlying(), getConjuncts(predicate.getInterpolants()));
 		}
 		if (conjunction instanceof PredicateWithConjuncts) {
 			return ((PredicateWithConjuncts) conjunction).getConjuncts();
@@ -388,6 +393,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			return getConjuncts(((SleepPredicate<?>) conjunction).getUnderlying());
 		}
 
+		// Sanity check to ensure we didn't forget to handle a case above.
+		assert conjunction.getClass() == MLPredicate.class
+				|| conjunction.getClass() == BasicPredicate.class : "unexpected predicate type: "
+						+ conjunction.getClass();
 		return ImmutableList.singleton(conjunction);
 	}
 
