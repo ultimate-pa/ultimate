@@ -146,7 +146,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		}
 	}
 
-	public DifferencePairwiseOnDemand(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
+	public DifferencePairwiseOnDemand(final AutomataLibraryServices services,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, minuendNet, subtrahendDfa, null);
