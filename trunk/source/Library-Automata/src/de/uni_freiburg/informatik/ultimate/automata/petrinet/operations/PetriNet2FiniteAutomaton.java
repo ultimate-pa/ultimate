@@ -41,11 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -60,8 +60,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            place content type
  */
-public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
-	private final IPetriNet<LETTER, PLACE> mOperand;
+public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
+		extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private final NestedWordAutomaton<LETTER, PLACE> mResult;
 	private final Predicate<Marking<PLACE>> mIsKnownDeadEnd;
 
@@ -80,7 +81,8 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	private final IPetriNet2FiniteAutomatonStateFactory<PLACE> mContentFactory;
 
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory, final IPetriNet<LETTER, PLACE> operand)
+			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory,
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		this(services, factory, operand, null);
 	}
@@ -100,8 +102,8 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	 * @throws AutomataOperationCanceledException
 	 */
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory, final IPetriNet<LETTER, PLACE> operand,
-			final Predicate<Marking<PLACE>> isKnownDeadEnd)
+			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory,
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final Predicate<Marking<PLACE>> isKnownDeadEnd)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -113,8 +115,8 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 
 		mContentFactory = factory;
 		final Set<LETTER> alphabet = new HashSet<>(operand.getAlphabet());
-		final VpAlphabet<LETTER> vpAlphabet = new VpAlphabet<LETTER>(alphabet, Collections.emptySet(),
-				Collections.emptySet());
+		final VpAlphabet<LETTER> vpAlphabet =
+				new VpAlphabet<>(alphabet, Collections.emptySet(), Collections.emptySet());
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
 		getState(new Marking<>(ImmutableSet.of(operand.getInitialPlaces())), true);
 		while (!mWorklist.isEmpty()) {
@@ -122,9 +124,9 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 			constructOutgoingTransitions(marking);
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-						"constructing automaton for Petri net that has " + mOperand.sizeInformation() +
-						". Already constructed " + mMarking2State.size() + " states. Currently " + mWorklist.size() +
-						" states in worklist.");
+						"constructing automaton for Petri net that has " + mOperand.sizeInformation()
+								+ ". Already constructed " + mMarking2State.size() + " states. Currently "
+								+ mWorklist.size() + " states in worklist.");
 				throw new AutomataOperationCanceledException(rti);
 			}
 		}
@@ -169,10 +171,10 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 		final PLACE state = getState(marking, false);
 		assert state != null : "Dead-end marking should never be on worklist";
 
-		final Set<ITransition<LETTER, PLACE>> outgoing = getOutgoingNetTransitions(marking);
-		for (final ITransition<LETTER, PLACE> transition : outgoing) {
-			if (marking.isTransitionEnabled(transition, mOperand)) {
-				final Marking<PLACE> succMarking = marking.fireTransition(transition, mOperand);
+		final Set<Transition<LETTER, PLACE>> outgoing = getOutgoingNetTransitions(marking);
+		for (final Transition<LETTER, PLACE> transition : outgoing) {
+			if (marking.isTransitionEnabled(transition)) {
+				final Marking<PLACE> succMarking = marking.fireTransition(transition);
 				final PLACE succState = getState(succMarking, false);
 				if (succState != null) {
 					mResult.addInternalTransition(state, transition.getSymbol(), succState);
@@ -181,8 +183,8 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 		}
 	}
 
-	private Set<ITransition<LETTER, PLACE>> getOutgoingNetTransitions(final Marking<PLACE> marking) {
-		final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
+	private Set<Transition<LETTER, PLACE>> getOutgoingNetTransitions(final Marking<PLACE> marking) {
+		final Set<Transition<LETTER, PLACE>> transitions = new HashSet<>();
 		for (final PLACE place : marking) {
 			transitions.addAll(mOperand.getSuccessors(place));
 		}
@@ -197,7 +199,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 	}
 
 	@Override
-	protected IPetriNet<LETTER, PLACE> getOperand() {
+	protected IPetriNetTransitionProvider<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 

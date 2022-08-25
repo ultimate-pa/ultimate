@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -147,9 +148,8 @@ public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public <LETTER> boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
-			final IPetriNet<LETTER, PLACE> net) {
-		return mPlaces.containsAll(net.getPredecessors(transition));
+	public <LETTER> boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition) {
+		return mPlaces.containsAll(transition.getPredecessors());
 	}
 
 	/**
@@ -158,10 +158,10 @@ public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 * @throws PetriNetNot1SafeException
 	 */
-	public <LETTER> Marking<PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
-			final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
-		final Set<PLACE> predecessors = net.getPredecessors(transition);
-		final Set<PLACE> successors = net.getSuccessors(transition);
+	public <LETTER> Marking<PLACE> fireTransition(final Transition<LETTER, PLACE> transition)
+			throws PetriNetNot1SafeException {
+		final Set<PLACE> predecessors = transition.getPredecessors();
+		final Set<PLACE> successors = transition.getSuccessors();
 		final Stream<PLACE> places =
 				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream());
 

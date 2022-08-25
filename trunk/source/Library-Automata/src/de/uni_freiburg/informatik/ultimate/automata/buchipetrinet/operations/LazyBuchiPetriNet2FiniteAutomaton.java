@@ -1,3 +1,5 @@
+package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+
 /*
  * Copyright (C) 2020 Marcel Ebbinghaus
  * Copyright (C) 2020 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -25,7 +27,6 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -61,12 +63,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <S>
  *            The type of places in the Petri net, and also the type of states in the resulting finite automaton.
  */
-public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
+// TODO: This class is just a slight modification of LazyPetriNet2FiniteAutomaton.
+// To reduce duplicate code we should use an abstract class for the common code.
+public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final IPetriNetTransitionProvider<L, S> mOperand;
 	private final Predicate<Marking<S>> mIsKnownDeadEnd;
 	private final IPetriNet2FiniteAutomatonStateFactory<S> mStateFactory;
-	private final Map<Marking<S>, S> mMarking2State = new HashMap<>();
+
+	private final IBlackWhiteStateFactory<S> mAcceptingOrNonAcceptingStateFactory;
+
+	private final Map<Marking<S>, S> mMarking2AcceptingState = new HashMap<>();
+	private final Map<Marking<S>, S> mMarking2NonAcceptingState = new HashMap<>();
 
 	// Needed to compute outgoing transitions. If all outgoing transitions of a state have been computed, we remove the
 	// state from this map (to save on memory).
@@ -91,16 +99,19 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	 * @throws PetriNetNot1SafeException
 	 *             Petri Net has to be one-safe
 	 */
-	public LazyPetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet2FiniteAutomatonStateFactory<S> factory, final IPetriNetTransitionProvider<L, S> operand,
-			final Predicate<Marking<S>> isKnownDeadEnd) throws PetriNetNot1SafeException {
+	public LazyBuchiPetriNet2FiniteAutomaton(final AutomataLibraryServices services,
+			final IPetriNet2FiniteAutomatonStateFactory<S> factory,
+			final IBlackWhiteStateFactory<S> acceptingNonacceptingFactory,
+			final IPetriNetTransitionProvider<L, S> operand, final Predicate<Marking<S>> isKnownDeadEnd)
+			throws PetriNetNot1SafeException {
 		mOperand = operand;
 		mIsKnownDeadEnd = isKnownDeadEnd;
 		mStateFactory = factory;
+		mAcceptingOrNonAcceptingStateFactory = acceptingNonacceptingFactory;
 		mCache = new NestedWordAutomatonCache<>(services, new VpAlphabet<>(mOperand.getAlphabet()), factory);
 
 		// construct the initial state
-		constructState(new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces())), true);
+		constructState(new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces())), true, false);
 	}
 
 	@Deprecated
@@ -136,7 +147,7 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	@Override
 	public int size() {
-		return mMarking2State.size();
+		return mMarking2AcceptingState.size() + mMarking2NonAcceptingState.size();
 	}
 
 	@Override
@@ -205,7 +216,12 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 
 	private void createAutomatonTransition(final S state, final Marking<S> marking, final Transition<L, S> transition) {
 		try {
-			final S successor = getOrConstructState(marking.fireTransition(transition));
+			boolean firesIntoAcceptingPlace = false;
+			if (transition.getSuccessors().stream().anyMatch(mOperand::isAccepting)) {
+				firesIntoAcceptingPlace = true;
+				System.out.println("accepting" + transition.toString());
+			}
+			final S successor = getOrConstructState(marking.fireTransition(transition), firesIntoAcceptingPlace);
 			if (successor != null) {
 				mCache.addInternalTransition(state, transition.getSymbol(), successor);
 			}
@@ -215,28 +231,42 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 		}
 	}
 
-	private S getOrConstructState(final Marking<S> marking) {
+	private S getOrConstructState(final Marking<S> marking, final boolean isAccepting) {
 		// Do not use computeIfAbsent, because constructState may return null.
-		if (!mMarking2State.containsKey(marking)) {
-			final S state = constructState(marking, false);
-			mMarking2State.put(marking, state);
+		if (isAccepting) {
+			if (!mMarking2AcceptingState.containsKey(marking)) {
+				final S state = constructState(marking, false, isAccepting);
+				mMarking2AcceptingState.put(marking, state);
+				return state;
+			}
+			return mMarking2AcceptingState.get(marking);
+		}
+		if (!mMarking2NonAcceptingState.containsKey(marking)) {
+			final S state = constructState(marking, false, isAccepting);
+			mMarking2NonAcceptingState.put(marking, state);
 			return state;
 		}
-		return mMarking2State.get(marking);
+		return mMarking2NonAcceptingState.get(marking);
 	}
 
-	private S constructState(final Marking<S> marking, final boolean isInitial) {
+	private S constructState(final Marking<S> marking, final boolean isInitial, final boolean isAccepting) {
 		if (isKnownDeadEnd(marking)) {
 			return null;
 		}
 
-		final S state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
+		S state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
+
+		if (isAccepting) {
+			state = mAcceptingOrNonAcceptingStateFactory.getWhiteContent(state);
+		} else {
+			state = mAcceptingOrNonAcceptingStateFactory.getBlackContent(state);
+		}
+
 		mState2Marking.put(state, marking);
 
 		assert isInitial == new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()))
 				.equals(marking) : "Wrong initial state";
-		final boolean isFinal = mOperand.isAccepting(marking);
-		mCache.addState(isInitial, isFinal, state);
+		mCache.addState(isInitial, isAccepting, state);
 
 		return state;
 	}

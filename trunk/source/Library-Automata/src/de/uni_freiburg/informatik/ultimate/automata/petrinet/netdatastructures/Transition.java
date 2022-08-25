@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 import java.io.Serializable;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -44,8 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            place content type
  */
-public class Transition<LETTER, PLACE>
-		implements ITransition<LETTER, PLACE>, Serializable, Comparable<Transition<LETTER, PLACE>> {
+public class Transition<LETTER, PLACE> implements Serializable, Comparable<Transition<LETTER, PLACE>> {
 	private static final long serialVersionUID = 5948089529814334197L;
 
 	private final int mHashCode;
@@ -76,7 +74,6 @@ public class Transition<LETTER, PLACE>
 		mTotalOrderId = totalOrderId;
 	}
 
-	@Override
 	public LETTER getSymbol() {
 		return mSymbol;
 	}
