@@ -84,7 +84,7 @@ public class PolynomialTest {
 		mScript.exit();
 	}
 
-	
+
 	@Test
 	public void realDivisionByConst() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
@@ -165,7 +165,7 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(_ bv0 8)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
-	
+
 	@Test
 	public void intAddMul() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
@@ -186,7 +186,7 @@ public class PolynomialTest {
 		final String inputAsString = "(div (* (* y 6) (* y (* x x) ) ) (div 6 3))";
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
-	
+
 	/**
 	 * Test division of zero by something with div.
 	 */
@@ -198,7 +198,7 @@ public class PolynomialTest {
 		final String inputAsString = "(div (* (* y 0) (* y (* x x) ) ) (div 144 12))";
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
-	
+
 	/**
 	 * Test treating div as a unique variable, if division is by zero.
 	 */
@@ -222,7 +222,7 @@ public class PolynomialTest {
 		final String inputAsString = "(div (* (* y 6) (* y (* x x))) (div 144 12))";
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
-	
+
 	/**
 	 * Test affine div.
 	 */
@@ -234,7 +234,7 @@ public class PolynomialTest {
 		final String inputAsString = "(+ (div (* y 14) (div 1337 191)) (div (* (+ x y) 20) 10))";
 		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
-	
+
 	/**
 	 * Test treating affine div as unique variable, and then handle these variables.
 	 */
@@ -246,7 +246,7 @@ public class PolynomialTest {
 		final String inputAsString = "(* (+ (div (* y 123) (div 1337 191)) (div (* (+ x y) 23) 10)) 2)";
 		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
-	
+
 	/**
 	 * Test treating affine div as unique variable, and then handle these variables.
 	 */
@@ -258,7 +258,7 @@ public class PolynomialTest {
 		final String inputAsString = "(* (div (* y 123) (div 1337 191)) (div (* y 123) (div 1337 191)))";
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
-	
+
 	/**
 	 * Test addition of AffineTerm and a PolynomialTerm.
 	 */
@@ -270,9 +270,9 @@ public class PolynomialTest {
 		final String inputAsString = "(+ (* 2 x) (* y y))";
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
-	
+
 	/**
-	 * Result should be 
+	 * Result should be
 	 * <pre>(/ 42.0 x y)</pre>
 	 * instead of
 	 * <pre>(/ 42.0 (/ x y))</pre>.
@@ -286,7 +286,7 @@ public class PolynomialTest {
 		runDefaultTest(inputAsString, inputAsString);
 	}
 
-	
+
 	/**
 	 * Check that non-polynomial terms get partially simplified
 	 */
@@ -298,7 +298,7 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(/ 21.0 x)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
-	
+
 	/**
 	 * The last constant divisors should be pulled out as coefficient.
 	 */
@@ -313,7 +313,7 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Result should be 
+	 * Result should be
 	 * <pre>(div (+ (* 21 x x) 1) x)</pre>
 	 */
 	@Test
@@ -324,7 +324,7 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(* (/ 1.0 2.0) (/ (+ (* 21.0 x x) 1.0) x))";
 		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
 	}
-	
+
 	/**
 	 * Check that intermediate constants get simplified.
 	 */
@@ -353,7 +353,7 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Result should be 
+	 * Result should be
 	 * <pre>(/ 42 x y)</pre>
 	 * instead of
 	 * <pre>(/ 42 (/ x y))</pre>.
@@ -366,7 +366,7 @@ public class PolynomialTest {
 		final String inputAsString = "(div 42 x y)";
 		runDefaultTest(inputAsString, inputAsString);
 	}
-	
+
 	/**
 	 * Check that non-polynomial terms get partially simplified
 	 */
@@ -378,22 +378,22 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(div 21 x)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
-	
+
 	/**
-	 * Result should be 
-	 * <pre>(div (* x 21) x)</pre>
+	 * Result should be
+	 * <pre>(div (* 21 x) x)</pre>
 	 */
 	@Test
 	public void intDivisionLeftAssoc03() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		final String inputAsString = "(div (* 42 x) 2 x)";
-		final String expectedOutputAsString = "(div (* x 21) x)";
+		final String expectedOutputAsString = "(div (* 21 x) x)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
-	
+
 	/**
-	 * Result should be 
+	 * Result should be
 	 * <pre>(* 42.0 x y)</pre>
 	 * instead of
 	 * <pre>(* 42.0 (* x y))</pre>.
@@ -406,7 +406,7 @@ public class PolynomialTest {
 		final String inputAsString = "(* 42.0 y x)";
 		runSyntaxWithoutPermutationsTest(inputAsString, inputAsString);
 	}
-	
+
 	/**
 	 * Check that non-polynomial terms get partially simplified
 	 */
@@ -418,9 +418,9 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(* 84.0 x)";
 		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
 	}
-	
+
 	/**
-	 * Result should be 
+	 * Result should be
 	 * <pre>(+ 42.0 x y)</pre>
 	 * instead of
 	 * <pre>(+ 42.0 (+ x y))</pre>.
@@ -433,7 +433,7 @@ public class PolynomialTest {
 		final String inputAsString = "(+ 42.0 y x)";
 		runSyntaxWithoutPermutationsTest(inputAsString, "(+ 42.0 y x)");
 	}
-	
+
 	/**
 	 * Check that non-polynomial terms get partially simplified
 	 */
@@ -445,7 +445,7 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(+ 44.0 x)";
 		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
 	}
-	
+
 	/**
 	 * Test whether transformed input is syntactically equivalent to expected
 	 * output.
@@ -461,7 +461,7 @@ public class PolynomialTest {
 		final boolean outputIsCorrect = expectedOutputAsTerm.equals(outputAsTerm);
 		Assert.assertTrue(outputIsCorrect);
 	}
-	
+
 	/**
 	 * Test whether transformed input is syntactically equivalent to expected
 	 * output, except for permutation. Only works for "flattened" Terms.
@@ -475,10 +475,10 @@ public class PolynomialTest {
 		mLogger.info("Output: " + outputAsTerm);
 		mLogger.info("Expected output: " + expectedOutputAsTerm);
 		//Trim braces
-		String expectedTrimmed = expectedOutputAsString.substring(1, expectedOutputAsString.length() - 1);
-		String outputTrimmed = outputAsTerm.toString().substring(1, outputAsTerm.toString().length() - 1);
-		String[] expectedArgs = expectedTrimmed.split("\\s");
-		String[] outputArgs = outputTrimmed.split("\\s");
+		final String expectedTrimmed = expectedOutputAsString.substring(1, expectedOutputAsString.length() - 1);
+		final String outputTrimmed = outputAsTerm.toString().substring(1, outputAsTerm.toString().length() - 1);
+		final String[] expectedArgs = expectedTrimmed.split("\\s");
+		final String[] outputArgs = outputTrimmed.split("\\s");
 		for (int i = 0; i < expectedArgs.length; i++) {
 			for (int j = 0; j < outputArgs.length; j++) {
 				if (expectedArgs[i].equals(outputArgs[j])) {
@@ -489,13 +489,13 @@ public class PolynomialTest {
 			}
 		}
 		boolean inputRemoved = true;
-		for (String arg : outputArgs) {
+		for (final String arg : outputArgs) {
 			if (!(arg == null)) {
 				inputRemoved = false;
 			}
 		}
 		boolean expectedRemoved = true;
-		for (String arg : expectedArgs) {
+		for (final String arg : expectedArgs) {
 			if (!(arg == null)) {
 				expectedRemoved = false;
 			}
@@ -503,7 +503,7 @@ public class PolynomialTest {
 		final boolean outputIsCorrect = inputRemoved && expectedRemoved;
 		Assert.assertTrue(outputIsCorrect);
 	}
-	
+
 	/**
 	 * Test whether the transformed input is logically equivalent to the input.
 	 * @param checkOutputIsAffine check that transformed input is an {@link AffineTerm}
@@ -520,7 +520,7 @@ public class PolynomialTest {
 			Assert.assertTrue(output instanceof AffineTerm);
 		}
 	}
-	
+
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
 		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);
 		final Term negatedEquality = SmtUtils.not(script, equality);
