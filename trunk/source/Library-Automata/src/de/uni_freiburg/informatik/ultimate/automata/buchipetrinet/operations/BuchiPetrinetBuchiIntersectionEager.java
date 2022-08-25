@@ -142,7 +142,7 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 	}
 
 	@Override
-	public Object getResult() {
+	public IPetriNet<LETTER, PLACE> getResult() {
 		return mIntersectionNet;
 	}
 }
