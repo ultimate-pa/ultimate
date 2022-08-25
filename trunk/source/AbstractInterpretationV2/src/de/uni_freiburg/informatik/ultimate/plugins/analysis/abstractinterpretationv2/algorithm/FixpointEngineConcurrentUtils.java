@@ -829,6 +829,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		if (result.size() == 1) {
+			result.removeAll(nonGlobalVars);
 			mDependenciesBetweenVars.addAll(result.getAllEquivalenceClasses());
 			return;
 		}
