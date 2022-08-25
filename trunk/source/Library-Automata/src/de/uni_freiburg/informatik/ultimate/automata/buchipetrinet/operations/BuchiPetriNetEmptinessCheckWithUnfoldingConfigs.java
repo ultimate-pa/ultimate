@@ -8,7 +8,16 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 
-public class UnfoldingLassoChecker<LETTER, PLACE> {
+/*
+ * TODO: If {@link BuchiPetriNetEmptinessCheckWithAccepts} is not much slower than this class, one could delete this
+ * class. Although it is not yet optimized either.
+ *
+ * The method of looking for a lasso configuration in this class is essentially looking for a configuration in the
+ * unfolding, which final state enables some maximum concurrent set of Events in that configuration such that the
+ * created loop also contains an accepting place.
+ *
+ */
+public class BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<LETTER, PLACE> {
 	private final BranchingProcess<LETTER, PLACE> mUnfolding;
 	Set<Event<LETTER, PLACE>> mUnfoldingEventsWithoutDummyRootEvent = new HashSet<>();
 	private final Set<Event<LETTER, PLACE>> mAcceptingEvents = new HashSet<>();
@@ -30,7 +39,7 @@ public class UnfoldingLassoChecker<LETTER, PLACE> {
 	 *
 	 * In essence this class searches for a configuration in Unfolding which' final state enables
 	 */
-	public UnfoldingLassoChecker(final BranchingProcess<LETTER, PLACE> unfolding) {
+	public BuchiPetriNetEmptinessCheckWithUnfoldingConfigs(final BranchingProcess<LETTER, PLACE> unfolding) {
 		mUnfolding = unfolding;
 		mMissingPlaces = null;
 		mUnfoldingEventsWithoutDummyRootEvent =

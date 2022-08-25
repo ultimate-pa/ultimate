@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class UnfoldingLassoCheckerTest {
+public class BuchiPetriNetEmptinessCheckWithUnfoldingConfigsTest {
 	private AutomataLibraryServices mServices;
 
 	@Before
@@ -55,7 +55,7 @@ public class UnfoldingLassoCheckerTest {
 
 		final BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
-		final UnfoldingLassoChecker<String, String> configurationChecker = new UnfoldingLassoChecker<>(mUnfolding);
+		final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<String, String> configurationChecker = new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
 		for (final Event<String, String> event : mUnfolding.getEvents()) {
 			configurationChecker.update(event);
 		}
@@ -83,7 +83,7 @@ public class UnfoldingLassoCheckerTest {
 
 		final BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
-		final UnfoldingLassoChecker<String, String> configurationChecker = new UnfoldingLassoChecker<>(mUnfolding);
+		final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<String, String> configurationChecker = new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
 		for (final Event<String, String> event : mUnfolding.getEvents()) {
 			configurationChecker.update(event);
 		}

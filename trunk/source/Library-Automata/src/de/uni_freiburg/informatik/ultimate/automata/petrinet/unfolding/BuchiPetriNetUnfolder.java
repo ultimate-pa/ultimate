@@ -27,8 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -36,7 +38,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.UnfoldingLassoChecker;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetriNetEmptinessCheckWithAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetriNetEmptinessCheckWithUnfoldingConfigs;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -47,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUn
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
@@ -75,12 +81,15 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	private final IPossibleExtensions<L, P> mPossibleExtensions;
 	private final BranchingProcess<L, P> mUnfolding;
 	private PetriNetRun<L, P> mRun;
-	private final UnfoldingLassoChecker<L, P> mLassoChecker;
+	private final BuchiPetriNetEmptinessCheckWithAccepts<L, P> mLassoChecker;
+	private final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<L, P> mLassoCheckerOld;
 
 	private final BuchiPetriNetUnfolder<L, P>.Statistics mStatistics = new Statistics();
 
 	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = true;
 	private static final boolean DEBUG_LOG_CO_RELATION_DEGREE_HISTOGRAM = false;
+
+	private final int mTypeOfChecker;
 
 	/**
 	 * Build the finite Prefix of PetriNet net.
@@ -98,7 +107,7 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	 */
 	public BuchiPetriNetUnfolder(final AutomataLibraryServices services,
 			final IPetriNetTransitionProvider<L, P> operand, final EventOrderEnum order,
-			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
+			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound, final int checker)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -121,8 +130,10 @@ public final class BuchiPetriNetUnfolder<L, P> {
 		default:
 			throw new IllegalArgumentException();
 		}
+		mTypeOfChecker = checker;
 		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
-		mLassoChecker = new UnfoldingLassoChecker<>(mUnfolding);
+		mLassoChecker = new BuchiPetriNetEmptinessCheckWithAccepts<>(mServices, mUnfolding, mOperand);
+		mLassoCheckerOld = new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
 		mPossibleExtensions =
 				new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
 
@@ -146,8 +157,12 @@ public final class BuchiPetriNetUnfolder<L, P> {
 		return mStatistics;
 	}
 
-	public UnfoldingLassoChecker<L, P> getChecker() {
+	public BuchiPetriNetEmptinessCheckWithAccepts<L, P> getChecker() {
 		return mLassoChecker;
+	}
+
+	public BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<L, P> getCheckerOld() {
+		return mLassoCheckerOld;
 	}
 
 	private void computeUnfolding() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -188,13 +203,25 @@ public final class BuchiPetriNetUnfolder<L, P> {
 		}
 		mUnfolding.addEvent(event);
 
-		final boolean lassoFound = mLassoChecker.update(event);
+		boolean lassoFound = false;
+		switch (mTypeOfChecker) {
+		case 0:
+			lassoFound = mLassoChecker.update(event);
+			break;
+		case 1:
+			lassoFound = mLassoCheckerOld.update(event);
+			break;
+
+		default:
+			break;
+		}
 		if (lassoFound && mRun == null) {
-			mRun = constructRun(event);
+			mRun = constructRun();
 			if (mStopIfAcceptingRunFound) {
 				return true;
 			}
 		}
+
 		if (isCutOffEvent) {
 			mLogger.debug("Constructed     Cut-off-Event: " + event.toString());
 		} else {
@@ -213,24 +240,22 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	/**
 	 * constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
 	 * specified event e.
-	 * <p>
-	 * uses the recursive helper-method {@code #constructRun(Event, Marking)}
+	 *
+	 * @throws PetriNetNot1SafeException
 	 */
-	private PetriNetRun<L, P> constructRun(final Event<L, P> event) {
-		// TODO:
-		return null;
-	}
-
-	/**
-	 * Recursively builds a part of a run over the unfolding which leads to the marking corresponding with the local
-	 * configuration of the specified event e.
-	 * <p>
-	 * The run starts with the given Marking {@code initialMarking}
-	 */
-	private RunAndConditionMarking constructRun(final Event<L, P> event, final ConditionMarking<L, P> initialMarking)
-			throws PetriNetNot1SafeException {
-		// TODO:
-		return null;
+	private PetriNetRun<L, P> constructRun() throws PetriNetNot1SafeException {
+		final List<Marking<P>> sequenceOfMarkings = new ArrayList<>();
+		final Pair<NestedLassoWord<L>, List<Event<L, P>>> resutlPair =
+				mLassoChecker.getLassoConfigurations().iterator().next();
+		Marking<P> currentMarking = new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()));
+		sequenceOfMarkings.add(currentMarking);
+		for (final Event<L, P> event : resutlPair.getSecond()) {
+			currentMarking = currentMarking.fireTransition(event.getTransition());
+			sequenceOfMarkings.add(currentMarking);
+		}
+		final PetriNetRun<L, P> run = new PetriNetRun<>(sequenceOfMarkings,
+				resutlPair.getFirst().getStem().concatenate(resutlPair.getFirst().getLoop()));
+		return run;
 	}
 
 	private boolean parentIsCutoffEvent(final Event<L, P> event) {
