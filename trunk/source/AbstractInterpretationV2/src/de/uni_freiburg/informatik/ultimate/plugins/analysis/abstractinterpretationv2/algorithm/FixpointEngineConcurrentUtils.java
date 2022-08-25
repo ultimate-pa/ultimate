@@ -82,6 +82,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final HashRelation<String, ACTION> mActionsInProcedure;
 	private final Set<String> mParallelProcedures;
 	private final List<String> mTopologicalOrder;
+	private final HashRelation<ACTION, ACTION> mDominates;
 
 	private final Collection<Set<IProgramVarOrConst>> mDependenciesBetweenVars;
 
@@ -111,6 +112,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 		mDependenciesBetweenVars = new HashSet<>();
 
+		mDominates = new HashRelation<>();
+
 		initialize(mIcfg.getProcedureEntryNodes());
 	}
 
@@ -135,7 +138,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	public List<HashRelation<ACTION, ACTION>>
 			getProgramOrderConstraints(final Map<String, ? extends IcfgLocation> entryNodes) {
 		final List<HashRelation<ACTION, ACTION>> result = new ArrayList<>();
-		result.add(getDominates(entryNodes));
+		result.add(getDominates());
 		result.add(getNotReachableFrom(entryNodes));
 		result.add(getThCreates(entryNodes));
 		result.add(getThJoins());
@@ -146,48 +149,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	 *
 	 * @return DOMINATES: (x,y) in DOMINATES, iff all paths from the thread entry to y contain x.
 	 */
-	public HashRelation<ACTION, ACTION> getDominates(final Map<String, ? extends IcfgLocation> entryNodes) {
-		final Map<ACTION, Set<ACTION>> dominatedBy = new HashMap<>();
-		for (final var entry : entryNodes.entrySet()) {
-			final Queue<ACTION> workList = new ArrayDeque<>();
-			// initialize
-			for (final var action : mTransitionProvider.getSuccessorActions((LOC) entry.getValue())) {
-				workList.add(action);
-				final Set<ACTION> identity = new HashSet<>();
-				identity.add(action);
-				dominatedBy.put(action, identity);
-			}
-
-			while (!workList.isEmpty()) {
-				final ACTION item = workList.poll();
-				final LOC target = mTransitionProvider.getTarget(item);
-				final Set<ACTION> itemDominatedBy = dominatedBy.get(item);
-				for (final var successor : mTransitionProvider.getSuccessorActions(target)) {
-					// if changes -> add successor to workList
-					final Set<ACTION> currentlyDominatedBy = dominatedBy.get(successor);
-					if (currentlyDominatedBy == null) {
-						final Set<ACTION> tempSet = new HashSet<>();
-						tempSet.add(successor);
-						tempSet.addAll(itemDominatedBy);
-						dominatedBy.put(successor, tempSet);
-						workList.add(successor);
-						continue;
-					}
-					final Set<ACTION> intersection =
-							DataStructureUtils.intersection(itemDominatedBy, currentlyDominatedBy);
-					if (!intersection.equals(currentlyDominatedBy)) {
-						dominatedBy.put(successor, intersection);
-						workList.add(successor);
-					}
-				}
-			}
-		}
-		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
-		// reverse dominatedBy
-		for (final var entry : dominatedBy.entrySet()) {
-			entry.getValue().forEach(value -> result.addPair(value, entry.getKey()));
-		}
-		return result;
+	public HashRelation<ACTION, ACTION> getDominates() {
+		return mDominates;
 	}
 
 	/***
@@ -870,9 +833,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			return;
 		}
 
-		// TODO: compute post-dominates over whole program
+		// control dependency
 
-		final HashRelation<ACTION, ACTION> postDominates = computePostDominates();
+		final HashRelation<ACTION, ACTION> postDominated = computePostDominatedBy();
+
+		// TODO: optimize getDominates like computePostDominates
+		final HashRelation<ACTION, ACTION> dominates = computeDominates();
+
+		final HashRelation<ACTION, ACTION> controlDependent = computeControlDependency(dominates);
 
 		// TODO: compute control-dependency for forks -> all writes in procedure are than also control dependent
 		// TODO: compute control-dependency for writes from (assumes, procedures)
@@ -885,7 +853,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return !edge.getTransformula().getAssignedVars().isEmpty();
 	}
 
-	private HashRelation<ACTION, ACTION> computePostDominates() {
+	private HashRelation<ACTION, ACTION> computePostDominatedBy() {
+		mLogger.info("Post Dominates Start");
 		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
 		final Set<LOC> loopHeads = (Set<LOC>) mIcfg.getLoopLocations();
 
@@ -945,11 +914,103 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				done.add(item);
 			}
 		}
+		mLogger.info("Post Dominates End");
 		return result;
 	}
 
+	private HashRelation<ACTION, ACTION> computeDominates() {
+		mLogger.info("Dominates Start");
+		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
+		final HashRelation<ACTION, ACTION> dominatedBy = new HashRelation<>();
+		final Set<LOC> loopHeads = (Set<LOC>) mIcfg.getLoopLocations();
+
+		for (final var procedure : mTopologicalOrder) {
+			final Queue<LOC> workList = new ArrayDeque<>();
+			// final Queue<LOC> skipped = new ArrayDeque<>();
+			final Set<LOC> done = new HashSet<>();
+
+			final LOC entry = (LOC) mIcfg.getProcedureEntryNodes().get(procedure);
+			// initialize to entry node
+			for (final var action : mTransitionProvider.getSuccessorActions(entry)) {
+				dominatedBy.addPair(action, action);
+				result.addPair(action, action);
+				workList.add(mTransitionProvider.getTarget(action));
+				done.add(mTransitionProvider.getSource(action));
+			}
+
+			while (!workList.isEmpty()) {
+				final LOC item = workList.poll();
+
+				if (!nodeReady(item, dominatedBy) && !loopHeads.contains(item)) {
+					continue;
+				}
+
+				Set<ACTION> intersection = new HashSet<>();
+				for (final var action : mTransitionProvider.getPredecessorActions(item)) {
+					final Set<ACTION> temp = dominatedBy.getImage(action);
+					if (temp.isEmpty()) {
+						continue;
+					}
+					if (intersection.isEmpty()) {
+						intersection = temp;
+						continue;
+					}
+					intersection = DataStructureUtils.intersection(intersection, temp);
+				}
+
+				for (final var action : mTransitionProvider.getSuccessorActions(item)) {
+					dominatedBy.addPair(action, action);
+					dominatedBy.addAllPairs(action, intersection);
+					result.addPair(action, action);
+					intersection.forEach(x -> result.addPair(x, action));
+					final LOC target = mTransitionProvider.getTarget(action);
+					if (!done.contains(target)) {
+						workList.add(target);
+					}
+				}
+
+				done.add(item);
+			}
+		}
+		mLogger.info("Dominates End");
+
+		for (final var entry : result.entrySet()) {
+			mDominates.addAllPairs(entry.getKey(), entry.getValue());
+		}
+		return result;
+	}
+
+	/***
+	 * a is control dependent on b iff b is an ACTION where the program flow splitted and b dominates a
+	 *
+	 * @param dominates
+	 * @return
+	 */
+	private HashRelation<ACTION, ACTION> computeControlDependency(final HashRelation<ACTION, ACTION> dominates) {
+		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
+		for (final var entry : dominates.entrySet()) {
+			if (!isSplitting(entry.getKey())) {
+				continue;
+			}
+			entry.getValue().stream().filter(x -> isControlDependent(x, entry.getKey()))
+					.forEach(y -> result.addPair(y, entry.getKey()));
+		}
+
+		return result;
+	}
+
+	private boolean isControlDependent(final ACTION assume, final ACTION action) {
+		// TODO: add that action does not post dominate the source of assume
+		return !action.equals(assume);
+	}
+
+	private boolean isSplitting(final ACTION start) {
+		final LOC temp = mTransitionProvider.getSource(start);
+		return mTransitionProvider.getSuccessorActions(temp).size() > 1;
+	}
+
 	private boolean nodeReady(final LOC node, final HashRelation<ACTION, ACTION> relation) {
-		for (final var action : mTransitionProvider.getSuccessorActions(node)) {
+		for (final var action : mTransitionProvider.getPredecessorActions(node)) {
 			if (relation.getImage(action).isEmpty()) {
 				return false;
 			}
