@@ -834,22 +834,48 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		// control dependency
+		final HashRelation<ACTION, ACTION> controlDependent = computeControlDependency();
 
-		final HashRelation<ACTION, ACTION> postDominated = computePostDominatedBy();
+		for (final var entry : controlDependent.entrySet()) {
+			final Set<IProgramVarOrConst> variables = new HashSet<>();
+			boolean flag = false;
+			if (isWrite((IcfgEdge) entry.getKey())) {
+				flag = true;
+				variables.addAll(getAllVars(entry.getKey()));
+			}
+			if (entry.getKey() instanceof IForkActionThreadCurrent) {
+				flag = true;
+				final String procedure = mTransitionProvider.getProcedureName(entry.getKey());
+				variables.addAll(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure));
+			}
 
-		// TODO: optimize getDominates like computePostDominates
-		final HashRelation<ACTION, ACTION> dominates = computeDominates();
-
-		final HashRelation<ACTION, ACTION> controlDependent = computeControlDependency(dominates);
-
-		// TODO: compute control-dependency for forks -> all writes in procedure are than also control dependent
-		// TODO: compute control-dependency for writes from (assumes, procedures)
+			if (flag) {
+				for (final var value : entry.getValue()) {
+					if (value instanceof IcfgEdge) {
+						variables.addAll(((IcfgEdge) value).getTransformula().getInVars().keySet());
+					}
+				}
+				result.union(variables);
+			}
+		}
 
 		result.removeAll(nonGlobalVars);
 		mDependenciesBetweenVars.addAll(result.getAllEquivalenceClasses());
 	}
 
-	private boolean isWrite(final IcfgEdge edge) {
+	private Set<IProgramVarOrConst> getAllVars(final ACTION action) {
+		if (action instanceof IcfgEdge) {
+			final Set<IProgramVarOrConst> result = new HashSet<>();
+			final IcfgEdge edge = (IcfgEdge) action;
+			result.addAll(edge.getTransformula().getAssignedVars());
+			result.addAll(edge.getTransformula().getInVars().keySet());
+			return result;
+		}
+		return null;
+
+	}
+
+	private static boolean isWrite(final IcfgEdge edge) {
 		return !edge.getTransformula().getAssignedVars().isEmpty();
 	}
 
@@ -885,7 +911,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			while (!workList.isEmpty()) {
 				final LOC item = workList.poll();
 
-				if (!nodeReady(item, result) && !loopHeads.contains(item)) {
+				if (!nodeReady(mTransitionProvider.getSuccessorActions(item), result) && !loopHeads.contains(item)) {
 					continue;
 				}
 
@@ -941,7 +967,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			while (!workList.isEmpty()) {
 				final LOC item = workList.poll();
 
-				if (!nodeReady(item, dominatedBy) && !loopHeads.contains(item)) {
+				if (!nodeReady(mTransitionProvider.getPredecessorActions(item), dominatedBy)
+						&& !loopHeads.contains(item)) {
 					continue;
 				}
 
@@ -986,22 +1013,33 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	 * @param dominates
 	 * @return
 	 */
-	private HashRelation<ACTION, ACTION> computeControlDependency(final HashRelation<ACTION, ACTION> dominates) {
+	private HashRelation<ACTION, ACTION> computeControlDependency() {
+		final HashRelation<ACTION, ACTION> dominates = computeDominates();
+		final HashRelation<ACTION, ACTION> postDominated = computePostDominatedBy();
+
 		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
 		for (final var entry : dominates.entrySet()) {
 			if (!isSplitting(entry.getKey())) {
 				continue;
 			}
-			entry.getValue().stream().filter(x -> isControlDependent(x, entry.getKey()))
+			entry.getValue().stream().filter(x -> isControlDependent(entry.getKey(), x, postDominated))
 					.forEach(y -> result.addPair(y, entry.getKey()));
 		}
 
 		return result;
 	}
 
-	private boolean isControlDependent(final ACTION assume, final ACTION action) {
+	private boolean isControlDependent(final ACTION assume, final ACTION action,
+			final HashRelation<ACTION, ACTION> postDominated) {
 		// TODO: add that action does not post dominate the source of assume
-		return !action.equals(assume);
+		final Iterator<ACTION> iterator =
+				mTransitionProvider.getSuccessorActions(mTransitionProvider.getSource(assume)).iterator();
+		Set<ACTION> intersection = postDominated.getImage(iterator.next());
+		while (iterator.hasNext()) {
+			intersection = DataStructureUtils.intersection(intersection, postDominated.getImage(iterator.next()));
+		}
+		final boolean temp = !action.equals(assume) && !intersection.contains(action);
+		return temp;
 	}
 
 	private boolean isSplitting(final ACTION start) {
@@ -1009,8 +1047,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mTransitionProvider.getSuccessorActions(temp).size() > 1;
 	}
 
-	private boolean nodeReady(final LOC node, final HashRelation<ACTION, ACTION> relation) {
-		for (final var action : mTransitionProvider.getPredecessorActions(node)) {
+	private boolean nodeReady(final Collection<ACTION> actions, final HashRelation<ACTION, ACTION> relation) {
+		for (final var action : actions) {
 			if (relation.getImage(action).isEmpty()) {
 				return false;
 			}
