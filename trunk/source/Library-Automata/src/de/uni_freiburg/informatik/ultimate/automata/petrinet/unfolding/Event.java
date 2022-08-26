@@ -363,14 +363,9 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final Event<?, ?> other = (Event<?, ?>) obj;
-		return mPredecessors.equals(other.mPredecessors) && mSuccessors.equals(other.mSuccessors)
-				&& mTransition.equals(other.mTransition);
+		// We intentionally use reference equality here:
+		// - An efficient equality check is crucial for unfolding performance; comparing sets of conditions is too slow.
+		// - The unfolding should never create two instances representing "equal" events.
+		return this == obj;
 	}
 }
