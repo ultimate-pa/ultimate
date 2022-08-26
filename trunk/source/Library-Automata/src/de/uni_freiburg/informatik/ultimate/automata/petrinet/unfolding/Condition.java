@@ -96,9 +96,9 @@ public class Condition<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		return mSerialNumber == ((Condition) obj).mSerialNumber;
+		// We intentionally use reference equality here:
+		// - An efficient equality check is crucial for unfolding performance.
+		// - The unfolding should never create two instances representing "equal" conditions.
+		return this == obj;
 	}
 }
