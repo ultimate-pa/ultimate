@@ -93,7 +93,9 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 	}
 
 	private int computeHashCode() {
-		return HashUtils.hashJenkins(13, mTotalOrderId, mPredecessors, mSuccessors, mSymbol);
+		// The totalOrderId should not be used verbatim as hash code,
+		// because this would cause frequent hash collisions for e.g. sets or lists of transitions.
+		return HashUtils.hashJenkins(29, mTotalOrderId);
 	}
 
 	@Override
