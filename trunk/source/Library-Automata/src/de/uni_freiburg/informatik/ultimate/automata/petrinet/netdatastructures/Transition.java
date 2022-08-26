@@ -98,15 +98,8 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final Transition<?, ?> other = (Transition<?, ?>) obj;
-		return mTotalOrderId == other.mTotalOrderId && mPredecessors.equals(other.mPredecessors)
-				&& mSuccessors.equals(other.mSuccessors) && mSymbol.equals(other.mSymbol);
+		// Transitions are unified by the TransitionUnifier class, hence reference equality suffices here.
+		return this == obj;
 	}
 
 	@Override
