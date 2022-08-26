@@ -31,6 +31,8 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 /**
  * A condition.
  *
@@ -43,7 +45,6 @@ import java.util.HashSet;
  **/
 public class Condition<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
-
 
 	private final Event<LETTER, PLACE> mPredecessor;
 	private final Collection<Event<LETTER, PLACE>> mSuccessors;
@@ -91,7 +92,9 @@ public class Condition<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return mSerialNumber;
+		// Serial numbers should not be used verbatim for hash codes,
+		// because this would cause frequent hash collisions for e.g. sets or lists of conditions.
+		return HashUtils.hashJenkins(17, mSerialNumber);
 	}
 
 	@Override
