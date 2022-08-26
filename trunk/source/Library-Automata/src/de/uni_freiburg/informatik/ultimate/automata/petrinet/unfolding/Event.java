@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public final class Event<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
+	private static final int HASH_PRIME = 89;
 
 	/**
 	 * Use the optimization that is outlined in observation B17 in the following issue.
@@ -96,7 +98,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mTransition = transition;
 		mSuccessors = transition.getSuccessors().stream().map(p -> bp.constructCondition(this, p))
 				.collect(Collectors.toSet());
-		mHashCode = hashCode;
+		mHashCode = HashUtils.hashJenkins(HASH_PRIME, hashCode);
 
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mDepth = 0;
@@ -150,7 +152,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mPredecessors = new HashSet<>();
 		mSuccessors = mMark.stream().map(p -> bp.constructCondition(this, p)).collect(Collectors.toSet());
 		conditionMarkSet.addAll(mSuccessors);
-		mHashCode = 0;
+		mHashCode = HashUtils.hashJenkins(HASH_PRIME, 0);
 		mPlaceCorelationMap = new HashMap<>();
 		if (bp.getNewFiniteComprehensivePrefixMode()) {
 			computePlaceCorelationMap(bp);
