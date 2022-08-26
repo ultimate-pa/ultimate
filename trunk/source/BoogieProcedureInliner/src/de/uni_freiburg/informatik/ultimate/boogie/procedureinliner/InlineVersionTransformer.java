@@ -254,14 +254,14 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private final Deque<Integer> mEdgeIndexStack = new ArrayDeque<>();
 
 	/**
-	 * Counts for each procedure, how much calls to this procedure where inlined (!) during the process.
+	 * Counts for each procedure, how much calls to this procedure were inlined (!) during the process.
 	 * {@code call forall} statements count too. Non-inlined calls don't count!<br>
 	 * The parameters and local variables of a Procedure are mapped, iff call counter > 0.
 	 * <p>
 	 * <b>Note:</b> This has nothing to do with the "single calls only" setting
-	 * ({@link de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem #IGNORE_MULTIPLE_CALLED}.
-	 * This counter is used to avoid re-mapping of already mapped variable ids, whereas the setting is applied using a
-	 * separate counter on the call graph.
+	 * ({@link de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem
+	 * #IGNORE_MULTIPLE_CALLED}. This counter is used to avoid re-mapping of already mapped variable ids, whereas the
+	 * setting is applied using a separate counter on the call graph.
 	 */
 	private final Map<String, Integer> mCallCounter = new HashMap<>();
 
@@ -335,7 +335,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	public Procedure inlineCallsInside(final CallGraphNode entryNode) throws CancelToolchainException {
 		if (mEntryProcId != null) {
 			throw new IllegalStateException("Instance was already used to inline an procedure: " + mEntryProcId);
-		} else if (!entryNode.isImplemented()) {
+		}
+		if (!entryNode.isImplemented()) {
 			return null;
 		}
 		mEntryProcId = entryNode.getId();
@@ -812,11 +813,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final AtomicStatement atomicStat = (AtomicStatement) stat;
 			final Statement[] newBody = flattenStatementsArray(atomicStat.getBody());
 			newStat = new AtomicStatement(atomicStat.getLocation(), newBody);
-		}  else if (stat instanceof ForkStatement) {
+		} else if (stat instanceof ForkStatement) {
 			getAndUpdateEdgeIndex();
 		}
 		if (newStat == null) {
-			newStat = processStatement(stat); // also adds backtranslation
+			// also adds backtranslation
+			newStat = processStatement(stat);
 		} else {
 			ModelUtils.copyAnnotations(stat, newStat);
 			addBacktranslation(newStat, stat);
