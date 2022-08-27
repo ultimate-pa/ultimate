@@ -321,7 +321,7 @@ public class PolynomialTest {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		final String inputAsString = "(/ (+ (* 42.0 x x) 2.0) 2.0 x 2.0)";
-		final String expectedOutputAsString = "(* (/ 1.0 2.0) (/ (+ (* 21.0 x x) 1.0) x))";
+		final String expectedOutputAsString = "(* (/ (+ (* x x 21.0) 1.0) x) (/ 1.0 2.0))";
 		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
 	}
 
