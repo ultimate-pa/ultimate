@@ -51,6 +51,7 @@ public class Condition<LETTER, PLACE> implements Serializable {
 	private final PLACE mPlace;
 
 	private final int mSerialNumber;
+	private final int mHashCode;
 
 	/**
 	 * Construct conditions only via {@link BranchingProcess}
@@ -61,6 +62,10 @@ public class Condition<LETTER, PLACE> implements Serializable {
 		mPredecessor = predecessor;
 		mSuccessors = new HashSet<>();
 		mPlace = place;
+		// Serial numbers should not be used verbatim for hash codes,
+		// because this would cause frequent hash collisions for e.g. sets or lists of
+		// conditions.
+		mHashCode = HashUtils.hashJenkins(17, mSerialNumber);
 	}
 
 	/**
@@ -92,9 +97,7 @@ public class Condition<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public int hashCode() {
-		// Serial numbers should not be used verbatim for hash codes,
-		// because this would cause frequent hash collisions for e.g. sets or lists of conditions.
-		return HashUtils.hashJenkins(17, mSerialNumber);
+		return mHashCode;
 	}
 
 	@Override
