@@ -70,8 +70,9 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 		mSymbol = Objects.requireNonNull(symbol, "Transition must not be labeled with null");
 		mPredecessors = predecessors;
 		mSuccessors = successors;
-		mHashCode = computeHashCode();
 		mTotalOrderId = totalOrderId;
+		// FIXME: Compute hash code here or use static method
+		mHashCode = computeHashCode();
 	}
 
 	public LETTER getSymbol() {
