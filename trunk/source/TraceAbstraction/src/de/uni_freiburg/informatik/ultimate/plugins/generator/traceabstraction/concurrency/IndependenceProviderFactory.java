@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Transferrer
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -215,8 +214,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		// We eliminate auxiliary variables.
 		// This is useful both for semantic independence (ease the load on the SMT solver),
 		// but even more so for syntactic independence (often allows shrinking the set of "read" variables).
-		final TransFormulaAuxVarEliminator tfEliminator = (ms, fm, av) -> TransFormulaUtils
-				.tryAuxVarElimination(mServices, ms, SimplificationTechnique.POLY_PAC, fm, av);
+		final TransFormulaAuxVarEliminator tfEliminator =
+				(ms, fm, av) -> TransFormulaUtils.tryAuxVarEliminationLight(mServices, ms, fm, av);
 
 		switch (settings.getAbstractionType()) {
 		case VARIABLES_GLOBAL:

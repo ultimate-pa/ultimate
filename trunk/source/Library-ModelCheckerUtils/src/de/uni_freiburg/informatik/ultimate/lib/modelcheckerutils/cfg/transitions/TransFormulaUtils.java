@@ -340,6 +340,21 @@ public final class TransFormulaUtils {
 		return pnf;
 	}
 
+	public static Term tryAuxVarEliminationLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term formula, final Set<TermVariable> auxVars) {
+		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, auxVars, formula);
+		auxVars.clear();
+
+		final Term partiallyEliminated = PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
+		final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
+		if (pnf instanceof QuantifiedFormula && ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
+			final QuantifiedFormula qf = (QuantifiedFormula) pnf;
+			auxVars.addAll(Arrays.asList(qf.getVariables()));
+			return qf.getSubformula();
+		}
+		return pnf;
+	}
+
 	/**
 	 * The parallel composition of transFormulas is the disjunction of the underlying relations. If we check
 	 * satisfiability of a path which contains this transFormula we want know one disjuncts that is satisfiable. We use
