@@ -76,4 +76,8 @@ class SleepMapStateFactory<L> implements ISleepMapStateFactory<L, IPredicate, IP
 	public int getBudget(final IPredicate sleepMapState) {
 		return ((SleepMapPredicate<?>) sleepMapState).getBudget();
 	}
+
+	public void reset() {
+		mMap.clear();
+	}
 }

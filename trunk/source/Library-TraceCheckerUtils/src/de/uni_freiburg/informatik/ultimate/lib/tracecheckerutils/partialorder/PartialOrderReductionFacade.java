@@ -289,6 +289,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
 			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
 		}
+		if (mSleepMapFactory instanceof SleepMapStateFactory<?>) {
+			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
+		}
 
 		final IIndependenceRelation<IPredicate, L> independence =
 				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
