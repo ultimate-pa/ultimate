@@ -35,13 +35,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
+ *            The type of letters
  * @param <R>
+ *            The type of states in the reduction automaton for which a budget is computed
  */
 public class CachedBudget<L, R> implements IBudgetFunction<L, R> {
 
 	private final IBudgetFunction<L, R> mUnderlying;
 	private final NestedMap2<R, L, Integer> mCache = new NestedMap2<>();
 
+	/**
+	 * Create a new cache around the given budget.
+	 *
+	 * @param underlying
+	 *            The budget function whose return values shall be cached
+	 */
 	public CachedBudget(final IBudgetFunction<L, R> underlying) {
 		mUnderlying = underlying;
 	}
