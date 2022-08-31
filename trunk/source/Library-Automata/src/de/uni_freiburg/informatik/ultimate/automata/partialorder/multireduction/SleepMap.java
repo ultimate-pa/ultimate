@@ -147,7 +147,7 @@ public final class SleepMap<L, S> {
 			}
 		}
 
-		return new SleepMap<>(mRelations, successorMap);
+		return new SleepMap<>(mRelations, Map.copyOf(successorMap));
 	}
 
 	private Integer minimumRelation(final S state, final L a, final L b, final int minLevel) {
