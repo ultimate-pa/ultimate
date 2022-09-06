@@ -372,8 +372,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> copy = new HashSet<>();
 		result.addAll(oldset);
 		copy.addAll(oldset);
+		int iteration = 1;
 		mLogger.info("Size before: " + oldset.size());
 		for (final var map1 : oldset) {
+			mLogger.info(iteration);
 			final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> toRemove = new HashSet<>();
 			for (final var map2 : copy) {
 				if (!map1.equals(map2)) {
@@ -382,9 +384,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						result.remove(temp);
 						toRemove.add(temp);
 					}
+					if (temp == map1) {
+						break;
+					}
 				}
 			}
 			copy.removeAll(toRemove);
+			iteration++;
 		}
 		mLogger.info("Size after: " + result.size());
 		return result;
@@ -652,7 +658,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		if (mVersion == AbstractInterpretationConcurrent.FLOW_SENSITIVE_FILTERED) {
 			final FeasibilityFilter<ACTION, LOC> filter = new FeasibilityFilter<>(services);
 			filter.setTransitionProvider(mTransitionProvider);
-			filter.initializeProgramConstraints(mFecUtils.getProgramOrderConstraints(mIcfg.getProcedureEntryNodes()),
+			filter.initializeProgramConstraints(mFecUtils.getMustHappenBefore(mIcfg.getProcedureEntryNodes()),
+					mFecUtils.getThCreates(mIcfg.getProcedureEntryNodes()), mFecUtils.getThJoins(),
 					mFecUtils.getIsLoad(), mFecUtils.getIsStore(), mFecUtils.getAllReads(),
 					mFecUtils.getParallelProcedureEntrys(), mFecUtils.getProgramEntry(),
 					mFecUtils.getNormalProcedureEntrys());

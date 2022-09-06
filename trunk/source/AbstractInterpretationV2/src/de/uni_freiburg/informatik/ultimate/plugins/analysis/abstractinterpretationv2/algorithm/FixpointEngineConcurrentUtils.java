@@ -144,6 +144,18 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
+	public HashRelation<ACTION, ACTION> getMustHappenBefore(final Map<String, ? extends IcfgLocation> entryNodes) {
+		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
+		final HashRelation<ACTION, ACTION> notRechableFrom = getNotReachableFrom(entryNodes);
+		for (final var entry : mDominates.getSetOfPairs()) {
+			if (notRechableFrom.getImage(entry.getKey()).contains(entry.getValue())) {
+				result.addPair(entry.getKey(), entry.getValue());
+			}
+		}
+
+		return result;
+	}
+
 	/***
 	 *
 	 * @return DOMINATES: (x,y) in DOMINATES, iff all paths from the thread entry to y contain x.

@@ -26,10 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,8 +69,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	private final String mExtraHavoc;
 
 	private enum Relations {
-		DOMINATES, NOT_REACHABLE_FROM, THCREATES, THJOINS, ISLOAD, ISSTORE, MHB, READS_FROM, PARALLEL_ENTRY,
-		NORMAL_ENTRY
+		THCREATES, THJOINS, ISLOAD, ISSTORE, MHB, READS_FROM, PARALLEL_ENTRY, NORMAL_ENTRY
 	}
 
 	private enum Sorts {
@@ -141,7 +138,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mTransitionProvider = transitionProvider;
 	}
 
-	public void initializeProgramConstraints(final List<HashRelation<ACTION, ACTION>> programOrderConstraints,
+	public void initializeProgramConstraints(final HashRelation<ACTION, ACTION> mustHappenBefore,
+			final HashRelation<ACTION, ACTION> thCreates, final HashRelation<ACTION, ACTION> thJoins,
 			final HashRelation<ACTION, IProgramVarOrConst> isLoad,
 			final HashRelation<ACTION, IProgramVarOrConst> isStore, final Set<ACTION> allReads,
 			final Set<ACTION> isParallelEntry, final Set<ACTION> mainProcedureEntry, final Set<ACTION> isNormalEntry) {
@@ -158,8 +156,6 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		final Sort[] actAct = new Sort[2];
 		actAct[0] = action;
 		actAct[1] = action;
-		mScript.declareFun(mRelations.get(Relations.DOMINATES), actAct, bool);
-		mScript.declareFun(mRelations.get(Relations.NOT_REACHABLE_FROM), actAct, bool);
 		mScript.declareFun(mRelations.get(Relations.MHB), actAct, bool);
 		mScript.declareFun(mRelations.get(Relations.THCREATES), actAct, bool);
 		mScript.declareFun(mRelations.get(Relations.THJOINS), actAct, bool);
@@ -175,7 +171,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mScript.declareFun(mRelations.get(Relations.NORMAL_ENTRY), act, bool);
 
 		// add Rules from Paper (fork rule is adapted)
-		mScript.assertTerm(dominationRule(action));
+
 		mScript.assertTerm(forkRuleParallel(action));
 		mScript.assertTerm(forkRuleNonParallel(action));
 		mScript.assertTerm(joinRule(action));
@@ -184,19 +180,9 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mScript.assertTerm(canNotReadFrom(action));
 		mScript.assertTerm(readsFromTwo(action, variable));
 
-		// Add Assertions from Program
-		final List<String> order = new ArrayList<>();
-		order.add(mRelations.get(Relations.DOMINATES));
-		order.add(mRelations.get(Relations.NOT_REACHABLE_FROM));
-		order.add(mRelations.get(Relations.THCREATES));
-		order.add(mRelations.get(Relations.THJOINS));
-
-		if (order.size() != programOrderConstraints.size()) {
-			throw new IllegalArgumentException("invalid params");
-		}
-		for (int i = 0; i < order.size(); i++) {
-			addProgramOrderConstraints(programOrderConstraints.get(i), order.get(i), action);
-		}
+		addProgramOrderConstraints(mustHappenBefore, mRelations.get(Relations.MHB), action);
+		addProgramOrderConstraints(thCreates, mRelations.get(Relations.THCREATES), action);
+		addProgramOrderConstraints(thJoins, mRelations.get(Relations.THJOINS), action);
 
 		addVariableConstraints(isLoad, mRelations.get(Relations.ISLOAD), action, variable);
 		addVariableConstraints(isStore, mRelations.get(Relations.ISSTORE), action, variable);
@@ -209,8 +195,6 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	}
 
 	private void defineNames() {
-		mRelations.put(Relations.DOMINATES, "dominates");
-		mRelations.put(Relations.NOT_REACHABLE_FROM, "notReachableFrom");
 		mRelations.put(Relations.THCREATES, "thCreates");
 		mRelations.put(Relations.THJOINS, "thJoins");
 		mRelations.put(Relations.ISLOAD, "isLoad");
@@ -294,12 +278,6 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		}
 	}
 
-	private Term dominationRule(final Sort sort) {
-		final TermVariable a = mScript.variable("a", sort);
-		final TermVariable b = mScript.variable("b", sort);
-		return forAll(implication(dominates(a, b), notReachable(a, b), mustHappenBefore(a, b)));
-	}
-
 	private Term forkRuleParallel(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
@@ -354,23 +332,6 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 				mScript.term("and", readsFrom(l1, s1), mustHappenBefore(l1, s2), mustHappenBefore(s2, l2),
 						isLoad(l1, x), isLoad(l2, x), isStore(s1, x), isStore(s2, x), readsFrom(l2, s1));
 		return forAll(implication(condition, mScript.term("false")));
-	}
-
-	private Term dominates(final Term a, final Term b) {
-		if (a.getSort() == mScript.sort(mSorts.get(Sorts.ACTION))
-				&& a.getSort() == mScript.sort(mSorts.get(Sorts.ACTION))) {
-			return mScript.term(mRelations.get(Relations.DOMINATES), a, b);
-		}
-		throw new UnsupportedOperationException("Wrong Sort of Variables");
-
-	}
-
-	private Term notReachable(final Term a, final Term b) {
-		if (a.getSort() == mScript.sort(mSorts.get(Sorts.ACTION))
-				&& a.getSort() == mScript.sort(mSorts.get(Sorts.ACTION))) {
-			return mScript.term(mRelations.get(Relations.NOT_REACHABLE_FROM), a, b);
-		}
-		throw new UnsupportedOperationException("Wrong Sort of Variables");
 	}
 
 	private Term mustHappenBefore(final Term a, final Term b) {
@@ -450,12 +411,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		return SmtUtils.not(mScript, term);
 	}
 
-	private Term and(final Term... terms) {
-		return SmtUtils.and(mScript, terms);
-	}
-
-	private Term sameAction(final Term term1, final Term term2) {
-		return and(dominates(term1, term2), dominates(term2, term1));
+	private Term sameAction(final TermVariable term1, final TermVariable term2) {
+		return SmtUtils.binaryEquality(mScript, term1, term2);
 	}
 
 	private String declareFunctionforAction(final ACTION item, final Sort action) {
