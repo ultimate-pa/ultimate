@@ -144,6 +144,7 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
+		// Two Parameters are needed, because two separate storages are needed
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpec =
 				buildParameters(root, timer, services, false);
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpe =

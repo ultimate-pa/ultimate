@@ -1039,8 +1039,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		while (iterator.hasNext()) {
 			intersection = DataStructureUtils.intersection(intersection, postDominated.getImage(iterator.next()));
 		}
-		final boolean temp = !action.equals(assume) && !intersection.contains(action);
-		return temp;
+
+		return !action.equals(assume) && !intersection.contains(action);
 	}
 
 	private boolean isSplitting(final ACTION start) {
