@@ -615,6 +615,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				writes.put(source, tempList);
 			}
 
+			mLogger.info("Start checking " + n + " possible combinations.");
 			for (int i = 0; i < n; i++) {
 				int blocksize = 1;
 				final Map<LOC, Set<ACTION>> map = new HashMap<>();
@@ -628,9 +629,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				mLogger.info("Filter Iteration " + i + " started");
 				if (!map.isEmpty() && filter.evaluate(map)) {
 					result.add(map);
-					mLogger.info("No contradiction");
+				} else {
+					mLogger.info("Contradiction");
 				}
-				mLogger.info("Filter Iteration " + i + " ended");
 			}
 		}
 

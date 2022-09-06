@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -144,13 +145,35 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
+		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
+
+		final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe;
+		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpec;
+		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG)) {
+			// run with RCFG of the Future
+			final FixpointEngineFutureParameterFactory domFac =
+					new FixpointEngineFutureParameterFactory(root, services);
+			final IAbstractDomain<STATE, IcfgEdge> domain = domFac.selectDomainFutureCfg();
+			if (domain instanceof LiveVariableDomain<?>) {
+				throw new UnsupportedOperationException(
+						"Operation is not supported, because BackwardFixpointEngine does not support Interferences.");
+			}
+
+			final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
+			final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
+			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+					domFac.createParamsFuture(timer, transProvider, loopDetector, domain);
+			fxpe = new FixpointEngine<>(params);
+			pfxpec = domFac.createParamsFuture(timer, transProvider, loopDetector, domain);
+		} else {
+			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpe =
+					buildParameters(root, timer, services, false);
+			fxpe = new FixpointEngine<>(pfxpe);
+			pfxpec = buildParameters(root, timer, services, false);
+		}
 		// Two Parameters are needed, because two separate storages are needed
-		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpec =
-				buildParameters(root, timer, services, false);
-		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> pfxpe =
-				buildParameters(root, timer, services, false);
 		final FixpointEngineConcurrent<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpec =
-				new FixpointEngineConcurrent<>(pfxpec, root, new FixpointEngine<>(pfxpe), services);
+				new FixpointEngineConcurrent<>(pfxpec, root, fxpe, services);
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpec.run(root.getInitialNodes(), script);
 
