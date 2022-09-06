@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -47,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inform
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.AbstractionAwareDeadEndOptimizingVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.AbstractionAwareDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.CoveringMode;
@@ -54,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizi
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.MonitoredIndependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
@@ -122,7 +126,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mItpAutomata;
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
-	private final boolean mSupportsDeadEnds;
+	private final boolean mHasAbstraction;
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
@@ -138,15 +142,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
 
 		mPartialOrderMode = mPref.getPartialOrderMode();
-		if (mPref.applyOneShotLbe()) {
-			boolean hasAbstraction = false;
-			for (int i = 0; !hasAbstraction && i < mPref.getNumberOfIndependenceRelations(); ++i) {
-				hasAbstraction |= mPref.porIndependenceSettings(i).getAbstractionType() != AbstractionType.NONE;
-			}
-			if (mPartialOrderMode.hasPersistentSets() || hasAbstraction) {
-				throw new UnsupportedOperationException(
-						"Soundness is currently not guaranteed for this CEGAR loop if one-shot LBE is turned on.");
-			}
+		mHasAbstraction = IntStream.range(0, mPref.getNumberOfIndependenceRelations())
+				.anyMatch(i -> mPref.porIndependenceSettings(0).getAbstractionType() != AbstractionType.NONE);
+
+		if (mPref.applyOneShotLbe() && (mHasAbstraction || mPartialOrderMode.hasPersistentSets())) {
+			throw new UnsupportedOperationException(
+					"Soundness is currently not guaranteed for this CEGAR loop if one-shot LBE is turned on.");
 		}
 
 		mIndependenceProviders = independenceProviders;
@@ -163,16 +164,21 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			provider.initialize();
 		}
 
-		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceProviders.stream()
-				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
+		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceProviders.stream().map(provider -> {
+			var independence = provider.retrieveIndependence();
+			if (provider instanceof IndependenceProviderWithAbstraction<?, ?>) {
+				independence = new MonitoredIndependence<>(independence);
+			}
+			return independence;
+		}).collect(Collectors.toList());
 
-		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
+		final boolean supportsDeadEnds = true || mPref.getNumberOfIndependenceRelations() == 1
 				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
 
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs, mPartialOrderMode,
 				mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations, this::makeBudget,
-				mSupportsDeadEnds ? this::createDeadEndStore : null);
-		assert mSupportsDeadEnds == (mDeadEndStore != null);
+				supportsDeadEnds ? this::createDeadEndStore : null);
+		assert supportsDeadEnds == (mDeadEndStore != null);
 
 		mProgram = initialAbstraction;
 	}
@@ -231,7 +237,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		for (int i = 0; i < mIndependenceProviders.size(); ++i) {
 			final var container = mIndependenceProviders.get(i);
 			container.refine(mRefinementResult);
-			mPOR.replaceIndependence(i, container.retrieveIndependence());
+			var independence = container.retrieveIndependence();
+
+			if (container instanceof IndependenceProviderWithAbstraction<?, ?>) {
+				((AbstractionAwareDeadEndStore<?, ?, Object>) mDeadEndStore)
+						.updateLevel(((IndependenceProviderWithAbstraction) container).mAbstractionLevel);
+				independence = new MonitoredIndependence<>(independence);
+			}
+			mPOR.replaceIndependence(i, independence);
 		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
@@ -311,11 +324,25 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					CoveringMode.PRUNE);
 		}
 
-		if (mSupportsDeadEnds) {
-			visitor = new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, false);
+		if (mDeadEndStore != null) {
+			if (mHasAbstraction) {
+				final var prov = (IndependenceProviderWithAbstraction<L, ?>) mIndependenceProviders.get(0);
+				visitor = makeDeadEndVisitor(prov, visitor);
+			} else {
+				visitor = new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, false);
+			}
 		}
 
 		return visitor;
+	}
+
+	private <H> IDfsVisitor<L, IPredicate> makeDeadEndVisitor(final IndependenceProviderWithAbstraction<L, H> provider,
+			final IDfsVisitor<L, IPredicate> visitor) {
+		final var deVisitor = new AbstractionAwareDeadEndOptimizingVisitor<>(visitor, provider.mAbstractionLevel,
+				(AbstractionAwareDeadEndStore<?, IPredicate, H>) mDeadEndStore, false, true,
+				provider.mRefinableAbstraction);
+		((MonitoredIndependence<L, IPredicate>) mPOR.getIndependence(0)).register(deVisitor.getMonitor());
+		return deVisitor;
 	}
 
 	private void switchToOnDemandConstructionMode() {
@@ -423,9 +450,18 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (splitter == null) {
 			mDeadEndStore = new IDeadEndStore.ProductDeadEndStore<>(getUnderlying, getInterpolants);
 		} else {
-			mDeadEndStore = new IDeadEndStore.ProductDeadEndStore<>(getUnderlying.compose(splitter::getOriginal),
-					state -> new Pair<>(splitter.getExtraInfo(state),
-							getInterpolants.apply(splitter.getOriginal(state))));
+			if (mHasAbstraction) {
+				final var abstr = ((IndependenceProviderWithAbstraction<L, ?>) mIndependenceProviders
+						.get(0)).mRefinableAbstraction; /* TODO */
+				mDeadEndStore = new AbstractionAwareDeadEndStore<>(getUnderlying.compose(splitter::getOriginal),
+						state -> new Pair<>(splitter.getExtraInfo(state),
+								getInterpolants.apply(splitter.getOriginal(state))),
+						abstr.getHierarchy());
+			} else {
+				mDeadEndStore = new IDeadEndStore.ProductDeadEndStore<>(getUnderlying.compose(splitter::getOriginal),
+						state -> new Pair<>(splitter.getExtraInfo(state),
+								getInterpolants.apply(splitter.getOriginal(state))));
+			}
 		}
 		return mDeadEndStore;
 	}
@@ -460,7 +496,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		@Override
 		public IPredicate union(final IPredicate state1, final IPredicate state2) {
 			final IPredicate newState = createUnion(state1, state2);
-			if (mSupportsDeadEnds) {
+			if (mDeadEndStore != null) {
 				mDeadEndStore.copyDeadEndInformation(state1, newState);
 			}
 			return newState;

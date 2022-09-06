@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
  */
 class IndependenceProviderWithAbstraction<L extends IIcfgTransition<?>, H>
 		implements IRefinableIndependenceProvider<L> {
-	private final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> mRefinableAbstraction;
+	public final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> mRefinableAbstraction;
 	private final IIndependenceRelation<IPredicate, L> mUnderlyingIndependence;
-	private H mAbstractionLevel;
+	public H mAbstractionLevel;
 
 	public IndependenceProviderWithAbstraction(
 			final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> abstraction,
