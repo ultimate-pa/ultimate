@@ -139,32 +139,42 @@ public class MultiDimensionalNestedStore {
 		return mds;
 	}
 
-//	public static MultiDimensionalNestedStore convert(final Term term) {
-//		if (!term.getSort().isArraySort()) {
-//			throw new IllegalArgumentException("no array");
-//		}
-////		final int dimension = new MultiDimensionalSort(term.getSort()).getDimension();
-//		final LinkedList<ArrayIndex> indices = new LinkedList<>();
-//		final LinkedList<Term> values = new LinkedList<>();
-//		Term currentArray = term;
-//		MultiDimensionalStore currentStore = MultiDimensionalStore.convert(term);
-//		if (currentStore == null) {
-//			return null;
-//		}
-////		if (currentStore.getDimension() != dimension) {
-////			return null;
-//////			throw new AssertionError("illegal dimension");
-////		}
-//		final int firstSeenDimension = currentStore.getDimension();
-//		while (currentStore != null && (currentStore.getDimension() == firstSeenDimension)) {
-//			indices.addFirst(currentStore.getIndex());
-//			values.addFirst(currentStore.getValue());
-//			currentArray = currentStore.getArray();
-//			currentStore = MultiDimensionalStore.convert(currentArray);
-//		}
-//		return new MultiDimensionalNestedStore(currentArray, indices, values);
-//	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mArray == null) ? 0 : mArray.hashCode());
+		result = prime * result + ((mIndices == null) ? 0 : mIndices.hashCode());
+		result = prime * result + ((mValues == null) ? 0 : mValues.hashCode());
+		return result;
+	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final MultiDimensionalNestedStore other = (MultiDimensionalNestedStore) obj;
+		if (mArray == null) {
+			if (other.mArray != null)
+				return false;
+		} else if (!mArray.equals(other.mArray))
+			return false;
+		if (mIndices == null) {
+			if (other.mIndices != null)
+				return false;
+		} else if (!mIndices.equals(other.mIndices))
+			return false;
+		if (mValues == null) {
+			if (other.mValues != null)
+				return false;
+		} else if (!mValues.equals(other.mValues))
+			return false;
+		return true;
+	}
 
 	public static MultiDimensionalNestedStore convert(final Script script, final Term term) {
 		MultiDimensionalNestedStore result = convert1mdseq(script, term);
