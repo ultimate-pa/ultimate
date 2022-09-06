@@ -362,7 +362,68 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			}
 		}
 
-		return procedureInterferences;
+		// Test if Subsetfiltering is helping
+		return filteringForSubSets(procedureInterferences);
+	}
+
+	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>>
+			filteringForSubSets(final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> oldset) {
+		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> result = new HashSet<>();
+		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> copy = new HashSet<>();
+		result.addAll(oldset);
+		copy.addAll(oldset);
+		mLogger.info("Size before: " + oldset.size());
+		for (final var map1 : oldset) {
+			final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> toRemove = new HashSet<>();
+			for (final var map2 : copy) {
+				if (!map1.equals(map2)) {
+					final Map<ACTION, DisjunctiveAbstractState<STATE>> temp = isSubset(map1, map2);
+					if (temp != null) {
+						result.remove(temp);
+						toRemove.add(temp);
+					}
+				}
+			}
+			copy.removeAll(toRemove);
+		}
+		mLogger.info("Size after: " + result.size());
+		return result;
+	}
+
+	/***
+	 *
+	 * @param map1
+	 * @param map2
+	 * @return map1, iff for every ACTION holds, that the state in map1 is a subset of the state in map2. map2, for the
+	 *         reversed condition. And if none of the above holds, then it returns null
+	 */
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> isSubset(
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> map1,
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> map2) {
+		int counter = 0;
+		for (final var entry : map1.entrySet()) {
+			final DisjunctiveAbstractState<STATE> state = map2.get(entry.getKey());
+			if (state == null) {
+				return null;
+			}
+
+			if (entry.getValue().isSubsetOf(state) == SubsetResult.NON_STRICT) {
+				counter++;
+			} else if (state.isSubsetOf(entry.getValue()) == SubsetResult.NON_STRICT) {
+				counter--;
+			}
+		}
+
+		if (counter == map1.size() && counter > 0) {
+			// mLogger.info(map1 + " is Subset of " + map2);
+			return map1;
+		}
+
+		if (counter == map2.size() && counter < 0) {
+			// mLogger.info(map2 + " is Subset of " + map1);
+			return map2;
+		}
+		return null;
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> handlingLoops(final String procedure,
@@ -393,8 +454,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 
-		final Set<IProgramVarOrConst> globalVariables = mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
-				.getModifiedBoogieVars(procedure).stream().collect(Collectors.toSet());
+		final Set<IProgramVarOrConst> globalVariables = mFecUtils.getGlobalVars();
 		DisjunctiveAbstractState<STATE> state = null;
 		for (final LOC forkLocation : mFecUtils.forkedAt(procedure)) {
 			DisjunctiveAbstractState<STATE> forkedState = flattenAbstractStates(loc2States.get(forkLocation));

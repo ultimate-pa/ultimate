@@ -84,6 +84,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private final List<String> mTopologicalOrder;
 	private final HashRelation<ACTION, ACTION> mDominates;
 
+	private final Set<IProgramVarOrConst> mGlobalVars;
+
 	private final Collection<Set<IProgramVarOrConst>> mDependenciesBetweenVars;
 
 	private final Map<String, Set<Map<LOC, Set<ACTION>>>> mCrossProducts;
@@ -105,14 +107,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		mForks = new HashRelation<>();
 		mActionsInProcedure = new HashRelation<>();
 		mParallelProcedures = new HashSet<>();
-
 		mCrossProducts = new HashMap<>();
-
 		mTopologicalOrder = new ArrayList<>();
-
 		mDependenciesBetweenVars = new HashSet<>();
-
 		mDominates = new HashRelation<>();
+		mGlobalVars = new HashSet<>();
 
 		initialize(mIcfg.getProcedureEntryNodes());
 	}
@@ -277,7 +276,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	public Set<Map<LOC, Set<ACTION>>> getCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
 		final var crossProduct = mCrossProducts.get(procedure);
 		if (crossProduct == null) {
-			return computeCrossProduct(filter, procedure, mDependenciesBetweenVars);
+			return computeCrossProduct(filter, procedure);
 		}
 		return crossProduct;
 	}
@@ -301,6 +300,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	public Set<IProgramVarOrConst> getReadVars(final ACTION action) {
 		return mSharedReadReadVars.getImage(action);
+	}
+
+	public Set<IProgramVarOrConst> getGlobalVars() {
+		return mGlobalVars;
 	}
 
 	public boolean canReadFromInterference(final ACTION read, final ACTION write) {
@@ -424,7 +427,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		computeTopologicalOrder(entryNodes.keySet());
-
+		computeGlobalVars();
 		computeDependenciesBetweenVars();
 	}
 
@@ -561,10 +564,9 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return edgeIterator.asStream().anyMatch(edge -> edge.equals(action));
 	}
 
-	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure,
-			final Collection<Set<IProgramVarOrConst>> sets) {
+	private Set<Map<LOC, Set<ACTION>>> computeCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
 		Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
-		for (final var variables : sets) {
+		for (final var variables : mDependenciesBetweenVars) {
 			final Set<Map<LOC, Set<ACTION>>> temp = computeCrossProductForSetOfVars(filter, procedure, variables);
 			if (result.isEmpty()) {
 				result.addAll(temp);
@@ -579,11 +581,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private Set<Map<LOC, Set<ACTION>>> computeCrossProductForSetOfVars(final IFilter<ACTION, LOC> filter,
 			final String procedure, final Set<IProgramVarOrConst> variables) {
-		mLogger.info("Cross Product Computation started for " + procedure);
+		mLogger.info("Cross Product Computation started for " + procedure + " with variables: " + variables);
 		// TODO: log the variables
 		final Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
-		// reads can read from several global variables -> should LOC - Set<ACTION>
 		final Map<LOC, List<Set<ACTION>>> writes = new LinkedHashMap<>();
 		int n = 1;
 		final Set<ACTION> reads = getReads(procedure);
@@ -829,6 +830,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 		}
 
+		// mDependenciesBetweenVars.add(mGlobalVars);
+
 		if (result.size() == 1) {
 			result.removeAll(nonGlobalVars);
 			mDependenciesBetweenVars.addAll(result.getAllEquivalenceClasses());
@@ -1057,5 +1060,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 
 		return true;
+	}
+
+	private void computeGlobalVars() {
+		for (final var procedure : mTopologicalOrder) {
+			mGlobalVars.addAll(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure));
+		}
 	}
 }
