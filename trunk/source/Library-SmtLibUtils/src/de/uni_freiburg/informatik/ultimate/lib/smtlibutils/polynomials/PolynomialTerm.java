@@ -115,7 +115,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	private static Rational calculateProductCoefficient(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		Rational newCoeff;
 		if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-			newCoeff = PolynomialTermUtils.bringValueInRange(poly1.getConstant().mul(poly2.getConstant()),
+			newCoeff = PolynomialTermUtils.bringBitvectorValueInRange(poly1.getConstant().mul(poly2.getConstant()),
 					poly1.getSort());
 		} else {
 			newCoeff = poly1.getConstant().mul(poly2.getConstant());
@@ -158,7 +158,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 				}
 
 				if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-					newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
+					newCoeff = PolynomialTermUtils.bringBitvectorValueInRange(tempCoeff, poly1.getSort());
 				} else {
 					newCoeff = tempCoeff;
 				}
@@ -191,7 +191,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			}
 
 			if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-				newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
+				newCoeff = PolynomialTermUtils.bringBitvectorValueInRange(tempCoeff, poly1.getSort());
 			} else {
 				newCoeff = tempCoeff;
 			}
@@ -360,17 +360,21 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		final HashMap<Monomial, Rational> newAbstractVariable2Coefficient = new HashMap<>();
 		for (final Entry<Monomial, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			if (!entry.getKey().equals(monomialOfSubject)) {
-				newAbstractVariable2Coefficient.put(entry.getKey(), entry.getValue().negate());
+				final Rational newCoefficient = PolynomialTermUtils.bringValueInRange(entry.getValue().negate(),
+						getSort());
+				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
 				if (!entry.getKey().isLinear()) {
 					allMonomialsAreLinear = false;
 				}
 			}
 		}
+		final Rational newConstant = PolynomialTermUtils.bringValueInRange(getConstant().negate(), getSort());
 		if (allMonomialsAreLinear) {
-			final Map<Term, Rational> map = newAbstractVariable2Coefficient.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSingleVariable(), x -> x.getValue()));
-			return new AffineTerm(getSort(), getConstant().negate(), map);
+			final Map<Term, Rational> map = newAbstractVariable2Coefficient.entrySet().stream()
+					.collect(Collectors.toMap(x -> x.getKey().getSingleVariable(), x -> x.getValue()));
+			return new AffineTerm(getSort(), newConstant, map);
 		} else {
-			return new PolynomialTerm(getSort(), getConstant().negate(), newAbstractVariable2Coefficient);
+			return new PolynomialTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 		}
 	}
 

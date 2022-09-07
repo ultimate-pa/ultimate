@@ -447,7 +447,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		} else if (SmtSortUtils.isIntSort(getSort())) {
 			newConstant = getConstant().add(offset);
 		} else if (SmtSortUtils.isBitvecSort(getSort())) {
-			newConstant = PolynomialTermUtils.bringValueInRange(getConstant().add(offset), getSort());
+			newConstant = PolynomialTermUtils.bringBitvectorValueInRange(getConstant().add(offset), getSort());
 		} else {
 			throw new AssertionError("unsupported Sort " + getSort());
 		}
