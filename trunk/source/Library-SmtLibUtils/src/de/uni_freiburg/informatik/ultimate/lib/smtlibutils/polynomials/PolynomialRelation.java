@@ -136,9 +136,9 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 	}
 
-	public PolynomialRelation(final Script script, final TransformInequality transformInequality,
-			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs,
-			final AbstractGeneralizedAffineTerm<?> polyRhs, final Term originalTerm) {
+	public PolynomialRelation(final TransformInequality transformInequality, final RelationSymbol relationSymbol,
+			final AbstractGeneralizedAffineTerm<?> polyLhs, final AbstractGeneralizedAffineTerm<?> polyRhs,
+			final Term originalTerm) {
 		mOriginalTerm = originalTerm;
 		final AbstractGeneralizedAffineTerm<Term> difference =
 				sum(checkThenCast(polyLhs), mul(checkThenCast(polyRhs), Rational.MONE));
@@ -561,7 +561,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			return null;
 		}
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
-		return new PolynomialRelation(script, transformInequality, relationSymbol, polyLhs, polyRhs, term);
+		return new PolynomialRelation(transformInequality, relationSymbol, polyLhs, polyRhs, term);
 	}
 
 	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
