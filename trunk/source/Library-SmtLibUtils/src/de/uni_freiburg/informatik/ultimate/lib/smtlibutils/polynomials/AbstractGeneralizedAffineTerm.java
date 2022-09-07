@@ -101,7 +101,15 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
+		assert !SmtSortUtils.isBitvecSort(s) || !constant.isNegative() : "Negative constant in bitvector term";
+		assert !SmtSortUtils.isBitvecSort(s)
+				|| allCoefficientsAreNonNegative(variables2coeffcient) : "Negative coefficients in bitvector term "
+						+ variables2coeffcient;
 		mAbstractVariable2Coefficient = variables2coeffcient;
+	}
+
+	private static boolean allCoefficientsAreNonNegative(final Map<?, Rational> variables2coeffcient) {
+		return variables2coeffcient.entrySet().stream().allMatch(x -> !x.getValue().isNegative());
 	}
 
 	protected abstract IPolynomialTerm constructNew(final Sort sort, final Rational constant,
