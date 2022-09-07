@@ -2730,14 +2730,19 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return true iff this number is the binary representation of a bitvector whose two's complement representation is
-	 *         -1 (i.e., minus one).
+	 * @return true iff this number is the binary representation of a bitvector
+	 *         whose two's complement representation is -1 (i.e., minus one).
+	 *         Exclude however the special case where bitvectors have length 1 and
+	 *         hence -1 and 1 coincide.
 	 */
 	// <pre>
 	// TODO #bvineq 20201017 Matthias:
 	// The name of this method might be misleading.
 	// </pre>
-	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
+	public static boolean isBvMinusOneButNotOne(final Rational number, final Sort bvSort) {
+		if (SmtSortUtils.getBitvectorLength(bvSort) == 1) {
+			return false;
+		}
 		if (number.equals(Rational.MONE)) {
 			return true;
 		}

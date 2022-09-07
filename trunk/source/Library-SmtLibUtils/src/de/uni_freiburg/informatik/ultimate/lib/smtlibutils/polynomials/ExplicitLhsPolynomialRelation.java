@@ -256,7 +256,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	public static boolean swapOfRelationSymbolRequired(final Rational divisor, final Sort sort) {
-		return divisor.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOne(divisor, sort));
+		return divisor.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOneButNotOne(divisor, sort));
 	}
 
 	public Pair<ExplicitLhsPolynomialRelation, Term> divideByIntegerCoefficient(final Script script,
