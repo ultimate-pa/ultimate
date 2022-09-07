@@ -380,7 +380,7 @@ public class PolynomialTermUtils {
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm... summands) {
 		final Sort sort = summands[0].getSort();
 		final Map<MNL, Rational> variable2Coefficient = new HashMap<>();
-		Rational constant = Rational.ZERO;
+		Rational newConstant = Rational.ZERO;
 		for (final IPolynomialTerm term : summands) {
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
 				// assert summand.getKey().getSort() == mSort : "Sort mismatch: " +
@@ -389,12 +389,7 @@ public class PolynomialTermUtils {
 				if (coeff == null) {
 					variable2Coefficient.put(summand.getKey(), summand.getValue());
 				} else {
-					final Rational newCoeff;
-					if (SmtSortUtils.isBitvecSort(sort)) {
-						newCoeff = bringBitvectorValueInRange(coeff.add(summand.getValue()), sort);
-					} else {
-						newCoeff = coeff.add(summand.getValue());
-					}
+					final Rational newCoeff = bringValueInRange(coeff.add(summand.getValue()), sort);
 					if (newCoeff.equals(Rational.ZERO)) {
 						variable2Coefficient.remove(summand.getKey());
 					} else {
@@ -402,13 +397,9 @@ public class PolynomialTermUtils {
 					}
 				}
 			}
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				constant = bringBitvectorValueInRange(constant.add(term.getConstant()), sort);
-			} else {
-				constant = constant.add(term.getConstant());
-			}
+			newConstant = bringValueInRange(newConstant.add(term.getConstant()), sort);
 		}
-		return constructor.apply(sort, constant, variable2Coefficient);
+		return constructor.apply(sort, newConstant, variable2Coefficient);
 	}
 
 	/**
@@ -442,13 +433,8 @@ public class PolynomialTermUtils {
 			sort = term.getSort();
 			constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
-				final Rational newCoefficient;
-				if (SmtSortUtils.isBitvecSort(sort)) {
-					newCoefficient = PolynomialTermUtils.bringBitvectorValueInRange(summand.getValue().mul(multiplier),
-							sort);
-				} else {
-					newCoefficient = summand.getValue().mul(multiplier);
-				}
+				final Rational newCoefficient = PolynomialTermUtils
+						.bringValueInRange(summand.getValue().mul(multiplier), sort);
 				variable2Coefficient.put(summand.getKey(), newCoefficient);
 			}
 		}
