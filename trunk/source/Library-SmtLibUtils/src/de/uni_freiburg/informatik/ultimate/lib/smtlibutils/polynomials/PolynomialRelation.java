@@ -526,8 +526,13 @@ public class PolynomialRelation implements IBinaryRelation {
 
 	@Override
 	public String toString() {
-		return String.format("(%s, %s, %s)", mRelationSymbol.toString(), mPolynomialTerm.toString(),
-				Rational.ZERO.toTerm(mPolynomialTerm.getSort()).toString());
+		final String zero;
+		if (SmtSortUtils.isBitvecSort(getPolynomialTerm().getSort())) {
+			zero = BitvectorUtils.constructBitvectorConstant(BigInteger.ZERO, getPolynomialTerm().getSort()).toString();
+		} else {
+			zero = Rational.ZERO.toTerm(mPolynomialTerm.getSort()).toString();
+		}
+		return String.format("(%s, %s, %s)", mRelationSymbol.toString(), mPolynomialTerm.toString(), zero);
 	}
 
 	public static PolynomialRelation convert(final Script script, final Term term) {
