@@ -441,12 +441,7 @@ public class PolynomialTermUtils {
 		} else {
 			variable2Coefficient = new HashMap<>();
 			sort = term.getSort();
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				constant = PolynomialTermUtils.bringBitvectorValueInRange(term.getConstant().mul(multiplier), sort);
-			} else {
-				assert sort.isNumericSort();
-				constant = term.getConstant().mul(multiplier);
-			}
+			constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
 				final Rational newCoefficient;
 				if (SmtSortUtils.isBitvecSort(sort)) {
