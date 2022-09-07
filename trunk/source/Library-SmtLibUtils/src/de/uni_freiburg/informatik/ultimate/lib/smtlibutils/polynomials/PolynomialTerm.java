@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils.GeneralizedConstructor;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -142,13 +141,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 				} else {
 					tempCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
 				}
-
-				if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-					newCoeff = PolynomialTermUtils.bringBitvectorValueInRange(tempCoeff, poly1.getSort());
-				} else {
-					newCoeff = tempCoeff;
-				}
-
+				newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
 				if (!newCoeff.equals(Rational.ZERO)) {
 					builder.put(mono, newCoeff);
 				}
@@ -175,13 +168,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			} else {
 				tempCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
 			}
-
-			if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-				newCoeff = PolynomialTermUtils.bringBitvectorValueInRange(tempCoeff, poly1.getSort());
-			} else {
-				newCoeff = tempCoeff;
-			}
-
+			newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
 			if (!newCoeff.equals(Rational.ZERO)) {
 				builder.put(summand.getKey(), newCoeff);
 			}
