@@ -424,8 +424,7 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	static <T extends IPolynomialTerm, MNL> T constructMul(
-			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
+	static <T extends IPolynomialTerm, MNL> T constructMul(final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm term, final Rational multiplier) {
 		final Sort sort;
 		final Rational constant;
@@ -445,7 +444,8 @@ public class PolynomialTermUtils {
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
 				final Rational newCoefficient;
 				if (SmtSortUtils.isBitvecSort(sort)) {
-					newCoefficient = PolynomialTermUtils.bringBitvectorValueInRange(summand.getValue().mul(multiplier), sort);
+					newCoefficient = PolynomialTermUtils.bringBitvectorValueInRange(summand.getValue().mul(multiplier),
+							sort);
 				} else {
 					newCoefficient = summand.getValue().mul(multiplier);
 				}
