@@ -525,6 +525,34 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mPolynomialTerm == null) ? 0 : mPolynomialTerm.hashCode());
+		result = prime * result + ((mRelationSymbol == null) ? 0 : mRelationSymbol.toString().hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final PolynomialRelation other = (PolynomialRelation) obj;
+		if (mPolynomialTerm == null) {
+			if (other.mPolynomialTerm != null)
+				return false;
+		} else if (!mPolynomialTerm.equals(other.mPolynomialTerm))
+			return false;
+		if (mRelationSymbol != other.mRelationSymbol)
+			return false;
+		return true;
+	}
+
+	@Override
 	public String toString() {
 		final String zero;
 		if (SmtSortUtils.isBitvecSort(getPolynomialTerm().getSort())) {
