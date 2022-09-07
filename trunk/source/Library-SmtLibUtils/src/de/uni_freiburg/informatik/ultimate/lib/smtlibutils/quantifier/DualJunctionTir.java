@@ -998,7 +998,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					resultRhs = rhs;
 				}
 				result = new PolynomialRelation(TransformInequality.NO_TRANFORMATION, relSymbAndOffset.getFirst(),
-						(AbstractGeneralizedAffineTerm<?>) resultLhs, (AbstractGeneralizedAffineTerm<?>) resultRhs).positiveNormalForm(script);
+						(AbstractGeneralizedAffineTerm<?>) resultLhs, (AbstractGeneralizedAffineTerm<?>) resultRhs)
+								.positiveNormalForm(script);
 			}
 			return result;
 		}
