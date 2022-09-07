@@ -103,24 +103,10 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * polynomialTerms.
 	 */
 	public static IPolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		final Sort s = poly1.getSort();
-		final Rational coeff = calculateProductCoefficient(poly1, poly2);
+		final Rational newConstant = PolynomialTermUtils
+				.bringBitvectorValueInRange(poly1.getConstant().mul(poly2.getConstant()), poly1.getSort());
 		final Map<Monomial, Rational> polyMap = calculateProductMap(poly1, poly2);
-		return minimalRepresentation(s, coeff, polyMap);
-	}
-
-	/**
-	 * Calculate the Coefficient of the product of two polynomials.
-	 */
-	private static Rational calculateProductCoefficient(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		Rational newCoeff;
-		if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-			newCoeff = PolynomialTermUtils.bringBitvectorValueInRange(poly1.getConstant().mul(poly2.getConstant()),
-					poly1.getSort());
-		} else {
-			newCoeff = poly1.getConstant().mul(poly2.getConstant());
-		}
-		return newCoeff;
+		return minimalRepresentation(poly1.getSort(), newConstant, polyMap);
 	}
 
 	/**
