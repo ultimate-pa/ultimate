@@ -598,6 +598,17 @@ public class PolynomialRelation implements IBinaryRelation {
 		return new PolynomialRelation(transformInequality, relationSymbol, polyLhs, polyRhs);
 	}
 
+	public static PolynomialRelation of(final Script script, final RelationSymbol relationSymbol, final Term lhs,
+			final Term rhs) {
+		final IPolynomialTerm lhsPoly = PolynomialTermTransformer.convert(script, lhs);
+		final IPolynomialTerm rhsPoly = PolynomialTermTransformer.convert(script, rhs);
+		if (lhsPoly == null || rhsPoly == null) {
+			throw new AssertionError("lhs or rhs not suitable for polynomial");
+		}
+		return new PolynomialRelation(TransformInequality.NO_TRANFORMATION, relationSymbol,
+				(AbstractGeneralizedAffineTerm<?>) lhsPoly, (AbstractGeneralizedAffineTerm<?>) rhsPoly);
+	}
+
 	private static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
 		return (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, term);
 	}

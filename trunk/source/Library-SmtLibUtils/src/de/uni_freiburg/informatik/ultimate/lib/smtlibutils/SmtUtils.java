@@ -762,17 +762,7 @@ public final class SmtUtils {
 		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
 			throw new UnsupportedOperationException("need BitVec sort");
 		}
-		final BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(lhs);
-		if (fstbw != null) {
-			final BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(rhs);
-			if (sndbw != null) {
-				if (fstbw.equals(sndbw)) {
-					return script.term("true");
-				}
-				return script.term("false");
-			}
-		}
-		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
 	}
 
 	/**
@@ -786,25 +776,7 @@ public final class SmtUtils {
 		if (!rhs.getSort().isNumericSort()) {
 			throw new UnsupportedOperationException("need numeric sort");
 		}
-		if (!(lhs instanceof ConstantTerm)) {
-			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
-		}
-		if (!(rhs instanceof ConstantTerm)) {
-			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
-		}
-		final ConstantTerm lhsConst = (ConstantTerm) lhs;
-		final ConstantTerm rhsConst = (ConstantTerm) rhs;
-		final Rational lhsValue = toRational(lhsConst);
-		final Rational rhsValue = toRational(rhsConst);
-		if (!lhsValue.getClass().isAssignableFrom(rhsValue.getClass())
-				&& rhsValue.getClass().isAssignableFrom(lhs.getClass())) {
-			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
-					+ lhsValue.getClass().getSimpleName() + " second value is " + rhsValue.getClass().getSimpleName());
-		}
-		if (lhsValue.equals(rhsValue)) {
-			return script.term("true");
-		}
-		return script.term("false");
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
 	}
 
 	/**
@@ -1318,15 +1290,16 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return term that is equivalent to lhs X rhs where X is either leq, less, geq, or greater.
+	 * @return term that is equivalent to lhs X rhs where X is either leq, less,
+	 *         geq, or greater.
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
-		final Term rawTerm = script.term(functionSymbol, lhs, rhs);
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script, rawTerm);
-		if (polyRel == null) {
-			return rawTerm;
+		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
+			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs)
+					.positiveNormalForm(script);
+		} else {
+			return script.term(functionSymbol, lhs, rhs);
 		}
-		return polyRel.positiveNormalForm(script);
 	}
 
 	/**
