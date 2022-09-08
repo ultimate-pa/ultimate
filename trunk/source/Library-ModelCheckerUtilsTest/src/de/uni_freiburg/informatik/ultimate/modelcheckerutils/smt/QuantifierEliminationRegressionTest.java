@@ -2019,7 +2019,7 @@ public class QuantifierEliminationRegressionTest {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "a") };
 		final String inputSTR = "(exists ((x (_ BitVec 32)) (y (_ BitVec 32))) (and (= x (bvmul (_ bv2 32) y)) (= (bvmul (_ bv2 32) x) (bvadd a (bvmul (_ bv4 32) y)))))";
 		final String expectedResult = inputSTR;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
