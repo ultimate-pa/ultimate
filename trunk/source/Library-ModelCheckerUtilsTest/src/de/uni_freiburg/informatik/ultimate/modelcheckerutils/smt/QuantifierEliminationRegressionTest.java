@@ -2006,6 +2006,22 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void sameVarOnBothSides01ContextInauguration() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "k", "i", "x", "y") };
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= k i) (or (= (+ 0 (select a k)) (+ x (select a i))) (= (+ 1 (select a k)) (+ y (select a i))))))";
+		final String expectedResultAsString = "(and (= i k) (or (= y 1) (= x 0)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void sameVarOnBothSides02Bitvector() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "a") };
+		final String inputSTR = "(exists ((x (_ BitVec 32)) (y (_ BitVec 32))) (and (= x (bvmul (_ bv2 32) y)) (= (bvmul (_ bv2 32) x) (bvadd a (bvmul (_ bv4 32) y)))))";
+		final String expectedResult = inputSTR;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	//@formatter:on
 }
