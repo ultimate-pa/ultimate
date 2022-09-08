@@ -303,15 +303,6 @@ public class QuantifierEliminationTodos {
 	}
 
 
-	@Test
-	public void loop_lit_gsv2008() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "main_~main__x~0", "main_~main__y~0"),
-			};
-		final String formulaAsString = "(exists ((aux_div_v_main_~main__x~0_21_53 Int) (v_main_~main__y~0_25 Int)) (and (<= (+ 52 main_~main__x~0) (+ v_main_~main__y~0_25 (* aux_div_v_main_~main__x~0_21_53 2))) (<= (+ v_main_~main__y~0_25 1) main_~main__y~0) (<= (+ aux_div_v_main_~main__x~0_21_53 4) (* 2 v_main_~main__y~0_25))))";
-		final String expectedResult = null;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
 
 
 
