@@ -1294,10 +1294,29 @@ public final class SmtUtils {
 	 *         geq, or greater.
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
+		final RelationSymbol rel = RelationSymbol.convert(functionSymbol);
+		if (rel == null) {
+			throw new AssertionError("Unknown RelationSymbol" + functionSymbol);
+		}
+		if (!rel.isConvexInequality()) {
+			throw new AssertionError("Not a comparison " + functionSymbol);
+		}
+		if (lhs == rhs) {
+			// This check is helpful for bitvector inequalities which cannot be converted to
+			// PolynomialRelations.
+			if (rel.isStrictRelation()) {
+				return script.term("false");
+			} else {
+				return script.term("true");
+			}
+		}
 		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
 			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs)
 					.positiveNormalForm(script);
 		} else {
+			assert SmtSortUtils.isBitvecSort(lhs.getSort());
+			// TODO 20220908 Matthias: Minor improvements still possible. E.g., everything
+			// is bvule 0.
 			return script.term(functionSymbol, lhs, rhs);
 		}
 	}
