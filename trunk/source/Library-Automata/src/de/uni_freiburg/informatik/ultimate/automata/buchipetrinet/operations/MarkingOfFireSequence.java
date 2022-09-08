@@ -23,6 +23,7 @@ public class MarkingOfFireSequence<LETTER, PLACE> {
 	private final Set<Pair<Marking<PLACE>, Integer>> mHondaMarkingsOfFireSequence;
 	private final int mFireSequenceIndex;
 	private final int mLastIndexOfShootingAcceptingStateInFireSequence;
+	private final int mLastIndexOfShootingFinitePlaceInFireSequence;
 
 	/*
 	 * Constructor.
@@ -36,11 +37,13 @@ public class MarkingOfFireSequence<LETTER, PLACE> {
 	 * place was last shot with a token.
 	 */
 	public MarkingOfFireSequence(final Marking<PLACE> marking, final Set<Pair<Marking<PLACE>, Integer>> hondaMarkings,
-			final int fireSequenceIndex, final int lastIndexOfShootingAcceptingStateInFireSequence) {
+			final int fireSequenceIndex, final int lastIndexOfShootingAcceptingStateInFireSequence,
+			final int lastIndexOfShootingFinitePlaceInFireSequence) {
 		mMarking = marking;
 		mHondaMarkingsOfFireSequence = hondaMarkings;
 		mFireSequenceIndex = fireSequenceIndex;
 		mLastIndexOfShootingAcceptingStateInFireSequence = lastIndexOfShootingAcceptingStateInFireSequence;
+		mLastIndexOfShootingFinitePlaceInFireSequence = lastIndexOfShootingFinitePlaceInFireSequence;
 	}
 
 	public final Marking<PLACE> getMarking() {
@@ -65,6 +68,10 @@ public class MarkingOfFireSequence<LETTER, PLACE> {
 
 	public final int getLastIndexOfShootingAcceptingStateInFireSequence() {
 		return mLastIndexOfShootingAcceptingStateInFireSequence;
+	}
+
+	public final int getLastIndexOfShootingFinitePlaceInFireSequence() {
+		return mLastIndexOfShootingFinitePlaceInFireSequence;
 	}
 
 }

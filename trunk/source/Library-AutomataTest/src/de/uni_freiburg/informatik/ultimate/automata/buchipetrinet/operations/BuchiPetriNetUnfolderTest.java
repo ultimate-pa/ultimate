@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiPetriNetUnfolder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -41,9 +42,9 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p2")));
 
 		final BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
-				BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, false, mCheckerType);
+				PetriNetUnfolder.EventOrderEnum.ERV, false, false, mCheckerType);
 
-		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = unfolder.getAcceptingRun() != null;
 		assertThat("Lasso should be found.", test);
 	}
 
@@ -70,9 +71,9 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("f", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 
 		final BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
-				BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, true, mCheckerType);
+				PetriNetUnfolder.EventOrderEnum.ERV, false, true, mCheckerType);
 
-		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = unfolder.getAcceptingRun() != null;
 		assertThat("Lasso should be found.", test);
 	}
 
@@ -101,9 +102,9 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
 		final BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
-				BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, true, mCheckerType);
+				PetriNetUnfolder.EventOrderEnum.ERV, false, true, mCheckerType);
 
-		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = unfolder.getAcceptingRun() != null;
 		assertThat("Lasso should not be found, language empty.", !test);
 	}
 
@@ -123,9 +124,9 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
 		final BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
-				BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, false, mCheckerType);
+				PetriNetUnfolder.EventOrderEnum.ERV, false, false, mCheckerType);
 
-		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = unfolder.getAcceptingRun() != null;
 		assertThat("Lasso should be found.", test);
 	}
 
@@ -149,9 +150,9 @@ public class BuchiPetriNetUnfolderTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p11")));
 
 		final BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
-				BuchiPetriNetUnfolder.EventOrderEnum.ERV, false, false, mCheckerType);
+				PetriNetUnfolder.EventOrderEnum.ERV, false, false, mCheckerType);
 
-		final boolean test = !unfolder.getChecker().getLassoConfigurations().isEmpty();
+		final boolean test = unfolder.getAcceptingRun() != null;
 		System.out.println(unfolder.getAcceptingRun());
 		assertThat("Lasso should be found.", test);
 	}

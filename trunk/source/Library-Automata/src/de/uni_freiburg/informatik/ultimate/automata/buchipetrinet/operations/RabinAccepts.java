@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Class that provides the Buchi acceptance check for (Buchi-)Petri nets.
+ * Class that provides the Rabin acceptance check for (Rabin-)Petri nets.
  *
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
@@ -24,12 +24,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Content. Type of the labels ("the content") of the automata states.
  */
 // TODO prefix nur buchi bei allen, alle in petri net operatins
-public final class BuchiPetrinetAccepts<LETTER, PLACE>
+public final class RabinAccepts<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	/*
 	 * The Petri net which we check acceptance for.
 	 */
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
+	private final Set<PLACE> mFinitelyLimitedPlaces;
 	private final Marking<PLACE> mInitialMarking;
 	/*
 	 * The word we check acceptance for.
@@ -59,11 +60,12 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 	 *
 	 * @param <word> Input word.
 	 */
-	public BuchiPetrinetAccepts(final AutomataLibraryServices services,
-			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final NestedLassoWord<LETTER> word)
-			throws PetriNetNot1SafeException {
+	public RabinAccepts(final AutomataLibraryServices services,
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final NestedLassoWord<LETTER> word,
+			final Set<PLACE> finitePlaces) throws PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
+		mFinitelyLimitedPlaces = finitePlaces;
 		mInitialMarking = new Marking<>(ImmutableSet.of(operand.getInitialPlaces()));
 		mLassoWord = word;
 		mFireSequenceTreeMarkings = new HashSet<>();
@@ -128,8 +130,11 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 			// a token into an accepting Petri place.
 			for (final Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer> markingAndHondaIndex : containsLoopingFiresequence(
 					mFireSequenceTreeMarkings)) {
-				if (markingAndHondaIndex.getFirst()
-						.getLastIndexOfShootingAcceptingStateInFireSequence() >= markingAndHondaIndex.getSecond()) {
+				if ((markingAndHondaIndex.getFirst()
+						.getLastIndexOfShootingAcceptingStateInFireSequence() >= markingAndHondaIndex.getSecond())
+						&& (markingAndHondaIndex.getFirst()
+								.getLastIndexOfShootingFinitePlaceInFireSequence() < markingAndHondaIndex
+										.getSecond())) {
 					return true;
 				}
 				// any nonaccepting firing sequence stuck in a loop is disregarded
@@ -174,8 +179,15 @@ public final class BuchiPetrinetAccepts<LETTER, PLACE>
 		} else {
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
 		}
+		int firingInLimitedPlaceIndex;
+		if (transition.getSuccessors().stream().anyMatch(mFinitelyLimitedPlaces::contains)) {
+			firingInLimitedPlaceIndex = mfireSequenceIndex;
+		} else {
+			firingInLimitedPlaceIndex = predecessor.getLastIndexOfShootingFinitePlaceInFireSequence();
+		}
 		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition),
-				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex, 0);
+				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex,
+				firingInLimitedPlaceIndex);
 	}
 
 	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<PLACE> marking,

@@ -17,15 +17,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE> {
-	private final AutomataLibraryServices mServices;
+public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
+		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	private final BranchingProcess<LETTER, PLACE> mUnfolding;
-	private final IPetriNetSuccessorProvider<LETTER, PLACE> mBuchiPetriNet;
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mBuchiPetriNet;
 	private final Set<Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>>> mConcurrentEndEventPowerset =
 			new HashSet<>();
 	private final Set<Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>>> mToBeExaminedConcurrentEndEvents =
@@ -35,14 +37,25 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE> {
 			new HashSet<>();
 	private final Set<Event<LETTER, PLACE>> mAcceptingEvents = new HashSet<>();
 	private final Set<Event<LETTER, PLACE>> mEndEvents = new HashSet<>();
+	private final Set<Event<LETTER, PLACE>> mLoopEvents = new HashSet<>();
 	private final Set<Event<LETTER, PLACE>> mAccptLoopEvents = new HashSet<>();
 	private final Map<Event<LETTER, PLACE>, Event<LETTER, PLACE>> mAccptLoopEventToLoopHeadMap = new HashMap<>();
 
 	public BuchiPetriNetEmptinessCheckWithAccepts(final AutomataLibraryServices services,
-			final BranchingProcess<LETTER, PLACE> unfolding, final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
-		mServices = services;
+			final BranchingProcess<LETTER, PLACE> unfolding, final IPetriNetTransitionProvider<LETTER, PLACE> net) {
+		super(services);
 		mUnfolding = unfolding;
 		mBuchiPetriNet = net;
+	}
+
+	@Override
+	public Object getResult() {
+		return (mResultLassoWordsWithConfigurations.size() > 0);
+	}
+
+	@Override
+	protected IPetriNetSuccessorProvider<LETTER, PLACE> getOperand() {
+		return mBuchiPetriNet;
 	}
 
 	/*
@@ -95,10 +108,13 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE> {
 		final Set<PLACE> finalState = new HashSet<>();
 		finalState.addAll(event.getSuccessorConditions().stream().map(x -> x.getPlace()).collect(Collectors.toSet()));
 		for (final Event<LETTER, PLACE> localEvent : event.getLocalConfiguration()) {
-			if (accptPlaceInLoop(localEvent) && localEvent.getPredecessorConditions().stream().map(x -> x.getPlace())
-					.anyMatch(finalState::contains)) {
-				mAccptLoopEvents.add(event);
-				mAccptLoopEventToLoopHeadMap.put(event, localEvent);
+			if (localEvent.getPredecessorConditions().stream().map(x -> x.getPlace()).anyMatch(finalState::contains)) {
+				mLoopEvents.add(event);
+				if (accptPlaceInLoop(localEvent)) {
+					mAccptLoopEvents.add(event);
+					mAccptLoopEventToLoopHeadMap.put(event, localEvent);
+				}
+
 			}
 		}
 		return false;
@@ -131,6 +147,10 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE> {
 			final Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>> singletonPair =
 					new Pair<>(singletonSet, loopHead);
 			mToBeExaminedConcurrentEndEvents.add(singletonPair);
+		}
+		// non loop events cannot help build a lasso configuration
+		if (!mLoopEvents.contains(event)) {
+			return;
 		}
 		for (final Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>> pair : mConcurrentEndEventPowerset) {
 			if (fitsInEqualSet(event, pair.getFirst())) {
@@ -171,8 +191,8 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE> {
 		final NestedLassoWord<LETTER> lassoWord =
 				getLassoWordFromConfiguration(configurationSorted, configurationEnd.getSecond());
 
-		final BuchiPetrinetAccepts<LETTER, PLACE> accepts = new BuchiPetrinetAccepts<>(mServices,
-				(IPetriNetTransitionProvider<LETTER, PLACE>) mBuchiPetriNet, lassoWord);
+		final BuchiPetrinetAccepts<LETTER, PLACE> accepts =
+				new BuchiPetrinetAccepts<>(mServices, mBuchiPetriNet, lassoWord);
 		if (accepts.getResult()) {
 			mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
 		}

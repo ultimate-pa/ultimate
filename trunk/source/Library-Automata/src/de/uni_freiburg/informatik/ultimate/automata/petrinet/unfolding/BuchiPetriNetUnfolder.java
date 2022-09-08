@@ -1,95 +1,26 @@
-/*
- * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
- *
- * This file is part of the ULTIMATE Automata Library.
- *
- * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- *
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
- * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE Automata Library grant you additional permission
- * to convey the resulting work.
- */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetriNetEmptinessCheckWithAccepts;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetriNetEmptinessCheckWithUnfoldingConfigs;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
-/**
- * Petri net unfolder.
- *
- * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <L>
- *            symbol type
- * @param <P>
- *            place content type
- */
-// TODO: This class is just a slight modification of PetriNetUnfolder.
-// To reduce duplicate code we should use an abstract class for the common code.
-public final class BuchiPetriNetUnfolder<L, P> {
-	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
-	private static final boolean B32_OPTIMIZATION = true;
+public final class BuchiPetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P> {
+	private BuchiPetriNetEmptinessCheckWithAccepts<L, P> mLassoChecker;
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-
-	private final IPetriNetTransitionProvider<L, P> mOperand;
-	private final boolean mStopIfAcceptingRunFound;
-	private final boolean mSameTransitionCutOff;
-	private final ConfigurationOrder<L, P> mOrder;
-	private final IPossibleExtensions<L, P> mPossibleExtensions;
-	private final BranchingProcess<L, P> mUnfolding;
-	private PetriNetRun<L, P> mRun;
-	private final BuchiPetriNetEmptinessCheckWithAccepts<L, P> mLassoChecker;
-	private final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<L, P> mLassoCheckerOld;
-
-	private final BuchiPetriNetUnfolder<L, P>.Statistics mStatistics = new Statistics();
-
-	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = true;
-	private static final boolean DEBUG_LOG_CO_RELATION_DEGREE_HISTOGRAM = false;
-
-	private final int mTypeOfChecker;
+	private PetriNetLassoRun<L, P> mLassoRun;
 
 	/**
 	 * Build the finite Prefix of PetriNet net.
@@ -109,132 +40,49 @@ public final class BuchiPetriNetUnfolder<L, P> {
 			final IPetriNetTransitionProvider<L, P> operand, final EventOrderEnum order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound, final int checker)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
-		mStopIfAcceptingRunFound = stopIfAcceptingRunFound;
-		mSameTransitionCutOff = sameTransitionCutOff;
-		mLogger.debug("Start unfolding. Net " + mOperand.sizeInformation()
-				+ (mStopIfAcceptingRunFound ? "We stop if some accepting run was found"
-						: "We compute complete finite Prefix"));
-		switch (order) {
-		case KMM:
-			mOrder = new McMillanOrder<>();
-			break;
-		case ERV:
-			mOrder = new EsparzaRoemerVoglerOrder<>();
-			break;
-		case DBO:
-			mOrder = new DepthBasedOrder<>();
-			break;
-		default:
-			throw new IllegalArgumentException();
-		}
-		mTypeOfChecker = checker;
-		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
-		mLassoChecker = new BuchiPetriNetEmptinessCheckWithAccepts<>(mServices, mUnfolding, mOperand);
-		mLassoCheckerOld = new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
-		mPossibleExtensions =
-				new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
+		super(services, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
+		mLassoChecker = null;
 
-		computeUnfolding();
-		mLogger.info(mStatistics.prettyprintCutOffInformation());
-		mLogger.info(mStatistics.prettyprintCoRelationInformation());
-		if (DEBUG_LOG_CO_RELATION_DEGREE_HISTOGRAM) {
-			final TreeHashRelation<Integer, Condition<L, P>> histogram =
-					mUnfolding.getCoRelation().computeHistogramOfDegree(mUnfolding.getConditions());
-			final StringBuilder sb = new StringBuilder();
-			sb.append("Histogram of co-relation degrees:" + System.lineSeparator());
-			for (final Entry<Integer, Condition<L, P>> pair : histogram.getSetOfPairs()) {
-				sb.append("Degree " + pair.getKey() + ": " + pair.getValue());
-				sb.append(System.lineSeparator());
-			}
-			mLogger.info(sb.toString());
-		}
 	}
 
-	public BuchiPetriNetUnfolder<L, P>.Statistics getUnfoldingStatistics() {
-		return mStatistics;
+	@Override
+	void setupChild() {
+		mLassoChecker = new BuchiPetriNetEmptinessCheckWithAccepts<>(mServices, mUnfolding,
+				(IPetriNetTransitionProvider<L, P>) mOperand);
+		mLassoRun = null;
 	}
 
-	public BuchiPetriNetEmptinessCheckWithAccepts<L, P> getChecker() {
-		return mLassoChecker;
+	public PetriNetLassoRun<L, P> getAcceptingRun() {
+		return mLassoRun;
 	}
 
-	public BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<L, P> getCheckerOld() {
-		return mLassoCheckerOld;
+	/*
+	 * cannot find a loop in initial marking
+	 */
+	@Override
+	protected boolean checkInitialPlaces() {
+		return false;
 	}
 
-	private void computeUnfolding() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-
-		mPossibleExtensions.update(mUnfolding.getDummyRoot());
-
-		while (!mPossibleExtensions.isEmpy()) {
-			final Event<L, P> e = mPossibleExtensions.remove();
-
-			final boolean finished = computeUnfoldingHelper(e);
-			if (finished) {
-				return;
-			}
-
-			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-						"constructing finite prefix that currently has " + mUnfolding.getConditions().size()
-								+ " conditions, " + mUnfolding.getEvents().size() + " events ("
-								+ mStatistics.prettyprintCutOffInformation() + " "
-								+ mStatistics.prettyprintCoRelationInformation() + " "
-								+ mStatistics.prettyprintPossibleExtensionsMaximalSize() + " "
-								+ mStatistics.prettyprintNumberOfEventComparisons() + " "
-								+ mStatistics.prettyprintPossibleExtensionCandidatesInformation() + " "
-								+ mStatistics.prettyprintCoRelationMaximalDegree() + " "
-								+ mStatistics.prettyprintConditionPerPlaceMax() + ")");
-				throw new AutomataOperationCanceledException(rti);
-			}
-		}
+	@Override
+	protected void createInitialRun() throws PetriNetNot1SafeException {
+		return;
 	}
 
-	private boolean computeUnfoldingHelper(final Event<L, P> event) throws PetriNetNot1SafeException {
-		assert !parentIsCutoffEvent(event) : "We must not construct successors of cut-off events.";
-		boolean isCutOffEvent;
-		if (!USE_FIRSTBORN_CUTOFF_CHECK) {
-			isCutOffEvent = mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff);
-		} else {
-			isCutOffEvent = event.isCutoffEvent();
-		}
+	@Override
+	boolean unfoldingSearchSuccessful(final Event<L, P> event) throws PetriNetNot1SafeException {
 		mUnfolding.addEvent(event);
 
 		boolean lassoFound = false;
-		switch (mTypeOfChecker) {
-		case 0:
-			lassoFound = mLassoChecker.update(event);
-			break;
-		case 1:
-			lassoFound = mLassoCheckerOld.update(event);
-			break;
+		lassoFound = mLassoChecker.update(event);
+		return lassoFound;
+	}
 
-		default:
-			break;
+	@Override
+	void createOrUpdateRunIfWanted(final Event<L, P> event) throws PetriNetNot1SafeException {
+		if (mLassoRun == null) {
+			mLassoRun = constructRun();
 		}
-		if (lassoFound && mRun == null) {
-			mRun = constructRun();
-			if (mStopIfAcceptingRunFound) {
-				return true;
-			}
-		}
-
-		if (isCutOffEvent) {
-			mLogger.debug("Constructed     Cut-off-Event: " + event.toString());
-		} else {
-			final long sizeBefore = mPossibleExtensions.size();
-			mPossibleExtensions.update(event);
-			final long newPossibleExtensions = mPossibleExtensions.size() - sizeBefore;
-			mLogger.debug("Constructed Non-cut-off-Event: " + event.toString());
-			mLogger.debug("The Event lead to " + newPossibleExtensions + " new possible extensions.");
-		}
-		mLogger.debug("Possible Extension size: " + mPossibleExtensions.size() + ", total #Events: "
-				+ mUnfolding.getEvents().size() + ", total #Conditions: " + mUnfolding.getConditions().size());
-		mStatistics.add(event);
-		return false;
 	}
 
 	/**
@@ -243,212 +91,42 @@ public final class BuchiPetriNetUnfolder<L, P> {
 	 *
 	 * @throws PetriNetNot1SafeException
 	 */
-	private PetriNetRun<L, P> constructRun() throws PetriNetNot1SafeException {
-		final List<Marking<P>> sequenceOfMarkings = new ArrayList<>();
+	private PetriNetLassoRun<L, P> constructRun() throws PetriNetNot1SafeException {
+		final List<Marking<P>> sequenceOfStemMarkings = new ArrayList<>();
+		final List<Marking<P>> sequenceOfLassoMarkings = new ArrayList<>();
 		final Pair<NestedLassoWord<L>, List<Event<L, P>>> resutlPair =
 				mLassoChecker.getLassoConfigurations().iterator().next();
+		final int stemlength = resutlPair.getFirst().getStem().length();
 		Marking<P> currentMarking = new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()));
-		sequenceOfMarkings.add(currentMarking);
+		sequenceOfStemMarkings.add(currentMarking);
+
+		int wordIndex = 0;
 		for (final Event<L, P> event : resutlPair.getSecond()) {
 			currentMarking = currentMarking.fireTransition(event.getTransition());
-			sequenceOfMarkings.add(currentMarking);
-		}
-		final PetriNetRun<L, P> run = new PetriNetRun<>(sequenceOfMarkings,
-				resutlPair.getFirst().getStem().concatenate(resutlPair.getFirst().getLoop()));
-		return run;
-	}
-
-	private boolean parentIsCutoffEvent(final Event<L, P> event) {
-		for (final Condition<L, P> c : event.getPredecessorConditions()) {
-			if (c.getPredecessorEvent().isCutoffEvent()) {
-				return true;
+			if (wordIndex < stemlength - 1) {
+				sequenceOfStemMarkings.add(currentMarking);
+				// TODO: Does the Petrinetrun for the lasso part have 1 marking too much ?
+				// maybe don't use Petrinetrun for loop part.
+			} else if (wordIndex == stemlength - 1) {
+				sequenceOfStemMarkings.add(currentMarking);
+				sequenceOfLassoMarkings.add(currentMarking);
+			} else {
+				sequenceOfLassoMarkings.add(currentMarking);
 			}
-		}
-		return false;
-	}
 
-	/**
-	 * @return Some accepting run of PetriNet net, return null if net does not have an accepting run.
-	 */
-	public PetriNetRun<L, P> getAcceptingRun() {
-		return mRun;
-	}
-
-	/**
-	 * @return The occurrence net which is the finite prefix of the unfolding of net.
-	 */
-	public BranchingProcess<L, P> getFinitePrefix() {
-		return mUnfolding;
-	}
-
-	public enum EventOrderEnum {
-		DBO("Depth-based Order"), ERV("Esparza Römer Vogler"), KMM("Ken McMillan"),;
-
-		private String mDescription;
-
-		EventOrderEnum(final String name) {
-			mDescription = name;
+			wordIndex++;
 		}
 
-		public String getDescription() {
-			return mDescription;
-		}
+		final PetriNetRun<L, P> stemRun = new PetriNetRun<>(sequenceOfStemMarkings, resutlPair.getFirst().getStem());
+		final PetriNetRun<L, P> loopRun = new PetriNetRun<>(sequenceOfLassoMarkings, resutlPair.getFirst().getLoop());
+		final PetriNetLassoRun<L, P> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
+		return lassoRun;
 	}
 
-	public BranchingProcess<L, P> getResult() {
-		return mUnfolding;
-	}
-
+	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		// TODO:
 		return false;
-	}
-
-	class RunAndConditionMarking {
-		private final PetriNetRun<L, P> mRunInner;
-		private final ConditionMarking<L, P> mMarking;
-
-		public RunAndConditionMarking(final PetriNetRun<L, P> run, final ConditionMarking<L, P> marking) {
-			mRunInner = run;
-			mMarking = marking;
-		}
-	}
-
-	/**
-	 * FIXME documentation.
-	 */
-	public class Statistics {
-		private final Map<Transition<L, P>, Map<Marking<P>, Set<Event<L, P>>>> mTrans2Mark2Events = new HashMap<>();
-		private int mCutOffEvents;
-		private int mNonCutOffEvents;
-
-		public void add(final Event<L, P> event) {
-			// TODO: The hash operations here take A LOT of time (~20% on the VMCAI2021) benchmarks
-			final Marking<P> marking = event.getMark();
-			final Transition<L, P> transition = event.getTransition();
-			Map<Marking<P>, Set<Event<L, P>>> mark2Events = mTrans2Mark2Events.get(transition);
-			if (mark2Events == null) {
-				mark2Events = new HashMap<>();
-				mTrans2Mark2Events.put(transition, mark2Events);
-			}
-			Set<Event<L, P>> events = mark2Events.get(marking);
-			if (events == null) {
-				events = new HashSet<>();
-				mark2Events.put(marking, events);
-			}
-			if (events.size() > 2) {
-				// 2019-12-15 Matthias: Adding an event twice for a transition-marking pair is
-				// very natural.
-				// We write log messages only if an event was added three or more times. This
-				// can even happen for total orders
-				mLogger.info("inserting event number " + (events.size() + 1) + " for the transition-marking pair ("
-						+ transition + ", " + marking + ")");
-				mLogger.info("this new event has " + event.getAncestors() + " ancestors and is "
-						+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
-				for (final Event<L, P> event2 : events) {
-					mLogger.info("  existing Event has " + event2.getAncestors() + " ancestors and is "
-							+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
-					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent()
-							|| event2.isCutoffEvent() : "if there is "
-									+ "already an event that has the same marking and a different size of "
-									+ "local configuration then the new event must be cut-off event";
-				}
-			}
-			events.add(event);
-			if (event.isCutoffEvent()) {
-				mCutOffEvents++;
-			} else {
-				mNonCutOffEvents++;
-			}
-		}
-
-		public String prettyprintCutOffInformation() {
-			return getCutOffEvents() + "/" + (getCutOffEvents() + getNonCutOffEvents()) + " cut-off events.";
-		}
-
-		public String prettyprintCoRelationInformation() {
-			return "For " + getCoRelationQueriesYes() + "/" + (getCoRelationQueriesYes() + getCoRelationQueriesNo())
-					+ " co-relation queries the response was YES.";
-		}
-
-		public String prettyprintPossibleExtensionCandidatesInformation() {
-			return getNumberOfUselessExtensionCandidates() + "/" + getNumberOfExtensionCandidates()
-					+ " useless extension candidates.";
-		}
-
-		public String prettyprintPossibleExtensionsMaximalSize() {
-			return "Maximal size of possible extension queue " + getMaximalSizeOfPossibleExtensions() + ".";
-		}
-
-		public String prettyprintCoRelationMaximalDegree() {
-			return "Maximal degree in co-relation " + computeCoRelationMaximalDegree() + ".";
-		}
-
-		public String prettyprintConditionPerPlaceMax() {
-			return "Up to " + computeConditionPerPlaceMax() + " conditions per place.";
-		}
-
-		public String prettyprintNumberOfEventComparisons() {
-			return "Compared " + getNumberOfConfigurationComparisons() + " event pairs, "
-					+ getNumberOfFoataBasedConfigurationComparisons() + " based on Foata normal form.";
-		}
-
-		public long getCoRelationQueriesYes() {
-			return mUnfolding.getCoRelation().getQueryCounterYes();
-		}
-
-		public long getCoRelationQueriesNo() {
-			return mUnfolding.getCoRelation().getQueryCounterNo();
-		}
-
-		public int getCutOffEvents() {
-			return mCutOffEvents;
-		}
-
-		public int getNonCutOffEvents() {
-			return mNonCutOffEvents;
-		}
-
-		public int getNumberOfConfigurationComparisons() {
-			return mOrder.getNumberOfComparisons();
-		}
-
-		public int getNumberOfFoataBasedConfigurationComparisons() {
-			return mOrder.getFotateNormalFormComparisons();
-		}
-
-		/**
-		 * @return Number of transitions that can never be fired in operand Petri net.
-		 */
-		public long unreachableTransitionsInOperand() {
-			// This statistic could be computed more efficiently when using a Set<Transition> in
-			// this class' add(Event) method. But doing so would slow down computation
-			// even in cases in which this statistic is not needed.
-			final int transitionsInNet = ((IPetriNet<L, P>) mOperand).getTransitions().size();
-			final long reachableTransitions = RemoveUnreachable.reachableTransitions(mUnfolding).size();
-			return transitionsInNet - reachableTransitions;
-		}
-
-		public int getNumberOfUselessExtensionCandidates() {
-			return mPossibleExtensions.getUselessExtensionCandidates();
-		}
-
-		public int getNumberOfExtensionCandidates() {
-			return mPossibleExtensions.getUsefulExtensionCandidates() + getNumberOfUselessExtensionCandidates();
-		}
-
-		public int computeCoRelationMaximalDegree() {
-			return mUnfolding.getCoRelation().computeMaximalDegree();
-		}
-
-		public int computeConditionPerPlaceMax() {
-			return mUnfolding.computeConditionPerPlaceMax();
-		}
-
-		public int getMaximalSizeOfPossibleExtensions() {
-			return mPossibleExtensions.getMaximalSize();
-		}
-
 	}
 }
