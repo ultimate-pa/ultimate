@@ -155,9 +155,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_ORDER_STEP_TYPE = "Defines what statements are considered a step in POR";
 	private static final StepType DEF_POR_ORDER_STEP_TYPE = StepType.ALL_READ_WRITE;
 
+	public static final String LABEL_POR_ORDER_THREADS =
+			"Considered threads and their maximal amount of steps (give as threadindex,steps threadIndex,steps ...), use X for all threads with single value MaxStep";
+	private static final String DEF_POR_ORDER_THREADS = "X";
+			
 	public static final String LABEL_POR_ORDER_MAXSTEP =
-			"Maximal amount of steps a thread is allowed to take successively";
-	private static final int DEF_POR_ORDER_MAXSTEP = 1;
+			"Maximal amount of steps the threads are allowed to take successively";
+	private static final int DEF_POR_ORDER_MAXSTEP = 1;	
 
 	public static final String LABEL_POR_COINFLIP_MODE = "Coinflip budget determination mode";
 	private static final CoinflipMode DEF_POR_COINFLIP_MODE = CoinflipMode.OFF;
@@ -639,6 +643,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_POR_ORDER_STEP_TYPE, DEF_POR_ORDER_STEP_TYPE, PreferenceType.Combo,
 						StepType.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_ORDER_THREADS, DEF_POR_ORDER_THREADS, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_POR_ORDER_MAXSTEP, DEF_POR_ORDER_MAXSTEP, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE, PreferenceType.Combo,
 						CoinflipMode.values()),

@@ -66,6 +66,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final long mDfsOrderSeed;
 	private final String mPluginId;
 	private final StepType mStepType;
+	private String mThreadList;
 	private final int mMaxStep;
 
 	/**
@@ -92,7 +93,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
 			final PredicateFactory predicateFactory, final PartialOrderMode partialOrderMode, final OrderType orderType,
-			final long dfsOrderSeed, final StepType stepType, final int maxStep, final String pluginId) {
+			final long dfsOrderSeed, final StepType stepType, final String threadList, final int maxStep, final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -101,6 +102,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		mOrderType = orderType;
 		mDfsOrderSeed = dfsOrderSeed;
 		mStepType = stepType;
+		mThreadList = threadList;
 		mMaxStep = maxStep;
 		mPluginId = pluginId;
 	}
@@ -116,7 +118,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
 		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
-				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, mStepType, mMaxStep, List.of(indep), null);
+				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep, List.of(indep), null);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);

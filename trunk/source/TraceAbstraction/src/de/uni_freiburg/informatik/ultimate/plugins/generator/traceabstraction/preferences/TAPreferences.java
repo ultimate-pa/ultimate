@@ -408,6 +408,10 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_STEP_TYPE, StepType.class);
 	}
 	
+	public String getOrderThreads() {
+		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_THREADS);
+	}
+	
 	public int getOrderMaxStep() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_MAXSTEP);
 	}

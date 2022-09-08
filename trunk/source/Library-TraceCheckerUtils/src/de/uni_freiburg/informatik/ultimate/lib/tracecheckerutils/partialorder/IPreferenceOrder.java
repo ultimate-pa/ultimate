@@ -37,7 +37,7 @@ public interface IPreferenceOrder<L, S1, S2> extends IPartialPreferenceOrder<L, 
 	Comparator<L> getOrder(S1 stateProgram, S2 stateMonitor);
 
 	default IPartialComparator<L> getPartialOrder(S1 stateProgram, S2 stateMonitor){
-		return null; //nach dem merge zur conversion abändern
+		return IPartialComparator.fromNonPartialComparator(this.getOrder(stateProgram, stateMonitor), true);
 		
 	}
 }

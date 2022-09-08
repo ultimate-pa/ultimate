@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State>{
 	private List<Integer> mMaxSteps;
 	private List<String> mThreads;
+	private ShiftedList<String> mShiftedThreads;
 	private INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
@@ -49,14 +50,16 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			java.util.function.Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
 		mThreads = threads;
-		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxSteps, mThreads,alphabet , isStep);
+		mShiftedThreads = new ShiftedList<String>();
+		mShiftedThreads.addAll(threads);
+		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxSteps, mThreads, mShiftedThreads, alphabet , isStep);
 	}
 
 	@Override
 	public Comparator<L> getOrder(S1 stateProgram, State stateMonitor) {
 		final String lastThread = stateMonitor.getThread();
-		final Integer lastIndex = stateMonitor.getIndex();
-		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
+		int lastIndex = stateMonitor.getIndex();
+		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads, mShiftedThreads);
 	}
 	
 	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
@@ -64,47 +67,73 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 		private final Integer mLastIndex;
 		private final Comparator<L> mFallback;
 		private List<String> mThreads;
+		private ShiftedList<String> mShiftedThreads;
+		
 
-		public PreferenceOrderComparator(final String lastThread, final Integer lastIndex, final Comparator<L> fallback, final List<String> threads) {
+		public PreferenceOrderComparator(final String lastThread, final Integer lastIndex, final Comparator<L> fallback,
+				final List<String> threads, final ShiftedList<String> shiftedThreads) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mLastIndex = lastIndex;
 			mFallback = fallback;
 			mThreads = threads;
+			mShiftedThreads=shiftedThreads;
 		}
 
 		@Override
 		public int compare(final L x, final L y) {
-			//idee ist hier die Liste vom aktuellen thread ausgehend zu betrachten und falls ein thread mehrfach vorkommt,
+			
+			/*
+			String xThread = x.getPrecedingProcedure();
+			String yThread = y.getPrecedingProcedure();
+			List<String> shiftedThreadList = new ArrayList<>();
+			shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
+			shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
+			if (xThread == yThread) {
+				return 0;
+			}
+			else if (xThread == mLastThread) {
+				return -1;
+			} else if (yThread == mLastThread) {
+				return 1;
+			} else if (shiftedThreadList.indexOf(xThread) < shiftedThreadList.indexOf(yThread)) {
+				return -1;
+			} else {
+				return 1;
+			}*/
+			
+			//idee ist hier die Liste vom aktuellen index ausgehend zu betrachten und falls ein thread mehrfach vorkommt,
 			//ist der relevante index der erste auf den aktuellen thread folgende
+			
+			if(x.getPrecedingProcedure()==mLastThread) {
+				return -1;
+			}
+			/*
 			List<String> shiftedThreadList = new ArrayList<>();
 			shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
 			shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
 			
 			final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure());
 			final int yThreadIndex = shiftedThreadList.indexOf(y.getPrecedingProcedure());
-			return Integer.compare(xThreadIndex, yThreadIndex);
+			return Integer.compare(xThreadIndex, yThreadIndex);*/
 			
-			/*
-			final int xThreadIndex = mThreads.indexOf(x.getPrecedingProcedure());
-			final boolean xBefore = mLastIndex >= xThreadIndex;
-			final int yThreadIndex = mThreads.indexOf(y.getPrecedingProcedure());
-			final boolean yBefore = mLastIndex >= yThreadIndex;
 			
+			final int xThreadIndex = mShiftedThreads.indexOf(x.getPrecedingProcedure(), mLastIndex);
+			final int yThreadIndex = mShiftedThreads.indexOf(y.getPrecedingProcedure(), mLastIndex);
+			final boolean xBefore = xThreadIndex < mLastIndex;
+			final boolean yBefore = yThreadIndex < mLastIndex;
 			if (xBefore && !yBefore) {
 				return 1;
 			}
 			if (yBefore && !xBefore) {
 				return -1;
 			}
-			return Integer.compare(xThreadIndex, yThreadIndex);
-			//return mFallback.compare(x, y);
-			 * 
-			 */
+			return Integer.compare(xThreadIndex, yThreadIndex);		
+			
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(mFallback, mLastThread);
+			return Objects.hash(mFallback, mLastThread, mThreads, mLastIndex);
 		}
 
 		@Override
@@ -120,7 +149,7 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			}
 			final PreferenceOrderComparator<L> other = (PreferenceOrderComparator<L>) obj;
 			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread) 
-					&& Objects.equals(mThreads, other.mThreads);
+					&& Objects.equals(mThreads, other.mThreads) && Objects.equals(mLastIndex, other.mLastIndex);
 		}
 	}
 
@@ -133,5 +162,35 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 	public INwaOutgoingLetterAndTransitionProvider<L, State> getMonitor() {
 		return mMonitor;
 	}
+	/*
+	public class ShiftedList<String> extends ArrayList<String>{
+		
+		public int indexOf(String s, int i) {
+			
+	        int index = indexOfRange(s, i, this.size());
+	        if (index != -1) {
+	        	return index;
+	        }
+	        return indexOfRange(s, 0, i);
+	    }
+
+	    int indexOfRange(Object o, int start, int end) {
+	       //Object[] es = this.elementData;
+	        if (o == null) {
+	            for (int i = start; i < end; i++) {
+	                if (this.get(i) == null) {
+	                    return i;
+	                }
+	            }
+	        } else {
+	            for (int i = start; i < end; i++) {
+	                if (o.equals(this.get(i))) {
+	                    return i;
+	                }
+	            }
+	        }
+	        return -1;
+	    }
+	}*/
 
 }

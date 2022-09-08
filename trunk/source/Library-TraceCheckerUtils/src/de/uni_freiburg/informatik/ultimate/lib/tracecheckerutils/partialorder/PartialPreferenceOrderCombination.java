@@ -37,12 +37,6 @@ public class PartialPreferenceOrderCombination<L, S1, S2,S3> implements IPrefere
 		}
 	}
 
-	@Override
-	public IPartialComparator<L> getPartialOrder(S1 stateProgram, Pair<S2,S3> stateMonitor) {
-		// transform back to Comparator
-		//return this.getOrder(stateProgram, stateMonitor);
-		return null;
-	}
 	
 	public static final class PartialPreferenceOrderCombinationComparator<L, S1, S2> implements Comparator<L> {
 		IPartialComparator<L> mPartComp;
