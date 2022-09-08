@@ -639,16 +639,16 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 					blocksize *= readEntry.getValue().size();
 				}
 
-				mLogger.info("Filter Iteration " + i + " started");
+				mLogger.info("Filter Iteration " + (i + 1) + "/" + n);
 				if (!map.isEmpty() && filter.evaluate(map)) {
 					result.add(map);
 				} else {
-					mLogger.info("Contradiction");
+					mLogger.info("contradiction");
 				}
 			}
 		}
 
-		mLogger.info("Cross Product Computation finished. Number of Combinations: " + result.size());
+		mLogger.info("Number of combinations: " + result.size());
 		return result;
 	}
 
@@ -897,7 +897,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	private HashRelation<ACTION, ACTION> computePostDominatedBy() {
-		mLogger.info("Post Dominates Start");
 		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
 		final Set<LOC> loopHeads = (Set<LOC>) mIcfg.getLoopLocations();
 
@@ -957,12 +956,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				done.add(item);
 			}
 		}
-		mLogger.info("Post Dominates End");
 		return result;
 	}
 
 	private HashRelation<ACTION, ACTION> computeDominates() {
-		mLogger.info("Dominates Start");
 		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
 		final HashRelation<ACTION, ACTION> dominatedBy = new HashRelation<>();
 		final Set<LOC> loopHeads = (Set<LOC>) mIcfg.getLoopLocations();
@@ -1016,7 +1013,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				done.add(item);
 			}
 		}
-		mLogger.info("Dominates End");
 
 		for (final var entry : result.entrySet()) {
 			mDominates.addAllPairs(entry.getKey(), entry.getValue());

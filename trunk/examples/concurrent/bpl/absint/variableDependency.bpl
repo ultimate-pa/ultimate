@@ -1,6 +1,8 @@
 // Safe
 
-/*
+/* 
+ * Testing the optimization of using the depencies between variables 
+ *
  * Author: Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  * Date: 28.07.2022
  */

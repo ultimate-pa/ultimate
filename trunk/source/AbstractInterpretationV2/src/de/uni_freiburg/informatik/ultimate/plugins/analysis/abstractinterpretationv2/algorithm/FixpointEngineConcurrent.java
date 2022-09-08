@@ -372,10 +372,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> copy = new HashSet<>();
 		result.addAll(oldset);
 		copy.addAll(oldset);
-		int iteration = 1;
-		mLogger.info("Size before: " + oldset.size());
+		mLogger.info("Reducing to supersets");
 		for (final var map1 : oldset) {
-			mLogger.info(iteration);
 			final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> toRemove = new HashSet<>();
 			for (final var map2 : copy) {
 				if (!map1.equals(map2)) {
@@ -390,9 +388,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				}
 			}
 			copy.removeAll(toRemove);
-			iteration++;
 		}
-		mLogger.info("Size after: " + result.size());
+		mLogger.info("Reduced size from " + oldset.size() + " to " + result.size());
 		return result;
 	}
 
@@ -637,6 +634,12 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> mergeStates(final DisjunctiveAbstractState<STATE> oldState,
 			final DisjunctiveAbstractState<STATE> newState) {
+		if (oldState.isBottom() && !newState.isBottom()) {
+			return newState;
+		}
+		if (!oldState.isBottom() && newState.isBottom()) {
+			return oldState;
+		}
 		return oldState.patch(newState).union(newState.patch(oldState));
 	}
 
