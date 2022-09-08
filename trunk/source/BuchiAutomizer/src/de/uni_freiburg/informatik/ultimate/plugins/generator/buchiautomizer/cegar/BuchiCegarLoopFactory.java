@@ -120,6 +120,12 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement, new AutomataLibraryServices(mServices));
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
+		case BUCHI_PETRI_NET_LAZY:
+			return new BuchiPetriNetCegarLoopLazy<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
+					mTransitionClazz, constructInitialAbstraction(petriNetProvider, icfg), mCegarLoopBenchmark);
+		case BUCHI_PETRI_NET_EAGER:
+			return new BuchiPetriNetCegarLoopEager<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
+					mTransitionClazz, constructInitialAbstraction(petriNetProvider, icfg), mCegarLoopBenchmark);
 		default:
 			throw new UnsupportedOperationException(
 					"The type " + automatonTypeConcurrent + " is currently not supported.");

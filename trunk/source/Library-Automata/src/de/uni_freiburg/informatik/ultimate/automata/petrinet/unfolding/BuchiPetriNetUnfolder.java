@@ -38,7 +38,7 @@ public final class BuchiPetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P
 	 */
 	public BuchiPetriNetUnfolder(final AutomataLibraryServices services,
 			final IPetriNetTransitionProvider<L, P> operand, final EventOrderEnum order,
-			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound, final int checker)
+			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
 		mLassoChecker = null;

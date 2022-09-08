@@ -43,7 +43,7 @@ public class BuchiPetriNetEmptinessCheckWithAcceptsTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
 		final BuchiPetriNetUnfolder<String, String> unfolder =
-				new BuchiPetriNetUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false, 0);
+				new BuchiPetriNetUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
 
 		final boolean test = unfolder.getAcceptingRun() != null;
 		assertThat("Lasso should be found.", test);

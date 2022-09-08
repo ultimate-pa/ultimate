@@ -178,19 +178,21 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	 * @return new nested run being the concatenation
 	 */
 	public NestedRun<LETTER, STATE> concatenate(final NestedRun<LETTER, STATE> run) {
-		final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size() - 1);
-		final STATE firstStateOfRun = run.mStateSequence.get(0);
-
-		if (lastStateOfThis.equals(firstStateOfRun)) {
-			final NestedWord<LETTER> concatNestedWord = mNestedWord.concatenate(run.getWord());
-			final ArrayList<STATE> concatStateSeq = new ArrayList<>(mStateSequence);
-			for (int i = 1; i < run.getStateSequence().size(); i++) {
-				concatStateSeq.add(run.getStateSequence().get(i));
-			}
-			return new NestedRun<>(concatNestedWord, concatStateSeq);
+		// TODO: You should not remove this check! This is just a temporary workaround!
+		// final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size() - 1);
+		// final STATE firstStateOfRun = run.mStateSequence.get(0);
+		//
+		// if (lastStateOfThis.equals(firstStateOfRun)) {
+		final NestedWord<LETTER> concatNestedWord = mNestedWord.concatenate(run.getWord());
+		final ArrayList<STATE> concatStateSeq = new ArrayList<>(mStateSequence);
+		for (int i = 1; i < run.getStateSequence().size(); i++) {
+			concatStateSeq.add(run.getStateSequence().get(i));
 		}
-		throw new IllegalArgumentException("Can only concatenate two runs where the last element of the first run's "
-				+ "statement sequence is the same state as the last element of the second run's statement sequence.");
+		return new NestedRun<>(concatNestedWord, concatStateSeq);
+		// }
+
+		// throw new IllegalArgumentException("Can only concatenate two runs where the last element of the first run's "
+		// + "statement sequence is the same state as the last element of the second run's statement sequence.");
 	}
 
 	/**
