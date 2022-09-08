@@ -130,6 +130,16 @@ public class PolynomialRelation implements IBinaryRelation {
 
 	public PolynomialRelation(final TransformInequality transformInequality, final RelationSymbol relationSymbol,
 			final AbstractGeneralizedAffineTerm<?> polyLhs, final AbstractGeneralizedAffineTerm<?> polyRhs) {
+		// TODO 20220908 Matthias: maybe static method and return null instead of constructor and AssertionError
+		if (polyLhs.getSort() != polyRhs.getSort()) {
+			throw new AssertionError("Inconsistent sorts");
+		}
+		if (!SmtSortUtils.isNumericSort(polyLhs.getSort()) && !SmtSortUtils.isBitvecSort(polyLhs.getSort())) {
+			throw new AssertionError("Unsupported sorts");
+		}
+		if (relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(polyLhs.getSort())) {
+			throw new AssertionError("Unsupported inequality/sort combination");
+		}
 		final AbstractGeneralizedAffineTerm<Term> difference =
 				sum(checkThenCast(polyLhs), mul(checkThenCast(polyRhs), Rational.MONE));
 		final AbstractGeneralizedAffineTerm<Term> polyTerm;
