@@ -402,8 +402,9 @@ public class PolynomialRelation implements IBinaryRelation {
 				final Term abstractVariableAsTerm = entry.getKey();
 				if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
 					if (isNegativeAsSignedInt(entry.getValue(), mPolynomialTerm.getSort())) {
-						rhsSummands
-								.add(SmtUtils.mul(script, entry.getValue().mul(Rational.MONE), abstractVariableAsTerm));
+						final Rational newCoefficient = PolynomialTermUtils.bringBitvectorValueInRange(
+								entry.getValue().mul(Rational.MONE), mPolynomialTerm.getSort());
+						rhsSummands.add(SmtUtils.mul(script, newCoefficient, abstractVariableAsTerm));
 					} else {
 						lhsSummands.add(SmtUtils.mul(script, entry.getValue(), abstractVariableAsTerm));
 					}
@@ -418,8 +419,9 @@ public class PolynomialRelation implements IBinaryRelation {
 			if (mPolynomialTerm.getConstant() != Rational.ZERO) {
 				if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
 					if (isNegativeAsSignedInt(mPolynomialTerm.getConstant(), mPolynomialTerm.getSort())) {
-						rhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant().mul(Rational.MONE),
-								mPolynomialTerm.getSort()));
+						final Rational newConstant = PolynomialTermUtils.bringBitvectorValueInRange(
+								mPolynomialTerm.getConstant().mul(Rational.MONE), mPolynomialTerm.getSort());
+						rhsSummands.add(SmtUtils.rational2Term(script, newConstant, mPolynomialTerm.getSort()));
 					} else {
 						lhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(),
 								mPolynomialTerm.getSort()));
