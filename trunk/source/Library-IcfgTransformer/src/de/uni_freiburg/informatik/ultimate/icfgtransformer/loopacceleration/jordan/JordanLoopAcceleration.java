@@ -112,7 +112,7 @@ public class JordanLoopAcceleration {
 		final ILogger logger = services.getLoggingService().getLogger(JordanLoopAcceleration.class);
 		final SimultaneousUpdate su;
 		try {
-			su = SimultaneousUpdate.fromTransFormula(loopTransFormula, mgdScript);
+			su = SimultaneousUpdate.fromTransFormula(services, loopTransFormula, mgdScript);
 		} catch (final SimultaneousUpdateException e) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg =
 					new JordanLoopAccelerationStatisticsGenerator(-1, -1, -1, new NestedMap2<>());
