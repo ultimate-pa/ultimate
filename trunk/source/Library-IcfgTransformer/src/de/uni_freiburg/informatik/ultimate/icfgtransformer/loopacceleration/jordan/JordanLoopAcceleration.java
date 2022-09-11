@@ -124,7 +124,9 @@ public class JordanLoopAcceleration {
 		final int numberOfArrayWrites = su.getDeterministicArrayWrites().size();
 		final int numberOfHavocedVariables = su.getHavocedVars().size();
 
-		final SimultaneousUpdateWithReplacements suwr = SimultaneousUpdateWithReplacements.replaceArrayIndices(mgdScript, su);
+		final Set<TermVariable> defaultVarsOfAssignedVars = loopTransFormula.getAssignedVars().stream()
+				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		final SimultaneousUpdateWithReplacements suwr = SimultaneousUpdateWithReplacements.replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars, su);
 
 		final Set<Sort> nonIntegerSorts = getNonIntegerSorts(suwr.getDeterministicAssignment().keySet());
 		if (!nonIntegerSorts.isEmpty()) {

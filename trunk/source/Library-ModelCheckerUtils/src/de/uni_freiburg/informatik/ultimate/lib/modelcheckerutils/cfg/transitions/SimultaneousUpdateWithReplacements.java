@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -69,21 +70,23 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 	}
 
 	public static SimultaneousUpdateWithReplacements replaceArrayIndices(final ManagedScript mgdScript,
-			final SimultaneousUpdate su) {
+			final Set<TermVariable> defaultVarsOfAssignedVars, final SimultaneousUpdate su) {
 
 		final Map<IProgramVar, Term> newDeterministicAssignments = new LinkedHashMap<>();
 		final NestedMap2<IProgramVar, ArrayIndex, Term> newDeterministicArrayWrites = new NestedMap2<>();
 		final Map<TermVariable, Term> idxRepAssignments = new LinkedHashMap<>();
 
 		for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
-			final Pair<Term, Map<TermVariable, Term>> tmp2 = replaceArrayIndices(mgdScript, entry.getValue());
+			final Pair<Term, Map<TermVariable, Term>> tmp2 = replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars,
+					entry.getValue());
 			idxRepAssignments.putAll(tmp2.getSecond());
 			newDeterministicAssignments.put(entry.getKey(), tmp2.getFirst());
 		}
 		for (final Triple<IProgramVar, ArrayIndex, Term> triple : su.getDeterministicArrayWrites().entrySet()) {
 			final Pair<ArrayIndex, Map<TermVariable, Term>> tmp1 = replaceIndex(mgdScript, triple.getSecond());
 			idxRepAssignments.putAll(tmp1.getSecond());
-			final Pair<Term, Map<TermVariable, Term>> tmp2 = replaceArrayIndices(mgdScript, triple.getThird());
+			final Pair<Term, Map<TermVariable, Term>> tmp2 = replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars,
+					triple.getThird());
 			idxRepAssignments.putAll(tmp2.getSecond());
 			newDeterministicArrayWrites.put(triple.getFirst(), tmp1.getFirst(), tmp2.getFirst());
 		}
@@ -106,15 +109,19 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 	}
 
 	private static Pair<Term, Map<TermVariable, Term>> replaceArrayIndices(final ManagedScript mgdScript,
-			final Term term) {
+			final Set<TermVariable> defaultVarsOfAssignedVars, final Term term) {
 		final List<MultiDimensionalSelect> tmp = MultiDimensionalSelect.extractSelectShallow(term, false);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		final Map<TermVariable, Term> replacementMapping = new LinkedHashMap<>();
 		for (final MultiDimensionalSelect mds : tmp) {
-			final Pair<ArrayIndex, Map<TermVariable, Term>> pair = replaceIndex(mgdScript, mds.getIndex());
-			for (final Entry<TermVariable, Term> entry : pair.getSecond().entrySet()) {
-				substitutionMapping.put(entry.getValue(), entry.getKey());
-				replacementMapping.putAll(pair.getSecond());
+			if (defaultVarsOfAssignedVars.contains(mds.getArray()) || mds.getIndex().stream().anyMatch(
+					x -> Arrays.asList(x.getFreeVars()).stream().anyMatch(defaultVarsOfAssignedVars::contains))) {
+				// replace only if array or index is modified
+				final Pair<ArrayIndex, Map<TermVariable, Term>> pair = replaceIndex(mgdScript, mds.getIndex());
+				for (final Entry<TermVariable, Term> entry : pair.getSecond().entrySet()) {
+					substitutionMapping.put(entry.getValue(), entry.getKey());
+					replacementMapping.putAll(pair.getSecond());
+				}
 			}
 		}
 		final Term newTerm = Substitution.apply(mgdScript, substitutionMapping, term);
