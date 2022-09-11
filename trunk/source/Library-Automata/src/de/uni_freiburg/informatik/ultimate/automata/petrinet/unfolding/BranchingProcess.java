@@ -333,26 +333,29 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	public boolean eventsInConcurrency(final Event<LETTER, PLACE> event1, final Event<LETTER, PLACE> event2) {
-		return (!eventsInConflict(event1, event2)) && (!eventsInCausalRelation(event1, event2));
+		return ((!eventsInCausalRelation(event1, event2) && !eventsInConflict(event1, event2)));
 
 	}
 
 	public boolean eventsInConflict(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
+		for (final Event<LETTER, PLACE> localEvent1 : e1.getLocalConfiguration()) {
+			for (final Event<LETTER, PLACE> localEvent2 : e2.getLocalConfiguration()) {
+				if (eventsInDirectConflict(localEvent1, localEvent2)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean eventsInDirectConflict(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
 		if (e1 == e2) {
 			return false;
 		}
 		if (e1.getPredecessorConditions().stream().anyMatch(e2.getPredecessorConditions()::contains)) {
 			return true;
 		}
-		boolean result = false;
-		for (final Condition<LETTER, PLACE> e1Pred : e1.getPredecessorConditions()) {
-			for (final Condition<LETTER, PLACE> e2Pred : e2.getPredecessorConditions()) {
-				final Set<Object> e2Ancestors = ancestorNodes(e2);
-				result = result || conflictPathCheck(e1Pred, e2Pred, e2Ancestors);
-			}
-		}
-		return result;
-
+		return false;
 	}
 
 	/**

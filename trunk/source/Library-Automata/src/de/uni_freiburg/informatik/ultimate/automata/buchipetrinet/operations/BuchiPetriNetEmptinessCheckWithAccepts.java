@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -28,10 +29,8 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
 
 	private final BranchingProcess<LETTER, PLACE> mUnfolding;
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mBuchiPetriNet;
-	private final Set<Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>>> mConcurrentEndEventPowerset =
-			new HashSet<>();
-	private final Set<Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>>> mToBeExaminedConcurrentEndEvents =
-			new HashSet<>();
+	private final Set<PotentialLassoConfiguration<LETTER, PLACE>> mConcurrentEndEventPowerset = new HashSet<>();
+	private final Set<PotentialLassoConfiguration<LETTER, PLACE>> mToBeExaminedConcurrentEndEvents = new HashSet<>();
 
 	private final Set<Pair<NestedLassoWord<LETTER>, List<Event<LETTER, PLACE>>>> mResultLassoWordsWithConfigurations =
 			new HashSet<>();
@@ -139,39 +138,60 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
 	 * (The sets of events are the "Headevents" which combined local configurations is the configuration we are
 	 * testing.)
 	 */
-	private final void checkNewConfigurations(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+	private final void checkNewConfigurations(final Event<LETTER, PLACE> event) {
 		if (mAccptLoopEvents.contains(event)) {
 			final Set<Event<LETTER, PLACE>> singletonSet = new HashSet<>();
 			singletonSet.add(event);
 			final Event<LETTER, PLACE> loopHead = mAccptLoopEventToLoopHeadMap.get(event);
-			final Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>> singletonPair =
-					new Pair<>(singletonSet, loopHead);
-			mToBeExaminedConcurrentEndEvents.add(singletonPair);
+			final Set<PLACE> successorPlaces = new HashSet<>();
+			for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
+				successorPlaces.add(cond.getPlace());
+			}
+			final PotentialLassoConfiguration<LETTER, PLACE> singleTonConfiguration =
+					new PotentialLassoConfiguration<>(singletonSet, loopHead);
+			checkWordFromConfig(singleTonConfiguration);
+			if (mResultLassoWordsWithConfigurations.size() > 0) {
+				return;
+			}
+			mToBeExaminedConcurrentEndEvents.add(singleTonConfiguration);
 		}
 		// non loop events cannot help build a lasso configuration
 		if (!mLoopEvents.contains(event)) {
 			return;
 		}
-		for (final Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>> pair : mConcurrentEndEventPowerset) {
-			if (fitsInEqualSet(event, pair.getFirst())) {
-				final Set<Event<LETTER, PLACE>> newConcSubSet = new HashSet<>();
-				newConcSubSet.add(event);
-				newConcSubSet.addAll(pair.getFirst());
-				final Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>> newPair =
-						new Pair<>(newConcSubSet, pair.getSecond());
-				mToBeExaminedConcurrentEndEvents.add(newPair);
+		for (final PotentialLassoConfiguration<LETTER, PLACE> config : mConcurrentEndEventPowerset) {
+			if (extendsConfiguration(event, config)) {
+
+				final Set<PLACE> newPlaceSet = new HashSet<>();
+				for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
+					newPlaceSet.add(cond.getPlace());
+				}
+
+				final PotentialLassoConfiguration<LETTER, PLACE> newConfiguration = config.getCopy();
+
+				newConfiguration.addPlaces(newPlaceSet);
+				newConfiguration.addEvent(event);
+
+				mToBeExaminedConcurrentEndEvents.add(newConfiguration);
 			}
 		}
-		for (final Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>> configurationHeads : mToBeExaminedConcurrentEndEvents) {
-			checkWordFromConfigHeads(configurationHeads);
+		for (final PotentialLassoConfiguration<LETTER, PLACE> configuration : mToBeExaminedConcurrentEndEvents) {
+			checkWordFromConfig(configuration);
+			if (mResultLassoWordsWithConfigurations.size() > 0) {
+				return;
+			}
 		}
 		mConcurrentEndEventPowerset.addAll(mToBeExaminedConcurrentEndEvents);
 		mToBeExaminedConcurrentEndEvents.clear();
 	}
 
-	private final boolean fitsInEqualSet(final Event<LETTER, PLACE> event,
-			final Set<Event<LETTER, PLACE>> setofevents) {
-		for (final Event<LETTER, PLACE> event2 : setofevents) {
+	private final boolean extendsConfiguration(final Event<LETTER, PLACE> event,
+			final PotentialLassoConfiguration<LETTER, PLACE> config) {
+		if (!config.extendsConfiguration(event)) {
+			return false;
+		}
+
+		for (final Event<LETTER, PLACE> event2 : config.getEndEvents()) {
 			if (!mUnfolding.eventsInConcurrency(event, event2)) {
 				return false;
 			}
@@ -179,23 +199,25 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
 		return true;
 	}
 
-	private final void
-			checkWordFromConfigHeads(final Pair<Set<Event<LETTER, PLACE>>, Event<LETTER, PLACE>> configurationEnd)
-					throws PetriNetNot1SafeException {
+	private final void checkWordFromConfig(final PotentialLassoConfiguration<LETTER, PLACE> configuration) {
+		if (!configuration.isLassoConfiguration()) {
+			return;
+		}
 		final Set<Event<LETTER, PLACE>> allEvents = new HashSet<>();
-		for (final Event<LETTER, PLACE> headEvent : configurationEnd.getFirst()) {
+		for (final Event<LETTER, PLACE> headEvent : configuration.getEndEvents()) {
 			allEvents.addAll(headEvent.getLocalConfiguration().getEvents());
 		}
 		final List<Event<LETTER, PLACE>> configurationSorted = new ArrayList<>(allEvents);
 		Collections.sort(configurationSorted, new EventComparator());
 		final NestedLassoWord<LETTER> lassoWord =
-				getLassoWordFromConfiguration(configurationSorted, configurationEnd.getSecond());
+				getLassoWordFromConfiguration(configurationSorted, configuration.getLoopheadEvent());
 
-		final BuchiPetrinetAccepts<LETTER, PLACE> accepts =
-				new BuchiPetrinetAccepts<>(mServices, mBuchiPetriNet, lassoWord);
-		if (accepts.getResult()) {
-			mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
-		}
+		// final BuchiPetrinetAccepts<LETTER, PLACE> accepts =
+		// new BuchiPetrinetAccepts<>(mServices, mBuchiPetriNet, lassoWord);
+		// if (accepts.getResult()) {
+		// mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
+		// }
+		mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
 	}
 
 	/*
