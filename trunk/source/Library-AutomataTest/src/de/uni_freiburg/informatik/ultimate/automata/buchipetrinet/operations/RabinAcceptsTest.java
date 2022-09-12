@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -38,7 +38,8 @@ public class RabinAcceptsTest {
 	@Test
 	public void testGetResultWithEmptyStem() throws PetriNetNot1SafeException {
 		final Set<String> alphabet = Set.of("b", "c");
-		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+
+		final BoundedRabinPetriNet<String, String> net1 = new BoundedRabinPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p2", true, false);
 		net1.addPlace("p3", false, true);
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
@@ -46,19 +47,23 @@ public class RabinAcceptsTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>());
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final Set<String> finitePlaceSet = new HashSet<>();
-		// finitePlaceSet.add("p2");
-		final RabinAccepts<String, String> buchiPetriAccpts =
-				new RabinAccepts<>(mServices, net1, lassoWord, finitePlaceSet);
-		final boolean accepted = buchiPetriAccpts.getResult();
+
+		RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
+		boolean accepted = buchiPetriAccpts.getResult();
 
 		assertThat("Stemless Word is accepted in deterministic Petri net.", accepted);
+
+		net1.addFinitePlace("p3");
+		buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
+		accepted = buchiPetriAccpts.getResult();
+		assertThat("Stemless Word is not accepted in limited deterministic Petri net.", !accepted);
 	}
 
 	@Test
 	public void testGetResultWithNonTrivialLoopPlaces() throws PetriNetNot1SafeException {
+
 		final Set<String> alphabet = Set.of("a", "b");
-		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+		final BoundedRabinPetriNet<String, String> net1 = new BoundedRabinPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
 		net1.addPlace("p3", false, false);
@@ -76,9 +81,7 @@ public class RabinAcceptsTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final Set<String> finitePlaceSet = new HashSet<>();
-		final RabinAccepts<String, String> buchiPetriAccpts =
-				new RabinAccepts<>(mServices, net1, lassoWord, finitePlaceSet);
+		final RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -88,7 +91,8 @@ public class RabinAcceptsTest {
 	@Test
 	public void testGetResultWithNonTrivialLoopPlaces2() throws PetriNetNot1SafeException {
 		final Set<String> alphabet = Set.of("a", "b");
-		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+
+		final BoundedRabinPetriNet<String, String> net1 = new BoundedRabinPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
 		net1.addPlace("p3", false, false);
@@ -106,10 +110,7 @@ public class RabinAcceptsTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final Set<String> finitePlaceSet = new HashSet<>();
-		finitePlaceSet.add("p6");
-		final RabinAccepts<String, String> buchiPetriAccpts =
-				new RabinAccepts<>(mServices, net1, lassoWord, finitePlaceSet);
+		final RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -119,7 +120,8 @@ public class RabinAcceptsTest {
 	@Test
 	public void testGetResultWithNondeterministicTransitions() throws PetriNetNot1SafeException {
 		final Set<String> alphabet = Set.of("a", "b", "c");
-		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+
+		final BoundedRabinPetriNet<String, String> net1 = new BoundedRabinPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
 		net1.addPlace("p3", false, true);
@@ -127,10 +129,8 @@ public class RabinAcceptsTest {
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p2")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
-		final Set<String> finitePlaceSet = new HashSet<>();
 		// finitePlaceSet.add("p3");
-		final RabinAccepts<String, String> buchiPetriAccpts =
-				new RabinAccepts<>(mServices, net1, lassoWord, finitePlaceSet);
+		final RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -140,7 +140,8 @@ public class RabinAcceptsTest {
 	@Test
 	public void testGetResultWithNondeterministicTransitionsAndNonAcceptingLoop() throws PetriNetNot1SafeException {
 		final Set<String> alphabet = Set.of("a", "b", "c");
-		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+
+		final BoundedRabinPetriNet<String, String> net1 = new BoundedRabinPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, false);
 		net1.addPlace("p3", false, false);
@@ -150,10 +151,7 @@ public class RabinAcceptsTest {
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p4")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p2")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
-		final Set<String> finitePlaceSet = new HashSet<>();
-		// finitePlaceSet.add("p4");
-		final RabinAccepts<String, String> buchiPetriAccpts =
-				new RabinAccepts<>(mServices, net1, lassoWord, finitePlaceSet);
+		final RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -163,7 +161,8 @@ public class RabinAcceptsTest {
 	@Test
 	public void testGetResultWithAcceptingPlaceInStem() throws PetriNetNot1SafeException {
 		final Set<String> alphabet = Set.of("a", "b", "c");
-		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+
+		final BoundedRabinPetriNet<String, String> net1 = new BoundedRabinPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, true);
 		net1.addPlace("p3", false, false);
@@ -172,10 +171,8 @@ public class RabinAcceptsTest {
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p4")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
-		final Set<String> finitePlaceSet = new HashSet<>();
 		// finitePlaceSet.add("p4");
-		final RabinAccepts<String, String> buchiPetriAccpts =
-				new RabinAccepts<>(mServices, net1, lassoWord, finitePlaceSet);
+		final RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -185,7 +182,8 @@ public class RabinAcceptsTest {
 	@Test
 	public void testGetResultWithDoubleLoop() throws PetriNetNot1SafeException {
 		final Set<String> alphabet = Set.of("a", "b", "c");
-		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
+
+		final BoundedRabinPetriNet<String, String> net1 = new BoundedRabinPetriNet<>(mServices, alphabet, false);
 		net1.addPlace("p0", true, false);
 		net1.addPlace("p1", true, false);
 		net1.addPlace("p2", false, true);
@@ -194,10 +192,8 @@ public class RabinAcceptsTest {
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
-		final Set<String> finitePlaceSet = new HashSet<>();
-		finitePlaceSet.add("p1");
 
-		RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord, finitePlaceSet);
+		RabinAccepts<String, String> buchiPetriAccpts = new RabinAccepts<>(mServices, net1, lassoWord);
 
 		boolean accepted = buchiPetriAccpts.getResult();
 
@@ -209,7 +205,7 @@ public class RabinAcceptsTest {
 		wordsToTestLassoWords.add(getLassoWord("a", "c c b"));
 
 		for (final NestedLassoWord<String> nestedLassoWord : wordsToTestLassoWords) {
-			buchiPetriAccpts = new RabinAccepts<>(mServices, net1, nestedLassoWord, finitePlaceSet);
+			buchiPetriAccpts = new RabinAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is accepted in double Loop Petri net.", accepted);
 		}
@@ -220,7 +216,7 @@ public class RabinAcceptsTest {
 		nonAcceptingWords.add(getLassoWord("a", "c c"));
 
 		for (final NestedLassoWord<String> nestedLassoWord : nonAcceptingWords) {
-			buchiPetriAccpts = new RabinAccepts<>(mServices, net1, nestedLassoWord, finitePlaceSet);
+			buchiPetriAccpts = new RabinAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is not accepted in double Loop Petri net.", !accepted);
 		}

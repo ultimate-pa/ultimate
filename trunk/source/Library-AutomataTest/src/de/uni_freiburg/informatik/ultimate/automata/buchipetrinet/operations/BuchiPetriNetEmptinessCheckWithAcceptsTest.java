@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiPetriNetUnfolder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -42,8 +42,8 @@ public class BuchiPetriNetEmptinessCheckWithAcceptsTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p2", "p3")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
-		final BuchiPetriNetUnfolder<String, String> unfolder =
-				new BuchiPetriNetUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
+		final BuchiUnfolder<String, String> unfolder =
+				new BuchiUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
 
 		final boolean test = unfolder.getAcceptingRun() != null;
 		assertThat("Lasso should be found.", test);

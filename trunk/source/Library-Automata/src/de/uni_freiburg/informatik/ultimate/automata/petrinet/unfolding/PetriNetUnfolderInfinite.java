@@ -5,7 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetriNetEmptinessCheckWithAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.IsEmptyInfinite;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -17,10 +17,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public final class BuchiPetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P> {
-	private BuchiPetriNetEmptinessCheckWithAccepts<L, P> mLassoChecker;
+public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBase<L, P> {
+	protected IsEmptyInfinite<L, P> mLassoChecker;
 
-	private PetriNetLassoRun<L, P> mLassoRun;
+	protected PetriNetLassoRun<L, P> mLassoRun;
 
 	/**
 	 * Build the finite Prefix of PetriNet net.
@@ -36,27 +36,21 @@ public final class BuchiPetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P
 	 *             if timeout exceeds
 	 * @throws PetriNetNot1SafeException
 	 */
-	public BuchiPetriNetUnfolder(final AutomataLibraryServices services,
+	public PetriNetUnfolderInfinite(final AutomataLibraryServices services,
 			final IPetriNetTransitionProvider<L, P> operand, final EventOrderEnum order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
-		mLassoChecker = null;
-
 	}
 
 	@Override
-	void setupChild() {
-		mLassoChecker = new BuchiPetriNetEmptinessCheckWithAccepts<>(mServices, mUnfolding,
-				(IPetriNetTransitionProvider<L, P>) mOperand);
-		mLassoRun = null;
-	}
+	abstract void setupChild();
 
 	public PetriNetLassoRun<L, P> getAcceptingRun() {
 		return mLassoRun;
 	}
 
-	/*
+	/**
 	 * cannot find a loop in initial marking
 	 */
 	@Override
@@ -86,9 +80,10 @@ public final class BuchiPetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P
 	}
 
 	/**
-	 * constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
+	 * Constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
 	 * specified event e.
 	 *
+	 * @return {@link PetriNetLassoRun}
 	 * @throws PetriNetNot1SafeException
 	 */
 	private PetriNetLassoRun<L, P> constructRun() throws PetriNetNot1SafeException {
@@ -116,8 +111,9 @@ public final class BuchiPetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P
 
 			wordIndex++;
 		}
-
+		System.out.println("AAAAA" + sequenceOfStemMarkings.size() + resutlPair.getFirst().getStem());
 		final PetriNetRun<L, P> stemRun = new PetriNetRun<>(sequenceOfStemMarkings, resutlPair.getFirst().getStem());
+		System.out.println("AAAAA" + sequenceOfLassoMarkings.size() + resutlPair.getFirst().getLoop());
 		final PetriNetRun<L, P> loopRun = new PetriNetRun<>(sequenceOfLassoMarkings, resutlPair.getFirst().getLoop());
 		final PetriNetLassoRun<L, P> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
 		return lassoRun;

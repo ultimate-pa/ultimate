@@ -2,13 +2,13 @@ package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Class that provides the Rabin acceptance check for (Rabin-)Petri nets.
+ * Class that provides the Buchi acceptance check for (Buchi-)Petri nets.
  *
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
@@ -16,10 +16,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Content. Type of the labels ("the content") of the automata states.
  */
 // TODO prefix nur buchi bei allen, alle in petri net operatins
-public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETTER, PLACE> {
+public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETTER, PLACE> {
 
 	/**
-	 * Constructor. Check if given Rabin-Petri Net accepts given word.
+	 * Constructor. Check if given Buchi-Petri Net accepts given word.
 	 *
 	 * @param <services>
 	 *            Ultimare services.
@@ -30,8 +30,9 @@ public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 	 * @param <word>
 	 *            Input word.
 	 */
-	public RabinAccepts(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand,
-			final NestedLassoWord<LETTER> word) throws PetriNetNot1SafeException {
+	public BuchiAccepts(final AutomataLibraryServices services,
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final NestedLassoWord<LETTER> word)
+			throws PetriNetNot1SafeException {
 		super(services, operand, word);
 	}
 
@@ -45,26 +46,16 @@ public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 		} else {
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
 		}
-		int firingInLimitedPlaceIndex;
-		if (transition.getSuccessors().stream()
-				.anyMatch(((IRabinPetriNet<LETTER, PLACE>) mOperand).getFinitePlaces()::contains)) {
-			firingInLimitedPlaceIndex = mfireSequenceIndex;
-		} else {
-			firingInLimitedPlaceIndex = predecessor.getLastIndexOfShootingFinitePlaceInFireSequence();
-		}
 		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition),
-				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex,
-				firingInLimitedPlaceIndex);
+				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex, 0);
 	}
 
 	@Override
 	boolean checkForAcceptingConditions() {
 		for (final Pair<MarkingOfFireSequence<LETTER, PLACE>, Integer> markingAndHondaIndex : containsLoopingFiresequence(
 				mFireSequenceTreeMarkings)) {
-			if ((markingAndHondaIndex.getFirst()
-					.getLastIndexOfShootingAcceptingStateInFireSequence() >= markingAndHondaIndex.getSecond())
-					&& (markingAndHondaIndex.getFirst()
-							.getLastIndexOfShootingFinitePlaceInFireSequence() < markingAndHondaIndex.getSecond())) {
+			if (markingAndHondaIndex.getFirst()
+					.getLastIndexOfShootingAcceptingStateInFireSequence() >= markingAndHondaIndex.getSecond()) {
 				return true;
 			}
 			// any nonaccepting firing sequence stuck in a loop is disregarded
@@ -72,4 +63,5 @@ public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 		}
 		return false;
 	}
+
 }

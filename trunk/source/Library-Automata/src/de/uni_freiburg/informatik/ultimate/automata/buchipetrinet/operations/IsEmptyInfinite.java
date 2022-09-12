@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
@@ -24,10 +23,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
+public abstract class IsEmptyInfinite<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
-	private final BranchingProcess<LETTER, PLACE> mUnfolding;
+	protected final BranchingProcess<LETTER, PLACE> mUnfolding;
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mBuchiPetriNet;
 	private final Set<PotentialLassoConfiguration<LETTER, PLACE>> mConcurrentEndEventPowerset = new HashSet<>();
 	private final Set<PotentialLassoConfiguration<LETTER, PLACE>> mToBeExaminedConcurrentEndEvents = new HashSet<>();
@@ -37,11 +36,11 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
 	private final Set<Event<LETTER, PLACE>> mAcceptingEvents = new HashSet<>();
 	private final Set<Event<LETTER, PLACE>> mEndEvents = new HashSet<>();
 	private final Set<Event<LETTER, PLACE>> mLoopEvents = new HashSet<>();
-	private final Set<Event<LETTER, PLACE>> mAccptLoopEvents = new HashSet<>();
-	private final Map<Event<LETTER, PLACE>, Event<LETTER, PLACE>> mAccptLoopEventToLoopHeadMap = new HashMap<>();
+	protected final Set<Event<LETTER, PLACE>> mAccptLoopEvents = new HashSet<>();
+	protected final Map<Event<LETTER, PLACE>, Event<LETTER, PLACE>> mAccptLoopEventToLoopHeadMap = new HashMap<>();
 
-	public BuchiPetriNetEmptinessCheckWithAccepts(final AutomataLibraryServices services,
-			final BranchingProcess<LETTER, PLACE> unfolding, final IPetriNetTransitionProvider<LETTER, PLACE> net) {
+	public IsEmptyInfinite(final AutomataLibraryServices services, final BranchingProcess<LETTER, PLACE> unfolding,
+			final IPetriNetTransitionProvider<LETTER, PLACE> net) {
 		super(services);
 		mUnfolding = unfolding;
 		mBuchiPetriNet = net;
@@ -75,7 +74,7 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
 	 * @return boolean representing if lasso configuration was found.
 	 *
 	 */
-	public final boolean update(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+	public final boolean update(final Event<LETTER, PLACE> event) {
 		// skipping artificial root event of Branchingprocess
 		if (event.getTransition() == null) {
 			return false;
@@ -139,7 +138,7 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
 	 * testing.)
 	 */
 	private final void checkNewConfigurations(final Event<LETTER, PLACE> event) {
-		if (mAccptLoopEvents.contains(event)) {
+		if (meetsConditionsToBeBaseOfLassoConfiguration(event)) {
 			final Set<Event<LETTER, PLACE>> singletonSet = new HashSet<>();
 			singletonSet.add(event);
 			final Event<LETTER, PLACE> loopHead = mAccptLoopEventToLoopHeadMap.get(event);
@@ -185,19 +184,10 @@ public class BuchiPetriNetEmptinessCheckWithAccepts<LETTER, PLACE>
 		mToBeExaminedConcurrentEndEvents.clear();
 	}
 
-	private final boolean extendsConfiguration(final Event<LETTER, PLACE> event,
-			final PotentialLassoConfiguration<LETTER, PLACE> config) {
-		if (!config.extendsConfiguration(event)) {
-			return false;
-		}
+	abstract boolean meetsConditionsToBeBaseOfLassoConfiguration(Event<LETTER, PLACE> event);
 
-		for (final Event<LETTER, PLACE> event2 : config.getEndEvents()) {
-			if (!mUnfolding.eventsInConcurrency(event, event2)) {
-				return false;
-			}
-		}
-		return true;
-	}
+	abstract boolean extendsConfiguration(final Event<LETTER, PLACE> event,
+			final PotentialLassoConfiguration<LETTER, PLACE> config);
 
 	private final void checkWordFromConfig(final PotentialLassoConfiguration<LETTER, PLACE> configuration) {
 		if (!configuration.isLassoConfiguration()) {

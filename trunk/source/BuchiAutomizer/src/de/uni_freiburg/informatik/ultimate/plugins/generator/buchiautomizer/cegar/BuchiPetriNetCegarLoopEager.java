@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiPetriNetUnfolder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiUnfolder;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -48,7 +48,7 @@ public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean isAbstractionEmpty(final IPetriNet<L, IPredicate> abstraction) throws AutomataLibraryException {
-		final var unfolder = new BuchiPetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction,
+		final var unfolder = new BuchiUnfolder<>(new AutomataLibraryServices(mServices), abstraction,
 				mPref.eventOrder(), mPref.cutOffRequiresSameTransition(), true);
 		final PetriNetLassoRun<L, IPredicate> run = unfolder.getAcceptingRun();
 		if (run == null) {

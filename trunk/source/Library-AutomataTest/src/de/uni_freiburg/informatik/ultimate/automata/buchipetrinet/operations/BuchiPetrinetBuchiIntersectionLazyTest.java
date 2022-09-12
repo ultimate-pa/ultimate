@@ -65,8 +65,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("c", "c"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, intersection, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -108,8 +108,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("c", "c"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, intersection, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -151,8 +151,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, intersection, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -198,8 +198,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "b"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, intersection, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -244,8 +244,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, intersection, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -290,8 +290,8 @@ public class BuchiPetrinetBuchiIntersectionLazyTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("e", "d", "e", "e"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, intersection, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, intersection, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 

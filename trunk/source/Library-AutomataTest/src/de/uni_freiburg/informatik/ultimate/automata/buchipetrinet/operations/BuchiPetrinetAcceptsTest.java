@@ -45,8 +45,8 @@ public class BuchiPetrinetAcceptsTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>());
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -74,8 +74,8 @@ public class BuchiPetrinetAcceptsTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -103,8 +103,8 @@ public class BuchiPetrinetAcceptsTest {
 		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
 		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b"));
 		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -122,8 +122,8 @@ public class BuchiPetrinetAcceptsTest {
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p2")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -143,8 +143,8 @@ public class BuchiPetrinetAcceptsTest {
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p4")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p2")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -163,8 +163,8 @@ public class BuchiPetrinetAcceptsTest {
 		net1.addTransition("b", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p4")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
-		final BuchiPetrinetAccepts<String, String> buchiPetriAccpts =
-				new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+		final BuchiAccepts<String, String> buchiPetriAccpts =
+				new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
 
@@ -184,7 +184,7 @@ public class BuchiPetrinetAcceptsTest {
 		net1.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 		final NestedLassoWord<String> lassoWord = getLassoWord("a", "b c");
 
-		BuchiPetrinetAccepts<String, String> buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, lassoWord);
+		BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		boolean accepted = buchiPetriAccpts.getResult();
 
@@ -196,7 +196,7 @@ public class BuchiPetrinetAcceptsTest {
 		wordsToTestLassoWords.add(getLassoWord("a", "c c b"));
 
 		for (final NestedLassoWord<String> nestedLassoWord : wordsToTestLassoWords) {
-			buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, nestedLassoWord);
+			buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is accepted in double Loop Petri net.", accepted);
 		}
@@ -207,7 +207,7 @@ public class BuchiPetrinetAcceptsTest {
 		nonAcceptingWords.add(getLassoWord("a", "c c"));
 
 		for (final NestedLassoWord<String> nestedLassoWord : nonAcceptingWords) {
-			buchiPetriAccpts = new BuchiPetrinetAccepts<>(mServices, net1, nestedLassoWord);
+			buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
 			assertThat(nestedLassoWord.toString() + "is not accepted in double Loop Petri net.", !accepted);
 		}
