@@ -166,10 +166,8 @@ public class JordanLoopAcceleration {
 
 		final boolean isAlternatingClosedFormRequired = JordanAcceleratedUpdate
 				.isAlternatingClosedFormRequired(jordanUpdate);
-		final UnmodifiableTransFormula guardTf =
-				TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);
 		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger, services,
-				mgdScript, su, suwr, pair.getFirst(), varMatrixIndexMap, jordanUpdate, loopTransFormula, guardTf, true,
+				mgdScript, su, suwr, pair.getFirst(), varMatrixIndexMap, jordanUpdate, loopTransFormula, true,
 				quantifyItFinExplicitly, isAlternatingClosedFormRequired);
 		final JordanLoopAccelerationStatisticsGenerator jlasg =
 				new JordanLoopAccelerationStatisticsGenerator(numberOfAssignedVariables, numberOfHavocedVariables,
@@ -366,11 +364,10 @@ public class JordanLoopAcceleration {
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SimultaneousUpdate su,
 			final SimultaneousUpdateWithReplacements suwr, final LinearUpdate linearUpdate,
 			final HashMap<Term, Integer> varMatrixIndexMap, final JordanTransformationResult jordanUpdate,
-			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
-			final boolean restrictedVersionPossible, final boolean quantifyItFinExplicitly,
-			final boolean isAlternatingClosedFormRequired) {
+			final UnmodifiableTransFormula loopTransFormula, final boolean restrictedVersionPossible,
+			final boolean quantifyItFinExplicitly, final boolean isAlternatingClosedFormRequired) {
 
-		final UnmodifiableTransFormula loopAccelerationFormula;
+		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(loopTransFormula.getInVars());
 		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, newInVars, loopTransFormula.getOutVars());
 
@@ -402,8 +399,8 @@ public class JordanLoopAcceleration {
 		} else {
 			accelerationTerm = transitiveClosure;
 		}
-		loopAccelerationFormula = buildAccelerationTransFormula(logger, mgdScript, services, loopTransFormula,
-				accelerationTerm, quantifyItFinExplicitly, itFin, newInVars);
+		final UnmodifiableTransFormula loopAccelerationFormula = buildAccelerationTransFormula(logger, mgdScript,
+				services, loopTransFormula, accelerationTerm, quantifyItFinExplicitly, itFin, newInVars);
 
 		assert LoopAccelerationUtils.checkSomePropertiesOfLoopAccelerationFormula(services, mgdScript, loopTransFormula,
 				loopAccelerationFormula, REFLEXIVE_TRANSITIVE_CLOSURE);
