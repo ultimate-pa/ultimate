@@ -1,13 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
-import java.util.InputMismatchException;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.IsEmptyRabin;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 
 public final class RabinUnfolder<L, P> extends PetriNetUnfolderInfinite<L, P> {
@@ -20,10 +20,13 @@ public final class RabinUnfolder<L, P> extends PetriNetUnfolderInfinite<L, P> {
 
 	@Override
 	void setupChild() {
-		if (!(mOperand instanceof IRabinPetriNet)) {
-			throw new InputMismatchException("Given net was not Rabin Petri net.");
+
+		if (mOperand instanceof BoundedPetriNet) {
+			mLassoChecker = new IsEmptyRabin<>(mServices, mUnfolding,
+					new BoundedRabinPetriNet<>((BoundedPetriNet<L, P>) mOperand));
+		} else {
+			mLassoChecker = new IsEmptyRabin<>(mServices, mUnfolding, (IRabinPetriNet<L, P>) mOperand);
 		}
-		mLassoChecker = new IsEmptyRabin<>(mServices, mUnfolding, (IRabinPetriNet<L, P>) mOperand);
 		mLassoRun = null;
 	}
 }
