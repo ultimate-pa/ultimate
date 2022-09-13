@@ -291,8 +291,8 @@ public class JordanLoopAcceleration {
 			}
 			closedFormMapWithoutReplacementTvs = closedFormMap.entrySet().stream().collect(Collectors
 					.toMap(Map.Entry::getKey, x -> Substitution.apply(mgdScript, substitutionMapping, x.getValue())));
-			array2Index2valuesWithoutReplacementTvs = applySubstitutionToIndexAndValue(mgdScript, substitutionMapping,
-					suwr.getDeterministicArrayWrites());
+			array2Index2valuesWithoutReplacementTvs = applySubstitutionToIndexAndValue(mgdScript,
+					closedFormMapWithoutReplacementTvs, suwr.getDeterministicArrayWrites());
 		}
 
 		final HashMap<Term, Term> substitutionMapping = new HashMap<>();
