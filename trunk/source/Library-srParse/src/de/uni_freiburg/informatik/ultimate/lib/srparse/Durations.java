@@ -98,13 +98,12 @@ public class Durations {
 		final BigInteger a = iter.next();
 		final BigInteger b = iter.next();
 		BigInteger gcd = Rational.gcd(a, b);
-		BigInteger mul = a.multiply(b);
+		BigInteger lcm = a.multiply(b).abs().divide(gcd);
 		while (iter.hasNext()) {
 			final BigInteger next = iter.next();
-			gcd = Rational.gcd(gcd, next);
-			mul = mul.multiply(next);
+			gcd = Rational.gcd(lcm, next);
+			lcm = lcm.multiply(next).abs().divide(gcd);
 		}
-		final BigInteger lcm = mul.abs().divide(gcd);
 		return Rational.valueOf(lcm, BigInteger.ONE);
 	}
 
