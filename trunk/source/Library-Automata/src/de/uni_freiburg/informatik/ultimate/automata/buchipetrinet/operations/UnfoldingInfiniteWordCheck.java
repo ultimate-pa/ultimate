@@ -23,11 +23,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public abstract class IsEmptyInfinite<LETTER, PLACE>
+public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	protected final BranchingProcess<LETTER, PLACE> mUnfolding;
-	private final IPetriNetTransitionProvider<LETTER, PLACE> mBuchiPetriNet;
+	protected final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private final Set<PotentialLassoConfiguration<LETTER, PLACE>> mConcurrentEndEventPowerset = new HashSet<>();
 	private final Set<PotentialLassoConfiguration<LETTER, PLACE>> mToBeExaminedConcurrentEndEvents = new HashSet<>();
 
@@ -39,11 +39,11 @@ public abstract class IsEmptyInfinite<LETTER, PLACE>
 	protected final Set<Event<LETTER, PLACE>> mAccptLoopEvents = new HashSet<>();
 	protected final Map<Event<LETTER, PLACE>, Event<LETTER, PLACE>> mAccptLoopEventToLoopHeadMap = new HashMap<>();
 
-	public IsEmptyInfinite(final AutomataLibraryServices services, final BranchingProcess<LETTER, PLACE> unfolding,
+	public UnfoldingInfiniteWordCheck(final AutomataLibraryServices services, final BranchingProcess<LETTER, PLACE> unfolding,
 			final IPetriNetTransitionProvider<LETTER, PLACE> net) {
 		super(services);
 		mUnfolding = unfolding;
-		mBuchiPetriNet = net;
+		mOperand = net;
 	}
 
 	@Override
@@ -53,7 +53,7 @@ public abstract class IsEmptyInfinite<LETTER, PLACE>
 
 	@Override
 	protected IPetriNetSuccessorProvider<LETTER, PLACE> getOperand() {
-		return mBuchiPetriNet;
+		return mOperand;
 	}
 
 	/*
@@ -203,7 +203,7 @@ public abstract class IsEmptyInfinite<LETTER, PLACE>
 				getLassoWordFromConfiguration(configurationSorted, configuration.getLoopheadEvent());
 
 		// final BuchiPetrinetAccepts<LETTER, PLACE> accepts =
-		// new BuchiPetrinetAccepts<>(mServices, mBuchiPetriNet, lassoWord);
+		// new BuchiPetrinetAccepts<>(mServices, mOperand, lassoWord);
 		// if (accepts.getResult()) {
 		// mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
 		// }

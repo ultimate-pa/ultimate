@@ -161,6 +161,7 @@ public abstract class PetriNetUnfolderBase<L, P> {
 
 			final boolean finished = computeUnfoldingHelper(e);
 			if (finished) {
+				mLogger.info("Found word, exiting Unfolder.");
 				return;
 			}
 
@@ -178,6 +179,7 @@ public abstract class PetriNetUnfolderBase<L, P> {
 				throw new AutomataOperationCanceledException(rti);
 			}
 		}
+		mLogger.info("Searched whole Unfolding.");
 	}
 
 	protected abstract void createInitialRun() throws PetriNetNot1SafeException;

@@ -1,10 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -62,6 +66,46 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 			mFireSequenceTreeMarkings.remove(markingAndHondaIndex.getFirst());
 		}
 		return false;
+	}
+
+	// TODO: This is faulty since PetriNet2FiniteAutomaton is not fully correct for Buchi Petri nets
+	// We have to change checkResult in Generaloperation to include a second Black white factory i think
+	@Override
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
+			throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of accepts");
+		}
+		final boolean resultAutomata =
+				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts<>(mServices,
+						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), mLassoWord))
+								.getResult();
+		final boolean correct = mResult == resultAutomata;
+
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of accepts");
+		}
+
+		return correct;
+	}
+
+	public boolean checkResultReal(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory,
+			final IBlackWhiteStateFactory<PLACE> blackWhite) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of accepts");
+		}
+		final boolean resultAutomata =
+				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts<>(mServices,
+						(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory, blackWhite, mOperand))
+								.getResult(),
+						mLassoWord)).getResult();
+		final boolean correct = mResult == resultAutomata;
+
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of accepts");
+		}
+
+		return correct;
 	}
 
 }

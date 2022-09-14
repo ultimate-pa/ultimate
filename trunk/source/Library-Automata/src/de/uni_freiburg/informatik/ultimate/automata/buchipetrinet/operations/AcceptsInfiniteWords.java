@@ -33,7 +33,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	/**
 	 * The word we check acceptance for.
 	 */
-	private final NestedLassoWord<LETTER> mLassoWord;
+	protected final NestedLassoWord<LETTER> mLassoWord;
 	/**
 	 * Through nondeterminism in the Petri net one input word can produce multiple different fire sequences. Thus we
 	 * could think of the multiple firesequences as a combined fire sequence tree where we have splits when
@@ -47,7 +47,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	 * Keeps track of the index of the FIreSequenceTree that is created during the isWordAcceptedByOmegaNet() method.
 	 */
 	protected int mfireSequenceIndex;
-	private final boolean mResult;
+	protected final boolean mResult;
 
 	/**
 	 * Constructor. Check if given Buchi-Petri Net accepts given word.

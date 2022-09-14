@@ -5,7 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.IsEmptyInfinite;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.UnfoldingInfiniteWordCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBase<L, P> {
-	protected IsEmptyInfinite<L, P> mLassoChecker;
+	protected UnfoldingInfiniteWordCheck<L, P> mLassoChecker;
 
 	protected PetriNetLassoRun<L, P> mLassoRun;
 

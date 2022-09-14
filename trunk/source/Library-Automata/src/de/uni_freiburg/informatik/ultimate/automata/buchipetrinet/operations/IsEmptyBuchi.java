@@ -1,34 +1,78 @@
 package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiUnfolder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
-public class IsEmptyBuchi<LETTER, PLACE> extends IsEmptyInfinite<LETTER, PLACE> {
+/**
+ * Emptiness check for Petri nets.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            place content type
+ */
+public final class IsEmptyBuchi<LETTER, PLACE>
+		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
+	private final boolean mResult;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 * @throws PetriNetNot1SafeException
+	 */
 	public IsEmptyBuchi(final AutomataLibraryServices services,
-			final BranchingProcess<LETTER, PLACE> unfolding, final IPetriNetTransitionProvider<LETTER, PLACE> net) {
-		super(services, unfolding, net);
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		super(services);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		final BuchiUnfolder<LETTER, PLACE> unf =
+				new BuchiUnfolder<>(mServices, operand, EventOrderEnum.ERV, false, true);
+		final PetriNetLassoRun<LETTER, PLACE> run = unf.getAcceptingRun();
+		mResult = run == null;
+		mLogger.info(exitMessage());
 	}
 
 	@Override
-	boolean meetsConditionsToBeBaseOfLassoConfiguration(final Event<LETTER, PLACE> event) {
-		return mAccptLoopEvents.contains(event);
+	public String exitMessage() {
+		return "Finished " + getOperationName() + " language is " + (mResult ? "empty" : "not empty");
 	}
 
 	@Override
-	boolean extendsConfiguration(final Event<LETTER, PLACE> event,
-			final PotentialLassoConfiguration<LETTER, PLACE> config) {
-		if (!config.extendsConfiguration(event)) {
-			return false;
-		}
+	protected IPetriNetTransitionProvider<LETTER, PLACE> getOperand() {
+		return mOperand;
+	}
 
-		for (final Event<LETTER, PLACE> event2 : config.getEndEvents()) {
-			if (!mUnfolding.eventsInConcurrency(event, event2)) {
-				return false;
-			}
-		}
-		return true;
+	@Override
+	public Boolean getResult() {
+		return mResult;
+	}
+
+	public boolean checkResultReal(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory,
+			final IBlackWhiteStateFactory<PLACE> blackWhite) throws AutomataLibraryException {
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> finiteAutomaton =
+				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory, blackWhite, mOperand)).getResult();
+		final boolean automatonEmpty =
+				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty<>(mServices,
+						finiteAutomaton)).getResult();
+		return getResult() == automatonEmpty;
 	}
 }
