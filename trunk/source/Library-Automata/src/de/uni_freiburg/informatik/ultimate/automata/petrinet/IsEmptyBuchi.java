@@ -1,13 +1,10 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
@@ -64,6 +61,18 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 	@Override
 	public Boolean getResult() {
 		return mResult;
+	}
+
+	@Override
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
+			throws AutomataLibraryException {
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> finiteAutomaton =
+				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
+						(IBlackWhiteStateFactory<PLACE>) stateFactory, mOperand)).getResult();
+		final boolean automatonEmpty =
+				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty<>(mServices,
+						finiteAutomaton)).getResult();
+		return getResult() == automatonEmpty;
 	}
 
 	public boolean checkResultReal(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory,

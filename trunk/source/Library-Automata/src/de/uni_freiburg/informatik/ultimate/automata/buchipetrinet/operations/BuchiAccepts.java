@@ -6,7 +6,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -68,8 +67,6 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 		return false;
 	}
 
-	// TODO: This is faulty since PetriNet2FiniteAutomaton is not fully correct for Buchi Petri nets
-	// We have to change checkResult in Generaloperation to include a second Black white factory i think
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
@@ -78,8 +75,9 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 		}
 		final boolean resultAutomata =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts<>(mServices,
-						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), mLassoWord))
-								.getResult();
+						(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
+								(IBlackWhiteStateFactory<PLACE>) stateFactory, mOperand)).getResult(),
+						mLassoWord)).getResult();
 		final boolean correct = mResult == resultAutomata;
 
 		if (mLogger.isInfoEnabled()) {

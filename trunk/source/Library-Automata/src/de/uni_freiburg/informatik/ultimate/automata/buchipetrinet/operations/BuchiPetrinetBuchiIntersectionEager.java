@@ -5,9 +5,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -144,5 +146,17 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 	@Override
 	public IPetriNet<LETTER, PLACE> getResult() {
 		return mIntersectionNet;
+	}
+
+	@Override
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
+			throws AutomataLibraryException {
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> finiteAutomaton =
+				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
+						(IBlackWhiteStateFactory<PLACE>) stateFactory, mPetriNet)).getResult();
+		// final boolean automatonIntersection = (new
+		// de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersectNwa<>(mServices,finiteAutomaton,
+		// mBuchiAutomata))
+		return true;
 	}
 }
