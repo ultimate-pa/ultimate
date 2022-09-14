@@ -47,10 +47,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * TODO
+ * @deprecated The idea of this class was to introduce auxiliary variables for
+ *             array indices. These auxiliary variables were part of the Jordan
+ *             matrix. My hope was that these auxiliary variables simplify the
+ *             construction and help us to deal with special cases where indices
+ *             are array reads itself. It seems however that the algorithm that
+ *             uses auxiliary variables is too complicated (one problem: it
+ *             seems natural that variables are updated atomically at the end of
+ *             the loop body whereas it seems natural that the index variables
+ *             are assigned before the array cell is updated). Now I hope that
+ *             I can avoid auxiliary variables and then this class can be
+ *             delted eventually.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
+@Deprecated
 public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 
 	private static final String ARRAY_INDEX = "arrIdx";
