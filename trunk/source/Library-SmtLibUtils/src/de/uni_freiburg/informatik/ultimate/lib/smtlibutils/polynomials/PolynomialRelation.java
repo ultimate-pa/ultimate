@@ -540,7 +540,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((mPolynomialTerm == null) ? 0 : mPolynomialTerm.hashCode());
-		result = prime * result + ((mRelationSymbol == null) ? 0 : mRelationSymbol.toString().hashCode());
+		result = prime * result + ((mRelationSymbol == null) ? 0 : mRelationSymbol.ordinal());
 		return result;
 	}
 
