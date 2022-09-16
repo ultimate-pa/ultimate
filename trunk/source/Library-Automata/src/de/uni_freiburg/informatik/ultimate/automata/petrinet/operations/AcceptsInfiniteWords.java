@@ -1,10 +1,11 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.MarkingOfFireSequence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;

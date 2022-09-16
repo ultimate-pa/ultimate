@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,14 +14,18 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class RabinBuchiDifference<LETTER, PLACE>
+/**
+ * Eager difference of Rabin-petri net minuend and buchi automata subtrahend.
+ *
+ */
+public class DifferenceRabin<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	private final IRabinPetriNet<LETTER, PLACE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomata;
 	private final BoundedRabinPetriNet<LETTER, PLACE> mDifferenceNet;
 
-	public RabinBuchiDifference(final IRabinPetriNet<LETTER, PLACE> petriNet,
+	public DifferenceRabin(final IRabinPetriNet<LETTER, PLACE> petriNet,
 			final INestedWordAutomaton<LETTER, PLACE> buchiAutomata, final AutomataLibraryServices services) {
 		super(services);
 		mPetriNet = petriNet;

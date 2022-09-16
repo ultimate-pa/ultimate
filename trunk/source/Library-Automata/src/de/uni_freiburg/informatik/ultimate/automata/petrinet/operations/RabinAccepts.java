@@ -1,6 +1,7 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.MarkingOfFireSequence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -35,6 +36,9 @@ public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 		super(services, operand, word);
 	}
 
+	/**
+	 * Creates a {@link MarkingOfFireSequence} with information if an accepted or finite place was fired into.
+	 */
 	@Override
 	MarkingOfFireSequence<LETTER, PLACE> getSuccessorMarkingOfFireSequence(
 			final MarkingOfFireSequence<LETTER, PLACE> predecessor, final Transition<LETTER, PLACE> transition)

@@ -1,9 +1,15 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
-
+/**
+ * Set of events which local configurations in the unfolding build a configurations which might be a lasso
+ * Configuration, i.e. a configuration which contains words accepted by the infinite petri net which the unfolding is
+ * done on.
+ *
+ * @param <LETTER>
+ * @param <PLACE>
+ */
 public class PotentialLassoConfiguration<LETTER, PLACE> {
 	private final Set<Event<LETTER, PLACE>> mEndEvents;
 

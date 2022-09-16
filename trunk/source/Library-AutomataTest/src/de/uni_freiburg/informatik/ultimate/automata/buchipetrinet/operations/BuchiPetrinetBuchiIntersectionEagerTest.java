@@ -14,9 +14,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.BuchiPetrinetBuchiIntersectionEager;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IntersectBuchiEager;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -61,8 +62,8 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
-				new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		final IntersectBuchiEager<String, String> intersectionMaker =
+				new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		final BoundedPetriNet<String, String> intersection =
 				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
@@ -105,8 +106,8 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
-				new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		final IntersectBuchiEager<String, String> intersectionMaker =
+				new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		final BoundedPetriNet<String, String> intersection =
 				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
@@ -150,8 +151,8 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
-				new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		final IntersectBuchiEager<String, String> intersectionMaker =
+				new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		final BoundedPetriNet<String, String> intersection =
 				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
@@ -198,8 +199,8 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
-				new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		final IntersectBuchiEager<String, String> intersectionMaker =
+				new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		final BoundedPetriNet<String, String> intersection =
 				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
@@ -246,8 +247,8 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
-				new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		final IntersectBuchiEager<String, String> intersectionMaker =
+				new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		final BoundedPetriNet<String, String> intersection =
 				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
@@ -294,8 +295,8 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		final BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
-				new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		final IntersectBuchiEager<String, String> intersectionMaker =
+				new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		final BoundedPetriNet<String, String> intersection =
 				(BoundedPetriNet<String, String>) intersectionMaker.getResult();
@@ -337,8 +338,8 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 
 		final StringFactory factory2 = new StringFactory();
 
-		BuchiPetrinetBuchiIntersectionEager<String, String> intersectionMaker =
-				new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		IntersectBuchiEager<String, String> intersectionMaker =
+				new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		BoundedPetriNet<String, String> intersection = (BoundedPetriNet<String, String>) intersectionMaker.getResult();
 
@@ -357,7 +358,7 @@ public class BuchiPetrinetBuchiIntersectionEagerTest {
 		buchiAutomata.addInternalTransition("q1", "a", "q1");
 		buchiAutomata.addInternalTransition("q1", "b", "q1");
 
-		intersectionMaker = new BuchiPetrinetBuchiIntersectionEager<>(mServices, factory2, petriNet, buchiAutomata);
+		intersectionMaker = new IntersectBuchiEager<>(mServices, factory2, petriNet, buchiAutomata);
 
 		intersection = (BoundedPetriNet<String, String>) intersectionMaker.getResult();
 

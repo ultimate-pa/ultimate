@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +17,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
-public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetriNetTransitionProvider<LETTER, PLACE> {
+/**
+ * Creates intersection of Buchi Petri net and buchi automata (lazily).
+ *
+ * @param <LETTER>
+ * @param <PLACE>
+ */
+public class IntersectBuchiLazy<LETTER, PLACE> implements IPetriNetTransitionProvider<LETTER, PLACE> {
 
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mPetriNet;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mBuchiAutomata;
@@ -61,7 +67,7 @@ public class BuchiPetrinetBuchiIntersectionLazy<LETTER, PLACE> implements IPetri
 	private int mNextTransitionId = 0;
 
 	// TODO call this clas slazy, and maybe make new one with ipetrinet..
-	public BuchiPetrinetBuchiIntersectionLazy(final IPetriNetTransitionProvider<LETTER, PLACE> petriNet,
+	public IntersectBuchiLazy(final IPetriNetTransitionProvider<LETTER, PLACE> petriNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> automaton,
 			final IBlackWhiteStateFactory<PLACE> factory) {
 		mPetriNet = petriNet;

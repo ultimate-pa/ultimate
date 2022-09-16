@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,11 +17,18 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorP
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Abstract class for emptiness check that is executed within {@link PetriNetUnfolderInfinite}.
+ *
+ * @param <LETTER>
+ *            letter type
+ * @param <PLACE>
+ *            place content type
+ */
 public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
@@ -55,19 +62,20 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		return mOperand;
 	}
 
-	/*
+	/**
 	 * @return a Pair containing the lasso word and the lasso configuration.
 	 */
 	public final Pair<NestedLassoWord<LETTER>, List<Event<LETTER, PLACE>>> getLassoConfigurations() {
 		return mResultLassoWordsWithConfigurations.iterator().next();
 	}
 
-	/*
+	/**
 	 * Supposed to be called by {@link BuchiPetriNetUnfolder} anytime an event is added to the Unfolding. Checks if
 	 * Unfolding contains a lasso configuration, i.e. a configuration containing a word that is accepted by the origin
 	 * BuchiPetriNet.
 	 *
-	 * @param <event> The event added to the Unfolding
+	 * @param <event>
+	 *            The event added to the Unfolding
 	 *
 	 * @return boolean representing if lasso configuration was found.
 	 *
@@ -96,9 +104,9 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		}
 	}
 
-	/*
-	 * Updates mAccptLoopEvents which contains events which local configuration might contain a loop containing an
-	 * accepting place.
+	/**
+	 * Updates mLoopEvents and mAccptLoopEvents which contains events which local configuration might contain a loop
+	 * containing an accepting place.
 	 */
 	private boolean computeIfLoopAndAccptLoopEvent(final Event<LETTER, PLACE> event) {
 		final Set<PLACE> finalState = new HashSet<>();
@@ -130,7 +138,7 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		return false;
 	}
 
-	/*
+	/**
 	 * We are looking for events which local configuration either is the foundation for a lasso configuration or
 	 * combined with some other set of local configurations can build one. Thus whenever a new event is added we
 	 * essentialy build the product set of this event and all potential lasso configuration event sets we have built
@@ -189,6 +197,12 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 	abstract boolean extendsConfiguration(final Event<LETTER, PLACE> event,
 			final PotentialLassoConfiguration<LETTER, PLACE> config);
 
+	/**
+	 * Check if given configuration contains words that are accepted by the infinite petri net.
+	 *
+	 * @param configuration
+	 * @throws PetriNetNot1SafeException
+	 */
 	private final void checkWordFromConfig(final PotentialLassoConfiguration<LETTER, PLACE> configuration)
 			throws PetriNetNot1SafeException {
 		final Set<Event<LETTER, PLACE>> allEvents = new HashSet<>();
@@ -209,7 +223,7 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		}
 	}
 
-	/*
+	/**
 	 * A configuration may contain multiple words, but since if one word is accepted by some BuchiPetriNet, all others
 	 * of the configuration will be aswell, we only have to check one word from a configuration.
 	 */

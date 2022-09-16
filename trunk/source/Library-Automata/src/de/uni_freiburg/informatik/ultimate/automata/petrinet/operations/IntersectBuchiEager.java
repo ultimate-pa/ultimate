@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.petrinet;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncludedBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -25,7 +26,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
+/**
+ * Creates intersection of Buchi Petri net and buchi automata (eagerly).
+ *
+ * @param <LETTER>
+ * @param <PLACE>
+ */
+public class IntersectBuchiEager<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
@@ -39,9 +46,8 @@ public class BuchiPetrinetBuchiIntersectionEager<LETTER, PLACE>
 
 	private final BoundedPetriNet<LETTER, PLACE> mIntersectionNet;
 
-	public BuchiPetrinetBuchiIntersectionEager(final AutomataLibraryServices services,
-			final IBlackWhiteStateFactory<PLACE> factory, final IPetriNet<LETTER, PLACE> petriNet,
-			final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) {
+	public IntersectBuchiEager(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
+			final IPetriNet<LETTER, PLACE> petriNet, final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) {
 		super(services);
 		mPetriNet = petriNet;
 		mBuchiAutomata = buchiAutomata;

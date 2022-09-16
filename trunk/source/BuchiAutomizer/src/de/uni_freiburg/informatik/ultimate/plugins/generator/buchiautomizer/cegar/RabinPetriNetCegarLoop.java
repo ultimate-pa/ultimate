@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.RabinBuchiDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -20,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferenceRabin;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.RabinUnfolder;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -93,7 +93,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	protected IPetriNet<L, IPredicate> refineBuchi(final IPetriNet<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException {
-		final RabinBuchiDifference<L, IPredicate> difference = new RabinBuchiDifference<>(
+		final DifferenceRabin<L, IPredicate> difference = new DifferenceRabin<>(
 				(IRabinPetriNet<L, IPredicate>) abstraction, (INestedWordAutomaton<L, IPredicate>) interpolantAutomaton,
 				new AutomataLibraryServices(mServices));
 		return difference.getResult();

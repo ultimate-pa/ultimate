@@ -8,13 +8,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 
-/*
- * TODO: If {@link BuchiPetriNetEmptinessCheckWithAccepts} is not much slower than this class, one could delete this
- * class. Although it is not yet optimized either.
- *
- * The method of looking for a lasso configuration in this class is essentially looking for a configuration in the
- * unfolding, which final state enables some maximum concurrent set of Events in that configuration such that the
- * created loop also contains an accepting place.
+/**
+ * TODO: Delete this probably. Was class trying to check for emptiness on Buchi petri nets without using Buchi accepts
+ * class.
  *
  */
 public class BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<LETTER, PLACE> {

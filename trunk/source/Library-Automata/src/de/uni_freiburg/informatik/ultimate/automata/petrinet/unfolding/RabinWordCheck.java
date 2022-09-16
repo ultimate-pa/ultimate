@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,9 +6,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.EsparzaRoemerVoglerOrder;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 
 public class RabinWordCheck<LETTER, PLACE> extends UnfoldingInfiniteWordCheck<LETTER, PLACE> {
 

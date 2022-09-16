@@ -5,7 +5,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.UnfoldingInfiniteWordCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -17,13 +16,21 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Abstract class for unfolding and checking Petri nets on infinite words for emptiness.
+ *
+ * @param <L>
+ *            letter type
+ * @param <P>
+ *            place content type
+ */
 public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBase<L, P> {
 	protected UnfoldingInfiniteWordCheck<L, P> mLassoChecker;
 
 	protected PetriNetLassoRun<L, P> mLassoRun;
 
 	/**
-	 * Build the finite Prefix of PetriNet net.
+	 * Build the finite Prefix of PetriNet net on infinite words.
 	 *
 	 * @param order
 	 *            the order on events and configurations respectively is used to determine cut-off events.
@@ -80,8 +87,7 @@ public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBas
 	}
 
 	/**
-	 * Constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
-	 * specified event e.
+	 * Constructs a run over the unfolding which is contained in the found lasso configuration.
 	 *
 	 * @return {@link PetriNetLassoRun}
 	 * @throws PetriNetNot1SafeException
