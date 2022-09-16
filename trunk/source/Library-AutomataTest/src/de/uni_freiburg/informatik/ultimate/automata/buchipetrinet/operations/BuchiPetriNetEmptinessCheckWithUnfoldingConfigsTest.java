@@ -55,12 +55,13 @@ public class BuchiPetriNetEmptinessCheckWithUnfoldingConfigsTest {
 
 		final BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
-		final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<String, String> configurationChecker = new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
+		final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<String, String> configurationChecker =
+				new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
 		for (final Event<String, String> event : mUnfolding.getEvents()) {
 			configurationChecker.update(event);
 		}
 
-		final boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
+		final boolean test = !(configurationChecker.getLassoConfigurations() != null);
 		assertThat("Lasso should be found.", test);
 	}
 
@@ -83,12 +84,13 @@ public class BuchiPetriNetEmptinessCheckWithUnfoldingConfigsTest {
 
 		final BranchingProcess<String, String> mUnfolding = unfolder.getFinitePrefix();
 
-		final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<String, String> configurationChecker = new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
+		final BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<String, String> configurationChecker =
+				new BuchiPetriNetEmptinessCheckWithUnfoldingConfigs<>(mUnfolding);
 		for (final Event<String, String> event : mUnfolding.getEvents()) {
 			configurationChecker.update(event);
 		}
 
-		final boolean test = !configurationChecker.getLassoConfigurations().isEmpty();
+		final boolean test = !(configurationChecker.getLassoConfigurations() != null);
 		assertThat("Lasso should be found.", test);
 	}
 

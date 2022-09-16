@@ -20,10 +20,6 @@ public class BuchiWordCheck<LETTER, PLACE> extends UnfoldingInfiniteWordCheck<LE
 	@Override
 	boolean extendsConfiguration(final Event<LETTER, PLACE> event,
 			final PotentialLassoConfiguration<LETTER, PLACE> config) {
-		if (!config.extendsConfiguration(event)) {
-			return false;
-		}
-
 		for (final Event<LETTER, PLACE> event2 : config.getEndEvents()) {
 			if (!mUnfolding.eventsInConcurrency(event, event2)) {
 				return false;

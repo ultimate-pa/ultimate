@@ -87,23 +87,4 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 		return correct;
 	}
 
-	public boolean checkResultReal(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory,
-			final IBlackWhiteStateFactory<PLACE> blackWhite) throws AutomataLibraryException {
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Testing correctness of accepts");
-		}
-		final boolean resultAutomata =
-				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts<>(mServices,
-						(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory, blackWhite, mOperand))
-								.getResult(),
-						mLassoWord)).getResult();
-		final boolean correct = mResult == resultAutomata;
-
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of accepts");
-		}
-
-		return correct;
-	}
-
 }

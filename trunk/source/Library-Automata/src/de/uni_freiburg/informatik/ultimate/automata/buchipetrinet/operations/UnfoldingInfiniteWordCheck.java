@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,9 +15,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -37,10 +36,10 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 	private final Set<Event<LETTER, PLACE>> mEndEvents = new HashSet<>();
 	private final Set<Event<LETTER, PLACE>> mLoopEvents = new HashSet<>();
 	protected final Set<Event<LETTER, PLACE>> mAccptLoopEvents = new HashSet<>();
-	protected final Map<Event<LETTER, PLACE>, Event<LETTER, PLACE>> mAccptLoopEventToLoopHeadMap = new HashMap<>();
+	protected final Map<Event<LETTER, PLACE>, Set<Event<LETTER, PLACE>>> mAccptLoopEventToLoopHeadMap = new HashMap<>();
 
-	public UnfoldingInfiniteWordCheck(final AutomataLibraryServices services, final BranchingProcess<LETTER, PLACE> unfolding,
-			final IPetriNetTransitionProvider<LETTER, PLACE> net) {
+	public UnfoldingInfiniteWordCheck(final AutomataLibraryServices services,
+			final BranchingProcess<LETTER, PLACE> unfolding, final IPetriNetTransitionProvider<LETTER, PLACE> net) {
 		super(services);
 		mUnfolding = unfolding;
 		mOperand = net;
@@ -59,9 +58,8 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 	/*
 	 * @return a Pair containing the lasso word and the lasso configuration.
 	 */
-	public final Set<Pair<NestedLassoWord<LETTER>, List<Event<LETTER, PLACE>>>> getLassoConfigurations() {
-		System.out.println(mResultLassoWordsWithConfigurations);
-		return mResultLassoWordsWithConfigurations;
+	public final Pair<NestedLassoWord<LETTER>, List<Event<LETTER, PLACE>>> getLassoConfigurations() {
+		return mResultLassoWordsWithConfigurations.iterator().next();
 	}
 
 	/*
@@ -74,7 +72,7 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 	 * @return boolean representing if lasso configuration was found.
 	 *
 	 */
-	public final boolean update(final Event<LETTER, PLACE> event) {
+	public final boolean update(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		// skipping artificial root event of Branchingprocess
 		if (event.getTransition() == null) {
 			return false;
@@ -84,7 +82,7 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		}
 		mEndEvents.add(event);
 		computeIfAcceptingEvent(event);
-		computeIfAccptLoopEvent(event);
+		computeIfLoopAndAccptLoopEvent(event);
 		checkNewConfigurations(event);
 		if (mResultLassoWordsWithConfigurations.size() > 0) {
 			return true;
@@ -102,15 +100,20 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 	 * Updates mAccptLoopEvents which contains events which local configuration might contain a loop containing an
 	 * accepting place.
 	 */
-	private boolean computeIfAccptLoopEvent(final Event<LETTER, PLACE> event) {
+	private boolean computeIfLoopAndAccptLoopEvent(final Event<LETTER, PLACE> event) {
 		final Set<PLACE> finalState = new HashSet<>();
 		finalState.addAll(event.getSuccessorConditions().stream().map(x -> x.getPlace()).collect(Collectors.toSet()));
 		for (final Event<LETTER, PLACE> localEvent : event.getLocalConfiguration()) {
 			if (localEvent.getPredecessorConditions().stream().map(x -> x.getPlace()).anyMatch(finalState::contains)) {
 				mLoopEvents.add(event);
+				final Set<Event<LETTER, PLACE>> headEvents = new HashSet<>();
+				if (mAccptLoopEventToLoopHeadMap.get(event) != null) {
+					headEvents.addAll(mAccptLoopEventToLoopHeadMap.get(event));
+				}
+				headEvents.add(localEvent);
+				mAccptLoopEventToLoopHeadMap.put(event, headEvents);
 				if (accptPlaceInLoop(localEvent)) {
 					mAccptLoopEvents.add(event);
-					mAccptLoopEventToLoopHeadMap.put(event, localEvent);
 				}
 
 			}
@@ -131,44 +134,31 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 	 * We are looking for events which local configuration either is the foundation for a lasso configuration or
 	 * combined with some other set of local configurations can build one. Thus whenever a new event is added we
 	 * essentialy build the product set of this event and all potential lasso configuration event sets we have built
-	 * before (mConcurrentEndEventPowerset). We then check these new sets (mToBeExaminedConcurrentEndEvents) if one is a
-	 * lasso configuration.
+	 * before (mConcurrentEndEventPowerset), which are concurrent to this new event. We then check these new sets
+	 * (mToBeExaminedConcurrentEndEvents) if one is a lasso configuration.
 	 *
-	 * (The sets of events are the "Headevents" which combined local configurations is the configuration we are
-	 * testing.)
 	 */
-	private final void checkNewConfigurations(final Event<LETTER, PLACE> event) {
+	private final void checkNewConfigurations(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		if (meetsConditionsToBeBaseOfLassoConfiguration(event)) {
 			final Set<Event<LETTER, PLACE>> singletonSet = new HashSet<>();
 			singletonSet.add(event);
-			final Event<LETTER, PLACE> loopHead = mAccptLoopEventToLoopHeadMap.get(event);
-			final Set<PLACE> successorPlaces = new HashSet<>();
-			for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
-				successorPlaces.add(cond.getPlace());
-			}
 			final PotentialLassoConfiguration<LETTER, PLACE> singleTonConfiguration =
-					new PotentialLassoConfiguration<>(singletonSet, loopHead);
+					new PotentialLassoConfiguration<>(singletonSet);
 			checkWordFromConfig(singleTonConfiguration);
 			if (mResultLassoWordsWithConfigurations.size() > 0) {
 				return;
 			}
 			mToBeExaminedConcurrentEndEvents.add(singleTonConfiguration);
 		}
-		// non loop events cannot help build a lasso configuration
+		// Non-loop events cannot help build a lasso configuration.
 		if (!mLoopEvents.contains(event)) {
 			return;
 		}
 		for (final PotentialLassoConfiguration<LETTER, PLACE> config : mConcurrentEndEventPowerset) {
-			if (extendsConfiguration(event, config)) {
-
-				final Set<PLACE> newPlaceSet = new HashSet<>();
-				for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
-					newPlaceSet.add(cond.getPlace());
-				}
+			if (fitsInEqualSet(event, config.getEndEvents())) {
 
 				final PotentialLassoConfiguration<LETTER, PLACE> newConfiguration = config.getCopy();
 
-				newConfiguration.addPlaces(newPlaceSet);
 				newConfiguration.addEvent(event);
 
 				mToBeExaminedConcurrentEndEvents.add(newConfiguration);
@@ -184,71 +174,72 @@ public abstract class UnfoldingInfiniteWordCheck<LETTER, PLACE>
 		mToBeExaminedConcurrentEndEvents.clear();
 	}
 
+	private final boolean fitsInEqualSet(final Event<LETTER, PLACE> event,
+			final Set<Event<LETTER, PLACE>> setofevents) {
+		for (final Event<LETTER, PLACE> event2 : setofevents) {
+			if (!mUnfolding.eventsInConcurrency(event, event2)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	abstract boolean meetsConditionsToBeBaseOfLassoConfiguration(Event<LETTER, PLACE> event);
 
 	abstract boolean extendsConfiguration(final Event<LETTER, PLACE> event,
 			final PotentialLassoConfiguration<LETTER, PLACE> config);
 
-	private final void checkWordFromConfig(final PotentialLassoConfiguration<LETTER, PLACE> configuration) {
-		if (!configuration.isLassoConfiguration()) {
-			return;
-		}
+	private final void checkWordFromConfig(final PotentialLassoConfiguration<LETTER, PLACE> configuration)
+			throws PetriNetNot1SafeException {
 		final Set<Event<LETTER, PLACE>> allEvents = new HashSet<>();
 		for (final Event<LETTER, PLACE> headEvent : configuration.getEndEvents()) {
-			allEvents.addAll(headEvent.getLocalConfiguration().getEvents());
+			for (final Event<LETTER, PLACE> configEvent : headEvent.getLocalConfiguration().getEvents()) {
+				mAccptLoopEventToLoopHeadMap.put(configEvent, mAccptLoopEventToLoopHeadMap.get(headEvent));
+				allEvents.add(configEvent);
+			}
 		}
-		final List<Event<LETTER, PLACE>> configurationSorted = new ArrayList<>(allEvents);
-		Collections.sort(configurationSorted, new EventComparator());
-		final NestedLassoWord<LETTER> lassoWord =
-				getLassoWordFromConfiguration(configurationSorted, configuration.getLoopheadEvent());
 
-		// final BuchiPetrinetAccepts<LETTER, PLACE> accepts =
-		// new BuchiPetrinetAccepts<>(mServices, mOperand, lassoWord);
-		// if (accepts.getResult()) {
-		// mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
-		// }
-		mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
+		final List<Event<LETTER, PLACE>> configurationSorted = new ArrayList<>(allEvents);
+		Collections.sort(configurationSorted, mUnfolding.getOrder());
+		final NestedLassoWord<LETTER> lassoWord = getLassoWordFromConfiguration(configurationSorted);
+
+		final BuchiAccepts<LETTER, PLACE> accepts = new BuchiAccepts<>(mServices, mOperand, lassoWord);
+		if (accepts.getResult()) {
+			mResultLassoWordsWithConfigurations.add(new Pair<>(lassoWord, configurationSorted));
+		}
 	}
 
 	/*
 	 * A configuration may contain multiple words, but since if one word is accepted by some BuchiPetriNet, all others
 	 * of the configuration will be aswell, we only have to check one word from a configuration.
 	 */
-	private NestedLassoWord<LETTER> getLassoWordFromConfiguration(final List<Event<LETTER, PLACE>> configurationSorted,
-			final Event<LETTER, PLACE> loopHead) {
+	private NestedLassoWord<LETTER>
+			getLassoWordFromConfiguration(final List<Event<LETTER, PLACE>> configurationSorted) {
 		final List<LETTER> stemLetters = new ArrayList<>();
 		final List<LETTER> loopLetters = new ArrayList<>();
-		boolean inLoop = false;
 		for (final Event<LETTER, PLACE> event : configurationSorted) {
-			if (event == loopHead) {
-				inLoop = true;
+			boolean inLoop = false;
+			for (final Event<LETTER, PLACE> headEvent : mAccptLoopEventToLoopHeadMap.get(event)) {
+				if (event.getLocalConfiguration().getEvents().contains(headEvent)) {
+					loopLetters.add(event.getTransition().getSymbol());
+					inLoop = true;
+					break;
+				}
 			}
 			if (!inLoop) {
 				stemLetters.add(event.getTransition().getSymbol());
-			} else {
-				loopLetters.add(event.getTransition().getSymbol());
 			}
+
 		}
+		@SuppressWarnings("unchecked")
 		final LETTER[] stem = (LETTER[]) stemLetters.toArray();
 		final Word<LETTER> stemWord = new Word<>(stem);
+		@SuppressWarnings("unchecked")
 		final LETTER[] loop = (LETTER[]) loopLetters.toArray();
 		final Word<LETTER> loopWord = new Word<>(loop);
 		final NestedWord<LETTER> nestedstemWord = NestedWord.nestedWord(stemWord);
 		final NestedWord<LETTER> nestedloopWord = NestedWord.nestedWord(loopWord);
 		final NestedLassoWord<LETTER> lassoWord = new NestedLassoWord<>(nestedstemWord, nestedloopWord);
 		return lassoWord;
-	}
-
-	/*
-	 * Helper class to compare events within a configuration.
-	 */
-	class EventComparator implements Comparator<Event<LETTER, PLACE>> {
-		@Override
-		public int compare(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
-			if (mUnfolding.eventsInConcurrency(e1, e2)) {
-				return 0;
-			}
-			return e1.getDepth() - e2.getDepth();
-		}
 	}
 }

@@ -37,6 +37,31 @@ public class BuchiPetrinetAcceptsTest {
 	}
 
 	@Test
+	public final void test4() throws AutomataLibraryException {
+		final Set<String> alphabet = Set.of("a", "b", "c", "d");
+		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
+		petriNet.addPlace("p1", true, false);
+		petriNet.addPlace("p2", false, false);
+		petriNet.addPlace("p3", false, false);
+		petriNet.addPlace("p4", false, false);
+		petriNet.addPlace("p5", false, true);
+		petriNet.addPlace("p6", false, false);
+		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2", "p3", "p4")));
+		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2", "p3", "p4")), ImmutableSet.of(Set.of("p5", "p6")));
+		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p2", "p3")));
+		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
+		final NestedWord<String> nestedword1 = NestedWord.nestedWord(new Word<>("a"));
+		final NestedWord<String> nestedword2 = NestedWord.nestedWord(new Word<>("b", "c", "d"));
+		final NestedLassoWord<String> lassoWord = new NestedLassoWord<>(nestedword1, nestedword2);
+		final BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, petriNet, lassoWord);
+
+		final boolean accepted = buchiPetriAccpts.getResult();
+		final boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
+
+		assertThat("test", accepted == acceptedByBuchi);
+	}
+
+	@Test
 	public void testGetResultWithEmptyStem() throws AutomataLibraryException {
 		final Set<String> alphabet = Set.of("b", "c");
 		final BoundedPetriNet<String, String> net1 = new BoundedPetriNet<>(mServices, alphabet, false);
@@ -50,7 +75,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
-		final boolean acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+		final boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 
 		assertThat("test", accepted && acceptedByBuchi);
 	}
@@ -79,7 +104,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
-		final boolean acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+		final boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 
 		assertThat("test", accepted && acceptedByBuchi);
 	}
@@ -108,7 +133,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
-		final boolean acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+		final boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 
 		assertThat("test", !accepted && acceptedByBuchi);
 	}
@@ -128,7 +153,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
-		final boolean acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+		final boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 
 		assertThat("test", accepted && acceptedByBuchi);
 	}
@@ -150,7 +175,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
-		final boolean acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+		final boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 
 		assertThat("test", !accepted && acceptedByBuchi);
 	}
@@ -170,7 +195,7 @@ public class BuchiPetrinetAcceptsTest {
 		final BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		final boolean accepted = buchiPetriAccpts.getResult();
-		final boolean acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+		final boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 
 		assertThat("test", !accepted && acceptedByBuchi);
 	}
@@ -191,7 +216,7 @@ public class BuchiPetrinetAcceptsTest {
 		BuchiAccepts<String, String> buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, lassoWord);
 
 		boolean accepted = buchiPetriAccpts.getResult();
-		boolean acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+		boolean acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 
 		assertThat("test", accepted && acceptedByBuchi);
 
@@ -203,7 +228,7 @@ public class BuchiPetrinetAcceptsTest {
 		for (final NestedLassoWord<String> nestedLassoWord : wordsToTestLassoWords) {
 			buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
-			acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+			acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 			assertThat(nestedLassoWord.toString() + "is accepted in double Loop Petri net.",
 					accepted && acceptedByBuchi);
 		}
@@ -216,7 +241,7 @@ public class BuchiPetrinetAcceptsTest {
 		for (final NestedLassoWord<String> nestedLassoWord : nonAcceptingWords) {
 			buchiPetriAccpts = new BuchiAccepts<>(mServices, net1, nestedLassoWord);
 			accepted = buchiPetriAccpts.getResult();
-			acceptedByBuchi = buchiPetriAccpts.checkResultReal(new StringFactory(), new StringFactory());
+			acceptedByBuchi = buchiPetriAccpts.checkResult(new StringFactory());
 			assertThat(nestedLassoWord.toString() + "is not accepted in double Loop Petri net.", !accepted);
 		}
 	}

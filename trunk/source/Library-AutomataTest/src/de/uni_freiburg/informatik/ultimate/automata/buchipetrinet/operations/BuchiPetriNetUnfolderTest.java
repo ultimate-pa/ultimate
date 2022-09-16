@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -24,6 +25,61 @@ public class BuchiPetriNetUnfolderTest {
 	public void setUp() {
 		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 		mServices = new AutomataLibraryServices(services);
+	}
+
+	@Test
+	public final void testFailedinAts12() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		final Set<String> alphabet = Set.of("a", "b", "c");
+		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
+		petriNet.addPlace("p0", true, true);
+		petriNet.addPlace("p1", false, false);
+		petriNet.addTransition("a", ImmutableSet.of(Set.of("p0")), ImmutableSet.of(Set.of("p0")));
+		petriNet.addTransition("b", ImmutableSet.of(Set.of("p0")), ImmutableSet.of(Set.of("p1")));
+		petriNet.addTransition("c", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p0")));
+
+		final BuchiUnfolder<String, String> unfolder =
+				new BuchiUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, true, true);
+
+		final boolean test = unfolder.getAcceptingRun() != null;
+		assertThat("Lasso should be found.", test);
+	}
+
+	@Test
+	public final void testFailedinAts1() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		final Set<String> alphabet = Set.of("a", "b", "c", "d");
+		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
+		petriNet.addPlace("p0", true, false);
+		petriNet.addPlace("p1", false, false);
+		petriNet.addPlace("p2", false, true);
+		petriNet.addTransition("a", ImmutableSet.of(Set.of("p0")), ImmutableSet.of(Set.of("p1")));
+		petriNet.addTransition("b", ImmutableSet.of(Set.of("p0")), ImmutableSet.of(Set.of("p1")));
+		petriNet.addTransition("c", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
+		petriNet.addTransition("d", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p1")));
+
+		final BuchiUnfolder<String, String> unfolder =
+				new BuchiUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, true, true);
+
+		final boolean test = unfolder.getAcceptingRun() != null;
+		assertThat("Lasso should be found.", test);
+	}
+
+	@Test
+	public final void testFailedinAts() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		final Set<String> alphabet = Set.of("a", "b", "c");
+		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
+		petriNet.addPlace("p0", true, true);
+		petriNet.addPlace("p1", true, false);
+		petriNet.addPlace("p2", false, false);
+		petriNet.addPlace("p3", false, false);
+		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
+		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2", "p0")), ImmutableSet.of(Set.of("p3")));
+		petriNet.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p1", "p0")));
+
+		final BuchiUnfolder<String, String> unfolder =
+				new BuchiUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
+
+		final boolean test = unfolder.getAcceptingRun() == null;
+		assertThat("Lasso should be found.", test == unfolder.checkResult(new StringFactory()));
 	}
 
 	@Test
@@ -128,26 +184,28 @@ public class BuchiPetriNetUnfolderTest {
 		assertThat("Lasso should be found.", test);
 	}
 
-	/*
-	 * @Test public final void test5() throws PetriNetNot1SafeException, AutomataOperationCanceledException { final
-	 * Set<String> alphabet = Set.of("a", "aa", "aaa", "b", "c", "d"); final BoundedPetriNet<String, String> petriNet =
-	 * new BoundedPetriNet<>(mServices, alphabet, false); petriNet.addPlace("p1", true, false); petriNet.addPlace("p11",
-	 * false, false); petriNet.addPlace("p111", false, false); petriNet.addPlace("p2", false, false);
-	 * petriNet.addPlace("p3", false, false); petriNet.addPlace("p4", false, false); petriNet.addPlace("p5", false,
-	 * true); petriNet.addPlace("p6", false, false); petriNet.addTransition("a", ImmutableSet.of(Set.of("p1")),
-	 * ImmutableSet.of(Set.of("p11", "p111"))); petriNet.addTransition("aa", ImmutableSet.of(Set.of("p11")),
-	 * ImmutableSet.of(Set.of("p2", "p3"))); petriNet.addTransition("aaa", ImmutableSet.of(Set.of("p111")),
-	 * ImmutableSet.of(Set.of("p4"))); petriNet.addTransition("b", ImmutableSet.of(Set.of("p2", "p3", "p4")),
-	 * ImmutableSet.of(Set.of("p5", "p6"))); petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")),
-	 * ImmutableSet.of(Set.of("p111"))); petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")),
-	 * ImmutableSet.of(Set.of("p11")));
-	 * 
-	 * final BuchiPetriNetUnfolder<String, String> unfolder = new BuchiPetriNetUnfolder<>(mServices, petriNet,
-	 * PetriNetUnfolder.EventOrderEnum.ERV, false, false);
-	 * 
-	 * final boolean test = unfolder.getAcceptingRun() != null; System.out.println(unfolder.getAcceptingRun());
-	 * assertThat("Lasso should be found.", test); }
-	 */
+	@Test
+	public final void test5() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		final Set<String> alphabet = Set.of("a", "aa", "aaa", "b", "c", "d");
+		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
+		petriNet.addPlace("p1", true, false);
+		petriNet.addPlace("p11", false, false);
+		petriNet.addPlace("p111", false, false);
+		petriNet.addPlace("p2", false, false);
+		petriNet.addPlace("p3", false, false);
+		petriNet.addPlace("p4", false, false);
+		petriNet.addPlace("p5", false, true);
+		petriNet.addPlace("p6", false, false);
+		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p11", "p111")));
+		petriNet.addTransition("aa", ImmutableSet.of(Set.of("p11")), ImmutableSet.of(Set.of("p2", "p3")));
+		petriNet.addTransition("aaa", ImmutableSet.of(Set.of("p111")), ImmutableSet.of(Set.of("p4")));
+		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2", "p3", "p4")), ImmutableSet.of(Set.of("p5", "p6")));
+		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p111")));
+		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p11")));
+		final BuchiUnfolder<String, String> unfolder =
+				new BuchiUnfolder<>(mServices, petriNet, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
 
-	// TODO WITH CONCURRENTSUBSETS
+		final boolean test = unfolder.getAcceptingRun() != null;
+		assertThat("Lasso should be found.", test);
+	}
 }

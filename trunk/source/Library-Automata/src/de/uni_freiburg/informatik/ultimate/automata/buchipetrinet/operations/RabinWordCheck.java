@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
@@ -25,14 +26,6 @@ public class RabinWordCheck<LETTER, PLACE> extends UnfoldingInfiniteWordCheck<LE
 	@Override
 	final boolean extendsConfiguration(final Event<LETTER, PLACE> event,
 			final PotentialLassoConfiguration<LETTER, PLACE> config) {
-		if (!config.extendsConfiguration(event)) {
-			return false;
-		}
-
-		if (finitePlaceInLoop(event, config.getLoopheadEvent())) {
-			return false;
-		}
-
 		for (final Event<LETTER, PLACE> event2 : config.getEndEvents()) {
 			if (!mUnfolding.eventsInConcurrency(event, event2)) {
 				return false;
@@ -41,12 +34,12 @@ public class RabinWordCheck<LETTER, PLACE> extends UnfoldingInfiniteWordCheck<LE
 		return true;
 	}
 
-	private boolean finitePlaceInLoop(final Event<LETTER, PLACE> event, final Event<LETTER, PLACE> loopHead) {
+	private boolean finitePlaceInLoop(final Event<LETTER, PLACE> event, final Set<Event<LETTER, PLACE>> set) {
 		List<Event<LETTER, PLACE>> sortedConfigArrayList = new ArrayList<>();
 		sortedConfigArrayList = event.getLocalConfiguration().getSortedConfiguration(new EsparzaRoemerVoglerOrder<>());
 		boolean inLoop = false;
 		for (final Event<LETTER, PLACE> configEvent : sortedConfigArrayList) {
-			if (configEvent == loopHead) {
+			if (set.contains(configEvent)) {
 				inLoop = true;
 			}
 			if (inLoop) {

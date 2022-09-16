@@ -89,19 +89,19 @@ public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBas
 	private PetriNetLassoRun<L, P> constructRun() throws PetriNetNot1SafeException {
 		final List<Marking<P>> sequenceOfStemMarkings = new ArrayList<>();
 		final List<Marking<P>> sequenceOfLassoMarkings = new ArrayList<>();
-		final Pair<NestedLassoWord<L>, List<Event<L, P>>> resutlPair =
-				mLassoChecker.getLassoConfigurations().iterator().next();
+		final Pair<NestedLassoWord<L>, List<Event<L, P>>> resutlPair = mLassoChecker.getLassoConfigurations();
 		final int stemlength = resutlPair.getFirst().getStem().length();
 		Marking<P> currentMarking = new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()));
 		sequenceOfStemMarkings.add(currentMarking);
+		if (stemlength == 0) {
+			sequenceOfLassoMarkings.add(currentMarking);
+		}
 
 		int wordIndex = 0;
 		for (final Event<L, P> event : resutlPair.getSecond()) {
 			currentMarking = currentMarking.fireTransition(event.getTransition());
 			if (wordIndex < stemlength - 1) {
 				sequenceOfStemMarkings.add(currentMarking);
-				// TODO: Does the Petrinetrun for the lasso part have 1 marking too much ?
-				// maybe don't use Petrinetrun for loop part.
 			} else if (wordIndex == stemlength - 1) {
 				sequenceOfStemMarkings.add(currentMarking);
 				sequenceOfLassoMarkings.add(currentMarking);
@@ -111,9 +111,7 @@ public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBas
 
 			wordIndex++;
 		}
-		System.out.println("AAAAA" + sequenceOfStemMarkings.size() + resutlPair.getFirst().getStem());
 		final PetriNetRun<L, P> stemRun = new PetriNetRun<>(sequenceOfStemMarkings, resutlPair.getFirst().getStem());
-		System.out.println("AAAAA" + sequenceOfLassoMarkings.size() + resutlPair.getFirst().getLoop());
 		final PetriNetRun<L, P> loopRun = new PetriNetRun<>(sequenceOfLassoMarkings, resutlPair.getFirst().getLoop());
 		final PetriNetLassoRun<L, P> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
 		return lassoRun;
@@ -122,7 +120,6 @@ public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBas
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		// TODO:
 		return false;
 	}
 }
