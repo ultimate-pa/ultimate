@@ -519,49 +519,9 @@ public class JordanLoopAcceleration {
 			}
 			conjuncts.add(fourthConjunct);
 
-			final TermVariable idx = mgdScript.constructFreshTermVariable("idx", SmtSortUtils.getIntSort(script));
-			// (=> (not (exists ((it Int)) (and (<= 1 it) (<= it (- itFin 1)) (= idx closedForm(it))))) (= a'[idx] a[idx])
-
-			final List<Term> arrayConstraints = new ArrayList<>();
-			// a[k] := v
-			// a' = (store a k v)
-			// ∀idx.       ∀it. (0 <= it < itFin ∧ idx=closedForm_k(it)) ==> a'[idx]=closedForm_v(it)
-			//      ∧ (not ∃it. (0 <= it < itFin ∧ idx=closedForm_k(it))) ==> a'[idx]=a[idx]
-			for (final Triple<IProgramVar, ArrayIndex, Term> entry : closedFormIt.getArrayUpdates().entrySet()) {
-				final ArrayIndex ai = entry.getSecond();
-				if (ai.size() > 1) {
-					throw new UnsupportedOperationException("multi-dimensional");
-				}
-//				final TermVariable indexReplacement = (TermVariable) ai.get(0);
-//				final Term cf = Substitution.apply(mgdScript, TransFormulaUtils.constructDefaultvarsToInvarsMap(loopTransFormula), suwr.getIdxRepAssignments().get(indexReplacement));
-
-				final Term inRangeIndexEquality;
-				{
-					final Term cf = ai.get(0);
-					final Term eq1 = SmtUtils.equality(script, idx, cf);
-					final Term iterationRange = constructIterationRange(script, BigInteger.ZERO, it, BigInteger.ONE, itFin);
-					inRangeIndexEquality = SmtUtils.and(script, iterationRange, eq1);
-				}
-				final Term conjunct1;
-				{
-					final Term valueUpdate = SmtUtils.equality(script, new MultiDimensionalSelect(loopTransFormula.getOutVars().get(entry.getFirst()), new ArrayIndex(idx), script).toTerm(script), entry.getThird());
-					final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueUpdate);
-					final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it), impl1);
-					conjunct1 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified, SimplificationTechnique.SIMPLIFY_DDA);
-				}
-				final Term conjunct2;
-				{
-					final Term valueConstancy = SmtUtils.equality(script, new MultiDimensionalSelect(loopTransFormula.getOutVars().get(entry.getFirst()), new ArrayIndex(idx), script).toTerm(script), new MultiDimensionalSelect(loopTransFormula.getInVars().get(entry.getFirst()), new ArrayIndex(idx), script).toTerm(script));
-					final Term existsInRangeEquality = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, Collections.singleton(it), inRangeIndexEquality);
-					final Term quantified = SmtUtils.implies(script, SmtUtils.not(mgdScript.getScript(), existsInRangeEquality), valueConstancy);
-					conjunct2 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified, SimplificationTechnique.SIMPLIFY_DDA);
-				}
-				final Term conjunction = SmtUtils.and(script, conjunct1, conjunct2);
-				// No need to apply quantifier elimination to conjunction, each conjunct
-				// addresses a different range hence no conjunct can simplify the other.
-				final Term all2 = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(idx), conjunction);
-				conjuncts.add(all2);
-			}
+			final List<Term> arrayConstraints = constructArrayUpdateConstraints(services, mgdScript, loopTransFormula,
+					itFin, it, closedFormIt);
+			conjuncts.addAll(arrayConstraints);
 		}
 //		conjuncts.add(fourthConjunct);
 
@@ -577,6 +537,74 @@ public class JordanLoopAcceleration {
 //		conjuncts.add(eq);
 		final Term transitiveClosure = SmtUtils.and(script, conjuncts);
 		return transitiveClosure;
+	}
+
+	private static List<Term> constructArrayUpdateConstraints(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula, final TermVariable itFin,
+			final TermVariable it, final ClosedFormOfUpdate closedFormIt) {
+		final Script script = mgdScript.getScript();
+		final TermVariable idx = mgdScript.constructFreshTermVariable("idx", SmtSortUtils.getIntSort(script));
+		final List<Term> arrayUpdateConstraints = new ArrayList<>();
+		// a[k] := v
+		// a' = (store a k v)
+		// ∀idx. ∀it. (0 <= it < itFin ∧ idx=closedForm_k(it)) ==> a'[idx]=closedForm_v(it)
+		//          ∧ (not ∃it. (0 <= it < itFin ∧ idx=closedForm_k(it))) ==> a'[idx]=a[idx]
+		for (final IProgramVar array : closedFormIt.getArrayUpdates().keySet()) {
+			final Set<Entry<ArrayIndex, Term>> entries = closedFormIt.getArrayUpdates().get(array).entrySet();
+			if (entries.size() > 1) {
+				throw new UnsupportedOperationException("several updates per array");
+			}
+			final ArrayIndex index;
+			final Term value;
+			{
+				final Entry<ArrayIndex, Term> entry = entries.iterator().next();
+				index = entry.getKey();
+				value = entry.getValue();
+			}
+			if (index.size() > 1) {
+				throw new UnsupportedOperationException("multi-dimensional");
+			}
+			final Term inRangeIndexEquality;
+			{
+				final Term cf = index.get(0);
+				final Term eq1 = SmtUtils.equality(script, idx, cf);
+				final Term iterationRange = constructIterationRange(script, BigInteger.ZERO, it, BigInteger.ONE, itFin);
+				inRangeIndexEquality = SmtUtils.and(script, iterationRange, eq1);
+			}
+			final Term conjunct1;
+			{
+				final Term valueUpdate = SmtUtils.equality(script,
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx),
+								script).toTerm(script),
+						value);
+				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueUpdate);
+				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
+						impl1);
+				conjunct1 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
+						SimplificationTechnique.SIMPLIFY_DDA);
+			}
+			final Term conjunct2;
+			{
+				final Term valueConstancy = SmtUtils.equality(script,
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx),
+								script).toTerm(script),
+						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx), script)
+								.toTerm(script));
+				final Term existsInRangeEquality = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
+						Collections.singleton(it), inRangeIndexEquality);
+				final Term quantified = SmtUtils.implies(script,
+						SmtUtils.not(mgdScript.getScript(), existsInRangeEquality), valueConstancy);
+				conjunct2 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
+						SimplificationTechnique.SIMPLIFY_DDA);
+			}
+			final Term conjunction = SmtUtils.and(script, conjunct1, conjunct2);
+			// No need to apply quantifier elimination to conjunction, each conjunct
+			// addresses a different range hence no conjunct can simplify the other.
+			final Term all2 = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(idx),
+					conjunction);
+			arrayUpdateConstraints.add(all2);
+		}
+		return arrayUpdateConstraints;
 	}
 
 	/**
