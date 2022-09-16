@@ -81,9 +81,9 @@
   <!-- === Sleep Set Reduction (with unrolling, minimal) integrated in TAR === -->
   <!-- ======================================================================= -->
 
-  <!--rundefinition name="GemCutter.NewStatesSleep">
+  <rundefinition name="GemCutter.NewStatesSleep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleep.Symm">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-Symm.epf</option>
@@ -198,9 +198,9 @@
   <!-- === Minimal Sleep Set Reduction in TAR with Variable-Based Abstraction === -->
   <!-- ========================================================================== -->
 
-  <!--rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic">
+  <rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic.OrderLoopLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
@@ -235,29 +235,33 @@
   <!-- === Combined Reduction with Probabilistic Switching === -->
   <!-- ======================================================= -->
 
-  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep.flip90-PURE-seed0">
+  <rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip10-PURE-seed0">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.coinflip.probability.value">10</option>
+    <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
+    <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+
+  <rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip90-PURE-seed0">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="&#45;-traceabstraction.coinflip.probability.value">90</option>
     <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
     <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">PURE</option>
-    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-  </rundefinition-->
+  </rundefinition>
 
-  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep.flip10-FALLBACK-seed0">
+  <rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip10-FALLBACK-seed0">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="&#45;-traceabstraction.coinflip.probability.value">10</option>
     <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
     <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
-    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-  </rundefinition-->
+  </rundefinition>
 
-  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep.flip90-FALLBACK-seed0">
+  <rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip90-FALLBACK-seed0">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="&#45;-traceabstraction.coinflip.probability.value">90</option>
     <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
     <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
-    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-  </rundefinition-->
+  </rundefinition>
 
 
   <!-- === Experiments with Varying SMT Solvers and Timeouts for Independence === -->
@@ -312,14 +316,14 @@
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-ConcreteSyntactic.epf</option>
   </rundefinition-->
 
-  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
-  </rundefinition>
+  </rundefinition-->
 
-  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.WithAssertions">
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.WithAssertions">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
     <option name="-ea" />
-  </rundefinition>
+  </rundefinition-->
 
   <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.LooperAbs">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
@@ -348,6 +352,7 @@
 
   <tasks name="POPL2023">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 
     <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
