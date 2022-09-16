@@ -34,8 +34,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
@@ -55,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public final class CoenabledRelation<LETTER, PLACE> {
 
-	private final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mRelation;
+	private final HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mRelation;
 
-	private CoenabledRelation(final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> relation) {
+	private CoenabledRelation(final HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> relation) {
 		mRelation = relation;
 	}
 
@@ -95,9 +95,9 @@ public final class CoenabledRelation<LETTER, PLACE> {
 		return new CoenabledRelation<>(computeFromBranchingProcess(bp));
 	}
 
-	private static <LETTER, PLACE> HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>>
+	private static <LETTER, PLACE> HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>>
 			computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
-		final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> hashRelation = new HashRelation<>();
+		final HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> hashRelation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		final Collection<Event<LETTER, PLACE>> events = bp.getEvents();
 		for (final Event<LETTER, PLACE> event1 : events) {
@@ -127,7 +127,7 @@ public final class CoenabledRelation<LETTER, PLACE> {
 	 *            The transition whose coenabled transitions shall be computed.
 	 * @return The set of all transitions b, such that the pair (element, b) is in the relation.
 	 */
-	public Set<ITransition<LETTER, PLACE>> getImage(final ITransition<LETTER, PLACE> element) {
+	public Set<Transition<LETTER, PLACE>> getImage(final Transition<LETTER, PLACE> element) {
 		return mRelation.getImage(element);
 	}
 
@@ -140,11 +140,11 @@ public final class CoenabledRelation<LETTER, PLACE> {
 	 * @param to
 	 *            The transition to which the relationships will be copied.
 	 */
-	public void copyRelationships(final ITransition<LETTER, PLACE> from, final ITransition<LETTER, PLACE> to) {
-		for (final ITransition<LETTER, PLACE> t3 : mRelation.getImage(from)) {
+	public void copyRelationships(final Transition<LETTER, PLACE> from, final Transition<LETTER, PLACE> to) {
+		for (final Transition<LETTER, PLACE> t3 : mRelation.getImage(from)) {
 			mRelation.addPair(to, t3);
 		}
-		for (final ITransition<LETTER, PLACE> t3 : mRelation.getDomain()) {
+		for (final Transition<LETTER, PLACE> t3 : mRelation.getDomain()) {
 			if (mRelation.containsPair(t3, from)) {
 				mRelation.addPair(t3, to);
 			}
@@ -157,7 +157,7 @@ public final class CoenabledRelation<LETTER, PLACE> {
 	 * @param transition
 	 *            The transition to be removed.
 	 */
-	public void deleteElement(final ITransition<LETTER, PLACE> transition) {
+	public void deleteElement(final Transition<LETTER, PLACE> transition) {
 		mRelation.removeDomainElement(transition);
 		mRelation.removeRangeElement(transition);
 	}
@@ -170,13 +170,13 @@ public final class CoenabledRelation<LETTER, PLACE> {
 	 * @param newTransition
 	 *            A transition that will replace the removed transition.
 	 */
-	public void replaceElement(final ITransition<LETTER, PLACE> oldTransition,
-			final ITransition<LETTER, PLACE> newTransition) {
+	public void replaceElement(final Transition<LETTER, PLACE> oldTransition,
+			final Transition<LETTER, PLACE> newTransition) {
 		mRelation.replaceDomainElement(oldTransition, newTransition);
 		mRelation.replaceRangeElement(oldTransition, newTransition);
 	}
 
-	public void addPair(final ITransition<LETTER, PLACE> first, final ITransition<LETTER, PLACE> second) {
+	public void addPair(final Transition<LETTER, PLACE> first, final Transition<LETTER, PLACE> second) {
 		mRelation.addPair(first, second);
 		mRelation.addPair(second, first);
 	}

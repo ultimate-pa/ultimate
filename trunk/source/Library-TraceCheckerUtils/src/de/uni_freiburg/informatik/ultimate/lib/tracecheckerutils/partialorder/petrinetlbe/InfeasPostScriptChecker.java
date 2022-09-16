@@ -33,7 +33,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPostScriptChecker;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -101,7 +101,7 @@ public class InfeasPostScriptChecker<L extends IIcfgTransition<?>, P> implements
 	}
 
 	@Override
-	public boolean isPostScript(final IPetriNet<L, P> net, final Set<ITransition<L, P>> transitions) {
+	public boolean isPostScript(final IPetriNet<L, P> net, final Set<Transition<L, P>> transitions) {
 		final UnmodifiableTransFormula[] tfs =
 				transitions.stream().map(t -> t.getSymbol().getTransformula()).toArray(UnmodifiableTransFormula[]::new);
 		try {

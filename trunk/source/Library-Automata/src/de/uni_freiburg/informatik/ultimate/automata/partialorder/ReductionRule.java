@@ -30,8 +30,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -86,14 +86,13 @@ public abstract class ReductionRule<L, P> {
 		mNet.addPlace(place, isInitial, isAccepting);
 	}
 
-	protected ITransition<L, P> addTransition(final L letter, final ImmutableSet<P> preds,
-			final ImmutableSet<P> succs) {
+	protected Transition<L, P> addTransition(final L letter, final ImmutableSet<P> preds, final ImmutableSet<P> succs) {
 		// TODO record data about PN change
 		mNet.getAlphabet().add(letter);
 		return mNet.addTransition(letter, preds, succs);
 	}
 
-	protected void removeTransition(final ITransition<L, P> transition) {
+	protected void removeTransition(final Transition<L, P> transition) {
 		// TODO record data about PN change
 		mNet.removeTransition(transition);
 	}

@@ -33,8 +33,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -70,27 +70,25 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 
 	@Override
 	protected void applyInternal(final IPetriNet<L, P> net) {
-		final Map<P, Set<ITransition<L, P>>> compositions = findCompositions(net);
+		final Map<P, Set<Transition<L, P>>> compositions = findCompositions(net);
 		for (final var entry : compositions.entrySet()) {
 			inhibitTransitions(net, entry.getKey(), entry.getValue());
 		}
 	}
 
-	private void inhibitTransitions(final IPetriNet<L, P> net, final P place,
-			final Set<ITransition<L, P>> transitions) {
+	private void inhibitTransitions(final IPetriNet<L, P> net, final P place, final Set<Transition<L, P>> transitions) {
 		// TODO If Lipton is repeatedly applied, a negatedPlace may already exist. Can we find / remember it?
 		final P negatedPlace = mPlaceFactory.createFreshPlace();
 		addPlace(negatedPlace, !net.getInitialPlaces().contains(place), false);
 
 		for (final var incoming : new HashSet<>(net.getPredecessors(place))) {
-			if (net.getSuccessors(incoming).contains(place)) {
+			if (incoming.getSuccessors().contains(place)) {
 				continue;
 			}
 
-			final var pre = new HashSet<>(net.getPredecessors(incoming));
+			final var pre = new HashSet<>(incoming.getPredecessors());
 			pre.add(negatedPlace);
-			final var newIncoming =
-					addTransition(incoming.getSymbol(), ImmutableSet.of(pre), net.getSuccessors(incoming));
+			final var newIncoming = addTransition(incoming.getSymbol(), ImmutableSet.of(pre), incoming.getSuccessors());
 			mCoenabledRelation.copyRelationships(incoming, newIncoming);
 
 			removeTransition(incoming);
@@ -98,14 +96,14 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 		}
 
 		for (final var outgoing : new HashSet<>(net.getSuccessors(place))) {
-			if (net.getPredecessors(outgoing).contains(place)) {
+			if (outgoing.getPredecessors().contains(place)) {
 				continue;
 			}
 
-			final var succ = new HashSet<>(net.getSuccessors(outgoing));
+			final var succ = new HashSet<>(outgoing.getSuccessors());
 			succ.add(negatedPlace);
 			final var newOutgoing =
-					addTransition(outgoing.getSymbol(), net.getPredecessors(outgoing), ImmutableSet.of(succ));
+					addTransition(outgoing.getSymbol(), outgoing.getPredecessors(), ImmutableSet.of(succ));
 			mCoenabledRelation.copyRelationships(outgoing, newOutgoing);
 
 			removeTransition(outgoing);
@@ -113,14 +111,14 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 		}
 
 		for (final var inhibitable : transitions) {
-			final var pre = new HashSet<>(net.getPredecessors(inhibitable));
+			final var pre = new HashSet<>(inhibitable.getPredecessors());
 			pre.add(negatedPlace);
-			final var succ = new HashSet<>(net.getSuccessors(inhibitable));
+			final var succ = new HashSet<>(inhibitable.getSuccessors());
 			succ.add(negatedPlace);
 
 			final var inhibited = addTransition(inhibitable.getSymbol(), ImmutableSet.of(pre), ImmutableSet.of(succ));
 			for (final var coenabled : mCoenabledRelation.getImage(inhibitable)) {
-				if (!net.getPredecessors(coenabled).contains(place)) {
+				if (!coenabled.getPredecessors().contains(place)) {
 					mCoenabledRelation.addPair(inhibited, coenabled);
 				}
 			}
@@ -130,17 +128,17 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 		}
 	}
 
-	private Map<P, Set<ITransition<L, P>>> findCompositions(final IPetriNet<L, P> net) {
-		final Map<P, Set<ITransition<L, P>>> result = new HashMap<>();
-		final Set<ITransition<L, P>> involved = new HashSet<>();
+	private Map<P, Set<Transition<L, P>>> findCompositions(final IPetriNet<L, P> net) {
+		final Map<P, Set<Transition<L, P>>> result = new HashMap<>();
+		final Set<Transition<L, P>> involved = new HashSet<>();
 
 		for (final P place : net.getPlaces()) {
-			final Set<ITransition<L, P>> incoming = net.getPredecessors(place);
+			final Set<Transition<L, P>> incoming = net.getPredecessors(place);
 			if (DataStructureUtils.haveNonEmptyIntersection(involved, incoming)) {
 				continue;
 			}
 
-			final Set<ITransition<L, P>> outgoing = net.getSuccessors(place);
+			final Set<Transition<L, P>> outgoing = net.getSuccessors(place);
 			if (DataStructureUtils.haveNonEmptyIntersection(involved, outgoing)) {
 				continue;
 			}
@@ -150,11 +148,11 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 			}
 
 			boolean isLeftMover = true;
-			final Set<ITransition<L, P>> inhibitable = new HashSet<>();
-			for (final ITransition<L, P> trans : outgoing) {
-				final Set<ITransition<L, P>> coenabled = mCoenabledRelation.getImage(trans);
+			final Set<Transition<L, P>> inhibitable = new HashSet<>();
+			for (final Transition<L, P> trans : outgoing) {
+				final Set<Transition<L, P>> coenabled = mCoenabledRelation.getImage(trans);
 				isLeftMover = isLeftMover && DataStructureUtils.haveNonEmptyIntersection(involved, coenabled)
-						&& coenabled.stream().flatMap(t -> net.getSuccessors(t).stream()).anyMatch(net::isAccepting)
+						&& coenabled.stream().flatMap(t -> t.getSuccessors().stream()).anyMatch(net::isAccepting)
 						&& coenabled.stream().allMatch(t -> checkCommutativity(net, t, trans));
 
 				// TODO If only some co-enabled transitions commute, wouldn't it be sound to only block these?
@@ -176,11 +174,11 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 		return result;
 	}
 
-	private boolean checkCommutativity(final IPetriNet<L, P> net, final ITransition<L, P> first,
-			final ITransition<L, P> second) {
+	private boolean checkCommutativity(final IPetriNet<L, P> net, final Transition<L, P> first,
+			final Transition<L, P> second) {
 		final Set<P> preconditions;
 		if (mIndependence.isConditional()) {
-			preconditions = DataStructureUtils.union(net.getPredecessors(first), net.getPredecessors(second));
+			preconditions = DataStructureUtils.union(first.getPredecessors(), second.getPredecessors());
 		} else {
 			preconditions = null;
 		}

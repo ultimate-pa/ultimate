@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	private final ICompositionFactory<L> mCompositionFactory;
-	private final Map<ITransition<L, P>, List<ITransition<L, P>>> mCompositions = new HashMap<>();
+	private final Map<Transition<L, P>, List<Transition<L, P>>> mCompositions = new HashMap<>();
 
 	/**
 	 * Creates a new instance of the rule.
@@ -82,52 +82,52 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 
 	@Override
 	protected void applyInternal(final IPetriNet<L, P> net) {
-		final Set<Pair<L, List<ITransition<L, P>>>> pendingCompositions = findCompositions(net);
+		final Set<Pair<L, List<Transition<L, P>>>> pendingCompositions = findCompositions(net);
 
-		for (final Pair<L, List<ITransition<L, P>>> pair : pendingCompositions) {
+		for (final Pair<L, List<Transition<L, P>>> pair : pendingCompositions) {
 			final L composedLetter = pair.getFirst();
-			final List<ITransition<L, P>> components = pair.getSecond();
-			final ITransition<L, P> firstComponent = components.get(0);
+			final List<Transition<L, P>> components = pair.getSecond();
+			final Transition<L, P> firstComponent = components.get(0);
 
 			// add composed transition
-			final ITransition<L, P> composed = addTransition(composedLetter, net.getPredecessors(firstComponent),
-					net.getSuccessors(firstComponent));
+			final Transition<L, P> composed =
+					addTransition(composedLetter, firstComponent.getPredecessors(), firstComponent.getSuccessors());
 			assert components.stream().allMatch(x -> mCoenabledRelation.getImage(x).equals(mCoenabledRelation
 					.getImage(firstComponent))) : "parallel letters with different coenabled transitions";
 			mCoenabledRelation.copyRelationships(firstComponent, composed);
 
 			// remove obsolete transitions
-			for (final ITransition<L, P> component : components) {
+			for (final Transition<L, P> component : components) {
 				removeTransition(component);
 				mCoenabledRelation.deleteElement(component);
 			}
 
 			// add mover information for composition
 			transferMoverProperties(composedLetter,
-					components.stream().map(ITransition::getSymbol).collect(Collectors.toList()));
+					components.stream().map(Transition::getSymbol).collect(Collectors.toList()));
 
 			mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
 			mCompositions.put(composed, components);
 		}
 	}
 
-	private Set<Pair<L, List<ITransition<L, P>>>> findCompositions(final IPetriNet<L, P> net) {
-		final NestedMap2<Set<P>, Set<P>, List<ITransition<L, P>>> groupedTransitions = new NestedMap2<>();
-		for (final ITransition<L, P> transition : net.getTransitions()) {
-			final List<ITransition<L, P>> group = groupedTransitions.computeIfAbsent(net.getPredecessors(transition),
-					net.getSuccessors(transition), (x, y) -> new ArrayList<>());
+	private Set<Pair<L, List<Transition<L, P>>>> findCompositions(final IPetriNet<L, P> net) {
+		final NestedMap2<Set<P>, Set<P>, List<Transition<L, P>>> groupedTransitions = new NestedMap2<>();
+		for (final Transition<L, P> transition : net.getTransitions()) {
+			final List<Transition<L, P>> group = groupedTransitions.computeIfAbsent(transition.getPredecessors(),
+					transition.getSuccessors(), (x, y) -> new ArrayList<>());
 			group.add(transition);
 		}
 
-		final Set<Pair<L, List<ITransition<L, P>>>> compositions = new HashSet<>();
+		final Set<Pair<L, List<Transition<L, P>>>> compositions = new HashSet<>();
 		for (final var triple : groupedTransitions.entrySet()) {
-			final List<ITransition<L, P>> parallelTransitions = triple.getThird();
+			final List<Transition<L, P>> parallelTransitions = triple.getThird();
 			if (parallelTransitions.size() <= 1) {
 				continue;
 			}
 
 			final List<L> parallelLetters =
-					parallelTransitions.stream().map(ITransition::getSymbol).collect(Collectors.toList());
+					parallelTransitions.stream().map(Transition::getSymbol).collect(Collectors.toList());
 			if (!mCompositionFactory.isParallelyComposable(parallelLetters)) {
 				continue;
 			}
@@ -138,7 +138,7 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 		return compositions;
 	}
 
-	public Map<ITransition<L, P>, List<ITransition<L, P>>> getCompositions() {
+	public Map<Transition<L, P>, List<Transition<L, P>>> getCompositions() {
 		return mCompositions;
 	}
 }

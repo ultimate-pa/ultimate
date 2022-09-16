@@ -48,9 +48,9 @@ import org.junit.runner.RunWith;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -270,7 +270,7 @@ public class LiptonReductionTests implements IMessagePrinter {
 
 		@Override
 		public boolean isPostScript(final IPetriNet<String, String> net,
-				final Set<ITransition<String, String>> transitions) {
+				final Set<Transition<String, String>> transitions) {
 			return false;
 		}
 	}
@@ -308,10 +308,10 @@ public class LiptonReductionTests implements IMessagePrinter {
 				if (!trans1.getSymbol().equals(trans2.getSymbol())) {
 					continue;
 				}
-				if (!first.getPredecessors(trans1).equals(second.getPredecessors(trans2))) {
+				if (!trans1.getPredecessors().equals(trans2.getPredecessors())) {
 					continue;
 				}
-				if (!first.getSuccessors(trans1).equals(second.getSuccessors(trans2))) {
+				if (!trans1.getSuccessors().equals(trans2.getSuccessors())) {
 					continue;
 				}
 				found = true;

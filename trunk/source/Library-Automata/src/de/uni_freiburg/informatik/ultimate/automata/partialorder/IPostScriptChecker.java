@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * An interface that supports identifying post-scripts of a certain language.
@@ -78,5 +78,5 @@ public interface IPostScriptChecker<L, P> {
 	 * @return true if the set is guaranteed to be a post-script; false if it is not a post-script, or the answer could
 	 *         not be determined.
 	 */
-	boolean isPostScript(final IPetriNet<L, P> net, final Set<ITransition<L, P>> transitions);
+	boolean isPostScript(final IPetriNet<L, P> net, final Set<Transition<L, P>> transitions);
 }
