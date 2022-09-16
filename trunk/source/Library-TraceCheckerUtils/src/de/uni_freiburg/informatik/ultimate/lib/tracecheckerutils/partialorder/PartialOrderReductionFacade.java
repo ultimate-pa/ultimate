@@ -119,7 +119,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final ISleepMapStateFactory<L, IPredicate, IPredicate> mSleepMapFactory;
 
 	private StateSplitter<IPredicate> mStateSplitter;
-	private final IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
+	private final IDeadEndStore<?, IPredicate> mDeadEndStore;
 	private final IPreferenceOrder<L, IPredicate, ?> mPreferenceOrder;
 
 	private final IIcfg<?> mIcfg;
@@ -136,7 +136,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed, final StepType steptype, final String threads,
 			final int maxStep, final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
-			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget) {
+			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget,
+			final Function<StateSplitter<IPredicate>, IDeadEndStore<?, IPredicate>> getDeadEndStore) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
@@ -154,7 +155,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
 		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
-		mDeadEndStore = createDeadEndStore();
+
+		// TODO decouple dead end support from this class
+		mDeadEndStore = getDeadEndStore == null ? null : getDeadEndStore.apply(mStateSplitter);
 
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
@@ -190,34 +193,34 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final String threads,
 			final int maxStep, final IIcfg<?> icfg) {
 		// TODO Add support for all orders previously supported in #getDfsOrder
-		
+
 		/*
-		final List<String> threadList =
-				IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList());
-		final List<Integer> maxSteps = Collections.nCopies(threadList.size(), maxStep);
-		*/
-		
+		 * final List<String> threadList =
+		 * IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()); final List<Integer>
+		 * maxSteps = Collections.nCopies(threadList.size(), maxStep);
+		 */
+
 		final List<String> allThreads = new ArrayList<>();
 		allThreads.addAll(IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()));
-		String start = "ULTIMATE.start";
-		for (int i = allThreads.indexOf(start); i>0; i--) {
-			allThreads.set(i, allThreads.get(i-1));
+		final String start = "ULTIMATE.start";
+		for (int i = allThreads.indexOf(start); i > 0; i--) {
+			allThreads.set(i, allThreads.get(i - 1));
 		}
 		allThreads.set(0, start);
-		String[] pairList = threads.split("\\s+");
-		
-		List<Integer> maxSteps  = new ArrayList<>();
-		List<String> threadList = new ArrayList<>();
+		final String[] pairList = threads.split("\\s+");
+
+		List<Integer> maxSteps = new ArrayList<>();
+		final List<String> threadList = new ArrayList<>();
 		if (pairList[0].equals("X")) {
 			threadList.addAll(allThreads);
 			maxSteps = Collections.nCopies(threadList.size(), maxStep);
 		} else {
-			List<Boolean> allThreadsBool = new ArrayList<>();
+			final List<Boolean> allThreadsBool = new ArrayList<>();
 			allThreadsBool.addAll(Collections.nCopies(allThreads.size(), false));
-			for (String pair : pairList) {
-				String[] splittedPair= pair.split(",");
-				Integer index = Integer.parseInt(splittedPair[0]);
-				if(allThreads.size()>index) {
+			for (final String pair : pairList) {
+				final String[] splittedPair = pair.split(",");
+				final Integer index = Integer.parseInt(splittedPair[0]);
+				if (allThreads.size() > index) {
 					threadList.add(allThreads.get(index));
 					maxSteps.add(Integer.parseInt(splittedPair[1]));
 					if (!allThreadsBool.get(index)) {
@@ -225,13 +228,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 					}
 				}
 			}
-			for (int i = 0; i<allThreadsBool.size(); i++) {
+			for (int i = 0; i < allThreadsBool.size(); i++) {
 				if (!allThreadsBool.get(i)) {
 					threadList.add(allThreads.get(i));
 					maxSteps.add(1);
 				}
 			}
-		}	
+		}
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
 
 		final IPreferenceOrder<L, IPredicate, ?> order =
@@ -253,11 +256,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype) {
 		switch (steptype) {
 		case ALL_READ_WRITE:
-			return x -> (!x.getTransformula().getInVars().isEmpty() || !x.getTransformula().getAssignedVars().isEmpty());
+			return x -> (!x.getTransformula().getInVars().isEmpty()
+					|| !x.getTransformula().getAssignedVars().isEmpty());
 		case ALL_WRITE:
 			return x -> !x.getTransformula().getAssignedVars().isEmpty();
 		case GLOBAL_READ_WRITE:
-			return x -> x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal()) 
+			return x -> x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal())
 					|| x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal());
 		case GLOBAL_WRITE:
 			return x -> x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal());
@@ -599,17 +603,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore() {
-		if (mStateSplitter == null) {
-			return new IDeadEndStore.SimpleDeadEndStore<>();
-		}
-		return new IDeadEndStore.ProductDeadEndStore<>(mStateSplitter::getOriginal, mStateSplitter::getExtraInfo);
-	}
-
-	public IDeadEndStore<IPredicate, IPredicate> getDeadEndStore() {
-		return mDeadEndStore;
-	}
-
 	/**
 	 * Constructs the reduced automaton explicitly.
 	 *
@@ -721,7 +714,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return mGetOriginal.apply(t);
 		}
 
-		Object getExtraInfo(final S t) {
+		public Object getExtraInfo(final S t) {
 			return mGetExtraInfo.apply(t);
 		}
 

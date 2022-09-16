@@ -36,15 +36,14 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol.Variable;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class XnfUpd extends XjunctPartialQuantifierElimination {
 
@@ -152,15 +151,9 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 			}
 		}
 		if (removeableTerms.isEmpty()) {
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
-			}
 			return dualJuncts;
 		}
 		eliminatees.removeAll(removeableTvs);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
-		}
 		final Term[] result;
 		if (unremoveableTerms.isEmpty()) {
 			if (quantifier == QuantifiedFormula.EXISTS) {

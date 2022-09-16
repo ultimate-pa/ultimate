@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-
 /**
  * TODO:
  *
@@ -40,6 +38,6 @@ public interface ISuccessorTransitionProvider<LETTER, PLACE> {
 
 	public Set<PLACE> getPredecessorPlaces();
 
-	public Collection<ITransition<LETTER, PLACE>> getTransitions();
+	public Collection<Transition<LETTER, PLACE>> getTransitions();
 
 }

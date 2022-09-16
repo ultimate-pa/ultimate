@@ -59,7 +59,15 @@ public class CommuhashUtils {
 	public final static Comparator<Term> HASH_BASED_COMPERATOR = new Comparator<Term>() {
 		@Override
 		public int compare(final Term arg0, final Term arg1) {
-			return Integer.compare(arg0.hashCode(), arg1.hashCode());
+			if (arg0 == arg1) {
+				return 0;
+			} else {
+				if (arg0.hashCode() == arg1.hashCode()) {
+					return arg0.toString().compareTo(arg1.toString());
+				} else {
+					return Integer.compare(arg0.hashCode(), arg1.hashCode());
+				}
+			}
 		}
 	};
 

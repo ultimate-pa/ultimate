@@ -34,7 +34,10 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.LazyInt;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IntLattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 
 /**
  * Sleep maps are an extension of sleep sets (from classical partial order reduction algorithms) to multiple
@@ -185,84 +188,48 @@ public final class SleepMap<L, S> {
 	 * @param <S>
 	 *            The type of states used by the sleep maps
 	 */
-	public static final class Comparator<L, S> implements IPartialComparator<SleepMap<L, S>> {
+	public static final class Lattice<L, S> implements ILattice<SleepMap<L, S>> {
+		private final List<IIndependenceRelation<S, L>> mRelations;
+		private final ILattice<Map<L, Integer>> mMapLattice =
+				new CanonicalLatticeForMaps<>(new UpsideDownLattice<>(new IntLattice()));
+
+		public Lattice(final List<IIndependenceRelation<S, L>> relations) {
+			mRelations = relations;
+		}
+
 		@Override
 		public ComparisonResult compare(final SleepMap<L, S> o1, final SleepMap<L, S> o2) {
-			if (Objects.equals(o1, o2)) {
-				return ComparisonResult.EQUAL;
+			if (o1.mRelations != mRelations || o2.mRelations != mRelations) {
+				throw new IllegalArgumentException("Cannot compare maps with different relations");
 			}
-			if (o1 == null || o2 == null || o1.mRelations != o2.mRelations) {
-				return ComparisonResult.INCOMPARABLE;
-			}
-			if (isLessOrEqual(o1.mSleepMap, o2.mSleepMap)) {
-				return ComparisonResult.STRICTLY_SMALLER;
-			}
-			if (isLessOrEqual(o2.mSleepMap, o1.mSleepMap)) {
-				return ComparisonResult.STRICTLY_GREATER;
-			}
-			return ComparisonResult.INCOMPARABLE;
+			return mMapLattice.compare(o1.mSleepMap, o2.mSleepMap);
 		}
 
-		private boolean isLessOrEqual(final Map<L, Integer> m1, final Map<L, Integer> m2) {
-			for (final Map.Entry<L, Integer> entry : m1.entrySet()) {
-				final Integer otherLevel = m2.get(entry.getKey());
-				if (otherLevel == null || entry.getValue() > otherLevel) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		/**
-		 * Computes the infimum of two sleep maps. For sleep sets (i.e., sleep maps with just one independence
-		 * relation), this corresponds to intersection.
-		 *
-		 * @param m1
-		 *            The first sleep map
-		 * @param m2
-		 *            The second sleep map
-		 * @return A sleep map representing the infimum (intersection) of two sleep maps
-		 */
+		@Override
 		public SleepMap<L, S> infimum(final SleepMap<L, S> m1, final SleepMap<L, S> m2) {
-			if (m1.mRelations != m2.mRelations) {
-				throw new UnsupportedOperationException("Cannot compute infimum for maps with different relations");
+			if (m1.mRelations != mRelations || m2.mRelations != mRelations) {
+				throw new IllegalArgumentException("Cannot compute infimum for maps with different relations");
 			}
-
-			final Map<L, Integer> newMap = new HashMap<>();
-			for (final Map.Entry<L, Integer> entry : m1.mSleepMap.entrySet()) {
-				final Integer otherLevel = m2.mSleepMap.get(entry.getKey());
-				if (otherLevel != null) {
-					newMap.put(entry.getKey(), Integer.max(entry.getValue(), otherLevel));
-				}
-			}
-			return new SleepMap<>(m1.mRelations, newMap);
+			return new SleepMap<>(m1.mRelations, mMapLattice.infimum(m1.mSleepMap, m2.mSleepMap));
 		}
 
-		/**
-		 * Computes the supremum of two sleep maps. For sleep sets (i.e., sleep maps with just one independence
-		 * relation), this corresponds to union.
-		 *
-		 * @param m1
-		 *            The first sleep map
-		 * @param m2
-		 *            The second sleep map
-		 * @return A sleep map representing the supremum (union) of two sleep maps
-		 */
+		@Override
 		public SleepMap<L, S> supremum(final SleepMap<L, S> m1, final SleepMap<L, S> m2) {
-			if (m1.mRelations != m2.mRelations) {
-				throw new UnsupportedOperationException("Cannot compute supremum for maps with different relations");
+			if (m1.mRelations != mRelations || m2.mRelations != mRelations) {
+				throw new IllegalArgumentException("Cannot compute supremum for maps with different relations");
 			}
+			return new SleepMap<>(m1.mRelations, mMapLattice.supremum(m1.mSleepMap, m2.mSleepMap));
+		}
 
-			final Map<L, Integer> newMap = new HashMap<>(m1.mSleepMap);
-			for (final Map.Entry<L, Integer> entry : m2.mSleepMap.entrySet()) {
-				final Integer otherLevel = newMap.get(entry.getKey());
-				if (otherLevel == null) {
-					newMap.put(entry.getKey(), entry.getValue());
-				} else {
-					newMap.put(entry.getKey(), Integer.min(otherLevel, entry.getValue()));
-				}
-			}
-			return new SleepMap<>(m1.mRelations, newMap);
+		@Override
+		public SleepMap<L, S> getBottom() {
+			return SleepMap.empty(mRelations);
+		}
+
+		@Override
+		public SleepMap<L, S> getTop() {
+			// TODO map all letters to 0
+			throw new UnsupportedOperationException();
 		}
 	}
 }

@@ -33,46 +33,43 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Data structure for sharing information between Petri net difference
- * operations. This information can guide the {@link Difference} operation by
- * providing information that are not known without inferring the reachable
- * (resp. vital) transitions of the result in advance.
+ * Data structure for sharing information between Petri net difference operations. This information can guide the
+ * {@link Difference} operation by providing information that are not known without inferring the reachable (resp.
+ * vital) transitions of the result in advance.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 	/**
-	 * Letters for which the subtrahend DFA actually has a transition that changes
-	 * the state. In on-demand constructions, this information can be more precise
-	 * than mUniversalLoopers because the user cannot foresee the construction
-	 * process.
+	 * Letters for which the subtrahend DFA actually has a transition that changes the state. In on-demand
+	 * constructions, this information can be more precise than mUniversalLoopers because the user cannot foresee the
+	 * construction process.
 	 */
 	private final Set<LETTER> mChangerLetters;
 
-	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mSelfloops;
-	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mStateChangers;
-	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mBlockingTransitions;
-	private final Set<ITransition<LETTER, PLACE>> mContributingTransitions;
+	private final HashRelation<Transition<LETTER, PLACE>, PLACE> mSelfloops;
+	private final HashRelation<Transition<LETTER, PLACE>, PLACE> mStateChangers;
+	private final HashRelation<Transition<LETTER, PLACE>, PLACE> mBlockingTransitions;
+	private final Set<Transition<LETTER, PLACE>> mContributingTransitions;
 	/**
-	 * If true, then every transition of a difference build according to these
-	 * instructions will be a reachable transition.
+	 * If true, then every transition of a difference build according to these instructions will be a reachable
+	 * transition.
 	 */
 	private final boolean mReachabilityPreserved;
 	/**
-	 * If true, then every transition of a difference build according to these
-	 * instructions will be a vital transition.
+	 * If true, then every transition of a difference build according to these instructions will be a vital transition.
 	 */
 	private final boolean mVitalityPreserved;
 
 	public DifferenceSynchronizationInformation(final Set<LETTER> changerLetters,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers,
-			final Set<ITransition<LETTER, PLACE>> contributingTransitions,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions,
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> selfloops,
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> stateChangers,
+			final Set<Transition<LETTER, PLACE>> contributingTransitions,
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> blockingTransitions,
 			final boolean reachabilityPreserved, final boolean vitalityPreserved) {
 		super();
 		mChangerLetters = changerLetters;
@@ -88,19 +85,19 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 		return mChangerLetters;
 	}
 
-	public HashRelation<ITransition<LETTER, PLACE>, PLACE> getSelfloops() {
+	public HashRelation<Transition<LETTER, PLACE>, PLACE> getSelfloops() {
 		return mSelfloops;
 	}
 
-	public HashRelation<ITransition<LETTER, PLACE>, PLACE> getStateChangers() {
+	public HashRelation<Transition<LETTER, PLACE>, PLACE> getStateChangers() {
 		return mStateChangers;
 	}
 
-	public HashRelation<ITransition<LETTER, PLACE>, PLACE> getBlockingTransitions() {
+	public HashRelation<Transition<LETTER, PLACE>, PLACE> getBlockingTransitions() {
 		return mBlockingTransitions;
 	}
 
-	public Set<ITransition<LETTER, PLACE>> getContributingTransitions() {
+	public Set<Transition<LETTER, PLACE>> getContributingTransitions() {
 		return mContributingTransitions;
 	}
 
@@ -112,52 +109,51 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 		return mVitalityPreserved;
 	}
 
-
 	public DifferenceSynchronizationInformation<LETTER, PLACE> transformThroughRemoveRedundantFlow(
-			final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions,
-			final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> differenceTransitions2projectedTransitions,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow,
+			final HashRelation<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> minuendTransition2differenceTransitions,
+			final Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> differenceTransitions2projectedTransitions,
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> redundantSelfloopFlow,
 			final Set<PLACE> redundantPlaces) {
-		final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops = new HashRelation<>();
-		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mSelfloops.entrySet()) {
+		final HashRelation<Transition<LETTER, PLACE>, PLACE> selfloops = new HashRelation<>();
+		for (final Entry<Transition<LETTER, PLACE>, HashSet<PLACE>> entry : mSelfloops.entrySet()) {
 			for (final PLACE automatonState : entry.getValue()) {
-				final Set<ITransition<LETTER, PLACE>> differenceTransitions = minuendTransition2differenceTransitions
-						.getImage(entry.getKey());
+				final Set<Transition<LETTER, PLACE>> differenceTransitions =
+						minuendTransition2differenceTransitions.getImage(entry.getKey());
 				assert !differenceTransitions.isEmpty() : "no corresponding transitions in difference";
 				if (!isRedundantForAll(redundantSelfloopFlow, differenceTransitions, automatonState)) {
-					final ITransition<LETTER, PLACE> projectedTransition = differenceTransitions2projectedTransitions
-							.get(differenceTransitions.iterator().next());
+					final Transition<LETTER, PLACE> projectedTransition =
+							differenceTransitions2projectedTransitions.get(differenceTransitions.iterator().next());
 					selfloops.addPair(projectedTransition, automatonState);
 				}
 			}
 		}
-		final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers = new HashRelation<>();
-		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mStateChangers.entrySet()) {
-			final Set<ITransition<LETTER, PLACE>> differenceTransitions = minuendTransition2differenceTransitions
-					.getImage(entry.getKey());
+		final HashRelation<Transition<LETTER, PLACE>, PLACE> stateChangers = new HashRelation<>();
+		for (final Entry<Transition<LETTER, PLACE>, HashSet<PLACE>> entry : mStateChangers.entrySet()) {
+			final Set<Transition<LETTER, PLACE>> differenceTransitions =
+					minuendTransition2differenceTransitions.getImage(entry.getKey());
 			for (final PLACE automatonState : entry.getValue()) {
 				if (!redundantPlaces.contains(automatonState)) {
-					final ITransition<LETTER, PLACE> projectedTransition = differenceTransitions2projectedTransitions
-							.get(differenceTransitions.iterator().next());
+					final Transition<LETTER, PLACE> projectedTransition =
+							differenceTransitions2projectedTransitions.get(differenceTransitions.iterator().next());
 					stateChangers.addPair(projectedTransition, automatonState);
 				}
 			}
 		}
-		final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions = new HashRelation<>();
-		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mBlockingTransitions.entrySet()) {
-			final Set<ITransition<LETTER, PLACE>> differenceTransitions = minuendTransition2differenceTransitions
-					.getImage(entry.getKey());
+		final HashRelation<Transition<LETTER, PLACE>, PLACE> blockingTransitions = new HashRelation<>();
+		for (final Entry<Transition<LETTER, PLACE>, HashSet<PLACE>> entry : mBlockingTransitions.entrySet()) {
+			final Set<Transition<LETTER, PLACE>> differenceTransitions =
+					minuendTransition2differenceTransitions.getImage(entry.getKey());
 			if (!differenceTransitions.isEmpty()) {
 				for (final PLACE automatonState : entry.getValue()) {
-					final ITransition<LETTER, PLACE> projectedTransition = differenceTransitions2projectedTransitions
-							.get(differenceTransitions.iterator().next());
+					final Transition<LETTER, PLACE> projectedTransition =
+							differenceTransitions2projectedTransitions.get(differenceTransitions.iterator().next());
 					if (!redundantPlaces.contains(automatonState)) {
 						blockingTransitions.addPair(projectedTransition, automatonState);
 					}
 				}
 			}
 		}
-		final Set<ITransition<LETTER, PLACE>> contributingTransitions = mContributingTransitions.stream()
+		final Set<Transition<LETTER, PLACE>> contributingTransitions = mContributingTransitions.stream()
 				.map(x -> differenceTransitions2projectedTransitions
 						.get(minuendTransition2differenceTransitions.getImage(x).iterator().next()))
 				.collect(Collectors.toSet());
@@ -165,13 +161,13 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 				contributingTransitions, blockingTransitions, true, false);
 	}
 
-	private boolean isRedundantForAll(final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow,
-			final Set<ITransition<LETTER, PLACE>> differenceTransitions, final PLACE automatonState) {
+	private boolean isRedundantForAll(final HashRelation<Transition<LETTER, PLACE>, PLACE> redundantSelfloopFlow,
+			final Set<Transition<LETTER, PLACE>> differenceTransitions, final PLACE automatonState) {
 		return differenceTransitions.stream().allMatch(x -> redundantSelfloopFlow.containsPair(x, automatonState));
 	}
 
 	public boolean isCompatible(final IPetriNet<LETTER, PLACE> net) {
-		if(!net.getAlphabet().containsAll(getChangerLetters())) {
+		if (!net.getAlphabet().containsAll(getChangerLetters())) {
 			return false;
 		}
 		if (!net.getTransitions().containsAll(getStateChangers().getDomain())) {
@@ -212,7 +208,5 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 		builder.append("]");
 		return builder.toString();
 	}
-
-
 
 }

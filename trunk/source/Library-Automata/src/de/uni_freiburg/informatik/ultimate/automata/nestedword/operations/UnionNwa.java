@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFact
  * @param <STATE>
  *            state type
  */
-class UnionNwa<LETTER, STATE> extends ProductNwa<LETTER, STATE, STATE, STATE> {
+public class UnionNwa<LETTER, STATE> extends ProductNwa<LETTER, STATE, STATE, STATE> {
 	private final IUnionStateFactory<STATE> mStateFactory;
 
 	/**

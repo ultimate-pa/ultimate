@@ -66,15 +66,21 @@ public class PolynomialTermUtils {
 	 *            bitvector sort
 	 * @return bv % 2^sort.getIndices[0]
 	 */
-	public static Rational bringValueInRange(final Rational bv, final Sort sort) {
+	public static Rational bringBitvectorValueInRange(final Rational bv, final Sort sort) {
 		assert SmtSortUtils.isBitvecSort(sort);
-		assert sort.getIndices().length == 1;
-		assert bv.isIntegral();
-		final int bitsize = Integer.valueOf(sort.getIndices()[0]);
+		final int bitsize = SmtSortUtils.getBitvectorLength(sort);
 		final BigInteger bvBigInt = bv.numerator();
 		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
 		final BigInteger resultBigInt = ArithmeticUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
+	}
+
+	public static Rational bringValueInRange(final Rational rat, final Sort sort) {
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return bringBitvectorValueInRange(rat, sort);
+		} else {
+			return rat;
+		}
 	}
 
 	/**
@@ -374,7 +380,7 @@ public class PolynomialTermUtils {
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm... summands) {
 		final Sort sort = summands[0].getSort();
 		final Map<MNL, Rational> variable2Coefficient = new HashMap<>();
-		Rational constant = Rational.ZERO;
+		Rational newConstant = Rational.ZERO;
 		for (final IPolynomialTerm term : summands) {
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
 				// assert summand.getKey().getSort() == mSort : "Sort mismatch: " +
@@ -383,12 +389,7 @@ public class PolynomialTermUtils {
 				if (coeff == null) {
 					variable2Coefficient.put(summand.getKey(), summand.getValue());
 				} else {
-					final Rational newCoeff;
-					if (SmtSortUtils.isBitvecSort(sort)) {
-						newCoeff = bringValueInRange(coeff.add(summand.getValue()), sort);
-					} else {
-						newCoeff = coeff.add(summand.getValue());
-					}
+					final Rational newCoeff = bringValueInRange(coeff.add(summand.getValue()), sort);
 					if (newCoeff.equals(Rational.ZERO)) {
 						variable2Coefficient.remove(summand.getKey());
 					} else {
@@ -396,13 +397,9 @@ public class PolynomialTermUtils {
 					}
 				}
 			}
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				constant = bringValueInRange(constant.add(term.getConstant()), sort);
-			} else {
-				constant = constant.add(term.getConstant());
-			}
+			newConstant = bringValueInRange(newConstant.add(term.getConstant()), sort);
 		}
-		return constructor.apply(sort, constant, variable2Coefficient);
+		return constructor.apply(sort, newConstant, variable2Coefficient);
 	}
 
 	/**
@@ -418,8 +415,7 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	static <T extends IPolynomialTerm, MNL> T constructMul(
-			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
+	static <T extends IPolynomialTerm, MNL> T constructMul(final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm term, final Rational multiplier) {
 		final Sort sort;
 		final Rational constant;
@@ -435,14 +431,11 @@ public class PolynomialTermUtils {
 		} else {
 			variable2Coefficient = new HashMap<>();
 			sort = term.getSort();
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
-			} else {
-				assert sort.isNumericSort();
-				constant = term.getConstant().mul(multiplier);
-			}
+			constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
-				variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
+				final Rational newCoefficient = PolynomialTermUtils
+						.bringValueInRange(summand.getValue().mul(multiplier), sort);
+				variable2Coefficient.put(summand.getKey(), newCoefficient);
 			}
 		}
 		return constructor.apply(sort, constant, variable2Coefficient);
@@ -483,11 +476,11 @@ public class PolynomialTermUtils {
 					result = null;
 				}
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				if (divisor.equals(Rational.ONE) || SmtUtils.isBvMinusOne(divisor, sort)) {
+				if (divisor.equals(Rational.ONE) || SmtUtils.isBvMinusOneButNotOne(divisor, sort)) {
 					// We use multiplication instead of division
 					// because we know that in this special case divisor is
 					// always its own multiplicative inverse.
-					result = PolynomialTermUtils.bringValueInRange(divident.mul(divisor), sort);
+					result = PolynomialTermUtils.bringBitvectorValueInRange(divident.mul(divisor), sort);
 				} else {
 					result = null;
 				}
