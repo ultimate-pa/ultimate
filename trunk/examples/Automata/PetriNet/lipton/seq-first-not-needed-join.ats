@@ -1,0 +1,30 @@
+// Transitions 'a' and 'b' should be sequentially composed.
+// Intuitively, it is not necessary to keep 'a' as a separate transition.
+// But the current implementation (2021-09-23) does keep it.
+
+//@ commutativity (c, b)
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" "join" },
+  places      = { "l11" "l12" "l13" "l21" "l22" "lacc" },
+  transitions = {
+    ({ "l11" } "a" { "l12" })
+    ({ "l12" } "b" { "l13" })
+    ({ "l21" } "c" { "l22" })
+    ({ "l13" "l22" } "join" { "lacc" })
+  },
+  initialMarking = { "l11" "l21" },
+  acceptingPlaces = { "lacc" }
+);
+
+PetriNet expected = (
+  alphabet    = { "ab" "c" "join" },
+  places      = { "l11" "l13" "l21" "l22" "lacc" },
+  transitions = {
+    ({ "l11" } "ab" { "l13" })
+    ({ "l21" } "c"  { "l22" })
+    ({ "l13" "l22" } "join" { "lacc" })
+  },
+  initialMarking = { "l11" "l21" },
+  acceptingPlaces = { "lacc" }
+);

@@ -1,0 +1,28 @@
+// Transitions 'a' and 'b' should be sequentially composed.
+// However we need to keep 'a' as separate transition.
+
+//@ commutativity (c, b)
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" },
+  places      = { "l11" "l12" "l13" "l21" "l22" },
+  transitions = {
+    ({ "l11" } "a" { "l12" })
+    ({ "l12" } "b" { "l13" })
+    ({ "l21" } "c" { "l22" })
+  },
+  initialMarking = { "l11" "l21" },
+  acceptingPlaces = { "l22" }
+);
+
+PetriNet expected = (
+  alphabet    = { "ab" "a" "c" },
+  places      = { "l11" "l13" "l21" "l22" "l12_copy2" },
+  transitions = {
+    ({ "l11" } "ab" { "l13" })
+    ({ "l11" } "a"  { "l12_copy2" })
+    ({ "l21" } "c"  { "l22" })
+  },
+  initialMarking = { "l11" "l21" },
+  acceptingPlaces = { "l22" }
+);
