@@ -48,5 +48,4 @@ public class PetriNetLargeBlockEncodingBenchmarks implements ICsvProviderProvide
 	public ICsvProvider<Object> createCsvProvider() {
 		return mStatisticsData.createCsvProvider();
 	}
-
 }

@@ -45,6 +45,18 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * Implementation of sleep map reduction: A kind of partial order reduction up to multiple independence relations.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters
+ * @param <S>
+ *            The type of states in the input automaton
+ * @param <R>
+ *            The type of states in the reduction automaton
+ */
 public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransitionProvider<L, R> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
@@ -55,6 +67,21 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 
 	private final R mInitial;
 
+	/**
+	 * Create a new reduction automaton.
+	 *
+	 * @param operand
+	 *            The input automaton
+	 * @param relations
+	 *            An ordered sequence of independence relations. The {@code operand} must be closed up to each of these
+	 *            relations.
+	 * @param order
+	 *            The preference order for the reduction
+	 * @param stateFactory
+	 *            A state factory to create the reduction automaton's states
+	 * @param getBudget
+	 *            A budget function that determines how the different independence relations are combined
+	 */
 	public SleepMapReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final List<IIndependenceRelation<S, L>> relations, final IDfsOrder<L, R> order,
 			final ISleepMapStateFactory<L, S, R> stateFactory,
@@ -143,6 +170,17 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 		return Collections.emptySet();
 	}
 
+	/**
+	 * Compute a successor state under the assumption of some given budget.
+	 *
+	 * @param state
+	 *            The current state of the reduction automaton
+	 * @param letter
+	 *            The input letter, for which the successor state shall be computed
+	 * @param budget
+	 *            The assumed budget given to the successor state
+	 * @return The successor state for the given state and letter, assuming the budget function assigns the given budget
+	 */
 	R computeSuccessorWithBudget(final R state, final L letter, final int budget) {
 		final S currentState = mStateFactory.getOriginalState(state);
 		final var currentTransitionOpt = DataStructureUtils.getOnly(mOperand.internalSuccessors(currentState, letter),
@@ -176,7 +214,34 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 		return oldCost <= newCost;
 	}
 
+	/**
+	 * A budget function determines how the different independence relation shall be combined.
+	 *
+	 * Specifically, it assigns a number <code>k</code> from <code>0</code> to <code>n-1</code> (where n is the number
+	 * of independence relations) to a state. In this state, and all states reachable from it, the reduction may then
+	 * only apply the independence relations at indices from 0 to k in the sequence of independence relations.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters in the reduction automaton
+	 * @param <R>
+	 *            The type of reduction automaton states
+	 */
 	public interface IBudgetFunction<L, R> {
+		/**
+		 * Given a state and an input letter, assigns the budget for the successor state.
+		 *
+		 * The assigned budget must always be between 0 and the given state's budget (inclusive), it may never exceed
+		 * the given state's budget.
+		 *
+		 * @param state
+		 *            The current state of the reduction automaton. An {@link ISleepMapStateFactory} may be used to
+		 *            decompose it.
+		 * @param letter
+		 *            An input letter
+		 * @return The budget for the successor state of <code>state</code> under input <code>letter</code>
+		 */
 		int computeBudget(R state, L letter);
 	}
 }

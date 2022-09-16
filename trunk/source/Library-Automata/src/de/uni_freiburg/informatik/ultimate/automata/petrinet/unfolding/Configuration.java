@@ -35,11 +35,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 /**
- * Represents a Suffix of a Configuration. A Configuration is a Set of Events
- * which is causally closed and conflict-free. A Set E is called Suffix if there
- * is a Configuration C, such that
+ * Represents a Suffix of a Configuration. A Configuration is a Set of Events which is causally closed and
+ * conflict-free. A Set E is called Suffix if there is a Configuration C, such that
  * <ul>
  * <li>C united with E is a Configuration</li>
  * <li>The intersection of C and E is empty</li>
@@ -52,25 +50,25 @@ import java.util.stream.Collectors;
  *            place content type
  */
 public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLACE>> {
-	private final ArrayList<Event<LETTER, PLACE>> mEvents;
-	private final ArrayList<List<Event<LETTER, PLACE>>> mFoataNormalForm;
-	private boolean mSorted = false;
-	private boolean mFoataComputed = false;
-	private int lastSortedMinimum = 0;
-	private final int mConfigurationDepth;
 	private final static boolean USE_DEPTH_TO_COMPUTE_FNF = true;
 
+	private final List<Event<LETTER, PLACE>> mEvents;
+	private final List<List<Event<LETTER, PLACE>>> mFoataNormalForm;
+	private boolean mSorted;
+	private boolean mFoataComputed;
+	private int mLastSortedMinimum;
+	private final int mConfigurationDepth;
 
 	public Configuration(final Set<Event<LETTER, PLACE>> events, final int configurationDepth) {
 		mEvents = new ArrayList<>(events);
 		mFoataNormalForm = new ArrayList<>(configurationDepth + 1);
-		mConfigurationDepth= configurationDepth;
+		mConfigurationDepth = configurationDepth;
 	}
 
-	private List<Event<LETTER, PLACE>> getMinPhi(final int depth, Comparator<Event<LETTER, PLACE>> comparator) {
-		if (lastSortedMinimum < depth) {
+	private List<Event<LETTER, PLACE>> getMinPhi(final int depth, final Comparator<Event<LETTER, PLACE>> comparator) {
+		if (mLastSortedMinimum < depth) {
 			mFoataNormalForm.get(depth).sort(comparator);
-			lastSortedMinimum = depth;
+			mLastSortedMinimum = depth;
 		}
 		return mFoataNormalForm.get(depth);
 	}
@@ -85,12 +83,11 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 	}
 
 	/**
-	 * Compares configurations initially based on size. In case of equal size,
-	 * lexically compares the ordered sequences of events with respect to the the
-	 * total order on their transitions.
+	 * Compares configurations initially based on size. In case of equal size, lexically compares the ordered sequences
+	 * of events with respect to the the total order on their transitions.
 	 */
 
-	public int compareTo(final Configuration<LETTER, PLACE> other, Comparator<Event<LETTER, PLACE>> comparator) {
+	public int compareTo(final Configuration<LETTER, PLACE> other, final Comparator<Event<LETTER, PLACE>> comparator) {
 		if (size() != other.size()) {
 			return size() - other.size();
 		}
@@ -100,8 +97,8 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 	}
 
 	public int compareMin(final Configuration<LETTER, PLACE> other, final int depth,
-			Comparator<Event<LETTER, PLACE>> comparator) {
-		int result = mFoataNormalForm.get(depth).size() - other.mFoataNormalForm.get(depth).size();
+			final Comparator<Event<LETTER, PLACE>> comparator) {
+		final int result = mFoataNormalForm.get(depth).size() - other.mFoataNormalForm.get(depth).size();
 		if (result != 0) {
 			return result;
 		}
@@ -111,7 +108,7 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 	}
 
 	private int comparePhi(final List<Event<LETTER, PLACE>> phi1, final List<Event<LETTER, PLACE>> phi2,
-			Comparator<Event<LETTER, PLACE>> comparator) {
+			final Comparator<Event<LETTER, PLACE>> comparator) {
 		for (int i = 0; i < phi1.size(); i++) {
 			final int result = comparator.compare(phi1.get(i), phi2.get(i));
 			if (result != 0) {
@@ -121,36 +118,40 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 		return 0;
 	}
 
-	private void computePhi(Comparator<Event<LETTER, PLACE>> comparator) {
+	private void computePhi(final Comparator<Event<LETTER, PLACE>> comparator) {
 		if (!mSorted) {
 			Collections.sort(mEvents, comparator);
 			mSorted = true;
 		}
 	}
-	
-	public ArrayList<Event<LETTER, PLACE>> getSortedConfiguration(Comparator<Event<LETTER, PLACE>> comparator) {
-		final ArrayList<Event<LETTER, PLACE>>  result = new ArrayList<>(mEvents);
+
+	public List<Event<LETTER, PLACE>> getSortedConfiguration(final Comparator<Event<LETTER, PLACE>> comparator) {
+		final List<Event<LETTER, PLACE>> result = new ArrayList<>(mEvents);
 		Collections.sort(result, comparator);
 		return result;
 	}
 
 	public void computeFoataNormalFormUsingDepth() {
-			for (int i = 0; i < mConfigurationDepth + 1; i++) {
-				mFoataNormalForm.add(new ArrayList<>());
-			}
-			for (final Event<LETTER, PLACE> e : mEvents) {
-				mFoataNormalForm.get(e.getDepth()).add(e);
-			}
-		
+		for (int i = 0; i < mConfigurationDepth + 1; i++) {
+			mFoataNormalForm.add(new ArrayList<>());
+		}
+		for (final Event<LETTER, PLACE> e : mEvents) {
+			mFoataNormalForm.get(e.getDepth()).add(e);
+		}
+
 	}
+
 	public void computeFoataNormalFormIntuitively() {
-		final Set<Event<LETTER,PLACE>> remainingEvents = new HashSet<>(mEvents);
-		Set<Event<LETTER, PLACE>> minimum = mEvents.stream().filter(event -> event.getAncestors() == 1).collect(Collectors.toCollection(HashSet::new));
+		final Set<Event<LETTER, PLACE>> remainingEvents = new HashSet<>(mEvents);
+		Set<Event<LETTER, PLACE>> minimum = mEvents.stream().filter(event -> event.getAncestors() == 1)
+				.collect(Collectors.toCollection(HashSet::new));
 		mFoataNormalForm.add(new ArrayList<>(minimum));
-		while(!minimum.isEmpty()) {
+		while (!minimum.isEmpty()) {
 			remainingEvents.removeAll(minimum);
-			minimum = Event.getSuccessorEvents(minimum).stream().filter(e -> remainingEvents.contains(e) &&
-					!(e.getPredecessorEvents().stream().anyMatch(e2 -> remainingEvents.contains(e2)))).collect(Collectors.toCollection(HashSet::new));
+			minimum = minimum.stream().flatMap(x -> x.getSuccessorEvents().stream())
+					.filter(e -> remainingEvents.contains(e)
+							&& !(e.getPredecessorEvents().stream().anyMatch(e2 -> remainingEvents.contains(e2))))
+					.collect(Collectors.toSet());
 			mFoataNormalForm.add(new ArrayList<>(minimum));
 		}
 		mFoataNormalForm.add(new ArrayList<>(remainingEvents));
@@ -158,24 +159,25 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 
 	public void computeFoataNormalForm() {
 		if (!mFoataComputed) {
-			if(USE_DEPTH_TO_COMPUTE_FNF) {
+			if (USE_DEPTH_TO_COMPUTE_FNF) {
 				computeFoataNormalFormUsingDepth();
 			} else {
 				computeFoataNormalFormIntuitively();
 			}
 			mFoataComputed = true;
 		}
-		
+
 	}
-	
+
 	public int getDepth() {
 		return mConfigurationDepth;
 	}
-	
-	public List<Event<LETTER, PLACE>> getEvents(){
+
+	public List<Event<LETTER, PLACE>> getEvents() {
 		return mEvents;
 	}
-	public boolean contains(Event<LETTER, PLACE> e) {
+
+	public boolean contains(final Event<LETTER, PLACE> e) {
 		return mEvents.contains(e);
 	}
 }

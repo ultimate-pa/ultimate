@@ -142,18 +142,6 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-	@Test
-	public void contextInauguration() {
-		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "k", "i", "x", "y") };
-		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= k i) (or (= (+ 0 (select a k)) (+ x (select a i))) (= (+ 1 (select a k)) (+ y (select a i))))))";
-		final String expectedResultAsString = "(and (= i k) (or (= y 1) (= x 0)))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
-
-
 	@Test
 	public void choirNightTrezor04Triathlon() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
@@ -314,18 +302,20 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
+	/**
+	 * Regression test for bug in array PQE. TODO 20220908 Matthias: It seems like
+	 * for some iteration orders we can eliminate all quantifiers and for some
+	 * iteration orders we can't.
+	 */
 	@Test
-	public void loop_lit_gsv2008() {
+	public void heap_data_cart2() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "main_~main__x~0", "main_~main__y~0"),
-			};
-		final String formulaAsString = "(exists ((aux_div_v_main_~main__x~0_21_53 Int) (v_main_~main__y~0_25 Int)) (and (<= (+ 52 main_~main__x~0) (+ v_main_~main__y~0_25 (* aux_div_v_main_~main__x~0_21_53 2))) (<= (+ v_main_~main__y~0_25 1) main_~main__y~0) (<= (+ aux_div_v_main_~main__x~0_21_53 4) (* 2 v_main_~main__y~0_25))))";
-		final String expectedResult = null;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idxDim1", "idxDim2"),
+			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "arr"),
+		};
+		final String formulaAsString = "(and (= idxDim2 (_ bv0 32)) (exists ((x (_ BitVec 32))) (and (exists ((|â| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (y (_ BitVec 32)) (z Bool)) (and (or (and (not (bvslt (select (select |â| y) (_ bv4 32)) x)) (not z)) (and (bvslt (select (select |â| y) (_ bv4 32)) x) z)) (= (store |â| y (store (store (select |â| y) (_ bv8 32) x) (_ bv4 32) (select (store (select |â| y) (_ bv8 32) x) (_ bv4 32)))) arr) (not (bvslt (select (select |â| idxDim1) (bvadd idxDim2 (_ bv4 32))) (select (select |â| idxDim1) (bvadd idxDim2 (_ bv8 32))))) (not (bvslt (select (select |â| idxDim1) (bvadd idxDim2 (_ bv8 32))) (_ bv0 32))) (not z))) (not (bvslt x (_ bv0 32))))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, null, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
-
 
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]

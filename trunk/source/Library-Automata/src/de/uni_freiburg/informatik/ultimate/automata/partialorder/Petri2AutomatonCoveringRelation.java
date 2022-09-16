@@ -57,18 +57,17 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
  */
 public class Petri2AutomatonCoveringRelation<L, S, P> implements ICoveringRelation<S> {
 	private final IPetriNet<L, P> mPetriNet;
-	private final Function<S, Marking<L, P>> mGetMarking;
+	private final Function<S, Marking<P>> mGetMarking;
 
-	public Petri2AutomatonCoveringRelation(final IPetriNet<L, P> petriNet,
-			final Function<S, Marking<L, P>> getMarking) {
+	public Petri2AutomatonCoveringRelation(final IPetriNet<L, P> petriNet, final Function<S, Marking<P>> getMarking) {
 		mPetriNet = petriNet;
 		mGetMarking = Objects.requireNonNull(getMarking);
 	}
 
 	@Override
 	public boolean covers(final S oldState, final S newState) {
-		final Marking<L, P> oldMarking = mGetMarking.apply(oldState);
-		final Marking<L, P> newMarking = mGetMarking.apply(newState);
+		final Marking<P> oldMarking = mGetMarking.apply(oldState);
+		final Marking<P> newMarking = mGetMarking.apply(newState);
 
 		// TODO In the future, the second disjunct below could be replaced by a strictly weaker condition:
 		// A (cached) check whether any accepting place can be reached from p.

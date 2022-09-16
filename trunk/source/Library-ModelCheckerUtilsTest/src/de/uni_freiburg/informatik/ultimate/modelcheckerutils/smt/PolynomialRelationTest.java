@@ -182,7 +182,7 @@ public class PolynomialRelationTest {
 	public void relationRealPolyEQ6() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -456,18 +456,18 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
-	@Test
+	// @Test Insufficient resources to check soundness
 	public void relationIntPolyGeq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
 		final String inputSTR = "(>= (* 2 a x) t )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
-	@Test
+	// @Test Insufficient resources to check soundness
 	public void relationIntPolyGq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
 		final String inputSTR = "(> (* 2 a x) t )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
@@ -526,7 +526,7 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
-	// @Test > 170h on Jenkins
+	@Test
 	public void relationIntPolyCVC4MATHSATEQ9() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 y x) (* 21 z y))";
@@ -540,7 +540,7 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
-	// @Test >8h on Jenkins although it runs fine on Matthias' maschine with the same mathsat
+	@Test
 	public void relationIntPolyCVC4MATHSATEQ11() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 y x) (* 333 y y y))";
@@ -840,11 +840,11 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
-	@Test
+	// @Test Insufficient resources to check soundness
 	public void relationIntRecModMore2Eq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod (mod (mod (mod x 13) 5) 7) 9) 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
 	@Test
@@ -988,7 +988,7 @@ public class PolynomialRelationTest {
 	public void relationIntNonlin01FactoryOutletLinear() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(<= 20 (* 2 x 6))";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 }

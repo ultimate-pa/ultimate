@@ -46,5 +46,5 @@ public interface IPetriNet2FiniteAutomatonStateFactory<STATE> extends IStateFact
 	 *            Petri net marking
 	 * @return state representing the marking
 	 */
-	STATE getContentOnPetriNet2FiniteAutomaton(Marking<?, STATE> marking);
+	STATE getContentOnPetriNet2FiniteAutomaton(Marking<STATE> marking);
 }

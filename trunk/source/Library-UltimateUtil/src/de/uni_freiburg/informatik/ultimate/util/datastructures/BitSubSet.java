@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
  * @param <E>
  *            The type of elements in the set.
  */
-public class BitSubSet<E> extends AbstractCollection<E> {
+public final class BitSubSet<E> extends AbstractCollection<E> {
 	private final Factory<E> mFactory;
 	private final BitSet mBitSet;
 	private final LazyInt mHash;
@@ -143,6 +143,10 @@ public class BitSubSet<E> extends AbstractCollection<E> {
 	 *            The type of elements in the universe
 	 */
 	public static class Factory<E> implements ILattice<BitSubSet<E>> {
+
+		private static final String LEFT_NOT_CREATED_BY_FACTORY = "Operand 'left' not created by this factory";
+		private static final String RIGHT_NOT_CREATED_BY_FACTORY = "Operand 'right' not created by this factory";
+
 		private final Object[] mElements;
 		private final Map<E, Integer> mIndexMap;
 
@@ -176,12 +180,6 @@ public class BitSubSet<E> extends AbstractCollection<E> {
 		 *         when given the original set
 		 */
 		public BitSubSet<E> valueOf(final Set<E> set) {
-			if (set instanceof BitSubSet<?>) {
-				final BitSubSet<E> b = (BitSubSet<E>) set;
-				if (b.mFactory == this) {
-					return new BitSubSet<>(this, b.mBitSet);
-				}
-			}
 			final BitSet bitset = new BitSet(mElements.length);
 			for (final E elem : set) {
 				final int index = getIndex(elem);
@@ -233,8 +231,8 @@ public class BitSubSet<E> extends AbstractCollection<E> {
 		 * @return A set representing the union of the given sets
 		 */
 		public BitSubSet<E> union(final BitSubSet<E> left, final BitSubSet<E> right) {
-			assert left.mFactory == this : "left not created by this factory";
-			assert right.mFactory == this : "right not created by this factory";
+			assert left.mFactory == this : LEFT_NOT_CREATED_BY_FACTORY;
+			assert right.mFactory == this : RIGHT_NOT_CREATED_BY_FACTORY;
 
 			if (right.isEmpty()) {
 				return left;
@@ -255,8 +253,8 @@ public class BitSubSet<E> extends AbstractCollection<E> {
 		 * @return A set representing the intersection of the given sets
 		 */
 		public BitSubSet<E> intersection(final BitSubSet<E> left, final BitSubSet<E> right) {
-			assert left.mFactory == this : "left not created by this factory";
-			assert right.mFactory == this : "right not created by this factory";
+			assert left.mFactory == this : LEFT_NOT_CREATED_BY_FACTORY;
+			assert right.mFactory == this : RIGHT_NOT_CREATED_BY_FACTORY;
 
 			if (right.isEmpty()) {
 				return right;
@@ -277,8 +275,8 @@ public class BitSubSet<E> extends AbstractCollection<E> {
 		 * @return A set representing the difference of the given sets
 		 */
 		public BitSubSet<E> difference(final BitSubSet<E> left, final BitSubSet<E> right) {
-			assert left.mFactory == this : "left not created by this factory";
-			assert right.mFactory == this : "right not created by this factory";
+			assert left.mFactory == this : LEFT_NOT_CREATED_BY_FACTORY;
+			assert right.mFactory == this : RIGHT_NOT_CREATED_BY_FACTORY;
 
 			if (left.isEmpty() || right.isEmpty()) {
 				return left;
@@ -305,7 +303,7 @@ public class BitSubSet<E> extends AbstractCollection<E> {
 
 		@Override
 		public ComparisonResult compare(final BitSubSet<E> o1, final BitSubSet<E> o2) {
-			assert o1.mFactory == this && o2.mFactory == this : "set with unexpected elements";
+			assert o1.mFactory == this && o2.mFactory == this : "operand not created by this factory";
 			if (o1.equals(o2)) {
 				return ComparisonResult.EQUAL;
 			}

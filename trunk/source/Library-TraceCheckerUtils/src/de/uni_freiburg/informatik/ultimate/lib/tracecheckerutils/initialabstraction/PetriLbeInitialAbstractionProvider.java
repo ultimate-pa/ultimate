@@ -67,10 +67,12 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	 *            Ultimate services used for Petri net LBE, and to report statistics
 	 * @param transitionClazz
 	 *            The class of transitions
-	 * @param lbeMode
-	 *            The kind of Petri net LBE to apply
+	 * @param independenceSettings
+	 *            Settings for the independence relation used by Petri net LBE
 	 * @param compositionFactory
 	 *            A factory to fuse transitions for Petri net LBE
+	 * @param pluginId
+	 *            A plugin ID under which statistics are reported
 	 */
 	public PetriLbeInitialAbstractionProvider(
 			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> underlying,
@@ -95,6 +97,7 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
 		mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
+		// TODO add statistics support to IInitialAbstractionProvider
 		mServices.getResultService().reportResult(mPluginId,
 				new StatisticsResult<>(mPluginId, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 

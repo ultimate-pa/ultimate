@@ -360,7 +360,7 @@ public class SemanticIndependenceConditionGeneratorTest {
 				compose(TransFormulaBuilder.constructTransFormulaFromTerm(SmtUtils.not(mScript, condition),
 						(Set) mSymbolTable.getGlobals(), mMgdScript), elseBranch);
 		return TransFormulaUtils.parallelComposition(mLogger, mServices, mMgdScript, null, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, takeThen, takeElse);
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, true, takeThen, takeElse);
 	}
 
 	private UnmodifiableTransFormula compose(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {

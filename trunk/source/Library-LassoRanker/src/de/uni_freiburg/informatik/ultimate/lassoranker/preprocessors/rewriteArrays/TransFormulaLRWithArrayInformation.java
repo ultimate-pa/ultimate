@@ -419,7 +419,7 @@ public class TransFormulaLRWithArrayInformation {
 				final ArrayGeneration fg = mGeneration2OriginalGeneration.get(ag);
 				assert fg != null : "no original generation!";
 				final TermVariable representative = fg.getRepresentative();
-				if (ModifiableTransFormulaUtils.isInvar(representative, mTransFormula)) {
+				if (ModifiableTransFormulaUtils.isInVar(representative, mTransFormula)) {
 					mInstance2Representative.put(array, representative);
 				} else {
 					throw new AssertionError("no invar");
@@ -484,7 +484,7 @@ public class TransFormulaLRWithArrayInformation {
 
 			private void determineRepresentative() {
 				for (final TermVariable array : mArrays) {
-					if (ModifiableTransFormulaUtils.isInvar(array, mTransFormula)) {
+					if (ModifiableTransFormulaUtils.isInVar(array, mTransFormula)) {
 						mRepresentative = array;
 						return;
 					}
@@ -745,7 +745,7 @@ public class TransFormulaLRWithArrayInformation {
 	 * each free variable of index is an inVar.
 	 */
 	public boolean isInVarCell(final TermVariable arrayInstance, final ArrayIndex index) {
-		if (ModifiableTransFormulaUtils.isInvar(arrayInstance, getTransFormulaLR())) {
+		if (ModifiableTransFormulaUtils.isInVar(arrayInstance, getTransFormulaLR())) {
 			return ModifiableTransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR());
 		} else {
 			return false;
@@ -753,7 +753,7 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	public boolean isOutVarCell(final TermVariable arrayInstance, final ArrayIndex index) {
-		if (ModifiableTransFormulaUtils.isOutvar(arrayInstance, getTransFormulaLR())) {
+		if (ModifiableTransFormulaUtils.isOutVar(arrayInstance, getTransFormulaLR())) {
 			return ModifiableTransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR());
 		} else {
 			return false;

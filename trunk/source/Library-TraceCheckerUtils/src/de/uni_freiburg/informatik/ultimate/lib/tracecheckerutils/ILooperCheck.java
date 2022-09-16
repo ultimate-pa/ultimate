@@ -67,7 +67,7 @@ public interface ILooperCheck<L> {
 	 * @param <L>
 	 *            The type of letters
 	 */
-	public static class IndependentLooperCheck<L extends IAction> implements ILooperCheck<L> {
+	class IndependentLooperCheck<L extends IAction> implements ILooperCheck<L> {
 		@Override
 		public boolean isUniversalLooper(final L letter, final Set<IPredicate> states) {
 			if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
@@ -96,7 +96,7 @@ public interface ILooperCheck<L> {
 	 * @param <L>
 	 *            The type of letters
 	 */
-	public static class HoareLooperCheck<L extends IAction> implements ILooperCheck<L> {
+	class HoareLooperCheck<L extends IAction> implements ILooperCheck<L> {
 		private final IHoareTripleChecker mHtc;
 		private final IPredicateCoverageChecker mCoverage;
 		private final IndependentLooperCheck<L> mIndependentCheck = new IndependentLooperCheck<>();
