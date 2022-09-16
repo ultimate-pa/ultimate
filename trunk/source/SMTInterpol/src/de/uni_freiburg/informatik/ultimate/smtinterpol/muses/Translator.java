@@ -120,11 +120,11 @@ public class Translator {
 	}
 
 	private Term getTerm(final NamedAtom atom) {
-		return atom.getSMTFormula(null, false);
+		return atom.getSMTFormula(null);
 	}
 
 	private String getName(final NamedAtom atom) {
-		return getName(atom.getSMTFormula(null, false));
+		return getName(atom.getSMTFormula(null));
 	}
 
 	/**

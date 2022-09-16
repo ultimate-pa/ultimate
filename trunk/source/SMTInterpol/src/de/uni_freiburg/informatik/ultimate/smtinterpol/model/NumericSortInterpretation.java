@@ -39,11 +39,13 @@ public class NumericSortInterpretation implements SortInterpretation {
 		throw new InternalError("Should never be called!");
 	}
 
-	public Term extend(final Rational rat, final Sort sort) {
+	@Override
+	public void register(Term term) {
+		// This must only be called with rational constants
+		final Rational rat = (Rational) ((ConstantTerm) term).getValue();
 		if (rat.compareTo(mBiggest) >= 0) {
 			mBiggest = rat.floor().add(Rational.ONE);
 		}
-		return rat.toTerm(sort);
 	}
 
 	@Override

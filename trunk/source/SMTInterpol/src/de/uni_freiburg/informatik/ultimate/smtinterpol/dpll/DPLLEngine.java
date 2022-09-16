@@ -822,6 +822,7 @@ public class DPLLEngine {
 	 */
 	private boolean explain(Clause conflict) {
 		while (conflict != null) {
+			startBacktrack();
 			conflict = explainConflict(conflict);
 			learnClause(conflict);
 			if (mUnsatClause != null) {
@@ -921,6 +922,12 @@ public class DPLLEngine {
 		}
 		assert found : "Unit literal not in explanation";
 		return found;
+	}
+
+	private void startBacktrack() {
+		for (final ITheory t : mTheories) {
+			t.backtrackStart();
+		}
 	}
 
 	private Clause finalizeBacktrack() {
@@ -1207,6 +1214,7 @@ public class DPLLEngine {
 					mClsScale *= Double.MIN_NORMAL;
 				}
 				if (--nextRestart == 0) {
+					startBacktrack();
 					final DPLLAtom next = mAtoms.peek();
 					int restartpos = -1;
 					for (int i = mNumSolvedAtoms + mBaseLevel; i < mDPLLStack.size(); ++i) {
@@ -1685,6 +1693,7 @@ public class DPLLEngine {
 	}
 
 	public void flipDecisions() {
+		startBacktrack();
 		while (mDPLLStack.size() > mBaseLevel + mNumSolvedAtoms) {
 			final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
 			backtrackLiteral(lit);
@@ -1697,6 +1706,7 @@ public class DPLLEngine {
 	}
 
 	public void flipNamedLiteral(final String name) throws SMTLIBException {
+		startBacktrack();
 		while (mDPLLStack.size() > mBaseLevel + mNumSolvedAtoms) {
 			final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
 			backtrackLiteral(lit);
@@ -1731,7 +1741,7 @@ public class DPLLEngine {
 		int i = -1;
 		for (final Literal lit : mDPLLStack) {
 			if (!(lit.getAtom() instanceof NamedAtom)) {
-				res[++i] = lit.getSMTFormula(smtTheory, true);
+				res[++i] = lit.getSMTFormula(smtTheory);
 			}
 		}
 		return res;
@@ -1806,6 +1816,7 @@ public class DPLLEngine {
 		if (mCurrentDecideLevel == 0) {
 			return;
 		}
+		startBacktrack();
 		mAssumptionLiterals.clear();
 		mLogger.debug("Clearing Assumptions (Baselevel is %d)", mBaseLevel);
 		while (mCurrentDecideLevel > 0) {
@@ -1861,6 +1872,7 @@ public class DPLLEngine {
 			mBaseLevel = mCurrentDecideLevel;
 			if (conflict != null) {
 				mLogger.debug("Conflict when setting literal");
+				startBacktrack();
 				mUnsatClause = explainConflict(conflict);
 				checkValidUnsatClause();
 				finalizeBacktrack();

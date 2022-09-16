@@ -24,87 +24,86 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Annotation for a linear arithmetic conflict.  This roughly stores the
- * proof in form of Farkas coefficients for the base literals and
- * sub-annotations.  The sub-annotations can be seen as auxiliary clauses
- * that handle extended branches, e.g., for Gomery cuts.
+ * Annotation for a linear arithmetic conflict. This roughly stores the proof in
+ * form of Farkas coefficients for the base literals and sub-annotations. The
+ * sub-annotations can be seen as auxiliary clauses that handle extended
+ * branches, e.g., for integer cuts.
  *
- * If m_linvar is null, this is a base annotation, which corresponds to a
- * proof of unsatisfiability of the current conflict.  Otherwise it is a
- * sub-annotation corresponding to a proof for some bound on a variable,
- * which is given by m_linvar, m_bound, and m_isUpper.
+ * If m_linvar is null, this is a base annotation, which corresponds to a proof
+ * of unsatisfiability of the current conflict. Otherwise it is a sub-annotation
+ * corresponding to a proof for some bound on a variable, which is given by
+ * m_linvar, m_bound, and m_isUpper.
  *
- * An annotation is basically a sum of inequalities with Farkas coefficients.
- * An inequality can either be a literal in the current conflict, i.e., the
- * negation of a literal in the conflict clause, or it can be a LAReason that
- * is explained by some different sub-annotation.  The maps m_coefficients
- * and m_auxAnnotations map these inequalities to their respective Farkas
- * coefficient.  The literals in the coefficient map appear negated, i.e., in
- * the same polarity that they have in the conflict clause.  The sum of the
+ * An annotation is basically a sum of inequalities with Farkas coefficients. An
+ * inequality can either be a literal in the current conflict, i.e., the
+ * negation of a literal in the conflict clause, or it can be a LAReason that is
+ * explained by some different sub-annotation. The maps m_coefficients and
+ * m_auxAnnotations map these inequalities to their respective Farkas
+ * coefficient. The literals in the coefficient map appear negated, i.e., in the
+ * same polarity that they have in the conflict clause. The sum of the
  * inequalities must yield the explained LAReason for a sub-annotation (in the
- * integer case some rounding may be involved), or an inconsistency (e.g.,
- * 1 <= 0) for the parent annotation.
+ * integer case some rounding may be involved), or an inconsistency (e.g., 1 <=
+ * 0) for the parent annotation.
  *
- * Instead of an inequality literals and sub-annotations, an annotation may
- * also add equalities (which can be seen as a strengthened inequality).
+ * Instead of an inequality literals and sub-annotations, an annotation may also
+ * add equalities (which can be seen as a strengthened inequality).
  *
  * There is a special type of annotations, a trichotomy, that involves a
- * disequality and two inequalities, namely, term !=0, term <= 0, term >= 0.
- * If it is a base annotation, it will contain these three literals in its
- * coefficient and auxAnnotation maps.  If it is a sub-annotation it must
- * either explain term < 0 or term >0 from the literals term != 0 and term >=0
- * resp. term <=0.
+ * disequality and two inequalities, namely, term !=0, term <= 0, term >= 0. If
+ * it is a base annotation, it will contain these three literals in its
+ * coefficient and auxAnnotation maps. If it is a sub-annotation it must either
+ * explain term < 0 or term >0 from the literals term != 0 and term >=0 resp.
+ * term <=0.
  *
  *
  * @author Juergen Christ, Jochen Hoenicke
  */
 public class LAAnnotation implements IAnnotation {
 	/**
-	 * Map from literal in the clause to a Farkas coefficient.  Note that
-	 * the literal has the same polarity as in the clause.  When summing up
-	 * the inequalities the literal must be negated first and then multiplied
-	 * with the coefficient from this map.
+	 * Map from literal in the clause to a Farkas coefficient. Note that the literal
+	 * has the same polarity as in the clause. When summing up the inequalities the
+	 * literal must be negated first and then multiplied with the coefficient from
+	 * this map.
 	 */
 	private final Map<Literal, Rational> mCoefficients;
 	/**
-	 * Map from sub-annotations to a Farkas coefficient.  The sub-annotations
-	 * must all have the same parent annotation as this annotation (and must
-	 * be distinct from this annotation to avoid circular reasoning).  When
-	 * summing up the inequalities, the bound explained by the sub-annotation
-	 * must be multiplied with the coefficient from this map.
+	 * Map from sub-annotations to a Farkas coefficient. The sub-annotations must
+	 * all have the same parent annotation as this annotation (and must be distinct
+	 * from this annotation to avoid circular reasoning). When summing up the
+	 * inequalities, the bound explained by the sub-annotation must be multiplied
+	 * with the coefficient from this map.
 	 */
 	private final Map<LAAnnotation, Rational> mAuxAnnotations;
 
 	/**
-	 * The linvar on which this sub-annotation explains a bound, or null
-	 * if this is the top-most annotation.
-	 * If this is a sub-annotation, it explains a bound on a linear variable.
+	 * The linvar on which this sub-annotation explains a bound, or null if this is
+	 * the top-most annotation. If this is a sub-annotation, it explains a bound on
+	 * a linear variable.
 	 */
 	private LinVar mLinvar;
 	/**
-	 * The linvar on which this sub-annotation explains a bound, or null
-	 * if this is the top-most annotation.
-	 * If this is a sub-annotation, it explains a bound on a linear variable.
+	 * The linvar on which this sub-annotation explains a bound, or null if this is
+	 * the top-most annotation. If this is a sub-annotation, it explains a bound on
+	 * a linear variable.
 	 */
 	private InfinitesimalNumber mBound;
 	/**
-	 * True, if this is a sub-annotation that explains an upper bound on a
-	 * linear variable.
-	 * If this is a sub-annotation, it explains a bound on a linear variable,
-	 * either a lower or an upper bound.
+	 * True, if this is a sub-annotation that explains an upper bound on a linear
+	 * variable. If this is a sub-annotation, it explains a bound on a linear
+	 * variable, either a lower or an upper bound.
 	 */
 	private boolean mIsUpper;
 
 	public LAAnnotation() {
-		mCoefficients   = new HashMap<Literal, Rational>();
-		mAuxAnnotations = new HashMap<LAAnnotation, Rational>();
+		mCoefficients = new HashMap<>();
+		mAuxAnnotations = new HashMap<>();
 	}
 
 	public LAAnnotation(LAReason reason) {
@@ -127,7 +126,7 @@ public class LAAnnotation implements IAnnotation {
 		if (r == null) {
 			r = Rational.ZERO;
 		}
-		assert(r.signum() * coeff.signum() >= 0);
+		assert (r.signum() * coeff.signum() >= 0);
 		r = r.add(coeff);
 		mAuxAnnotations.put(annot, r);
 	}
@@ -188,9 +187,9 @@ public class LAAnnotation implements IAnnotation {
 	}
 
 	@Override
-	public Term toTerm(Clause ignored, Theory theory) {
-		assert(mCoefficients != null);
-		return new AnnotationToProofTerm().convert(this, theory);
+	public Term toTerm(Clause ignored, ProofRules proofRules) {
+		assert (mCoefficients != null);
+		return new AnnotationToProofTerm().convert(this, proofRules);
 	}
 
 	@Override
@@ -220,7 +219,7 @@ public class LAAnnotation implements IAnnotation {
 	}
 
 	public Literal[] collectLiterals() {
-		final HashSet<Literal> lits = new HashSet<Literal>();
+		final HashSet<Literal> lits = new HashSet<>();
 		collect(lits, new HashSet<LAAnnotation>());
 		return lits.toArray(new Literal[lits.size()]);
 	}

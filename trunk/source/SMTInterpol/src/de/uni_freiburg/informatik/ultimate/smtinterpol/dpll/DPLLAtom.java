@@ -34,7 +34,7 @@ public abstract class DPLLAtom extends Literal {
 		}
 
 		@Override
-		public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
+		public Term getSMTFormula(final Theory smtTheory) {
 			return smtTheory.mTrue;
 		}
 
@@ -55,8 +55,8 @@ public abstract class DPLLAtom extends Literal {
 			return mAtom.toStringNegated();
 		}
 		@Override
-		public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
-			return mAtom.getNegatedSMTFormula(smtTheory, quoted);
+		public Term getSMTFormula(final Theory smtTheory) {
+			return mAtom.getNegatedSMTFormula(smtTheory);
 		}
 	}
 
@@ -128,8 +128,8 @@ public abstract class DPLLAtom extends Literal {
 	 * Returns a SMT formula representing the negated atoms.
 	 * Subclasses may overwrite this for pretty output.
 	 */
-	public final Term getNegatedSMTFormula(final Theory smtTheory, final boolean quoted) {
-		return smtTheory.not(getSMTFormula(smtTheory, quoted));
+	public final Term getNegatedSMTFormula(final Theory smtTheory) {
+		return smtTheory.not(getSMTFormula(smtTheory));
 	}
 
 	/**

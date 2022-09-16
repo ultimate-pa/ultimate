@@ -73,6 +73,6 @@ public class ProofLiteral {
 
 	@Override
 	public String toString() {
-		return mPositive ? mAtom.toString() : "~" + mAtom.toString();
+		return (mPositive ? "+ " : "- ") + mAtom.toString();
 	}
 }

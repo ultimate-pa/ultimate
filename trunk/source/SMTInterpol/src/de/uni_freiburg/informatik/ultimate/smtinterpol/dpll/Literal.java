@@ -41,15 +41,18 @@ public abstract class Literal implements ILiteral {
 	 * Returns the underlying atom.  If this literal is an atom, it returns
 	 * itself.
 	 */
+	@Override
 	public final DPLLAtom getAtom() { return mAtom; } // NOCHECKSTYLE
 	/**
 	 * Returns the negated literal.
 	 */
+	@Override
 	public final Literal  negate()  { return mNegated; } // NOCHECKSTYLE
 
 	/**
 	 * Returns true, as Literal is ground.
 	 */
+	@Override
 	public final boolean isGround() {
 		return true;
 	}
@@ -57,20 +60,13 @@ public abstract class Literal implements ILiteral {
 	 * Returns the sign of the literal (1 for atom, -1 for negated atom).
 	 */
 	public abstract int getSign();
+	
 	/**
 	 * Returns an SMT representation of the literal.
 	 * @param smtTheory The term factory to use.
-	 * @param quoted    Should quotes be used in the output.
+	 *
 	 * @return an SMT representation of the literal.
 	 */
-	public abstract Term getSMTFormula(Theory smtTheory, boolean quoted);
-	/**
-	 * Returns an SMT representation of the literal.  This function does not
-	 * use quotes.
-	 * @param smtTheory The term factory to use.
-	 * @return an SMT representation of the literal.
-	 */
-	public final Term getSMTFormula(Theory smtTheory) {
-		return getSMTFormula(smtTheory, false);
-	}
+	@Override
+	public abstract Term getSMTFormula(Theory smtTheory);
 }

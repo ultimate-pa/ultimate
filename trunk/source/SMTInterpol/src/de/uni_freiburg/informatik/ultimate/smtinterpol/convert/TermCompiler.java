@@ -201,7 +201,8 @@ public class TermCompiler extends TermTransformer {
 
 		final Term[] params = ((ApplicationTerm) mTracker.getProvedTerm(convertedApp)).getParameters();
 
-		if (fsym.getDefinition() != null) {
+		if (fsym.getDefinition() != null && !fsym.getName().startsWith("@skolem.")
+				&& !fsym.getName().startsWith("@AUX")) {
 			final HashMap<TermVariable, Term> substs = new HashMap<>();
 			for (int i = 0; i < params.length; i++) {
 				substs.put(fsym.getDefinitionVars()[i], params[i]);
@@ -216,7 +217,7 @@ public class TermCompiler extends TermTransformer {
 			return;
 		}
 
-		if (fsym.isIntern() && !fsym.getName().matches("@.*skolem.*")) {
+		if (fsym.isIntern()) {
 			switch (fsym.getName()) {
 			case "not":
 				setResult(mUtils.convertNot(convertedApp));
@@ -551,6 +552,9 @@ public class TermCompiler extends TermTransformer {
 				if (fsym.isConstructor() || fsym.isSelector()) {
 					break;
 				}
+				if (fsym.getName().startsWith("@AUX") || fsym.getName().matches("@.*skolem.*")) {
+					break;
+				}
 				throw new UnsupportedOperationException("Unsupported internal function " + fsym.getName());
 			}
 		}
@@ -635,14 +639,9 @@ public class TermCompiler extends TermTransformer {
 	 */
 	public ApplicationTerm unifySummation(final ApplicationTerm sumTerm) {
 		assert sumTerm.getFunction().getName() == "+";
-		final HashSet<Term> summands = new HashSet<>();
-		int hash = 0;
-		for (final Term p : sumTerm.getParameters()) {
-			final boolean fresh = summands.add(p);
-			assert fresh;
-			hash += p.hashCode();
-		}
-		hash = summands.hashCode();
+		final HashSet<Term> summands = new HashSet<>(Arrays.asList(sumTerm.getParameters()));
+		assert summands.size() == sumTerm.getParameters().length;
+		final int hash = summands.hashCode();
 		for (final ApplicationTerm canonic : mCanonicalSums.iterateHashCode(hash)) {
 			if (canonic.getParameters().length == summands.size()
 					&& summands.containsAll(Arrays.asList(canonic.getParameters()))) {

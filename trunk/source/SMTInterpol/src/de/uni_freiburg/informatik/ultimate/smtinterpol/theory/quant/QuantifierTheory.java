@@ -94,7 +94,6 @@ public class QuantifierTheory implements ITheory {
 	 * becomes a conflict or unit clause.
 	 */
 	private final Map<Literal, Set<InstClause>> mPendingInstances;
-	private int mDecideLevelOfLastCheckpoint;
 
 	// Statistics
 	long mNumInstancesProduced, mNumInstancesDER, mNumInstancesProducedConfl, mNumInstancesProducedEM,
@@ -132,7 +131,6 @@ public class QuantifierTheory implements ITheory {
 		mQuantClauses = new ScopedArrayList<>();
 
 		mPendingInstances = new LinkedHashMap<>();
-		mDecideLevelOfLastCheckpoint = mEngine.getDecideLevel();
 
 		mNumInstancesOfAge = new int[Integer.SIZE];
 		mNumInstancesOfAgeEnum = new int[Integer.SIZE];
@@ -214,7 +212,6 @@ public class QuantifierTheory implements ITheory {
 			// || mInstantiationMethod == InstantiationMethod.E_MATCHING_LAZY
 			// || mEngine.getDecideLevel() <= mDecideLevelOfLastCheckpoint;
 			// }
-			mDecideLevelOfLastCheckpoint = mEngine.getDecideLevel();
 			if (!mPendingInstances.isEmpty()) {
 				return null;
 			}
@@ -415,12 +412,16 @@ public class QuantifierTheory implements ITheory {
 	}
 
 	@Override
+	public void backtrackStart() {
+		mPendingInstances.clear();
+	}
+
+	@Override
 	public Clause backtrackComplete() {
 		final int decisionLevel = mClausifier.getEngine().getDecideLevel();
 		mEMatching.undo(decisionLevel);
 		mInstantiationManager.resetInterestingTerms();
 		mInstantiationManager.resetSubsAgeForFinalCheck();
-		mPendingInstances.clear();
 		return null;
 	}
 
@@ -456,28 +457,31 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public Object[] getStatistics() {
-		return new Object[] { ":Quant",
-				new Object[][] { { "DER ground results", mNumInstancesDER },
-						{ "Instances produced", mNumInstancesProduced },
-						{ "thereof by conflict/unit search", mNumInstancesProducedConfl },
-						{ "and by E-matching", mNumInstancesProducedEM },
-						{ "and by enumeration", mNumInstancesProducedEnum },
-						{ "Subs of age 0, 1, 2-3, 4-7, ...", Arrays.toString(mNumInstancesOfAge) },
-						{ "thereof for enumeration", Arrays.toString(mNumInstancesOfAgeEnum) },
-						{ "Conflicts", mNumConflicts }, { "Propagations", mNumProps },
-						{ "Checkpoints", mNumCheckpoints },
-						{ "Checkpoints with new evaluation", mNumCheckpointsWithNewEval },
-						{ "Final Checks", mNumFinalcheck },
-						{ "Times",
-								new Object[][] { { "Checkpoint", mCheckpointTime },
-										{ "Find E-matching", mFindEmatchingTime }, { "E-Matching", mEMatchingTime },
-										{ "Final Check", mFinalCheckTime } } } } };
+		return new Object[] { ":Quant", new Object[][] { { "DER ground results", mNumInstancesDER },
+			{ "Instances produced", mNumInstancesProduced },
+			{ "thereof by conflict/unit search", mNumInstancesProducedConfl },
+			{ "and by E-matching", mNumInstancesProducedEM }, { "and by enumeration", mNumInstancesProducedEnum },
+			{ "Subs of age 0, 1, 2-3, 4-7, ...", Arrays.toString(mNumInstancesOfAge) },
+			{ "thereof for enumeration", Arrays.toString(mNumInstancesOfAgeEnum) }, { "Conflicts", mNumConflicts },
+			{ "Propagations", mNumProps }, { "Checkpoints", mNumCheckpoints },
+			{ "Checkpoints with new evaluation", mNumCheckpointsWithNewEval }, { "Final Checks", mNumFinalcheck },
+			{ "Times",
+				new Object[][] { { "Checkpoint", mCheckpointTime }, { "Find E-matching", mFindEmatchingTime },
+				{ "E-Matching", mEMatchingTime }, { "Final Check", mFinalCheckTime } } } } };
 	}
 
-	public ILiteral createAuxLiteral(final Term auxTerm, final TermVariable[] freeVars, final Term definingTerm,
+	public QuantAuxEquality createAuxLiteral(final Term auxTerm, final Term definingTerm,
 			final SourceAnnotation source) {
-		final Term newTerm = mTheory.term("=", auxTerm, mTheory.mTrue);
-		final QuantLiteral atom = new QuantAuxEquality(newTerm, auxTerm, mTheory.mTrue, definingTerm);
+		final QuantAuxEquality atom = new QuantAuxEquality(auxTerm, mTheory.mTrue, definingTerm);
+
+		// The atom is almost uninterpreted.
+		atom.mIsEssentiallyUninterpreted = atom.negate().mIsEssentiallyUninterpreted = true;
+		return atom;
+	}
+
+	public ILiteral createAuxFalseLiteral(final QuantAuxEquality auxTrueLit, final SourceAnnotation source) {
+		final Term auxTerm = auxTrueLit.getLhs();
+		final QuantLiteral atom = new QuantAuxEquality(auxTerm, mTheory.mFalse, auxTrueLit.getDefinition());
 
 		// The atom is almost uninterpreted.
 		atom.mIsEssentiallyUninterpreted = atom.negate().mIsEssentiallyUninterpreted = true;
@@ -512,6 +516,7 @@ public class QuantifierTheory implements ITheory {
 		} else {
 			final SMTAffineTerm linAdded = SMTAffineTerm.create(lhs);
 			linAdded.add(Rational.MONE, SMTAffineTerm.create(rhs));
+			linAdded.div(linAdded.getGcd());
 			Rational fac = Rational.ONE;
 			final TermCompiler compiler = mClausifier.getTermCompiler();
 			for (final Term smd : linAdded.getSummands().keySet()) {
@@ -520,7 +525,7 @@ public class QuantifierTheory implements ITheory {
 					if (smd.getSort().getName() == "Real") {
 						newLhs = smd;
 						linAdded.add(fac.negate(), smd);
-						linAdded.mul(fac.negate());
+						linAdded.div(fac.negate());
 						newRhs = linAdded.toTerm(compiler, lhs.getSort());
 						break;
 					} else {
@@ -539,9 +544,13 @@ public class QuantifierTheory implements ITheory {
 			}
 		}
 		final Term newTerm = mTheory.term("=", newLhs, newRhs);
+		QuantLiteral atom = (QuantLiteral) mClausifier.getILiteral(newTerm);
+		if (atom != null) {
+			return atom;
+		}
 		addGroundCCTerms(newLhs, source);
 		addGroundCCTerms(newRhs, source);
-		final QuantLiteral atom = new QuantEquality(newTerm, newLhs, newRhs);
+		atom = new QuantEquality(newLhs, newRhs);
 
 		// Check if the atom is almost uninterpreted or can be used for DER.
 		if (!(newLhs instanceof TermVariable)) { // (euEUTerm = euTerm) is essentially and almost uninterpreted
@@ -561,6 +570,9 @@ public class QuantifierTheory implements ITheory {
 		} else { // (var = var) is not almost uninterpreted, but the negated form can be used for DER
 			atom.negate().mIsDERUsable = true;
 		}
+		mClausifier.setTermFlags(newTerm,
+				mClausifier.getTermFlags(newTerm) | Clausifier.POS_AUX_AXIOMS_ADDED | Clausifier.NEG_AUX_AXIOMS_ADDED);
+		mClausifier.setLiteral(newTerm, atom);
 		return atom;
 	}
 
@@ -625,9 +637,13 @@ public class QuantifierTheory implements ITheory {
 
 		final TermCompiler compiler = mClausifier.getTermCompiler();
 		final Term newLhs = linTerm.toTerm(compiler, lhs.getSort());
+		final Term newAtomTerm = mTheory.term("<=", newLhs, Rational.ZERO.toTerm(lhs.getSort()));
+		QuantLiteral atom = (QuantLiteral) mClausifier.getILiteral(newAtomTerm);
+		if (atom != null) {
+			return rewrite ? atom.negate() : atom;
+		}
+		atom = new QuantBoundConstraint(newAtomTerm, linTerm);
 		addGroundCCTerms(newLhs, source);
-		final Term newTerm = mTheory.term("<=", newLhs, Rational.ZERO.toTerm(lhs.getSort()));
-		final QuantLiteral atom = new QuantBoundConstraint(newTerm, linTerm);
 
 		// Check if the atom is almost uninterpreted.
 		if (var == null) { // (euTerm <= 0), pos. and neg., is essentially and almost uninterpreted.
@@ -650,6 +666,9 @@ public class QuantifierTheory implements ITheory {
 				atom.negate().mIsArithmetical = true;
 			}
 		}
+		mClausifier.setTermFlags(newAtomTerm, mClausifier.getTermFlags(newAtomTerm) | Clausifier.POS_AUX_AXIOMS_ADDED
+				| Clausifier.NEG_AUX_AXIOMS_ADDED);
+		mClausifier.setLiteral(newAtomTerm, atom);
 		return rewrite ? atom.negate() : atom;
 	}
 
@@ -671,11 +690,9 @@ public class QuantifierTheory implements ITheory {
 				clauseAtom = new QuantBoundConstraint(atom.getTerm(), ((QuantBoundConstraint) atom).getAffineTerm());
 			} else if (atom instanceof QuantAuxEquality) {
 				final QuantAuxEquality auxAtom = (QuantAuxEquality) atom;
-				clauseAtom = new QuantAuxEquality(auxAtom.getTerm(), auxAtom.getLhs(), auxAtom.getRhs(),
-						auxAtom.getDefinition());
+				clauseAtom = new QuantAuxEquality(auxAtom.getLhs(), auxAtom.getRhs(), auxAtom.getDefinition());
 			} else {
-				clauseAtom = new QuantEquality(atom.getTerm(), ((QuantEquality) atom).getLhs(),
-						((QuantEquality) atom).getRhs());
+				clauseAtom = new QuantEquality(((QuantEquality) atom).getLhs(), ((QuantEquality) atom).getRhs());
 			}
 			clauseAtom.mClause = clause;
 			clauseAtom.mIsEssentiallyUninterpreted = atom.mIsEssentiallyUninterpreted;
@@ -693,21 +710,17 @@ public class QuantifierTheory implements ITheory {
 
 	/**
 	 * Perform destructive equality reasoning.
+	 * @param vars       The quantified variables.
+	 * @param groundLits The ground literals of the clause.
+	 * @param quantLits  The quantified literals of the clause.
+	 * @param source     The source of the clause.
 	 *
-	 * @param clause
-	 *            The quantified clause term, annotated with its proof if proof production is enabled.
-	 * @param groundLits
-	 *            The ground literals of the clause.
-	 * @param quantLits
-	 *            The quantified literals of the clause.
-	 * @param source
-	 *            The source of the clause.
 	 * @return the result from performing DER if something has changed, null else.
 	 */
-	public DERResult performDestructiveEqualityReasoning(final Term clause, final Literal[] groundLits,
+	public DERResult performDestructiveEqualityReasoning(final TermVariable[] vars, final Literal[] groundLits,
 			final QuantLiteral[] quantLits, final SourceAnnotation source) {
 		final DestructiveEqualityReasoning der =
-				new DestructiveEqualityReasoning(this, groundLits, quantLits, source, clause);
+				new DestructiveEqualityReasoning(this, vars, groundLits, quantLits, source);
 		if (der.applyDestructiveEqualityReasoning()) {
 			final DERResult result = der.getResult();
 			if (result.isGround() && !result.isTriviallyTrue()) {
@@ -725,29 +738,26 @@ public class QuantifierTheory implements ITheory {
 	 *
 	 * Call this only after performing DER.
 	 *
-	 * @param groundLits
-	 *            the ground literals of the clause to add.
-	 * @param quantLits
-	 *            the quantified literals of the clause to add.
-	 * @param source
-	 *            the source of the clause
-	 * @param clauseWithProof
-	 *            the clause term, possibly annotated with its proof
+	 * @param vars            the variables of the quantified formula
+	 * @param groundLits      the ground literals of the clause to add.
+	 * @param quantLits       the quantified literals of the clause to add.
+	 * @param source          the source of the clause
+	 * @param clauseWithProof the clause term, possibly annotated with its proof
 	 */
-	public void addQuantClause(final Literal[] groundLits, final QuantLiteral[] quantLits,
+	public void addQuantClause(final TermVariable[] vars, final Literal[] groundLits, final QuantLiteral[] quantLits,
 			final SourceAnnotation source, final Term clauseWithProof) {
 		for (final QuantLiteral l : quantLits) {
 			if (!l.isAlmostUninterpreted()) {
-				mLogger.warn("Quant: Clause contains literal that is not almost uninterpreted: " + l);
+				mLogger.info("Quant: Clause contains literal that is not almost uninterpreted: %s", l);
 			} else if (l.mIsDERUsable) {
-				mLogger.warn("Quant: Clause contains disequality on variable not eliminated by DER: " + l);
+				mLogger.warn("Quant: Clause contains disequality on variable not eliminated by DER: %s", l);
 			}
 		}
 		if (quantLits.length == 0) {
 			throw new IllegalArgumentException("Cannot add clause to QuantifierTheory: No quantified literal!");
 		}
 
-		final QuantClause clause = new QuantClause(groundLits, quantLits, this, source, clauseWithProof);
+		final QuantClause clause = new QuantClause(vars, groundLits, quantLits, this, source, clauseWithProof);
 		mQuantClauses.add(clause);
 
 		mEMatching.addClause(clause);

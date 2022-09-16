@@ -84,7 +84,7 @@ public class Theory {
 		}
 
 		protected final static void defineFunction(final Theory theory, final FunctionSymbolFactory factory) {
-			theory.defineFunction(factory);
+			theory.declareInternalFunctionFactory(factory);
 		}
 	}
 
@@ -126,7 +126,6 @@ public class Theory {
 
 	private int mTvarCtr = 0;
 
-	private int mSkolemCounter = 0;
 	private int mAuxCounter = 0;
 
 	private boolean mGlobalDecls;
@@ -606,7 +605,7 @@ public class Theory {
 		assert !mFunFactory.containsKey(name);
 		final PolymorphicFunctionSymbol f = new PolymorphicFunctionSymbol(name, sortParams, paramTypes, resultType,
 				flags | FunctionSymbol.INTERNAL);
-		defineFunction(f);
+		declareInternalFunctionFactory(f);
 		return f;
 	}
 
@@ -662,7 +661,7 @@ public class Theory {
 		final Sort[] sort1 = new Sort[] { sort };
 		final Sort[] sort2 = new Sort[] { sort, sort };
 		declareInternalFunction(SMTLIBConstants.PLUS, sort2, sort, FunctionSymbol.LEFTASSOC);
-		defineFunction(new MinusFunctionFactory(sort, sort));
+		declareInternalFunctionFactory(new MinusFunctionFactory(sort, sort));
 		declareInternalFunction(SMTLIBConstants.MUL, sort2, sort, FunctionSymbol.LEFTASSOC);
 		/* the functions /, div and mod are partial (for division by 0) and thus partially uninterpreted */
 		if (isRealArith) {
@@ -672,7 +671,7 @@ public class Theory {
 			declareInternalFunction(SMTLIBConstants.DIV, sort2, sort,
 					FunctionSymbol.LEFTASSOC | FunctionSymbol.UNINTERPRETEDINTERNAL);
 			declareInternalFunction(SMTLIBConstants.MOD, sort2, sort, FunctionSymbol.UNINTERPRETEDINTERNAL);
-			defineFunction(new DivisibleFunctionFactory());
+			declareInternalFunctionFactory(new DivisibleFunctionFactory());
 		}
 		final Sort sBool = mBooleanSort;
 		declareInternalFunction(SMTLIBConstants.GT, sort2, sBool, FunctionSymbol.CHAINABLE);
@@ -711,13 +710,13 @@ public class Theory {
 			}
 		}
 
-		defineFunction(new BinArithFactory("+", null, FunctionSymbol.LEFTASSOC));
-		defineFunction(new MinusFunctionFactory(mNumericSort, mRealSort));
-		defineFunction(new BinArithFactory("*", null, FunctionSymbol.LEFTASSOC));
-		defineFunction(new BinArithFactory(">", mBooleanSort, FunctionSymbol.CHAINABLE));
-		defineFunction(new BinArithFactory(">=", mBooleanSort, FunctionSymbol.CHAINABLE));
-		defineFunction(new BinArithFactory("<", mBooleanSort, FunctionSymbol.CHAINABLE));
-		defineFunction(new BinArithFactory("<=", mBooleanSort, FunctionSymbol.CHAINABLE));
+		declareInternalFunctionFactory(new BinArithFactory("+", null, FunctionSymbol.LEFTASSOC));
+		declareInternalFunctionFactory(new MinusFunctionFactory(mNumericSort, mRealSort));
+		declareInternalFunctionFactory(new BinArithFactory("*", null, FunctionSymbol.LEFTASSOC));
+		declareInternalFunctionFactory(new BinArithFactory(">", mBooleanSort, FunctionSymbol.CHAINABLE));
+		declareInternalFunctionFactory(new BinArithFactory(">=", mBooleanSort, FunctionSymbol.CHAINABLE));
+		declareInternalFunctionFactory(new BinArithFactory("<", mBooleanSort, FunctionSymbol.CHAINABLE));
+		declareInternalFunctionFactory(new BinArithFactory("<=", mBooleanSort, FunctionSymbol.CHAINABLE));
 
 		final Sort[] int1 = new Sort[] { mNumericSort };
 		final Sort[] int2 = new Sort[] { mNumericSort, mNumericSort };
@@ -725,7 +724,7 @@ public class Theory {
 		final Sort[] real2 = new Sort[] { mRealSort, mRealSort };
 		declareInternalFunction("/", real2, mRealSort, FunctionSymbol.LEFTASSOC);
 		declareInternalFunction("div", int2, mNumericSort, FunctionSymbol.LEFTASSOC);
-		defineFunction(new DivisibleFunctionFactory());
+		declareInternalFunctionFactory(new DivisibleFunctionFactory());
 		declareInternalFunction("to_real", int1, mRealSort, 0);
 		declareInternalFunction("to_int", real1, mNumericSort, 0);
 
@@ -735,7 +734,7 @@ public class Theory {
 		final Term isintx = term("=", xr, term("to_real", term("to_int", xr)));
 		declareInternalFunction("is_int", real1, new TermVariable[] { xr }, isintx, 0);
 
-		defineFunction(new FunctionSymbolFactory("abs") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("abs") {
 			@Override
 			public Term getDefinition(final TermVariable[] tvs, final Sort resultSort) {
 				return absDefinition(tvs[0]);
@@ -851,7 +850,7 @@ public class Theory {
 				return paramSorts[0];
 			}
 		}
-		defineFunction(new FunctionSymbolFactory("concat") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("concat") {
 			@Override
 			public int getFlags(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				return FunctionSymbol.INTERNAL;
@@ -873,7 +872,7 @@ public class Theory {
 				// what does { size } ?
 			}
 		});
-		defineFunction(new FunctionSymbolFactory("extract") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("extract") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length < 2 || paramSorts.length != 1 || resultSort != null
@@ -892,29 +891,29 @@ public class Theory {
 		});
 		final Sort bitvec1 = mBitVecSort.getSort(new String[] { BigInteger.ONE.toString() }, new Sort[0]);
 
-		defineFunction(new RegularBitVecFunction("bvnot", 1, null));
-		defineFunction(new RegularBitVecFunction("bvand", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
-		defineFunction(new RegularBitVecFunction("bvor", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
-		defineFunction(new RegularBitVecFunction("bvneg", 1, null));
-		defineFunction(new RegularBitVecFunction("bvadd", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
-		defineFunction(new RegularBitVecFunction("bvmul", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
-		defineFunction(new RegularBitVecFunction("bvudiv", 2, null));
-		defineFunction(new RegularBitVecFunction("bvurem", 2, null));
-		defineFunction(new RegularBitVecFunction("bvshl", 2, null));
-		defineFunction(new RegularBitVecFunction("bvlshr", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvnot", 1, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvand", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvor", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvneg", 1, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvadd", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvmul", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvudiv", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvurem", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvshl", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvlshr", 2, null));
 
-		defineFunction(new RegularBitVecFunction("bvnand", 2, null));
-		defineFunction(new RegularBitVecFunction("bvnor", 2, null));
-		defineFunction(new RegularBitVecFunction("bvxor", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
-		defineFunction(new RegularBitVecFunction("bvxnor", 2, null));
-		defineFunction(new RegularBitVecFunction("bvcomp", 2, bitvec1));
-		defineFunction(new RegularBitVecFunction("bvsub", 2, null));
-		defineFunction(new RegularBitVecFunction("bvsdiv", 2, null));
-		defineFunction(new RegularBitVecFunction("bvsrem", 2, null));
-		defineFunction(new RegularBitVecFunction("bvsmod", 2, null));
-		defineFunction(new RegularBitVecFunction("bvashr", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvnand", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvnor", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvxor", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvxnor", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvcomp", 2, bitvec1));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvsub", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvsdiv", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvsrem", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvsmod", 2, null));
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvashr", 2, null));
 
-		defineFunction(new FunctionSymbolFactory("repeat") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("repeat") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 1 || resultSort != null
@@ -925,26 +924,26 @@ public class Theory {
 				return mBitVecSort.getSort(new String[] { size.toString() }, new Sort[0]);
 			}
 		});
-		defineFunction(new ExtendBitVecFunction("zero_extend"));
-		defineFunction(new ExtendBitVecFunction("sign_extend"));
-		defineFunction(new RotateBitVecFunction("rotate_left"));
-		defineFunction(new RotateBitVecFunction("rotate_right"));
+		declareInternalFunctionFactory(new ExtendBitVecFunction("zero_extend"));
+		declareInternalFunctionFactory(new ExtendBitVecFunction("sign_extend"));
+		declareInternalFunctionFactory(new RotateBitVecFunction("rotate_left"));
+		declareInternalFunctionFactory(new RotateBitVecFunction("rotate_right"));
 
-		defineFunction(new RegularBitVecFunction("bvult", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvult", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularBitVecFunction("bvule", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvule", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularBitVecFunction("bvugt", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvugt", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularBitVecFunction("bvuge", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvuge", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularBitVecFunction("bvslt", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvslt", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularBitVecFunction("bvsle", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvsle", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularBitVecFunction("bvsgt", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvsgt", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularBitVecFunction("bvsge", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularBitVecFunction("bvsge", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 	}
 
@@ -1011,7 +1010,7 @@ public class Theory {
 			}
 		}
 
-		defineFunction(new FunctionSymbolFactory("fp") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("fp") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices != null || paramSorts.length != 3 || resultSort != null
@@ -1031,7 +1030,7 @@ public class Theory {
 		});
 
 		// from BitVec to FP
-		defineFunction(new FunctionSymbolFactory("to_fp") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("to_fp") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 2 || paramSorts == null) {
@@ -1067,7 +1066,7 @@ public class Theory {
 			}
 		});
 
-		defineFunction(new FunctionSymbolFactory("to_fp_unsigned") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("to_fp_unsigned") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 2 || paramSorts.length != 2 || resultSort != null
@@ -1078,7 +1077,7 @@ public class Theory {
 			}
 		});
 
-		defineFunction(new FunctionSymbolFactory("fp.to_ubv") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("fp.to_ubv") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 2 || resultSort != null
@@ -1089,7 +1088,7 @@ public class Theory {
 			}
 		});
 
-		defineFunction(new FunctionSymbolFactory("fp.to_sbv") {
+		declareInternalFunctionFactory(new FunctionSymbolFactory("fp.to_sbv") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 2 || resultSort != null
@@ -1117,13 +1116,13 @@ public class Theory {
 			}
 		}
 		// +/- infinity
-		defineFunction(new FloatingPointConstant("+oo"));
-		defineFunction(new FloatingPointConstant("-oo"));
+		declareInternalFunctionFactory(new FloatingPointConstant("+oo"));
+		declareInternalFunctionFactory(new FloatingPointConstant("-oo"));
 		// +/- zero
-		defineFunction(new FloatingPointConstant("+zero"));
-		defineFunction(new FloatingPointConstant("-zero"));
+		declareInternalFunctionFactory(new FloatingPointConstant("+zero"));
+		declareInternalFunctionFactory(new FloatingPointConstant("-zero"));
 
-		defineFunction(new FloatingPointConstant("NaN"));
+		declareInternalFunctionFactory(new FloatingPointConstant("NaN"));
 
 		// short forms of common floats
 		defineSort("Float16", 0, mFloatingPointSort.getSort(new String[] { new String("5"), new String("11") }));
@@ -1149,43 +1148,43 @@ public class Theory {
 				FunctionSymbol.INTERNAL);
 
 		// Operators
-		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.min", 2, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.rem", 2, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.abs", 1, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.neg", 1, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.min", 2, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.max", 2, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.rem", 2, null, FunctionSymbol.INTERNAL));
 		// rounded operators
-		defineFunction(new RegularFloatingPointFunction("fp.add", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.sub", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.mul", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.div", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.fma", 4, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.sqrt", 2, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.roundToIntegral", 2, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.add", 3, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.sub", 3, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.mul", 3, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.div", 3, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.fma", 4, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.sqrt", 2, null, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.roundToIntegral", 2, null, FunctionSymbol.INTERNAL));
 
 		// Comparison Operators
-		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularFloatingPointFunction("fp.lt", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.lt", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularFloatingPointFunction("fp.geq", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.geq", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularFloatingPointFunction("fp.gt", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.gt", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		defineFunction(new RegularFloatingPointFunction("fp.eq", 2, mBooleanSort,
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.eq", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 
 		// Classification of numbers
-		defineFunction(new RegularFloatingPointFunction("fp.isNormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.isSubnormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.isZero", 1, mBooleanSort, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.isInfinite", 1, mBooleanSort, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.isNaN", 1, mBooleanSort, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.isNegative", 1, mBooleanSort, FunctionSymbol.INTERNAL));
-		defineFunction(new RegularFloatingPointFunction("fp.isPositive", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.isNormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.isSubnormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.isZero", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.isInfinite", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.isNaN", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.isNegative", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.isPositive", 1, mBooleanSort, FunctionSymbol.INTERNAL));
 
 		// Conversion from FP
-		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort, FunctionSymbol.INTERNAL));
 	}
 
 	private void createStringOperators() {
@@ -1199,7 +1198,7 @@ public class Theory {
 		final Sort[] str_re_str = new Sort[] { str, re, str };
 		final Sort[] re1 = new Sort[] { re };
 		final Sort[] re2 = new Sort[] { re, re };
-		defineFunction(new FunctionSymbolFactory(SMTLIBConstants.CHAR) {
+		declareInternalFunctionFactory(new FunctionSymbolFactory(SMTLIBConstants.CHAR) {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 0 || resultSort != null) {
@@ -1242,7 +1241,7 @@ public class Theory {
 
 		declareInternalFunction(SMTLIBConstants.STR_IS_DIGIT, str1, mBooleanSort, 0);
 
-		defineFunction(new FunctionSymbolFactory(SMTLIBConstants.RE_ITER) {
+		declareInternalFunctionFactory(new FunctionSymbolFactory(SMTLIBConstants.RE_ITER) {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 1 || resultSort != null
@@ -1253,7 +1252,7 @@ public class Theory {
 				return re;
 			}
 		});
-		defineFunction(new FunctionSymbolFactory(SMTLIBConstants.RE_LOOP) {
+		declareInternalFunctionFactory(new FunctionSymbolFactory(SMTLIBConstants.RE_LOOP) {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 2 || paramSorts.length != 1 || resultSort != null
@@ -1326,7 +1325,7 @@ public class Theory {
 			mSolverSetup.setLogic(this, logic);
 		}
 		if (logic.isDatatype()) {
-			defineFunction(new IsConstructorFactory());
+			declareInternalFunctionFactory(new IsConstructorFactory());
 		}
 	}
 
@@ -1437,7 +1436,7 @@ public class Theory {
 
 	/******************** FUNCTIONS SYMBOLS AND FUNCTION TERMS ************/
 
-	private void defineFunction(final FunctionSymbolFactory factory) {
+	public void declareInternalFunctionFactory(final FunctionSymbolFactory factory) {
 		if (mFunFactory.put(factory.mFuncName, factory) != null) {
 			throw new AssertionError();
 		}
@@ -1521,6 +1520,10 @@ public class Theory {
 
 	public Map<String, SortSymbol> getDeclaredSorts() {
 		return mDeclaredSorts;
+	}
+
+	public Map<String, FunctionSymbolFactory> getFunctionFactories() {
+		return mFunFactory;
 	}
 
 	private FunctionSymbol getModelValueSymbol(final String name, final Sort sort) {
@@ -1783,20 +1786,6 @@ public class Theory {
 			mDeclaredFuns.endScope();
 			mDeclaredSorts.endScope();
 		}
-	}
-
-	/******************** QUANTIFIER SUPPORT ***************************/
-	public Term skolemize(final TermVariable tv, final QuantifiedFormula qf) {
-		final TermVariable[] freeVars = qf.getFreeVars();
-		final Term[] args = new Term[freeVars.length];
-		final Sort[] freeVarSorts = new Sort[freeVars.length];
-		for (int i = 0; i < freeVars.length; i++) {
-			args[i] = freeVars[i];
-			freeVarSorts[i] = freeVars[i].getSort();
-		}
-		final FunctionSymbol fsym = declareInternalFunction("@" + tv.getName() + "_skolem_" + mSkolemCounter++,
-				freeVarSorts, tv.getSort(), FunctionSymbol.UNINTERPRETEDINTERNAL); // TODO Change flag?
-		return term(fsym, args);
 	}
 
 	/**

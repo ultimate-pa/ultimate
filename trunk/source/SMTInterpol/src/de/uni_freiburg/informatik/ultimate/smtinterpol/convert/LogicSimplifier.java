@@ -510,13 +510,12 @@ public class LogicSimplifier {
 		final Term[] newArgs = args.clone();
 		int countNot = 0;
 		for (int i = 0; i < args.length; i++) {
-			if (args[i] instanceof ApplicationTerm) {
-				final ApplicationTerm at = (ApplicationTerm) args[i];
-				if (at.getFunction() == theory.mNot) {
-					newArgs[i] = at.getParameters()[0];
-					countNot++;
-				}
+			Term arg = args[i];
+			while (isNegation(arg)) {
+				arg = ((ApplicationTerm) arg).getParameters()[0];
+				countNot++;
 			}
+			newArgs[i] = arg;
 		}
 		Term rewrite = input;
 		if (countNot > 0) {

@@ -19,16 +19,19 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 
 public interface IAnnotation {
 	/**
-	 * Convert this annotation into a term suitable to add to the proof tree.
-	 * The resulting term might either correspond to the clause, or replace the
-	 * clause in the resulting proof term.
-	 * @param cls    The clause containing this annotation.
-	 * @param theory The term unifier.
+	 * Convert this annotation into a term suitable to add to the proof tree. The
+	 * resulting term might either correspond to the clause, or replace the clause
+	 * in the resulting proof term.
+	 * 
+	 * @param cls
+	 *            The clause containing this annotation.
+	 * @param theory
+	 *            The term unifier.
 	 * @return Term to insert into the proof tree.
 	 */
-	Term toTerm(Clause cls, Theory theory);
+	Term toTerm(Clause cls, ProofRules proofRules);
 }
