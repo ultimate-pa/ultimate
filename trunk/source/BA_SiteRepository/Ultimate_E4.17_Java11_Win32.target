@@ -10,19 +10,19 @@
 	</launcherArgs>
 	<locations>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-4.17"/>
+			<repository location="https://nexus.sopranium.de/repository/eclipse-4.17"/>
 			<unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
 			<unit id="org.eclipse.jdt.feature.group" version="0.0.0"/>
 			<unit id="org.eclipse.platform.sdk" version="0.0.0"/>
 			<unit id="eclipse-junit-tests" version="0.0.0"/>
 		</location>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/cdt-10.0"/>
+			<repository location="https://nexus.sopranium.de/repository/cdt-10.0"/>
 			<unit id="org.eclipse.cdt.feature.group" version="0.0.0"/>
 			<unit id="org.eclipse.cdt.sdk.feature.group" version="0.0.0"/>
 		</location>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-			<repository location="https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200831200620"/>
+			<repository location="https://nexus.sopranium.de/repository/orbit-R20200831200620"/>
 			<unit id="org.jdom" version="0.0.0"/>
 			<unit id="org.apache.log4j" version="0.0.0"/>
 			<unit id="org.apache.logging.log4j" version="0.0.0"/>

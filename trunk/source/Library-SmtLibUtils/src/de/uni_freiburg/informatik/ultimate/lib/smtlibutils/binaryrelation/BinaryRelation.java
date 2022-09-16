@@ -153,4 +153,44 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		}
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mLhs == null) ? 0 : mLhs.hashCode());
+		// Enums in Java do not have a "stable" hashCode the hashCode varies between
+		// different runs. Furthermore, we cannot overwrite the hashCode method of an
+		// enum. Hence we do not use the mRelationSymbol's hashCode but the hashCode
+		// of its string representation.
+		result = prime * result + ((mRelationSymbol == null) ? 0 : mRelationSymbol.toString().hashCode());
+		result = prime * result + ((mRhs == null) ? 0 : mRhs.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final BinaryRelation other = (BinaryRelation) obj;
+		if (mLhs == null) {
+			if (other.mLhs != null)
+				return false;
+		} else if (!mLhs.equals(other.mLhs))
+			return false;
+		if (mRelationSymbol != other.mRelationSymbol)
+			return false;
+		if (mRhs == null) {
+			if (other.mRhs != null)
+				return false;
+		} else if (!mRhs.equals(other.mRhs))
+			return false;
+		return true;
+	}
+
+
+
 }

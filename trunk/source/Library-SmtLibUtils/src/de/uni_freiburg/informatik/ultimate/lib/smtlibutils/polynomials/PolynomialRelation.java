@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -80,7 +79,6 @@ public class PolynomialRelation implements IBinaryRelation {
 	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE =
 			"No affine representation where desired variable is on left hand side";
 	protected static final boolean TEMPORARY_POLYNOMIAL_TERM_TEST = false;
-	protected final Term mOriginalTerm;
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
 	/**
@@ -128,18 +126,20 @@ public class PolynomialRelation implements IBinaryRelation {
 		mRelationSymbol = relationSymbol;
 
 		mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
-		if (VMUtils.areAssertionsEnabled()) {
-			mOriginalTerm = script.term(mRelationSymbol.toString(), term.toTerm(script),
-					SmtUtils.constructIntegerValue(script, term.getSort(), BigInteger.ZERO));
-		} else {
-			mOriginalTerm = null;
-		}
 	}
 
-	public PolynomialRelation(final Script script, final TransformInequality transformInequality,
-			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs,
-			final AbstractGeneralizedAffineTerm<?> polyRhs, final Term originalTerm) {
-		mOriginalTerm = originalTerm;
+	public PolynomialRelation(final TransformInequality transformInequality, final RelationSymbol relationSymbol,
+			final AbstractGeneralizedAffineTerm<?> polyLhs, final AbstractGeneralizedAffineTerm<?> polyRhs) {
+		// TODO 20220908 Matthias: maybe static method and return null instead of constructor and AssertionError
+		if (polyLhs.getSort() != polyRhs.getSort()) {
+			throw new AssertionError("Inconsistent sorts");
+		}
+		if (!SmtSortUtils.isNumericSort(polyLhs.getSort()) && !SmtSortUtils.isBitvecSort(polyLhs.getSort())) {
+			throw new AssertionError("Unsupported sorts");
+		}
+		if (relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(polyLhs.getSort())) {
+			throw new AssertionError("Unsupported inequality/sort combination");
+		}
 		final AbstractGeneralizedAffineTerm<Term> difference =
 				sum(checkThenCast(polyLhs), mul(checkThenCast(polyRhs), Rational.MONE));
 		final AbstractGeneralizedAffineTerm<Term> polyTerm;
@@ -412,8 +412,9 @@ public class PolynomialRelation implements IBinaryRelation {
 				final Term abstractVariableAsTerm = entry.getKey();
 				if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
 					if (isNegativeAsSignedInt(entry.getValue(), mPolynomialTerm.getSort())) {
-						rhsSummands
-								.add(SmtUtils.mul(script, entry.getValue().mul(Rational.MONE), abstractVariableAsTerm));
+						final Rational newCoefficient = PolynomialTermUtils.bringBitvectorValueInRange(
+								entry.getValue().mul(Rational.MONE), mPolynomialTerm.getSort());
+						rhsSummands.add(SmtUtils.mul(script, newCoefficient, abstractVariableAsTerm));
 					} else {
 						lhsSummands.add(SmtUtils.mul(script, entry.getValue(), abstractVariableAsTerm));
 					}
@@ -428,8 +429,9 @@ public class PolynomialRelation implements IBinaryRelation {
 			if (mPolynomialTerm.getConstant() != Rational.ZERO) {
 				if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
 					if (isNegativeAsSignedInt(mPolynomialTerm.getConstant(), mPolynomialTerm.getSort())) {
-						rhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant().mul(Rational.MONE),
-								mPolynomialTerm.getSort()));
+						final Rational newConstant = PolynomialTermUtils.bringBitvectorValueInRange(
+								mPolynomialTerm.getConstant().mul(Rational.MONE), mPolynomialTerm.getSort());
+						rhsSummands.add(SmtUtils.rational2Term(script, newConstant, mPolynomialTerm.getSort()));
 					} else {
 						lhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(),
 								mPolynomialTerm.getSort()));
@@ -449,8 +451,6 @@ public class PolynomialRelation implements IBinaryRelation {
 			final Term rhsTerm =
 					SmtUtils.sum(script, mPolynomialTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
 			final Term result = BinaryRelation.constructLessNormalForm(script, mRelationSymbol, lhsTerm, rhsTerm);
-			assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(mOriginalTerm, result,
-					script) != LBool.SAT : "transformation to positive normal form " + "unsound";
 			return result;
 		}
 	}
@@ -536,8 +536,42 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mPolynomialTerm == null) ? 0 : mPolynomialTerm.hashCode());
+		result = prime * result + ((mRelationSymbol == null) ? 0 : mRelationSymbol.ordinal());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final PolynomialRelation other = (PolynomialRelation) obj;
+		if (mPolynomialTerm == null) {
+			if (other.mPolynomialTerm != null)
+				return false;
+		} else if (!mPolynomialTerm.equals(other.mPolynomialTerm))
+			return false;
+		if (mRelationSymbol != other.mRelationSymbol)
+			return false;
+		return true;
+	}
+
+	@Override
 	public String toString() {
-		return mOriginalTerm.toString();
+		final String zero;
+		if (SmtSortUtils.isBitvecSort(getPolynomialTerm().getSort())) {
+			zero = BitvectorUtils.constructBitvectorConstant(BigInteger.ZERO, getPolynomialTerm().getSort()).toString();
+		} else {
+			zero = Rational.ZERO.toTerm(mPolynomialTerm.getSort()).toString();
+		}
+		return String.format("(%s, %s, %s)", mRelationSymbol.toString(), mPolynomialTerm.toString(), zero);
 	}
 
 	public static PolynomialRelation convert(final Script script, final Term term) {
@@ -561,10 +595,21 @@ public class PolynomialRelation implements IBinaryRelation {
 			return null;
 		}
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
-		return new PolynomialRelation(script, transformInequality, relationSymbol, polyLhs, polyRhs, term);
+		return new PolynomialRelation(transformInequality, relationSymbol, polyLhs, polyRhs);
 	}
 
-	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
+	public static PolynomialRelation of(final Script script, final RelationSymbol relationSymbol, final Term lhs,
+			final Term rhs) {
+		final IPolynomialTerm lhsPoly = PolynomialTermTransformer.convert(script, lhs);
+		final IPolynomialTerm rhsPoly = PolynomialTermTransformer.convert(script, rhs);
+		if (lhsPoly == null || rhsPoly == null) {
+			throw new AssertionError("lhs or rhs not suitable for polynomial");
+		}
+		return new PolynomialRelation(TransformInequality.NO_TRANFORMATION, relationSymbol,
+				(AbstractGeneralizedAffineTerm<?>) lhsPoly, (AbstractGeneralizedAffineTerm<?>) rhsPoly);
+	}
+
+	private static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
 		return (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, term);
 	}
 }

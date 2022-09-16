@@ -355,7 +355,11 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public String toString() {
-		return mSerialNumber + ":" + +mLocalConfiguration.size() + "A:" + getTransition().toString();
+		if (mSerialNumber == 0 ) {
+			return "Dummy event whose successors are the initial conditions of the branching process";
+		} else {
+			return mSerialNumber + ":" + +mLocalConfiguration.size() + "A:" + getTransition().toString();
+		}
 	}
 
 	@Override
