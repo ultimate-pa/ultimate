@@ -851,6 +851,7 @@ public final class TransFormulaUtils {
 			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
+			// TODO What if the assigned variable does not appear in outVars (e.g. for calls?)
 			final TermVariable outVar = tf.getOutVars().get(bv);
 			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
 				auxVars.add(outVar);
@@ -859,10 +860,10 @@ public final class TransFormulaUtils {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		// yes! outVars of result are indeed the inVars of input
 
 		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
 
+		// yes! outVars of result are indeed the inVars of input
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
@@ -1081,6 +1082,30 @@ public final class TransFormulaUtils {
 		tfb.setFormula(mgdScript.getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(mgdScript);
+	}
+
+	/**
+	 * This method first computes the guards of the input {@link UnmodifiableTransFormula}s. It then returns a
+	 * {@link UnmodifiableTransFormula} that is satisfied for some input variables iff none of the guards is satisfied.
+	 * The output variables of the result are simply set to the input variables.
+	 *
+	 * This method will not always work: in case the disjunction contains auxvars that cannot be eliminated this method
+	 * will throw an Exception.
+	 *
+	 * @param logger
+	 * @param services
+	 * @param mgdScript
+	 * @param transFormulas
+	 *            The other TransFormulas.
+	 * @return A TransFormula in guard form.
+	 */
+	public static UnmodifiableTransFormula constructRemainderGuard(final ILogger logger,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula... transFormulas) {
+		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, mgdScript, null, false,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, true, transFormulas);
+		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services);
+		return negate(guardOfDisjunction, mgdScript, services);
 	}
 
 	/**
