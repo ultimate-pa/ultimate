@@ -60,10 +60,19 @@ public class BetterLockstepOrder<L extends IAction, S> implements IDfsOrder<L, S
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
+	/**
+	 * Creates a new lockstep order.
+	 */
 	public BetterLockstepOrder() {
 		this(null);
 	}
 
+	/**
+	 * Creates a new lockstep order.
+	 *
+	 * @param normalizer
+	 *            A normalizing function: States normalized to the same object will be assigned the same order.
+	 */
 	public BetterLockstepOrder(final Function<S, Object> normalizer) {
 		mNormalizer = normalizer;
 	}

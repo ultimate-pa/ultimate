@@ -528,7 +528,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		for (final Backbone backbone : backbones) {
 			path.addAll(backbone.getPath());
 			loopFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, loopFormula,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, loopFormula,
 					(UnmodifiableTransFormula) backbone.getFormula());
 		}
 		return new Pair<>(loopFormula, path);

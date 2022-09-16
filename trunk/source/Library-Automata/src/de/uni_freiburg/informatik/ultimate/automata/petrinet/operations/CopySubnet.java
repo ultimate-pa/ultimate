@@ -34,8 +34,8 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -57,9 +57,9 @@ public final class CopySubnet<LETTER, PLACE> {
 	/** The Petri Net for which we copy partially to create a sub-net. */
 	private final IPetriNet<LETTER, PLACE> mSuperNet;
 	private final boolean mKeepSuccessorPlaces;
-	private final Set<ITransition<LETTER, PLACE>> mTransitionSubset;
+	private final Set<Transition<LETTER, PLACE>> mTransitionSubset;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
-	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mOldToNewTransitions;
+	private final Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mOldToNewTransitions;
 
 	/**
 	 * Copies a net partially, creating a sub-net.
@@ -75,7 +75,7 @@ public final class CopySubnet<LETTER, PLACE> {
 	 *            in transitions with an empty post-set.
 	 */
 	private CopySubnet(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> superNet,
-			final Set<ITransition<LETTER, PLACE>> transitionSubset, final Set<LETTER> newAlphabet,
+			final Set<Transition<LETTER, PLACE>> transitionSubset, final Set<LETTER> newAlphabet,
 			final boolean keepSuccessorPlaces) {
 		mSuperNet = superNet;
 		mKeepSuccessorPlaces = keepSuccessorPlaces;
@@ -91,10 +91,6 @@ public final class CopySubnet<LETTER, PLACE> {
 	 * Copies a net partially, creating a sub-net. The sub-net is defined in terms of transitions. Places that are no
 	 * longer required are excluded automatically.
 	 *
-	 * @param <LETTER>
-	 *            Type of the transition labels in the old and new petri net
-	 * @param <PLACE>
-	 *            Type of the places in the old and new petri net
 	 * @param services
 	 *            Services for logging and so on
 	 * @param superNet
@@ -112,9 +108,9 @@ public final class CopySubnet<LETTER, PLACE> {
 	 * @return Subnet N'
 	 */
 	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> copy(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, PLACE> superNet, final Set<ITransition<LETTER, PLACE>> transitionSubset,
+			final IPetriNet<LETTER, PLACE> superNet, final Set<Transition<LETTER, PLACE>> transitionSubset,
 			final Set<LETTER> newAlphabet, final boolean keepSuccessorPlaces,
-			final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> oldToNewTransitions) {
+			final Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> oldToNewTransitions) {
 		final CopySubnet<LETTER, PLACE> copy =
 				new CopySubnet<>(services, superNet, transitionSubset, newAlphabet, keepSuccessorPlaces);
 		oldToNewTransitions.putAll(copy.getOldToNewTransitions());
@@ -144,7 +140,7 @@ public final class CopySubnet<LETTER, PLACE> {
 	 * @return Subnet N'
 	 */
 	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> copy(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, PLACE> superNet, final Set<ITransition<LETTER, PLACE>> transitionSubset,
+			final IPetriNet<LETTER, PLACE> superNet, final Set<Transition<LETTER, PLACE>> transitionSubset,
 			final Set<LETTER> newAlphabet, final boolean keepSuccessorPlaces) {
 		return new CopySubnet<>(services, superNet, transitionSubset, newAlphabet, keepSuccessorPlaces).getResult();
 	}
@@ -169,7 +165,7 @@ public final class CopySubnet<LETTER, PLACE> {
 	 * @return Subnet N'
 	 */
 	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> copy(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, PLACE> superNet, final Set<ITransition<LETTER, PLACE>> transitionSubset,
+			final IPetriNet<LETTER, PLACE> superNet, final Set<Transition<LETTER, PLACE>> transitionSubset,
 			final Set<LETTER> newAlphabet) {
 		return copy(services, superNet, transitionSubset, newAlphabet, false);
 	}
@@ -191,7 +187,7 @@ public final class CopySubnet<LETTER, PLACE> {
 	 * @return Subnet N'
 	 */
 	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> copy(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, PLACE> superNet, final Set<ITransition<LETTER, PLACE>> transitionSubset) {
+			final IPetriNet<LETTER, PLACE> superNet, final Set<Transition<LETTER, PLACE>> transitionSubset) {
 		return copy(services, superNet, transitionSubset, superNet.getAlphabet());
 	}
 
@@ -218,10 +214,10 @@ public final class CopySubnet<LETTER, PLACE> {
 		}
 	}
 
-	private void rebuildTransition(final ITransition<LETTER, PLACE> trans) {
-		final Set<PLACE> succ = DataStructureUtils.intersection(mSuperNet.getSuccessors(trans), mResult.getPlaces());
-		final ITransition<LETTER, PLACE> newTransition =
-				mResult.addTransition(trans.getSymbol(), mSuperNet.getPredecessors(trans), ImmutableSet.of(succ));
+	private void rebuildTransition(final Transition<LETTER, PLACE> trans) {
+		final Set<PLACE> succ = DataStructureUtils.intersection(trans.getSuccessors(), mResult.getPlaces());
+		final Transition<LETTER, PLACE> newTransition =
+				mResult.addTransition(trans.getSymbol(), trans.getPredecessors(), ImmutableSet.of(succ));
 		mOldToNewTransitions.put(trans, newTransition);
 	}
 
@@ -242,14 +238,14 @@ public final class CopySubnet<LETTER, PLACE> {
 	 */
 	private Set<PLACE> requiredPlaces() {
 		final Set<PLACE> requiredPlaces = new HashSet<>();
-		for (final ITransition<LETTER, PLACE> trans : mTransitionSubset) {
-			requiredPlaces.addAll(mSuperNet.getPredecessors(trans));
+		for (final Transition<LETTER, PLACE> trans : mTransitionSubset) {
+			requiredPlaces.addAll(trans.getPredecessors());
 
 			// successor places are only really required
 			// if they are predecessors of another reachable transition
 			// or if they are accepting
 			if (mKeepSuccessorPlaces) {
-				requiredPlaces.addAll(mSuperNet.getSuccessors(trans));
+				requiredPlaces.addAll(trans.getSuccessors());
 			}
 		}
 		acceptingSuccPlaces().forEach(requiredPlaces::add);
@@ -283,7 +279,7 @@ public final class CopySubnet<LETTER, PLACE> {
 				.haveEmptyIntersection(mSuperNet.getSuccessors(accIniPlace), mTransitionSubset));
 	}
 
-	private Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getOldToNewTransitions() {
+	private Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> getOldToNewTransitions() {
 		return mOldToNewTransitions;
 	}
 

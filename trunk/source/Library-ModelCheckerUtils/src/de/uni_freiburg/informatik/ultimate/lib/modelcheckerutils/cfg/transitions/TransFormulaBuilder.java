@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -408,7 +407,7 @@ public class TransFormulaBuilder {
 
 	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term, final Set<IProgramVar> vars,
 			final ManagedScript script) {
-		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(term, false);
+		final Set<ApplicationTerm> consts = SmtUtils.extractConstants(term, false);
 		if (!consts.isEmpty()) {
 			throw new UnsupportedOperationException("constants not yet supported");
 		}
@@ -452,7 +451,7 @@ public class TransFormulaBuilder {
 		}
 		final Set<IProgramVar> rhsPvs = new HashSet<>();
 		for (int i = 0; i < rhs.size(); i++) {
-			final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(rhs.get(i), false);
+			final Set<ApplicationTerm> consts = SmtUtils.extractConstants(rhs.get(i), false);
 			if (!consts.isEmpty()) {
 				throw new UnsupportedOperationException("constants not yet supported");
 			}

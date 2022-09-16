@@ -146,6 +146,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected final BuchiCegarLoopBenchmarkGenerator mBenchmarkGenerator;
 	protected final PredicateFactory mPredicateFactory;
 	protected boolean mIsSemiDeterministic;
+	protected boolean mUseDoubleDeckers;
 
 	/**
 	 * Intermediate layer to encapsulate preferences.
@@ -215,6 +216,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
+		mUseDoubleDeckers = !baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
 
 		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, mInterpolation, mServices);
 		mConstructTermcompProof = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
@@ -261,11 +263,11 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 * @param interpolantAutomaton
 	 *            The subtrahend of the difference, a weak Büchi automaton
 	 * @return The new refined abstraction
-	 * @throws AutomataOperationCanceledException
+	 * @throws AutomataLibraryException
 	 */
 	protected abstract A refineFinite(A abstraction,
 			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
-			throws AutomataOperationCanceledException;
+			throws AutomataLibraryException;
 
 	/**
 	 * Refine the given {@code abstraction} i.e. calculate the difference with the given {@code interpolantAutomaton}
@@ -431,10 +433,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 							mPref.getAutomataFormat(), "");
 				}
 
-			} catch (final AutomataOperationCanceledException e) {
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "performing iteration " + mIteration);
-				return BuchiCegarLoopResult.constructTimeoutResult(new ToolchainCanceledException(e, rti), mMDBenchmark,
-						mTermcompProofBenchmark);
+			} catch (final AutomataLibraryException e) {
+				return BuchiCegarLoopResult.constructTimeoutResult(
+						new ToolchainCanceledException(e.getClassOfThrower()), mMDBenchmark, mTermcompProofBenchmark);
 			} catch (final ToolchainCanceledException e) {
 				return BuchiCegarLoopResult.constructTimeoutResult(e, mMDBenchmark, mTermcompProofBenchmark);
 			}
@@ -456,7 +457,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	}
 
 	private A refineFiniteInternal(final A abstraction, final LassoCheck<L> lassoCheck)
-			throws AutomataOperationCanceledException {
+			throws AutomataLibraryException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final var traceCheck = constructRefinementEngineResult(lassoCheck);
 		final NestedWordAutomaton<L, IPredicate> interpolAutomaton = traceCheck.getInfeasibilityProof();

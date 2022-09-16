@@ -762,17 +762,7 @@ public final class SmtUtils {
 		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
 			throw new UnsupportedOperationException("need BitVec sort");
 		}
-		final BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(lhs);
-		if (fstbw != null) {
-			final BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(rhs);
-			if (sndbw != null) {
-				if (fstbw.equals(sndbw)) {
-					return script.term("true");
-				}
-				return script.term("false");
-			}
-		}
-		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
 	}
 
 	/**
@@ -786,25 +776,7 @@ public final class SmtUtils {
 		if (!rhs.getSort().isNumericSort()) {
 			throw new UnsupportedOperationException("need numeric sort");
 		}
-		if (!(lhs instanceof ConstantTerm)) {
-			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
-		}
-		if (!(rhs instanceof ConstantTerm)) {
-			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
-		}
-		final ConstantTerm lhsConst = (ConstantTerm) lhs;
-		final ConstantTerm rhsConst = (ConstantTerm) rhs;
-		final Rational lhsValue = toRational(lhsConst);
-		final Rational rhsValue = toRational(rhsConst);
-		if (!lhsValue.getClass().isAssignableFrom(rhsValue.getClass())
-				&& rhsValue.getClass().isAssignableFrom(lhs.getClass())) {
-			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
-					+ lhsValue.getClass().getSimpleName() + " second value is " + rhsValue.getClass().getSimpleName());
-		}
-		if (lhsValue.equals(rhsValue)) {
-			return script.term("true");
-		}
-		return script.term("false");
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
 	}
 
 	/**
@@ -1318,15 +1290,35 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return term that is equivalent to lhs X rhs where X is either leq, less, geq, or greater.
+	 * @return term that is equivalent to lhs X rhs where X is either leq, less,
+	 *         geq, or greater.
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
-		final Term rawTerm = script.term(functionSymbol, lhs, rhs);
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script, rawTerm);
-		if (polyRel == null) {
-			return rawTerm;
+		final RelationSymbol rel = RelationSymbol.convert(functionSymbol);
+		if (rel == null) {
+			throw new AssertionError("Unknown RelationSymbol" + functionSymbol);
 		}
-		return polyRel.positiveNormalForm(script);
+		if (!rel.isConvexInequality()) {
+			throw new AssertionError("Not a comparison " + functionSymbol);
+		}
+		if (lhs == rhs) {
+			// This check is helpful for bitvector inequalities which cannot be converted to
+			// PolynomialRelations.
+			if (rel.isStrictRelation()) {
+				return script.term("false");
+			} else {
+				return script.term("true");
+			}
+		}
+		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
+			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs)
+					.positiveNormalForm(script);
+		} else {
+			assert SmtSortUtils.isBitvecSort(lhs.getSort());
+			// TODO 20220908 Matthias: Minor improvements still possible. E.g., everything
+			// is bvule 0.
+			return script.term(functionSymbol, lhs, rhs);
+		}
 	}
 
 	/**
@@ -2596,6 +2588,31 @@ public final class SmtUtils {
 		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
 	}
 
+	/**
+	 * Find all subterms of the given term that are constants (i.e.
+	 * {@link ApplicationTerm}s with zero parameters).
+	 *
+	 * @param restrictToNonTheoryConstants If set to true, we omit constants that
+	 *                                     are defined by the SMT that our solver is
+	 *                                     using. E.g. for the theory of floats, we
+	 *                                     omit roundTowardZero which is a constant
+	 *                                     that defines a certain rounding mode.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Set<ApplicationTerm> extractConstants(final Term term, final boolean restrictToNonTheoryConstants) {
+		final Predicate<Term> p;
+		if (restrictToNonTheoryConstants) {
+			p = (x -> SmtUtils.isConstant(x) && (x instanceof ApplicationTerm)
+					&& !((ApplicationTerm) x).getFunction().isIntern());
+		} else {
+			p = SmtUtils::isConstant;
+
+		}
+		// hack for casting a Set<Term> which contains only ApplicationTerms into a
+		// Set<ApplicationTerm>
+		return (Set) SubTermFinder.find(term, p, false);
+	}
+
 	public static Term unzipNot(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
@@ -2705,14 +2722,19 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return true iff this number is the binary representation of a bitvector whose two's complement representation is
-	 *         -1 (i.e., minus one).
+	 * @return true iff this number is the binary representation of a bitvector
+	 *         whose two's complement representation is -1 (i.e., minus one).
+	 *         Exclude however the special case where bitvectors have length 1 and
+	 *         hence -1 and 1 coincide.
 	 */
 	// <pre>
 	// TODO #bvineq 20201017 Matthias:
 	// The name of this method might be misleading.
 	// </pre>
-	public static boolean isBvMinusOne(final Rational number, final Sort bvSort) {
+	public static boolean isBvMinusOneButNotOne(final Rational number, final Sort bvSort) {
+		if (SmtSortUtils.getBitvectorLength(bvSort) == 1) {
+			return false;
+		}
 		if (number.equals(Rational.MONE)) {
 			return true;
 		}

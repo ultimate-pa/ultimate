@@ -108,7 +108,7 @@ public class PredicateFactoryResultChecking
 	}
 
 	@Override
-	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
+	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<IPredicate> marking) {
 		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 }

@@ -90,6 +90,16 @@ public class CanonicalPartialComparatorForMaps<K, V> implements IPartialComparat
 
 	@Override
 	public ComparisonResult compare(final Map<K, V> o1, final Map<K, V> o2) {
+		if (o1 == o2) {
+			// performance optimisation
+			return ComparisonResult.EQUAL;
+		}
+
+		if (o1.size() > o2.size()) {
+			// swap, so we always iterate over the smaller map (for performance)
+			return compare(o2, o1).invert();
+		}
+
 		ComparisonResult result = ComparisonResult.EQUAL;
 		for (final Entry<K, V> entry : o1.entrySet()) {
 			ComparisonResult currentPartialComparionResult;
@@ -104,6 +114,7 @@ public class CanonicalPartialComparatorForMaps<K, V> implements IPartialComparat
 				return result;
 			}
 		}
+
 		if (result == ComparisonResult.EQUAL && o1.size() < o2.size()) {
 			// not equal but strictly smaller since o2 has elements that o1 does not have.
 			result = ComparisonResult.STRICTLY_SMALLER;

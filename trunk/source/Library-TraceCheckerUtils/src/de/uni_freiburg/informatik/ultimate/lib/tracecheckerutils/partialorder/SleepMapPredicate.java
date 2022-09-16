@@ -26,87 +26,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
-import java.util.Objects;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMap;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class SleepMapPredicate<L> implements IMLPredicate {
-	private final IMLPredicate mUnderlying;
-	private final SleepMap<L, IPredicate> mSleepMap;
-	private final int mBudget;
-
+public class SleepMapPredicate<L> extends AnnotatedMLPredicate<Pair<SleepMap<L, IPredicate>, Integer>> {
 	public SleepMapPredicate(final IMLPredicate underlying, final SleepMap<L, IPredicate> sleepMap, final int budget) {
-		mUnderlying = underlying;
-		mSleepMap = sleepMap;
-		mBudget = budget;
-	}
-
-	@Override
-	public Term getFormula() {
-		return mUnderlying.getFormula();
-	}
-
-	@Override
-	public Term getClosedFormula() {
-		return mUnderlying.getClosedFormula();
-	}
-
-	@Override
-	public String[] getProcedures() {
-		return mUnderlying.getProcedures();
-	}
-
-	@Override
-	public Set<IProgramVar> getVars() {
-		return mUnderlying.getVars();
-	}
-
-	@Override
-	public IcfgLocation[] getProgramPoints() {
-		return mUnderlying.getProgramPoints();
-	}
-
-	public IMLPredicate getUnderlying() {
-		return mUnderlying;
+		super(underlying, new Pair<>(sleepMap, budget));
 	}
 
 	public SleepMap<L, IPredicate> getSleepMap() {
-		return mSleepMap;
+		return mAnnotation.getFirst();
 	}
 
 	public int getBudget() {
-		return mBudget;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(mBudget, mSleepMap, mUnderlying);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final SleepMapPredicate<?> other = (SleepMapPredicate<?>) obj;
-		return mBudget == other.mBudget && Objects.equals(mSleepMap, other.mSleepMap)
-				&& Objects.equals(mUnderlying, other.mUnderlying);
+		return mAnnotation.getSecond();
 	}
 
 	@Override
 	public String toString() {
-		return "SleepMapPredicate [underlying: " + mUnderlying + ", budget: " + mBudget + ", map: " + mSleepMap + "]";
+		return "SleepMapPredicate [underlying: " + mUnderlying + ", budget: " + getBudget() + ", map: " + getSleepMap()
+				+ "]";
 	}
 }

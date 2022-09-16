@@ -133,7 +133,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 				final UnmodifiableTransFormula[] tfs =
 						disjuncts.toArray(new UnmodifiableTransFormula[disjuncts.size()]);
 				final UnmodifiableTransFormula disjunct = TransFormulaUtils.parallelComposition(mLogger, mServices,
-						mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, tfs);
+						mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, tfs);
 				final ArrayList<UnmodifiableTransFormula> dj = new ArrayList<>();
 				dj.add(disjunct);
 				result.put(loophead, dj);
@@ -213,7 +213,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 	}
 
 	private List<UnmodifiableTransFormula> convertActionToFormula(final List<L> actions) {
-		final List<UnmodifiableTransFormula> tfs = new ArrayList<UnmodifiableTransFormula>();
+		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 		for (final L action : actions) {
 			tfs.add(action.getTransformula());
 		}

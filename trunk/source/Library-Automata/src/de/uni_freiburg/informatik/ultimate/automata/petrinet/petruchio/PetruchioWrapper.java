@@ -31,7 +31,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import petruchio.interfaces.petrinet.Place;
@@ -58,11 +57,11 @@ public class PetruchioWrapper<LETTER, PLACE> {
 	private final PetriNet mNetPetruchio = new PetriNet();
 
 	// Maps each place of mBoundedNet to the corresponding place in mNetPetruchio
-	private final Map<PLACE, Place> mPBounded2pPetruchio =
-			new IdentityHashMap<>();
+	private final Map<PLACE, Place> mPBounded2pPetruchio = new IdentityHashMap<>();
 
 	// Maps each transition of mNetPetruchio to the corresponding transition in mBoundedNet
-	private final Map<Transition, ITransition<LETTER, PLACE>> mTPetruchio2tBounded = new IdentityHashMap<>();
+	private final Map<Transition, de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition<LETTER, PLACE>> mTPetruchio2tBounded =
+			new IdentityHashMap<>();
 
 	/**
 	 * @param services
@@ -98,18 +97,17 @@ public class PetruchioWrapper<LETTER, PLACE> {
 			mPBounded2pPetruchio.put(pBounded, pPetruchio);
 		}
 		// construct a Petruchio transition for each BoundedNet transition
-		for (final ITransition<LETTER, PLACE> tBounded : mBoundedNet.getTransitions()) {
+		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition<LETTER, PLACE> tBounded : mBoundedNet
+				.getTransitions()) {
 			final Transition transitionPetruchio = mNetPetruchio.addTransition(tBounded.toString());
 			mTPetruchio2tBounded.put(transitionPetruchio, tBounded);
 			// PTArcs kopieren
-			for (final PLACE pBounded :
-				mBoundedNet.getSuccessors(tBounded)) {
+			for (final PLACE pBounded : tBounded.getSuccessors()) {
 				// 1-safe net
 				mNetPetruchio.addArc(transitionPetruchio, mPBounded2pPetruchio.get(pBounded), 1);
 			}
 			// TPArcs kopieren
-			for (final PLACE p :
-					mBoundedNet.getPredecessors(tBounded)) {
+			for (final PLACE p : tBounded.getPredecessors()) {
 				// 1-safe net
 				mNetPetruchio.addArc(mPBounded2pPetruchio.get(p), transitionPetruchio, 1);
 			}
@@ -139,7 +137,8 @@ public class PetruchioWrapper<LETTER, PLACE> {
 	/**
 	 * @return Map (transition in {@link BoundedPetriNet} -> transition in Petruchio).
 	 */
-	public Map<Transition, ITransition<LETTER, PLACE>> gettPetruchio2tBounded() {
+	public Map<Transition, de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition<LETTER, PLACE>>
+			gettPetruchio2tBounded() {
 		return mTPetruchio2tBounded;
 	}
 

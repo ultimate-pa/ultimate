@@ -422,4 +422,21 @@ public class DataStructureUtils {
 	public static <E> Stream<E> filteredCast(final Stream<?> s, final Class<E> c) {
 		return s.filter(a -> c.isAssignableFrom(a.getClass())).map(c::cast);
 	}
+
+	/**
+	 * Converts a stream into an unmodifiable set (as returned by {@link Set#of()}.
+	 *
+	 * @param <T>
+	 *            The type of elements
+	 * @param stream
+	 *            a stream of elements
+	 * @return the set
+	 *
+	 * @throws IllegalArgumentException
+	 *             if the stream contains multiple occurrences of the same element
+	 */
+	public static <T> Set<T> asSet(final Stream<T> stream) {
+		final Object[] elements = stream.toArray();
+		return (Set<T>) Set.of(elements);
+	}
 }

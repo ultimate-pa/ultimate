@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
@@ -48,13 +47,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder.RoundRobinComparator;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * A DFS order that aims to place context switches between threads whenever (and only when) a loop head is reached.
@@ -221,82 +217,18 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 		}
 	}
 
-	public static final class PredicateWithLastThread implements IMLPredicate {
-		private final IMLPredicate mUnderlying;
-
-		private final String mLastThread;
-
+	public static final class PredicateWithLastThread extends AnnotatedMLPredicate<String> {
 		public PredicateWithLastThread(final IMLPredicate underlying, final String lastThread) {
-			mUnderlying = underlying;
-			mLastThread = lastThread;
-		}
-
-		public IMLPredicate getUnderlying() {
-			return mUnderlying;
+			super(underlying, lastThread);
 		}
 
 		public String getLastThread() {
-			return mLastThread;
-		}
-
-		@Override
-		public IcfgLocation[] getProgramPoints() {
-			return mUnderlying.getProgramPoints();
-		}
-
-		@Override
-		public Term getFormula() {
-			return mUnderlying.getFormula();
-		}
-
-		@Override
-		public Term getClosedFormula() {
-			return mUnderlying.getClosedFormula();
-		}
-
-		@Override
-		public String[] getProcedures() {
-			return mUnderlying.getProcedures();
-		}
-
-		@Override
-		public Set<IProgramVar> getVars() {
-			return mUnderlying.getVars();
-		}
-
-		@Override
-		public Set<IProgramConst> getConstants() {
-			return mUnderlying.getConstants();
-		}
-
-		@Override
-		public Set<IProgramFunction> getFunctions() {
-			return mUnderlying.getFunctions();
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(mLastThread, mUnderlying);
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final PredicateWithLastThread other = (PredicateWithLastThread) obj;
-			return Objects.equals(mLastThread, other.mLastThread) && Objects.equals(mUnderlying, other.mUnderlying);
+			return mAnnotation;
 		}
 
 		@Override
 		public String toString() {
-			return "[last=" + mLastThread + ", underlying=" + mUnderlying + "]";
+			return "PredicateWithLastThread [last=" + mAnnotation + ", underlying=" + mUnderlying + "]";
 		}
 	}
 }

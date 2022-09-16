@@ -528,30 +528,32 @@ public class MapEliminator {
 				final ArrayIndex indexWrittenOut =
 						getOutVarIndex(globalIndexWritten, transformula, mManagedScript, mSymbolTable);
 				for (final MapTemplate template : mAnalysis.getTemplate(globalIndexWritten)) {
+					final boolean isAssigned = template.isAssigned(transformula);
 					final Term written = template.getTerm(globalIndexWritten);
-					final Term writtenIn = getInVarTerm(written, transformula, mManagedScript, mSymbolTable);
 					final Term writtenOut = getOutVarTerm(written, transformula, mManagedScript, mSymbolTable);
-					final Term unchanged = indexEqualityImpliesValueEquality(indexWrittenOut, indexWrittenIn,
-							writtenOut, writtenIn, invariants, transformula);
-					result.add(unchanged);
+					if (!isAssigned) {
+						final Term writtenIn = getInVarTerm(written, transformula, mManagedScript, mSymbolTable);
+						result.add(indexEqualityImpliesValueEquality(indexWrittenOut, indexWrittenIn, writtenOut,
+								writtenIn, invariants, transformula));
+					}
 					for (final ArrayIndex globalIndexRead : mAnalysis.getIndices(template)) {
-						if (globalIndexWritten == globalIndexRead) {
+						if (globalIndexWritten.equals(globalIndexRead)) {
 							continue;
 						}
 						// Compare with the other indices (in- and out-var-version)
 						final Term read = template.getTerm(globalIndexRead);
-						final Term readIn = getInVarTerm(read, transformula, mManagedScript, mSymbolTable);
+						if (!isAssigned) {
+							final Term readIn = getInVarTerm(read, transformula, mManagedScript, mSymbolTable);
+							final ArrayIndex indexReadIn =
+									getInVarIndex(globalIndexRead, transformula, mManagedScript, mSymbolTable);
+							result.add(indexEqualityImpliesValueEquality(indexWrittenOut, indexReadIn, writtenOut,
+									readIn, invariants, transformula));
+						}
 						final Term readOut = getOutVarTerm(read, transformula, mManagedScript, mSymbolTable);
-						final ArrayIndex indexReadIn =
-								getInVarIndex(globalIndexRead, transformula, mManagedScript, mSymbolTable);
 						final ArrayIndex indexReadOut =
 								getOutVarIndex(globalIndexRead, transformula, mManagedScript, mSymbolTable);
-						final Term assignmentIn = indexEqualityImpliesValueEquality(indexWrittenOut, indexReadIn,
-								writtenOut, readIn, invariants, transformula);
-						result.add(assignmentIn);
-						final Term assignmentOut = indexEqualityImpliesValueEquality(indexWrittenOut, indexReadOut,
-								writtenOut, readOut, invariants, transformula);
-						result.add(assignmentOut);
+						result.add(indexEqualityImpliesValueEquality(indexWrittenOut, indexReadOut, writtenOut, readOut,
+								invariants, transformula));
 					}
 				}
 			}

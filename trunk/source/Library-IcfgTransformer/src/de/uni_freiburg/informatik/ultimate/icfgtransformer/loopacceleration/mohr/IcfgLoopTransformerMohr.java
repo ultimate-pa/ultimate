@@ -239,10 +239,14 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			// DD: Note that the issue with the "IllegalArgumentException: cannot bring into simultaneous update form
 			// xxx outvar occurs in several conjuncts" still persists. I have to check with Matthias if we can fix this.
 			// Until then, you can just ignore these errors.
+			//
+			// 20220909 Matthias: I think the commit that introduced this
+			// line fixed the problem. There are however (and always will
+			// be) formulas that we cannot convert into a SimultaneousUpdate.
 
 			final SimultaneousUpdate su;
 			try {
-				su = SimultaneousUpdate.fromTransFormula(path, mManagedScript);
+				su = SimultaneousUpdate.fromTransFormula(mServices, path, mManagedScript);
 			} catch (final SimultaneousUpdateException e) {
 				throw new IllegalArgumentException(e.getMessage());
 			}

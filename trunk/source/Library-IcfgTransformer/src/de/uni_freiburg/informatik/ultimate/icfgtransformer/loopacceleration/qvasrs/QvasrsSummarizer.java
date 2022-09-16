@@ -137,9 +137,10 @@ public class QvasrsSummarizer {
 					mLogger.warn(disjunct.toStringDirect());
 					final UnmodifiableTransFormula disjunctTf =
 							QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
-					final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mScript, disjunctTf);
-					preTfPostAbstraction =
-							QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction).getThird();
+					final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mServices, mScript,
+							disjunctTf);
+					preTfPostAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction)
+							.getThird();
 				}
 				final Triple<Rational[][], Rational[][], QvasrAbstraction> abstractionWithSimulations =
 						QvasrAbstractionJoin.join(mScript, bestAbstraction, preTfPostAbstraction);

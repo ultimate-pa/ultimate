@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -447,7 +446,7 @@ public class VerificationResultTransformer {
 				final Term quantifiedFormula =
 						SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, toRemove, oldFormula);
 				newFormula = tryToEliminate(mgdScript, quantifiedFormula);
-				final Set<ApplicationTerm> constantsInFormula = new ConstantFinder().findConstants(newFormula, false);
+				final Set<ApplicationTerm> constantsInFormula = SmtUtils.extractConstants(newFormula, false);
 				nonTheoryConsts = oldTf.getNonTheoryConsts().stream()
 						.filter(a -> constantsInFormula.contains(a.getDefaultConstant())).collect(Collectors.toSet());
 			}
