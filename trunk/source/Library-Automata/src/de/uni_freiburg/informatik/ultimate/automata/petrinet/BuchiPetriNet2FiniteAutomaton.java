@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,10 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;

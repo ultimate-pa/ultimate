@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
@@ -69,16 +68,6 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> finiteAutomaton =
 				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
 						(IBlackWhiteStateFactory<PLACE>) stateFactory, mOperand)).getResult();
-		final boolean automatonEmpty =
-				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty<>(mServices,
-						finiteAutomaton)).getResult();
-		return getResult() == automatonEmpty;
-	}
-
-	public boolean checkResultReal(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory,
-			final IBlackWhiteStateFactory<PLACE> blackWhite) throws AutomataLibraryException {
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> finiteAutomaton =
-				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory, blackWhite, mOperand)).getResult();
 		final boolean automatonEmpty =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty<>(mServices,
 						finiteAutomaton)).getResult();

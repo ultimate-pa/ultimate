@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.BuchiPetrinetBuchiIntersectionEager;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -15,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.BuchiPetrinetBuchiIntersectionEager;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
@@ -101,8 +101,8 @@ public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
 		mBenchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 
 		final BuchiPetrinetBuchiIntersectionEager<L, IPredicate> intersection =
-				new BuchiPetrinetBuchiIntersectionEager<>(abstraction, complNwa.getResult(), mDefaultStateFactory,
-						new AutomataLibraryServices(mServices));
+				new BuchiPetrinetBuchiIntersectionEager<>(new AutomataLibraryServices(mServices), mDefaultStateFactory,
+						abstraction, complNwa.getResult());
 		return intersection.getResult();
 	}
 
