@@ -122,7 +122,7 @@ public interface IDeadEndStore<S, R> {
 	 */
 	final class ProductDeadEndStore<S, R> implements IDeadEndStore<S, R> {
 		private final Function<R, S> mState2Original;
-		private final Function<R, Object> mState2ExtraInfo;
+		private final Function<R, ?> mState2ExtraInfo;
 		private final HashRelation<S, Object> mDeadEndRelation = new HashRelation<>();
 
 		/**
@@ -133,7 +133,7 @@ public interface IDeadEndStore<S, R> {
 		 * @param state2ExtraInfo
 		 *            Extracts the remaining components of the product state
 		 */
-		public ProductDeadEndStore(final Function<R, S> state2Original, final Function<R, Object> state2ExtraInfo) {
+		public ProductDeadEndStore(final Function<R, S> state2Original, final Function<R, ?> state2ExtraInfo) {
 			mState2Original = state2Original;
 			mState2ExtraInfo = state2ExtraInfo;
 		}

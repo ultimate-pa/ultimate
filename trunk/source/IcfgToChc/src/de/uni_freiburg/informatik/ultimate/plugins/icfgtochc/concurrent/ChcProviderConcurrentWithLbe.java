@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -78,8 +77,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 				petrified.getCfgSmtToolkit(), mHcSymbolTable, x -> true);
 		result.add(factory.getInitialClause(getLocations(petriNet.getInitialPlaces())));
 		result.addAll(factory.getSafetyClauses(errorLocs));
-		for (final ITransition<IcfgEdge, IPredicate> t : petriNet.getTransitions()) {
-			final Transition<IcfgEdge, IPredicate> transition = (Transition<IcfgEdge, IPredicate>) t;
+		for (final Transition<IcfgEdge, IPredicate> transition : petriNet.getTransitions()) {
 			final IcfgEdge edge = transition.getSymbol();
 			final String proc = edge.getPrecedingProcedure();
 			if (!numberOfThreads.containsKey(proc) || !numberOfThreads.containsKey(edge.getSucceedingProcedure())) {

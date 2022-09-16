@@ -282,7 +282,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public void releaseLock() {
 		clearAssertionStack();
-		assert !mManagedScript.isLocked();
+		assert !mManagedScript.isLocked() : "script should not be locked";
 	}
 
 	private LBool assertPrecondition(final IPredicate p) {

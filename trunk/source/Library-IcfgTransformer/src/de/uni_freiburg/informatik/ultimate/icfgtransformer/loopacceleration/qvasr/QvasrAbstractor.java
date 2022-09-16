@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -94,15 +95,16 @@ public class QvasrAbstractor {
 	 *            A transition formula from which an overapproximative qvasr-abstraction is computed.
 	 * @return A {@link QvasrAbstraction} that overapproximates the changes to variables of the transition formula.
 	 */
-	public static QvasrAbstraction computeAbstraction(final ManagedScript script,
+	public static QvasrAbstraction computeAbstraction(final IUltimateServiceProvider services, final ManagedScript script,
 			final UnmodifiableTransFormula transitionFormula) {
 		if (!SmtUtils.isArrayFree(transitionFormula.getFormula())
 				|| !SmtUtils.containsArrayVariables(transitionFormula.getFormula())) {
 			throw new UnsupportedOperationException("Cannot deal with arrays.");
 		}
 		final Map<TermVariable, Term> updatesInFormulaAdditions =
-				getUpdates(script, transitionFormula, BaseType.ADDITIONS);
-		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(script, transitionFormula, BaseType.RESETS);
+				getUpdates(services, script, transitionFormula, BaseType.ADDITIONS);
+		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(services, script, transitionFormula,
+				BaseType.RESETS);
 		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(script, updatesInFormulaResets, transitionFormula);
 		final Term[][] newUpdatesMatrixAdditions =
 				constructBaseMatrix(script, updatesInFormulaAdditions, transitionFormula);
@@ -1116,11 +1118,11 @@ public class QvasrAbstractor {
 	 * @param outVariables
 	 * @return
 	 */
-	private static Map<TermVariable, Term> getUpdates(final ManagedScript script,
-			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+	private static Map<TermVariable, Term> getUpdates(final IUltimateServiceProvider services,
+			final ManagedScript script, final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
 		final SimultaneousUpdate su;
 		try {
-			su = SimultaneousUpdate.fromTransFormula(transitionFormula, script);
+			su = SimultaneousUpdate.fromTransFormula(services, transitionFormula, script);
 		} catch (final Exception e) {
 			throw new UnsupportedOperationException("Could not compute Simultaneous Update!");
 		}

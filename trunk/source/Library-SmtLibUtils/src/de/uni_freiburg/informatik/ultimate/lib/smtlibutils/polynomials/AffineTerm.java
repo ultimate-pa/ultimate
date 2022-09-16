@@ -269,13 +269,16 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 
 	@Override
 	public AbstractGeneralizedAffineTerm<Term> removeAndNegate(final Monomial monomialOfSubject) {
-		 final HashMap<Term, Rational> newAbstractVariable2Coefficient = new HashMap<>();
-		 for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
-			 if (!entry.getKey().equals(monomialOfSubject.getSingleVariable())) {
-				 newAbstractVariable2Coefficient.put(entry.getKey(), entry.getValue().negate());
-			 }
-		 }
-		 return new AffineTerm(getSort(), getConstant().negate(), newAbstractVariable2Coefficient);
+		final HashMap<Term, Rational> newAbstractVariable2Coefficient = new HashMap<>();
+		for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			if (!entry.getKey().equals(monomialOfSubject.getSingleVariable())) {
+				final Rational newCoefficient = PolynomialTermUtils.bringValueInRange(entry.getValue().negate(),
+						getSort());
+				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
+			}
+		}
+		final Rational newConstant = PolynomialTermUtils.bringValueInRange(getConstant().negate(), getSort());
+		return new AffineTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 	}
 
 	@Override
