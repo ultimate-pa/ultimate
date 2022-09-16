@@ -167,7 +167,7 @@ public class LoopAcceleratorLite {
 	private void calculateSymbolicMemory(final Backbone backbone, final Loop loop) {
 		final SimultaneousUpdate update;
 		try {
-			update = SimultaneousUpdate.fromTransFormula(backbone.getFormula(), mScript);
+			update = SimultaneousUpdate.fromTransFormula(mServices, backbone.getFormula(), mScript);
 		} catch (final SimultaneousUpdateException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}

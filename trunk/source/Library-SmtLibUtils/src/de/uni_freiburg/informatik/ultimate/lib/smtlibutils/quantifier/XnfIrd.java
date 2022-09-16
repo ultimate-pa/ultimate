@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class XnfIrd extends XjunctPartialQuantifierElimination {
 
@@ -82,13 +80,10 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				it.remove();
 				continue;
 			}
-			final Term[] withoutTv = irdSimple(mMgdScript, quantifier, result, tv, mLogger);
+			final Term[] withoutTv = irdSimple(mMgdScript, quantifier, result, tv);
 			if (withoutTv != null) {
-				mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
 				result = withoutTv;
 				it.remove();
-			} else {
-				mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
 			}
 		}
 		return result;
@@ -103,8 +98,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	 * symbol is "=" and the quantifier is ∀ 3. param is an inequality
 	 */
 	public static Term[] irdSimple(final ManagedScript mgdScript, final int quantifier, final Term[] oldParams,
-			final TermVariable tv, final ILogger logger) {
-
+			final TermVariable tv) {
 		final ArrayList<Term> paramsWithoutTv = new ArrayList<>();
 		int numberOfAntiDer = 0;
 		int numberOfUpperBounds = 0;

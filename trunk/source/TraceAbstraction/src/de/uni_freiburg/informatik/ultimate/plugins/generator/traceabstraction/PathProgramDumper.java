@@ -633,7 +633,7 @@ public class PathProgramDumper {
 
 		final SimultaneousUpdate su;
 		try {
-			su = SimultaneousUpdate.fromTransFormula(action.getTransformula(), mgdScript);
+			su = SimultaneousUpdate.fromTransFormula(mServices, action.getTransformula(), mgdScript);
 		} catch (final SimultaneousUpdateException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}

@@ -38,7 +38,7 @@ pipeline {
   agent { label 'linux' && 'java' }
   options {
     skipDefaultCheckout()
-    timeout(time: 10, unit: 'HOURS')
+    timeout(time: 12, unit: 'HOURS')
   }
   environment {
     PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"

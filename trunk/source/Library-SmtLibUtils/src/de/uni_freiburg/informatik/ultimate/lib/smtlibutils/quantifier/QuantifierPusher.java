@@ -622,11 +622,22 @@ public class QuantifierPusher extends TermTransformer {
 
 	private static EliminationResult tryToEliminateOne(final IUltimateServiceProvider services,
 			final EliminationTask currentEt, final List<DualJunctionQuantifierElimination> elimtechniques) {
+		final ILogger logger = services.getLoggingService().getLogger(QuantifierPusher.class);
 		for (final DualJunctionQuantifierElimination djqe : elimtechniques) {
 			final EliminationResult er = djqe.tryToEliminate(currentEt);
+			if (logger.isDebugEnabled()) {
+				if (er != null) {
+					logger.debug(String.format("At least one variable eliminated via %s: %s", djqe.getAcronym(),
+							currentEt.getEliminatees()));
+				} else {
+					logger.debug(String.format("No variable eliminated via %s: %s", djqe.getAcronym(),
+							currentEt.getEliminatees()));
+				}
+
+			}
 			if (er != null) {
 				if (er.getEliminationTask().getEliminatees().equals(currentEt.getEliminatees())) {
-					services.getLoggingService().getLogger(QuantifierPusher.class).warn(
+					logger.warn(
 							"no eliminatee completely removed, nonetheless the elimination was considered successful");
 				}
 				return er;
