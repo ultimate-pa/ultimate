@@ -39,9 +39,9 @@
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf</option>
   </rundefinition-->
 
-	<!--rundefinition name="Automizer PN.VariableLBE">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer PN.VariableLBE">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
+  </rundefinition-->
 
   <!--rundefinition name="Automizer PN.SemanticLBE">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
@@ -346,24 +346,24 @@
   </rundefinition-->
 
 
-	<!-- === Lipton Reduction integrated in TAR === -->
-	<!-- ========================================== -->
+  <!-- === Lipton Reduction integrated in TAR === -->
+  <!-- ========================================== -->
 
-	<!--rundefinition name="Automizer PN.RepeatedVariableLbe">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedVariableLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer PN.RepeatedVariableLbe">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedVariableLbe.epf</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PN.RepeatedSemanticLBE">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf</option>
-	</rundefinition>
+  <rundefinition name="Automizer PN.RepeatedSemanticLBE">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf</option>
+  </rundefinition>
 
-	<!--rundefinition name="Automizer PN.RepeatedSemanticLbeWithPredicates">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithPredicates.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer PN.RepeatedSemanticLbeWithPredicates">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithPredicates.epf</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PN.RepeatedSemanticLbeWithDisjunctivePredicates">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithDisjunctivePredicates.epf</option>
-	</rundefinition>
+  <rundefinition name="Automizer PN.RepeatedSemanticLbeWithDisjunctivePredicates">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithDisjunctivePredicates.epf</option>
+  </rundefinition>
 
 
   <!-- =============================================================================================================== -->
