@@ -38,11 +38,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
@@ -60,30 +60,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <PLACE>
  *            Type of places in Petri net
  * @param <CRSF>
- *            Type of factory needed to check the result of this operation in
- *            {@link #checkResult(CRSF)}
+ *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
 public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private static final boolean DEBUG_LOG_RESTRICTOR_INFORMATION = false;
 	/**
-	 * Idea: If true we only check if (p,p') is a restrictor-redundancy pair if
-	 * the restrictor candidate p does not have more conditions than the
-	 * redundancy candidate p'
+	 * Idea: If true we only check if (p,p') is a restrictor-redundancy pair if the restrictor candidate p does not have
+	 * more conditions than the redundancy candidate p'
 	 */
 	private static final boolean MOUNTAIN_COCK_HEURISTIC = false;
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private final FinitePrefix<LETTER, PLACE> mFinitePrefixOperation;
 	private final BranchingProcess<LETTER, PLACE> mFinPre;
-	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
+	private final HashRelation<Transition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 	private final Set<PLACE> mRedundantPlaces;
 	private final Set<PLACE> mEligibleRedundancyCandidates;
 	private final Set<PLACE> mEligibleRestrictorCandidates;
 	private int mRestrictorConditionChecks = 0;
 	private final NestedMap2<PLACE, PLACE, Boolean> mRestrictorPlaceCache = new NestedMap2<>();
-	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mInput2projected;
+	private final Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mInput2projected;
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -106,14 +104,14 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 			mFinitePrefixOperation = new FinitePrefix<>(services, operand);
 			mFinPre = mFinitePrefixOperation.getResult();
 		}
-		final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
-		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
-			for (final PLACE p : operand.getPredecessors(t)) {
+		final HashRelation<Transition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
+		for (final Transition<LETTER, PLACE> t : operand.getTransitions()) {
+			for (final PLACE p : t.getPredecessors()) {
 				if (isEligibleRedundancyCandidate(p)) {
 					final boolean isFlowRedundant = isFlowRedundant(t, p, redundantFlow);
 					if (isFlowRedundant) {
 						redundantFlow.addPair(t, p);
-						if (operand.getSuccessors(t).contains(p)) {
+						if (t.getSuccessors().contains(p)) {
 							mRedundantSelfloopFlow.addPair(t, p);
 						}
 					}
@@ -122,8 +120,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		}
 		mRedundantPlaces = operand.getPlaces().stream().filter(x -> isRedundantPlace(x, operand, redundantFlow))
 				.collect(Collectors.toSet());
-		final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, operand, mRedundantSelfloopFlow,
-				mRedundantPlaces);
+		final ProjectToSubnet<LETTER, PLACE> pts =
+				new ProjectToSubnet<>(services, operand, mRedundantSelfloopFlow, mRedundantPlaces);
 		mInput2projected = pts.getTransitionMapping();
 		mResult = pts.getResult();
 		printExitMessage();
@@ -138,11 +136,11 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	}
 
 	private boolean isRedundantPlace(final PLACE p, final IPetriNet<LETTER, PLACE> operand,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow) {
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> redundantFlow) {
 		if (operand.isAccepting(p)) {
 			return false;
 		}
-		final Set<ITransition<LETTER, PLACE>> succTrans = operand.getSuccessors(p);
+		final Set<Transition<LETTER, PLACE>> succTrans = operand.getSuccessors(p);
 		if (succTrans.isEmpty()) {
 			// TODO 20200225 Matthias: At the moment places without successor
 			// transitions are not considered redundant. Otherwise we would
@@ -150,7 +148,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 			// by the unfolding.
 			return false;
 		}
-		for (final ITransition<LETTER, PLACE> t : succTrans) {
+		for (final Transition<LETTER, PLACE> t : succTrans) {
 			if (!redundantFlow.containsPair(t, p)) {
 				return false;
 			}
@@ -158,10 +156,10 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return true;
 	}
 
-	private boolean isFlowRedundant(final ITransition<LETTER, PLACE> t, final PLACE redundancyCandidate,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow)
+	private boolean isFlowRedundant(final Transition<LETTER, PLACE> t, final PLACE redundancyCandidate,
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> redundantFlow)
 			throws AutomataOperationCanceledException {
-		for (final PLACE p : mOperand.getPredecessors(t)) {
+		for (final PLACE p : t.getPredecessors()) {
 			if (isEligibleRestrictorCandidate(p) && !p.equals(redundancyCandidate) && (!MOUNTAIN_COCK_HEURISTIC
 					|| mFinPre.getConditions(p).size() <= mFinPre.getConditions(redundancyCandidate).size())) {
 				if (redundantFlow.containsPair(t, p)) {
@@ -187,8 +185,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return false;
 	}
 
-	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
-			throws AutomataOperationCanceledException {
+	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate) {
 		Boolean isRestrictor = mRestrictorPlaceCache.get(redundancyCandidate, restrictorCandidate);
 		if (isRestrictor == null) {
 			isRestrictor = checkRestrictorPlace(redundancyCandidate, restrictorCandidate);
@@ -197,8 +194,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return isRestrictor;
 	}
 
-	private boolean checkRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
-			throws AutomataOperationCanceledException {
+	private boolean checkRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate) {
 		for (final Condition<LETTER, PLACE> restrictorCandidateCondition : mFinPre.place2cond(restrictorCandidate)) {
 			if (restrictorCandidateCondition.getPredecessorEvent().isCutoffEvent()) {
 				// we may omit the check because if the the candidate is not a
@@ -217,12 +213,11 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	}
 
 	private boolean isRestrictorCondition(final Condition<LETTER, PLACE> restrictorCandidateCondition,
-			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation)
-			throws AutomataOperationCanceledException {
+			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation) {
 		mRestrictorConditionChecks++;
-		final Optional<Condition<LETTER, PLACE>> redundancyCandidateCondition = restrictorCandidateCondition
-				.getPredecessorEvent().getConditionMark().stream().filter(x -> x.getPlace().equals(redundancyCandidate))
-				.findAny();
+		final Optional<Condition<LETTER, PLACE>> redundancyCandidateCondition =
+				restrictorCandidateCondition.getPredecessorEvent().getConditionMark().stream()
+						.filter(x -> x.getPlace().equals(redundancyCandidate)).findAny();
 		if (!redundancyCandidateCondition.isPresent()) {
 			return false;
 		}
@@ -241,7 +236,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return mOperand;
 	}
 
-	public HashRelation<ITransition<LETTER, PLACE>, PLACE> getRedundantSelfloopFlow() {
+	public HashRelation<Transition<LETTER, PLACE>, PLACE> getRedundantSelfloopFlow() {
 		return mRedundantSelfloopFlow;
 	}
 
@@ -249,7 +244,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return mRedundantPlaces;
 	}
 
-	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getOld2projected() {
+	public Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> getOld2projected() {
 		return mInput2projected;
 	}
 

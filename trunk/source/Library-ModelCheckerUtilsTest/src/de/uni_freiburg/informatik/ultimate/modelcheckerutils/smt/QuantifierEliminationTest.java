@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
@@ -56,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -252,13 +252,13 @@ public class QuantifierEliminationTest {
 	}
 
 	static void runQuantifierEliminationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
-			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
+			final String expectedResultAsString, final boolean expectQuantifierFreeResult,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final QuantifierEliminationTestCsvWriter csvWriter) {
 		for (final FunDecl funDecl : funDecls) {
 			funDecl.declareFuns(mgdScript.getScript());
 		}
-		runQuantifierEliminationTest(eliminationInputAsString, expectedResultAsString, checkResultIsQuantifierFree,
+		runQuantifierEliminationTest(eliminationInputAsString, expectedResultAsString, expectQuantifierFreeResult,
 				services, logger, mgdScript, csvWriter);
 	}
 
@@ -267,7 +267,7 @@ public class QuantifierEliminationTest {
 	 */
 	@Deprecated
 	private static void runQuantifierEliminationTest(final String eliminationInputAsString,
-			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
+			final String expectedResultAsString, final boolean expectQuantifierFreeResult,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
@@ -290,9 +290,11 @@ public class QuantifierEliminationTest {
 				throw new AssertionError("Reduction " + esr.getReductionOfTreeSize());
 			}
 		}
-		if (checkResultIsQuantifierFree) {
-			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
-			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		if (expectQuantifierFreeResult) {
+			Assert.assertTrue("Result is not quantifier-free ", resultIsQuantifierFree);
+		} else {
+			Assert.assertTrue("Result is quantifier-free ", !resultIsQuantifierFree);
 		}
 		if (expectedResultAsString != null) {
 			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);

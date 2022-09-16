@@ -33,10 +33,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -88,7 +88,7 @@ public class TestPredicateFactory {
 	}
 
 	public IProgramNonOldVar constructProgramVar(final String identifier) {
-		BoogieOldVar oldVar;
+		ProgramOldVar oldVar;
 		final Object lock = new Object();
 		final Sort sort = SmtSortUtils.getIntSort(mScript);
 		{
@@ -101,9 +101,9 @@ public class TestPredicateFactory {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, lock, sort, name);
 			mMgdScript.unlock(lock);
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+			oldVar = new ProgramOldVar(identifier, termVariable, defaultConstant, primedConstant);
 		}
-		BoogieNonOldVar nonOldVar;
+		ProgramNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
@@ -114,7 +114,7 @@ public class TestPredicateFactory {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, lock, sort, name);
 			mMgdScript.unlock(lock);
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+			nonOldVar = new ProgramNonOldVar(identifier, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;

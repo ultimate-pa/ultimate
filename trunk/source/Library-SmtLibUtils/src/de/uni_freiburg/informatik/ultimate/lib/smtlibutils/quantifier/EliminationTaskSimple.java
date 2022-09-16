@@ -27,12 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -123,7 +123,7 @@ public class EliminationTaskSimple {
 		}
 	}
 
-	public EliminationTaskSimple integrateNewEliminatees(final Set<TermVariable> additionalEliminatees) {
+	public EliminationTaskSimple integrateNewEliminatees(final Collection<TermVariable> additionalEliminatees) {
 		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
 				mTerm);
 		final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(mEliminatees);

@@ -22,6 +22,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata.nestedword,
    de.uni_freiburg.informatik.ultimate.core.model.models",
  de.uni_freiburg.informatik.ultimate.automata.alternating.visualization;uses:="de.uni_freiburg.informatik.ultimate.automata.alternating,de.uni_freiburg.informatik.ultimate.automata,de.uni_freiburg.informatik.ultimate.core.model.models",
+ de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations,
  de.uni_freiburg.informatik.ultimate.automata.counting,
  de.uni_freiburg.informatik.ultimate.automata.counting.datastructures,
  de.uni_freiburg.informatik.ultimate.automata.nestedword;
@@ -251,6 +252,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata,
    de.uni_freiburg.informatik.ultimate.core.model.models",
  de.uni_freiburg.informatik.ultimate.automata.partialorder,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction,
  de.uni_freiburg.informatik.ultimate.automata.petrinet;
   uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures,
    de.uni_freiburg.informatik.ultimate.util.datastructures.relation,

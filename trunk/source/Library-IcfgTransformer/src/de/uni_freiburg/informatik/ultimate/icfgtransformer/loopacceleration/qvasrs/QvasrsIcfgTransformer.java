@@ -155,7 +155,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 			}
 			final UnmodifiableTransFormula loopDisjunction =
 					TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, distinctPathsFormulas);
+							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, distinctPathsFormulas);
 			mLogger.warn(loopDisjunction.toStringDirect());
 			loopsWithLoopHead.put((INLOC) loopMap.getKey(), loopDisjunction);
 		}
@@ -175,7 +175,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 			final INLOC oldSource = iter.next();
 			OUTLOC newSource;
 			if (loopHeads.contains(oldSource)) {
-				final int i = 0;
+				int i = 0;
 				final IntVasrsAbstraction abstraction = qvasrsAbstractions.get(oldSource);
 				final Map<Term, OUTLOC> qvasrsStateToLoc = new HashMap<>();
 				for (final Term state : abstraction.getStates()) {
@@ -183,6 +183,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 					@SuppressWarnings("unchecked")
 					final OUTLOC newLoc = (OUTLOC) new IcfgLocation(id, oldSource.getProcedure());
 					qvasrsStateToLoc.put(state, newLoc);
+					i++;
 				}
 				final Term[] inVarsReal =
 						abstraction.getInVars().values().toArray(new Term[abstraction.getInVars().size()]);
@@ -282,7 +283,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 		for (final IcfgEdge edge : loopEdges) {
 			edgeTransitions.add(edge.getTransformula());
 		}
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false, false,
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.POLY_PAC,
 				edgeTransitions);
 	}

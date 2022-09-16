@@ -177,6 +177,20 @@ public class SdHoareTripleCheckerHelper {
 				final String proc = act.getPrecedingProcedure();
 				assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
 						|| act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
+				// The two lines below address a special case that is relevant for e.g., the
+				// following example. Let's assume that x is a global variable, pre is `x = 42`,
+				// post is `old(x) = 42`, and the action represents an `assume true` statement.
+				// Hence, all variables are disjoint, pre does not imply post, and at a first
+				// glance it seems like the Hoare triple is invalid. If however the preceding
+				// and succeeding procedure of the action does not have `x` in its modifies
+				// clause, the Hoare triple is valid.
+				// TODO: A solution would be to check not only intersections between variable
+				// sets but to take also into account that the semantic of oldvars and global
+				// vars coincides in local procedure contexts in which the global var is not
+				// modifiable.
+				// Here we implement a simpler but less precise workaround: if there is an
+				// oldvar whose global var is not modifiable in the current procedure, we say
+				// that the SdHoareTripleChecker cannot provide a result.
 				if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc)
 						|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
 					return null;

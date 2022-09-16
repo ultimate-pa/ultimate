@@ -38,9 +38,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
@@ -48,13 +48,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.ExplicitLhsPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -220,12 +218,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		if (!supportAntiDerTerms && !elprs.getAntiDerRelations().isEmpty()) {
 			return null;
 		}
-		final ExplicitLhsPolynomialRelations bestElprs =
-				bestDivision(script, eliminatee, bannedForDivCapture, quantifier, elprs);
+		final ExplicitLhsPolynomialRelations bestElprs = makeTight(elprs);
+//				bestDivision(script, eliminatee, bannedForDivCapture, quantifier, elprs);
 		if (bestElprs == null) {
 			return null;
 		}
-		final Term constraint = bestElprs.buildBoundConstraint(services, script, quantifier);
+		final Term constraint = bestElprs.buildBoundConstraint(services, script, quantifier, bannedForDivCapture);
 		if (constraint == null) {
 			return null;
 		}
@@ -233,6 +231,40 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, withoutEliminatee);
 	}
 
+	private static ExplicitLhsPolynomialRelations makeTight(final ExplicitLhsPolynomialRelations elprs) {
+		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations(elprs.getSort());
+		for (final ExplicitLhsPolynomialRelation elpr : elprs.getLowerBounds()) {
+			final ExplicitLhsPolynomialRelation tight = elpr.makeTight();
+			result.addSimpleRelation(tight);
+		}
+		for (final ExplicitLhsPolynomialRelation elpr : elprs.getUpperBounds()) {
+			final ExplicitLhsPolynomialRelation tight = elpr.makeTight();
+			result.addSimpleRelation(tight);
+		}
+		for (final Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation> pair : elprs
+				.getAntiDerRelations()) {
+			final ExplicitLhsPolynomialRelation tightLower = pair.getFirst().makeTight();
+			final ExplicitLhsPolynomialRelation tightUpper = pair.getSecond().makeTight();
+			final Sort sort = pair.getFirst().getLhsMonomial().getSort();
+			if (ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(pair.getFirst().getLhsCoefficient(),
+					sort)) {
+				assert ExplicitLhsPolynomialRelation
+						.swapOfRelationSymbolRequired(pair.getSecond().getLhsCoefficient(), sort);
+				// upper and lower have been swapped
+				result.addAntiDerRelation(tightUpper, tightLower);
+			} else {
+				result.addAntiDerRelation(tightLower, tightUpper);
+			}
+		}
+		return result;
+	}
+
+
+	/**
+	 * @deprecated Unused since we use the "exact shadows" from the omega test.
+	 *             Maybe we can delete this method in the future.
+	 */
+	@Deprecated
 	private static ExplicitLhsPolynomialRelations bestDivision(final Script script, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture, final int quantifier,
 			final ExplicitLhsPolynomialRelations elprs) {
@@ -255,10 +287,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 		for (final Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation> pair : elprs
 				.getAntiDerRelations()) {
-			final ExplicitLhsPolynomialRelation solvedLower =
-					bestDivision(script, bannedForDivCapture, pair.getFirst());
-			final ExplicitLhsPolynomialRelation solvedUpper =
-					bestDivision(script, bannedForDivCapture, pair.getSecond());
+			final ExplicitLhsPolynomialRelation solvedLower = bestDivision(script, bannedForDivCapture,
+					pair.getFirst());
+			final ExplicitLhsPolynomialRelation solvedUpper = bestDivision(script, bannedForDivCapture,
+					pair.getSecond());
 			if (solvedLower == null) {
 				assert solvedUpper == null;
 				return null;
@@ -274,11 +306,15 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					result.addAntiDerRelation(solvedLower, solvedUpper);
 				}
 			}
-
 		}
 		return result;
 	}
 
+	/**
+	 * @deprecated Unused since we use the "exact shadows" from the omega test.
+	 *             Maybe we can delete this method in the future.
+	 */
+	@Deprecated
 	private static ExplicitLhsPolynomialRelation bestDivision(final Script script,
 			final Set<TermVariable> bannedForDivCapture, final ExplicitLhsPolynomialRelation elpr) {
 		final ExplicitLhsPolynomialRelation solved = elpr.divInvertible(elpr.getLhsCoefficient());
@@ -311,8 +347,21 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations(eliminatee.getSort());
 		// have to be processed after we determined the BvSignedness
 		final List<ExplicitLhsPolynomialRelation> compatibleDistinctAndEqRelations = new ArrayList<>();
+
+		final TransformInequality tfi;
+		if (!SmtSortUtils.isIntSort(eliminatee.getSort())) {
+			tfi = TransformInequality.NO_TRANFORMATION;
+		} else {
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				tfi = TransformInequality.STRICT2NONSTRICT;
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				tfi = TransformInequality.NONSTRICT2STRICT;
+			} else {
+				throw new AssertionError("Unknown quantifier");
+			}
+		}
 		for (final Term t : withEliminatee) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t);
+			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t, tfi);
 			final ExplicitLhsPolynomialRelation elpr;
 			if (polyRel == null) {
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(t);
@@ -413,12 +462,26 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			default:
 				throw new AssertionError("unknown relation " + elpr.getRelationSymbol());
 			}
-			final RelationSymbol greaterRelationSymbol = RelationSymbol.getGreaterRelationSymbol(inequalitiesAreStrict,
-					eliminatee.getSort(), bvSignedness);
-			final ExplicitLhsPolynomialRelation lower = elpr.changeRelationSymbol(greaterRelationSymbol);
-			final RelationSymbol lessRelationSymbol = RelationSymbol.getLessRelationSymbol(inequalitiesAreStrict,
-					eliminatee.getSort(), bvSignedness);
-			final ExplicitLhsPolynomialRelation upper = elpr.changeRelationSymbol(lessRelationSymbol);
+			final ExplicitLhsPolynomialRelation lower;
+			{
+				final RelationSymbol greaterRelationSymbol = RelationSymbol
+						.getGreaterRelationSymbol(inequalitiesAreStrict, eliminatee.getSort(), bvSignedness);
+				if (SmtSortUtils.isIntSort(elpr.getRhs().getSort())) {
+					lower = elpr.changeRelationSymbol(greaterRelationSymbol).changeStrictness(tfi);
+				} else {
+					lower = elpr.changeRelationSymbol(greaterRelationSymbol);
+				}
+			}
+			final ExplicitLhsPolynomialRelation upper;
+			{
+				final RelationSymbol lessRelationSymbol = RelationSymbol.getLessRelationSymbol(inequalitiesAreStrict,
+						eliminatee.getSort(), bvSignedness);
+				if (SmtSortUtils.isIntSort(elpr.getRhs().getSort())) {
+					upper = elpr.changeRelationSymbol(lessRelationSymbol).changeStrictness(tfi);
+				} else {
+					upper = elpr.changeRelationSymbol(lessRelationSymbol);
+				}
+			}
 			result.addAntiDerRelation(lower, upper);
 		}
 		return result;
@@ -540,7 +603,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 
 		private Term buildBoundConstraint(final IUltimateServiceProvider services, final Script script,
-				final int quantifier) {
+				final int quantifier, final Set<TermVariable> bannedForDivCapture) {
 			final List<ExplicitLhsPolynomialRelation> lowerBounds = mLowerBounds;
 			final List<ExplicitLhsPolynomialRelation> upperBounds = mUpperBounds;
 			final boolean bvSingleDirectionBounds = SmtSortUtils.isBitvecSort(mSort) && mAntiDerBounds.isEmpty()
@@ -548,13 +611,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			if (bvSingleDirectionBounds) {
 				return checkforSingleDirectionBounds(script, lowerBounds, upperBounds, quantifier);
 			}
-			// final Term withoutAntiDer = buildDualFiniteJunction(script,
-			// quantifier, mLowerBounds, mUpperBounds, null);
-			final Term antiDer = buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script);
-			if (antiDer == null) {
-				return null;
-			}
-			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, antiDer);
+			// TODO 20220731 Matthias: The non-antider conjunct are similar in each
+			// disjuncts, we could pull them out. Workaround: construct there conjuncts here
+			// and let simplification delete them in disjuncts.
+			return  buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script, bannedForDivCapture);
 		}
 
 
@@ -677,9 +737,13 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		}
 
 		private Term buildCorrespondingFiniteJunctionForAntiDer(final IUltimateServiceProvider services,
-				final int quantifier, final Script script) {
+				final int quantifier, final Script script, final Set<TermVariable> bannedForDivCapture) {
 
 			final int numberOfCorrespondingFiniteJuncts = (int) Math.pow(2, mAntiDerBounds.size());
+			if (mAntiDerBounds.size() > 5) {
+				final ILogger logger = services.getLoggingService().getLogger(this.getClass());
+				logger.warn("Constructing " + numberOfCorrespondingFiniteJuncts + "(two to the power of " + mAntiDerBounds.size() + " dual juncts.");
+			}
 			final Term[] correspondingFiniteJuncts = new Term[numberOfCorrespondingFiniteJuncts];
 
 			for (int i = 0; i < numberOfCorrespondingFiniteJuncts; i++) {
@@ -697,7 +761,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 						lowerBounds.add(mAntiDerBounds.get(k).getFirst());
 					}
 				}
-				correspondingFiniteJuncts[i] = buildDualFiniteJunction(script, quantifier, lowerBounds, upperBounds);
+				correspondingFiniteJuncts[i] = buildDualFiniteJunction(script, quantifier, bannedForDivCapture, lowerBounds, upperBounds);
 				if (correspondingFiniteJuncts[i] == null) {
 					return null;
 				}
@@ -707,9 +771,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 
 		private Term buildDualFiniteJunction(final Script script, final int quantifier,
-				final List<ExplicitLhsPolynomialRelation> lowerBounds,
+				final Set<TermVariable> bannedForDivCapture, final List<ExplicitLhsPolynomialRelation> lowerBounds,
 				final List<ExplicitLhsPolynomialRelation> upperBounds) {
-			if (lowerBounds.size() == 0 || upperBounds.size() == 0) {
+			if (lowerBounds.isEmpty() || upperBounds.isEmpty()) {
 				// If one list of bounds is non-empty, we have to add a special constraint for
 				// strict bitvector inequalities if case of existential quantification
 				// and a special constraint for non-strict bitvector inequalities in case of
@@ -722,35 +786,22 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					return QuantifierUtils.applyDualFiniteConnective(script, quantifier);
 				}
 			}
-			final boolean allLowerCoefficientsOne = allCoefficientsOne(lowerBounds);
-			final boolean allUpperCoefficientsOne = allCoefficientsOne(upperBounds);
-			if (allLowerCoefficientsOne != allUpperCoefficientsOne) {
-				if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
-					final String message = "we need the exact shadows from the omega test";
-					throw new AssertionError(message);
-				} else {
-					// TODO: log message
-					return null;
-				}
+			final Pair<List<ExplicitLhsPolynomialRelation>, List<ExplicitLhsPolynomialRelation>> bounds = preprocessBounds(
+					script, bannedForDivCapture, lowerBounds, upperBounds);
+			if (bounds == null) {
+				return null;
 			}
-			if (!allLowerCoefficientsOne && !allUpperCoefficientsOne) {
-				if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
-					final String message = "we need the omega test";
-					throw new AssertionError(message);
-				} else {
-					// TODO: log message
-					return null;
-				}
-			}
-			if ( ((long) lowerBounds.size()) * ((long) upperBounds.size()) >= Integer.MAX_VALUE) {
+			final List<ExplicitLhsPolynomialRelation> preprocessedLowerBounds = bounds.getFirst();
+			final List<ExplicitLhsPolynomialRelation> preprocessedUpperBounds = bounds.getSecond();
+			if (((long) preprocessedLowerBounds.size()) * ((long) preprocessedUpperBounds.size()) >= Integer.MAX_VALUE) {
 				throw new UnsupportedOperationException(String.format("Size of result too large: %s xjuncts",
-						((long) lowerBounds.size()) * ((long) upperBounds.size())));
+						((long) preprocessedLowerBounds.size()) * ((long) preprocessedUpperBounds.size())));
 			}
-			final Term[] allCombinations = new Term[lowerBounds.size() * upperBounds.size()];
+			final Term[] allCombinations = new Term[preprocessedLowerBounds.size() * preprocessedUpperBounds.size()];
 
 			int i = 0;
-			for (final ExplicitLhsPolynomialRelation lower : lowerBounds) {
-				for (final ExplicitLhsPolynomialRelation upper : upperBounds) {
+			for (final ExplicitLhsPolynomialRelation lower : preprocessedLowerBounds) {
+				for (final ExplicitLhsPolynomialRelation upper : preprocessedUpperBounds) {
 
 					allCombinations[i] = combine(script, quantifier, lower, upper);
 					if (allCombinations[i] == null) {
@@ -759,12 +810,123 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 						return null;
 					}
 					i++;
-
 				}
 			}
 			return QuantifierUtils.applyDualFiniteConnective(script, quantifier, allCombinations);
 		}
 
+		/**
+		 * In order to compute the "exact shadows" form the omega test, we need that
+		 * that all lower bounds have coefficient one or all upper bounds have
+		 * coeffcient one. In this preprocessing we try to make sure that at least one
+		 * kind of bounds has always coefficient zero.
+		 */
+		private Pair<List<ExplicitLhsPolynomialRelation>, List<ExplicitLhsPolynomialRelation>> preprocessBounds(
+				final Script script, final Set<TermVariable> bannedForDivCapture,
+				final List<ExplicitLhsPolynomialRelation> inputLowerBounds,
+				final List<ExplicitLhsPolynomialRelation> inputUpperBounds) {
+			final int nonOneLowerCoefficients = countNonOneCoefficients(inputLowerBounds);
+			final int nonOneUpperCoefficients = countNonOneCoefficients(inputUpperBounds);
+			if (nonOneLowerCoefficients == 0 || nonOneUpperCoefficients == 0) {
+				// One kind of bounds has only coefficient one, ready for product,
+				// no preprocessing needed
+				return new Pair<>(inputLowerBounds, inputUpperBounds);
+			}
+			// Both kinds of bounds have at least once a non-zero coefficient.
+			// We should try to use division to solve at least one kind of bounds for the
+			// eliminatee. This may however fail since we must avoid that the ancestor's
+			// eliminatees get div-captured
+			final List<ExplicitLhsPolynomialRelation> ouputLowerBounds;
+			final List<ExplicitLhsPolynomialRelation> outputUpperBounds;
+			// Which kind of bound should we try first?
+			// Idea: prefer the kind of bounds where we have fewer non-one coefficients
+			// if there is a draw, we prefer the bounds such that the other kind of bounds
+			// is smaller. Example: One lower bound where we have to divide, one upper bound
+			// where we have to divide, 99 upper bounds where the coefficient is one. We
+			// choose the upper bounds because then the upper bound with the div-term is
+			// only combined with one lower bound (Otherwise we would have to combine the
+			// lower bound div-term with 100 upper bounds).
+			final boolean trylowerBoundsFirst = (nonOneLowerCoefficients < nonOneUpperCoefficients)
+					|| (nonOneLowerCoefficients == nonOneUpperCoefficients
+							&& inputLowerBounds.size() >= inputUpperBounds.size());
+			if (trylowerBoundsFirst) {
+				final List<ExplicitLhsPolynomialRelation> solvedLower = solve(script, bannedForDivCapture,
+						inputLowerBounds);
+				if (solvedLower != null) {
+					ouputLowerBounds = solvedLower;
+					outputUpperBounds = inputUpperBounds;
+				} else {
+					// We failed to apply division to the preferred lower bounds. Let's try the
+					// upper bounds.
+					final List<ExplicitLhsPolynomialRelation> solvedUpper = solve(script, bannedForDivCapture,
+							inputUpperBounds);
+					if (solvedUpper != null) {
+						ouputLowerBounds = inputLowerBounds;
+						outputUpperBounds = solvedUpper;
+					} else {
+						if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
+							final String message = "we need the omega test";
+							throw new AssertionError(message);
+						} else {
+							// TODO: maybe log a message
+							return null;
+						}
+					}
+				}
+			} else {
+				// We prefer to apply division to the upper bounds.
+				final List<ExplicitLhsPolynomialRelation> solvedUpper = solve(script, bannedForDivCapture,
+						inputUpperBounds);
+				if (solvedUpper != null) {
+					ouputLowerBounds = inputLowerBounds;
+					outputUpperBounds = solvedUpper;
+				} else {
+					// We failed to apply division to the preferred upper bounds. Let's try the
+					// lower bounds.
+					final List<ExplicitLhsPolynomialRelation> solvedLower = solve(script, bannedForDivCapture,
+							inputLowerBounds);
+					if (solvedLower != null) {
+						ouputLowerBounds = solvedLower;
+						outputUpperBounds = inputUpperBounds;
+					} else {
+						if (ERROR_FOR_OMEGA_TEST_APPLICABILITY) {
+							final String message = "we need the omega test";
+							throw new AssertionError(message);
+						} else {
+							// TODO: maybe log a message
+							return null;
+						}
+					}
+				}
+			}
+			return new Pair<>(ouputLowerBounds, outputUpperBounds);
+		}
+
+		private List<ExplicitLhsPolynomialRelation> solve(final Script script, final Set<TermVariable> bannedForDivCapture,
+				final List<ExplicitLhsPolynomialRelation> bounds) {
+			final List<ExplicitLhsPolynomialRelation> result = new ArrayList<>(bounds.size());
+			for (final ExplicitLhsPolynomialRelation bound : bounds) {
+				if (bound.getLhsCoefficient().equals(Rational.ONE)) {
+					result.add(bound);
+				} else {
+					final Pair<ExplicitLhsPolynomialRelation, Term> solvedBound = bound
+							.divideByIntegerCoefficient(script, bannedForDivCapture);
+					if (solvedBound == null) {
+						return null;
+					}
+					if (solvedBound.getSecond() != null) {
+						throw new AssertionError();
+					}
+					result.add(solvedBound.getFirst());
+				}
+			}
+			return result;
+		}
+
+		/**
+		 * @deprecated Superseded by {@link DualJunctionTir#countNonOneCoefficients}
+		 */
+		@Deprecated
 		private static boolean allCoefficientsOne(final List<ExplicitLhsPolynomialRelation> bounds) {
 			for (final ExplicitLhsPolynomialRelation bound : bounds) {
 				if (!bound.getLhsMonomial().isLinear()) {
@@ -780,9 +942,24 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return true;
 		}
 
+		private static int countNonOneCoefficients(final List<ExplicitLhsPolynomialRelation> bounds) {
+			int number = 0;
+			for (final ExplicitLhsPolynomialRelation bound : bounds) {
+				if (!bound.getLhsMonomial().isLinear()) {
+					throw new AssertionError("cannot handle proper monomial");
+				}
+				if (bound.getLhsCoefficient().isNegative()) {
+					throw new AssertionError("cannot handle negative coefficients");
+				}
+				if (!bound.getLhsCoefficient().equals(Rational.ONE)) {
+					number++;
+				}
+			}
+			return number;
+		}
+
 		private Term combine(final Script script, final int quantifier, final ExplicitLhsPolynomialRelation lower,
 				final ExplicitLhsPolynomialRelation upper) {
-
 			final Pair<RelationSymbol, Rational> relSymbAndOffset = computeRelationSymbolAndOffset(quantifier,
 					lower.getRelationSymbol(), upper.getRelationSymbol(), lower.getRhs().getSort());
 			assert relSymbAndOffset.getSecond().equals(Rational.ZERO)
@@ -790,9 +967,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					|| relSymbAndOffset.getSecond().equals(Rational.MONE);
 			final IPolynomialTerm lhs = lower.getRhs();
 			final IPolynomialTerm rhs = upper.getRhs();
-
 			final Term result;
 			if (SmtSortUtils.isBitvecSort(lower.getRhs().getSort())) {
+				assert (lower.getLhsCoefficient().equals(Rational.ONE)
+						&& upper.getLhsCoefficient().equals(Rational.ONE)) : "Both coefficients must be one";
 				if (!relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
 					// for bitvectors we cannot handle offsets
 					// e.g., required if we combine two strict
@@ -802,22 +980,29 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					result = relSymbAndOffset.getFirst().constructTerm(script, lhs.toTerm(script), rhs.toTerm(script));
 				}
 			} else {
-				final IPolynomialTerm resultLhs;
-				if (relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
-					resultLhs = lhs;
-				} else {
-					resultLhs = PolynomialTerm.sum(lhs,
-							new AffineTerm(lhs.getSort(), relSymbAndOffset.getSecond(), Collections.emptyMap()));
+				assert (lower.getLhsCoefficient().equals(Rational.ONE)
+						|| upper.getLhsCoefficient().equals(Rational.ONE)) : "At least one coefficient must be one";
+				if (!relSymbAndOffset.getSecond().equals(Rational.ZERO)) {
+					throw new AssertionError("Offset must be zero for non-bitvectors");
 				}
-				final Term originalTerm = relSymbAndOffset.getFirst().constructTerm(script, resultLhs.toTerm(script),
-						rhs.toTerm(script));
-				result = new PolynomialRelation(script, TransformInequality.NO_TRANFORMATION,
-						relSymbAndOffset.getFirst(), (AbstractGeneralizedAffineTerm<?>) resultLhs,
-						(AbstractGeneralizedAffineTerm<?>) rhs, originalTerm).positiveNormalForm(script);
+				final IPolynomialTerm resultLhs;
+				if (!upper.getLhsCoefficient().equals(Rational.ONE)) {
+					resultLhs = lhs.mul(upper.getLhsCoefficient());
+				} else {
+					resultLhs = lhs;
+				}
+				final IPolynomialTerm resultRhs;
+				if (!lower.getLhsCoefficient().equals(Rational.ONE)) {
+					resultRhs = rhs.mul(lower.getLhsCoefficient());
+				} else {
+					resultRhs = rhs;
+				}
+				result = new PolynomialRelation(TransformInequality.NO_TRANFORMATION, relSymbAndOffset.getFirst(),
+						(AbstractGeneralizedAffineTerm<?>) resultLhs, (AbstractGeneralizedAffineTerm<?>) resultRhs)
+								.positiveNormalForm(script);
 			}
 			return result;
 		}
-
 	}
 
 	private static Pair<RelationSymbol, Rational> computeRelationSymbolAndOffset(final int quantifier,

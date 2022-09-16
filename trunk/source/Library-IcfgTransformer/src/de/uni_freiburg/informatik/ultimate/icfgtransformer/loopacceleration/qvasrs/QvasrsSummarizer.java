@@ -137,16 +137,17 @@ public class QvasrsSummarizer {
 					mLogger.warn(disjunct.toStringDirect());
 					final UnmodifiableTransFormula disjunctTf =
 							QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
-					final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mScript, disjunctTf);
-					preTfPostAbstraction =
-							QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction).getThird();
+					final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mServices, mScript,
+							disjunctTf);
+					preTfPostAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction)
+							.getThird();
 				}
 				final Triple<Rational[][], Rational[][], QvasrAbstraction> abstractionWithSimulations =
 						QvasrAbstractionJoin.join(mScript, bestAbstraction, preTfPostAbstraction);
 				final Pair<Term, Term> prePostPair = new Pair<>(pre, post);
 				simulationMatrices.add(new Triple<>(prePostPair, preTfPostAbstraction.getVasr(),
 						abstractionWithSimulations.getSecond()));
-				bestAbstraction = abstractionWithSimulations.getThird();
+				bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, preTfPostAbstraction).getThird();
 			}
 		}
 
@@ -162,6 +163,7 @@ public class QvasrsSummarizer {
 				outVarsReal.put(assVar, transitionFormula.getOutVars().get(assVar));
 			}
 		}
+
 		final QvasrsAbstraction qvasrsAbstraction =
 				new QvasrsAbstraction(bestAbstraction, disjuncts, inVarsReal, outVarsReal);
 		for (final Triple<Pair<Term, Term>, IVasr<Rational>, Rational[][]> qvasrSimulationPair : simulationMatrices) {
@@ -170,7 +172,11 @@ public class QvasrsSummarizer {
 			final Qvasr qvasrImage =
 					QvasrAbstractionJoin.image(qvasrSimulationPair.getSecond(), qvasrSimulationPair.getThird());
 			for (final Pair<Rational[], Rational[]> translatedTransformer : qvasrImage.getTransformer()) {
-				qvasrsAbstraction.addTransition(new Triple<>(pre, translatedTransformer, post));
+				final Triple<Term, Pair<Rational[], Rational[]>, Term> transition =
+						new Triple<>(pre, translatedTransformer, post);
+				if (checkIfTransitionIsAbsent(transition, qvasrsAbstraction)) {
+					qvasrsAbstraction.addTransition(transition);
+				}
 			}
 		}
 
@@ -191,6 +197,27 @@ public class QvasrsSummarizer {
 			qvasrsAbstraction.setPostState(SmtUtils.not(mScript.getScript(), postLoop));
 		}
 		return qvasrsAbstraction;
+	}
+
+	private final boolean checkIfTransitionIsAbsent(final Triple<Term, Pair<Rational[], Rational[]>, Term> transition,
+			final QvasrsAbstraction qvasrsAbstraction) {
+		boolean absent = true;
+		for (final Triple<Term, Pair<Rational[], Rational[]>, Term> t : qvasrsAbstraction.getTransitions()) {
+			if (QvasrUtils.checkTermEquiv(mScript, t.getFirst(), transition.getFirst())
+					|| QvasrUtils.checkTermEquiv(mScript, t.getThird(), transition.getThird())) {
+				for (int i = 0; i < t.getSecond().getFirst().length; i++) {
+					if (transition.getSecond().getFirst()[i] != t.getSecond().getFirst()[i]) {
+						break;
+					}
+					if (transition.getSecond().getSecond()[i] != t.getSecond().getSecond()[i]) {
+						break;
+					}
+					absent = false;
+				}
+			}
+
+		}
+		return absent;
 	}
 
 	private final Term substituteVars(final Term termToBeSubbed, final Map<IProgramVar, TermVariable> toBeSubstituted) {

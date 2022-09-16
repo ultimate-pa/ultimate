@@ -387,6 +387,7 @@
 					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
 					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
 					<format>properties</format>
+					<useNativeGit>true</useNativeGit>
 
 					<skipPoms>false</skipPoms>
 					<runOnlyOnce>true</runOnlyOnce>
@@ -496,7 +497,6 @@
 		<module>../GUIGeneratedPreferencePages</module>
 		<module>../GUILoggingWindow</module>
 		<module>../GuiRCP</module>
-		<module>../HornVerifier</module>
 		<module>../IcfgToChc</module>
 		<module>../IcfgTransformation</module>
 		<module>../InvariantSynthesis</module>
@@ -566,14 +566,13 @@
 			</activation>
 
 			<repositories>
-				<!-- We proxy repositories via monteverdi to reduce load and speed up 
-					the build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
-					The user/password is managed by DD The original URLs are <url>http://download.eclipse.org/releases/mars/</url> 
-					<url>http://download.eclipse.org/releases/neon/</url> <url>http://download.eclipse.org/releases/2018-09/</url> -->
+				<!-- We proxy repositories via sopranium.de to reduce load and speed up the build in our LAN. 
+					You can configure the sopranium.de proxy or look at the original URLs by visiting <url>https://nexus.sopranium.de</url>.
+					The user/password is managed by DD. -->
 				<repository>
 					<id>eclipse-4.17</id>
 					<layout>p2</layout>
-					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-4.17/</url>
+					<url>https://nexus.sopranium.de/repository/eclipse-4.17/</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -582,7 +581,7 @@
 				<repository>
 					<id>cdt-10</id>
 					<layout>p2</layout>
-					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/cdt-10.0/</url>
+					<url>https://nexus.sopranium.de/repository/cdt-10.0/</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
@@ -591,7 +590,7 @@
 				<repository>
 					<id>orbit-R20200831200620</id>
 					<layout>p2</layout>
-					<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/orbit-R20200831200620/</url>
+					<url>https://nexus.sopranium.de/repository/orbit-R20200831200620/</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>

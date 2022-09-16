@@ -101,7 +101,15 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
+		assert !SmtSortUtils.isBitvecSort(s) || !constant.isNegative() : "Negative constant in bitvector term";
+		assert !SmtSortUtils.isBitvecSort(s)
+				|| allCoefficientsAreNonNegative(variables2coeffcient) : "Negative coefficients in bitvector term "
+						+ variables2coeffcient;
 		mAbstractVariable2Coefficient = variables2coeffcient;
+	}
+
+	private static boolean allCoefficientsAreNonNegative(final Map<?, Rational> variables2coeffcient) {
+		return variables2coeffcient.entrySet().stream().allMatch(x -> !x.getValue().isNegative());
 	}
 
 	protected abstract IPolynomialTerm constructNew(final Sort sort, final Rational constant,
@@ -439,6 +447,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		return Rational.valueOf(bi, BigInteger.ONE);
 	}
 
+	@Override
 	public IPolynomialTerm add(final Rational offset) {
 		final Rational newConstant;
 		if (SmtSortUtils.isRealSort(getSort())) {
@@ -446,7 +455,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		} else if (SmtSortUtils.isIntSort(getSort())) {
 			newConstant = getConstant().add(offset);
 		} else if (SmtSortUtils.isBitvecSort(getSort())) {
-			newConstant = PolynomialTermUtils.bringValueInRange(getConstant().add(offset), getSort());
+			newConstant = PolynomialTermUtils.bringBitvectorValueInRange(getConstant().add(offset), getSort());
 		} else {
 			throw new AssertionError("unsupported Sort " + getSort());
 		}
@@ -954,6 +963,18 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			throw new AssertionError("unknown value: " + rRel);
 		}
 		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Rational computeGcdOfCoefficients() {
+		Rational gcd = Rational.ZERO;
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			gcd = gcd.gcd(entry.getValue());
+		}
+		return gcd;
 	}
 
 	@Override

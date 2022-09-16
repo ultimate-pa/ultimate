@@ -99,7 +99,6 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	public Interpolator(final IPredicateUnifier predicateUnifier,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer, final ILogger logger,
 			final ManagedScript script, final IUltimateServiceProvider services, final ITraceCheckPreferences prefs) {
-
 		mPredicateUnifier = predicateUnifier;
 		mPredTransformer = predTransformer;
 		mScript = script;

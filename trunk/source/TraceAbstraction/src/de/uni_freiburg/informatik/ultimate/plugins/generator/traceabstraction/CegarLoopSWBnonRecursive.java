@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -68,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -77,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author haettigj@informatik.uni-freiburg.de
  *
  */
-public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends BasicCegarLoop<L> {
+public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaCegarLoop<L> {
 	/**
 	 * Maps states from the original automaton to corresponding states in the new interpolant automaton.
 	 */
@@ -171,13 +169,15 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 	 * @param services
 	 * @param transitionClazz
 	 */
-	public CegarLoopSWBnonRecursive(final DebugIdentifier name, final IIcfg<?> icfg, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
-			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
-			final Class<L> transitionClazz) {
-		super(name, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, compositionFactory, transitionClazz);
+	public CegarLoopSWBnonRecursive(final DebugIdentifier name,
+			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> icfg,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
+				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}
@@ -196,10 +196,10 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends Basi
 
 		// cast the abstraction automaton as nested word and double decker
 		// automaton
-		mNestedAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
+		mNestedAbstraction = mAbstraction;
 
-		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()),
-				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction).getResult();
+		mDoubleDeckerAbstraction =
+				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), mAbstraction).getResult();
 		// (IDoubleDeckerAutomaton<LETTER, IPredicate>) mAbstraction.get;
 
 		// cast the path as nested run

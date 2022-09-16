@@ -43,6 +43,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
  */
 public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
 	private final IDeadEndStore<?, S> mDeadEndStore;
+	private final boolean mIsReadOnly;
 
 	/**
 	 * Wraps a given visitor with dead-end detection and pruning.
@@ -51,10 +52,14 @@ public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> e
 	 *            The underlying visitor
 	 * @param store
 	 *            A dead end store which is used to store and query dead end information
+	 * @param isReadOnly
+	 *            Whether the dead end store should be treated as read-only
 	 */
-	public DeadEndOptimizingSearchVisitor(final V underlying, final IDeadEndStore<?, S> store) {
+	public DeadEndOptimizingSearchVisitor(final V underlying, final IDeadEndStore<?, S> store,
+			final boolean isReadOnly) {
 		super(underlying);
 		mDeadEndStore = store;
+		mIsReadOnly = isReadOnly;
 	}
 
 	@Override
@@ -72,7 +77,7 @@ public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> e
 	@Override
 	public void backtrackState(final S state, final boolean isComplete) {
 		mUnderlying.backtrackState(state, isComplete);
-		if (isComplete) {
+		if (!mIsReadOnly && isComplete) {
 			mDeadEndStore.addDeadEndState(state);
 		}
 	}

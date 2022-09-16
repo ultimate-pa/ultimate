@@ -179,6 +179,9 @@ public final class QvasrAbstractionJoin {
 		}
 		Rational[][] vectorBasis = QvasrVectorSpaceBasisConstructor.computeVectorSpaceBasis(script, joinedMatrix);
 		vectorBasis = removeLastColumnRational(vectorBasis);
+		if (vectorBasis.length == 0 || vectorBasis[0].length == 0) {
+			throw new UnsupportedOperationException("Matrices are not coherent!");
+		}
 		final Pair<Rational[][], Rational[][]> splitVectorBase =
 				splitRationalMatricesVertically(vectorBasis, lhs[0].length);
 		final Rational[][] lhsRational = splitVectorBase.getFirst();

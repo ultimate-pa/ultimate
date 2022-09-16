@@ -95,26 +95,27 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 	@Override
 	public Map<IcfgLocation, List<UnmodifiableTransFormula>>
 			preProcessLoopInterprocedual(final Map<IcfgLocation, Set<List<L>>> loop) {
+
 		final Map<IcfgLocation, List<UnmodifiableTransFormula>> result = new HashMap<>();
 		for (final Entry<IcfgLocation, Set<List<L>>> loopSet : loop.entrySet()) {
 			final IcfgLocation loophead = loopSet.getKey();
 			if (loopSet.getValue() == null) {
 				continue;
 			}
+			boolean noSplit = false;
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
 			for (final List<L> loopActions : loopSet.getValue()) {
 				UnmodifiableTransFormula interprocedualTransformula = SequentialComposition
 						.getInterproceduralTransFormula(mCsToolkit, false, false, false, false, mLogger, mServices,
 								loopActions, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 								SimplificationTechnique.SIMPLIFY_DDA);
-				boolean noSplit = false;
 				for (final String option : mOptions) {
 					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
 					if (!applicationTermFinder.findMatchingSubterms(interprocedualTransformula.getFormula())
 							.isEmpty()) {
 						interprocedualTransformula = preProcessing(option, interprocedualTransformula);
 					}
-					if ("no DNF".equals(option)) {
+					if ("No DNF".equals(option)) {
 						noSplit = true;
 					}
 					mLogger.debug("Preprocess");
@@ -128,7 +129,17 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 							LoopPreprocessorTransformulaTransformer.splitDisjunction(modTf, mScript, mServices));
 				}
 			}
-			result.put(loophead, disjuncts);
+			if (noSplit) {
+				final UnmodifiableTransFormula[] tfs =
+						disjuncts.toArray(new UnmodifiableTransFormula[disjuncts.size()]);
+				final UnmodifiableTransFormula disjunct = TransFormulaUtils.parallelComposition(mLogger, mServices,
+						mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, tfs);
+				final ArrayList<UnmodifiableTransFormula> dj = new ArrayList<>();
+				dj.add(disjunct);
+				result.put(loophead, dj);
+			} else {
+				result.put(loophead, disjuncts);
+			}
 			mLogger.debug("Loop preprocessed");
 		}
 		return result;
@@ -202,7 +213,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 	}
 
 	private List<UnmodifiableTransFormula> convertActionToFormula(final List<L> actions) {
-		final List<UnmodifiableTransFormula> tfs = new ArrayList<UnmodifiableTransFormula>();
+		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 		for (final L action : actions) {
 			tfs.add(action.getTransformula());
 		}

@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -47,11 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermOperations;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -99,12 +95,16 @@ public class QvasrAbstractor {
 	 *            A transition formula from which an overapproximative qvasr-abstraction is computed.
 	 * @return A {@link QvasrAbstraction} that overapproximates the changes to variables of the transition formula.
 	 */
-	public static QvasrAbstraction computeAbstraction(final ManagedScript script,
+	public static QvasrAbstraction computeAbstraction(final IUltimateServiceProvider services, final ManagedScript script,
 			final UnmodifiableTransFormula transitionFormula) {
-
+		if (!SmtUtils.isArrayFree(transitionFormula.getFormula())
+				|| !SmtUtils.containsArrayVariables(transitionFormula.getFormula())) {
+			throw new UnsupportedOperationException("Cannot deal with arrays.");
+		}
 		final Map<TermVariable, Term> updatesInFormulaAdditions =
-				getUpdates(script, transitionFormula, BaseType.ADDITIONS);
-		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(script, transitionFormula, BaseType.RESETS);
+				getUpdates(services, script, transitionFormula, BaseType.ADDITIONS);
+		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(services, script, transitionFormula,
+				BaseType.RESETS);
 		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(script, updatesInFormulaResets, transitionFormula);
 		final Term[][] newUpdatesMatrixAdditions =
 				constructBaseMatrix(script, updatesInFormulaAdditions, transitionFormula);
@@ -135,32 +135,6 @@ public class QvasrAbstractor {
 		gaussedAdditionsPruned = gaussRowEchelonFormJordan(script, gaussedAdditionsPruned);
 		gaussedAdditionsPruned = removeZeroRows(script, gaussedAdditionsPruned);
 		return gaussedAdditionsPruned;
-	}
-
-	/**
-	 * Convert a matrix in upper triangular form into row echelon form -> only leading 1s using Standard Real Division.
-	 *
-	 * @param matrix
-	 *            A matrix containing terms in upper triangular form.
-	 * @return A matrix in row echelon form.
-	 *
-	 */
-	private static Term[][] gaussRowEchelonForm(final ManagedScript script, final Term[][] matrix) {
-		for (int i = 0; i < matrix.length; i++) {
-			for (int j = 0; j < matrix[0].length; j++) {
-				if (!QvasrUtils.checkTermEquiv(script, script.getScript().decimal("0"), matrix[i][j])) {
-					final Term dividerInverse = getDivisionInverse(script, matrix[i][j]);
-					for (int k = j; k < matrix[0].length; k++) {
-						final Term toBeDivided = matrix[i][k];
-						final Term mult =
-								QvasrAbstractor.simplifyRealMultiplication(script, toBeDivided, dividerInverse);
-						matrix[i][k] = mult;
-					}
-					break;
-				}
-			}
-		}
-		return matrix;
 	}
 
 	/**
@@ -196,44 +170,6 @@ public class QvasrAbstractor {
 					final Term newMul = QvasrAbstractor.simplifyRealMultiplication(script, newDiv, currentColumn);
 					final Term newSub = QvasrAbstractor.simplifyRealSubtraction(script, currentEntry, newMul);
 					matrix[i][j] = newSub;
-				}
-			}
-		}
-		return matrix;
-	}
-
-	/**
-	 * Bring a given matrix, containing logical terms, into upper triangle form using the gaussian partial pivot method
-	 * by making use of Ultimate's {@link PolynomialTerm}.
-	 *
-	 * @param script
-	 *            A {@link ManagedScript}
-	 *
-	 * @param matrix
-	 *            A matrix in non-upper triangle form.
-	 * @return A matrix in upper-triangle form
-	 */
-	private Term[][] gaussRowEchelonFormPolynomial(final ManagedScript script, final Term[][] matrix) {
-		final Term zero = script.getScript().decimal("0");
-		for (int i = 0; i < matrix.length; i++) {
-			for (int j = 0; j < matrix[0].length; j++) {
-				if (!QvasrUtils.checkTermEquiv(script, matrix[i][j], zero)) {
-					final IPolynomialTerm divider = PolynomialTermOperations.convert(script.getScript(), matrix[i][j]);
-					for (int k = j; k < matrix[0].length; k++) {
-						final IPolynomialTerm[] polyArr = new IPolynomialTerm[2];
-						final IPolynomialTerm toBeDivided =
-								PolynomialTermOperations.convert(script.getScript(), matrix[i][k]);
-						polyArr[0] = toBeDivided;
-						polyArr[1] = divider;
-						final IPolynomialTerm polyDiv;
-						if (PolynomialTerm.divisionPossible(polyArr)) {
-							polyDiv = AffineTerm.divide(polyArr, script.getScript());
-						} else {
-							polyDiv = PolynomialTermUtils.simplifyImpossibleDivision("/", polyArr, script.getScript());
-						}
-						matrix[i][k] = polyDiv.toTerm(script.getScript());
-					}
-					break;
 				}
 			}
 		}
@@ -304,34 +240,6 @@ public class QvasrAbstractor {
 	}
 
 	/**
-	 * Use back substitution to compute solutions for a matrix in row echelon form.
-	 *
-	 * @param matrix
-	 *            A matrix in row echelon form.
-	 * @return Solutions to unknowns
-	 */
-	private Term[] backSub(final ManagedScript script, final Term[][] matrix) {
-		final Term one = script.getScript().decimal("1");
-		final Term zero = script.getScript().decimal("0");
-		final Term[] solutions = new Term[matrix[0].length - 1];
-		for (int k = 0; k < matrix[0].length - 1; k++) {
-			solutions[k] = zero;
-		}
-		final int columns = matrix[0].length - 1;
-		int solCounter = matrix[0].length - 2;
-		for (int i = matrix.length - 1; 0 <= i; i--) {
-			solutions[solCounter] = matrix[i][columns];
-			for (int j = solCounter + 1; j <= columns - 1; j++) {
-				final Term mul = QvasrAbstractor.simplifyRealMultiplication(script, matrix[i][j], solutions[j]);
-				final Term sub = QvasrAbstractor.simplifyRealSubtraction(script, solutions[solCounter], mul);
-				solutions[solCounter] = sub;
-			}
-			solCounter--;
-		}
-		return solutions;
-	}
-
-	/**
 	 * Remove rows with all 0s from a given matrix.
 	 *
 	 * @param matrix
@@ -351,17 +259,22 @@ public class QvasrAbstractor {
 			}
 		}
 		final int prunedLength = matrix.length - toBeEliminated.size();
-		final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
-		int cnt = 0;
-		for (int k = 0; k < matrix.length; k++) {
-			if (!toBeEliminated.contains(k)) {
-				for (int l = 0; l < matrix[0].length; l++) {
-					prunedMatrix[cnt][l] = matrix[k][l];
+		if (prunedLength > 0) {
+			final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
+			int cnt = 0;
+			for (int k = 0; k < matrix.length; k++) {
+				if (!toBeEliminated.contains(k)) {
+					for (int l = 0; l < matrix[0].length; l++) {
+						prunedMatrix[cnt][l] = matrix[k][l];
+					}
+					cnt++;
 				}
-				cnt++;
 			}
+			return prunedMatrix;
+		} else {
+			return matrix;
 		}
-		return prunedMatrix;
+
 	}
 
 	/**
@@ -396,17 +309,23 @@ public class QvasrAbstractor {
 			}
 		}
 		final int prunedLength = matrix.length - toBeEliminated.size();
-		final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
-		int cnt = 0;
-		for (int k = 0; k < matrix.length; k++) {
-			if (!toBeEliminated.contains(k)) {
-				for (int l = 0; l < matrix[0].length; l++) {
-					prunedMatrix[cnt][l] = matrix[k][l];
+		if (prunedLength > 0) {
+			final Term[][] prunedMatrix = new Term[prunedLength][matrix[0].length];
+			int cnt = 0;
+			for (int k = 0; k < matrix.length; k++) {
+				if (!toBeEliminated.contains(k)) {
+					for (int l = 0; l < matrix[0].length; l++) {
+						prunedMatrix[cnt][l] = matrix[k][l];
+					}
+					cnt++;
 				}
-				cnt++;
 			}
+			return prunedMatrix;
+		} else {
+			return matrix;
+
 		}
-		return prunedMatrix;
+
 	}
 
 	/**
@@ -649,7 +568,6 @@ public class QvasrAbstractor {
 			} else {
 				divisorDividend = divisorAppTerm;
 			}
-
 			if ("/".equals(divisorAppTerm.getFunction().getName())
 					|| "/".equals(dividendAppTerm.getFunction().getName())) {
 				final Term commonDividend = SmtUtils.mul(script.getScript(), "*", dividendDividend, divisorDivisor);
@@ -844,7 +762,6 @@ public class QvasrAbstractor {
 						SmtUtils.minus(script.getScript(), commonDenominatorSubtrahend, commonDenominatorMinuend);
 				result = QvasrAbstractor.simplifyRealDivision(script, simplifiedMinuend, divisorMinuend);
 				result.toStringDirect();
-
 			}
 		}
 		if (QvasrUtils.isApplicationTerm(subtrahend) && !(QvasrUtils.isApplicationTerm(minuend))) {
@@ -1091,7 +1008,6 @@ public class QvasrAbstractor {
 					final Term[] divisorArray =
 							simplifiedDivisorParamSet.toArray(new Term[simplifiedDivisorParamSet.size()]);
 					simplifiedDivisor = SmtUtils.mul(script.getScript(), "*", divisorArray);
-
 				}
 			}
 			if (QvasrUtils.checkTermEquiv(script, simplifiedDividendPre, simplifiedDividend)) {
@@ -1202,11 +1118,11 @@ public class QvasrAbstractor {
 	 * @param outVariables
 	 * @return
 	 */
-	private static Map<TermVariable, Term> getUpdates(final ManagedScript script,
-			final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
+	private static Map<TermVariable, Term> getUpdates(final IUltimateServiceProvider services,
+			final ManagedScript script, final UnmodifiableTransFormula transitionFormula, final BaseType baseType) {
 		final SimultaneousUpdate su;
 		try {
-			su = SimultaneousUpdate.fromTransFormula(transitionFormula, script);
+			su = SimultaneousUpdate.fromTransFormula(services, transitionFormula, script);
 		} catch (final Exception e) {
 			throw new UnsupportedOperationException("Could not compute Simultaneous Update!");
 		}
@@ -1215,6 +1131,12 @@ public class QvasrAbstractor {
 		 */
 		final Map<Term, Term> realTvs = new HashMap<>();
 		final Map<IProgramVar, Term> updates = su.getDeterministicAssignment();
+		/*
+		 * TODO: Look at havoced vars.
+		 */
+		for (final IProgramVar readOnlyVar : su.getReadonlyVars()) {
+			updates.put(readOnlyVar, readOnlyVar.getTermVariable());
+		}
 		for (final IProgramVar pv : updates.keySet()) {
 			final TermVariable inVar = script.constructFreshTermVariable(pv.getGloballyUniqueId() + "_real",
 					SmtSortUtils.getRealSort(script));
@@ -1265,12 +1187,13 @@ public class QvasrAbstractor {
 		final Map<Term, Term> subMap = new HashMap<>();
 		for (final Term param : appTerm.getParameters()) {
 			if (param.getSort() == SmtSortUtils.getRealSort(script)) {
-				continue;
-			}
-			if (param instanceof ConstantTerm) {
+			} else if (param instanceof ConstantTerm) {
 				final ConstantTerm paramConst = (ConstantTerm) param;
 				final Rational paramValue = (Rational) paramConst.getValue();
 				subMap.put(param, paramValue.toTerm(SmtSortUtils.getRealSort(script)));
+			} else if (param instanceof TermVariable) {
+				subMap.put(param, script.constructFreshTermVariable(((TermVariable) param).getName(),
+						SmtSortUtils.getRealSort(script)));
 			} else {
 				subMap.putAll(appTermToReal(script, (ApplicationTerm) param));
 			}

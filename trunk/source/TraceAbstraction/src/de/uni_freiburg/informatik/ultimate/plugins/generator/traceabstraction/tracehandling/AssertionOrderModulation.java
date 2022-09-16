@@ -113,7 +113,6 @@ public class AssertionOrderModulation<LETTER> {
 		switch (interpolationTechnique) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-		case AcceleratedInterpolation:
 		case PDR:
 			return AssertCodeBlockOrder.NOT_INCREMENTALLY;
 		case ForwardPredicates:
