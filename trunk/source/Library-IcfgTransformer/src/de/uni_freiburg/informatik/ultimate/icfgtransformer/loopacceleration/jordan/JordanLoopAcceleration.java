@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial.Occurrence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -304,8 +305,42 @@ public class JordanLoopAcceleration {
 		}
 		final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
 				closedFormWithInvarsMap, su.getDeterministicArrayWrites());
+		checkIndices(mgdScript, array2Index2values, it);
 		return new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
 	}
+
+	private static void checkIndices(final ManagedScript mgdScript,
+			final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values, final TermVariable it) {
+		for (final Triple<IProgramVar, ArrayIndex, Term> triple : array2Index2values.entrySet()) {
+			checkIndex(mgdScript, triple.getSecond(), it);
+		}
+	}
+
+	private static void checkIndex(final ManagedScript mgdScript, final ArrayIndex index, final TermVariable it) {
+		final List<IPolynomialTerm> polyIndex = index.stream().map(x -> PolynomialTermTransformer.convert(mgdScript.getScript(), x)).collect(Collectors.toList());
+		if (isStrictlyMonotone(polyIndex, it)) {
+			return;
+		} else {
+			throw new UnsupportedOperationException("Index not moving: " + index);
+		}
+	}
+
+	private static boolean isStrictlyMonotone(final List<IPolynomialTerm> polyIndex, final TermVariable it) {
+		boolean strictlyMonotone = false;
+		for (final IPolynomialTerm poly : polyIndex) {
+			for (final Entry<Monomial, Rational> entry : poly.getMonomial2Coefficient().entrySet()) {
+				final Occurrence occ = entry.getKey().isExclusiveVariable(it);
+				if (occ == Occurrence.NON_EXCLUSIVE_OR_SUBTERM) {
+					throw new UnsupportedOperationException("Probably not monotone: " + entry.getKey());
+				} else if (occ == Occurrence.AS_EXCLUSIVE_VARIABlE) {
+					strictlyMonotone = true;
+				}
+			}
+
+		}
+		return strictlyMonotone;
+	}
+
 
 	private static NestedMap2<IProgramVar, ArrayIndex, Term> applySubstitutionToIndexAndValue(
 			final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping,
