@@ -646,6 +646,8 @@ public class JordanLoopAcceleration {
 			return Arrays.asList(new TermVariable[] { mgdScript.constructFreshTermVariable("idxDim1", intSort),
 					mgdScript.constructFreshTermVariable("idxDim2", intSort) });
 		} else {
+			// TODO: Works analogously to two dimensions, but I did not had examples to test
+			// an implementation.
 			throw new UnsupportedOperationException("Dimension not yet supported: " + dimension);
 		}
 	}
