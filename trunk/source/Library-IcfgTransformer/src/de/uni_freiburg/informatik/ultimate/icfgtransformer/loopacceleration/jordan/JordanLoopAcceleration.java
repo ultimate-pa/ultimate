@@ -578,7 +578,6 @@ public class JordanLoopAcceleration {
 			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula, final TermVariable itFin,
 			final TermVariable it, final ClosedFormOfUpdate closedFormIt) {
 		final Script script = mgdScript.getScript();
-		final TermVariable idx = mgdScript.constructFreshTermVariable("idx", SmtSortUtils.getIntSort(script));
 		final List<Term> arrayUpdateConstraints = new ArrayList<>();
 		// a[k] := v
 		// a' = (store a k v)
@@ -596,13 +595,10 @@ public class JordanLoopAcceleration {
 				index = entry.getKey();
 				value = entry.getValue();
 			}
-			if (index.size() > 1) {
-				throw new UnsupportedOperationException("multi-dimensional");
-			}
+			final List<TermVariable> idx = constructIdxTermVariables(mgdScript, index.size());
 			final Term inRangeIndexEquality;
 			{
-				final Term cf = index.get(0);
-				final Term eq1 = SmtUtils.equality(script, idx, cf);
+				final Term eq1 = SmtUtils.pairwiseEquality(script, idx, index);
 				final Term iterationRange = constructIterationRange(script, BigInteger.ZERO, it, BigInteger.ONE, itFin);
 				inRangeIndexEquality = SmtUtils.and(script, iterationRange, eq1);
 			}
@@ -635,11 +631,23 @@ public class JordanLoopAcceleration {
 			final Term conjunction = SmtUtils.and(script, conjunct1, conjunct2);
 			// No need to apply quantifier elimination to conjunction, each conjunct
 			// addresses a different range hence no conjunct can simplify the other.
-			final Term all2 = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(idx),
-					conjunction);
+			final Term all2 = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, idx, conjunction);
 			arrayUpdateConstraints.add(all2);
 		}
 		return arrayUpdateConstraints;
+	}
+
+	private static List<TermVariable> constructIdxTermVariables(final ManagedScript mgdScript, final int dimension) {
+		assert dimension >= 1;
+		final Sort intSort = SmtSortUtils.getIntSort(mgdScript.getScript());
+		if (dimension == 1) {
+			return Collections.singletonList(mgdScript.constructFreshTermVariable("idx", intSort));
+		} else if (dimension == 2) {
+			return Arrays.asList(new TermVariable[] { mgdScript.constructFreshTermVariable("idxDim1", intSort),
+					mgdScript.constructFreshTermVariable("idxDim2", intSort) });
+		} else {
+			throw new UnsupportedOperationException("Dimension not yet supported: " + dimension);
+		}
 	}
 
 	/**
