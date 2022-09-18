@@ -455,7 +455,8 @@ public final class SmtUtils {
 	 * Given the array of terms [lhs_1, ..., lhs_n] and the array of terms [rhs_1, ..., rhs_n], return the conjunction
 	 * of the following equalities lhs_1 = rhs_1, ... , lhs_n = rhs_n.
 	 */
-	public static Term pairwiseEquality(final Script script, final List<Term> lhs, final List<Term> rhs) {
+	public static Term pairwiseEquality(final Script script, final List<? extends Term> lhs,
+			final List<? extends Term> rhs) {
 		if (lhs.size() != rhs.size()) {
 			throw new IllegalArgumentException("must have same length");
 		}
