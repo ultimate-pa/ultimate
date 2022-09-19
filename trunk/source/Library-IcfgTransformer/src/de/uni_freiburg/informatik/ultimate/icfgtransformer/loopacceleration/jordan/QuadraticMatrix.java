@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult.JordanTransformationStatus;
@@ -53,7 +54,7 @@ public class QuadraticMatrix {
 	 * mEntries is an integer array of arrays representing the entries of the
 	 * matrix.
 	 */
-	private final BigInteger[][] mEntries;;
+	private final BigInteger[][] mEntries;
 
 	public QuadraticMatrix(final BigInteger[][] matrixEntries) {
 		// Check if given array of arrays is quadratic.
@@ -810,6 +811,11 @@ public class QuadraticMatrix {
 
 	public void setEntry(final int i, final int j, final BigInteger value) {
 		mEntries[i][j] = value;
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.deepToString(mEntries);
 	}
 
 	static class JordanTransformationResult {
