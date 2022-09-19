@@ -40,6 +40,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -549,6 +550,40 @@ public class LiptonReduction<L, P> {
 		}
 
 		return true;
+	}
+
+	// Candidate replacement for checkEventsInBetween
+	// TODO This may not be entirely sound yet: Do we have to consider cutoff events specially?
+	// TODO Is it worth caching this?
+	private boolean checkForEventsInBetween2(final Transition<L, P> t1, final Transition<L, P> t2, final P pivot,
+			final IPetriNet<L, P> petriNet) {
+		final var targets = getFirstEvents(t1).collect(Collectors.toSet());
+		return getLastEvents(t2).noneMatch(e2 -> searchEventBetween(e2, targets, pivot));
+	}
+
+	private boolean searchEventBetween(final Event<L, P> start, final Set<Event<L, P>> targets, final P pivot) {
+		for (final var pre : start.getPredecessorConditions()) {
+			final var ev = pre.getPredecessorEvent();
+			if (targets.stream().noneMatch(ev.getLocalConfiguration()::contains)) {
+				// we are not on a path back to a target, so ignore this node
+				continue;
+			}
+
+			final var trans = ev.getTransition();
+			if (trans.getPredecessors().contains(pivot) || trans.getSuccessors().contains(pivot)) {
+				// ignore paths through predecessors or successors of the pivot
+				continue;
+			}
+
+			if (targets.contains(ev)) {
+				// the path consists only of a single place, and can be ignored
+				continue;
+			}
+
+			// the path contains at least event ev; so ev is between start and targets
+			return true;
+		}
+		return false;
 	}
 
 	/**
