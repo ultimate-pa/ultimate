@@ -112,45 +112,62 @@ public class PolynomialTermMatrix {
 	 * Construct the term it(it-1)*...*(it-j) which is the numerator of the entries of the it-th power of the
 	 * Jordan matrix. Multiply this term by (k+1)*(k+2)*...*(it-blockSize+1) to make sure that fractions in
 	 * PolynomialTermMatrix are reduced.
-	 * restrictedVersionPossible is true iff -1 is not an eigenvalue and for eigenvalue 1
-	 * no Jordan block is greater than 2.
-	 * If !restrictedVersionPossible, substitute it = 2*itHalf if itEven, it = 2*itHalf + 1 if !itEven.
 	 */
 	private static IPolynomialTerm constructBinomialCoefficientNumerator(final Script script, final TermVariable it,
 			final TermVariable itHalf, final int k, final int blockSize, final boolean itEven,
 			final boolean restrictedVersionPossible) {
 		final Sort sort = SmtSortUtils.getIntSort(script);
-		IPolynomialTerm var;
-		if (restrictedVersionPossible) {
-			var = AffineTerm.constructVariable(it);
-		} else {
-			var = AffineTerm.constructVariable(itHalf);
-			if (itEven) {
-				var = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
-						AffineTerm.constructVariable(itHalf));
-			} else {
-				var = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
-						AffineTerm.constructVariable(itHalf));
-				var = PolynomialTerm.sum(var, AffineTerm.constructConstant(sort,Rational.ONE));
-			}
-		}
+		final IPolynomialTerm iterCount = constructIterationCounter(script, restrictedVersionPossible, itEven, it, itHalf);
 		if (k==0) {
 			return AffineTerm.constructConstant(sort, Rational.valueOf(
 					computeFacultyWithStartValue(1,blockSize-1), BigInteger.ONE));
 		} else if (k==1) {
 			return PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.valueOf(
-					computeFacultyWithStartValue(1,blockSize-1), BigInteger.ONE)),var);
+					computeFacultyWithStartValue(1,blockSize-1), BigInteger.ONE)),iterCount);
 		}
 		final IPolynomialTerm facultyFactor = AffineTerm.constructConstant(sort, Rational.valueOf(
 				computeFacultyWithStartValue(k+1,blockSize-1), BigInteger.ONE));
-		IPolynomialTerm varMinusKFaculty = PolynomialTerm.mulPolynomials(facultyFactor,var);
+		IPolynomialTerm varMinusKFaculty = PolynomialTerm.mulPolynomials(facultyFactor,iterCount);
 		for (int i=1; i<k; i++) {
 			final IPolynomialTerm constant = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.valueOf(-i),
 					BigInteger.ONE));
-			final IPolynomialTerm varMinusConstant = PolynomialTerm.sum(var, constant);
+			final IPolynomialTerm varMinusConstant = PolynomialTerm.sum(iterCount, constant);
 			varMinusKFaculty = PolynomialTerm.mulPolynomials(varMinusKFaculty, varMinusConstant);
 		}
 		return varMinusKFaculty;
+	}
+
+	/**
+	 * Construct an {@link IPolynomialTerm} that represents the current iteration
+	 * (which is also the exponent of the Jordan matrix that we construct). The
+	 * result can be
+	 * <li>`it` (can represent all iterations)
+	 * <li>`2*itHalf` (can represent even iterations)
+	 * <li>`2*itHalf+1` (can represent odd iterations)
+	 *
+	 * Note: We have to distinguish even and odd transitions
+	 * <li> if some eigenvalue is negative (currently we only support -1) or
+	 * <li> if some Jordan block is greater than 2.
+	 */
+	private static IPolynomialTerm constructIterationCounter(final Script script,
+			final boolean restrictedVersionPossible, final boolean itEven, final TermVariable it,
+			final TermVariable itHalf) {
+		final Sort sort = SmtSortUtils.getIntSort(script);
+		final IPolynomialTerm result;
+		if (restrictedVersionPossible) {
+			result = AffineTerm.constructVariable(it);
+		} else {
+			if (itEven) {
+				result = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
+						AffineTerm.constructVariable(itHalf));
+			} else {
+				result = PolynomialTerm.sum(
+						PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
+								AffineTerm.constructVariable(itHalf)),
+						AffineTerm.constructConstant(sort, Rational.ONE));
+			}
+		}
+		return result;
 	}
 
 	/**
