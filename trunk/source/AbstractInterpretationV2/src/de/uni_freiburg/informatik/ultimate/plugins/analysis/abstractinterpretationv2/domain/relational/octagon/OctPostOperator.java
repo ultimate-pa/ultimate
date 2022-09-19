@@ -189,14 +189,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 	public List<OctDomainState> apply(final OctDomainState oldState, final IcfgEdge edge) {
 		final IcfgEdge transitionLabel = edge.getLabel();
 
-		if (transitionLabel instanceof Summary) {
-			final Summary summary = (Summary) transitionLabel;
-			if (!summary.calledProcedureHasImplementation()) {
-				final OctDomainState result = oldState.deepCopy();
-				// TODO: Consider the summary instead of just havocing all assigned variables
-				result.havocVars(summary.getTransformula().getAssignedVars());
-				return List.of(result);
-			}
+		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
+		if (transitionLabel instanceof Summary && !((Summary) transitionLabel).calledProcedureHasImplementation()) {
+			throw new UnsupportedOperationException("Summary for procedure without implementation");
 		} else if (transitionLabel instanceof Call) {
 			return applyCall(oldState, oldState, (Call) transitionLabel);
 		} else if (transitionLabel instanceof Return) {
