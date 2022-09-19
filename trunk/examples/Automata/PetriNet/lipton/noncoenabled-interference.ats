@@ -1,0 +1,25 @@
+//@ commutativity (b,c) (c,b) (a,d) (d,a)
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" },
+  places      = { "l1" "l2" "p" "l3" },
+  transitions = {
+    ({ "l1" "l2" } "a" { "p" "l1" })
+    ({ "p" }       "b" { "l3" })
+    ({ "l1" }      "c" { "l1" })
+  },
+  initialMarking = { "l1" "l2" },
+  acceptingPlaces = { "l3" }
+);
+
+PetriNet expected = (
+  alphabet    = { "a" "b" "c" },
+  places      = { "l1" "l2" "p" "l3" },
+  transitions = {
+    ({ "l1" "l2" } "a" { "p" "l1" })
+    ({ "p" }       "b" { "l3" })
+    ({ "l1" }      "c" { "l1" })
+  },
+  initialMarking = { "l1" "l2" },
+  acceptingPlaces = { "l3" }
+);
