@@ -140,7 +140,7 @@ public class LiptonReduction<L, P> {
 
 		try {
 			BoundedPetriNet<L, P> resultCurrentIteration = CopySubnet.copy(mServices, mPetriNet,
-					new HashSet<>(mPetriNet.getTransitions()), mPetriNet.getAlphabet(), true);
+					new HashSet<>(mPetriNet.getTransitions()), new HashSet<>(mPetriNet.getAlphabet()), true);
 
 			// TODO Why call FinitePrefix and not PetriNetUnfolder directly?
 			mBranchingProcess = new FinitePrefix<>(mServices, resultCurrentIteration).getResult();
