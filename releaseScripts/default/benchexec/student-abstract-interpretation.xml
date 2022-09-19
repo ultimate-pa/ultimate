@@ -21,5 +21,6 @@
 		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks>
-
+  
+  <resultfiles></resultfiles>
 </benchmark>

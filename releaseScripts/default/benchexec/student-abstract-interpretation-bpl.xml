@@ -16,5 +16,6 @@
 		<includesfile>../../../trunk/examples/concurrency-bpl.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
 	</tasks>
-
+  
+  <resultfiles></resultfiles>
 </benchmark>
