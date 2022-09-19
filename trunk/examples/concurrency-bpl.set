@@ -4,3 +4,4 @@ concurrent/bpl/regression/*.bpl
 concurrent/bpl/regression/showcase/*.bpl
 concurrent/bpl/unbounded/*.bpl
 concurrent/bpl/weaver-benchmarks/generated/*.yml
+concurrent/bpl/weaver-benchmarks/generated/*/*.yml
