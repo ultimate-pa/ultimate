@@ -82,7 +82,7 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	 * corresponding to this marking can be omitted from the program automaton.
 	 */
 	protected boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
-			final Set<? extends IcfgLocation> errorLocs, final Marking<?, IPredicate> marking) {
+			final Set<? extends IcfgLocation> errorLocs, final Marking<IPredicate> marking) {
 		for (final IPredicate place : marking) {
 			if (place instanceof ISLPredicate) {
 				final IcfgLocation location = ((ISLPredicate) place).getProgramPoint();

@@ -30,11 +30,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -42,17 +41,17 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 /**
  * Obtain a word that is accpeted by a given Petri net.
  * <p>
- * NOTE: If the language of the input  is empty, an exception is thrown.
+ * NOTE: If the language of the input is empty, an exception is thrown.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public final class GetAcceptedWord<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
-	private final IPetriNet<LETTER, PLACE> mOperand;
+	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private final Word<LETTER> mAcceptedWord;
 
-
-	public GetAcceptedWord(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand)
+	public GetAcceptedWord(final AutomataLibraryServices services,
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -73,7 +72,7 @@ public final class GetAcceptedWord<LETTER, PLACE>
 	}
 
 	@Override
-	protected IPetriNet<LETTER, PLACE> getOperand() {
+	protected IPetriNetTransitionProvider<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 
@@ -85,7 +84,7 @@ public final class GetAcceptedWord<LETTER, PLACE>
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
-		final boolean isAccepted = new Accepts<LETTER, PLACE>(mServices, getOperand(), getResult()).getResult();
+		final boolean isAccepted = new Accepts<>(mServices, getOperand(), getResult()).getResult();
 		return isAccepted;
 	}
 }

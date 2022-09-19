@@ -353,11 +353,16 @@ public final class TransFormulaUtils {
 	 * @param logger
 	 * @param services
 	 * @param xnfConversionTechnique
+	 * @param isInternal
+	 *            Whether or not the resulting TF is meant to describe an internal transition (as opposed to a call or
+	 *            return). If so, the method ensures that the return value has internal normal form (see
+	 *            {@link #hasInternalNormalForm(TransFormula)}).
 	 */
 	public static UnmodifiableTransFormula parallelComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final TermVariable[] branchIndicators, final boolean tranformToCNF,
-			final XnfConversionTechnique xnfConversionTechnique, final UnmodifiableTransFormula... transFormulas) {
+			final XnfConversionTechnique xnfConversionTechnique, final boolean isInternal,
+			final UnmodifiableTransFormula... transFormulas) {
 		logger.debug("parallel composition");
 
 		final boolean useBranchEncoders = branchIndicators != null;
@@ -413,6 +418,9 @@ public final class TransFormulaUtils {
 
 		tfb.setFormula(resultFormula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		if (isInternal) {
+			tfb.ensureInternalNormalForm();
+		}
 		return tfb.finishConstruction(mgdScript);
 	}
 
@@ -970,21 +978,6 @@ public final class TransFormulaUtils {
 		return resultTerm;
 	}
 
-	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
-			final ManagedScript maScript, final IUltimateServiceProvider services, final ILogger logger,
-			final XnfConversionTechnique xnfConversionTechnique) {
-		final UnmodifiableTransFormula guard = computeGuard(tf, maScript, services);
-		final UnmodifiableTransFormula negGuard = negate(guard, maScript, services);
-		return parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, negGuard);
-	}
-
-	public static UnmodifiableTransFormula computeEncodedBranchFormula(final UnmodifiableTransFormula tf,
-			final UnmodifiableTransFormula altPath, final ManagedScript maScript,
-			final IUltimateServiceProvider services, final ILogger logger,
-			final XnfConversionTechnique xnfConversionTechnique) {
-		return parallelComposition(logger, services, maScript, null, false, xnfConversionTechnique, tf, altPath);
-	}
-
 	/**
 	 * Add all elements of progConsts to tfb that occur in formula, ignore the those that do not occur in the formula.
 	 */
@@ -1081,34 +1074,6 @@ public final class TransFormulaUtils {
 		tfb.setFormula(mgdScript.getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(mgdScript);
-	}
-
-	/**
-	 * This method first computes the guards of the input {@link UnmodifiableTransFormula}s. It then returns a
-	 * {@link UnmodifiableTransFormula} that is satisfied for some input variables iff none of the guards is satisfied.
-	 * The output variables of the result are simply set to the input variables.
-	 *
-	 * This method will not always work: in case the disjunction contains auxvars that cannot be eliminated this method
-	 * will throw an Exception.
-	 *
-	 *
-	 *
-	 * @param logger
-	 * @param services
-	 * @param serialNumber
-	 *            Use a different number in each call. This is an ugly workaround and will be removed in the future.
-	 * @param mgdScript
-	 * @param transFormulas
-	 *            The other TransFormulas.
-	 * @return A TransFormula in guard form.
-	 */
-	public static UnmodifiableTransFormula constructRemainderGuard(final ILogger logger,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final UnmodifiableTransFormula... transFormulas) {
-		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, mgdScript, null, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
-		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services);
-		return negate(guardOfDisjunction, mgdScript, services);
 	}
 
 	/**

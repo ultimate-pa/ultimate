@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 /**
  * A trigger to find new function applications. It has to be installed into the CClosure. Upon activation, the remaining
  * E-Matching code can be executed with the given register that is updated by the new term.
- * 
+ *
  * @author Tanja Schindler
  */
 public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ReverseTrigger {
@@ -70,15 +70,15 @@ public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 	}
 
 	@Override
-	public void activate(final CCAppTerm appTerm) {
+	public void activate(final CCAppTerm appTerm, final boolean isFresh) {
 		final CCTerm[] updatedRegister = Arrays.copyOf(mRegister, mRegister.length);
 		updatedRegister[mOutRegIndex] = appTerm;
 
 		if (mArg != null) { // Reverse
 			assert appTerm instanceof CCAppTerm;
-			CCAppTerm partialApp = (CCAppTerm) appTerm;
+			CCAppTerm partialApp = appTerm;
 			for (int i = 0; i < mFunc.getParameterSorts().length - mArgPos - 1; i++) {
-				partialApp = (CCAppTerm) ((CCAppTerm) partialApp).getFunc();
+				partialApp = (CCAppTerm) partialApp.getFunc();
 			}
 			final CCTerm candArg = partialApp.getArg();
 			final int termDecisionLevel = mEMatching.getQuantTheory().getCClosure()

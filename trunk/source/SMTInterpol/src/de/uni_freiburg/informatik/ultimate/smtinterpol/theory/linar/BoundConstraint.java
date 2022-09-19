@@ -118,11 +118,11 @@ public class BoundConstraint extends DPLLAtom {
 	}
 
 	@Override
-	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
+	public Term getSMTFormula(Theory smtTheory) {
 		final MutableAffineTerm at = new MutableAffineTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
-		return at.toSMTLibLeq0(smtTheory, quoted);
+		return at.toSMTLibLeq0(smtTheory);
 	}
 
 	@Override

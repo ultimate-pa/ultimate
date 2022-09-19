@@ -26,6 +26,7 @@ import org.junit.runners.JUnit4;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
@@ -61,7 +62,9 @@ public final class PairHashTest {
 		mTerms = new CCTerm[NUMTERMS];
 		for (int i = 0; i < NUMTERMS; i++) {
 			final FunctionSymbol sym = mTheory.declareFunction("x" + i, new Sort[0], sort);
-			mTerms[i] = mCClosure.createAnonTerm(mTheory.term(sym));
+			final Term term = mTheory.term(sym);
+			mTerms[i] = mCClosure.createAnonTerm(term);
+			mCClosure.addTerm(mTerms[i], term);
 		}
 	}
 

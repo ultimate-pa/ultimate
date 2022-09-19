@@ -60,7 +60,7 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 	 * fixed in the last 13 months.
 	 */
 
-	private final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> conflictRelation = new HashRelation<>();
+	private final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> mConflictRelation = new HashRelation<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
 	/**
@@ -85,7 +85,6 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 
 	@Override
 	public void initialize(final Set<Condition<LETTER, PLACE>> initialConditions) {
-
 	}
 
 	private Stream<Event<LETTER, PLACE>> streamCoRelatedEvents(final Condition<LETTER, PLACE> c) {
@@ -95,7 +94,7 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 		final Set<Event<LETTER, PLACE>> coRelatedEvents = new HashSet<>(mBranchingProcess.getEvents());
 		coRelatedEvents.remove(mBranchingProcess.getDummyRoot());
 		coRelatedEvents.removeAll(c.getPredecessorEvent().getLocalConfiguration().getEvents());
-		return coRelatedEvents.stream().filter(e -> !conflictRelation.containsPair(c.getPredecessorEvent(), e)
+		return coRelatedEvents.stream().filter(e -> !mConflictRelation.containsPair(c.getPredecessorEvent(), e)
 				&& !e.getLocalConfiguration().contains(c.getPredecessorEvent()));
 	}
 
@@ -134,19 +133,19 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 		// in co-relation with all predecessor conditions of e.
 		for (final Event<LETTER, PLACE> pred : e.getPredecessorEvents()) {
 			if (e != pred) {
-				for (final Event<LETTER, PLACE> e2 : conflictRelation.getImage(pred)) {
+				for (final Event<LETTER, PLACE> e2 : mConflictRelation.getImage(pred)) {
 					assert e != e2 : "event is in conflict to itself";
-					conflictRelation.addPair(e, e2);
-					conflictRelation.addPair(e2, e);
+					mConflictRelation.addPair(e, e2);
+					mConflictRelation.addPair(e2, e);
 				}
 			}
 		}
 
 		final Set<Event<LETTER, PLACE>> succOfPredOfE = new HashSet<>();
 		succOfPredOfE.add(e);
-		final Set<Condition<LETTER, PLACE>> PredOfE = e.getPredecessorConditions();
+		final Set<Condition<LETTER, PLACE>> predOfE = e.getPredecessorConditions();
 		final Set<Event<LETTER, PLACE>> conflictEvents = new HashSet<>();
-		for (final Condition<LETTER, PLACE> c : PredOfE) {
+		for (final Condition<LETTER, PLACE> c : predOfE) {
 			for (final Event<LETTER, PLACE> e2 : c.getSuccessorEvents()) {
 				if (e != e2) {
 					conflictEvents.add(e2);
@@ -156,19 +155,11 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 		for (final Event<LETTER, PLACE> event : mBranchingProcess.getEvents()) {
 			for (final Event<LETTER, PLACE> confEvent : conflictEvents) {
 				if (event.getLocalConfiguration().contains(confEvent)) {
-					conflictRelation.addPair(event, e);
-					conflictRelation.addPair(e, event);
+					mConflictRelation.addPair(event, e);
+					mConflictRelation.addPair(e, event);
 					break;
 				}
 			}
-		}
-	}
-
-	private void addConflict(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
-		for (final Event<LETTER, PLACE> e : mBranchingProcess.getEvents().stream()
-				.filter(e3 -> e3.getLocalConfiguration().contains(e2)).collect(Collectors.toSet())) {
-			conflictRelation.addPair(e1, e);
-			conflictRelation.addPair(e, e1);
 		}
 	}
 
@@ -176,15 +167,11 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		final Event<LETTER, PLACE> e1 = c1.getPredecessorEvent();
 		final Event<LETTER, PLACE> e2 = c2.getPredecessorEvent();
-		final boolean result = !(conflictRelation.containsPair(e1, e2) || e1.getLocalConfiguration().contains(e2)
+		final boolean result = !(mConflictRelation.containsPair(e1, e2) || e1.getLocalConfiguration().contains(e2)
 				|| e2.getLocalConfiguration().contains(e1) || e1.getAncestors() == 0 || e2.getAncestors() == 0)
 				// we don't have to check this if we assume that c1 and c2 are not cutoff conditions
 				|| c1.getPredecessorEvent().conditionMarkContains(c2)
 				|| c2.getPredecessorEvent().conditionMarkContains(c1);
-		// if( result != isInCoRelationNaive(c1, c2)) {
-		// assert false: String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result,
-		// !result);
-		// }
 
 		if (result) {
 			mQueryCounterYes++;
@@ -192,10 +179,6 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 			mQueryCounterNo++;
 		}
 		return result;
-	}
-
-	private boolean isInCoRelationNaive(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
-		return !mBranchingProcess.inCausalRelation(c1, c2) && !mBranchingProcess.inConflict(c1, c2);
 	}
 
 	/**
@@ -275,7 +258,7 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 
 	@Override
 	public String toString() {
-		return conflictRelation.toString();
+		return mConflictRelation.toString();
 	}
 
 	@Override
@@ -328,7 +311,6 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 		}
 		final Iterator<Condition<LETTER, PLACE>> it = succCond.iterator();
 		final Condition<LETTER, PLACE> firstCond = it.next();
-		streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
 		final Set<Event<LETTER, PLACE>> result = streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
 		while (it.hasNext()) {
 			final Condition<LETTER, PLACE> c = it.next();

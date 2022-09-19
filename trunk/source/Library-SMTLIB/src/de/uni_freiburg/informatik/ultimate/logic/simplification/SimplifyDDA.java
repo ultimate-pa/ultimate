@@ -660,7 +660,7 @@ public class SimplifyDDA extends NonRecursive {
 	 * @return term if each subterm of term is neither NON_CONSTRAINING nor NON_RELAXING. Otherwise return a copy of
 	 *         term, where each NON_CONSTRAINING subterm is replaced by true and each NON_RELAXING subterm is replaced
 	 *         by false
-	 * @param mTerm
+	 * @param term
 	 *            whose Sort is Boolean
 	 */
 	public Term getSimplifiedTerm(final Term inputTerm) throws SMTLIBException {

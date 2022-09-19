@@ -308,7 +308,7 @@ public final class Polynomial {
 			return "0";
 		}
 		final StringBuilder sb = new StringBuilder();
-		final String comma = "";
+		String comma = "";
 		for (final Map.Entry<Map<Term, Integer>, Rational> monomial: mSummands.entrySet()) {
 			sb.append(comma);
 			sb.append(monomial.getValue());
@@ -320,6 +320,7 @@ public final class Polynomial {
 					sb.append(repr);
 				}
 			}
+			comma = " + ";
 		}
 		return sb.toString();
 	}

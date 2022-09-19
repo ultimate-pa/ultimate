@@ -189,7 +189,7 @@ public class Generator {
 	public Term convertClauseToTerm(Theory theory, Clause cl) {
 		final Term[] literals = new Term[cl.getSize()];
 		for (int i = 0; i < cl.getSize(); i++) {
-			literals[i] = cl.getLiteral(i).getSMTFormula(theory, true);
+			literals[i] = cl.getLiteral(i).getSMTFormula(theory);
 		}
 		final Term clause = theory.or(literals);
 		return clause;

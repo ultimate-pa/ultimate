@@ -70,7 +70,7 @@ public final class Sort {
 
 	Sort(final SortSymbol sym, final String[] indices, final Sort[] args) {
 		assert args != null;
-		assert args.length == (sym.isParametric() ? 0 : sym.mNumParams)
+		assert args.length == (sym.isSortVariable() ? 0 : sym.mNumParams)
 				: "Sort created with wrong number of args";
 		mSymbol = sym;
 		mIndices = indices;
@@ -199,7 +199,7 @@ public final class Sort {
 			return last == concrete;
 		}
 
-		if (!mSymbol.isParametric()) {
+		if (!mSymbol.isSortVariable()) {
 			final Sort me = getRealSort();
 			if (me.mSymbol != concrete.mSymbol) {
 				return false;
@@ -223,7 +223,7 @@ public final class Sort {
 	 * @return The substituted sort.
 	 */
 	public Sort mapSort(final Sort[] substitution) {
-		if (mSymbol.isParametric()) {
+		if (mSymbol.isSortVariable()) {
 			return substitution[mSymbol.mNumParams];
 		}
 		if (mArgs.length == 0) {
@@ -249,7 +249,7 @@ public final class Sort {
 	 * @return The substituted sort.
 	 */
 	Sort mapSort(final Sort[] substitution, final HashMap<Sort, Sort> cachedMappings) {
-		if (mSymbol.isParametric()) {
+		if (mSymbol.isSortVariable()) {
 			return substitution[mSymbol.mNumParams];
 		}
 		Sort result = cachedMappings.get(this);
@@ -276,8 +276,8 @@ public final class Sort {
 	 * command.
 	 * @return true iff this is a sort variable.
 	 */
-	public boolean isParametric() {
-		return mSymbol.isParametric();
+	public boolean isSortVariable() {
+		return mSymbol.isSortVariable();
 	}
 
 	/**

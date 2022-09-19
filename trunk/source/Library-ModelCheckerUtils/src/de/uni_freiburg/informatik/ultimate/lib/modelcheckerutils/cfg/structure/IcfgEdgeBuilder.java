@@ -200,13 +200,14 @@ public class IcfgEdgeBuilder {
 
 		final Collection<IcfgEdge> transitions = branchEncodersAndTransitions.values();
 		assert onlyInternal(transitions) : "You cannot have calls or returns in parallel compositions";
+		final boolean isInternal = true;
 
 		final List<UnmodifiableTransFormula> transFormulas =
 				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray =
 				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
-				mManagedScript, null, false, mXnfConversionTechnique, tfArray);
+				mManagedScript, null, false, mXnfConversionTechnique, isInternal, tfArray);
 
 		final List<UnmodifiableTransFormula> transFormulasWithBE =
 				transitions.stream().map(IcfgEdgeBuilder::getTransformulaWithBE).collect(Collectors.toList());
@@ -214,8 +215,9 @@ public class IcfgEdgeBuilder {
 				transFormulasWithBE.toArray(new UnmodifiableTransFormula[transFormulasWithBE.size()]);
 		final TermVariable[] branchIndicatorArray =
 				branchEncodersAndTransitions.keySet().toArray(new TermVariable[branchEncodersAndTransitions.size()]);
-		final UnmodifiableTransFormula parallelWithBranchIndicators = TransFormulaUtils.parallelComposition(mLogger,
-				mServices, mManagedScript, branchIndicatorArray, false, mXnfConversionTechnique, tfWithBEArray);
+		final UnmodifiableTransFormula parallelWithBranchIndicators =
+				TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, branchIndicatorArray, false,
+						mXnfConversionTechnique, isInternal, tfWithBEArray);
 
 		final IcfgInternalTransition rtr =
 				mEdgeFactory.createInternalTransition(source, target, null, parallelTf, parallelWithBranchIndicators);

@@ -28,6 +28,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstanceOrigin;
@@ -84,23 +86,32 @@ public class QuantAnnotation implements IAnnotation {
 	}
 
 	@Override
-	public Term toTerm(final Clause cls, final Theory theory) {
-		final Term quantClauseLitProof =
-				mProofTracker.allIntro(mQuantClauseTerm, mVars);
-		final Term quantClauseLit = mProofTracker.getProvedTerm(quantClauseLitProof);
+	public Term toTerm(final Clause cls, ProofRules proofRules) {
+		final Term quantClauseLit = mProofTracker.getProvedTerm(mQuantClauseTerm);
+		final Theory theory = proofRules.getTheory();
 
-		// For partial proofs, make an asserted sub proof for the quant clause.
-		final Term subproof =
-				mProofTracker instanceof ProofTracker ? ((ProofTracker) mProofTracker).getProof(quantClauseLitProof)
-						: theory.term(ProofConstants.FN_ASSERTED, quantClauseLit);
-		final Annotation[] clauseAnnots = new Annotation[] {
-				new Annotation(ProofConstants.ANNOTKEY_PROVES, new Term[] { quantClauseLit }),
-				new Annotation(ProofConstants.ANNOTKEY_INPUT,
-						mSource.getAnnotation().isEmpty() ? null : mSource.getAnnotation()) };
-		final Term quantUnitClauseProof = theory.term(ProofConstants.FN_CLAUSE,
-				theory.annotatedTerm(clauseAnnots, subproof));
+		final ProofLiteral[] quantClause = new ProofLiteral[] { new ProofLiteral(quantClauseLit, true)};
+		final Annotation quantClauseAnnot = new Annotation(ProofConstants.ANNOTKEY_INPUTCLAUSE,
+						mSource.getAnnotation().isEmpty() ? null : mSource.getAnnotation());
+		final Term quantUnitClauseProof;
+		// TODO duplicated code from SourceAnnotation.
+		if (mProofTracker instanceof ProofTracker) {
+			final Annotation[] clauseAnnots = new Annotation[] {
+					new Annotation(ProofConstants.ANNOTKEY_PROVES,
+							ProofRules.convertProofLiteralsToAnnotation(quantClause)),
+					quantClauseAnnot };
 
-		final Term base = theory.or(theory.not(quantClauseLit), cls.toTerm(theory));
+			quantUnitClauseProof = theory.annotatedTerm(clauseAnnots,
+					((ProofTracker) mProofTracker).getProof(mQuantClauseTerm));
+		} else {
+			// For partial proofs, make an oracle sub proof for the quant clause.
+			quantUnitClauseProof = proofRules.oracle(quantClause, new Annotation[] { quantClauseAnnot });
+		}
+
+		final ProofLiteral[] clause = cls.toProofLiterals(proofRules);
+		final ProofLiteral[] instLemma = new ProofLiteral[clause.length + 1];
+		instLemma[0] = new ProofLiteral(quantClauseLit, false);
+		System.arraycopy(clause, 0, instLemma, 1, clause.length);
 
 		final boolean isFullProofModeActive = mProofTracker instanceof ProofTracker;
 		final Object[] subannots = new Object[isFullProofModeActive ? 5 : 3];
@@ -115,11 +126,8 @@ public class QuantAnnotation implements IAnnotation {
 		}
 
 		final Annotation[] annots = new Annotation[] { new Annotation(":inst", subannots) };
-		final Term instLemma = theory.term(ProofConstants.FN_LEMMA, theory.annotatedTerm(annots, base));
-
-		final Term proofAnnot = theory.annotatedTerm(new Annotation[] { new Annotation(":pivot", quantClauseLit) },
-				quantUnitClauseProof);
-		return theory.term(ProofConstants.FN_RES, instLemma, proofAnnot);
+		final Term lemma = proofRules.oracle(instLemma, annots);
+		return proofRules.resolutionRule(quantClauseLit, quantUnitClauseProof, lemma);
 	}
 
 	@Override
