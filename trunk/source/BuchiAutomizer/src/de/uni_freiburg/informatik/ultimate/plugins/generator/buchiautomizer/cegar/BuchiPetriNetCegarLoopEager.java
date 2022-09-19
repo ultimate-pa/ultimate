@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -15,21 +14,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IntersectBuchiEager;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IntersectBuchiEager;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiUnfolder;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -37,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
 		extends AbstractBuchiCegarLoop<L, IPetriNet<L, IPredicate>> {
+	private final Marking2MLPredicate mMarking2MLPredicate;
+
 	public BuchiPetriNetCegarLoopEager(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
@@ -44,6 +41,7 @@ public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		super(icfg, rankVarConstructor, predicateFactory, taPrefs, services, transitionClazz, initialAbstraction,
 				benchmarkGenerator);
+		mMarking2MLPredicate = new Marking2MLPredicate(predicateFactory);
 	}
 
 	@Override
@@ -59,23 +57,9 @@ public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
 		return false;
 	}
 
-	// TODO: This is a bit hacky and should probably not belong here!
 	private NestedRun<L, IPredicate> constructNestedLassoRun(final PetriNetRun<L, IPredicate> run) {
 		return new NestedRun<>(NestedWord.nestedWord(run.getWord()), (ArrayList<IPredicate>) run.getStateSequence()
-				.stream().map(this::markingToPredicate).collect(Collectors.toList()));
-	}
-
-	private IPredicate markingToPredicate(final Marking<IPredicate> marking) {
-		final List<IcfgLocation> locations = new ArrayList<>();
-		final ArrayList<Term> terms = new ArrayList<>();
-		for (final IPredicate p : marking) {
-			if (p instanceof ISLPredicate) {
-				final ISLPredicate pred = (ISLPredicate) p;
-				locations.add(pred.getProgramPoint());
-				terms.add(pred.getFormula());
-			}
-		}
-		return mPredicateFactory.newMLPredicate(locations.toArray(IcfgLocation[]::new), terms);
+				.stream().map(mMarking2MLPredicate::markingToPredicate).collect(Collectors.toList()));
 	}
 
 	@Override
@@ -100,9 +84,8 @@ public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
 				new AutomataLibraryServices(mServices), mDefaultStateFactory, interpolantAutomaton, stateDeterminizer);
 		mBenchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 
-		final IntersectBuchiEager<L, IPredicate> intersection =
-				new IntersectBuchiEager<>(new AutomataLibraryServices(mServices), mDefaultStateFactory,
-						abstraction, complNwa.getResult());
+		final IntersectBuchiEager<L, IPredicate> intersection = new IntersectBuchiEager<>(
+				new AutomataLibraryServices(mServices), mDefaultStateFactory, abstraction, complNwa.getResult());
 		return intersection.getResult();
 	}
 
