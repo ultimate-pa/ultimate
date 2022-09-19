@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -59,8 +58,8 @@ public class BuchiPetriNetCegarLoopLazy<L extends IIcfgTransition<?>>
 	}
 
 	private NestedRun<L, IPredicate> constructNestedLassoRun(final PetriNetRun<L, IPredicate> run) {
-		return new NestedRun<>(NestedWord.nestedWord(run.getWord()), (ArrayList<IPredicate>) run.getStateSequence()
-				.stream().map(mMarking2MLPredicate::markingToPredicate).collect(Collectors.toList()));
+		return new NestedRun<>(NestedWord.nestedWord(run.getWord()), run.getStateSequence().stream()
+				.map(mMarking2MLPredicate::markingToPredicate).collect(Collectors.toList()));
 	}
 
 	@Override
