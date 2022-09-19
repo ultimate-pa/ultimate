@@ -90,5 +90,4 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 
 		return correct;
 	}
-
 }

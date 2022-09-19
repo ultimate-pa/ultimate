@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 public final class IsEmptyBuchi<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
-	private final boolean mResult;
+	private final PetriNetLassoRun<LETTER, PLACE> mRun;
 
 	/**
 	 * Constructor.
@@ -38,21 +38,25 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 	 * @throws PetriNetNot1SafeException
 	 */
 	public IsEmptyBuchi(final AutomataLibraryServices services,
-			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
+			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final EventOrderEnum order,
+			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		final BuchiUnfolder<LETTER, PLACE> unf =
-				new BuchiUnfolder<>(mServices, operand, EventOrderEnum.ERV, false, true);
-		final PetriNetLassoRun<LETTER, PLACE> run = unf.getAcceptingRun();
-		mResult = run == null;
+				new BuchiUnfolder<>(mServices, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
+		mRun = unf.getAcceptingRun();
 		mLogger.info(exitMessage());
+	}
+
+	public PetriNetLassoRun<LETTER, PLACE> getRun() {
+		return mRun;
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + " language is " + (mResult ? "empty" : "not empty");
+		return "Finished " + getOperationName() + " language is " + (getResult() ? "empty" : "not empty");
 	}
 
 	@Override
@@ -62,7 +66,7 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 
 	@Override
 	public Boolean getResult() {
-		return mResult;
+		return mRun == null;
 	}
 
 	@Override
