@@ -162,11 +162,10 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to eliminate some eliminatee using the given "derHelper". Return
-	 * immediately after the first successful step (note that a step can be
-	 * successful if a case distinction was made and the variable was only
-	 * eliminated in for some cases). Return null if did not make progress for
-	 * any eliminatee.
+	 * Try to eliminate some eliminatee. Return immediately after the first
+	 * successful step (note that a step can be successful if a case distinction was
+	 * made and the variable was only eliminated in for some cases). Return null if
+	 * did not make progress for any eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
