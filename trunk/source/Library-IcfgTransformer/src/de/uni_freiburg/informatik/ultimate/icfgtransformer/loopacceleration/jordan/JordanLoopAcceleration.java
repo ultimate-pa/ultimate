@@ -405,6 +405,9 @@ public class JordanLoopAcceleration {
 		final Term transitiveClosure;
 		final TermVariable itFin;
 		if (isAlternatingClosedFormRequired) {
+			if (!su.getDeterministicArrayWrites().isEmpty()) {
+				throw new UnsupportedOperationException("If alternating form is required we do not yet support arrays");
+			}
 			itFin = mgdScript.constructFreshTermVariable("itFinHalf", SmtSortUtils.getIntSort(mgdScript.getScript()));
 			transitiveClosure = createLoopAccelerationTermAlternating(logger, services, mgdScript, su, linearUpdate,
 					varMatrixIndexMap, jordanUpdate, loopTransFormula, guardTf, itFin, newInVars);
