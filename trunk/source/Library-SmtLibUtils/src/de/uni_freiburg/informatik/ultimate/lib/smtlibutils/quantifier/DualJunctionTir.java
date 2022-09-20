@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -124,41 +123,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		final EliminationResult er = tryExhaustivelyToEliminate(inputEt);
+		final EliminationResult er = tryToEliminateOne(inputEt);
 		return er;
-	}
-
-	/**
-	 * Try to iteratively eliminate as many eliminatees as possible using the
-	 * given "derHelper". Return null if did not make progress for any
-	 * eliminatee.
-	 */
-	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt) {
-		EliminationTask currentEt = inputEt;
-		final LinkedHashSet<TermVariable> aquiredEliminatees = new LinkedHashSet<>();
-		while (true) {
-			final EliminationResult er = tryToEliminateOne(currentEt);
-			if (er == null) {
-				// no success, no further iterations
-				break;
-			}
-			aquiredEliminatees.addAll(er.getNewEliminatees());
-			currentEt = er.getEliminationTask();
-			if (!aquiredEliminatees.isEmpty()) {
-				break;
-			}
-			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
-					er.getEliminationTask().getTerm())) {
-				// we can push the quantifier, no further iterations
-				break;
-			}
-		}
-		if (currentEt == inputEt) {
-			// only one non-successful iteration
-			return null;
-		} else {
-			return new EliminationResult(currentEt, aquiredEliminatees);
-		}
 	}
 
 	/**
@@ -168,6 +134,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	 * did not make progress for any eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
+		// TODO 20220921 Matthias: Add some heuristics that allows us to iterates over
+		// "inexpensive" variables first.
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(inputEt.getEliminatees());
 			bannedForDivCapture.addAll(inputEt.getContext().getBoundByAncestors());
