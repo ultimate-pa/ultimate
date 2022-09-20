@@ -159,12 +159,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> interferencesMaps =
 						computeProcedureInterferences(entryNodes.get(procedure), interferences);
 
+				final Collection<ACTION> entryActions =
+						mTransitionProvider.getSuccessorActions((LOC) entryNodes.get(procedure));
+
 				for (final var procedureInterferences : interferencesMaps) {
 					// runWithInterferences needs a Collection
 					final Collection<LOC> entryCollection = new ArrayList<>();
 					entryCollection.add((LOC) entryNodes.get(procedure));
 					final InterferenceProvider<ACTION, STATE> interferenceProvider =
-							new InterferenceProvider<>(procedureInterferences, readsProcedureIntern.get(procedure));
+							new InterferenceProvider<>(procedureInterferences, handlingForks(procedure, entryActions),
+									readsProcedureIntern.get(procedure));
 					final AbsIntResult<STATE, ACTION, LOC> result =
 							mFixpointEngine.runWithInterferences(entryCollection, script, interferenceProvider);
 
@@ -237,8 +241,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> procedureInterferences = new HashSet<>();
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> map = new HashMap<>();
 			if (!mStateStorage.computeLoc2States().isEmpty()) {
-				map.putAll(handlingForks(entryNode.getProcedure(),
-						mTransitionProvider.getSuccessorActions((LOC) entryNode)));
+				// map.putAll(handlingForks(entryNode.getProcedure(), mTransitionProvider.getSuccessorActions((LOC)
+				// entryNode)));
 			}
 			procedureInterferences.add(map);
 			return procedureInterferences;
@@ -272,14 +276,14 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
 		final String currentProcedure = entryNode.getProcedure();
 		final Set<ACTION> reads = mFecUtils.getReads(currentProcedure);
-		final Map<ACTION, DisjunctiveAbstractState<STATE>> statesForForks =
-				handlingForks(currentProcedure, mTransitionProvider.getSuccessorActions((LOC) entryNode));
+		// final Map<ACTION, DisjunctiveAbstractState<STATE>> statesForForks = handlingForks(currentProcedure,
+		// mTransitionProvider.getSuccessorActions((LOC) entryNode));
 		if (reads == null) {
-			result.add(statesForForks);
+			// result.add(statesForForks);
 			return result;
 		}
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> procedureInterference = new HashMap<>();
-		procedureInterference.putAll(statesForForks);
+		// procedureInterference.putAll(statesForForks);
 		for (final ACTION read : reads) {
 			DisjunctiveAbstractState<STATE> newInterferences = null;
 			for (final ACTION write : mFecUtils.getPossibleWrites(read)) {
@@ -324,7 +328,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Set<Map<LOC, Set<ACTION>>> crossProduct = mFecUtils.getCrossProduct(filter, procedure);
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> readsInLoopsAndForks = new HashMap<>();
 		readsInLoopsAndForks.putAll(handlingLoops(procedure, interferences));
-		readsInLoopsAndForks.putAll(handlingForks(procedure, entryActions));
+		// readsInLoopsAndForks.putAll(handlingForks(procedure, entryActions));
 
 		final Set<ACTION> reads = mFecUtils.getReads(procedure);
 		for (final var map : crossProduct) {
@@ -596,6 +600,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return mergeStates(stateOne, stateTwo);
 	}
 
+	/***
+	 *
+	 * @param entryNodes
+	 * @return Actions, for which in the analysis we have to union with the preState. Instead of merging into preState.
+	 */
 	private Map<String, Set<ACTION>>
 			getReadsReadingProcedureIntern(final Map<String, ? extends IcfgLocation> entryNodes) {
 		if (mVersion == AbstractInterpretationConcurrent.FLOW_INSENSITIVE) {
@@ -607,7 +616,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				if (reads != null) {
 					final Set<ACTION> entryActions = mTransitionProvider.getSuccessorActions((LOC) entry.getValue())
 							.stream().collect(Collectors.toSet());
-					result.put(procedure, DataStructureUtils.difference(reads, entryActions));
+					// result.put(procedure, DataStructureUtils.difference(reads, entryActions));
+					result.put(procedure, reads);
 				} else {
 					result.put(procedure, Set.of());
 				}

@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,15 +44,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 public class InterferenceProvider<ACTION, STATE extends IAbstractState<STATE>> {
 	private final Map<ACTION, DisjunctiveAbstractState<STATE>> mInterferingStates;
 	private final Set<ACTION> mReadsFromOwnThread;
+	private final Map<ACTION, DisjunctiveAbstractState<STATE>> mStatesAfterFork;
+	private final Set<ACTION> mUsed;
 
 	public InterferenceProvider(final Map<ACTION, DisjunctiveAbstractState<STATE>> interferingStates,
-			final Set<ACTION> readsFromOwnThread) {
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> entryStates, final Set<ACTION> readsFromOwnThread) {
 		mInterferingStates = interferingStates;
 		mReadsFromOwnThread = readsFromOwnThread;
+		mStatesAfterFork = entryStates;
+		mUsed = new HashSet<>();
+
 	}
 
 	public InterferenceProvider() {
-		this(Map.of(), Set.of());
+		this(Map.of(), Map.of(), Set.of());
 	}
 
 	public DisjunctiveAbstractState<STATE> getInterferingState(final ACTION action) {
@@ -60,5 +66,13 @@ public class InterferenceProvider<ACTION, STATE extends IAbstractState<STATE>> {
 
 	public boolean canReadFromOwnThread(final ACTION action) {
 		return mReadsFromOwnThread.contains(action);
+	}
+
+	public DisjunctiveAbstractState<STATE> getEntryState(final ACTION action) {
+		if (mUsed.contains(action)) {
+			return null;
+		}
+		mUsed.add(action);
+		return mStatesAfterFork.get(action);
 	}
 }

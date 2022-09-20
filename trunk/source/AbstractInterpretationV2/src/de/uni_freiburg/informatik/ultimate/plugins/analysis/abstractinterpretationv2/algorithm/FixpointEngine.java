@@ -241,7 +241,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 		DisjunctiveAbstractState<STATE> preState;
 		final ACTION currentAction = currentItem.getAction();
-		final DisjunctiveAbstractState<STATE> currentPreState = currentItem.getState();
+		DisjunctiveAbstractState<STATE> currentPreState = currentItem.getState();
+		final DisjunctiveAbstractState<STATE> entryState = interferences.getEntryState(currentAction);
+		if (entryState != null) {
+			currentPreState = currentPreState.patch(entryState);
+		}
+		// patch fork hier rein + union entries als Read from own thread
 		final DisjunctiveAbstractState<STATE> interferingStates = interferences.getInterferingState(currentAction);
 		if (interferingStates != null && !interferingStates.isEmpty()) {
 			preState = currentPreState.patch(interferingStates);
