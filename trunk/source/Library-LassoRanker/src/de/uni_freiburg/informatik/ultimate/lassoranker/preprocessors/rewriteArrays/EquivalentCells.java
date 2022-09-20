@@ -152,7 +152,7 @@ public class EquivalentCells {
 		for (final TermVariable representative : unionFind.getAllRepresentatives()) {
 			final List<TermVariable> equalInOutVars = new ArrayList<TermVariable>();
 			for (final TermVariable member : unionFind.getEquivalenceClassMembers(representative)) {
-				if (ModifiableTransFormulaUtils.isInvar(member, mTransFormula) || ModifiableTransFormulaUtils.isOutvar(member, mTransFormula)) {
+				if (ModifiableTransFormulaUtils.isInVar(member, mTransFormula) || ModifiableTransFormulaUtils.isOutVar(member, mTransFormula)) {
 					equalInOutVars.add(member);
 				}
 			}
@@ -177,7 +177,7 @@ public class EquivalentCells {
 	private TermVariable computeInOutRepresentative(final UnionFind<TermVariable> uf, final TermVariable ufRepresentative) {
 		final Set<TermVariable> eq = uf.getEquivalenceClassMembers(ufRepresentative);
 		for (final TermVariable member : eq) {
-			if (ModifiableTransFormulaUtils.isInvar(member, mTransFormula) || ModifiableTransFormulaUtils.isOutvar(member, mTransFormula)) {
+			if (ModifiableTransFormulaUtils.isInVar(member, mTransFormula) || ModifiableTransFormulaUtils.isOutVar(member, mTransFormula)) {
 				return member;
 			}
 		}

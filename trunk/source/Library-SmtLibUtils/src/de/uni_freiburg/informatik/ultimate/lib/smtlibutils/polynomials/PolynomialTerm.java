@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils.GeneralizedConstructor;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -103,24 +102,10 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * polynomialTerms.
 	 */
 	public static IPolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		final Sort s = poly1.getSort();
-		final Rational coeff = calculateProductCoefficient(poly1, poly2);
+		final Rational newConstant = PolynomialTermUtils
+				.bringValueInRange(poly1.getConstant().mul(poly2.getConstant()), poly1.getSort());
 		final Map<Monomial, Rational> polyMap = calculateProductMap(poly1, poly2);
-		return minimalRepresentation(s, coeff, polyMap);
-	}
-
-	/**
-	 * Calculate the Coefficient of the product of two polynomials.
-	 */
-	private static Rational calculateProductCoefficient(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		Rational newCoeff;
-		if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-			newCoeff = PolynomialTermUtils.bringValueInRange(poly1.getConstant().mul(poly2.getConstant()),
-					poly1.getSort());
-		} else {
-			newCoeff = poly1.getConstant().mul(poly2.getConstant());
-		}
-		return newCoeff;
+		return minimalRepresentation(poly1.getSort(), newConstant, polyMap);
 	}
 
 	/**
@@ -156,13 +141,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 				} else {
 					tempCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
 				}
-
-				if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-					newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
-				} else {
-					newCoeff = tempCoeff;
-				}
-
+				newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
 				if (!newCoeff.equals(Rational.ZERO)) {
 					builder.put(mono, newCoeff);
 				}
@@ -189,13 +168,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			} else {
 				tempCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
 			}
-
-			if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-				newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
-			} else {
-				newCoeff = tempCoeff;
-			}
-
+			newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
 			if (!newCoeff.equals(Rational.ZERO)) {
 				builder.put(summand.getKey(), newCoeff);
 			}
@@ -360,17 +333,21 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		final HashMap<Monomial, Rational> newAbstractVariable2Coefficient = new HashMap<>();
 		for (final Entry<Monomial, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			if (!entry.getKey().equals(monomialOfSubject)) {
-				newAbstractVariable2Coefficient.put(entry.getKey(), entry.getValue().negate());
+				final Rational newCoefficient = PolynomialTermUtils.bringValueInRange(entry.getValue().negate(),
+						getSort());
+				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
 				if (!entry.getKey().isLinear()) {
 					allMonomialsAreLinear = false;
 				}
 			}
 		}
+		final Rational newConstant = PolynomialTermUtils.bringValueInRange(getConstant().negate(), getSort());
 		if (allMonomialsAreLinear) {
-			final Map<Term, Rational> map = newAbstractVariable2Coefficient.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSingleVariable(), x -> x.getValue()));
-			return new AffineTerm(getSort(), getConstant().negate(), map);
+			final Map<Term, Rational> map = newAbstractVariable2Coefficient.entrySet().stream()
+					.collect(Collectors.toMap(x -> x.getKey().getSingleVariable(), x -> x.getValue()));
+			return new AffineTerm(getSort(), newConstant, map);
 		} else {
-			return new PolynomialTerm(getSort(), getConstant().negate(), newAbstractVariable2Coefficient);
+			return new PolynomialTerm(getSort(), newConstant, newAbstractVariable2Coefficient);
 		}
 	}
 

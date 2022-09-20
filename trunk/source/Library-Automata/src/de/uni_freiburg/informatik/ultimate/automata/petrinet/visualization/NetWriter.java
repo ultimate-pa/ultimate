@@ -32,8 +32,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * Prints a {@link BoundedPetriNet}.
@@ -77,8 +77,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 
 	protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet);
 
-	protected abstract Map<STATE, String>
-			getPlacesMapping(final Collection<STATE> places);
+	protected abstract Map<STATE, String> getPlacesMapping(final Collection<STATE> places);
 
 	protected final void printElementPrefix(final String string) {
 		print(String.format("\t%s = ", string));
@@ -98,21 +97,19 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 
 	private void printTransitions(final BoundedPetriNet<LETTER, STATE> net) {
 		printlnCollectionPrefix("transitions");
-		for (final ITransition<LETTER, STATE> transition : net.getTransitions()) {
-			printTransition(transition, net);
-		}
+		net.getTransitions().forEach(this::printTransition);
 		printTransitionsSuffix();
 		print(',');
 		print(NEW_LINE);
 	}
 
-	private void printTransition(final ITransition<LETTER, STATE> transition, BoundedPetriNet<LETTER, STATE> net) {
+	private void printTransition(final Transition<LETTER, STATE> transition) {
 		printOneTransitionPrefix();
-		printMarking(net.getPredecessors(transition));
+		printMarking(transition.getPredecessors());
 		print(' ');
 		print(mAlphabet.get(transition.getSymbol()));
 		print(' ');
-		printMarking(net.getSuccessors(transition));
+		printMarking(transition.getSuccessors());
 		printOneTransitionSuffix();
 	}
 

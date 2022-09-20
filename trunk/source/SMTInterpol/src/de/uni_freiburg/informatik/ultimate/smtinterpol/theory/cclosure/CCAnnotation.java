@@ -21,9 +21,9 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CongruencePath.SubPath;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.WeakCongruencePath.WeakSubPath;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
@@ -98,11 +98,15 @@ public class CCAnnotation implements IAnnotation {
 	 * The kind of the array axiom. We support two kinds, read-over-weakeq and
 	 * weakeq-ext.
 	 */
-	enum RuleKind {
+	public enum RuleKind {
 		/**
-		 * Congruence closure lemma, i.e., congruence or transitivity.
+		 * Transitivity lemma.
 		 */
-		CC(":CC"),
+		TRANS(":trans"),
+		/**
+		 * Congruence lemma.
+		 */
+		CONG(":cong"),
 		/**
 		 * Read over weak equivalence lemma.
 		 */
@@ -120,22 +124,28 @@ public class CCAnnotation implements IAnnotation {
 		 */
 		CONST_WEAKEQ(":const-weakeq"),
 		/**
-		 * Selector application on corresponding constructor application, e.g.,
-		 * car(cons(x,y)) = x.
+		 * Selector application on corresponding constructor application. Its conflict
+		 * is:
+		 *
+		 * <pre>
+		 * u = cons(u1,...,un) , seli(u) != ui
+		 * </pre>
 		 */
 		DT_PROJECT(":dt-project"),
 		/**
 		 * Rule that the result of a constructor application fulfills an is predicate,
 		 * iff it's index is the same constructor.
 		 *
+		 * The conflict is:
+		 *
 		 * <pre>
-		 * is_cons(cons(x, y)) = true
+		 * u = cons(u1,...,un) , is_cons(u) != true
 		 * </pre>
 		 *
 		 * and
 		 *
 		 * <pre>
-		 * is_cons(nil) = false
+		 * u = cons1(u1,...,un) , is_cons2(u) != false
 		 * </pre>
 		 *
 		 * .
@@ -143,30 +153,44 @@ public class CCAnnotation implements IAnnotation {
 		DT_TESTER(":dt-tester"),
 		/**
 		 * Rule that an datatype object where a tester returns true must be equal to
-		 * it's constructor applictaion.
+		 * it's constructor application. The conflict is
 		 *
 		 * <pre>
-		 * is_cons(u) = true -> u = cons(car(u), cdr(u))
+		 * is_cons(u) = true , u != cons(car(u), cdr(u)).
 		 * </pre>
-		 *
-		 * .
 		 */
 		DT_CONSTRUCTOR(":dt-constructor"),
 		/**
 		 * Every datatype object must fulfill at least one tester. I.e. we can do
 		 * case-distinction over all constructors.
+		 *
+		 * <pre>
+		 * is_cons1(u) = false, ..., is_consn(u) = false
+		 * </pre>
 		 */
 		DT_CASES(":dt-cases"),
 		/**
 		 * Every datatype object must fulfill at most one tester.
+		 *
+		 * <pre>
+		 * is_consi(u) = true, is_consj(u) = true
+		 * </pre>
 		 */
 		DT_UNIQUE(":dt-unique"),
 		/**
 		 * Every constructor returns different objects, e.g., cons(x,y) != nil.
+		 *
+		 * <pre>
+		 *  cons1(u1,...,un) = cons2(v1,...,vm)
+		 * </pre>
 		 */
 		DT_DISJOINT(":dt-disjoint"),
 		/**
 		 * Every constructor is injective, e.g., cons(x1,x2) = cons(y1,y2) -> x1=x2.
+		 *
+		 * <pre>
+		 *  cons(u1,...,un) = cons(v1,...,vm), ui != vi
+		 * </pre>
 		 */
 		DT_INJECTIVE(":dt-injective"),
 		/**
@@ -263,16 +287,18 @@ public class CCAnnotation implements IAnnotation {
 	 * output is a lemma where all congruences are explained by auxiliary CC lemmas
 	 * in a hyper-resolution step.
 	 *
-	 * @param clause The clause containing this annotation.
-	 * @param theory The term unifier.
+	 * @param clause
+	 *            The clause containing this annotation.
+	 * @param theory
+	 *            The term unifier.
 	 * @return the proof term in form of a resolution step of the central lemma and
 	 *         the auxiliary lemmas which are obtained from subpaths explaining
 	 *         congruences in the main lemma - or, if there are no congruences, just
 	 *         the central lemma.
 	 */
 	@Override
-	public Term toTerm(final Clause clause, final Theory theory) {
-		return new CCProofGenerator(this).toTerm(clause, theory);
+	public Term toTerm(final Clause clause, final ProofRules proofRules) {
+		return new CCProofGenerator(this).toTerm(clause, proofRules);
 	}
 
 	@Override

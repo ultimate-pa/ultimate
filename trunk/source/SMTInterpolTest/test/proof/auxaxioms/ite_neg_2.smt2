@@ -15,7 +15,7 @@
 (assert (or q (and p (not (ite c1 a b)))))
 (assert b)
 (assert (not c1))
-;(@tautology (! (or (! (ite c1 a b) :quoted) c1 (not b)) :ite-2))
+;(@tautology (! (or (ite c1 a b) c1 (not b)) :ite+2))
 
 (check-sat)
 (set-option :print-terms-cse false)

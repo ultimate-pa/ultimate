@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *

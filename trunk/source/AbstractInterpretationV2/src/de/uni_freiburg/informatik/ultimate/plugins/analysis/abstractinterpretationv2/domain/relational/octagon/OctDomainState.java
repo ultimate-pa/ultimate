@@ -969,7 +969,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	 * @param vars
 	 *            Names of variables.
 	 */
-	protected void havocVars(final Collection<? extends IProgramVarOrConst> vars) {
+	protected void havocVars(final Collection<IProgramVarOrConst> vars) {
 		// TODO Only calculate closure if necessary. Some vars may have no constraints to other vars => no closure
 		assert assertNotBottomBeforeAssign();
 		mIsBottom = TVBool.UNCHECKED;
@@ -1168,7 +1168,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		final OctagonRelation octRel;
 		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
 		if (polyRel == null || !polyRel.isAffine()) {
-			// term is not an affine relation
+			//term is not an affine relation
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver
 			// TODO (optional) special treatment for boolean variables
 		}

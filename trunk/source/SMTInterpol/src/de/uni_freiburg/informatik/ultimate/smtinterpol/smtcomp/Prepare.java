@@ -51,7 +51,6 @@ public class Prepare {
 				return;
 			}
 		}
-		final Prepare prepare = new Prepare();
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
 		while (fileStartIdx < args.length) {
@@ -59,7 +58,7 @@ public class Prepare {
 			// Insert .prep before .smt2
 			target.insert(target.length() - 5, ".prep");// NOCHECKSTYLE
 			options.reset();
-			Script script = new PrepareScript(track, target.toString());
+			final Script script = new PrepareScript(track, target.toString());
 			final ParseEnvironment pe = new ParseEnvironment(script, options);
 			pe.parseScript(args[fileStartIdx]);
 			script.exit();

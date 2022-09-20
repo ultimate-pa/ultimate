@@ -30,14 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-
 /**
- * Split {@link ISuccessorTransitionProvider} in two
- * {@link ISuccessorTransitionProvider}s. One provides all transitions such that
- * the letter is in a given set, the other provides all transitions that are not
- * in the set.
+ * Split {@link ISuccessorTransitionProvider} in two {@link ISuccessorTransitionProvider}s. One provides all transitions
+ * such that the letter is in a given set, the other provides all transitions that are not in the set.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -47,11 +42,11 @@ public class SuccessorTransitionProviderSplit<LETTER, PLACE> {
 	private final ISuccessorTransitionProvider<LETTER, PLACE> mSuccTransProviderLetterNotInSet;
 
 	public SuccessorTransitionProviderSplit(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider,
-			final Set<LETTER> letterSet, final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
+			final Set<LETTER> letterSet) {
 		super();
-		final List<ITransition<LETTER, PLACE>> transWithLetterInSet = new ArrayList<>();
-		final List<ITransition<LETTER, PLACE>> transWithLetterNotInSet = new ArrayList<>();
-		for (final ITransition<LETTER, PLACE> trans : succTransProvider.getTransitions()) {
+		final List<Transition<LETTER, PLACE>> transWithLetterInSet = new ArrayList<>();
+		final List<Transition<LETTER, PLACE>> transWithLetterNotInSet = new ArrayList<>();
+		for (final Transition<LETTER, PLACE> trans : succTransProvider.getTransitions()) {
 			if (letterSet.contains(trans.getSymbol())) {
 				transWithLetterInSet.add(trans);
 			} else {
@@ -61,12 +56,12 @@ public class SuccessorTransitionProviderSplit<LETTER, PLACE> {
 		if (transWithLetterInSet.isEmpty()) {
 			mSuccTransProviderLetterInSet = null;
 		} else {
-			mSuccTransProviderLetterInSet = new SimpleSuccessorTransitionProvider<>(transWithLetterInSet, net);
+			mSuccTransProviderLetterInSet = new SimpleSuccessorTransitionProvider<>(transWithLetterInSet);
 		}
 		if (transWithLetterNotInSet.isEmpty()) {
 			mSuccTransProviderLetterNotInSet = null;
 		} else {
-			mSuccTransProviderLetterNotInSet = new SimpleSuccessorTransitionProvider<>(transWithLetterNotInSet, net);
+			mSuccTransProviderLetterNotInSet = new SimpleSuccessorTransitionProvider<>(transWithLetterNotInSet);
 		}
 	}
 
@@ -77,7 +72,5 @@ public class SuccessorTransitionProviderSplit<LETTER, PLACE> {
 	public ISuccessorTransitionProvider<LETTER, PLACE> getSuccTransProviderLetterNotInSet() {
 		return mSuccTransProviderLetterNotInSet;
 	}
-
-
 
 }

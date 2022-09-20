@@ -51,9 +51,9 @@ public class DestructiveEqualityReasoning {
 	private final QuantifierTheory mQuantTheory;
 	private final Clausifier mClausifier;
 
+	private final TermVariable[] mVars;
 	private final Literal[] mGroundLits;
 	private final QuantLiteral[] mQuantLits;
-	private final Term mProof;
 	private final SourceAnnotation mSource;
 
 	private final Map<TermVariable, Term> mSigma;
@@ -61,14 +61,15 @@ public class DestructiveEqualityReasoning {
 
 	private DERResult mResult;
 
-	DestructiveEqualityReasoning(final QuantifierTheory quantTheory, final Literal[] groundLits, final QuantLiteral[] quantLits,
-			final SourceAnnotation source, final Term proof) {
+	DestructiveEqualityReasoning(final QuantifierTheory quantTheory, final TermVariable[] vars,
+			final Literal[] groundLits, final QuantLiteral[] quantLits,
+			final SourceAnnotation source) {
 		mQuantTheory = quantTheory;
 		mClausifier = quantTheory.getClausifier();
 
+		mVars = vars;
 		mGroundLits = groundLits;
 		mQuantLits = quantLits;
-		mProof = proof;
 		mSource = source;
 
 		mSigma = new LinkedHashMap<>();
@@ -90,10 +91,9 @@ public class DestructiveEqualityReasoning {
 			final SubstitutionHelper subsHelper =
 					new SubstitutionHelper(mQuantTheory, mGroundLits, mQuantLits, mSource, mSigma);
 			final SubstitutionResult subsResult = subsHelper.substituteInClause();
-			final TermVariable[] vars = mClausifier.getTracker().getProvedTerm(mProof).getFreeVars();
-			final Term[] subs = new Term[vars.length];
+			final Term[] subs = new Term[mVars.length];
 			for (int i = 0; i < subs.length; i++) {
-				subs[i] = mSigma.containsKey(vars[i]) ? mSigma.get(vars[i]) : vars[i];
+				subs[i] = mSigma.containsKey(mVars[i]) ? mSigma.get(mVars[i]) : mVars[i];
 			}
 			mResult = new DERResult(subs, subsResult);
 			mIsChanged = true;
@@ -103,7 +103,7 @@ public class DestructiveEqualityReasoning {
 
 	/**
 	 * Get the result from applying DER if it has changed something.
-	 * 
+	 *
 	 * @return the result from applying DER on the given clause.
 	 */
 	DERResult getResult() {
@@ -245,7 +245,7 @@ public class DestructiveEqualityReasoning {
 	public static class DERResult extends SubstitutionResult {
 		private final Term[] mSubs;
 
-		protected DERResult(final Term[] subs, SubstitutionResult subsRes) {
+		protected DERResult(final Term[] subs, final SubstitutionResult subsRes) {
 			super(subsRes.mSubstituted, subsRes.mSimplified, subsRes.mGroundLits, subsRes.mQuantLits);
 			mSubs = subs;
 		}
