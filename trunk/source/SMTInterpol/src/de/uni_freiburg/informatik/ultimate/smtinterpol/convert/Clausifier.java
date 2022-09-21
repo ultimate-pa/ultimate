@@ -365,12 +365,12 @@ public class Clausifier {
 	 */
 	private class CollectLiteral implements Operation {
 		private final Term mLiteral;
-		private final BuildClause mCollector;
+		private final BuildClause mClauseBuilder;
 
 		public CollectLiteral(final Term term, final BuildClause collector) {
 			assert term.getSort() == mTheory.getBooleanSort();
 			mLiteral = term;
-			mCollector = collector;
+			mClauseBuilder = collector;
 		}
 
 		@Override
@@ -389,9 +389,9 @@ public class Clausifier {
 					// --> dont create a literal for the current term
 					// (i.e. only the EPR-theory, not the DPLLEngine, will know it)
 					final DPLLAtom eprAtom =
-							mEprTheory.getEprAtom((ApplicationTerm) idx, 0, mStackLevel, mCollector.getSource());
+							mEprTheory.getEprAtom((ApplicationTerm) idx, 0, mStackLevel, mClauseBuilder.getSource());
 
-					mCollector.addLiteral(positive ? eprAtom : eprAtom.negate(), idx, mTracker.reflexivity(idx),
+					mClauseBuilder.addLiteral(positive ? eprAtom : eprAtom.negate(), idx, mTracker.reflexivity(idx),
 							positive);
 					return;
 				}
@@ -416,9 +416,10 @@ public class Clausifier {
 						tautClause[i + 1] = p;
 					}
 					final Term taut = mTracker.tautology(theory.term("or", tautClause), rule);
-					mCollector.addResolution(taut, mLiteral);
+					mClauseBuilder.mCurrentLits.remove(mLiteral);
+					mClauseBuilder.addResolution(taut, mLiteral);
 					for (int i = params.length - 1; i >= 0; i--) {
-						pushOperation(new CollectLiteral(tautClause[i + 1], mCollector));
+						mClauseBuilder.collectLiteral(tautClause[i + 1]);
 					}
 					return;
 				}
@@ -445,14 +446,14 @@ public class Clausifier {
 						} else if (trivialEq == mTheory.mFalse) {
 							lit = mFALSE;
 						} else {
-							final Term newLhs = rewriteBooleanSubterms(lhs, mCollector.getSource());
-							final Term newRhs = rewriteBooleanSubterms(rhs, mCollector.getSource());
+							final Term newLhs = rewriteBooleanSubterms(lhs, mClauseBuilder.getSource());
+							final Term newRhs = rewriteBooleanSubterms(rhs, mClauseBuilder.getSource());
 							rewrite = mTracker.congruence(rewrite, new Term[] { newLhs, newRhs });
 							lit = mQuantTheory.getQuantEquality(mTracker.getProvedTerm(newLhs),
-									mTracker.getProvedTerm(newRhs), mCollector.getSource());
+									mTracker.getProvedTerm(newRhs), mClauseBuilder.getSource());
 						}
 					} else {
-						final EqualityProxy eq = createEqualityProxy(lhs, rhs, mCollector.getSource());
+						final EqualityProxy eq = createEqualityProxy(lhs, rhs, mClauseBuilder.getSource());
 						// eq == true and positive ==> set to true
 						// eq == true and !positive ==> noop
 						// eq == false and !positive ==> set to true
@@ -462,7 +463,7 @@ public class Clausifier {
 						} else if (eq == EqualityProxy.getFalseProxy()) {
 							lit = mFALSE;
 						} else {
-							lit = eq.getLiteral(mCollector.getSource());
+							lit = eq.getLiteral(mClauseBuilder.getSource());
 						}
 					}
 				} else if (at.getFunction().getName().equals("<=")) {
@@ -470,33 +471,33 @@ public class Clausifier {
 					if (quantified) {
 						final Term linTerm = at.getParameters()[0];
 						final Term zero = at.getParameters()[1];
-						final Term newLinTerm = rewriteBooleanSubterms(linTerm, mCollector.getSource());
+						final Term newLinTerm = rewriteBooleanSubterms(linTerm, mClauseBuilder.getSource());
 						rewrite = mTracker.congruence(rewrite, new Term[] { newLinTerm, mTracker.reflexivity(zero) });
 						lit = mQuantTheory.getQuantInequality(positive, mTracker.getProvedTerm(newLinTerm),
-								mCollector.getSource());
+								mClauseBuilder.getSource());
 					} else {
-						lit = createLeq0(at, mCollector.getSource());
+						lit = createLeq0(at, mClauseBuilder.getSource());
 					}
 				} else if (!at.getFunction().isInterpreted() || Clausifier.needCCTerm(at)) {
 					if (quantified) {
-						rewrite = rewriteBooleanSubterms(at, mCollector.getSource());
+						rewrite = rewriteBooleanSubterms(at, mClauseBuilder.getSource());
 					}
-					lit = createBooleanLit((ApplicationTerm) mTracker.getProvedTerm(rewrite), mCollector.getSource());
+					lit = createBooleanLit((ApplicationTerm) mTracker.getProvedTerm(rewrite), mClauseBuilder.getSource());
 				} else {
-					lit = createAnonLiteral(idx, mCollector.getSource());
+					lit = createAnonLiteral(idx, mClauseBuilder.getSource());
 					// aux axioms will always automatically created for quantified formulas
 					if (idx.getFreeVars().length == 0) {
 						if (positive) {
-							addAuxAxioms(idx, true, mCollector.getSource());
+							addAuxAxioms(idx, true, mClauseBuilder.getSource());
 						} else {
-							addAuxAxioms(idx, false, mCollector.getSource());
+							addAuxAxioms(idx, false, mClauseBuilder.getSource());
 						}
 					}
 				}
 				// TODO end
 				rewrite = mTracker.transitivity(rewrite,
 						mTracker.intern(mTracker.getProvedTerm(rewrite), lit.getSMTFormula(theory)));
-				mCollector.addLiteral(positive ? lit : lit.negate(), at, rewrite, positive);
+				mClauseBuilder.addLiteral(positive ? lit : lit.negate(), at, rewrite, positive);
 			} else if (idx instanceof QuantifiedFormula) {
 				final QuantifiedFormula qf = (QuantifiedFormula) idx;
 				final Pair<Term, Annotation> converted = convertQuantifiedSubformula(positive, qf);
@@ -505,33 +506,34 @@ public class Clausifier {
 				final Term negLit = positive ? theory.term(SMTLIBConstants.NOT, idx) : idx;
 				final Term tautology = mTracker.tautology(theory.term(SMTLIBConstants.OR, negLit, substituted),
 						converted.getSecond());
-				mCollector.addResolution(tautology, lit);
+				mClauseBuilder.mCurrentLits.remove(mLiteral);
+				mClauseBuilder.addResolution(tautology, lit);
 				final Term substitutedCanonic = mCompiler.transform(substituted);
-				mCollector.addResolution(mTracker.rewriteToClause(substituted, substitutedCanonic), substituted);
+				mClauseBuilder.addResolution(mTracker.rewriteToClause(substituted, substitutedCanonic), substituted);
 				final Term newLiteral = mTracker.getProvedTerm(substitutedCanonic);
-				pushOperation(new CollectLiteral(newLiteral, mCollector));
+				mClauseBuilder.collectLiteral(newLiteral);
 				return;
 			} else if (idx instanceof TermVariable) {
 				assert idx.getSort().equals(theory.getBooleanSort());
 				// Build a quantified disequality, this allows us to use the literal for DER.
 				// That is, x --> (x != false) and ~x --> (x != true),
 				final Term value = positive ? mTheory.mFalse : mTheory.mTrue;
-				final ILiteral lit = mQuantTheory.getQuantEquality(idx, value, mCollector.getSource());
+				final ILiteral lit = mQuantTheory.getQuantEquality(idx, value, mClauseBuilder.getSource());
 				final Term rewrite =
 						mTracker.intern(idx, (positive ? lit.negate() : lit).getSMTFormula(theory));
-				mCollector.addLiteral(lit.negate(), idx, rewrite, positive);
+				mClauseBuilder.addLiteral(lit.negate(), idx, rewrite, positive);
 			} else if (idx instanceof MatchTerm) {
-				final ILiteral lit = createAnonLiteral(idx, mCollector.getSource());
+				final ILiteral lit = createAnonLiteral(idx, mClauseBuilder.getSource());
 				// aux axioms will always automatically created for quantified formulas
 				if (idx.getFreeVars().length == 0) {
 					if (positive) {
-						addAuxAxioms(idx, true, mCollector.getSource());
+						addAuxAxioms(idx, true, mClauseBuilder.getSource());
 					} else {
-						addAuxAxioms(idx, false, mCollector.getSource());
+						addAuxAxioms(idx, false, mClauseBuilder.getSource());
 					}
 				}
 				final Term rewrite = mTracker.intern(idx, lit.getSMTFormula(theory));
-				mCollector.addLiteral(positive ? lit : lit.negate(), idx, rewrite, positive);
+				mClauseBuilder.addLiteral(positive ? lit : lit.negate(), idx, rewrite, positive);
 			} else {
 				throw new SMTLIBException("Cannot handle literal " + mLiteral);
 			}
@@ -571,6 +573,7 @@ public class Clausifier {
 		private Term mProof;
 
 		private boolean mIsTrue = false;
+		private final LinkedHashSet<Term> mCurrentLits = new LinkedHashSet<>();
 		private final LinkedHashSet<Literal> mLits = new LinkedHashSet<>();
 		private final LinkedHashSet<QuantLiteral> mQuantLits = new LinkedHashSet<>();
 		private final SourceAnnotation mSource;
@@ -583,6 +586,21 @@ public class Clausifier {
 
 		public SourceAnnotation getSource() {
 			return mSource;
+		}
+
+		/**
+		 * Start collecting a term in a clause.  This creates a literal collector for the literal, unless the
+		 * literal was already collected.
+		 * @param term the disjunct to add to the clause.
+		 */
+		public void collectLiteral(Term term) {
+			while (isNotTerm(term) && isNotTerm(((ApplicationTerm) term).getParameters()[0])) {
+				Term negated = ((ApplicationTerm) term).getParameters()[0];
+				term = ((ApplicationTerm) negated).getParameters()[0];
+			}
+			if (mCurrentLits.add(term)) {
+				pushOperation(new CollectLiteral(term, this));
+			}
 		}
 
 		/**
@@ -636,6 +654,8 @@ public class Clausifier {
 			final Term origLiteral = positive ? origAtom : theory.term(SMTLIBConstants.NOT, origAtom);
 			final Term rewriteLiteral = positive ? rewriteAtom
 					: mTracker.congruence(mTracker.reflexivity(origLiteral), new Term[] { rewriteAtom });
+			assert mCurrentLits.contains(origLiteral);
+			mCurrentLits.remove(origLiteral);
 			addResolution(mTracker.rewriteToClause(origLiteral, rewriteLiteral), origLiteral);
 			if (lit == mFALSE && mTracker instanceof ProofTracker) {
 				/* resolve literal from clause */
@@ -783,67 +803,15 @@ public class Clausifier {
 		}
 	}
 
-	public static class ConditionChain implements Iterable<Term> {
-		final ConditionChain mPrev;
-		final Term mCond;
-		final boolean mPositive;
-		final int mSize;
-
-		public ConditionChain() {
-			mSize = 0;
-			mPrev = null;
-			mCond = null;
-			mPositive = false;
-		}
-
-		public ConditionChain(final ConditionChain prev, final Term cond, final boolean positive) {
-			mPrev = prev;
-			mCond = cond;
-			mPositive = positive;
-			mSize = prev == null ? 1 : prev.mSize + 1;
-		}
-
-		public Term getTerm() {
-			return mPositive ? mCond : mCond.getTheory().term("not", mCond);
-		}
-
-		public int size() {
-			return mSize;
-		}
-
-		@Override
-		public Iterator<Term> iterator() {
-			return new Iterator<Term>() {
-				ConditionChain walk = ConditionChain.this;
-
-				@Override
-				public boolean hasNext() {
-					return walk.mSize > 0;
-				}
-
-				@Override
-				public Term next() {
-					final Term term = walk.getTerm();
-					walk = walk.mPrev;
-					return term;
-				}
-			};
-		}
-
-		public ConditionChain getPrevious() {
-			return mPrev;
-		}
-	}
-
 	private class AddTermITEAxiom implements Operation {
 
 		private final SourceAnnotation mSource;
 
 		private class CollectConditions implements Operation {
-			private final ConditionChain mConds;
+			private final LinkedHashSet<Term> mConds;
 			private final Term mTerm;
 
-			public CollectConditions(final ConditionChain conds, final Term term) {
+			public CollectConditions(final LinkedHashSet<Term> conds, final Term term) {
 				mConds = conds;
 				mTerm = term;
 			}
@@ -857,8 +825,11 @@ public class Clausifier {
 						final Term c = at.getParameters()[0];
 						final Term t = at.getParameters()[1];
 						final Term e = at.getParameters()[2];
-						pushOperation(new CollectConditions(new ConditionChain(mConds, c, false), t));
-						pushOperation(new CollectConditions(new ConditionChain(mConds, c, true), e));
+						LinkedHashSet<Term> other = new LinkedHashSet<>(mConds);
+						mConds.add(c.getTheory().term(SMTLIBConstants.NOT, c));
+						other.add(c);
+						pushOperation(new CollectConditions(mConds, t));
+						pushOperation(new CollectConditions(other, e));
 						return;
 					}
 				}
@@ -959,7 +930,7 @@ public class Clausifier {
 
 		@Override
 		public void perform() {
-			pushOperation(new CollectConditions(new ConditionChain(), mTermITE));
+			pushOperation(new CollectConditions(new LinkedHashSet<Term>(), mTermITE));
 			pushOperation(new AddBoundAxioms());
 			pushOperation(new CheckBounds(mTermITE));
 		}
@@ -1473,7 +1444,7 @@ public class Clausifier {
 		/* add auxlit directly to prevent it getting converted. No rewrite proof necessary */
 		bc.addLiteral(auxlit);
 		for (int i = params.length - 1; i >= 1; i--) {
-			pushOperation(new CollectLiteral(params[i], bc));
+			bc.collectLiteral(params[i]);
 		}
 	}
 
@@ -1482,14 +1453,14 @@ public class Clausifier {
 		final BuildClause bc = new BuildClause(mTracker.tautology(theory.term("or", clause), rule), source);
 		pushOperation(bc);
 		for (final Term term : clause) {
-			pushOperation(new CollectLiteral(term, bc));
+			bc.collectLiteral(term);
 		}
 	}
 
 	public void buildClause(final Term term, final SourceAnnotation source) {
 		final BuildClause bc = new BuildClause(term, source);
 		pushOperation(bc);
-		pushOperation(new CollectLiteral(mTracker.getProvedTerm(term), bc));
+		bc.collectLiteral(mTracker.getProvedTerm(term));
 	}
 
 	public void buildClauseWithTautology(final Term term, final SourceAnnotation source, final Term[] tautLits,
@@ -1500,7 +1471,7 @@ public class Clausifier {
 		pushOperation(bc);
 		bc.addResolution(tautology, mTracker.getProvedTerm(term));
 		for (int i = 1; i < tautLits.length; i++) {
-			pushOperation(new CollectLiteral(tautLits[i], bc));
+			bc.collectLiteral(tautLits[i]);
 		}
 	}
 
@@ -2111,6 +2082,7 @@ public class Clausifier {
 			final Term trueEqFalse = mTheory.term("=", mTheory.mTrue, mTheory.mFalse);
 			final Term axiom = mTracker.tautology(mTheory.not(trueEqFalse), ProofConstants.TAUT_TRUE_NOT_FALSE);
 			final BuildClause bc = new BuildClause(axiom, source);
+			bc.mCurrentLits.add(mTheory.not(trueEqFalse));
 			final Term rewrite = mTracker.intern(trueEqFalse, atom.getSMTFormula(mTheory));
 			bc.addLiteral(atom.negate(), trueEqFalse, rewrite, false);
 			bc.perform();

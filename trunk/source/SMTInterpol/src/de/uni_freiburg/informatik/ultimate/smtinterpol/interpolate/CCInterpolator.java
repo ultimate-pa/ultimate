@@ -26,12 +26,14 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -418,19 +420,46 @@ public class CCInterpolator {
 					final LitInfo litInfo = mInterpolator.getAtomOccurenceInfo(atom);
 					// Collect all B-local or shared literals. (We do not explicitly negate them, as
 					// literals in the lemma are already the negation of literals in the conflict.)
-					if (litInfo.isBorShared(part)) {
+					if (litInfo.isBLocal(part)) {
 						terms.add(lits[i]);
 					} else if (litInfo.isMixed(part)) {
-						// Collect B-part from splitting mixed literal.
 						final TermVariable mixedVar = litInfo.getMixedVar();
-						final Term sideB = litInfo.getLhsOccur().isBLocal(part)
-								? ((ApplicationTerm) atom).getParameters()[0]
-								: ((ApplicationTerm) atom).getParameters()[1];
-
-						if (mInterpolator.isNegatedTerm(lits[i])) {
-							terms.add(mTheory.not(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideB)));
+						InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
+						if (atomInfo.isCCEquality()) {
+							// Collect B-part from splitting mixed literal.
+							final Term sideB = litInfo.getLhsOccur().isBLocal(part)
+									? ((ApplicationTerm) atom).getParameters()[0]
+									: ((ApplicationTerm) atom).getParameters()[1];
+	
+							if (mInterpolator.isNegatedTerm(lits[i])) {
+								terms.add(mTheory.not(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideB)));
+							} else {
+								terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideB));
+							}
+						} else if (atomInfo.isLAEquality() || atomInfo.isBoundConstraint()) {
+							final InterpolatorAffineTerm aPart = litInfo.getAPart(part);
+							final InterpolatorAffineTerm bPart = new InterpolatorAffineTerm();
+							bPart.add(Rational.ONE, atomInfo.getAffineTerm());
+							bPart.add(Rational.MONE, aPart);
+							if (atomInfo.isLAEquality()) {
+								final Term sideB = bPart.toSMTLib(mTheory, atomInfo.isInt());
+								if (mInterpolator.isNegatedTerm(lits[i])) {
+									terms.add(mTheory.not(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideB)));
+								} else {
+									terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideB));
+								}
+							} else {
+								bPart.add(Rational.ONE, mixedVar);
+								final InfinitesimalNumber epsilon =
+										atomInfo.isInt() ? InfinitesimalNumber.ONE : InfinitesimalNumber.EPSILON;
+								if (mInterpolator.isNegatedTerm(lits[i])) {
+									bPart.mul(Rational.MONE);
+									bPart.add(epsilon);
+								}
+								terms.add(LAInterpolator.createLATerm(bPart, epsilon.negate(), bPart.toLeq0(mInterpolator.mTheory)));
+							}
 						} else {
-							terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideB));
+							throw new AssertionError();
 						}
 					}
 				}
@@ -451,13 +480,36 @@ public class CCInterpolator {
 					} else if (litInfo.isMixed(part)) {
 						// Collect A-part from splitting mixed literal.
 						final TermVariable mixedVar = litInfo.getMixedVar();
-						final Term sideA = litInfo.getLhsOccur().isALocal(part)
-								? ((ApplicationTerm) atom).getParameters()[0]
-								: ((ApplicationTerm) atom).getParameters()[1];
-						if (mInterpolator.isNegatedTerm(lits[i])) {
-							terms.add(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideA));
+						InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
+						if (atomInfo.isCCEquality()) {
+							final Term sideA = litInfo.getLhsOccur().isALocal(part)
+									? ((ApplicationTerm) atom).getParameters()[0]
+									: ((ApplicationTerm) atom).getParameters()[1];
+							if (mInterpolator.isNegatedTerm(lits[i])) {
+								terms.add(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideA));
+							} else {
+								terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideA));
+							}
+						} else if (atomInfo.isLAEquality() || atomInfo.isBoundConstraint()) {
+							final InterpolatorAffineTerm aPart = new InterpolatorAffineTerm(litInfo.getAPart(part));
+							if (atomInfo.isLAEquality()) {
+								final Term sideA = aPart.toSMTLib(mTheory, atomInfo.isInt());
+								if (mInterpolator.isNegatedTerm(lits[i])) {
+									terms.add(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideA));
+								} else {
+									terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideA));
+								}
+							} else {
+								aPart.add(Rational.MONE, mixedVar);
+								final InfinitesimalNumber epsilon =
+										atomInfo.isInt() ? InfinitesimalNumber.ONE : InfinitesimalNumber.EPSILON;
+								if (!mInterpolator.isNegatedTerm(lits[i])) {
+									aPart.mul(Rational.MONE);
+								}
+								terms.add(LAInterpolator.createLATerm(aPart, epsilon.negate(), aPart.toLeq0(mInterpolator.mTheory)));
+							}
 						} else {
-							terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideA));
+							throw new AssertionError();
 						}
 					}
 				}

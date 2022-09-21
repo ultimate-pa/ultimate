@@ -351,7 +351,6 @@ public class Interpolator extends NonRecursive {
 				break;
 			}
 			case ":inst": {
-				// TODO: Only supports EUF.
 				final CCInterpolator ipolator = new CCInterpolator(this);
 				interpolants = ipolator.interpolateInstantiation(leafTermInfo);
 				// Replace non-shared symbols in interpolant.

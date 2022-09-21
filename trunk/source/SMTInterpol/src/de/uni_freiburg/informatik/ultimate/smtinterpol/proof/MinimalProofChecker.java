@@ -317,9 +317,7 @@ public class MinimalProofChecker extends NonRecursive {
 		case ":" + ProofRules.ORACLE: {
 			mNumOracles++;
 			mNumAxioms--;
-			final StringBuilder sb = new StringBuilder("Used oracle: ");
-			ProofRules.printProof(sb, new FormulaLet().let(axiom));
-			reportWarning(sb.toString());
+			reportWarning("Used oracle: %s", axiom);
 			// convert to clause (and remove multiple occurrences)
 			final ProofLiteral[] lits = ProofRules.proofLiteralsFromAnnotation((Object[]) annots[0].getValue());
 			final LinkedHashSet<ProofLiteral> clause = new LinkedHashSet<>(Arrays.asList(lits));

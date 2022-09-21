@@ -167,7 +167,11 @@ public class ProofSimplifier extends TermTransformer {
 		final Term goal = iteEquality.getParameters()[1];
 		final ArrayList<Term> intermediates = new ArrayList<>();
 		final ArrayList<Term> proofs = new ArrayList<>();
+		final HashMap<Term,ProofLiteral> conditionLits = new HashMap<>();
 		for (int i = 0; i < clause.length - 1; i++) {
+			conditionLits.put(clause[i].getAtom(), clause[i]);
+		}
+		while (iteTerm != goal) {
 			assert isApplication("ite", iteTerm);
 			intermediates.add(iteTerm);
 			final Term[] iteParams = ((ApplicationTerm) iteTerm).getParameters();
@@ -177,8 +181,8 @@ public class ProofSimplifier extends TermTransformer {
 				condition = ((ApplicationTerm) condition).getParameters()[0];
 				conditionPositive = !conditionPositive;
 			}
-			assert condition == clause[i].getAtom();
-			if (conditionPositive == clause[i].getPolarity()) {
+			ProofLiteral clauseLit = conditionLits.get(condition);
+			if (conditionPositive == clauseLit.getPolarity()) {
 				proofs.add(removeNot(mProofRules.ite2(iteTerm), iteParams[0], true));
 				iteTerm = iteParams[2];
 			} else {
@@ -1674,7 +1678,7 @@ public class ProofSimplifier extends TermTransformer {
 					if (xorAll == null) {
 						proofStep = proofXor;
 					} else {
-						proofStep = xorAllNegated ? mProofRules.xorElim(xorArgs, xorAllArgs, xorAllNextArgs)
+						proofStep = xorAllNegated ? mProofRules.xorIntro(xorArgs, xorAllNextArgs, xorAllArgs)
 								: mProofRules.xorIntro(xorArgs, xorAllArgs, xorAllNextArgs);
 						proofStep = mProofRules.resolutionRule(xorTerm, proofStep, proofXor);
 					}

@@ -405,7 +405,7 @@ public class InterpolantChecker {
 					mCheckingSolver.assertTerm(theory.term("=", tNew, purVarToFreshTerm.get(e.getKey())));
 				}
 			}
-			if (mCheckingSolver.checkSat() != LBool.UNSAT) {
+			if (mCheckingSolver.checkSat() == LBool.SAT) {
 				throw new AssertionError();
 			}
 			mCheckingSolver.pop(1);
