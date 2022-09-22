@@ -17,5 +17,5 @@ modifies x;
   {
       x := -x + 2;
   }
-  assert x != -3 && x != 5;
+  assert x == -3 || x == 5;
 }
