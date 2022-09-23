@@ -26,6 +26,5 @@ public final class RabinUnfolder<L, P> extends PetriNetUnfolderInfinite<L, P> {
 		} else {
 			mLassoChecker = new RabinWordCheck<>(mServices, mUnfolding, (IRabinPetriNet<L, P>) mOperand);
 		}
-		mLassoRun = null;
 	}
 }

@@ -1,20 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Abstract class for unfolding and checking Petri nets on infinite words for emptiness.
@@ -82,45 +74,8 @@ public abstract class PetriNetUnfolderInfinite<L, P> extends PetriNetUnfolderBas
 	@Override
 	void createOrUpdateRunIfWanted(final Event<L, P> event) throws PetriNetNot1SafeException {
 		if (mLassoRun == null) {
-			mLassoRun = constructRun();
+			mLassoRun = mLassoChecker.mRun;
 		}
-	}
-
-	/**
-	 * Constructs a run over the unfolding which is contained in the found lasso configuration.
-	 *
-	 * @return {@link PetriNetLassoRun}
-	 * @throws PetriNetNot1SafeException
-	 */
-	private PetriNetLassoRun<L, P> constructRun() throws PetriNetNot1SafeException {
-		final List<Marking<P>> sequenceOfStemMarkings = new ArrayList<>();
-		final List<Marking<P>> sequenceOfLassoMarkings = new ArrayList<>();
-		final Pair<NestedLassoWord<L>, List<Event<L, P>>> resutlPair = mLassoChecker.getLassoConfigurations();
-		final int stemlength = resutlPair.getFirst().getStem().length();
-		Marking<P> currentMarking = new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()));
-		sequenceOfStemMarkings.add(currentMarking);
-		if (stemlength == 0) {
-			sequenceOfLassoMarkings.add(currentMarking);
-		}
-
-		int wordIndex = 0;
-		for (final Event<L, P> event : resutlPair.getSecond()) {
-			currentMarking = currentMarking.fireTransition(event.getTransition());
-			if (wordIndex < stemlength - 1) {
-				sequenceOfStemMarkings.add(currentMarking);
-			} else if (wordIndex == stemlength - 1) {
-				sequenceOfStemMarkings.add(currentMarking);
-				sequenceOfLassoMarkings.add(currentMarking);
-			} else {
-				sequenceOfLassoMarkings.add(currentMarking);
-			}
-
-			wordIndex++;
-		}
-		final PetriNetRun<L, P> stemRun = new PetriNetRun<>(sequenceOfStemMarkings, resutlPair.getFirst().getStem());
-		final PetriNetRun<L, P> loopRun = new PetriNetRun<>(sequenceOfLassoMarkings, resutlPair.getFirst().getLoop());
-		final PetriNetLassoRun<L, P> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
-		return lassoRun;
 	}
 
 	@Override
