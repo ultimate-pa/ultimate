@@ -205,6 +205,7 @@ public class PolynomialTermMatrix {
 			block.mDenominator = computeFacultyWithStartValue(1,blockSize-1);
 		} else if (lambda == -1) {
 			final Sort sort = SmtSortUtils.getIntSort(script);
+			// iterate over all columns j
 			for (int j=0; j<blockSize; j++) {
 				// first row
 				if (j % 2 == 0) {
@@ -218,7 +219,8 @@ public class PolynomialTermMatrix {
 				}
 				// all other rows
 				if (j!=0) {
-					for (int i=j; i<blockSize; i++) {
+					// we omit the first colum (colum 0) since it is filled with zeros anyway
+					for (int i=1; i<blockSize; i++) {
 						block.mEntries[i][j] = block.mEntries[i-1][j-1];
 					}
 				}
