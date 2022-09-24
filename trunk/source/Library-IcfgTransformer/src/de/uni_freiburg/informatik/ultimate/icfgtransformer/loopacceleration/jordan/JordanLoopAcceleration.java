@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -132,6 +133,21 @@ public class JordanLoopAcceleration {
 			final String errorMessage = "Some updated variables are of non-integer sorts : " + nonIntegerSorts;
 			return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.NONINTEGER_UPDATE,
 					errorMessage, null, jlasg);
+		}
+
+		{
+			final Set<TermVariable> tvOfHavoced = su.getHavocedVars().stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+			for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
+				if (!DataStructureUtils.haveEmptyIntersection(new HashSet<>(Arrays.asList(entry.getValue().getFreeVars())), tvOfHavoced)) {
+					throw new UnsupportedOperationException("Havoced var is read!");
+				}
+			}
+			for (final Triple<IProgramVar, ArrayIndex, Term> entry : su.getDeterministicArrayWrites().entrySet()) {
+				if (!DataStructureUtils.haveEmptyIntersection(new HashSet<>(Arrays.asList(entry.getThird().getFreeVars())), tvOfHavoced)) {
+					throw new UnsupportedOperationException("Havoced var is read!");
+				}
+			}
+
 		}
 
 		final Pair<LinearUpdate, String> pair = extractLinearUpdate(mgdScript, su);
