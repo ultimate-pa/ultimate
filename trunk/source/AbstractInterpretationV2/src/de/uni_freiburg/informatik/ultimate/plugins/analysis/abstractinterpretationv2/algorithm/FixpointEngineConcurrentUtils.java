@@ -656,6 +656,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable, final ACTION read) {
 		List<Set<ACTION>> result = new ArrayList<>();
 
+		// Check only variables which are read in read???
+
 		final Set<ACTION> entryActions = getFirstActions();
 		for (final IProgramVarOrConst variable : writesPerVariable.getDomain()) {
 			writesPerVariable.addAllPairs(variable, checkDummyWrite(variable, read, entryActions));
@@ -703,6 +705,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		final Set<ACTION> allWritesToVariable = mSharedWriteWrittenVars.getDomain().stream()
 				.filter(write -> mSharedWriteWrittenVars.getImage(write).contains(variable))
 				.collect(Collectors.toSet());
+		// BFS backwards through CFG starting at read
 		while (!workList.isEmpty()) {
 			final ACTION currentItem = workList.poll();
 			if (allWritesToVariable.contains(currentItem)) {
