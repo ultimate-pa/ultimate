@@ -117,20 +117,19 @@ public class PolynomialTermMatrix {
 			final TermVariable itHalf, final int k, final int blockSize, final boolean itEven,
 			final boolean restrictedVersionPossible) {
 		final Sort sort = SmtSortUtils.getIntSort(script);
-		final IPolynomialTerm iterCount = constructIterationCounter(script, restrictedVersionPossible, itEven, it, itHalf);
-		if (k==0) {
-			return AffineTerm.constructConstant(sort, Rational.valueOf(
-					computeFacultyWithStartValue(1,blockSize-1), BigInteger.ONE));
-		} else if (k==1) {
-			return PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.valueOf(
-					computeFacultyWithStartValue(1,blockSize-1), BigInteger.ONE)),iterCount);
+		final IPolynomialTerm iterCount = constructIterationCounter(script, restrictedVersionPossible, itEven, it,
+				itHalf);
+		if (k == 0) {
+			return AffineTerm.constructConstant(sort, computeFacultyWithStartValue(1, blockSize - 1));
+		} else if (k == 1) {
+			return PolynomialTerm.mulPolynomials(
+					AffineTerm.constructConstant(sort, computeFacultyWithStartValue(1, blockSize - 1)), iterCount);
 		}
-		final IPolynomialTerm facultyFactor = AffineTerm.constructConstant(sort, Rational.valueOf(
-				computeFacultyWithStartValue(k+1,blockSize-1), BigInteger.ONE));
-		IPolynomialTerm varMinusKFaculty = PolynomialTerm.mulPolynomials(facultyFactor,iterCount);
-		for (int i=1; i<k; i++) {
-			final IPolynomialTerm constant = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.valueOf(-i),
-					BigInteger.ONE));
+		final IPolynomialTerm facultyFactor = AffineTerm.constructConstant(sort,
+				computeFacultyWithStartValue(k + 1, blockSize - 1));
+		IPolynomialTerm varMinusKFaculty = PolynomialTerm.mulPolynomials(facultyFactor, iterCount);
+		for (int i = 1; i < k; i++) {
+			final IPolynomialTerm constant = AffineTerm.constructConstant(sort, -i);
 			final IPolynomialTerm varMinusConstant = PolynomialTerm.sum(iterCount, constant);
 			varMinusKFaculty = PolynomialTerm.mulPolynomials(varMinusKFaculty, varMinusConstant);
 		}
@@ -214,8 +213,7 @@ public class PolynomialTermMatrix {
 				} else {
 					block.mEntries[0][j] = PolynomialTerm.mulPolynomials(constructBinomialCoefficientNumerator(script,
 							it, itHalf, j, blockSize, itEven, restrictedVersionPossible),
-							AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.valueOf(-1),
-									BigInteger.ONE)));
+							AffineTerm.constructConstant(sort, -1));
 				}
 				// all other rows
 				if (j!=0) {
@@ -245,23 +243,20 @@ public class PolynomialTermMatrix {
 		for (int i=0; i<s; i++) {
 			for (int j=0; j<s; j++) {
 				mEntries[i+start][j+start] = PolynomialTerm.mulPolynomials(block.mEntries[i][j],
-						AffineTerm.constructConstant(sort, Rational.valueOf(mDenominator.divide(gcd),
-								BigInteger.ONE)));
+						AffineTerm.constructConstant(sort, mDenominator.divide(gcd)));
 			}
 		}
 		mDenominator = mDenominator.multiply(block.mDenominator.divide(gcd));
 		for (int k=0; k<start; k++) {
 			for (int l=0; l<mDimension; l++) {
 				mEntries[k][l] = PolynomialTerm.mulPolynomials(mEntries[k][l],
-						AffineTerm.constructConstant(sort, Rational.valueOf(block.mDenominator.divide(gcd),
-								BigInteger.ONE)));
+						AffineTerm.constructConstant(sort, block.mDenominator.divide(gcd)));
 			}
 		}
 		for (int k=start+s; k<mDimension; k++) {
 			for (int l=0; l<mDimension; l++) {
 				mEntries[k][l] = PolynomialTerm.mulPolynomials(mEntries[k][l],
-						AffineTerm.constructConstant(sort, Rational.valueOf(block.mDenominator.divide(gcd),
-								BigInteger.ONE)));
+						AffineTerm.constructConstant(sort, block.mDenominator.divide(gcd)));
 			}
 		}
 	}
