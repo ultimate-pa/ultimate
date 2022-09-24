@@ -760,12 +760,13 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			final List<ExplicitLhsPolynomialRelation> preprocessedLowerBounds = bounds.getFirst();
 			final List<ExplicitLhsPolynomialRelation> preprocessedUpperBounds = bounds.getSecond();
-			if (((long) preprocessedLowerBounds.size()) * ((long) preprocessedUpperBounds.size()) >= Integer.MAX_VALUE) {
-				throw new UnsupportedOperationException(String.format("Size of result too large: %s xjuncts",
-						((long) preprocessedLowerBounds.size()) * ((long) preprocessedUpperBounds.size())));
+			final long numberOfResultDualJuncts = ((long) preprocessedLowerBounds.size())
+					* ((long) preprocessedUpperBounds.size());
+			if (numberOfResultDualJuncts >= Integer.MAX_VALUE) {
+				throw new UnsupportedOperationException(
+						String.format("Size of result too large: %s xjuncts", numberOfResultDualJuncts));
 			}
-			final Term[] allCombinations = new Term[preprocessedLowerBounds.size() * preprocessedUpperBounds.size()];
-
+			final Term[] allCombinations = new Term[Math.toIntExact(numberOfResultDualJuncts)];
 			int i = 0;
 			for (final ExplicitLhsPolynomialRelation lower : preprocessedLowerBounds) {
 				for (final ExplicitLhsPolynomialRelation upper : preprocessedUpperBounds) {
