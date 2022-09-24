@@ -36,14 +36,11 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		final BuchiUnfolder<LETTER, PLACE> unf =
-				new BuchiUnfolder<>(mServices, operand, PetriNetUnfolder.EventOrderEnum.ERV, false, true);
-		mRun = unf.getAcceptingRun();
-
-		mLogger.info("localconfigs:");
-		for (final Event<LETTER, PLACE> events : unf.getFinitePrefix().getEvents()) {
-			mLogger.info(events.getLocalConfiguration().getSortedConfiguration(new EsparzaRoemerVoglerOrder<>()));
-		}
+		final PetriNetUnfolder<LETTER, PLACE> unfolder =
+				new PetriNetUnfolder<>(mServices, operand, PetriNetUnfolder.EventOrderEnum.ERV, false, false);
+		final CFPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
+				new CFPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
+		mRun = checkBuchi.mRun;
 		mResult = mRun == null;
 		mLogger.info(exitMessage());
 	}
@@ -66,9 +63,11 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		final BuchiUnfolder<LETTER, PLACE> unf =
-				new BuchiUnfolder<>(mServices, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
-		mRun = unf.getAcceptingRun();
+		final PetriNetUnfolder<LETTER, PLACE> unfolder =
+				new PetriNetUnfolder<>(mServices, operand, order, sameTransitionCutOff, false);
+		final CFPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
+				new CFPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
+		mRun = checkBuchi.mRun;
 		mResult = mRun == null;
 		mLogger.info(exitMessage());
 	}
@@ -97,22 +96,18 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 			throws AutomataLibraryException {
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> finiteAutomaton =
 				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
-						(IBlackWhiteStateFactory<PLACE>) stateFactory, mOperand)).getResult();
-		final boolean automatonEmpty =
+						(IBlackWhiteStateFactory<PLACE>) stateFactory, mOperand, null)).getResult();
+		final var emptyCheck =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty<>(mServices,
-						finiteAutomaton)).getResult();
-		final var run2 = (new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty<>(mServices,
-				finiteAutomaton)).getAcceptingNestedLassoRun();
+						finiteAutomaton));
+		final boolean automatonEmpty = emptyCheck.getResult();
+		final var run2 = emptyCheck.getAcceptingNestedLassoRun();
 		if (getRun() != null) {
 			mLogger.info("stem mine: " + getRun().getStem());
-		}
-		if (run2 != null) {
-			mLogger.info("stem theirs: " + run2.getStem());
-		}
-		if (getRun() != null) {
 			mLogger.info("loop mine: " + getRun().getLoop());
 		}
 		if (run2 != null) {
+			mLogger.info("stem theirs: " + run2.getStem());
 			mLogger.info("loop theirs: " + run2.getLoop());
 		}
 
@@ -124,15 +119,6 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 			final var accepts = new BuchiAccepts<>(mServices, finiteAutomaton, nestedLassoWord);
 			isAcceptedWord = accepts.getResult();
 		}
-
-		// if (getRun() != null) {
-		// final var sameloop = getRun().getLoop().getWord() == run2.getLoop().getWord();
-		// if (!sameloop) {
-		// mLogger.info(getRun().getLoop());
-		// mLogger.info(run2.getLoop().getWord());
-		// }
-		// return sameloop;
-		// }
 
 		return getResult() == automatonEmpty && isAcceptedWord;
 	}

@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferenceRabin;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.RabinUnfolder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.IsEmptyBuchi;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -47,9 +47,9 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean isAbstractionEmpty(final IPetriNet<L, IPredicate> abstraction) throws AutomataLibraryException {
-		final var unfolder = new RabinUnfolder<>(new AutomataLibraryServices(mServices), abstraction,
-				mPref.eventOrder(), mPref.cutOffRequiresSameTransition(), true);
-		final PetriNetLassoRun<L, IPredicate> run = unfolder.getAcceptingRun();
+		final var isempty = new IsEmptyBuchi<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
+				mPref.cutOffRequiresSameTransition(), true);
+		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
 		if (run == null) {
 			return true;
 		}
@@ -60,8 +60,8 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 
 	// TODO: This is a bit hacky and should probably not belong here!
 	private NestedRun<L, IPredicate> constructNestedLassoRun(final PetriNetRun<L, IPredicate> run) {
-		return new NestedRun<>(NestedWord.nestedWord(run.getWord()), (ArrayList<IPredicate>) run.getStateSequence()
-				.stream().map(this::markingToPredicate).collect(Collectors.toList()));
+		return new NestedRun<>(NestedWord.nestedWord(run.getWord()),
+				run.getStateSequence().stream().map(this::markingToPredicate).collect(Collectors.toList()));
 	}
 
 	private IPredicate markingToPredicate(final Marking<IPredicate> marking) {

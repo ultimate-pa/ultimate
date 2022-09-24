@@ -45,7 +45,6 @@ public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean isAbstractionEmpty(final IPetriNet<L, IPredicate> abstraction) throws AutomataLibraryException {
-		mLogger.info(abstraction);
 		final var isempty = new IsEmptyBuchi<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
 				mPref.cutOffRequiresSameTransition(), true);
 		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
