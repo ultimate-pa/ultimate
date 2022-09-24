@@ -208,7 +208,7 @@ public class PolynomialTermMatrix {
 			// iterate over all columns j
 			for (int j=0; j<blockSize; j++) {
 				// first row
-				if (j % 2 == 0) {
+				if (itEven == (j % 2 == 0)) {
 					block.mEntries[0][j] = constructBinomialCoefficientNumerator(script, it, itHalf, j, blockSize,
 							itEven, restrictedVersionPossible);
 				} else {
