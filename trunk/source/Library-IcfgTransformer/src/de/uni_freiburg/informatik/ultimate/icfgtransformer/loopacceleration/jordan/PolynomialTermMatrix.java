@@ -310,7 +310,7 @@ public class PolynomialTermMatrix {
 			closedFormMatrix = multiplication(mgdScript, tmp,
 					rationalMatrix2TermMatrix(script, inverseModalUpdate));
 			// TODO 20220924 Matthias: We construct here an AffineTerm that has sort Int and
-			// whose value is a non-integer rational. This looks like a questionable
+			// whose value can be a non-integer rational. This looks like a questionable
 			// workaround that should be revised.
 			final IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
 					closedFormMatrix.getDenominator()));
