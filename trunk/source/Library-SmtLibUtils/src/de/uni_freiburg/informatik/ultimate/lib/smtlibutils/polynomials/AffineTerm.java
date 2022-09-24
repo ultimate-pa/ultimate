@@ -96,8 +96,22 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	/**
 	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given {@link Rational} value.
 	 */
-	public static AffineTerm constructConstant(final Sort s, final Rational constant) {
-		return new AffineTerm(s, constant, Collections.emptyMap());
+	public static AffineTerm constructConstant(final Sort s, final Rational value) {
+		return new AffineTerm(s, value, Collections.emptyMap());
+	}
+
+	/**
+	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given {@link Rational} value.
+	 */
+	public static AffineTerm constructConstant(final Sort s, final BigInteger value) {
+		return new AffineTerm(s, Rational.valueOf(value, BigInteger.ONE), Collections.emptyMap());
+	}
+
+	/**
+	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given long value.
+	 */
+	public static AffineTerm constructConstant(final Sort s, final long value) {
+		return new AffineTerm(s, Rational.valueOf(value, 1), Collections.emptyMap());
 	}
 
 	/**
