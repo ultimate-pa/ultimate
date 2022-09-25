@@ -411,4 +411,21 @@ public class PolynomialTermMatrix {
 	public int getDimension() {
 		return mDimension;
 	}
+
+	public static PolynomialTermMatrix cancelDenominator(final ManagedScript mgdScript,
+			final PolynomialTermMatrix matrix) {
+		final PolynomialTermMatrix result = constructConstantZeroMatrix(mgdScript, matrix.getDimension());
+		for (int i = 0; i < result.getDimension(); i++) {
+			for (int j = 0; j < result.getDimension(); j++) {
+				final IPolynomialTerm entry = matrix.getEntry(i, j);
+				final IPolynomialTerm newEntry = entry
+						.divInvertible(Rational.valueOf(matrix.getDenominator(), BigInteger.ONE));
+				if (newEntry == null) {
+					return null;
+				}
+				result.setEntry(i, j, newEntry);
+			}
+		}
+		return result;
+	}
 }
