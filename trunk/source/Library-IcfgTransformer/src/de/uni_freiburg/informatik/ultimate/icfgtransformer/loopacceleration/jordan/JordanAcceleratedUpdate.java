@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.Iterations;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -189,10 +190,10 @@ public class JordanAcceleratedUpdate {
 	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
 			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
 			final JordanTransformationResult jordanUpdate, final TermVariable it, final TermVariable itHalf,
-			final boolean itEven, final boolean restrictedVersionPossible) {
+			final Iterations itKind) {
 		// Compute matrix that represents closed form.
 		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
-				jordanUpdate, it, itHalf, itEven, restrictedVersionPossible);
+				jordanUpdate, it, itHalf, itKind);
 		final HashMap<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, linearUpdate,
 				varMatrixIndexMap);
 		return closedFormMap;
