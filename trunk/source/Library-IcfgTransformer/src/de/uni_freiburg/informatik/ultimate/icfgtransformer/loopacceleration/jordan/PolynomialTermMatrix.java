@@ -291,79 +291,19 @@ public class PolynomialTermMatrix {
 	 */
 	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
 			final JordanTransformationResult jordanUpdate, final TermVariable it, final TermVariable itHalf,
-			final boolean itEven, boolean restrictedVersionPossible) {
+			final boolean itEven, final boolean restrictedVersionPossible) {
 		final int n = jordanUpdate.getJnf().getDimension();
 		final Script script = mgdScript.getScript();
-		final Sort sort = SmtSortUtils.getIntSort(script);
 		final RationalMatrix modalUpdate = jordanUpdate.getModal();
 		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
 		PolynomialTermMatrix closedFormMatrix = constructConstantZeroMatrix(mgdScript, n);
-		if (restrictedVersionPossible) {
-			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, it, itHalf, itEven, jordanUpdate,
-					restrictedVersionPossible);
-			final PolynomialTermMatrix tmp = multiplication(mgdScript,
-					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePower);
-			closedFormMatrix = multiplication(mgdScript, tmp,
-					rationalMatrix2TermMatrix(script, inverseModalUpdate));
-			// TODO 20220924 Matthias: We construct here an AffineTerm that has sort Int and
-			// whose value can be a non-integer rational. This looks like a questionable
-			// workaround that should be revised.
-			final IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
-					closedFormMatrix.getDenominator()));
-
-			for (int i=0; i<n; i++) {
-				for (int j=0; j<n; j++) {
-					final Rational constant = closedFormMatrix.getEntry(i,j).getConstant();
-					for (final Rational coeff : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
-						if (coeff.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-							restrictedVersionPossible = false;
-//							final Pair<PolynomialTermMatrix, Boolean> result = new Pair<>(null, false);
-//							return result;
-							// TODO Matthias: Check if this is really dead code.
-							throw new AssertionError("Case should never occur");
-						}
-						if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-							restrictedVersionPossible = false;
-//							final Pair<PolynomialTermMatrix, Boolean> result = new Pair<>(null, false);
-//							return result;
-							// TODO Matthias: Check if this is really dead code.
-							throw new AssertionError("Case should never occur");
-						}
-					}
-					closedFormMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
-							closedFormMatrix.getEntry(i,j), denom));
-				}
-			}
-		}
-		if (!restrictedVersionPossible) {
-			final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, it, itHalf, itEven, jordanUpdate,
-					restrictedVersionPossible);
-			final PolynomialTermMatrix tmp = multiplication(mgdScript,
-					rationalMatrix2TermMatrix(script, modalUpdate), jordanUpdatePower);
-			closedFormMatrix = multiplication(mgdScript, tmp,
-					rationalMatrix2TermMatrix(script, inverseModalUpdate));
-			final IPolynomialTerm denom = AffineTerm.constructConstant(sort, Rational.valueOf(BigInteger.ONE,
-					closedFormMatrix.getDenominator()));
-			for (int i=0; i<n; i++) {
-				for (int j=0; j<n; j++) {
-					final Rational constant = closedFormMatrix.getEntry(i,j).getConstant();
-					for (final Rational coeff : closedFormMatrix.getEntry(i,j).getMonomial2Coefficient().values()) {
-						if (coeff.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not"
-									+ "possible.");
-						}
-						if (constant.numerator().intValue() % closedFormMatrix.getDenominator().intValue() != 0) {
-							throw new AssertionError("Non-integer value found. Computation of closed form not"
-									+ "possible.");
-						}
-					}
-					closedFormMatrix.setEntry(i,j,PolynomialTerm.mulPolynomials(
-							closedFormMatrix.getEntry(i,j), denom));
-				}
-			}
-		}
-		closedFormMatrix.mDenominator = BigInteger.ONE;
-		return closedFormMatrix;
+		final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, it, itHalf, itEven, jordanUpdate,
+				restrictedVersionPossible);
+		final PolynomialTermMatrix tmp = multiplication(mgdScript, rationalMatrix2TermMatrix(script, modalUpdate),
+				jordanUpdatePower);
+		closedFormMatrix = multiplication(mgdScript, tmp,
+				rationalMatrix2TermMatrix(script, inverseModalUpdate));
+		return PolynomialTermMatrix.cancelDenominator(mgdScript, closedFormMatrix);
 	}
 
 	/**
