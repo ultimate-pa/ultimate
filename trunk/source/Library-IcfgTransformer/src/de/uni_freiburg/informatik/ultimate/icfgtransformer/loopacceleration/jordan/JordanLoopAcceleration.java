@@ -422,8 +422,15 @@ public class JordanLoopAcceleration {
 			final boolean restrictedVersionPossible, final boolean quantifyItFinExplicitly,
 			final boolean isAlternatingClosedFormRequired) {
 
+		final int sizeOfLargestEv0Block = JordanAcceleratedUpdate.computeSizeOfLargestEv0Block(jordanUpdate);
+		if (sizeOfLargestEv0Block > 1) {
+			throw new UnsupportedOperationException(
+					String.format("Consider first %s iterations separately", sizeOfLargestEv0Block));
+		}
+
 		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(loopTransFormula.getInVars());
+		// The call of `constructXPrimeEqualsX` might add entries to the newInVars.
 		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, newInVars, loopTransFormula.getOutVars());
 
 		final Term transitiveClosure;

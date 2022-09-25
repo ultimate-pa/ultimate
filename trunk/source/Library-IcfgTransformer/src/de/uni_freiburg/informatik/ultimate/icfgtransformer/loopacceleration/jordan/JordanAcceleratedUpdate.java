@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -174,14 +175,6 @@ public class JordanAcceleratedUpdate {
 	 *         strictly greater than 2
 	 */
 	private static boolean hasEv1JordanBlockStrictlyGreater2(final JordanTransformationResult jordanUpdate) {
-		if (jordanUpdate.getJordanBlockSizes().containsKey(0)) {
-			for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(0).keySet()) {
-				if (blockSize >= 2 && (jordanUpdate.getJordanBlockSizes().get(0).get(blockSize) != 0)) {
-					throw new UnsupportedOperationException(
-							"Need separate disjuncts for first iterations: " + blockSize);
-				}
-			}
-		}
 		boolean ev1hasBlockGreater2 = false;
 		for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(1).keySet()) {
 			if (blockSize > 2 && (jordanUpdate.getJordanBlockSizes().get(1).get(blockSize) != 0)) {
@@ -189,6 +182,22 @@ public class JordanAcceleratedUpdate {
 			}
 		}
 		return ev1hasBlockGreater2;
+	}
+
+	static int computeSizeOfLargestEv0Block(final JordanTransformationResult jordanUpdate) {
+		final NestedMap2<Integer, Integer, Integer> blockSizes = jordanUpdate.getJordanBlockSizes();
+		if (!blockSizes.containsKey(0)) {
+			return 0;
+		} else {
+			int max = 0;
+			for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(0).keySet()) {
+				if (blockSize > max) {
+					max = blockSize;
+				}
+			}
+			assert max > 0;
+			return max;
+		}
 	}
 
 	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
