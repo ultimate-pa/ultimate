@@ -109,28 +109,27 @@ public class PolynomialTermMatrix {
 	}
 
 	/**
-	 * Construct the term it(it-1)*...*(it-j) which is the numerator of the entries of the it-th power of the
-	 * Jordan matrix. Multiply this term by (k+1)*(k+2)*...*(it-blockSize+1) to make sure that fractions in
+	 * Construct the term itc(itc-1)*...*(itc-j) which is the numerator of the
+	 * entries of the itc-th power of the Jordan matrix. Multiply this term by
+	 * (k+1)*(k+2)*...*(itc-blockSize+1) to make sure that fractions in
 	 * PolynomialTermMatrix are reduced.
+	 * @param itc {@link IPolynomialTerm} that represents the exponent
 	 */
-	private static IPolynomialTerm constructBinomialCoefficientNumerator(final Script script, final TermVariable it,
-			final TermVariable itHalf, final int k, final int blockSize, final boolean itEven,
-			final boolean restrictedVersionPossible) {
+	private static IPolynomialTerm constructBinomialCoefficientNumerator(final Script script,
+			final IPolynomialTerm itc, final int k, final int blockSize) {
 		final Sort sort = SmtSortUtils.getIntSort(script);
-		final IPolynomialTerm iterCount = constructIterationCounter(script, restrictedVersionPossible, itEven, it,
-				itHalf);
 		if (k == 0) {
 			return AffineTerm.constructConstant(sort, computeFacultyWithStartValue(1, blockSize - 1));
 		} else if (k == 1) {
 			return PolynomialTerm.mulPolynomials(
-					AffineTerm.constructConstant(sort, computeFacultyWithStartValue(1, blockSize - 1)), iterCount);
+					AffineTerm.constructConstant(sort, computeFacultyWithStartValue(1, blockSize - 1)), itc);
 		}
 		final IPolynomialTerm facultyFactor = AffineTerm.constructConstant(sort,
 				computeFacultyWithStartValue(k + 1, blockSize - 1));
-		IPolynomialTerm varMinusKFaculty = PolynomialTerm.mulPolynomials(facultyFactor, iterCount);
+		IPolynomialTerm varMinusKFaculty = PolynomialTerm.mulPolynomials(facultyFactor, itc);
 		for (int i = 1; i < k; i++) {
 			final IPolynomialTerm constant = AffineTerm.constructConstant(sort, -i);
-			final IPolynomialTerm varMinusConstant = PolynomialTerm.sum(iterCount, constant);
+			final IPolynomialTerm varMinusConstant = PolynomialTerm.sum(itc, constant);
 			varMinusKFaculty = PolynomialTerm.mulPolynomials(varMinusKFaculty, varMinusConstant);
 		}
 		return varMinusKFaculty;
@@ -187,44 +186,41 @@ public class PolynomialTermMatrix {
 	private static PolynomialTermMatrix createBlock(final ManagedScript mgdScript, final TermVariable it,
 			final TermVariable itHalf, final int lambda, final int blockSize, final boolean itEven,
 			final boolean restrictedVersionPossible) {
-		final Script script = mgdScript.getScript();
-		final PolynomialTermMatrix block = constructConstantZeroMatrix(mgdScript, blockSize);
-		if (lambda == 1) {
-			for (int j=0; j<blockSize; j++) {
-				// first row
-				block.mEntries[0][j] = constructBinomialCoefficientNumerator(script, it, itHalf, j, blockSize, itEven,
-						restrictedVersionPossible);
-				// all other rows
-				if (j!=0) {
-					for (int i=1; i<blockSize; i++) {
-						block.mEntries[i][j] = block.mEntries[i-1][j-1];
-					}
-				}
-			}
-			block.mDenominator = computeFacultyWithStartValue(1,blockSize-1);
-		} else if (lambda == -1) {
-			final Sort sort = SmtSortUtils.getIntSort(script);
-			// iterate over all columns j
-			for (int j=0; j<blockSize; j++) {
-				// first row
-				if (itEven == (j % 2 == 0)) {
-					block.mEntries[0][j] = constructBinomialCoefficientNumerator(script, it, itHalf, j, blockSize,
-							itEven, restrictedVersionPossible);
-				} else {
-					block.mEntries[0][j] = PolynomialTerm.mulPolynomials(constructBinomialCoefficientNumerator(script,
-							it, itHalf, j, blockSize, itEven, restrictedVersionPossible),
-							AffineTerm.constructConstant(sort, -1));
-				}
-				// all other rows
-				if (j!=0) {
-					// we omit the first colum (colum 0) since it is filled with zeros anyway
-					for (int i=1; i<blockSize; i++) {
-						block.mEntries[i][j] = block.mEntries[i-1][j-1];
-					}
-				}
-			}
-			block.mDenominator = computeFacultyWithStartValue(1,blockSize-1);
+		if (lambda != -1 && lambda != 0 && lambda != 1) {
+			throw new UnsupportedOperationException("Only eigenvalues -1,0,1 are supported");
 		}
+		final Script script = mgdScript.getScript();
+		final IPolynomialTerm itc = constructIterationCounter(script, restrictedVersionPossible, itEven, it, itHalf);
+		final PolynomialTermMatrix block = constructConstantZeroMatrix(mgdScript, blockSize);
+		if (lambda == 0) {
+			// In this case we return a block filled with zeros.
+			return block;
+		}
+		final Sort sort = SmtSortUtils.getIntSort(script);
+		// iterate over all columns j
+		for (int j = 0; j < blockSize; j++) {
+			// first row
+			final IPolynomialTerm matrixEntry;
+			final IPolynomialTerm tmp = constructBinomialCoefficientNumerator(script, itc, j, blockSize);
+			if (lambda == -1 && itEven != (j % 2 == 0)) {
+				// If the eigenvalue lambda is negative, we might have to multiply the matrix
+				// entry by -1. If we consider only even iteration numbers, then entries of the
+				// odd columns are multiplied by -1. If we consider only odd numbers, the
+				// entries of the even columns are multiplied by -1.
+				matrixEntry = PolynomialTerm.mulPolynomials(tmp, AffineTerm.constructConstant(sort, -1));
+			} else {
+				matrixEntry = tmp;
+			}
+			block.mEntries[0][j] = matrixEntry;
+			// all other rows
+			if (j != 0) {
+				// we omit the first colum (colum 0) since it is filled with zeros anyway
+				for (int i = 1; i < blockSize; i++) {
+					block.mEntries[i][j] = block.mEntries[i - 1][j - 1];
+				}
+			}
+		}
+		block.mDenominator = computeFacultyWithStartValue(1, blockSize - 1);
 		return block;
 	}
 
@@ -271,12 +267,12 @@ public class PolynomialTermMatrix {
 		final PolynomialTermMatrix jordanPower = constructConstantZeroMatrix(mgdScript, n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = jordan.getJordanBlockSizes();
 		int current = 0;
-		for (int e=-1; e<=1; e++) {
-			if (jordanBlockSizes.get(e) != null) {
-				for (final Integer blockSize : jordanBlockSizes.get(e).keySet()) {
+		for (int lambda=-1; lambda<=1; lambda++) {
+			if (jordanBlockSizes.get(lambda) != null) {
+				for (final Integer blockSize : jordanBlockSizes.get(lambda).keySet()) {
 					if (blockSize != null) {
-						for (int occ=1; occ<=jordanBlockSizes.get(e, blockSize); occ++) {
-							final PolynomialTermMatrix block = createBlock(mgdScript, it, itHalf, e, blockSize, itEven,
+						for (int occ=1; occ<=jordanBlockSizes.get(lambda, blockSize); occ++) {
+							final PolynomialTermMatrix block = createBlock(mgdScript, it, itHalf, lambda, blockSize, itEven,
 									restrictedVersionPossible);
 							jordanPower.addBlockToJordanPower(mgdScript, block, current);
 							current = current + blockSize;
