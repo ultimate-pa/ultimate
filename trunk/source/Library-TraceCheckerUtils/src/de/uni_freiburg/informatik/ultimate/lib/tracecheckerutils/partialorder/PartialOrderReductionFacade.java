@@ -130,7 +130,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (independenceRelations.isEmpty() && mMode != PartialOrderMode.NONE) {
 			throw new IllegalArgumentException("Need at least one independence relation");
 		}
-		if (independenceRelations.size() > 1 && mMode != PartialOrderMode.SLEEP_NEW_STATES) {
+		if (independenceRelations.size() > 1 && mMode != PartialOrderMode.SLEEP_NEW_STATES
+				&& mMode != PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER) {
 			throw new IllegalArgumentException("This mode does not support multiple independence relations");
 		}
 		mIndependenceRelations = new ArrayList<>(independenceRelations);
@@ -320,8 +321,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			break;
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES:
-			PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
-					mSleepFactory, mPersistent, visitor);
+			if (mIndependenceRelations.size() == 1) {
+				PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
+						mSleepFactory, mPersistent, visitor);
+			} else {
+				PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
+						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
+			}
 			break;
 		case NONE:
 			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);
