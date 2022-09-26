@@ -4,6 +4,9 @@
 
   <option name="--force-no-wrapper" />
 
+  <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+
   <!-- === No Partial Order Reduction === -->
   <!-- ================================== -->
 
@@ -95,6 +98,11 @@
     <option name="&#45;-traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
   </rundefinition-->
 
+  <rundefinition name="GemCutter.NewStatesSleep.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+  </rundefinition>
+
   <!--rundefinition name="GemCutter.NewStatesSleep.OrderRandom42">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
     <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
@@ -160,10 +168,10 @@
     <option name="&#45;-traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
   </rundefinition-->
 
-  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderLoopLockstep">
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderLoopLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
     <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-  </rundefinition-->
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderRandom42">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
@@ -216,6 +224,10 @@
 
   <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.SleepMapPersistentFixedOrder.ConcreteSmt_VarAbsGlobalSyntactic">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMapPersistentFixedOrder-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
   </rundefinition>
 
   <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.WithAssertions">
@@ -314,8 +326,6 @@
   </rundefinition-->
 
   <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
-    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
   </rundefinition>
 
