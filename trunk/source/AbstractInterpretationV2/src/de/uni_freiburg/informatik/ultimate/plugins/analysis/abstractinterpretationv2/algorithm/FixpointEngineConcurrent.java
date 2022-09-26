@@ -40,7 +40,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
@@ -74,14 +73,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
 	private final IAbstractDomain<STATE, ACTION> mDomain;
 	private final IVariableProvider<STATE, ACTION> mVarProvider;
-	private final ILoopDetector<ACTION> mLoopDetector;
-	private final IDebugHelper<STATE, ACTION, VARDECL, LOC> mDebugHelper;
-	private final IProgressAwareTimer mTimer;
 	private final ILogger mLogger;
 
 	private AbsIntResult<STATE, ACTION, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, LOC> mSummaryMap;
-	private final boolean mUseHierachicalPre;
 
 	private final IIcfg<?> mIcfg;
 	private final FixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
@@ -99,18 +94,14 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
-		mTimer = params.getTimer();
 		mLogger = params.getLogger();
 		mTransitionProvider = params.getTransitionProvider();
 		mStateStorage = params.getStorage();
 		mDomain = params.getAbstractDomain();
 		mVarProvider = params.getVariableProvider();
-		mLoopDetector = params.getLoopDetector();
-		mDebugHelper = params.getDebugHelper();
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
-		mUseHierachicalPre = mDomain.useHierachicalPre();
 		mIcfg = icfg;
 		mFixpointEngine = fxpe;
 
@@ -202,7 +193,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			interferences = tempInterferences;
 		}
 
-		areAbStractStatesSound(mStateStorage.computeLoc2States());
+		// For debugging
+		// areAbStractStatesSound(mStateStorage.computeLoc2States());
 	}
 
 	private boolean areAbStractStatesSound(final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States) {
@@ -362,11 +354,17 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		}
 
 		// Test if Subsetfiltering is helping
-		return filteringForSubSets(procedureInterferences);
+		return filteringForSuperSets(procedureInterferences);
 	}
 
+	/***
+	 * Finding all supersets and to reduce number of FixpointEngine Iterations
+	 *
+	 * @param oldset
+	 * @return
+	 */
 	private Set<Map<ACTION, DisjunctiveAbstractState<STATE>>>
-			filteringForSubSets(final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> oldset) {
+			filteringForSuperSets(final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> oldset) {
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> result = new HashSet<>();
 		final Set<Map<ACTION, DisjunctiveAbstractState<STATE>>> copy = new HashSet<>();
 		result.addAll(oldset);
@@ -428,6 +426,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return null;
 	}
 
+	/***
+	 * All reads which are selfreachable read from the union of all interferences
+	 *
+	 * @param procedure
+	 * @param interferences
+	 * @return
+	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> handlingLoops(final String procedure,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
@@ -451,6 +456,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result;
 	}
 
+	/***
+	 * Initializing each procedure analysis with the state in which it will be forked.
+	 *
+	 * @param procedure
+	 * @param initialActions
+	 * @return
+	 */
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> handlingForks(final String procedure,
 			final Collection<ACTION> initialActions) {
 		final Map<LOC, Set<DisjunctiveAbstractState<STATE>>> loc2States = mStateStorage.computeLoc2States();
@@ -672,7 +684,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			filter.initializeProgramConstraints(mFecUtils.getMustHappenBefore(mIcfg.getProcedureEntryNodes()),
 					mFecUtils.getThCreates(mIcfg.getProcedureEntryNodes()), mFecUtils.getThJoins(),
 					mFecUtils.getIsLoad(), mFecUtils.getIsStore(), mFecUtils.getAllReads(),
-					mFecUtils.getParallelProcedureEntrys(), mFecUtils.getProgramEntry(),
+					mFecUtils.getParallelProcedureEntrys(), mFecUtils.getProgramEntries(),
 					mFecUtils.getNormalProcedureEntrys());
 			return filter;
 		}

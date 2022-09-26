@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -64,8 +65,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	private ITransitionProvider<ACTION, LOC> mTransitionProvider;
 
-	private final Map<FeasibilityFilter.Sorts, String> mSorts;
-	private final Map<FeasibilityFilter.Relations, String> mRelations;
+	private final EnumMap<Sorts, String> mSorts;
+	private final Map<Relations, String> mRelations;
 	private final String mExtraHavoc;
 
 	private enum Relations {
@@ -87,8 +88,8 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mVariable2Function = new HashMap<>();
 		mActCounter = 0;
 
-		mSorts = new HashMap<>();
-		mRelations = new HashMap<>();
+		mSorts = new EnumMap<>(Sorts.class);
+		mRelations = new EnumMap<>(Relations.class);
 
 		mExtraHavoc = "havoc";
 
@@ -97,8 +98,6 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	@Override
 	public boolean evaluate(final Map<LOC, Set<ACTION>> read2Writes) {
-		// if Set<ACTION> contains null -> treat write as write at entry of Ultimate
-		// Problem Variable is not known, add RF for every variable
 		mScript.push(1);
 		for (final var entry : read2Writes.entrySet()) {
 			for (final ACTION potentialRead : mTransitionProvider.getSuccessorActions(entry.getKey())) {
@@ -138,6 +137,19 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		mTransitionProvider = transitionProvider;
 	}
 
+	/***
+	 * Initialies all Condition which must be true for the whole program and can be deduced from the program-order.
+	 *
+	 * @param mustHappenBefore
+	 * @param thCreates
+	 * @param thJoins
+	 * @param isLoad
+	 * @param isStore
+	 * @param allReads
+	 * @param isParallelEntry
+	 * @param mainProcedureEntry
+	 * @param isNormalEntry
+	 */
 	public void initializeProgramConstraints(final HashRelation<ACTION, ACTION> mustHappenBefore,
 			final HashRelation<ACTION, ACTION> thCreates, final HashRelation<ACTION, ACTION> thJoins,
 			final HashRelation<ACTION, IProgramVarOrConst> isLoad,
@@ -254,9 +266,9 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	private void addExtraHavoc(final HashRelation<ACTION, IProgramVarOrConst> isLoad,
 			final Set<ACTION> mainProcedureEntry, final Sort action, final Sort variable) {
-		// For all loaded variables add a write at the top of ultimate and save them
+		// For all loaded variables add a write at the top of ultimate
 		mScript.declareFun(mExtraHavoc, new Sort[0], mScript.sort(mSorts.get(Sorts.ACTION)));
-		// add MHB before entries
+		// state that havoc is at the very top of ultimate
 		for (final var entry : mainProcedureEntry) {
 			String two = mAction2Function.get(entry);
 			if (two == null) {
@@ -278,6 +290,13 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		}
 	}
 
+	/***
+	 * States that at least one 'fork threadxy()' must have been executed, before the program can execute a statement
+	 * from threadxy(). Will be used when a thread can run in parallel to itself.
+	 *
+	 * @param sort
+	 * @return
+	 */
 	private Term forkRuleParallel(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
@@ -287,6 +306,12 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 
 	}
 
+	/***
+	 * Simpler rule for 'forkRuleParallel'. Is precise enough if the thread can't run parallel to itself.
+	 *
+	 * @param sort
+	 * @return
+	 */
 	private Term forkRuleNonParallel(final Sort sort) {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
@@ -300,6 +325,13 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		return forAll(implication(joins(a, b), mustHappenBefore(b, a)));
 	}
 
+	/***
+	 * States that if a can read from b then, b must happen before a.
+	 *
+	 * @param action
+	 * @param variable
+	 * @return
+	 */
 	private Term readsFromOne(final Sort action, final Sort variable) {
 		final TermVariable l = mScript.variable("l", action);
 		final TermVariable s1 = mScript.variable("s1", action);
@@ -307,6 +339,26 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		final TermVariable x = mScript.variable("x", variable);
 		return forAll(implication(readsFrom(l, s1), mustHappenBefore(s1, s2), isLoad(l, x), isStore(s1, x),
 				isStore(s2, x), mustHappenBefore(l, s2)));
+	}
+
+	/***
+	 * States that if a must happen before b and b before c. And a, b are writes to variable v and c reads from variable
+	 * v. Then c can not read from a, because b will overwrite it.
+	 *
+	 * @param action
+	 * @param variable
+	 * @return
+	 */
+	private Term readsFromTwo(final Sort action, final Sort variable) {
+		final TermVariable l1 = mScript.variable("l1", action);
+		final TermVariable l2 = mScript.variable("l2", action);
+		final TermVariable s1 = mScript.variable("s1", action);
+		final TermVariable s2 = mScript.variable("s2", action);
+		final TermVariable x = mScript.variable("x", variable);
+		final Term condition =
+				mScript.term("and", readsFrom(l1, s1), mustHappenBefore(l1, s2), mustHappenBefore(s2, l2),
+						isLoad(l1, x), isLoad(l2, x), isStore(s1, x), isStore(s2, x), readsFrom(l2, s1));
+		return forAll(implication(condition, mScript.term("false")));
 	}
 
 	private Term transitivity(final Sort sort) {
@@ -320,18 +372,6 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 		final TermVariable a = mScript.variable("a", sort);
 		final TermVariable b = mScript.variable("b", sort);
 		return forAll(implication(mustHappenBefore(a, b), readsFrom(a, b), mScript.term("false")));
-	}
-
-	private Term readsFromTwo(final Sort action, final Sort variable) {
-		final TermVariable l1 = mScript.variable("l1", action);
-		final TermVariable l2 = mScript.variable("l2", action);
-		final TermVariable s1 = mScript.variable("s1", action);
-		final TermVariable s2 = mScript.variable("s2", action);
-		final TermVariable x = mScript.variable("x", variable);
-		final Term condition =
-				mScript.term("and", readsFrom(l1, s1), mustHappenBefore(l1, s2), mustHappenBefore(s2, l2),
-						isLoad(l1, x), isLoad(l2, x), isStore(s1, x), isStore(s2, x), readsFrom(l2, s1));
-		return forAll(implication(condition, mScript.term("false")));
 	}
 
 	private Term mustHappenBefore(final Term a, final Term b) {
@@ -416,7 +456,7 @@ public class FeasibilityFilter<ACTION, LOC> implements IFilter<ACTION, LOC> {
 	}
 
 	private String declareFunctionforAction(final ACTION item, final Sort action) {
-		// for debugging
+		// for debugging:
 		// final String name = item.toString() + "_" + mTransitionProvider.getProcedureName(item) + "_" +
 		// String.valueOf(mActCounter);
 		final String name = "Act_" + String.valueOf(mActCounter);

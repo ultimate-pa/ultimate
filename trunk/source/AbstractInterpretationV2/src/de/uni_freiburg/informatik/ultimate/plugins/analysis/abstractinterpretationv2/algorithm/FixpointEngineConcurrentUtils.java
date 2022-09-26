@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -144,6 +143,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
+	/***
+	 *
+	 * @param entryNodes
+	 * @return MHB: (x,y) in MHB, iff (x,y) in DOMINATES and (x,y) in NOTREACHABLEFROM
+	 */
 	public HashRelation<ACTION, ACTION> getMustHappenBefore(final Map<String, ? extends IcfgLocation> entryNodes) {
 		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
 		final HashRelation<ACTION, ACTION> notRechableFrom = getNotReachableFrom(entryNodes);
@@ -169,13 +173,8 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	 * @return NOTREACHABLEFROM: (x,y) in NOTREACHABLEFROM, iff x is not reachable from y.
 	 */
 	public HashRelation<ACTION, ACTION> getNotReachableFrom(final Map<String, ? extends IcfgLocation> entryNodes) {
-		// compute Set of all ACTIONS in Thread -> X
-		// compute ReachableFrom via Iterator
-		// Compute AllActions\ReachableFrom -> NOTREACHABLEFROM
 		final HashRelation<ACTION, ACTION> result = new HashRelation<>();
 
-		// very inefficient, but first approach
-		// TODO: find a more efficient way
 		for (final var entry : entryNodes.entrySet()) {
 			if (mParallelProcedures.contains(entry.getKey())) {
 				// procedure can run parallel to itself -> NotReachable condition is not valid anymore
@@ -234,6 +233,10 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mSharedWriteWrittenVars;
 	}
 
+	/***
+	 *
+	 * @return All actions that are a successor of entry locations from procedures which can run parallel to itself.
+	 */
 	public Set<ACTION> getParallelProcedureEntrys() {
 		final Set<ACTION> result = new HashSet<>();
 		for (final var entry : mIcfg.getProcedureEntryNodes().entrySet()) {
@@ -244,6 +247,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
+	/***
+	 *
+	 * @return All actions that are a successor of entry locations from procedures which can <b>not </b> run parallel to
+	 *         itself.
+	 */
 	public Set<ACTION> getNormalProcedureEntrys() {
 		final Set<ACTION> result = new HashSet<>();
 		for (final var entry : mIcfg.getProcedureEntryNodes().entrySet()) {
@@ -254,23 +262,13 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
-	public Set<ACTION> getIsEntry() {
-		final Set<ACTION> result = new HashSet<>();
-		final String initialProcedure = mTopologicalOrder.get(0);
-		for (final var entry : mIcfg.getProcedureEntryNodes().entrySet()) {
-			if (!entry.getKey().equals(initialProcedure)) {
-				result.addAll(mTransitionProvider.getSuccessorActions((LOC) entry.getValue()));
-			}
-		}
-		return result;
-	}
-
-	public Set<ACTION> getProgramEntry() {
-		final Set<ACTION> result = new HashSet<>();
-		final String initialProcedure = mTopologicalOrder.get(0);
-		result.addAll(
-				mTransitionProvider.getSuccessorActions((LOC) mIcfg.getProcedureEntryNodes().get(initialProcedure)));
-		return result;
+	/***
+	 *
+	 * @return All actions that are a successor of the entry location of the whole program.
+	 */
+	public Set<ACTION> getProgramEntries() {
+		final IcfgLocation start = mIcfg.getProcedureEntryNodes().get(mTopologicalOrder.get(0));
+		return new HashSet<>(mTransitionProvider.getSuccessorActions((LOC) start));
 	}
 
 	public Set<ACTION> getSelfReachableReads(final String procedure) {
@@ -285,6 +283,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mForkedAt.getImage(procedure);
 	}
 
+	/***
+	 * If the cross-product for the procedure is not computed yet, it will be computed intern (may take some time). The
+	 * cross-product contains initially every combination of read-write-combinations and will then be filtered.
+	 *
+	 * @param filter
+	 * @param procedure
+	 * @return
+	 */
 	public Set<Map<LOC, Set<ACTION>>> getCrossProduct(final IFilter<ACTION, LOC> filter, final String procedure) {
 		final var crossProduct = mCrossProducts.get(procedure);
 		if (crossProduct == null) {
@@ -302,6 +308,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	}
 
+	/***
+	 *
+	 * @param action
+	 * @return All variables that will either be written or read in that statement
+	 */
 	public Set<IProgramVarOrConst> getVarsForBuildingState(final ACTION action) {
 		return DataStructureUtils.union(getWrittenVars(action), mSharedWriteReadVars.get(action));
 	}
@@ -322,15 +333,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return mWritesPerRead.get(read).contains(write);
 	}
 
-	// Is function needed?
-	public Map<ACTION, DisjunctiveAbstractState<STATE>> filterProcedures(final String name,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> interferences) {
-		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
-		interferences.entrySet().stream().filter(a -> mTransitionProvider.getProcedureName(a.getKey()) != (name))
-				.forEach(b -> result.put(b.getKey(), b.getValue()));
-		return result;
-	}
-
 	public static <K, V> Map<K, V> copyMap(final Map<K, V> map) {
 		final Map<K, V> result = new HashMap<>();
 		map.forEach((a, b) -> result.put(a, b));
@@ -342,18 +344,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	private static Integer queueCompare(final Pair<String, Integer> pair1, final Pair<String, Integer> pair2) {
-		// 1 < 2 => -1
-		// 1 > 2 => 1
-		// 1 == 2 => 0
 		return pair1.getSecond() - pair2.getSecond();
 	}
 
-	/**
-	 * pre computation over the icfg: shared write locations and share read locations
-	 *
-	 * @param entryNodes
-	 */
 	private void initialize(final Map<String, ? extends IcfgLocation> entryNodes) {
+
 		final Set<IProgramVar> variables = new HashSet<>();
 		entryNodes.forEach((procedure, location) -> variables
 				.addAll(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(procedure)));
@@ -362,7 +357,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			final IcfgEdgeIterator iterator = new IcfgEdgeIterator(entry.getValue().getOutgoingEdges());
 			iterator.asStream().forEach(edge -> computationsPerEdge(entry.getKey(), edge, variables));
 		}
-		// calculated until here: mReadSharedVars, mWrittenSharedVars, mWritesPerProcedure, mReadsPerProcedure
 
 		final Map<ACTION, Set<String>> readsFromProcedures = new HashMap<>();
 
@@ -388,6 +382,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 		}
 
+		computeTopologicalOrder(entryNodes.keySet());
 		final Map<String, Set<String>> closureDepending = closure(mDependingProcedures);
 		final Map<String, Set<String>> dependingOn = computeDependingProcedures(closureDepending);
 
@@ -438,11 +433,16 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			}
 		}
 
-		computeTopologicalOrder(entryNodes.keySet());
 		computeGlobalVars();
 		computeDependenciesBetweenVars();
 	}
 
+	/***
+	 * Compute transitive closure over relation
+	 *
+	 * @param map
+	 * @return
+	 */
 	private static Map<String, Set<String>> closure(final Map<String, Set<String>> map) {
 		// create deep copy of mForks
 		final Map<String, Set<String>> result = new HashMap<>();
@@ -474,7 +474,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		final Map<String, Set<String>> result = new HashMap<>();
 		final Queue<String> worklist = new ArrayDeque<>();
 		final Set<String> added = new HashSet<>();
-		final String startitem = "ULTIMATE.start";
+		final String startitem = getTopologicalOrder().get(0);
 		worklist.add(startitem);
 		added.add(startitem);
 		// initialize for every procedure the empty set
@@ -594,7 +594,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	private Set<Map<LOC, Set<ACTION>>> computeCrossProductForSetOfVars(final IFilter<ACTION, LOC> filter,
 			final String procedure, final Set<IProgramVarOrConst> variables) {
 		mLogger.info("Cross Product Computation started for " + procedure + " with variables: " + variables);
-		// TODO: log the variables
 		final Set<Map<LOC, Set<ACTION>>> result = new HashSet<>();
 		// LinkedHashMap, because Iteration order must stay the same
 		final Map<LOC, List<Set<ACTION>>> writes = new LinkedHashMap<>();
@@ -656,9 +655,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 			final HashRelation<IProgramVarOrConst, ACTION> writesPerVariable, final ACTION read) {
 		List<Set<ACTION>> result = new ArrayList<>();
 
-		// Check only variables which are read in read???
-
-		final Set<ACTION> entryActions = getFirstActions();
+		final Set<ACTION> entryActions = getProgramEntries();
 		for (final IProgramVarOrConst variable : writesPerVariable.getDomain()) {
 			writesPerVariable.addAllPairs(variable, checkDummyWrite(variable, read, entryActions));
 		}
@@ -696,6 +693,14 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return writesPerVariable;
 	}
 
+	/***
+	 * Find last writes which the read can from, iff the program is executed sequential.
+	 *
+	 * @param variable
+	 * @param read
+	 * @param entryActions
+	 * @return
+	 */
 	private Set<ACTION> checkDummyWrite(final IProgramVarOrConst variable, final ACTION read,
 			final Set<ACTION> entryActions) {
 		final Set<ACTION> result = new HashSet<>();
@@ -761,11 +766,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		return result;
 	}
 
-	private Set<ACTION> getFirstActions() {
-		final IcfgLocation start = mIcfg.getProcedureEntryNodes().get(mTopologicalOrder.get(0));
-		return new HashSet<>(mTransitionProvider.getSuccessorActions((LOC) start));
-	}
-
 	private void computeTopologicalOrder(final Set<String> procedures) {
 		final Map<String, Integer> inGrad = new HashMap<>();
 		for (final String procedure : procedures) {
@@ -812,6 +812,11 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 		}
 	}
 
+	/***
+	 * Two variables are dependent if they are data-dependent or control-dependent. They are data-dependent if the value
+	 * of y (directly) influences the computation of x. They are control-dependent if x is part of a statement and it
+	 * depends on y, whether the statement will be executed or not.
+	 */
 	private void computeDependenciesBetweenVars() {
 		final UnionFind<IProgramVarOrConst> result = new UnionFind<>();
 		final Set<IProgramVarOrConst> nonGlobalVars = new HashSet<>();
@@ -844,8 +849,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 				}
 			}
 		}
-
-		// mDependenciesBetweenVars.add(mGlobalVars);
 
 		if (result.size() == 1) {
 			result.removeAll(nonGlobalVars);
@@ -905,7 +908,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 		for (final var procedure : mTopologicalOrder) {
 			final Queue<LOC> workList = new ArrayDeque<>();
-			// final Queue<LOC> skipped = new ArrayDeque<>();
 			final Set<LOC> done = new HashSet<>();
 
 			final LOC exit = (LOC) mIcfg.getProcedureExitNodes().get(procedure);
@@ -969,7 +971,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 		for (final var procedure : mTopologicalOrder) {
 			final Queue<LOC> workList = new ArrayDeque<>();
-			// final Queue<LOC> skipped = new ArrayDeque<>();
 			final Set<LOC> done = new HashSet<>();
 
 			final LOC entry = (LOC) mIcfg.getProcedureEntryNodes().get(procedure);
@@ -1024,7 +1025,7 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 	}
 
 	/***
-	 * a is control dependent on b iff b is an ACTION where the program flow splitted and b dominates a
+	 * a is control dependent on b iff the execution of a is dependent on b.
 	 *
 	 * @param dominates
 	 * @return
@@ -1047,7 +1048,6 @@ public class FixpointEngineConcurrentUtils<STATE extends IAbstractState<STATE>, 
 
 	private boolean isControlDependent(final ACTION assume, final ACTION action,
 			final HashRelation<ACTION, ACTION> postDominated) {
-		// TODO: add that action does not post dominate the source of assume
 		final Iterator<ACTION> iterator =
 				mTransitionProvider.getSuccessorActions(mTransitionProvider.getSource(assume)).iterator();
 		Set<ACTION> intersection = postDominated.getImage(iterator.next());
