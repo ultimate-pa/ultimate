@@ -216,22 +216,22 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 	}
 
 	private S getOrConstructState(final Marking<S> marking) {
-		// Do not use computeIfAbsent, because constructState may return null.
+		// Use containsKey, because the map may intentionally store null.
 		if (!mMarking2State.containsKey(marking)) {
-			final S state = constructState(marking, false);
-			mMarking2State.put(marking, state);
-			return state;
+			return constructState(marking, false);
 		}
 		return mMarking2State.get(marking);
 	}
 
 	private S constructState(final Marking<S> marking, final boolean isInitial) {
 		if (isKnownDeadEnd(marking)) {
+			mMarking2State.put(marking, null);
 			return null;
 		}
 
 		final S state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 		mState2Marking.put(state, marking);
+		mMarking2State.put(marking, state);
 
 		assert isInitial == new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()))
 				.equals(marking) : "Wrong initial state";
