@@ -61,11 +61,11 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 
 		final var expectedCtex = findReductionCounterexample(expected, input, independence);
 		assertThat("FLAWED TEST: Expected net " + expected + " is not a reduction of input " + input
-				+ "; counterexample: " + expectedCtex.orElse(null), expectedCtex.isEmpty());
+				+ "counterexample: " + expectedCtex.orElse(null), expectedCtex.isEmpty());
 
 		final var expectedNew = findNewWord(expected, input);
 		assertThat("FLAWED TEST: Expected net " + expected + " contains words not accepted by input " + input
-				+ "; example: " + expectedNew.orElse(null), expectedNew.isEmpty());
+				+ "example: " + expectedNew.orElse(null), expectedNew.isEmpty());
 
 		final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
 				CopyPlaceFactory.INSTANCE, independence, PostScriptChecker.INSTANCE, null);
@@ -73,11 +73,11 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 		final BoundedPetriNet<String, String> actual = reduction.getResult();
 
 		final var actualCtex = findReductionCounterexample(actual, input, independence);
-		assertThat("Incorrect: Actual net " + actual + " is not a reduction of input " + input + "; counterexample: "
-				+ actualCtex, actualCtex.isEmpty());
+		assertThat("Incorrect: Actual net " + actual + " is not a reduction of input " + input + "counterexample: "
+				+ actualCtex.orElse(null), actualCtex.isEmpty());
 
 		final var actualNew = findNewWord(actual, input);
-		assertThat("Incorrect: Actual net " + actual + " contains words not accepted by input " + input + "; example: "
+		assertThat("Incorrect: Actual net " + actual + " contains words not accepted by input " + input + "example: "
 				+ actualNew.orElse(null), actualNew.isEmpty());
 	}
 
