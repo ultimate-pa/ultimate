@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.MultiPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
@@ -91,6 +92,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
+
+	// Enables the combination of persistent sets up to multiple independence relations.
+	public static final boolean ENABLE_MULTI_PERSISTENT_SETS = false;
 
 	public enum OrderType {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
@@ -244,9 +248,21 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return null;
 		}
 
-		// TODO Persistent sets currently only supported for single independence relation
+		// Preliminary support for multiple independence relations
+		if (ENABLE_MULTI_PERSISTENT_SETS && mIndependenceRelations.size() > 1) {
+			final var persistent = mIndependenceRelations.stream()
+					.map(indep -> createPersistentSets(icfg, errorLocs, indep)).collect(Collectors.toList());
+			return new MultiPersistentSetChoice<>(persistent, mSleepMapFactory);
+		}
+
 		final IIndependenceRelation<IPredicate, L> independence =
 				IndependenceBuilder.fromIndependence(mIndependenceRelations.get(0)).ensureUnconditional().build();
+		return createPersistentSets(icfg, errorLocs, independence);
+	}
+
+	private IPersistentSetChoice<L, IPredicate> createPersistentSets(final IIcfg<?> icfg,
+			final Collection<? extends IcfgLocation> errorLocs,
+			final IIndependenceRelation<IPredicate, L> independence) {
 		final IDfsOrder<IcfgEdge, IPredicate> relevantOrder =
 				mMode.hasFixedOrder() ? (IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder : null;
 
