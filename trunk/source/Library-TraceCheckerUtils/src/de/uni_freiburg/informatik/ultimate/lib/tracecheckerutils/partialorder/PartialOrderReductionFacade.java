@@ -94,7 +94,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
 	// Enables the combination of persistent sets up to multiple independence relations.
-	public static final boolean ENABLE_MULTI_PERSISTENT_SETS = false;
+	public static final boolean ENABLE_MULTI_PERSISTENT_SETS = true;
 
 	public enum OrderType {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
