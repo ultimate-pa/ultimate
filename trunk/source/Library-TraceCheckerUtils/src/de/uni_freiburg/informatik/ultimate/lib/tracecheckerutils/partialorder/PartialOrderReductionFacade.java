@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -76,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -194,11 +196,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final int maxStep, final IIcfg<?> icfg) {
 		// TODO Add support for all orders previously supported in #getDfsOrder
 
-		/*
-		 * final List<String> threadList =
-		 * IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()); final List<Integer>
-		 * maxSteps = Collections.nCopies(threadList.size(), maxStep);
-		 */
+		//TODO heuristic
+
 
 		final List<String> allThreads = new ArrayList<>();
 		allThreads.addAll(IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()));
@@ -237,6 +236,11 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
 
+		/* TODO get all global Variables, then iterate over the cfg and mark variables if a procedure accesses it,
+		* remove all variables that are marked at most once at the end to calculate the effective global variables
+		* can also be done via the heuristic
+		*/
+		
 		final IPreferenceOrder<L, IPredicate, ?> order =
 				new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, getStepDefinition(icfg, steptype));
 
@@ -253,7 +257,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return order;
 	}
 
-	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype) {
+	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype
+			/*, final Set<IProgramVar> effectiveGlobalVars*/) {
+
 		switch (steptype) {
 		case ALL_READ_WRITE:
 			return x -> (!x.getTransformula().getInVars().isEmpty()
@@ -263,14 +269,17 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case GLOBAL_READ_WRITE:
 			return x -> x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal())
 					|| x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal());
+			// v.isGlobal() should be modified s.t. it has to be "effectively global"
 		case GLOBAL_WRITE:
 			return x -> x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal());
+			// v.isGlobal() should be modified s.t. it has to be "effectively global"
 		case LOOP:
 			final var loopHeads = icfg.getLoopLocations();
 			return x -> loopHeads.contains(x.getTarget());
 		}
 		throw new UnsupportedOperationException("Unknown step type: " + steptype);
 	}
+
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
 			createSleepFactory(final PredicateFactory predicateFactory) {
