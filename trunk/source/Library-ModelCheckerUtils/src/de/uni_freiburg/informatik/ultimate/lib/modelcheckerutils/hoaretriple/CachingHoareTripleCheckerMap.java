@@ -57,11 +57,8 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
 	public CachingHoareTripleCheckerMap(final IUltimateServiceProvider services,
 			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer,
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache,
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache,
-			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache) {
-		super(services, protectedHoareTripleChecker, predicateUnifer, initialInternalCache, initialCallCache,
-				initialReturnCache);
+			final HoareTripleCheckerCache initialCache) {
+		super(services, protectedHoareTripleChecker, predicateUnifer, initialCache);
 	}
 
 	@Override
