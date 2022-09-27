@@ -77,7 +77,7 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	}
 
 	public enum AutomatonTypeConcurrent {
-		BUCHI_AUTOMATON, BUCHI_PETRI_NET_LAZY, BUCHI_PETRI_NET_EAGER, RABIN_PETRI_NET
+		BUCHI_AUTOMATON, BUCHI_PETRI_NET, RABIN_PETRI_NET
 	}
 
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";

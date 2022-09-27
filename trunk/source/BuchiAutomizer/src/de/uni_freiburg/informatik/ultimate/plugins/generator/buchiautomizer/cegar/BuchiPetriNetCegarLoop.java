@@ -29,11 +29,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Rank
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
-public class BuchiPetriNetCegarLoopEager<L extends IIcfgTransition<?>>
+public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		extends AbstractBuchiCegarLoop<L, IPetriNet<L, IPredicate>> {
 	private final Marking2MLPredicate mMarking2MLPredicate;
 
-	public BuchiPetriNetCegarLoopEager(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
+	public BuchiPetriNetCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final IPetriNet<L, IPredicate> initialAbstraction,
