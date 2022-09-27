@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Matthias Heizmann
  *
  */
-public class CachingHoareTripleCheckerIterative extends CachingHoareTripleChecker implements IHoareTripleChecker {
+public class CachingHoareTripleCheckerIterative extends CachingHoareTripleChecker {
 
 	public CachingHoareTripleCheckerIterative(final IUltimateServiceProvider services,
 			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer) {
