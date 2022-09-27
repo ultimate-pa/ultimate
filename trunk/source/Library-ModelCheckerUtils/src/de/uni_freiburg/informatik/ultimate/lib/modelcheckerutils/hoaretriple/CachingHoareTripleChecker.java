@@ -55,7 +55,7 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 
 	protected final ILogger mLogger;
 	protected final IHoareTripleChecker mComputingHoareTripleChecker;
-	protected final IPredicateUnifier mPredicateUnifer;
+	protected final IPredicateUnifier mPredicateUnifier;
 
 	private final InCaReCounter mResultFromSolver = new InCaReCounter();
 	private final InCaReCounter mResultFromCache = new InCaReCounter();
@@ -69,11 +69,11 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	public CachingHoareTripleChecker(final IUltimateServiceProvider services,
-			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer,
+			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifier,
 			final HoareTripleCheckerCache initialCache) {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mComputingHoareTripleChecker = Objects.requireNonNull(protectedHoareTripleChecker);
-		mPredicateUnifer = Objects.requireNonNull(predicateUnifer);
+		mPredicateUnifier = Objects.requireNonNull(predicateUnifier);
 		mCache = Objects.requireNonNull(initialCache);
 	}
 

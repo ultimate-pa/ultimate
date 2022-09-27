@@ -56,9 +56,9 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 	}
 
 	public CachingHoareTripleCheckerMap(final IUltimateServiceProvider services,
-			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer,
+			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifier,
 			final HoareTripleCheckerCache initialCache) {
-		super(services, protectedHoareTripleChecker, predicateUnifer, initialCache);
+		super(services, protectedHoareTripleChecker, predicateUnifier, initialCache);
 	}
 
 	@Override
@@ -73,8 +73,8 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
 		boolean someResultWasUnknown = false;
 		{
-			final Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
-			final Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
+			final Set<IPredicate> strongerThanPre = mPredicateUnifier.getCoverageRelation().getCoveredPredicates(pre);
+			final Set<IPredicate> weakerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveringPredicates(succ);
 			final Validity validity = new PreIterator(strongerThanPre, pred2succ, weakerThanSucc,
 					this::evaluteResultStrongerThanPreAndWeakerThanSucc).iterate();
 			if (validity != null) {
@@ -95,8 +95,8 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
 		}
 		{
-			final Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
-			final Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
+			final Set<IPredicate> weakerThanPre = mPredicateUnifier.getCoverageRelation().getCoveringPredicates(pre);
+			final Set<IPredicate> strongerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveredPredicates(succ);
 			final Validity validity = new PreIterator(weakerThanPre, pred2succ, strongerThanSucc,
 					this::evaluteResultWeakerThanPreAndStrongerThanSucc).iterate();
 			if (validity != null) {

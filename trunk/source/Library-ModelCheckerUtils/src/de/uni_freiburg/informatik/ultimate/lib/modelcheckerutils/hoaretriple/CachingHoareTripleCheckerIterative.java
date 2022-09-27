@@ -54,8 +54,8 @@ public class CachingHoareTripleCheckerIterative extends CachingHoareTripleChecke
 			final NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache) {
 		boolean someResultWasUnknown = false;
 		{
-			final Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
-			final Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
+			final Set<IPredicate> strongerThanPre = mPredicateUnifier.getCoverageRelation().getCoveredPredicates(pre);
+			final Set<IPredicate> weakerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveringPredicates(succ);
 			if (strongerThanPre.size() * weakerThanSucc.size() > 100) {
 				mLogger.warn("costly cache lookup: " + strongerThanPre.size() * weakerThanSucc.size());
 			}
@@ -82,8 +82,8 @@ public class CachingHoareTripleCheckerIterative extends CachingHoareTripleChecke
 			}
 		}
 		{
-			final Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
-			final Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
+			final Set<IPredicate> weakerThanPre = mPredicateUnifier.getCoverageRelation().getCoveringPredicates(pre);
+			final Set<IPredicate> strongerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveredPredicates(succ);
 			if (weakerThanPre.size() * strongerThanSucc.size() > 100) {
 				mLogger.warn("costly cache lookup: " + weakerThanPre.size() * strongerThanSucc.size());
 			}
