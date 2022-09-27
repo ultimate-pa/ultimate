@@ -28,11 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -41,6 +43,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
@@ -48,10 +51,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -66,7 +71,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
+	private final IAbstractStateStorage<STATE, ACTION, LOC> mDefaultStateStorage;
+	private IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
 	private final IAbstractDomain<STATE, ACTION> mDomain;
 	private final IVariableProvider<STATE, ACTION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
@@ -85,7 +91,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mTimer = params.getTimer();
 		mLogger = params.getLogger();
 		mTransitionProvider = params.getTransitionProvider();
-		mStateStorage = params.getStorage();
+		mDefaultStateStorage = params.getStorage();
 		mDomain = params.getAbstractDomain();
 		mVarProvider = params.getVariableProvider();
 		mLoopDetector = params.getLoopDetector();
@@ -98,11 +104,18 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
+		return runWithInterferences(initialNodes, script, Map.of());
+	}
+
+	@Override
+	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
+			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+		mStateStorage = mDefaultStateStorage.copy();
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation(mResult.getBenchmark());
-		calculateFixpoint(initialNodes);
+		calculateFixpoint(initialNodes, interferences);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
@@ -110,7 +123,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		return mResult;
 	}
 
-	private void calculateFixpoint(final Collection<? extends LOC> start) {
+	private void calculateFixpoint(final Collection<? extends LOC> start,
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -131,7 +145,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp);
+			final DisjunctiveAbstractState<STATE> interferingState = interferences.getOrDefault(
+					mTransitionProvider.getTarget(currentItem.getAction()), new DisjunctiveAbstractState<>());
+			final DisjunctiveAbstractState<STATE> postState =
+					calculateAbstractPost(currentItem, postOp).union(interferingState);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
 				continue;
@@ -265,6 +282,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			final DisjunctiveAbstractState<STATE> hierachicalPreState,
 			final DisjunctiveAbstractState<STATE> postState) {
 		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
+				|| currentAction instanceof IForkActionThreadCurrent
 				|| mDebugHelper.isPostSound(preState, hierachicalPreState, postState, currentAction);
 		if (rtr) {
 			return true;
@@ -282,6 +300,34 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			mLogger.fatal("Post  :  " + postState.toLogString());
 		}
 		return false;
+	}
+
+	private AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOC> constructCounterexample(
+			final ITransitionProvider<ACTION, LOC> transitionProvider,
+			final IWorklistItem<STATE, ACTION, LOC> currentItem, final DisjunctiveAbstractState<STATE> postState) {
+
+		final List<Triple<DisjunctiveAbstractState<STATE>, LOC, ACTION>> abstractExecution = new ArrayList<>();
+
+		ACTION transition = currentItem.getAction();
+		abstractExecution.add(getCexTriple(transitionProvider, postState, transition));
+
+		DisjunctiveAbstractState<STATE> post = currentItem.getState();
+		IWorklistItem<STATE, ACTION, LOC> current = currentItem.getPredecessor();
+		while (current != null) {
+			transition = current.getAction();
+			abstractExecution.add(getCexTriple(transitionProvider, post, transition));
+			post = current.getState();
+			current = current.getPredecessor();
+		}
+
+		Collections.reverse(abstractExecution);
+		return new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution);
+	}
+
+	private Triple<DisjunctiveAbstractState<STATE>, LOC, ACTION> getCexTriple(
+			final ITransitionProvider<ACTION, LOC> transitionProvider, final DisjunctiveAbstractState<STATE> postState,
+			final ACTION transition) {
+		return new Triple<>(postState, transitionProvider.getTarget(transition), transition);
 	}
 
 	/**
@@ -369,7 +415,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Error state reached"));
 		}
 
-		mResult.reachedError(mTransitionProvider, currentItem, postState);
+		mResult.addCounterexample(constructCounterexample(mTransitionProvider, currentItem, postState));
 	}
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {

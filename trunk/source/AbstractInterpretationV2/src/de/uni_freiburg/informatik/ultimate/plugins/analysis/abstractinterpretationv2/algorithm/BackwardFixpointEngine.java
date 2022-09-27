@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -527,5 +528,12 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding [")
 				.append(item.getState().hashCode()).append("]").append(" --[").append(item.getAction().hashCode())
 				.append("]->");
+	}
+
+	@Override
+	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
+			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+		throw new UnsupportedOperationException(
+				getClass().getSimpleName() + " cannot be used inside concurrent abstract interpretation.");
 	}
 }

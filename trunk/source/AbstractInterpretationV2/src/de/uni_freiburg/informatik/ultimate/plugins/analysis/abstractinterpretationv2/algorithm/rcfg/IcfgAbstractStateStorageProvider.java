@@ -320,4 +320,9 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	protected ITransitionProvider<ACTION, LOC> getTransitionProvider() {
 		return mTransProvider;
 	}
+
+	@Override
+	public IAbstractStateStorage<STATE, ACTION, LOC> copy() {
+		return new IcfgAbstractStateStorageProvider<>(mServices, mTransProvider, mScope, mParent, mUsedSummary);
+	}
 }
