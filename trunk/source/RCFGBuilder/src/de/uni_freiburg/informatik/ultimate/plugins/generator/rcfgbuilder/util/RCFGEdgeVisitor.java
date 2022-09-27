@@ -32,7 +32,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
@@ -94,8 +96,12 @@ public class RCFGEdgeVisitor {
 			visit((Summary) c);
 		} else if (c instanceof StatementSequence) {
 			visit((StatementSequence) c);
+		} else if (c instanceof ForkThreadCurrent) {
+			visit((ForkThreadCurrent) c);
+		} else if (c instanceof JoinThreadCurrent) {
+			visit((JoinThreadCurrent) c);
 		} else {
-			throw new UnsupportedOperationException("Extend the new type");
+			throw new UnsupportedOperationException("Extend the new type: " + c.getClass());
 		}
 	}
 
@@ -108,9 +114,7 @@ public class RCFGEdgeVisitor {
 	}
 
 	protected void visit(final ParallelComposition c) {
-		for (final CodeBlock b : c.getCodeBlocks()) {
-			visit(b);
-		}
+		c.getCodeBlocks().forEach(this::visit);
 	}
 
 	protected void visit(final Return c) {
@@ -118,9 +122,7 @@ public class RCFGEdgeVisitor {
 	}
 
 	protected void visit(final SequentialComposition c) {
-		for (final CodeBlock b : c.getCodeBlocks()) {
-			visit(b);
-		}
+		c.getCodeBlocks().forEach(this::visit);
 	}
 
 	protected void visit(final Summary c) {
@@ -128,6 +130,14 @@ public class RCFGEdgeVisitor {
 	}
 
 	protected void visit(final StatementSequence c) {
+		// override if you want to use it
+	}
+
+	protected void visit(final ForkThreadCurrent c) {
+		// override if you want to use it
+	}
+
+	protected void visit(final JoinThreadCurrent c) {
 		// override if you want to use it
 	}
 }
