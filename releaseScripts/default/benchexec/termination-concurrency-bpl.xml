@@ -2,7 +2,7 @@
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
     
 	<option name="--force-no-wrapper" />
-  <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerCInline.xml</option>
+  <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerBplInline.xml</option>
 
   <rundefinition name="Buchi Automaton (no LBE)">
     <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
@@ -28,8 +28,8 @@
     <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-syntacticLbe.epf</option>
 	</rundefinition>
 -->    
-	<tasks name="SVCOMP ConcurrencySafety-Main">
-		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+	<tasks name="Ultimate Repo">
+		<includesfile>../../../trunk/examples/concurrency-termination-bpl.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
 	</tasks>
   
