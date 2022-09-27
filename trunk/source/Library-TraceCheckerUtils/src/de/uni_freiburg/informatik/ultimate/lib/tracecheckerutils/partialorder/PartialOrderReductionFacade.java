@@ -172,6 +172,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 
 		mIndependenceRelations.set(index, independence);
+		// TODO reuse cached persistent sets of non-replaced relations between iterations!
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
