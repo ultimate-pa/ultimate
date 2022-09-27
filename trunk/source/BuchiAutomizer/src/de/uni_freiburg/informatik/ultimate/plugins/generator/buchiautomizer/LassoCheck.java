@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.Preprocessi
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
@@ -127,6 +128,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private static final boolean CHECK_TERMINATION_EVEN_IF_NON_TERMINATING = false;
 
 	private static final boolean AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED = true;
+
+	private static final boolean TRACE_CHECK_BASED_FIXPOINT_CHECK = true;
 
 	/**
 	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
@@ -552,7 +555,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem) {
-				mNonterminationArgument = fixpointCheck.getTerminationArgument();
+				if (TRACE_CHECK_BASED_FIXPOINT_CHECK) {
+					final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<L>(mServices, mLogger, mCsToolkit, mPredicateFactory, mCounterexample.getStem(), loopTF);
+					mNonterminationArgument = fixpointCheck2.getTerminationArgument();
+				} else {
+					mNonterminationArgument = fixpointCheck.getTerminationArgument();
+				}
 			}
 			return SynthesisResult.NONTERMINATING;
 		}
