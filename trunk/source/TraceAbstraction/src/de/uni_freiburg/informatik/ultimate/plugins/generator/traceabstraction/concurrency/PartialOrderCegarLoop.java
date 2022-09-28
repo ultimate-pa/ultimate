@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -96,6 +97,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -227,15 +229,28 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mAbstraction =
 				new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory, false);
 
+		// augment refinement result with Hoare triple checker to allow re-use by independence providers
+		final var resultWithHtc = addHoareTripleChecker(mRefinementResult, htc);
+
 		// update independence relations (in case of abstract independence)
 		for (int i = 0; i < mIndependenceProviders.size(); ++i) {
 			final var container = mIndependenceProviders.get(i);
-			container.refine(mRefinementResult);
+			container.refine(resultWithHtc);
 			mPOR.replaceIndependence(i, container.retrieveIndependence());
 		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
+	}
+
+	private <T> IRefinementEngineResult<L, T> addHoareTripleChecker(final IRefinementEngineResult<L, T> result,
+			final IHoareTripleChecker htc) {
+		if (result.getHoareTripleChecker() != null) {
+			return result;
+		}
+		return new IRefinementEngineResult.BasicRefinementEngineResult<>(result.getCounterexampleFeasibility(),
+				result.getInfeasibilityProof(), result.getIcfgProgramExecution(), result.somePerfectSequenceFound(),
+				result.getUsedTracePredicates(), new Lazy<>(htc), new Lazy<>(result::getPredicateUnifier));
 	}
 
 	@Override
