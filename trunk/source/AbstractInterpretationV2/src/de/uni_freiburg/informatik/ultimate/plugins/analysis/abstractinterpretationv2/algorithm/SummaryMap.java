@@ -43,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-final class SummaryMap<STATE extends IAbstractState<STATE>, ACTION, LOCATION>
+public final class SummaryMap<STATE extends IAbstractState<STATE>, ACTION, LOCATION>
 		implements ISummaryStorage<STATE, ACTION, LOCATION> {
 
 	private final Map<String, Set<Summary>> mSummaries;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final ILogger mLogger;
 
-	SummaryMap(final ITransitionProvider<ACTION, LOCATION> trans, final ILogger logger) {
+	public SummaryMap(final ITransitionProvider<ACTION, LOCATION> trans, final ILogger logger) {
 		mTransProvider = trans;
 		mSummaries = new HashMap<>();
 		mLogger = logger;
