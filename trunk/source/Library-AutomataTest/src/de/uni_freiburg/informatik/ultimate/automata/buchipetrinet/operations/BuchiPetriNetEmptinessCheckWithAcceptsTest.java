@@ -7,11 +7,13 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.IsEmptyBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -91,7 +93,7 @@ public class BuchiPetriNetEmptinessCheckWithAcceptsTest {
 	}
 
 	@Test
-	public final void testCutoffEvent() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+	public final void testCutoffEvent() throws AutomataLibraryException {
 		final Set<String> alphabet = Set.of("a", "aa", "b", "c", "d", "u");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -109,11 +111,12 @@ public class BuchiPetriNetEmptinessCheckWithAcceptsTest {
 		petriNet.addTransition("u", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p6")));
 		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
+		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
 	}
 
 	@Test
-	public final void testCutoffEvent2() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+	public final void testCutoffEvent2() throws AutomataLibraryException {
 		final Set<String> alphabet = Set.of("a", "aa", "b", "c", "d");
 		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
 		petriNet.addPlace("p1", true, false);
@@ -131,6 +134,7 @@ public class BuchiPetriNetEmptinessCheckWithAcceptsTest {
 
 		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
+		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
 	}
 

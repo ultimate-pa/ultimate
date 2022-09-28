@@ -119,7 +119,6 @@ public abstract class PetriNetUnfolderBase<L, P> {
 		mPossibleExtensions =
 				new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
 
-		setupChild();
 		computeUnfolding();
 		mLogger.info(mStatistics.prettyprintCutOffInformation());
 		mLogger.info(mStatistics.prettyprintCoRelationInformation());
@@ -135,12 +134,6 @@ public abstract class PetriNetUnfolderBase<L, P> {
 			mLogger.info(sb.toString());
 		}
 	}
-
-	/*
-	 * little hack to ininitalize childclasses before computeUnfolding() since i did not want to change constructor
-	 * architecture.
-	 */
-	abstract void setupChild();
 
 	public PetriNetUnfolderBase<L, P>.Statistics getUnfoldingStatistics() {
 		return mStatistics;

@@ -74,11 +74,6 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P> {
 		super(services, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
 	}
 
-	@Override
-	void setupChild() {
-		return;
-	}
-
 	public enum EventOrderEnum {
 		DBO("Depth-based Order"), ERV("Esparza Römer Vogler"), KMM("Ken McMillan"),;
 
