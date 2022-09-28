@@ -72,7 +72,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOC
 	private Map<LOCATION, STATE> mLoc2SingleStates;
 	private Set<Term> mTerms;
 
-	protected AbsIntResult(final Script script, final IAbstractDomain<STATE, ACTION> abstractDomain,
+	public AbsIntResult(final Script script, final IAbstractDomain<STATE, ACTION> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider,
 			final IVariableProvider<STATE, ACTION> varProvider) {
 		mAbstractDomain = Objects.requireNonNull(abstractDomain);
@@ -89,11 +89,11 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOC
 		mCounterexamples.add(counterexample);
 	}
 
-	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, LOCATION> rootStateStorage) {
+	public void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, LOCATION> rootStateStorage) {
 		mRootStorage = rootStateStorage;
 	}
 
-	void saveSummaryStorage(final ISummaryStorage<STATE, ACTION, LOCATION> summaryStorage) {
+	public void saveSummaryStorage(final ISummaryStorage<STATE, ACTION, LOCATION> summaryStorage) {
 		mSummaryMap = summaryStorage;
 	}
 
