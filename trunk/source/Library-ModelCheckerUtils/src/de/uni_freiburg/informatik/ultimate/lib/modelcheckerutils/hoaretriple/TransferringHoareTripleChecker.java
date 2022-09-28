@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 
 	private final IHoareTripleChecker mUnderlying;
+	private final IPredicateUnifier mUnifier;
 	private final TransferrerWithVariableCache mTransferrer;
 
 	/**
@@ -60,9 +62,10 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 	 *            used to transfer predicates and actions to the given Hoare triple checker's script
 	 */
 	public TransferringHoareTripleChecker(final IHoareTripleChecker underlying,
-			final TransferrerWithVariableCache transferrer) {
+			final TransferrerWithVariableCache transferrer, final IPredicateUnifier unifier) {
 		mUnderlying = Objects.requireNonNull(underlying);
 		mTransferrer = Objects.requireNonNull(transferrer);
+		mUnifier = unifier;
 	}
 
 	@Override
@@ -72,8 +75,8 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
-		final IPredicate transferredPre = mTransferrer.transferPredicate(pre);
-		final IPredicate transferredPost = mTransferrer.transferPredicate(post);
+		final IPredicate transferredPre = transfer(pre);
+		final IPredicate transferredPost = transfer(post);
 		final IInternalAction transferredAct = new BasicInternalAction(act.getPrecedingProcedure(),
 				act.getSucceedingProcedure(), mTransferrer.transferTransFormula(act.getTransformula()));
 		return mUnderlying.checkInternal(transferredPre, transferredAct, transferredPost);
@@ -81,8 +84,8 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate post) {
-		final IPredicate transferredPre = mTransferrer.transferPredicate(pre);
-		final IPredicate transferredPost = mTransferrer.transferPredicate(post);
+		final IPredicate transferredPre = transfer(pre);
+		final IPredicate transferredPost = transfer(post);
 		final ICallAction transferredAct = new BasicCallAction(act.getPrecedingProcedure(),
 				act.getSucceedingProcedure(), mTransferrer.transferTransFormula(act.getLocalVarsAssignment()));
 		return mUnderlying.checkCall(transferredPre, transferredAct, transferredPost);
@@ -91,9 +94,9 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate post) {
-		final IPredicate transferredPreLin = mTransferrer.transferPredicate(preLin);
-		final IPredicate transferredPreHier = mTransferrer.transferPredicate(preHier);
-		final IPredicate transferredPost = mTransferrer.transferPredicate(post);
+		final IPredicate transferredPreLin = transfer(preLin);
+		final IPredicate transferredPreHier = transfer(preHier);
+		final IPredicate transferredPost = transfer(post);
 		final IReturnAction transferredAct = new BasicReturnAction(act.getPrecedingProcedure(),
 				act.getSucceedingProcedure(), mTransferrer.transferTransFormula(act.getAssignmentOfReturn()),
 				mTransferrer.transferTransFormula(act.getLocalVarsAssignmentOfCall()));
@@ -103,5 +106,9 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mUnderlying.getStatistics();
+	}
+
+	private IPredicate transfer(final IPredicate predicate) {
+		return mUnifier.getOrConstructPredicate(mTransferrer.transferPredicate(predicate));
 	}
 }

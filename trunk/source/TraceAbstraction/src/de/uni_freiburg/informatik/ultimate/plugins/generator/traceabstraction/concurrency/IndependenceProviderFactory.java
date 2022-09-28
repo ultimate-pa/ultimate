@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 /**
  * Creates {@link IRefinableIndependenceProvider} instances from given settings. This involves setting up
@@ -109,11 +110,13 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			final IndependenceSettings settings, final PredicateFactory predicateFactory) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		if (settings.getAbstractionType() == AbstractionType.LOOPER) {
-			return new IndependenceProviderForLoopers<>(mServices, csToolkit, settings.getIndependenceType());
+			return new IndependenceProviderForLoopers<>(mServices, csToolkit,
+					new Lazy<>(() -> constructIndependenceScript(settings)), settings.getIndependenceType());
 		}
 
 		// Construct the script used for independence checks.
 		// TODO Only construct this if an independence relation actually needs a script!
+		// TODO Independence relations might have different settings for the script!
 		if (mIndependenceScript == null) {
 			mIndependenceScript = constructIndependenceScript(settings);
 		}
