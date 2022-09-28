@@ -147,8 +147,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 			final DisjunctiveAbstractState<STATE> interferingState = interferences.getOrDefault(
 					mTransitionProvider.getTarget(currentItem.getAction()), new DisjunctiveAbstractState<>());
-			final DisjunctiveAbstractState<STATE> postState =
-					calculateAbstractPost(currentItem, postOp).union(interferingState);
+			final DisjunctiveAbstractState<STATE> postState = InterferenceUtils
+					.computeStateWithInterferences(calculateAbstractPost(currentItem, postOp), interferingState);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
 				continue;
