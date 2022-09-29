@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -20,10 +21,10 @@ public class WriteExtractor<ACTION extends IIcfgTransition<?>> {
 	private final HashRelation<IProgramVar, String> mWritesToProcedures;
 	private final HashRelation<IProgramVar, String> mReadsToProcedures;
 
-	private final HashRelation<ACTION, IProgramVar> mWritesToSharedVariables;
+	private final HashRelation<ACTION, IProgramVarOrConst> mWritesToSharedVariables;
 
 	public WriteExtractor(final IIcfg<?> icfg) {
-		final HashRelation<ACTION, IProgramVar> writesToVariables = new HashRelation<>();
+		final HashRelation<ACTION, IProgramVarOrConst> writesToVariables = new HashRelation<>();
 		mWritesToProcedures = new HashRelation<>();
 		mReadsToProcedures = new HashRelation<>();
 		mWritesToSharedVariables = new HashRelation<>();
@@ -32,16 +33,19 @@ public class WriteExtractor<ACTION extends IIcfgTransition<?>> {
 			final List<IcfgEdge> initalEdges = ((IcfgLocation) entry.getValue()).getOutgoingEdges();
 			new IcfgEdgeIterator(initalEdges).forEachRemaining(edge -> {
 				final TransFormula transformula = edge.getTransformula();
-				final Set<IProgramVar> writtenVars = transformula.getAssignedVars();
-				writesToVariables.addAllPairs((ACTION) edge, writtenVars);
-				writtenVars.forEach(x -> mWritesToProcedures.addPair(x, procedure));
+				for (final IProgramVar written : transformula.getAssignedVars()) {
+					writesToVariables.addPair((ACTION) edge, written);
+					mWritesToProcedures.addPair(written, procedure);
+				}
+				// TODO: Is this the best way to find reads?
 				transformula.getInVars().forEach((k, v) -> mReadsToProcedures.addPair(k, procedure));
 			});
 		}
-		final Set<IProgramVar> sharedVars =
+		final Set<IProgramVarOrConst> sharedVars =
 				mReadsToProcedures.getDomain().stream().filter(this::isSharedVariable).collect(Collectors.toSet());
-		for (final Entry<ACTION, HashSet<IProgramVar>> entry : writesToVariables.entrySet()) {
-			final Set<IProgramVar> writtenSharedVars = DataStructureUtils.intersection(entry.getValue(), sharedVars);
+		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : writesToVariables.entrySet()) {
+			final Set<IProgramVarOrConst> writtenSharedVars =
+					DataStructureUtils.intersection(entry.getValue(), sharedVars);
 			if (!writtenSharedVars.isEmpty()) {
 				mWritesToSharedVariables.addAllPairs(entry.getKey(), writtenSharedVars);
 			}
@@ -64,7 +68,7 @@ public class WriteExtractor<ACTION extends IIcfgTransition<?>> {
 		return !readingProcedures.equals(writingProcedures);
 	}
 
-	public HashRelation<ACTION, IProgramVar> getWritesToSharedVariables() {
+	public HashRelation<ACTION, IProgramVarOrConst> getWritesToSharedVariables() {
 		return mWritesToSharedVariables;
 	}
 }
