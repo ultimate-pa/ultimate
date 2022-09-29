@@ -47,5 +47,6 @@ public interface IFixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VA
 	AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start, final Script script);
 
 	AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start, final Script script,
-			Map<LOC, DisjunctiveAbstractState<STATE>> interferences);
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
+			final DisjunctiveAbstractState<STATE> initialState);
 }

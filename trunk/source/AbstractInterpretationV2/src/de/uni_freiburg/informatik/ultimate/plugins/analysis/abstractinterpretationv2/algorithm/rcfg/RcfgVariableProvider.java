@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
@@ -82,7 +83,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE>> implement
 		assert current != null : "edge is null";
 		assert state != null : "state is null";
 
-		final Set<IProgramVarOrConst> vars = getPreVariables(current);
+		final Set<IProgramVarOrConst> vars =
+				DataStructureUtils.difference(getPreVariables(current), state.getVariables());
 		if (vars.isEmpty()) {
 			return state;
 		}
