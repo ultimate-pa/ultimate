@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -22,26 +22,34 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class FixpointEngineConcurrentUtils {
-	private FixpointEngineConcurrentUtils() {
+public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
+	private final IIcfg<? extends LOC> mIcfg;
+	private HashRelation<String, LOC> mProceduresToForkLocations;
+
+	public ConcurrentCfgInformation(final IIcfg<? extends LOC> icfg) {
+		mIcfg = icfg;
+		getForks().forEach(x -> mProceduresToForkLocations.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
 	}
 
-	private static HashRelation<String, String> getForkRelation(final IIcfg<?> icfg) {
-		final var forks = icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet();
-		final HashRelation<String, String> result = new HashRelation<>();
-		forks.forEach(x -> result.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
-		return result;
+	private Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> getForks() {
+		return mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet();
+	}
+
+	public Set<LOC> getForkLocations(final String procedure) {
+		return mProceduresToForkLocations.getImage(procedure);
 	}
 
 	// TODO: This seems rather inefficient and complicated. Can we do better?
-	public static List<String> getTopologicalProcedureOrder(final IIcfg<?> icfg) {
-		final Set<String> procedures = icfg.getProcedureEntryNodes().keySet();
+	public List<String> getTopologicalProcedureOrder() {
+		final Set<String> procedures = mIcfg.getProcedureEntryNodes().keySet();
 		final Map<String, Integer> inGrad = new HashMap<>();
 		for (final String procedure : procedures) {
 			inGrad.put(procedure, 0);
 		}
 
-		final HashRelation<String, String> forks = getForkRelation(icfg);
+		final HashRelation<String, String> forks = new HashRelation<>();
+		getForks().forEach(x -> forks.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
+
 		for (final var entry : forks.entrySet()) {
 			for (final String forked : entry.getValue()) {
 				inGrad.put(forked, inGrad.get(forked) + 1);
@@ -81,13 +89,12 @@ public class FixpointEngineConcurrentUtils {
 		return result;
 	}
 
-	public static <ACTION extends IIcfgTransition<?>> HashRelation<ACTION, IProgramVarOrConst>
-			getSharedWrites(final IIcfg<?> icfg) {
+	public HashRelation<ACTION, IProgramVarOrConst> getSharedWrites() {
 		final HashRelation<ACTION, IProgramVarOrConst> writesToVariables = new HashRelation<>();
 		final HashRelation<IProgramVar, String> writesToProcedures = new HashRelation<>();
 		final HashRelation<IProgramVar, String> readsToProcedures = new HashRelation<>();
 		final HashRelation<ACTION, IProgramVarOrConst> result = new HashRelation<>();
-		for (final Entry<String, ?> entry : icfg.getProcedureEntryNodes().entrySet()) {
+		for (final Entry<String, ?> entry : mIcfg.getProcedureEntryNodes().entrySet()) {
 			final String procedure = entry.getKey();
 			final List<IcfgEdge> initalEdges = ((IcfgLocation) entry.getValue()).getOutgoingEdges();
 			new IcfgEdgeIterator(initalEdges).forEachRemaining(edge -> {
