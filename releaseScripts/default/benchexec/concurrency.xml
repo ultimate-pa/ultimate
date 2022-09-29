@@ -443,4 +443,11 @@
     <include>../../../trunk/examples/concurrent/bpl/PLDI2022/*.yml</include>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
+
+  <tasks name="SVCOMP-Concurrency-Memsafety-Separated">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBpl.xml</option>
+
+    <include>../../../trunk/examples/boogie-benchmarks-from-svcomp-memsafety-concurrent/*.yml</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
 </benchmark>
