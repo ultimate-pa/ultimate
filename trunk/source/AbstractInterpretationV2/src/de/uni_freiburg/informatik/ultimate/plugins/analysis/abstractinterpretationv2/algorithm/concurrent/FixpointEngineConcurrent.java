@@ -48,8 +48,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final Map<String, ? extends LOC> mEntryLocs;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 	private final List<String> mTopologicalOrder;
-	private final HashRelation<String, LOC> mInverseForkRelation;
 	private final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> mParams;
+	private final ConcurrentCfgInformation<ACTION, LOC> mInfo;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> factory, final IIcfg<? extends LOC> icfg) {
@@ -67,16 +67,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 		mFixpointEngineFactory = factory;
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mSharedWrites = FixpointEngineConcurrentUtils.getSharedWrites(icfg);
-		mTopologicalOrder = FixpointEngineConcurrentUtils.getTopologicalProcedureOrder(icfg);
-		mInverseForkRelation = constructInverseForkRelation(icfg);
-	}
-
-	private HashRelation<String, LOC> constructInverseForkRelation(final IIcfg<? extends LOC> icfg) {
-		final HashRelation<String, LOC> result = new HashRelation<>();
-		icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap()
-				.forEach((x, y) -> result.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
-		return result;
+		mInfo = new ConcurrentCfgInformation<>(icfg);
+		mSharedWrites = mInfo.getSharedWrites();
+		mTopologicalOrder = mInfo.getTopologicalProcedureOrder();
 	}
 
 	@Override
@@ -160,7 +153,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
-		final Iterator<LOC> locs = mInverseForkRelation.getImage(procedure).iterator();
+		final Iterator<LOC> locs = mInfo.getForkLocations(procedure).iterator();
 		if (!locs.hasNext()) {
 			return new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 		}
