@@ -64,7 +64,7 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE>, ACTION> 
 	 * @return An {@link IAbstractState} that contains all global and local variables according to the position of
 	 *         <code>current</code> in the program.
 	 */
-	STATE defineInitialVariables(ACTION current, STATE state);
+	DisjunctiveAbstractState<STATE> defineInitialVariables(ACTION current, DisjunctiveAbstractState<STATE> state);
 
 	/**
 	 * Should prepare an {@link IAbstractState} with insertion or removal of variables s.t.
