@@ -6,6 +6,7 @@
 
   <option name="-tc">../../../trunk/examples/toolchains/CInlineAndPrint.xml</option>
   <option name="--printer.file.name">${taskdef_name}.bpl</option>
+  <option name="--procedureinliner.inline.calls.to.unimplemented.procedures">true</option>
 
   <rundefinition name="Print">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
