@@ -139,15 +139,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 
 	@Override
 	public DisjunctiveAbstractState<STATE> patch(final DisjunctiveAbstractState<STATE> dominator) {
-		assert mStates.size() != dominator.mStates
-				.size() : "Cannot apply symmetrical with differently sized multi-states";
-		final Set<STATE> newSet = newSet(mStates.size());
-		final Iterator<STATE> iter = mStates.iterator();
-		final Iterator<STATE> otherIter = dominator.mStates.iterator();
-		while (iter.hasNext() && otherIter.hasNext()) {
-			newSet.add(iter.next().patch(otherIter.next()));
-		}
-		return new DisjunctiveAbstractState<>(mMaxSize, newSet);
+		return crossProduct(STATE::patch, dominator, mMaxSize);
 	}
 
 	@Override
