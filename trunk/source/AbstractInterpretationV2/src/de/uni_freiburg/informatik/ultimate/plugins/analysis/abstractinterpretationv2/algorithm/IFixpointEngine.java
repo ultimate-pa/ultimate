@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.Collection;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
@@ -42,11 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
  * @param <VARDECL>
  * @param <LOC>
  */
+@FunctionalInterface
 public interface IFixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> {
 
-	AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start, final Script script);
-
-	AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start, final Script script,
-			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
-			final DisjunctiveAbstractState<STATE> initialState);
+	AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start,
+			final Script script);
 }

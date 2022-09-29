@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -51,9 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -72,8 +69,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final IAbstractStateStorage<STATE, ACTION, LOC> mDefaultStateStorage;
-	private IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
+	private final IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
 	private final IAbstractDomain<STATE, ACTION> mDomain;
 	private final IVariableProvider<STATE, ACTION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
@@ -92,7 +88,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mTimer = params.getTimer();
 		mLogger = params.getLogger();
 		mTransitionProvider = params.getTransitionProvider();
-		mDefaultStateStorage = params.getStorage();
+		mStateStorage = params.getStorage();
 		mDomain = params.getAbstractDomain();
 		mVarProvider = params.getVariableProvider();
 		mLoopDetector = params.getLoopDetector();
@@ -105,20 +101,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
-		return runWithInterferences(initialNodes, script, Map.of(),
-				new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState()));
-	}
-
-	@Override
-	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
-			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
-			final DisjunctiveAbstractState<STATE> initialState) {
-		mStateStorage = mDefaultStateStorage.copy();
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation(mResult.getBenchmark());
-		calculateFixpoint(initialNodes, interferences, initialState);
+		calculateFixpoint(initialNodes);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
@@ -126,9 +113,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		return mResult;
 	}
 
-	private void calculateFixpoint(final Collection<? extends LOC> start,
-			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
-			final DisjunctiveAbstractState<STATE> initialState) {
+	private void calculateFixpoint(final Collection<? extends LOC> start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -136,8 +121,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 		// add all outgoing edges of nodes in the start set that are not unnecessary summaries to the worklist
 		start.stream().flatMap(a -> mTransitionProvider.getSuccessorActions(a).stream())
-				.filter(a -> !mTransitionProvider.isSummaryWithImplementation(a))
-				.map(x -> createInitialWorklistItem(x, initialState)).forEach(worklist::add);
+				.filter(a -> !mTransitionProvider.isSummaryWithImplementation(a)).map(this::createInitialWorklistItem)
+				.forEach(worklist::add);
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -149,10 +134,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			final DisjunctiveAbstractState<STATE> interferingState = interferences.getOrDefault(
-					mTransitionProvider.getTarget(currentItem.getAction()), new DisjunctiveAbstractState<>());
-			final DisjunctiveAbstractState<STATE> postState = InterferenceUtils
-					.computeStateWithInterferences(calculateAbstractPost(currentItem, postOp), interferingState);
+			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
 				continue;
@@ -286,7 +268,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			final DisjunctiveAbstractState<STATE> hierachicalPreState,
 			final DisjunctiveAbstractState<STATE> postState) {
 		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
-				|| currentAction instanceof IForkActionThreadCurrent
 				|| mDebugHelper.isPostSound(preState, hierachicalPreState, postState, currentAction);
 		if (rtr) {
 			return true;
@@ -422,8 +403,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mResult.addCounterexample(constructCounterexample(mTransitionProvider, currentItem, postState));
 	}
 
-	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem,
-			final DisjunctiveAbstractState<STATE> initialState) {
+	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
+		final DisjunctiveAbstractState<STATE> initialState =
+				new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 		final DisjunctiveAbstractState<STATE> preMultiState = mVarProvider.defineInitialVariables(elem, initialState);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}

@@ -44,17 +44,19 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private AbsIntResult<STATE, ACTION, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, LOC> mSummaryMap;
 
-	private final IFixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
-	private final Map<String, LOC> mEntryLocs;
+	private final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> mFixpointEngineFactory;
+	private final Map<String, ? extends LOC> mEntryLocs;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 	private final List<String> mTopologicalOrder;
 	private final HashRelation<String, LOC> mInverseForkRelation;
+	private final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> mParams;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
-			final IFixpointEngine<STATE, ACTION, VARDECL, LOC> fxpe, final IIcfg<LOC> icfg) {
+			final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> factory, final IIcfg<? extends LOC> icfg) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
+		mParams = params;
 		mLogger = params.getLogger();
 		mTransitionProvider = params.getTransitionProvider();
 		mStateStorage = params.getStorage();
@@ -63,14 +65,14 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
-		mFixpointEngine = fxpe;
+		mFixpointEngineFactory = factory;
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mSharedWrites = InterferenceUtils.getSharedWrites(icfg);
-		mTopologicalOrder = InterferenceUtils.getTopologicalProcedureOrder(icfg);
+		mSharedWrites = FixpointEngineConcurrentUtils.getSharedWrites(icfg);
+		mTopologicalOrder = FixpointEngineConcurrentUtils.getTopologicalProcedureOrder(icfg);
 		mInverseForkRelation = constructInverseForkRelation(icfg);
 	}
 
-	private HashRelation<String, LOC> constructInverseForkRelation(final IIcfg<LOC> icfg) {
+	private HashRelation<String, LOC> constructInverseForkRelation(final IIcfg<? extends LOC> icfg) {
 		final HashRelation<String, LOC> result = new HashRelation<>();
 		icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap()
 				.forEach((x, y) -> result.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
@@ -98,13 +100,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		while (true) {
 			mLogger.info("Starting outer Fixpoint iteration number " + iteration);
 			for (final String procedure : mTopologicalOrder) {
-				// TODO: Should we just use run, but with a modified IAbstractPostOperator
-				// (that wraps the other one and considers interferences?)
-				// Similarly we could have a new IVariableProvider-wrapper that adds a more precise initial state
-				// (after the fork)
 				final DisjunctiveAbstractState<STATE> initialState = getInitialState(procedure);
-				final AbsIntResult<STATE, ACTION, LOC> threadResult = mFixpointEngine
-						.runWithInterferences(Set.of(mEntryLocs.get(procedure)), script, interferences, initialState);
+				final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> paramsWithInterferences =
+						mParams.setStorage(mStateStorage.copy())
+								.setVariableProvider(new InterferingVariableProvider<>(mVarProvider, initialState))
+								.setDomain(new InterferingDomain<>(mDomain, mTransitionProvider, interferences));
+				final IFixpointEngine<STATE, ACTION, VARDECL, LOC> fixpointEngine =
+						mFixpointEngineFactory.constructFixpointEngine(paramsWithInterferences);
+				final AbsIntResult<STATE, ACTION, LOC> threadResult =
+						fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
 
 				// Merge mStateStorage and result.getLoc2States
 				for (final var locAndStates : threadResult.getLoc2States().entrySet()) {
@@ -170,7 +174,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
 			computeNewInterferences(final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
 		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
-		for (final Entry<String, LOC> entry : mEntryLocs.entrySet()) {
+		for (final Entry<String, ? extends LOC> entry : mEntryLocs.entrySet()) {
 			// TODO: Only consider writes of procedures that have already been forked
 			final DisjunctiveAbstractState<STATE> interferingState =
 					getInterferingState(entry.getKey(), relevantPostStates);
@@ -217,13 +221,5 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			return false;
 		}
 		return oldInts.keySet().stream().allMatch(x -> oldInts.get(x).isEqualTo(newInts.get(x)));
-	}
-
-	@Override
-	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
-			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
-			final DisjunctiveAbstractState<STATE> initialState) {
-		throw new UnsupportedOperationException(
-				getClass().getSimpleName() + " cannot be used inside concurrent abstract interpretation.");
 	}
 }
