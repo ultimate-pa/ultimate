@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
@@ -48,7 +47,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private final IFixpointEngine<STATE, ACTION, VARDECL, LOC> mFixpointEngine;
 	private final Map<String, LOC> mEntryLocs;
-	private final HashRelation<ACTION, IProgramVar> mSharedWrites;
+	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 	private final List<String> mTopologicalOrder;
 	private final HashRelation<String, LOC> mInverseForkRelation;
 
@@ -99,7 +98,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Set<LOC> addedErrorLocations = new HashSet<>();
 		while (true) {
 			mLogger.info("Starting outer Fixpoint iteration number " + iteration);
-			// TODO: Iterate in a topological order instead (w.r.t. the forks) to be more precise after the forks
 			for (final String procedure : mTopologicalOrder) {
 				// TODO: Should we just use run, but with a modified IAbstractPostOperator
 				// (that wraps the other one and considers interferences?)
@@ -174,6 +172,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			computeNewInterferences(final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
 		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final Entry<String, LOC> entry : mEntryLocs.entrySet()) {
+			// TODO: Only consider writes of procedures that have already been forked
 			final DisjunctiveAbstractState<STATE> interferingState =
 					getInterferingState(entry.getKey(), relevantPostStates);
 			if (interferingState != null) {
@@ -199,16 +198,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>>
-			getRelevantPostStates(final HashRelation<ACTION, IProgramVar> sharedWritesToVars) {
+			getRelevantPostStates(final HashRelation<ACTION, IProgramVarOrConst> sharedWrites) {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
-		for (final Entry<ACTION, HashSet<IProgramVar>> entry : sharedWritesToVars.entrySet()) {
+		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : sharedWrites.entrySet()) {
 			// TODO: Previously we applied the post-operator to the pre-state, why?
 			final ACTION write = entry.getKey();
 			final DisjunctiveAbstractState<STATE> stateAfterWrite =
 					mStateStorage.getAbstractState(mTransitionProvider.getTarget(write));
-			// TODO: The new HashSet<> is just needed for type conversion, is there a better way?
 			final Set<IProgramVarOrConst> varsToRemove =
-					DataStructureUtils.difference(stateAfterWrite.getVariables(), new HashSet<>(entry.getValue()));
+					DataStructureUtils.difference(stateAfterWrite.getVariables(), entry.getValue());
 			result.put(write, stateAfterWrite.removeVariables(varsToRemove));
 		}
 		return result;
