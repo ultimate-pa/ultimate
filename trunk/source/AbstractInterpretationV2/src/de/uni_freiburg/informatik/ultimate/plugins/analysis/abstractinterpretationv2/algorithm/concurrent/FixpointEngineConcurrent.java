@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.SummaryMap;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.WriteExtractor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -66,7 +65,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 		mFixpointEngine = fxpe;
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mSharedWrites = new WriteExtractor<ACTION>(icfg).getWritesToSharedVariables();
+		mSharedWrites = InterferenceUtils.getSharedWrites(icfg);
 		mTopologicalOrder = InterferenceUtils.getTopologicalProcedureOrder(icfg);
 		mInverseForkRelation = constructInverseForkRelation(icfg);
 	}
