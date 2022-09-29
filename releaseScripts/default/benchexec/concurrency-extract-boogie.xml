@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="120" hardtimelimit="140" cpuCores="2">
+  <resultfiles>dumped-boogie</resultfiles>
+
+  <option name="--force-no-wrapper" />
+
+  <option name="-tc">../../../trunk/examples/toolchains/CInlineAndPrint.xml</option>
+  <option name="--printer.file.name">${taskdef_name}.bpl</option>
+
+  <rundefinition name="Print">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
+  </rundefinition>
+
+  <!-- =============================================================================================================== -->
+  <!-- ==================================================== TASKS ==================================================== -->
+  <!-- =============================================================================================================== -->
+
+  <tasks name="POPL2023">
+    <option name="--printer.dump.path">dumped-boogie/POPL2023</option>
+
+    <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <option name="--printer.dump.path">dumped-boogie/SVCOMP-ConcurrencySafety-Main</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-NoDataRace">
+    <option name="--printer.dump.path">dumped-boogie/SVCOMP-NoDataRace</option>
+
+    <option name="&#45;-cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+    <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+
+    <includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-SafeDeref">
+    <option name="--printer.dump.path">dumped-boogie/SVCOMP-Concurrency-SafeDeref</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+    <option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-NoOverflow">
+    <option name="--printer.dump.path">dumped-boogie/SVCOMP-Concurrency-NoOverflow</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-NoDataRace">
+    <option name="--printer.dump.path">dumped-boogie/SVCOMP-Concurrency-NoDataRace</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+  </tasks>
+</benchmark>
