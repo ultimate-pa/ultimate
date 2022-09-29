@@ -10,8 +10,6 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -24,24 +22,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class InterferenceUtils {
-	private InterferenceUtils() {
-	}
-
-	// TODO: Does this also work for edge cases (top/bottom states)?
-	public static <STATE extends IAbstractState<STATE>> DisjunctiveAbstractState<STATE> computeStateWithInterferences(
-			final DisjunctiveAbstractState<STATE> state, final DisjunctiveAbstractState<STATE> interferingState) {
-		final Set<IProgramVarOrConst> sharedVars =
-				DataStructureUtils.intersection(interferingState.getVariables(), state.getVariables());
-		final DisjunctiveAbstractState<STATE> unionOnSharedVars =
-				keepVariables(state, sharedVars).union(keepVariables(interferingState, sharedVars));
-		return state.patch(unionOnSharedVars);
-	}
-
-	private static <STATE extends IAbstractState<STATE>> DisjunctiveAbstractState<STATE>
-			keepVariables(final DisjunctiveAbstractState<STATE> state, final Set<IProgramVarOrConst> vars) {
-		final Set<IProgramVarOrConst> varsToRemove = DataStructureUtils.difference(state.getVariables(), vars);
-		return state.removeVariables(varsToRemove);
+public class FixpointEngineConcurrentUtils {
+	private FixpointEngineConcurrentUtils() {
 	}
 
 	private static HashRelation<String, String> getForkRelation(final IIcfg<?> icfg) {
