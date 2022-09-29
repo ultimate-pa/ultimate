@@ -532,7 +532,8 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
-			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
+			final DisjunctiveAbstractState<STATE> initialState) {
 		throw new UnsupportedOperationException(
 				getClass().getSimpleName() + " cannot be used inside concurrent abstract interpretation.");
 	}

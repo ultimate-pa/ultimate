@@ -105,8 +105,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				// Similarly we could have a new IVariableProvider-wrapper that adds a more precise initial state
 				// (after the fork)
 				final DisjunctiveAbstractState<STATE> initialState = getInitialState(procedure);
-				final AbsIntResult<STATE, ACTION, LOC> threadResult =
-						mFixpointEngine.runWithInterferences(Set.of(mEntryLocs.get(procedure)), script, interferences);
+				final AbsIntResult<STATE, ACTION, LOC> threadResult = mFixpointEngine
+						.runWithInterferences(Set.of(mEntryLocs.get(procedure)), script, interferences, initialState);
 
 				// Merge mStateStorage and result.getLoc2States
 				for (final var locAndStates : threadResult.getLoc2States().entrySet()) {
@@ -140,8 +140,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
 		final Iterator<LOC> locs = mInverseForkRelation.getImage(procedure).iterator();
 		if (!locs.hasNext()) {
-			// TODO: We want a top state then
-			return null;
+			return new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 		}
 		DisjunctiveAbstractState<STATE> state = mStateStorage.getAbstractState(locs.next());
 		while (locs.hasNext()) {
@@ -204,7 +203,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> start,
-			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
+			final DisjunctiveAbstractState<STATE> initialState) {
 		throw new UnsupportedOperationException(
 				getClass().getSimpleName() + " cannot be used inside concurrent abstract interpretation.");
 	}

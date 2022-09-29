@@ -105,18 +105,20 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
-		return runWithInterferences(initialNodes, script, Map.of());
+		return runWithInterferences(initialNodes, script, Map.of(),
+				new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState()));
 	}
 
 	@Override
 	public AbsIntResult<STATE, ACTION, LOC> runWithInterferences(final Collection<? extends LOC> initialNodes,
-			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+			final Script script, final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
+			final DisjunctiveAbstractState<STATE> initialState) {
 		mStateStorage = mDefaultStateStorage.copy();
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation(mResult.getBenchmark());
-		calculateFixpoint(initialNodes, interferences);
+		calculateFixpoint(initialNodes, interferences, initialState);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
@@ -125,7 +127,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	}
 
 	private void calculateFixpoint(final Collection<? extends LOC> start,
-			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences,
+			final DisjunctiveAbstractState<STATE> initialState) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -133,8 +136,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 		// add all outgoing edges of nodes in the start set that are not unnecessary summaries to the worklist
 		start.stream().flatMap(a -> mTransitionProvider.getSuccessorActions(a).stream())
-				.filter(a -> !mTransitionProvider.isSummaryWithImplementation(a)).map(this::createInitialWorklistItem)
-				.forEach(worklist::add);
+				.filter(a -> !mTransitionProvider.isSummaryWithImplementation(a))
+				.map(x -> createInitialWorklistItem(x, initialState)).forEach(worklist::add);
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -419,11 +422,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mResult.addCounterexample(constructCounterexample(mTransitionProvider, currentItem, postState));
 	}
 
-	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
-		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createTopState());
-		assert preState != null;
+	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem,
+			final DisjunctiveAbstractState<STATE> initialState) {
+		final Set<STATE> preStates = initialState.getStates().stream()
+				.map(x -> mVarProvider.defineInitialVariables(elem, x)).collect(Collectors.toSet());
 		final DisjunctiveAbstractState<STATE> preMultiState =
-				new DisjunctiveAbstractState<>(mMaxParallelStates, preState);
+				DisjunctiveAbstractState.createDisjunction(preStates, mMaxParallelStates);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 
