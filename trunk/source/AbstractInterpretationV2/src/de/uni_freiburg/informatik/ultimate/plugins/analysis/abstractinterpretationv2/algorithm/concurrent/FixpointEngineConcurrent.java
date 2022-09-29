@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -131,10 +132,30 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			if (interferencesAreEqual(interferences, newInterferences)) {
 				break;
 			}
-			interferences = newInterferences;
-			// TODO: Do some widening after a number of iterations.
+			// Compute the new interferences. Use the newly computed or widen them if necessary.
+			interferences =
+					iteration < mMaxUnwindings ? newInterferences : widenInterferences(interferences, newInterferences);
 			iteration++;
 		}
+	}
+
+	private Map<LOC, DisjunctiveAbstractState<STATE>> widenInterferences(
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences1,
+			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences2) {
+		final IAbstractStateBinaryOperator<STATE> widenOp = mDomain.getWideningOperator();
+		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
+		for (final LOC loc : DataStructureUtils.union(interferences1.keySet(), interferences2.keySet())) {
+			final DisjunctiveAbstractState<STATE> state1 = interferences1.get(loc);
+			final DisjunctiveAbstractState<STATE> state2 = interferences2.get(loc);
+			if (state1 == null) {
+				result.put(loc, state2);
+			} else if (state2 == null) {
+				result.put(loc, state1);
+			} else {
+				result.put(loc, state1.widen(widenOp, state2));
+			}
+		}
+		return result;
 	}
 
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
