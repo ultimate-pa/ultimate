@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -79,7 +80,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE>> implement
 	}
 
 	@Override
-	public STATE defineInitialVariables(final IcfgEdge current, final STATE state) {
+	public DisjunctiveAbstractState<STATE> defineInitialVariables(final IcfgEdge current,
+			final DisjunctiveAbstractState<STATE> state) {
 		assert current != null : "edge is null";
 		assert state != null : "state is null";
 

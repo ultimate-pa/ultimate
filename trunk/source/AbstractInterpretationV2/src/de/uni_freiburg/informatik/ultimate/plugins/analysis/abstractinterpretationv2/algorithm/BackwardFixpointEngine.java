@@ -236,10 +236,9 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 	}
 
 	private DisjunctiveAbstractState<STATE> createFreshPrestateWithVariables(final ACTION elem) {
-		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createTopState());
-		final DisjunctiveAbstractState<STATE> preMultiState =
-				new DisjunctiveAbstractState<>(mMaxParallelStates, preState);
-		return preMultiState;
+		final DisjunctiveAbstractState<STATE> topState =
+				new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
+		return mVarProvider.defineInitialVariables(elem, topState);
 	}
 
 	private List<BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC>> createPredecessorItems(

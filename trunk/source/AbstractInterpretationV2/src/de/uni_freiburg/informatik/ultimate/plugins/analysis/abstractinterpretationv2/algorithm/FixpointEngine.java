@@ -424,10 +424,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem,
 			final DisjunctiveAbstractState<STATE> initialState) {
-		final Set<STATE> preStates = initialState.getStates().stream()
-				.map(x -> mVarProvider.defineInitialVariables(elem, x)).collect(Collectors.toSet());
-		final DisjunctiveAbstractState<STATE> preMultiState =
-				DisjunctiveAbstractState.createDisjunction(preStates, mMaxParallelStates);
+		final DisjunctiveAbstractState<STATE> preMultiState = mVarProvider.defineInitialVariables(elem, initialState);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 
