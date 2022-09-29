@@ -15,13 +15,6 @@
   <!-- ==================================================== TASKS ==================================================== -->
   <!-- =============================================================================================================== -->
 
-  <tasks name="POPL2023">
-    <option name="--printer.dump.path">dumped-boogie/POPL2023</option>
-
-    <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
-    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-  </tasks>
-
   <tasks name="SVCOMP-ConcurrencySafety-Main">
     <option name="--printer.dump.path">dumped-boogie/SVCOMP-ConcurrencySafety-Main</option>
 
