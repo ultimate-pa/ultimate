@@ -5,12 +5,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -89,5 +97,54 @@ public class InterferenceUtils {
 			break;
 		}
 		return result;
+	}
+
+	public static <ACTION extends IIcfgTransition<?>> HashRelation<ACTION, IProgramVarOrConst>
+			getSharedWrites(final IIcfg<?> icfg) {
+		final HashRelation<ACTION, IProgramVarOrConst> writesToVariables = new HashRelation<>();
+		final HashRelation<IProgramVar, String> writesToProcedures = new HashRelation<>();
+		final HashRelation<IProgramVar, String> readsToProcedures = new HashRelation<>();
+		final HashRelation<ACTION, IProgramVarOrConst> result = new HashRelation<>();
+		for (final Entry<String, ?> entry : icfg.getProcedureEntryNodes().entrySet()) {
+			final String procedure = entry.getKey();
+			final List<IcfgEdge> initalEdges = ((IcfgLocation) entry.getValue()).getOutgoingEdges();
+			new IcfgEdgeIterator(initalEdges).forEachRemaining(edge -> {
+				final TransFormula transformula = edge.getTransformula();
+				for (final IProgramVar written : transformula.getAssignedVars()) {
+					writesToVariables.addPair((ACTION) edge, written);
+					writesToProcedures.addPair(written, procedure);
+				}
+				// TODO: Is this the best way to find reads?
+				transformula.getInVars().forEach((k, v) -> readsToProcedures.addPair(k, procedure));
+			});
+		}
+		final Set<IProgramVarOrConst> sharedVars = readsToProcedures.getDomain().stream()
+				.filter(x -> isSharedVariable(x, writesToProcedures, readsToProcedures)).collect(Collectors.toSet());
+		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : writesToVariables.entrySet()) {
+			final Set<IProgramVarOrConst> writtenSharedVars =
+					DataStructureUtils.intersection(entry.getValue(), sharedVars);
+			if (!writtenSharedVars.isEmpty()) {
+				result.addAllPairs(entry.getKey(), writtenSharedVars);
+			}
+		}
+		return result;
+	}
+
+	private static boolean isSharedVariable(final IProgramVar var,
+			final HashRelation<IProgramVar, String> writesToProcedures,
+			final HashRelation<IProgramVar, String> readsToProcedures) {
+		final Set<String> writingProcedures = writesToProcedures.getImage(var);
+		if (writingProcedures.isEmpty()) {
+			return false;
+		}
+		final Set<String> readingProcedures = readsToProcedures.getImage(var);
+		if (readingProcedures.isEmpty()) {
+			return false;
+		}
+		if (writingProcedures.size() > 1 || readingProcedures.size() > 1) {
+			return true;
+		}
+		// readingProcedures and writingProcedures are both singleton, return true iff they are different
+		return !readingProcedures.equals(writingProcedures);
 	}
 }
