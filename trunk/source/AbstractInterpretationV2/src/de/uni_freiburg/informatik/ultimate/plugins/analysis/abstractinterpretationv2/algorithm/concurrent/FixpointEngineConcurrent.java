@@ -52,6 +52,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> mParams;
 	private final ConcurrentCfgInformation<ACTION, LOC> mInfo;
 	private final BiPredicate<LOC, ACTION> mIsInterfering;
+	private final DisjunctiveAbstractState<STATE> mTopState;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> factory, final IIcfg<? extends LOC> icfg) {
@@ -75,6 +76,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		// TODO: There can be multiple variants of this predicate (e.g. full flow-senstive analysis)
 		// This should be probably an argument or setting.
 		mIsInterfering = (loc, action) -> mInfo.getInterferingProcedures(loc).contains(action.getPrecedingProcedure());
+		mTopState = new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
 
 	@Override
@@ -157,21 +159,22 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result;
 	}
 
-	private DisjunctiveAbstractState<STATE> createTopState() {
-		return new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
+	private DisjunctiveAbstractState<STATE> unionStates(final Iterator<DisjunctiveAbstractState<STATE>> states,
+			final DisjunctiveAbstractState<STATE> defaultValue) {
+		if (!states.hasNext()) {
+			return defaultValue;
+		}
+		DisjunctiveAbstractState<STATE> result = states.next();
+		while (states.hasNext()) {
+			result = result.union(states.next());
+		}
+		return result;
 	}
 
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
 		final Iterator<DisjunctiveAbstractState<STATE>> iterator =
 				mInfo.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState).iterator();
-		if (!iterator.hasNext()) {
-			return createTopState();
-		}
-		DisjunctiveAbstractState<STATE> state = iterator.next();
-		while (iterator.hasNext()) {
-			state = state.union(iterator.next());
-		}
-		return state;
+		return unionStates(iterator, mTopState);
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
@@ -192,14 +195,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
 		final Iterator<DisjunctiveAbstractState<STATE>> interferingStates = relevantPostStates.keySet().stream()
 				.filter(x -> mIsInterfering.test(loc, x)).map(relevantPostStates::get).iterator();
-		if (!interferingStates.hasNext()) {
-			return null;
-		}
-		DisjunctiveAbstractState<STATE> result = interferingStates.next();
-		while (interferingStates.hasNext()) {
-			result = result.union(interferingStates.next());
-		}
-		return result;
+		return unionStates(interferingStates, null);
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>>
@@ -212,7 +208,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			DisjunctiveAbstractState<STATE> postState;
 			// TODO: How is it possible that the target of write is not in mStateStorage?
 			if (stateAfterWrite == null) {
-				postState = createTopState().addVariables(entry.getValue());
+				postState = mTopState.addVariables(entry.getValue());
 			} else {
 				final Set<IProgramVarOrConst> varsToRemove =
 						DataStructureUtils.difference(stateAfterWrite.getVariables(), entry.getValue());
