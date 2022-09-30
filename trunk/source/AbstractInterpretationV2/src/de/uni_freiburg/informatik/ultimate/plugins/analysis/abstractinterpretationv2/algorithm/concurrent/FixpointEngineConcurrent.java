@@ -3,12 +3,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -159,22 +159,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result;
 	}
 
-	private DisjunctiveAbstractState<STATE> unionStates(final Iterator<DisjunctiveAbstractState<STATE>> states,
+	private DisjunctiveAbstractState<STATE> unionStates(final Stream<DisjunctiveAbstractState<STATE>> states,
 			final DisjunctiveAbstractState<STATE> defaultValue) {
-		if (!states.hasNext()) {
-			return defaultValue;
-		}
-		DisjunctiveAbstractState<STATE> result = states.next();
-		while (states.hasNext()) {
-			result = result.union(states.next());
-		}
-		return result;
+		return states.reduce(DisjunctiveAbstractState::union).orElse(defaultValue);
 	}
 
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
-		final Iterator<DisjunctiveAbstractState<STATE>> iterator =
-				mInfo.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState).iterator();
-		return unionStates(iterator, mTopState);
+		return unionStates(mInfo.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState), mTopState);
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
@@ -193,9 +184,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
-		final Iterator<DisjunctiveAbstractState<STATE>> interferingStates = relevantPostStates.keySet().stream()
-				.filter(x -> mIsInterfering.test(loc, x)).map(relevantPostStates::get).iterator();
-		return unionStates(interferingStates, null);
+		return unionStates(relevantPostStates.keySet().stream().filter(x -> mIsInterfering.test(loc, x))
+				.map(relevantPostStates::get), null);
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>>
