@@ -185,16 +185,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
-		final Iterator<DisjunctiveAbstractState<STATE>> postStatesOfOtherThreads = relevantPostStates.keySet().stream()
+		final Iterator<DisjunctiveAbstractState<STATE>> interferingStates = relevantPostStates.keySet().stream()
 				.filter(x -> mIsInterfering.test(loc, x)).map(relevantPostStates::get).iterator();
-		if (!postStatesOfOtherThreads.hasNext()) {
+		if (!interferingStates.hasNext()) {
 			return null;
 		}
-		DisjunctiveAbstractState<STATE> state = postStatesOfOtherThreads.next();
-		while (postStatesOfOtherThreads.hasNext()) {
-			state = state.union(postStatesOfOtherThreads.next());
+		DisjunctiveAbstractState<STATE> result = interferingStates.next();
+		while (interferingStates.hasNext()) {
+			result = result.union(interferingStates.next());
 		}
-		return state;
+		return result;
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>>
