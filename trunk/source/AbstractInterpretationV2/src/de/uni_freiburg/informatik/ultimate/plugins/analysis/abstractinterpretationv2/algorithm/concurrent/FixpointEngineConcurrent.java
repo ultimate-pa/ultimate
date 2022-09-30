@@ -157,14 +157,26 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result;
 	}
 
+	private DisjunctiveAbstractState<STATE> createTopState() {
+		return new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
+	}
+
+	private DisjunctiveAbstractState<STATE> getAbstractState(final LOC location) {
+		final DisjunctiveAbstractState<STATE> result = mStateStorage.getAbstractState(location);
+		if (result == null) {
+			return createTopState();
+		}
+		return result;
+	}
+
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
 		final Iterator<LOC> locs = mInfo.getForkLocations(procedure).iterator();
 		if (!locs.hasNext()) {
-			return new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
+			return createTopState();
 		}
-		DisjunctiveAbstractState<STATE> state = mStateStorage.getAbstractState(locs.next());
+		DisjunctiveAbstractState<STATE> state = getAbstractState(locs.next());
 		while (locs.hasNext()) {
-			state = state.union(mStateStorage.getAbstractState(locs.next()));
+			state = state.union(getAbstractState(locs.next()));
 		}
 		return state;
 	}
@@ -201,10 +213,10 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			getRelevantPostStates(final HashRelation<ACTION, IProgramVarOrConst> sharedWrites) {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : sharedWrites.entrySet()) {
-			// TODO: Previously we applied the post-operator to the pre-state, why?
+			// TODO: How is it possible that the target of write is not in mStateStorage?
 			final ACTION write = entry.getKey();
 			final DisjunctiveAbstractState<STATE> stateAfterWrite =
-					mStateStorage.getAbstractState(mTransitionProvider.getTarget(write));
+					getAbstractState(mTransitionProvider.getTarget(write));
 			final Set<IProgramVarOrConst> varsToRemove =
 					DataStructureUtils.difference(stateAfterWrite.getVariables(), entry.getValue());
 			result.put(write, stateAfterWrite.removeVariables(varsToRemove));
