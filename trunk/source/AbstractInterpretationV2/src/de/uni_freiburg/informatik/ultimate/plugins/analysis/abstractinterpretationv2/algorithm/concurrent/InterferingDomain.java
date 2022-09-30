@@ -14,15 +14,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class InterferingDomain<STATE extends IAbstractState<STATE>, ACTION, LOC>
 		implements IAbstractDomain<STATE, ACTION> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlying;
-	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final Map<LOC, DisjunctiveAbstractState<STATE>> mInterferences;
+	private final IAbstractPostOperator<STATE, ACTION> mInterferingPostOperator;
 
 	public InterferingDomain(final IAbstractDomain<STATE, ACTION> underlying,
 			final ITransitionProvider<ACTION, LOC> transitionProvider,
 			final Map<LOC, DisjunctiveAbstractState<STATE>> interferences) {
 		mUnderlying = underlying;
-		mTransitionProvider = transitionProvider;
-		mInterferences = interferences;
+		mInterferingPostOperator =
+				new InterferingPostOperator<>(transitionProvider, interferences, underlying.getPostOperator());
 	}
 
 	@Override
@@ -47,7 +46,7 @@ public class InterferingDomain<STATE extends IAbstractState<STATE>, ACTION, LOC>
 
 	@Override
 	public IAbstractPostOperator<STATE, ACTION> getPostOperator() {
-		return new InterferingPostOperator<>(mTransitionProvider, mInterferences, mUnderlying.getPostOperator());
+		return mInterferingPostOperator;
 	}
 
 	@Override
