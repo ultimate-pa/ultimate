@@ -10,6 +10,7 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -24,10 +25,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
-	private HashRelation<String, LOC> mProceduresToForkLocations;
+	private final HashRelation<String, LOC> mProceduresToForkLocations;
+	private final Set<String> mUnboundedThreads;
 
 	public ConcurrentCfgInformation(final IIcfg<? extends LOC> icfg) {
 		mIcfg = icfg;
+		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
+				.collect(Collectors.toSet());
+		mProceduresToForkLocations = new HashRelation<>();
 		getForks().forEach(x -> mProceduresToForkLocations.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
 	}
 
@@ -135,5 +140,16 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		}
 		// readingProcedures and writingProcedures are both singleton, return true iff they are different
 		return !readingProcedures.equals(writingProcedures);
+	}
+
+	public Set<String> getInterferingProcedures(final LOC location) {
+		// TODO: Do something more precise based on the flow of the forks
+		// (e.g. there should be no interference before a fork)
+		final Set<String> result = new HashSet<>(mIcfg.getProcedureEntryNodes().keySet());
+		final String ownProcedure = location.getProcedure();
+		if (getForkLocations(ownProcedure).size() <= 1 && !mUnboundedThreads.contains(ownProcedure)) {
+			result.remove(ownProcedure);
+		}
+		return result;
 	}
 }

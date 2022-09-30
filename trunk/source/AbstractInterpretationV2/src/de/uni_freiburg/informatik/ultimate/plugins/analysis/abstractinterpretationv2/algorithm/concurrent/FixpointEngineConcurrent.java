@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -50,6 +51,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final List<String> mTopologicalOrder;
 	private final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> mParams;
 	private final ConcurrentCfgInformation<ACTION, LOC> mInfo;
+	private final BiPredicate<LOC, ACTION> mIsInterfering;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> factory, final IIcfg<? extends LOC> icfg) {
@@ -70,6 +72,9 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mInfo = new ConcurrentCfgInformation<>(icfg);
 		mSharedWrites = mInfo.getSharedWrites();
 		mTopologicalOrder = mInfo.getTopologicalProcedureOrder();
+		// TODO: There can be multiple variants of this predicate (e.g. full flow-senstive analysis)
+		// This should be probably an argument or setting.
+		mIsInterfering = (loc, action) -> mInfo.getInterferingProcedures(loc).contains(action.getPrecedingProcedure());
 	}
 
 	@Override
@@ -112,7 +117,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				for (final var counterExample : threadResult.getCounterexamples()) {
 					final var execution = counterExample.getAbstractExecution();
 					final var errorLocation = execution.get(execution.size() - 1).getSecond();
-					if (!addedErrorLocations.add(errorLocation)) {
+					if (addedErrorLocations.add(errorLocation)) {
 						mResult.addCounterexample(counterExample);
 					}
 				}
@@ -167,22 +172,21 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
 			computeNewInterferences(final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
 		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
-		for (final Entry<String, ? extends LOC> entry : mEntryLocs.entrySet()) {
-			// TODO: Only consider writes of procedures that have already been forked
-			final DisjunctiveAbstractState<STATE> interferingState =
-					getInterferingState(entry.getKey(), relevantPostStates);
-			if (interferingState != null) {
-				new IcfgLocationIterator<>(entry.getValue()).forEachRemaining(x -> result.put(x, interferingState));
-			}
+		for (final LOC entryLoc : mEntryLocs.values()) {
+			new IcfgLocationIterator<>(entryLoc).forEachRemaining(loc -> {
+				final DisjunctiveAbstractState<STATE> interferingState = getInterferingState(loc, relevantPostStates);
+				if (interferingState != null) {
+					result.put(loc, interferingState);
+				}
+			});
 		}
 		return result;
 	}
 
-	private DisjunctiveAbstractState<STATE> getInterferingState(final String procedure,
+	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
-		// TODO: Considering only the other procedures is unsound for unbounded threads!
 		final Iterator<DisjunctiveAbstractState<STATE>> postStatesOfOtherThreads = relevantPostStates.keySet().stream()
-				.filter(x -> !x.getPrecedingProcedure().equals(procedure)).map(relevantPostStates::get).iterator();
+				.filter(x -> mIsInterfering.test(loc, x)).map(relevantPostStates::get).iterator();
 		if (!postStatesOfOtherThreads.hasNext()) {
 			return null;
 		}
