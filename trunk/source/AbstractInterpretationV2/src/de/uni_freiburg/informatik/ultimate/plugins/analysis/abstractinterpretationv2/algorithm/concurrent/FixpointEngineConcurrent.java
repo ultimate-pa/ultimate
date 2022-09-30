@@ -161,22 +161,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
 
-	private DisjunctiveAbstractState<STATE> getAbstractState(final LOC location) {
-		final DisjunctiveAbstractState<STATE> result = mStateStorage.getAbstractState(location);
-		if (result == null) {
-			return createTopState();
-		}
-		return result;
-	}
-
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
-		final Iterator<LOC> locs = mInfo.getForkLocations(procedure).iterator();
-		if (!locs.hasNext()) {
+		final Iterator<DisjunctiveAbstractState<STATE>> iterator =
+				mInfo.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState).iterator();
+		if (!iterator.hasNext()) {
 			return createTopState();
 		}
-		DisjunctiveAbstractState<STATE> state = getAbstractState(locs.next());
-		while (locs.hasNext()) {
-			state = state.union(getAbstractState(locs.next()));
+		DisjunctiveAbstractState<STATE> state = iterator.next();
+		while (iterator.hasNext()) {
+			state = state.union(iterator.next());
 		}
 		return state;
 	}
@@ -213,13 +206,19 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			getRelevantPostStates(final HashRelation<ACTION, IProgramVarOrConst> sharedWrites) {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : sharedWrites.entrySet()) {
-			// TODO: How is it possible that the target of write is not in mStateStorage?
 			final ACTION write = entry.getKey();
 			final DisjunctiveAbstractState<STATE> stateAfterWrite =
-					getAbstractState(mTransitionProvider.getTarget(write));
-			final Set<IProgramVarOrConst> varsToRemove =
-					DataStructureUtils.difference(stateAfterWrite.getVariables(), entry.getValue());
-			result.put(write, stateAfterWrite.removeVariables(varsToRemove));
+					mStateStorage.getAbstractState(mTransitionProvider.getTarget(write));
+			DisjunctiveAbstractState<STATE> postState;
+			// TODO: How is it possible that the target of write is not in mStateStorage?
+			if (stateAfterWrite == null) {
+				postState = createTopState().addVariables(entry.getValue());
+			} else {
+				final Set<IProgramVarOrConst> varsToRemove =
+						DataStructureUtils.difference(stateAfterWrite.getVariables(), entry.getValue());
+				postState = stateAfterWrite.removeVariables(varsToRemove);
+			}
+			result.put(write, postState);
 		}
 		return result;
 	}
