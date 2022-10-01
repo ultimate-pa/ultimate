@@ -18,8 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -38,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
 
 public class InterpolantChecker {
 	Interpolator mInterpolator;
@@ -84,7 +87,7 @@ public class InterpolantChecker {
 				if (LAInterpolator.isLATerm(term)) {
 					term = ((AnnotatedTerm) term).getSubterm();
 				}
-				if (term instanceof TermVariable) {
+				if (auxMap != null && term instanceof TermVariable) {
 					final Term replacement = auxMap.get(term);
 					if (replacement != null) {
 						setResult(replacement);
@@ -95,6 +98,43 @@ public class InterpolantChecker {
 			}
 		};
 		return substitutor.transform(interpolant);
+	}
+
+	/**
+	 * Fix auxiliary variables by replacing them through constant terms. This is
+	 * needed to obtain a closed formula.
+	 *
+	 * @param interpolant The term in which variables should be replaced.
+	 * @param varToTerm   A map from auxiliary variables to their replacement term.
+	 * @return The term with variables replaced by constant terms.
+	 */
+	private Term fixVars(Term interpolant, HashMap<TermVariable, Term> varToTerm) {
+		for (final Term tv : interpolant.getFreeVars()) {
+			final TermTransformer ipolator = mInterpolator.new TermSubstitutor(tv, varToTerm.get(tv));
+				interpolant = ipolator.transform(interpolant);
+		}
+		return interpolant;
+	}
+
+	/**
+	 * Purify a literal and directly fix the emerging purification variables by
+	 * replacing them through constant terms. This is needed to obtain a closed
+	 * formula.
+	 *
+	 * @param literal   The term that needs to be purified.
+	 * @param varToTerm A map from auxiliary variables to their replacement term.
+	 * @return The purified literal with purification variables replaced by constant
+	 *         terms.
+	 */
+	private Term purifyAndFix(Term literal, HashMap<TermVariable, Term> varToTerm,
+			HashMap<TermVariable, Term> varToFreshTerm) {
+		for (final Entry<TermVariable, Term> e : varToFreshTerm.entrySet()) {
+			final Term term = varToTerm.get(e.getKey());
+			assert term != null;
+			final TermTransformer ipolator = mInterpolator.new TermSubstitutor(term, e.getValue());
+			literal = ipolator.transform(literal);
+		}
+		return literal;
 	}
 
 	public void checkInductivity(final Term[] literals, final Term[] ipls) {
@@ -111,6 +151,34 @@ public class InterpolantChecker {
 		 */
 		@SuppressWarnings("unchecked") // because Java Generics are broken :(
 		final HashMap<TermVariable, Term>[] auxMaps = new HashMap[ipls.length];
+
+		/*
+		 * purVarToFreshTerm Get the mapping from all so far used purification variables
+		 * to the terms they replaced.
+		 */
+		final HashMap<TermVariable, Term> purVarToTerm = mInterpolator.mPurifyDefinitions;
+		final HashSet<TermVariable> activeVars = new HashSet<>();
+
+		/*
+		 * TODO: initialize purVarToFreshTerm, which maps the auxiliary variables used
+		 * in the purified interpolant of at least one partition to a new fresh
+		 * constant.
+		 */
+		final HashMap<TermVariable, Term> purVarToFreshTerm = new HashMap<>();
+		for (final Entry<TermVariable, Term> e : purVarToTerm.entrySet()) {
+			final TermVariable tv = e.getKey();
+			if (!purVarToFreshTerm.containsKey(tv)) {
+				final String name = ".check" + tv.getName();
+				mCheckingSolver.declareFun(name, new Sort[0], tv.getSort());
+				final Term constTerm = mCheckingSolver.term(name);
+				purVarToFreshTerm.put(tv, constTerm);
+			}
+		}
+		assert purVarToTerm.size() == purVarToFreshTerm.size();
+
+		for (int i = 0; i < ipls.length; i++) {
+			activeVars.addAll(Arrays.asList(ipls[i].getFreeVars()));
+		}
 
 		for (final Term lit : literals) {
 			final Term atom = mInterpolator.getAtom(lit);
@@ -161,7 +229,9 @@ public class InterpolantChecker {
 				final InterpolatorAtomInfo atomTermInfo = mInterpolator.getAtomTermInfo(atom);
 				final LitInfo occInfo = mInterpolator.mAtomOccurenceInfos.get(atom);
 				if (occInfo.contains(part)) {
-					mCheckingSolver.assertTerm(theory.not(lit));
+					// Purify literal and replace purification variable by fresh term.
+					final Term purLit = purifyAndFix(lit, purVarToTerm, purVarToFreshTerm);
+					mCheckingSolver.assertTerm(theory.not(purLit));
 				} else if (occInfo.isBLocal(part)) {
 					// nothing to do, literal cannot be mixed in sub-tree.
 				} else if (occInfo.isALocalInSomeChild(part)) {
@@ -313,15 +383,29 @@ public class InterpolantChecker {
 			}
 			for (int child = part - 1; child >= mInterpolator.mStartOfSubtrees[part];
 					child = mInterpolator.mStartOfSubtrees[child] - 1) {
-				final Term interpolant = fixupAndLet(ipls[child], fixedEQs[child], auxMaps[child]);
+				Term interpolant = fixupAndLet(ipls[child], fixedEQs[child], auxMaps[child]);
+				// Replace purification variable in interpolant by fresh term.
+				interpolant = fixVars(interpolant, purVarToFreshTerm);
 				mCheckingSolver.assertTerm(interpolant);
 			}
 
 			if (part < ipls.length) {
-				final Term interpolant = fixupAndLet(ipls[part], fixedEQs[part], auxMaps[part]);
+				Term interpolant = fixupAndLet(ipls[part], fixedEQs[part], auxMaps[part]);
+				// Replace purification variable in interpolant by fresh term.
+				interpolant = fixVars(interpolant, purVarToFreshTerm);
 				mCheckingSolver.assertTerm(theory.not(interpolant));
 			}
-			if (mCheckingSolver.checkSat() != LBool.UNSAT) {
+			// Assert auxeq in all partitions were outermost symbol is contained and/or
+			// interpolant contains auxvar.
+			for (final Entry<TermVariable, Term> e : purVarToTerm.entrySet()) {
+				final ApplicationTerm t = (ApplicationTerm) e.getValue();
+				final Occurrence occ = mInterpolator.mFunctionSymbolOccurrenceInfos.get(t.getFunction());
+				if (occ.contains(part) || activeVars.contains(e.getKey()) || true) {
+					final Term tNew = fixVars(t, purVarToFreshTerm);
+					mCheckingSolver.assertTerm(theory.term("=", tNew, purVarToFreshTerm.get(e.getKey())));
+				}
+			}
+			if (mCheckingSolver.checkSat() == LBool.SAT) {
 				throw new AssertionError();
 			}
 			mCheckingSolver.pop(1);
@@ -397,7 +481,7 @@ public class InterpolantChecker {
 		final LogProxy logger = mInterpolator.getLogger();
 		final int old = logger.getLoglevel();
 		try {
-			// logger.setLoglevel(LogProxy.LOGLEVEL_ERROR);
+			logger.setLoglevel(LogProxy.LOGLEVEL_ERROR);
 			final SymbolChecker checker = new SymbolChecker(mGlobals, subOccurrences[interpolants.length]);
 			for (int part = 0; part < numPartitions; part++) {
 				mCheckingSolver.push(1);

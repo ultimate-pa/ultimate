@@ -18,11 +18,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * A quantified equality atom of the form "Term = Term".
- * 
+ *
  * If the equality contains a variable at top level, it is of the form "TermVariable = Term"
  *
  * @author Tanja Schindler
@@ -32,8 +33,8 @@ public class QuantEquality extends QuantLiteral {
 
 	private final Term mLhs, mRhs;
 
-	public QuantEquality(final Term term, final Term lhs, final Term rhs) {
-		super(term);
+	public QuantEquality(final Term lhs, final Term rhs) {
+		super(lhs.getTheory().term(SMTLIBConstants.EQUALS, lhs, rhs));
 		mLhs = lhs;
 		mRhs = rhs;
 		mNegated = new NegQuantLiteral(this);

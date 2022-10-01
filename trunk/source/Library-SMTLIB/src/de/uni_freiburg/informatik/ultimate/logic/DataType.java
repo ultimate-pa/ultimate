@@ -137,7 +137,7 @@ public class DataType extends SortSymbol {
 		while (!todo.isEmpty()) {
 			final Sort sort = todo.removeFirst();
 			if (seen.add(sort)) {
-				if (sort.isParametric()) {
+				if (sort.isSortVariable()) {
 					for (int i = 0; i < sortParams.length; i++) {
 						if (sort == sortParams[i]) {
 							unused.clear(i);

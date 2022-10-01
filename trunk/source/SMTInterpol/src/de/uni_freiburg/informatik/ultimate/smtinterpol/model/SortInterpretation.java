@@ -42,6 +42,13 @@ public interface SortInterpretation {
 	 * @return Index of the fresh element.
 	 */
 	public Term extendFresh(Sort sort);
+
+	/**
+	 * Tells the sort that this value is in use. This ensures that later calls of
+	 * extendFresh will not return the same value again.
+	 */
+	public void register(Term value);
+
 	/**
 	 * Convert this sort interpretation to SMTLIB.
 	 * @param t    Theory to use during conversion.

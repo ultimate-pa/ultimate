@@ -62,8 +62,8 @@ public class ArrayIndex implements List<Term> {
 		mIndexEntries = Arrays.asList(indexEntries);
 	}
 
-	public ArrayIndex(final List<Term> indexEntries) {
-		mIndexEntries = indexEntries;
+	public ArrayIndex(final List<? extends Term> indexEntries) {
+		mIndexEntries = (List<Term>) indexEntries;
 	}
 
 	@Override

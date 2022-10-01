@@ -116,7 +116,7 @@ public class CongruencePath {
 	}
 
 	private CCAnnotation createAnnotation(final SymmetricPair<CCTerm> diseq) {
-		return new CCAnnotation(diseq, mAllPaths, CCAnnotation.RuleKind.CC);
+		return new CCAnnotation(diseq, mAllPaths, CCAnnotation.RuleKind.CONG);
 	}
 
 	private int computeDepth(CCTerm t) {

@@ -50,11 +50,9 @@ public interface ILiteral {
 	 *
 	 * @param theory
 	 *            The term factory to use.
-	 * @param quoted
-	 *            Should quotes be used in the output?
 	 * @return an SMT representation of the literal.
 	 */
-	public Term getSMTFormula(final Theory theory, final boolean quoted);
+	public Term getSMTFormula(final Theory theory);
 
 	@Override
 	public String toString();

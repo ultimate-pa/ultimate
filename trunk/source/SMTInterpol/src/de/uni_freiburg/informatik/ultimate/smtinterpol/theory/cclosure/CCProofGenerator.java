@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -33,7 +34,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
@@ -141,7 +143,7 @@ public class CCProofGenerator {
 		/**
 		 * The sub proofs for auxiliary lemmas it depends on.
 		 */
-		private final ArrayList<ProofInfo> mSubProofs;
+		private final Set<ProofInfo> mSubProofs;
 
 		// Information needed to determine the proof order
 		private int mNumParents;
@@ -149,8 +151,8 @@ public class CCProofGenerator {
 
 		public ProofInfo() {
 			mLemmaDiseq = null;
-			mProofLiterals = new ArrayList<>();
-			mSubProofs = new ArrayList<>();
+			mProofLiterals = new LinkedHashSet<>();
+			mSubProofs = new LinkedHashSet<>();
 			mNumParents = 0;
 			mNumVisitedParents = 0;
 		}
@@ -205,6 +207,7 @@ public class CCProofGenerator {
 				if (congruence == null) {
 					return false;
 				}
+				mPathProofMap.put(termPair, congruence);
 				mSubProofs.add(congruence);
 				return true;
 			}
@@ -228,7 +231,7 @@ public class CCProofGenerator {
 		}
 
 		private void collectSelectIndexEquality(final CCTerm select, final CCTerm pathIndex) {
-			if (isSelectTerm(select)) {
+			if (ArrayTheory.isSelectTerm(select)) {
 				final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
 				if (index != pathIndex) {
 					if (!collectEquality(new SymmetricPair<>(pathIndex, index))) {
@@ -256,9 +259,10 @@ public class CCProofGenerator {
 				}
 				// Case (ii)
 				CCTerm storeTerm = null;
-				if (isStoreTerm(firstTerm) && ArrayTheory.getArrayFromStore((CCAppTerm) firstTerm) == secondTerm) {
+				if (ArrayTheory.isStoreTerm(firstTerm)
+						&& ArrayTheory.getArrayFromStore((CCAppTerm) firstTerm) == secondTerm) {
 					storeTerm = firstTerm;
-				} else if (isStoreTerm(secondTerm)
+				} else if (ArrayTheory.isStoreTerm(secondTerm)
 						&& ArrayTheory.getArrayFromStore((CCAppTerm) secondTerm) == firstTerm) {
 					storeTerm = secondTerm;
 				}
@@ -335,7 +339,7 @@ public class CCProofGenerator {
 	 *         obtained from subpaths explaining congruences in the main lemma - or, if there are no congruences, just
 	 *         the array lemma.
 	 */
-	public Term toTerm(final Clause clause, final Theory theory) {
+	public Term toTerm(final Clause clause, final ProofRules proofRules) {
 		mAllEqualities = new LinkedHashSet<>();
 		// Store all clause literals
 		collectClauseLiterals(clause);
@@ -361,7 +365,7 @@ public class CCProofGenerator {
 		final ArrayList<ProofInfo> proofOrder = determineProofOrder(mainInfo);
 
 		// Build the final proof term
-		return buildProofTerm(clause, theory, proofOrder);
+		return buildProofTerm(clause, proofRules, proofOrder);
 	}
 
 	/**
@@ -421,13 +425,15 @@ public class CCProofGenerator {
 	private ProofInfo findMainPaths() {
 		final ProofInfo mainProof = new ProofInfo();
 		switch (mRule) {
-		case CC:
+		case TRANS:
+		case CONG:
 			// The main path was already collected, just return it.
 			return mPathProofMap.get(mIndexedPaths[0].getPathEnds());
 		case READ_OVER_WEAKEQ: {
 			// collect index equality and the weak path
 			final SymmetricPair<CCTerm> selectEquality = mAnnot.mDiseq;
-			assert isSelectTerm(selectEquality.getFirst()) && isSelectTerm(selectEquality.getSecond());
+			assert ArrayTheory.isSelectTerm(selectEquality.getFirst())
+					&& ArrayTheory.isSelectTerm(selectEquality.getSecond());
 			// collect the index equality
 			final CCTerm idx1 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getFirst());
 			final CCTerm idx2 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getSecond());
@@ -520,22 +526,19 @@ public class CCProofGenerator {
 		return proofOrder;
 	}
 
-	private Term buildLemma(final Theory theory, final RuleKind rule, final ProofInfo info, final Term mainEq,
+	private Term buildLemma(final ProofRules proofRules, RuleKind rule, final ProofInfo info, final Term mainEq,
 			final HashMap<SymmetricPair<CCTerm>, Term> auxLiterals) {
+		final Theory theory = proofRules.getTheory();
 		// Collect the new clause literals.
-		final Term[] args = new Term[info.getLiterals().size() + (mainEq == null ? 0 : 1) + info.getSubProofs().size()];
-		int i = 0;
+		final Set<ProofLiteral> clause = new LinkedHashSet<>(
+				info.getLiterals().size() + 1 + info.getSubProofs().size());
 		if (mainEq != null) {
 			// First the (positive) diseq literal
-			args[i++] = theory.annotatedTerm(CCEquality.QUOTED_CC, mainEq);
+			clause.add(new ProofLiteral(mainEq, true));
 		}
 		// then the other literals, there may also be other positive literals.
 		for (final Literal entry : info.getLiterals()) {
-			Term arg = entry.getAtom().getSMTFormula(theory, true);
-			if (entry.getSign() < 0) {
-				arg = theory.not(arg);
-			}
-			args[i++] = arg;
+			clause.add(new ProofLiteral(entry.getAtom().getSMTFormula(theory), entry.getSign() > 0));
 		}
 		for (final ProofInfo entry : info.getSubProofs()) {
 			if (!auxLiterals.containsKey(entry.getDiseq())) {
@@ -544,99 +547,92 @@ public class CCProofGenerator {
 				auxLiterals.put(entry.getDiseq(), theory.term("=", lhs, rhs));
 			}
 			/* these are always negated equalities */
-			Term arg = theory.annotatedTerm(CCEquality.QUOTED_CC, auxLiterals.get(entry.getDiseq()));
-			arg = theory.not(arg);
-			args[i++] = arg;
+			clause.add(new ProofLiteral(auxLiterals.get(entry.getDiseq()), false));
 		}
-		// Create the clause.
-		final Term base = theory.or(args);
+		assert clause.size() == info.getLiterals().size() + (mainEq != null ? 1 : 0) + info.getSubProofs().size();
+		final ProofLiteral[] args = clause.toArray(new ProofLiteral[clause.size()]);
 
-		final IndexedPath[] paths = info.getPaths();
-		final SymmetricPair<CCTerm> infoDiseq = info.getDiseq();
-		Object[] lemmaAnnot = new Object[0];
-		if (rule != RuleKind.CC && mAnnot.mDTLemma != null && mAnnot.mDTLemma.getAnnotation() != null) {
-			lemmaAnnot = mAnnot.mDTLemma.getAnnotation();
-		}
-		final Object[] subannots = new Object[2 * paths.length + (infoDiseq == null ? 0 : 1) + lemmaAnnot.length];
-		int k = 0;
-		if (infoDiseq != null) {
-			final Term diseqTerm = theory.term(SMTLIBConstants.EQUALS, infoDiseq.getFirst().getFlatTerm(),
-					infoDiseq.getSecond().getFlatTerm());
-			subannots[k++] = theory.annotatedTerm(CCEquality.QUOTED_CC, diseqTerm);
-		}
-		for (final Object annot : lemmaAnnot) {
-			subannots[k++] = annot;
-		}
-		for (final IndexedPath p : paths) {
-			final CCTerm index = p.getIndex();
-			final CCTerm[] path = p.getPath();
+		final Object[] subannots;
+		if (rule == RuleKind.CONG) {
+			// this is a transitivity or congruence lemma
+			assert info.getPaths().length == 1;
+			final CCTerm[] path = info.getPaths()[0].getPath();
 			final Term[] subs = new Term[path.length];
 			for (int j = 0; j < path.length; ++j) {
 				subs[j] = path[j].getFlatTerm();
 			}
-			if (index == null) {
-				subannots[k++] = ":subpath";
-				subannots[k++] = subs;
-			} else {
-				subannots[k++] = ":weakpath";
-				subannots[k++] = new Object[] { index.getFlatTerm(), subs };
+			rule = subs.length == 2 ? RuleKind.CONG : RuleKind.TRANS;
+			subannots = subs;
+		} else {
+			final IndexedPath[] paths = info.getPaths();
+			final SymmetricPair<CCTerm> infoDiseq = info.getDiseq();
+			Object[] lemmaAnnot = new Object[0];
+			if (mAnnot.mDTLemma != null && mAnnot.mDTLemma.getAnnotation() != null) {
+				lemmaAnnot = mAnnot.mDTLemma.getAnnotation();
+			}
+			subannots = new Object[2 * paths.length + (infoDiseq == null ? 0 : 1) + lemmaAnnot.length];
+			int k = 0;
+			if (infoDiseq != null) {
+				final Term diseqTerm = theory.term(SMTLIBConstants.EQUALS, infoDiseq.getFirst().getFlatTerm(),
+						infoDiseq.getSecond().getFlatTerm());
+				subannots[k++] = diseqTerm;
+			}
+			for (final Object annot : lemmaAnnot) {
+				subannots[k++] = annot;
+			}
+			for (final IndexedPath p : paths) {
+				final CCTerm index = p.getIndex();
+				final CCTerm[] path = p.getPath();
+				final Term[] subs = new Term[path.length];
+				for (int j = 0; j < path.length; ++j) {
+					subs[j] = path[j].getFlatTerm();
+				}
+				if (index == null) {
+					subannots[k++] = ":subpath";
+					subannots[k++] = subs;
+				} else {
+					subannots[k++] = ":weakpath";
+					subannots[k++] = new Object[] { index.getFlatTerm(), subs };
+				}
 			}
 		}
 		final Annotation[] annots = new Annotation[] { new Annotation(rule.getKind(), subannots) };
-		return theory.term(ProofConstants.FN_LEMMA, theory.annotatedTerm(annots, base));
+		return proofRules.oracle(args, annots);
 	}
 
 	/**
 	 * Build the proof term in the form of a resolution step of the main lemma resolved with the auxiliary lemmas in the
 	 * order determined by proofOrder.
 	 */
-	private Term buildProofTerm(final Clause clause, final Theory theory, final ArrayList<ProofInfo> proofOrder) {
+	private Term buildProofTerm(final Clause clause, final ProofRules proofRules,
+			final ArrayList<ProofInfo> proofOrder) {
 
+		final Theory theory = proofRules.getTheory();
 		// Store the self-built auxiliary equality literals, such that the
 		// arguments of the equality are always in the same order.
 		final HashMap<SymmetricPair<CCTerm>, Term> auxLiterals = new HashMap<>();
 
-		// Build all lemma terms.
-		final Term[] allLemmas = new Term[proofOrder.size()];
-		for (int lemmaNo = 0; lemmaNo < proofOrder.size(); lemmaNo++) {
+		// Build main lemma
+		final ProofInfo mainInfo = proofOrder.get(0);
+		assert mainInfo.getDiseq() == mAnnot.getDiseq();
+		// The equality proved by the lemma. It is null if the lemma proofs a
+		// false equality like x == x + 1, or for rules without main equality
+		final Term mainEq = mainInfo.getDiseq() == null || !isDisequalityLiteral(mainInfo.getDiseq()) ? null
+				: mEqualityLiterals.get(mainInfo.getDiseq()).getSMTFormula(theory);
+		Term proof = buildLemma(proofRules, mRule, mainInfo, mainEq, auxLiterals);
+		// Resolve with sub-lemmas.
+		for (int lemmaNo = 1; lemmaNo < proofOrder.size(); lemmaNo++) {
 			// Build the lemma clause.
 			final ProofInfo info = proofOrder.get(lemmaNo);
-			// The equality proved by the lemma. It is null if the lemma proofs a
-			// false equality like x == x + 1 (can only happen for the main lemma).
-			// In that case there is no positive equality atom in the clause.
-			Term provedEq;
-			if (lemmaNo == 0) { // main lemma
-				assert info.getDiseq() == mAnnot.getDiseq();
-				if (info.getDiseq() == null) {
-					// Rule without disequality
-					provedEq = null;
-				} else {
-					final Literal diseqLit = mEqualityLiterals.get(info.getDiseq());
-					// disequality must occur positively in lemma or not at all.
-					assert diseqLit == null || diseqLit.getSign() > 0;
-					// if disequality does not occur, it is a trivial disequality.
-					provedEq = diseqLit == null ? null : diseqLit.getSMTFormula(theory, false);
-				}
-			} else {
-				// auxLiteral should already have been created by the lemma that needs it.
-				assert auxLiterals.containsKey(info.getDiseq());
-				provedEq = auxLiterals.get(info.getDiseq());
-			}
+			// auxLiteral should already have been created by the lemma that needs it.
+			assert auxLiterals.containsKey(info.getDiseq());
+			final Term provedEq = auxLiterals.get(info.getDiseq());
 
 			// Build lemma annotations.
-			Term lemma = buildLemma(theory, lemmaNo == 0 ? mRule : RuleKind.CC, info, provedEq, auxLiterals);
-			if (lemmaNo != 0) {
-				final Term pivot = theory.annotatedTerm(CCEquality.QUOTED_CC, provedEq);
-				lemma = theory.annotatedTerm(new Annotation[] { new Annotation(":pivot", pivot) }, lemma);
-			}
-			allLemmas[lemmaNo] = lemma;
+			final Term lemma = buildLemma(proofRules, RuleKind.CONG, info, provedEq, auxLiterals);
+			proof = proofRules.resolutionRule(provedEq, lemma, proof);
 		}
-		// If there is at least one auxiliary lemma, return a resolution term
-		if (allLemmas.length > 1) {
-			return theory.term(ProofConstants.FN_RES, allLemmas);
-		}
-		// Otherwise just return the array lemma
-		return allLemmas[0];
+		return proof;
 	}
 
 	private boolean isEqualityLiteral(final SymmetricPair<CCTerm> termPair) {
@@ -658,53 +654,7 @@ public class CCProofGenerator {
 		return smtAffine.isAllIntSummands() && !smtAffine.getConstant().div(smtAffine.getGcd()).isIntegral();
 	}
 
-	private boolean isStoreTerm(CCTerm term) {
-		// term == store a i v
-		if (term instanceof CCAppTerm) {
-			term = ((CCAppTerm) term).getFunc();
-			// term == store a i
-			if (term instanceof CCAppTerm) {
-				term = ((CCAppTerm) term).getFunc();
-				// term == store a
-				if (term instanceof CCAppTerm) {
-					term = ((CCAppTerm) term).getFunc();
-					// term == store
-					if (term instanceof CCBaseTerm) {
-						return ((CCBaseTerm) term).getFunctionSymbol().getName().equals("store");
-					}
-				}
-			}
-		}
-		return false;
-	}
 
-	private boolean isSelectTerm(CCTerm term) {
-		// term == select a i
-		if (term instanceof CCAppTerm) {
-			term = ((CCAppTerm) term).getFunc();
-			// term == select a
-			if (term instanceof CCAppTerm) {
-				term = ((CCAppTerm) term).getFunc();
-				// term == select
-				if (term instanceof CCBaseTerm) {
-					return ((CCBaseTerm) term).getFunctionSymbol().getName().equals("select");
-				}
-			}
-		}
-		return false;
-	}
-
-	private boolean isConstTerm(CCTerm term) {
-		// term == const v
-		if (term instanceof CCAppTerm) {
-			term = ((CCAppTerm) term).getFunc();
-			// term == const
-			if (term instanceof CCBaseTerm) {
-				return ((CCBaseTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
-			}
-		}
-		return false;
-	}
 
 	/**
 	 * Find argument paths for a congruence. These may also be literals from the original clause. Note that a function
@@ -751,13 +701,13 @@ public class CCProofGenerator {
 	 */
 	private SelectEdge findSelectPath(final SymmetricPair<CCTerm> termPair, final CCTerm weakpathindex) {
 		// first check for trivial select-const edges, i.e., (const (select a j)) and a with j = weakpathindex.
-		if (isConstTerm(termPair.getFirst())) {
+		if (ArrayTheory.isConstTerm(termPair.getFirst())) {
 			final CCTerm value = ArrayTheory.getValueFromConst((CCAppTerm) termPair.getFirst());
 			if (isSelect(value, termPair.getSecond(), weakpathindex)) {
 				return new SelectEdge(value, value);
 			}
 		}
-		if (isConstTerm(termPair.getSecond())) {
+		if (ArrayTheory.isConstTerm(termPair.getSecond())) {
 			final CCTerm value = ArrayTheory.getValueFromConst((CCAppTerm) termPair.getSecond());
 			if (isSelect(value, termPair.getFirst(), weakpathindex)) {
 				return new SelectEdge(value, value);
@@ -791,7 +741,7 @@ public class CCProofGenerator {
 	 * Check if select is a select on array on weakpathindex or something equal to weakpathindex.
 	 */
 	private boolean isSelect(final CCTerm select, final CCTerm array, final CCTerm weakpathindex) {
-		if (!isSelectTerm(select) || ArrayTheory.getArrayFromSelect((CCAppTerm) select) != array) {
+		if (!ArrayTheory.isSelectTerm(select) || ArrayTheory.getArrayFromSelect((CCAppTerm) select) != array) {
 			return false;
 		}
 		final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
@@ -802,6 +752,6 @@ public class CCProofGenerator {
 	 * Check if array is an application of const on value
 	 */
 	private boolean isConst(final CCTerm array, final CCTerm value) {
-		return (isConstTerm(array) && ArrayTheory.getValueFromConst((CCAppTerm) array) == value);
+		return (ArrayTheory.isConstTerm(array) && ArrayTheory.getValueFromConst((CCAppTerm) array) == value);
 	}
 }

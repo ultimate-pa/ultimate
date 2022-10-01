@@ -61,7 +61,7 @@ public class EprGroundPredicateAtom extends EprPredicateAtom {
 	}
 
 	@Override
-	public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
+	public Term getSMTFormula(final Theory smtTheory) {
 		return getTerm();
 	}
 
