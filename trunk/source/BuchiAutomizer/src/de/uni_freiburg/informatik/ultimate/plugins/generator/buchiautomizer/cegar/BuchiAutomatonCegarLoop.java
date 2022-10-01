@@ -178,7 +178,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 					mStateFactoryForRefinement, abstraction, interpolantAutomaton, psd, true);
 			return diff.getResult();
 		} catch (final AutomataLibraryException e) {
-			throw new AssertionError();
+			throw new AssertionError("Implement support for handling timeouts");
 		}
 	}
 
