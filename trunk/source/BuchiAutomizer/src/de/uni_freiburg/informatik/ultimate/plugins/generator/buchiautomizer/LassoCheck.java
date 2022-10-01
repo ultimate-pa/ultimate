@@ -556,7 +556,16 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem) {
 				if (TRACE_CHECK_BASED_FIXPOINT_CHECK) {
-					final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<L>(mServices, mLogger, mCsToolkit, mPredicateFactory, mCounterexample.getStem(), loopTF);
+					final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<L>(mServices, mLogger, mCsToolkit,
+							mPredicateFactory, mCounterexample.getStem(), loopTF);
+					if (fixpointCheck2.getResult() == HasFixpoint.UNKNOWN) {
+						mNonterminationArgument = fixpointCheck.getTerminationArgument();
+					} else {
+						throw new AssertionError(String.format(
+								"Contradiciting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
+								fixpointCheck.getResult(), fixpointCheck2.getResult(),
+								mCounterexample.getStem().getLength(), mCounterexample.getLoop().getLength()));
+					}
 					mNonterminationArgument = fixpointCheck2.getTerminationArgument();
 				} else {
 					mNonterminationArgument = fixpointCheck.getTerminationArgument();
