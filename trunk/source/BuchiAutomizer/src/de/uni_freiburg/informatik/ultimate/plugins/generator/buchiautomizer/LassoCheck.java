@@ -555,12 +555,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem) {
-				if (TRACE_CHECK_BASED_FIXPOINT_CHECK) {
+				if (TRACE_CHECK_BASED_FIXPOINT_CHECK && mCounterexample.getStem().getWord().length() > 0) {
 					final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<L>(mServices, mLogger, mCsToolkit,
 							mPredicateFactory, mCounterexample.getStem(), loopTF);
-					if (fixpointCheck2.getResult() == HasFixpoint.UNKNOWN) {
-						mNonterminationArgument = fixpointCheck.getTerminationArgument();
-					} else {
+					if (fixpointCheck2.getResult() != fixpointCheck.getResult()) {
 						throw new AssertionError(String.format(
 								"Contradiciting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
 								fixpointCheck.getResult(), fixpointCheck2.getResult(),
