@@ -68,13 +68,13 @@ public class RewriteDisequality extends TransformerPreprocessor {
 		return new RewriteDisequalityTransformer(script.getScript());
 	}
 
-	private static final class RewriteDisequalityTransformer extends TermTransformer {
+	public static final class RewriteDisequalityTransformer extends TermTransformer {
 
 		private static final Set<String> SUPPORTED_SORTS =
 				new HashSet<>(Arrays.asList(SmtSortUtils.INT_SORT, SmtSortUtils.REAL_SORT));
 		private final Script mScript;
 
-		RewriteDisequalityTransformer(final Script script) {
+		public RewriteDisequalityTransformer(final Script script) {
 			assert script != null;
 			mScript = script;
 		}
