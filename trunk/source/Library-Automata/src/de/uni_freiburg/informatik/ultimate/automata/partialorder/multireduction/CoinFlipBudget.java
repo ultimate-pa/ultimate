@@ -30,18 +30,44 @@ import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 
+/**
+ * Budget function that flips a random coin to determine if the minimum budget 0 shall be used, or the budget computed
+ * by some underlying budget function.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            the type of letters
+ * @param <R>
+ *            the type of states
+ */
 public class CoinFlipBudget<L, R> implements IBudgetFunction<L, R> {
 	private final IBudgetFunction<L, R> mUnderlying;
 
 	private final Random mRand;
-	private final double mProbabilityMin;
+	private final double mProbabilityUnderlying;
 	private final boolean mPreemptive;
 
-	public CoinFlipBudget(final boolean preemptive, final long seed, final double probabilityMin,
-			final IBudgetFunction<L, R> underlying) {
+	/**
+	 * Creates a new randomized wrapper for a given underlying budget function.
+	 *
+	 * @param underlying
+	 *            An underlying budget function whose computed budget is used, unless a coin flip determines that it
+	 *            shall be overridden with the minimum budget 0.
+	 * @param probabilityUnderlying
+	 *            Probability that the underlying budget function's value is used, rather than just returning 0.
+	 * @param seed
+	 *            The seed for the random generator (for reproducible results).
+	 * @param preemptive
+	 *            If true, the coin flip is made before the computation of the underlying budget function. If the coin
+	 *            determines that the minimum budget shall be used, the underlinyg budget function is never called. This
+	 *            should usually be set to {@code true}.
+	 */
+	public CoinFlipBudget(final IBudgetFunction<L, R> underlying, final double probabilityUnderlying, final long seed,
+			final boolean preemptive) {
 		mUnderlying = underlying;
 		mRand = new Random(seed);
-		mProbabilityMin = probabilityMin;
+		mProbabilityUnderlying = probabilityUnderlying;
 		mPreemptive = preemptive;
 	}
 
@@ -58,6 +84,6 @@ public class CoinFlipBudget<L, R> implements IBudgetFunction<L, R> {
 	}
 
 	private boolean flipCoin() {
-		return mRand.nextDouble() >= mProbabilityMin;
+		return mRand.nextDouble() >= mProbabilityUnderlying;
 	}
 }

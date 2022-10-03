@@ -408,18 +408,7 @@ public final class TAPreferences {
 	}
 
 	public double getCoinflipProbability(final int iteration) {
-		final double prob = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_PROB) / 100.0D;
-		final CoinflipMode mode =
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE, CoinflipMode.class);
-		switch (mode) {
-		case OFF:
-			return 0;
-		case FALLBACK:
-		case PURE:
-			return prob;
-		default:
-			throw new IllegalStateException();
-		}
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_PROB) / 100.0D;
 	}
 
 	public int coinflipSeed() {
