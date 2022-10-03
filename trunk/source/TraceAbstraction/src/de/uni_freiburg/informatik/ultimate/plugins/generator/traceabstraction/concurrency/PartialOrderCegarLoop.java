@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -273,16 +274,24 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IBudgetFunction<L, IPredicate> makeBudget(final SleepMapReduction<L, IPredicate, IPredicate> reduction) {
-		final IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
+		final IBudgetFunction<L, IPredicate> optBudget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
 				mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor, reduction);
+
+		final double switchProbability = mPref.getCoinflipProbability(mIteration);
+		final long seed = mPref.coinflipSeed();
 		switch (mPref.useCoinflip()) {
 		case OFF:
-			return budget;
+			return optBudget;
 		case FALLBACK:
-			return new CoinFlipBudget<>(budget, mPref.getCoinflipProbability(mIteration), mPref.coinflipSeed(), true);
+			return new CoinFlipBudget<>(optBudget, switchProbability, seed, true);
 		case PURE:
-			return new CoinFlipBudget<>((s, l) -> 1, mPref.getCoinflipProbability(mIteration), mPref.coinflipSeed(),
-					true);
+			return new CoinFlipBudget<>((s, l) -> 1, switchProbability, seed, true);
+		case COARSE:
+			final boolean flip = new Random(seed).nextDouble() >= switchProbability;
+			if (flip) {
+				return (s, l) -> 0;
+			}
+			return optBudget;
 		}
 		throw new IllegalArgumentException("Unknown coinflip mode: " + mPref.useCoinflip());
 	}

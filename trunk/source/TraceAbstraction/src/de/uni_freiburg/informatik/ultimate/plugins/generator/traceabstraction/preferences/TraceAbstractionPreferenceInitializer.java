@@ -164,7 +164,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final int DEF_POR_COINFLIP_INCREMENT = 0;
 
 	public enum CoinflipMode {
-		OFF, FALLBACK, PURE
+		OFF, FALLBACK, PURE, COARSE
 	}
 
 	/* **************************************** */
