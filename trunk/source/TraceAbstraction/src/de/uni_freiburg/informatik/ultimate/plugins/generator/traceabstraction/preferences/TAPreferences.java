@@ -408,7 +408,11 @@ public final class TAPreferences {
 	}
 
 	public double getCoinflipProbability(final int iteration) {
-		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_PROB) / 100.0D;
+		final int basicProbability = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_PROB);
+		final int probabilityIncrement =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_INCREMENT);
+		final int probability = Integer.min(100, basicProbability + iteration * probabilityIncrement);
+		return probability / 100.0D;
 	}
 
 	public int coinflipSeed() {
