@@ -1,10 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
@@ -31,22 +31,24 @@ public class InterferingPostOperator<STATE extends IAbstractState<STATE>, ACTION
 
 	@Override
 	public Collection<STATE> apply(final STATE oldstate, final ACTION transition) {
-		final DisjunctiveAbstractState<STATE> interferences =
+		final Collection<STATE> postStates = mUnderlying.apply(oldstate, transition);
+		final DisjunctiveAbstractState<STATE> interfereringDisjunctiveState =
 				mInterferences.get(mTransitionProvider.getTarget(transition));
-		return mUnderlying.apply(oldstate, transition).stream().map(x -> addInterferences(x, interferences))
-				.collect(Collectors.toList());
-	}
-
-	private STATE addInterferences(final STATE state, final DisjunctiveAbstractState<STATE> interferences) {
-		if (interferences == null) {
-			return state;
+		if (interfereringDisjunctiveState == null) {
+			return postStates;
 		}
-		final STATE interferingState = interferences.getSingleState(STATE::union);
-		final Set<IProgramVarOrConst> sharedVars =
-				DataStructureUtils.intersection(interferingState.getVariables(), state.getVariables());
-		final STATE unionOnSharedVars =
-				keepVariables(state, sharedVars).union(keepVariables(interferingState, sharedVars));
-		return state.patch(unionOnSharedVars);
+		final Set<STATE> interferingStates = interfereringDisjunctiveState.getStates();
+		final List<STATE> result = new ArrayList<>(postStates.size() * interferingStates.size());
+		for (final STATE postState : postStates) {
+			for (final STATE interferingState : interferingStates) {
+				final Set<IProgramVarOrConst> sharedVars =
+						DataStructureUtils.intersection(interferingState.getVariables(), postState.getVariables());
+				final STATE unionOnSharedVars =
+						keepVariables(postState, sharedVars).union(keepVariables(interferingState, sharedVars));
+				result.add(postState.patch(unionOnSharedVars));
+			}
+		}
+		return result;
 	}
 
 	private static <STATE extends IAbstractState<STATE>> STATE keepVariables(final STATE state,
