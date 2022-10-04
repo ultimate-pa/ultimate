@@ -1,12 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
@@ -44,53 +44,9 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		return mProceduresToForkLocations.getImage(procedure);
 	}
 
-	// TODO: This seems rather inefficient and complicated. Can we do better?
 	public List<String> getTopologicalProcedureOrder() {
-		final Set<String> procedures = mIcfg.getProcedureEntryNodes().keySet();
-		final Map<String, Integer> inGrad = new HashMap<>();
-		for (final String procedure : procedures) {
-			inGrad.put(procedure, 0);
-		}
-
-		final HashRelation<String, String> forks = new HashRelation<>();
-		getForks().forEach(x -> forks.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
-
-		for (final var entry : forks.entrySet()) {
-			for (final String forked : entry.getValue()) {
-				inGrad.put(forked, inGrad.get(forked) + 1);
-			}
-		}
-
-		final PriorityQueue<Pair<String, Integer>> pQueue =
-				new PriorityQueue<>((x, y) -> x.getSecond() - y.getSecond());
-		inGrad.forEach((k, v) -> pQueue.add(new Pair<>(k, v)));
-
-		final Set<String> visited = new HashSet<>();
-		final List<String> result = new ArrayList<>();
-		while (!DataStructureUtils.difference(procedures, visited).isEmpty()) {
-			final Pair<String, Integer> currentItem = pQueue.poll();
-			if (currentItem.getSecond() == 0) {
-				final String key = currentItem.getFirst();
-				if (!visited.contains(key)) {
-					result.add(key);
-					visited.add(key);
-
-					for (final String forked : forks.getImage(key)) {
-						if (inGrad.get(forked) > 0) {
-							inGrad.put(forked, inGrad.get(forked) - 1);
-							pQueue.add(new Pair<>(forked, inGrad.get(forked)));
-						}
-					}
-				}
-				continue;
-			}
-
-			// cycle -> add others in arbitrary order
-			for (final String procedure : DataStructureUtils.difference(procedures, visited)) {
-				result.add(procedure);
-			}
-			break;
-		}
+		final List<String> result = getTopologicalOrderReverse();
+		Collections.reverse(result);
 		return result;
 	}
 
@@ -149,6 +105,54 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		final String ownProcedure = location.getProcedure();
 		if (getForkLocations(ownProcedure).size() <= 1 && !mUnboundedThreads.contains(ownProcedure)) {
 			result.remove(ownProcedure);
+		}
+		return result;
+	}
+
+	private List<String> getTopologicalOrderReverse() {
+		final Map<String, Set<String>> forkRelation = getForkRelation();
+		final HashRelation<Integer, String> numberOfForks = new HashRelation<>();
+		forkRelation.forEach((t, dep) -> numberOfForks.addPair(dep.size(), t));
+		final List<String> result = new ArrayList<>();
+		while (!numberOfForks.isEmpty()) {
+			final Set<String> candidates = numberOfForks.removeDomainElement(0);
+			if (candidates == null || candidates.isEmpty()) {
+				// TODO: What should we do in that case?
+				throw new UnsupportedOperationException("Cycle found");
+			}
+			result.addAll(candidates);
+			for (final String t : candidates) {
+				// TODO: For one usecase we actually need the fork locations (and know if there are multiple)
+				for (final LOC loc : getForkLocations(t)) {
+					final String forking = loc.getProcedure();
+					final Set<String> forked = forkRelation.get(forking);
+					numberOfForks.removePair(forked.size(), forking);
+					numberOfForks.addPair(forked.size() - 1, forking);
+					forked.remove(t);
+				}
+			}
+		}
+		return result;
+	}
+
+	private Map<String, Set<String>> getForkRelation() {
+		final Map<String, Set<String>> result = new HashMap<>();
+		final ArrayDeque<String> worklist = new ArrayDeque<>();
+		mIcfg.getInitialNodes().stream().map(IcfgLocation::getProcedure).forEach(x -> result.put(x, new HashSet<>()));
+		worklist.addAll(result.keySet());
+		while (!worklist.isEmpty()) {
+			final String currentThread = worklist.pop();
+			for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : getForks()) {
+				if (!currentThread.equals(fork.getPrecedingProcedure())) {
+					continue;
+				}
+				final String newThread = fork.getNameOfForkedProcedure();
+				result.get(currentThread).add(newThread);
+				result.computeIfAbsent(newThread, x -> {
+					worklist.add(x);
+					return new HashSet<>();
+				});
+			}
 		}
 		return result;
 	}
