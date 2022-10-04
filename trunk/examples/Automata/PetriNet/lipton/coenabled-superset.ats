@@ -1,0 +1,28 @@
+// Shows that we need the coenabled transitions of one of the fused transitions to subsume the other
+//@ commutativity (b,c) (c,b) (a,d) (d,a)
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" "d" },
+  places      = { "l1" "p" "l2" "l3" "l4" "l5" },
+  transitions = {
+    ({ "l1" } "a" { "p" })
+    ({ "p" "l5" } "b" { "l2" })
+    ({ "l3" } "c" { "l4" })
+    ({ "l4" } "d" { "l5" })
+  },
+  initialMarking = { "l1" "l3" },
+  acceptingPlaces = { "l2" }
+);
+
+PetriNet expected = (
+  alphabet    = { "a" "b" "c" "d" },
+  places      = { "l1" "p" "l2" "l3" "l4" "l5" },
+  transitions = {
+    ({ "l1" } "a" { "p" })
+    ({ "p" "l5" } "b" { "l2" })
+    ({ "l3" } "c" { "l4" })
+    ({ "l4" } "d" { "l5" })
+  },
+  initialMarking = { "l1" "l3" },
+  acceptingPlaces = { "l2" }
+);
