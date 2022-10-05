@@ -16,11 +16,11 @@ PetriNet initial = (
 
 PetriNet expected = (
   alphabet    = { "a" "ab" },
-  places      = { "l1" "l2_copy" "l3" "l4" },
+  places      = { "l1" "l2_copy1" "l3" "l4" },
   transitions = {
     ({ "l1" } "ab" { "l3" "l4" })
-    ({ "l1" } "a"  { "l2_copy" })
+    ({ "l1" } "a"  { "l2_copy1" "l4" })
   },
   initialMarking  = { "l1" },
-  acceptingPlaces = { "l3" "l4" "l2_copy" }
+  acceptingPlaces = { "l3" "l4" }
 );
