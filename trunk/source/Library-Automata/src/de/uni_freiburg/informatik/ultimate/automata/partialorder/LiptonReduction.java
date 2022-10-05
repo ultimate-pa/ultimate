@@ -241,6 +241,8 @@ public class LiptonReduction<L, P> {
 	 * @return new Petri net, where the sequence rule has been performed.
 	 */
 	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
+		mLogger.debug("applying sequence rule...");
+
 		final Set<Transition<L, P>> obsoleteTransitions = new HashSet<>();
 		final Set<Transition<L, P>> composedTransitions = new HashSet<>();
 		final Set<Triple<L, Transition<L, P>, Transition<L, P>>> pendingCompositions = new HashSet<>();
@@ -250,6 +252,8 @@ public class LiptonReduction<L, P> {
 			if (!isPivotPlace(petriNet, pivot)) {
 				continue;
 			}
+
+			mLogger.debug("considering pivot place %s", pivot);
 
 			final Set<Transition<L, P>> incomingTransitions = petriNet.getPredecessors(pivot);
 			final Set<Transition<L, P>> outgoingTransitions = petriNet.getSuccessors(pivot);
