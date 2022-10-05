@@ -244,7 +244,9 @@ public class LiptonReduction<L, P> {
 	 * @return new Petri net, where the sequence rule has been performed.
 	 */
 	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
+		mLogger.debug("-------------------------");
 		mLogger.debug("applying sequence rule...");
+		mLogger.debug("-------------------------");
 
 		final Set<Transition<L, P>> obsoleteTransitions = new HashSet<>();
 		final Set<Transition<L, P>> composedTransitions = new HashSet<>();
@@ -313,7 +315,7 @@ public class LiptonReduction<L, P> {
 
 					if (canFireSequenceInOneSafeNet(petriNet, t1, t2)) {
 						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
-						mLogger.debug("Composing %s and %s at pivot place %s", t1, t2, pivot);
+						mLogger.debug("  Composing %s and %s at pivot place %s", t1, t2, pivot);
 						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
 					} else {
 						// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
@@ -322,14 +324,14 @@ public class LiptonReduction<L, P> {
 						// TODO What is the best course of action here?
 						// TODO As-is, the subsequent modifications (composedHere, replacementNeeded, statistics,
 						// obsoleteTransitions) seem dangerous.
-						mLogger.debug("Discarding composition of " + t1 + " and " + t2 + ".");
+						mLogger.debug("  Discarding composition of " + t1 + " and " + t2 + ".");
 					}
 					composedHere.add(t1);
 					composedHere.add(t2);
 
 					if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(pivot, t1, t2, petriNet)) {
 						// TODO add setting to forbid compositions where t1 must be replaced
-						mLogger.debug("  keeping first transition " + t1);
+						mLogger.debug("    keeping first transition " + t1);
 						replacementNeeded.add(t1);
 					}
 
@@ -556,7 +558,7 @@ public class LiptonReduction<L, P> {
 		relevantTransitions.addAll(mCoEnabledRelation.getImage(t2));
 
 		// TODO Which version is correct? Or neither? Or something different? (see tests)
-		// petriNet.getSuccessors(t1).stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
+		// t1.getSuccessors().stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
 		// .forEach(relevantTransitions::add);
 		t1.getSuccessors().stream().flatMap(p -> petriNet.getSuccessors(p).stream())
 				.filter(t -> !petriNet.getSuccessors(pivot).contains(t)).forEach(relevantTransitions::add);
@@ -623,10 +625,23 @@ public class LiptonReduction<L, P> {
 
 	private boolean isStructurallyComposableAt(final IPetriNet<L, P> petriNet, final Transition<L, P> t1,
 			final Transition<L, P> t2, final P pivot) {
-		// TODO First conjunct was in report but not in the code. Is it really needed?
-		// TODO ^--- actually it was checked in sequenceRule() -- might make sense, as it precludes ALL pairs with t1
-		return !t1.getPredecessors().contains(pivot) && !t2.getSuccessors().contains(pivot)
-				&& checkForEventsInBetween2(petriNet, t1, t2, pivot);
+		if (t1.getPredecessors().contains(pivot)) {
+			// TODO This condition was in report but not in the code. Is it really needed?
+			// TODO ^--- actually it was checked in sequenceRule() -- might make sense: it precludes ALL pairs with t1
+			mLogger.debug("  cannot compose t1 = %s at pivot place %s because it loops", t1, pivot);
+			return false;
+		}
+
+		if (t2.getSuccessors().contains(pivot)) {
+			mLogger.debug("  cannot compose t2 = %s at pivot place %s because it loops", t2, pivot);
+			return false;
+		}
+
+		if (!checkForEventsInBetween2(petriNet, t1, t2, pivot)) {
+			mLogger.debug("  cannot compose %s and %s at pivot place %s because of events in between", t1, t2, pivot);
+			return false;
+		}
+		return true;
 	}
 
 	private Stream<Transition<L, P>> getFirstTransitions(final Transition<L, P> t) {
@@ -835,9 +850,19 @@ public class LiptonReduction<L, P> {
 		final Set<Transition<L, P>> coEnabled2 = mCoEnabledRelation.getImage(t2);
 
 		final boolean all1 = coEnabled1.containsAll(coEnabled2);
-		final boolean all2 = coEnabled2.containsAll(coEnabled1);
+		if (all1 && isRightMover(t1, coEnabled1)) {
+			mLogger.debug("  %s is a right-mover and has a superset of coenabled transitions compared with %s", t1, t2);
+			return true;
+		}
 
-		return (all1 && isRightMover(t1, coEnabled1)) || (all2 && isLeftMover(t2, coEnabled2));
+		final boolean all2 = coEnabled2.containsAll(coEnabled1);
+		if (all2 && isLeftMover(t2, coEnabled2)) {
+			mLogger.debug("  %s is a left-mover and has a superset of coenabled transitions compared with %s", t1, t2);
+			return true;
+		}
+
+		mLogger.debug("  %s and %s are not Lipton-composable", t1, t2);
+		return false;
 	}
 
 	/**
