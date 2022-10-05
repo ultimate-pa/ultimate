@@ -56,27 +56,27 @@ public class LiptonReductionTests extends LiptonReductionTestsBase {
 	private boolean areEqual(final BoundedPetriNet<String, String> first,
 			final BoundedPetriNet<String, String> second) {
 		if (!first.getAlphabet().equals(second.getAlphabet())) {
-			mLogger.warn("alphabet differs: %s != %s", first.getAlphabet(), second.getAlphabet());
+			mLogger.error("alphabet differs: %s != %s", first.getAlphabet(), second.getAlphabet());
 			return false;
 		}
 
 		if (!first.getPlaces().equals(second.getPlaces())) {
-			mLogger.warn("places differ");
+			mLogger.error("places differ");
 			return false;
 		}
 
 		if (!first.getInitialPlaces().equals(second.getInitialPlaces())) {
-			mLogger.warn("initial places differ");
+			mLogger.error("initial places differ");
 			return false;
 		}
 
 		if (!first.getAcceptingPlaces().equals(second.getAcceptingPlaces())) {
-			mLogger.warn("accepting places differ");
+			mLogger.error("accepting places differ");
 			return false;
 		}
 
 		if (first.getTransitions().size() != second.getTransitions().size()) {
-			mLogger.warn("transition count differs");
+			mLogger.error("transition count differs");
 			return false;
 		}
 
@@ -95,7 +95,7 @@ public class LiptonReductionTests extends LiptonReductionTestsBase {
 				found = true;
 			}
 			if (!found) {
-				mLogger.warn("no matching transition for " + trans1);
+				mLogger.error("no matching transition for " + trans1);
 				return false;
 			}
 		}
