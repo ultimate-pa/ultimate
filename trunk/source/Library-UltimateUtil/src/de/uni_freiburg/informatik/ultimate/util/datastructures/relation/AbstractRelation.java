@@ -164,7 +164,6 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		assert sanityCheck();
 	}
 
-
 	/**
 	 * Replaces all occurrences of an element on the left hand side of a pair in this relation by some other element.
 	 *
@@ -173,8 +172,8 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	 */
 	public void replaceDomainElement(final D element, final D replacement) {
 		assert replacement != null;
-		final Set<R> image = mMap.get(element);
 
+		final Set<R> image = removeDomainElement(element);
 		if (image == null) {
 			// relation has no pair where element is left entry -- nothing to do
 			return;
@@ -183,7 +182,6 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		for (final R rangeElement : image) {
 			addPair(replacement, rangeElement);
 		}
-		removeDomainElement(element);
 		assert sanityCheck();
 	}
 
