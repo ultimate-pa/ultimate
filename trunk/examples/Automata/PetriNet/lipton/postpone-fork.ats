@@ -1,0 +1,27 @@
+// Transitions 'fork' and 'a' should be sequentially composed.
+// This is similar to the "postpone-fork" rule we once discussed.
+
+//@ commutativity (b, a)
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "fork" },
+  places      = { "l0" "l11" "l12" "l21" "l22" },
+  transitions = {
+    ({ "l0"  } "fork" { "l11" "l21" })
+    ({ "l11" } "a" { "l12" })
+    ({ "l21" } "b" { "l22" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "l12" }
+);
+
+PetriNet expected = (
+  alphabet    = { "forka" "forkab" },
+  places      = { "l0" "l12" "l21_copy1" "l22" },
+  transitions = {
+    ({ "l0" } "forka"  { "l12" "l21_copy1" })
+    ({ "l0" } "forkab" { "l12" "l22" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "l12" }
+);

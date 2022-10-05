@@ -1,0 +1,28 @@
+// A net that should be completely sequentializable.
+
+//@ commutativity (c, a) (c, b) (d, a) (d, b) (c, ab) (d, ab)
+
+PetriNet initial = (
+  alphabet    = { "fork" "a" "b" "c" "d" "join" },
+  places      = { "l0" "l11" "l12" "l13" "l21" "l22" "l23" "lacc" },
+  transitions = {
+    ({ "l0"  } "fork" { "l11" "l21" })
+    ({ "l11" } "a" { "l12" })
+    ({ "l12" } "b" { "l13" })
+    ({ "l21" } "c" { "l22" })
+    ({ "l22" } "d" { "l23" })
+    ({ "l13" "l23" } "join" { "lacc" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "lacc" }
+);
+
+PetriNet expected = (
+  alphabet    = { "forkabcdjoin" },
+  places      = { "l0" "lacc" },
+  transitions = {
+    ({ "l0" } "forkabcdjoin"  { "lacc" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "lacc" }
+);

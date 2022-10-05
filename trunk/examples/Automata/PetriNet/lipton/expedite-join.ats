@@ -1,0 +1,26 @@
+// Transitions 'a' and 'join' should be sequentially composed.
+// This is similar to the "expedite-join" rule we once discussed.
+
+//@ commutativity (a, b)
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "join" },
+  places      = { "l11" "l12" "l21" "l22" "lacc" },
+  transitions = {
+    ({ "l11" } "a" { "l12" })
+    ({ "l21" } "b" { "l22" })
+    ({ "l12" "l22" } "join" { "lacc" })
+  },
+  initialMarking = { "l11" "l21" },
+  acceptingPlaces = { "lacc" }
+);
+
+PetriNet expected = (
+  alphabet    = { "bajoin" },
+  places      = { "l11" "l21" "l22" "lacc" },
+  transitions = {
+    ({ "l11" "l21" } "bajoin" { "lacc" })
+  },
+  initialMarking = { "l11" "l21" },
+  acceptingPlaces = { "lacc" }
+);
