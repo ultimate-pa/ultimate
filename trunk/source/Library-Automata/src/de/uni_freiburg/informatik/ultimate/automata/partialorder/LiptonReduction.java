@@ -75,6 +75,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            The type of places in the net.
  */
 public class LiptonReduction<L, P> {
+
+	private static final boolean LIBERAL_ACCEPTING_TRANSITION_CHECK = true;
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
@@ -538,6 +541,11 @@ public class LiptonReduction<L, P> {
 		if (!mStuckPlaceChecker.mightGetStuck(petriNet, pivot)) {
 			mLogger.debug("  first transition %s is NOT needed because pivot place %s cannot get stuck", t1, pivot);
 			return false;
+		}
+
+		if (LIBERAL_ACCEPTING_TRANSITION_CHECK) {
+			return Stream.concat(mCoEnabledRelation.getImage(t1).stream(), mCoEnabledRelation.getImage(t2).stream())
+					.distinct().anyMatch(t -> hasAcceptingSuccessor(t, petriNet));
 		}
 
 		// Check whether any transition which either
