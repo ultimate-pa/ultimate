@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -76,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
@@ -155,7 +157,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
-		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg);
+		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg, true);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 
 		// TODO decouple dead end support from this class
@@ -193,12 +195,37 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final String threads,
-			final int maxStep, final IIcfg<?> icfg) {
+			final int maxStep, final IIcfg<?> icfg, final Boolean heuristicEnabled) {
 		// TODO Add support for all orders previously supported in #getDfsOrder
 
-		//TODO heuristic
+		//get all global Variables, then iterate over the cfg and mark variables if a procedure accesses it
+		Set<IProgramVar> allProgramVars = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
+		HashMap<IProgramVar, Set<String>> sharedVarsMap = new HashMap<>();
+		for (IProgramVar var : allProgramVars) {
+			sharedVarsMap.put(var, new HashSet<String>());
+		}
+		IcfgEdgeIterator iterator = new IcfgEdgeIterator(icfg);
+		while (iterator.hasNext()) {
+			IcfgEdge current = iterator.next();
+			String currentProcedure = current.getPrecedingProcedure();
+			//only mark with procedures different from "ULTIMATE.start"
+			if (!currentProcedure.equals("ULTIMATE.start")) {
+				Set<IProgramVar> currentVars = new HashSet<>();
+				currentVars.addAll(current.getTransformula().getInVars().keySet());
+				currentVars.addAll(current.getTransformula().getOutVars().keySet());
+				for (IProgramVar var : currentVars) {
+					if (!sharedVarsMap.get(var).contains(currentProcedure)) {
+						Set<String> procedures = sharedVarsMap.get(var);
+						procedures.add(currentProcedure);
+						sharedVarsMap.put(var, procedures);
+					}
+				}
+			}
+			
+		}
 
-
+		//remove all variables that are marked at most once at the end to calculate the effective global variables
+		HashMap<String, Set<IProgramVar>> sharedVarsMapReversed = new HashMap<>();
 		final List<String> allThreads = new ArrayList<>();
 		allThreads.addAll(IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()));
 		final String start = "ULTIMATE.start";
@@ -206,7 +233,33 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			allThreads.set(i, allThreads.get(i - 1));
 		}
 		allThreads.set(0, start);
-		final String[] pairList = threads.split("\\s+");
+		for (String procedure : allThreads) {
+			sharedVarsMapReversed.put(procedure, new HashSet<>());
+		}
+		
+		Set<IProgramVar> effectiveGlobalVars = new HashSet<>();
+		for (IProgramVar var : sharedVarsMap.keySet()) {
+			if (sharedVarsMap.get(var).size() > 1) {
+				effectiveGlobalVars.add(var);
+				for (String procedure : sharedVarsMap.get(var)) {
+					Set<IProgramVar> vars = sharedVarsMapReversed.get(procedure);
+					vars.add(var);
+					sharedVarsMapReversed.put(procedure, vars);
+				}
+			}
+		}
+
+		
+		String[] pairList;
+		if (heuristicEnabled) {
+			PreferenceOrderHeuristic<L> heuristic = new PreferenceOrderHeuristic<>(icfg, allThreads,
+					effectiveGlobalVars, sharedVarsMapReversed);
+			heuristic.computeParameterizedOrder();
+			pairList = heuristic.getParameterizedOrderSequence().split("\\s+");
+		} else {
+			pairList = threads.split("\\s+");
+		}
+		
 
 		List<Integer> maxSteps = new ArrayList<>();
 		final List<String> threadList = new ArrayList<>();
@@ -235,14 +288,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			}
 		}
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
-
-		/* TODO get all global Variables, then iterate over the cfg and mark variables if a procedure accesses it,
-		* remove all variables that are marked at most once at the end to calculate the effective global variables
-		* can also be done via the heuristic
-		*/
 		
 		final IPreferenceOrder<L, IPredicate, ?> order =
-				new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, getStepDefinition(icfg, steptype));
+				new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, getStepDefinition(icfg, steptype, effectiveGlobalVars));
 
 		if (order.getMonitor() != null) {
 			final var splitter = mStateSplitter;
@@ -258,7 +306,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype
-			/*, final Set<IProgramVar> effectiveGlobalVars*/) {
+			, final Set<IProgramVar> effectiveGlobalVars) {
 
 		switch (steptype) {
 		case ALL_READ_WRITE:
@@ -267,12 +315,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case ALL_WRITE:
 			return x -> !x.getTransformula().getAssignedVars().isEmpty();
 		case GLOBAL_READ_WRITE:
-			return x -> x.getTransformula().getInVars().keySet().stream().anyMatch(v -> v.isGlobal())
-					|| x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal());
-			// v.isGlobal() should be modified s.t. it has to be "effectively global"
+			return x -> x.getTransformula().getInVars().keySet().stream().anyMatch(v -> effectiveGlobalVars.contains(v))
+					|| x.getTransformula().getAssignedVars().stream().anyMatch(v -> effectiveGlobalVars.contains(v));
 		case GLOBAL_WRITE:
-			return x -> x.getTransformula().getAssignedVars().stream().anyMatch(v -> v.isGlobal());
-			// v.isGlobal() should be modified s.t. it has to be "effectively global"
+			return x -> x.getTransformula().getAssignedVars().stream().anyMatch(v -> effectiveGlobalVars.contains(v));
 		case LOOP:
 			final var loopHeads = icfg.getLoopLocations();
 			return x -> loopHeads.contains(x.getTarget());
