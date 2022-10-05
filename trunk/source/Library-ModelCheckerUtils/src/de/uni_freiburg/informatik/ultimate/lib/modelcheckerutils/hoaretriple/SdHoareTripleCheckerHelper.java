@@ -175,8 +175,13 @@ public class SdHoareTripleCheckerHelper {
 			}
 			if (sat == Validity.INVALID) {
 				final String proc = act.getPrecedingProcedure();
-				assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
-						|| act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
+				if (!proc.equals(act.getSucceedingProcedure()) && !(act instanceof IcfgForkThreadOtherTransition)
+						&& !(act instanceof IcfgJoinThreadOtherTransition)) {
+					return null;
+				}
+				// assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
+				// || act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
+
 				// The two lines below address a special case that is relevant for e.g., the
 				// following example. Let's assume that x is a global variable, pre is `x = 42`,
 				// post is `old(x) = 42`, and the action represents an `assume true` statement.

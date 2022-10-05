@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
@@ -71,6 +72,7 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
+	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
@@ -82,6 +84,7 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	private final Map<IcfgEdge, BranchEncoderRenaming> mBranchEncoderRenamingInFirst = new HashMap<>();
 
 	public IcfgCompositionFactory(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit) {
+		mLogger = services.getLoggingService().getLogger(IcfgCompositionFactory.class);
 		mMgdScript = cfgSmtToolkit.getManagedScript();
 		mEdgeBuilder = new IcfgEdgeBuilder(cfgSmtToolkit, services, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 	}
@@ -92,7 +95,7 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		// While such compositions may be desirable (they overcome a shortcoming of normal Lipton reduction), major
 		// refactoring is probably needed to support them: Since the composition must be an IcfgEdge, we must assign it
 		// some source and target locations, which would be unclear with such mixed-thread compositions.
-		return isComposable(t1) && isComposable(t2) && t1.getTarget() == t2.getSource();
+		return isComposable(t1) && isComposable(t2); // && t1.getTarget() == t2.getSource();
 	}
 
 	@Override
@@ -110,6 +113,9 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	@Override
 	public IcfgEdge composeSequential(final IcfgEdge first, final IcfgEdge second) {
 		assert isSequentiallyComposable(first, second) : "Illegal sequential composition: " + first + " and " + second;
+		if (first.getTarget() != second.getSource()) {
+			mLogger.error("Composing non-subsequent actions: " + first + " and " + second);
+		}
 
 		final BranchEncoderRenaming branchEncoderRenaming;
 		final IcfgEdge renamedFirst;
