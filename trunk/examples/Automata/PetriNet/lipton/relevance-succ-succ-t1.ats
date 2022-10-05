@@ -22,6 +22,6 @@ PetriNet expected = (
     ({ "l1" } "a" { "p_copy1" "l3" })
     ({ "l2" "l3" } "c" { "l5" })
   },
-  initialMarking  = { "l1" },
+  initialMarking  = { "l1" "l2" },
   acceptingPlaces = { "l5" }
 );
