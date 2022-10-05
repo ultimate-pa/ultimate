@@ -17,10 +17,10 @@ PetriNet initial = (
 
 PetriNet expected = (
   alphabet    = { "ab" "a" "c" },
-  places      = { "l11" "l13" "l21" "l22" "l12_copy2" },
+  places      = { "l11" "l13" "l21" "l22" "l12_copy1" },
   transitions = {
     ({ "l11" } "ab" { "l13" })
-    ({ "l11" } "a"  { "l12_copy2" })
+    ({ "l11" } "a"  { "l12_copy1" })
     ({ "l21" } "c"  { "l22" })
   },
   initialMarking = { "l11" "l21" },
