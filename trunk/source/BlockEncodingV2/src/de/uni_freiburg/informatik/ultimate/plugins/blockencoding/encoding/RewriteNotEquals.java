@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
@@ -113,20 +112,14 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 
 	private UnmodifiableTransFormula constructNewTransFormula(final ManagedScript mgScript,
 			final UnmodifiableTransFormula oldTransFormula, final Term newTerm) {
-		final UnmodifiableTransFormula newTransFormula;
-		{
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(oldTransFormula.getInVars(),
-					oldTransFormula.getOutVars(), oldTransFormula.getNonTheoryConsts().isEmpty(),
-					oldTransFormula.getNonTheoryConsts(), oldTransFormula.getBranchEncoders().isEmpty(),
-					oldTransFormula.getBranchEncoders(), oldTransFormula.getAuxVars().isEmpty());
-			for (final TermVariable auxVar : oldTransFormula.getAuxVars()) {
-				tfb.addAuxVar(auxVar);
-			}
-			tfb.setFormula(newTerm);
-			tfb.setInfeasibility(oldTransFormula.isInfeasible());
-			newTransFormula = tfb.finishConstruction(mgScript);
-		}
-		return newTransFormula;
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(oldTransFormula.getInVars(),
+				oldTransFormula.getOutVars(), oldTransFormula.getNonTheoryConsts().isEmpty(),
+				oldTransFormula.getNonTheoryConsts(), oldTransFormula.getBranchEncoders().isEmpty(),
+				oldTransFormula.getBranchEncoders(), oldTransFormula.getAuxVars().isEmpty());
+		tfb.addAuxVarsButRenameToFreshCopies(oldTransFormula.getAuxVars(), mgScript);
+		tfb.setFormula(newTerm);
+		tfb.setInfeasibility(oldTransFormula.isInfeasible());
+		return tfb.finishConstruction(mgScript);
 	}
 
 	@Override
