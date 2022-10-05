@@ -306,7 +306,7 @@ public class LiptonReduction<L, P> {
 
 					if (canFireSequenceInOneSafeNet(petriNet, t1, t2)) {
 						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
-						mLogger.debug("Composing " + t1 + " and " + t2);
+						mLogger.debug("Composing %s and %s at pivot place %s", t1, t2, pivot);
 						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
 					} else {
 						// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
@@ -322,6 +322,7 @@ public class LiptonReduction<L, P> {
 
 					if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(pivot, t1, t2, petriNet)) {
 						// TODO add setting to forbid compositions where t1 must be replaced
+						mLogger.debug("  keeping first transition " + t1);
 						replacementNeeded.add(t1);
 					}
 
@@ -506,7 +507,7 @@ public class LiptonReduction<L, P> {
 	/**
 	 * Check whether the first transition needs to be kept after composing two transitions.
 	 *
-	 * @param place
+	 * @param pivot
 	 *            The place where the compositions happens at.
 	 * @param t1
 	 *            The first transition.
@@ -516,14 +517,16 @@ public class LiptonReduction<L, P> {
 	 *            The Petri net.
 	 * @return true if the first transition is still needed after composition, false if the transition can be deleted.
 	 */
-	private boolean isFirstTransitionNeeded(final P place, final Transition<L, P> t1, final Transition<L, P> t2,
+	private boolean isFirstTransitionNeeded(final P pivot, final Transition<L, P> t1, final Transition<L, P> t2,
 			final IPetriNet<L, P> petriNet) {
 		if (hasAcceptingSuccessor(t1, petriNet)) {
 			// If any successor of t1 is accepting, we need to preserve t1.
+			mLogger.debug("  first transition %s is needed because it has accepting successors", t1);
 			return true;
 		}
 
-		if (!mStuckPlaceChecker.mightGetStuck(petriNet, place)) {
+		if (!mStuckPlaceChecker.mightGetStuck(petriNet, pivot)) {
+			mLogger.debug("  first transition %s is NOT needed because pivot place %s cannot get stuck", t1, pivot);
 			return false;
 		}
 
@@ -538,7 +541,7 @@ public class LiptonReduction<L, P> {
 		// petriNet.getSuccessors(t1).stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
 		// .forEach(relevantTransitions::add);
 		t1.getSuccessors().stream().flatMap(p -> petriNet.getSuccessors(p).stream())
-				.filter(t -> !petriNet.getSuccessors(place).contains(t)).forEach(relevantTransitions::add);
+				.filter(t -> !petriNet.getSuccessors(pivot).contains(t)).forEach(relevantTransitions::add);
 
 		final Set<Event<L, P>> events =
 				relevantTransitions.stream().flatMap(this::getFirstEvents).collect(Collectors.toSet());
@@ -549,6 +552,7 @@ public class LiptonReduction<L, P> {
 		for (final Event<L, P> errorEvent : errorEvents) {
 			for (final Event<L, P> e : events) {
 				if (isAncestorEvent(e, errorEvent, new HashSet<>())) {
+					mLogger.debug("  first transition %s is needed because of error event %s", t1, errorEvent);
 					return true;
 				}
 			}
