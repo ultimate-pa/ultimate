@@ -248,42 +248,20 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 				termEvaluationMap.put(procedureTerm, null);
 			}
 			SMTInterpol.checkSat();
-			Model model = SMTInterpol.getModel();
-			ArrayList<Term> termList = new ArrayList<>();
-			//then compute the sequence
+		}
+		Model model = SMTInterpol.getModel();
+		ArrayList<Term> termList = new ArrayList<>();
+		for (Term term : termEvaluationMap.keySet()) {
+			Term value = model.evaluate(term);
+			int intValue = Integer.parseInt(value.toString());
+			termEvaluationMap.put(term, intValue);
+			termList.add(term);
+		}
+		if (!mAllLoopProcedures.isEmpty()) {
 			for (Term term : termEvaluationMap.keySet()) {
-				Term value = model.evaluate(term);
-				int intValue = Integer.parseInt(value.toString());
-				termEvaluationMap.put(term, intValue);
-				termList.add(term);
-			}
-			if (!mAllLoopProcedures.isEmpty()) {
-				for (Term term : termEvaluationMap.keySet()) {
-					int value = termEvaluationMap.get(term);
-					int maxStep = value;
-					sequence += String.format("%d,%d ",mAllProcedures.indexOf(term.toString()),maxStep);
-				}
-			}
-		} else {
-			//if solvable, then compute the sequence directly
-			Model model = SMTInterpol.getModel();
-			ArrayList<Term> termList = new ArrayList<>();
-			for (Term term : termEvaluationMap.keySet()) {
-				Term value = model.evaluate(term);
-				int intValue = Integer.parseInt(value.toString());
-				termEvaluationMap.put(term, intValue);
-				termList.add(term);
-			}
-			if (!mAllLoopProcedures.isEmpty()) {
-				int lcm = termEvaluationMap.get(termList.get(0));
-				for (int i = 1; i < termList.size(); i++) {
-					lcm = lcm(lcm, termEvaluationMap.get(termList.get(i)));
-				}	
-				for (Term term : termEvaluationMap.keySet()) {
-					int value = termEvaluationMap.get(term);
-					int maxStep = lcm/value;
-					sequence += String.format("%d,%d ",mAllProcedures.indexOf(term.toString()),maxStep);
-				}
+				int value = termEvaluationMap.get(term);
+				int maxStep = value;
+				sequence += String.format("%d,%d ",mAllProcedures.indexOf(term.toString()),maxStep);
 			}
 		}
 
@@ -324,18 +302,6 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 		
 	}
 
-	private int gcd(int fst, int snd) {
-		while (snd > 0) {
-			int temp = snd;
-			snd = fst % snd;
-			fst = temp;
-		}
-		return fst;
-	}
-	
-	private int lcm(int fst, int snd) {
-		return fst * (snd / gcd(fst, snd));
-	}
 
 	public String getParameterizedOrderSequence() {
 		return mSequence;	
