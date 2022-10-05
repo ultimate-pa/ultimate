@@ -193,18 +193,19 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : sharedWrites.entrySet()) {
 			final ACTION write = entry.getKey();
-			final DisjunctiveAbstractState<STATE> stateAfterWrite =
-					mStateStorage.getAbstractState(mTransitionProvider.getTarget(write));
-			DisjunctiveAbstractState<STATE> postState;
-			// TODO: How is it possible that the target of write is not in mStateStorage?
-			if (stateAfterWrite == null) {
-				postState = mTopState.addVariables(entry.getValue());
+			final DisjunctiveAbstractState<STATE> preState =
+					mStateStorage.getAbstractState(mTransitionProvider.getSource(write));
+			final DisjunctiveAbstractState<STATE> postState;
+			if (preState == null) {
+				// If the source is not present in mStateStorage, fall back to the target
+				// TODO: Is it possible that neither the source nor the target are present?
+				postState = mStateStorage.getAbstractState(mTransitionProvider.getTarget(write));
 			} else {
-				final Set<IProgramVarOrConst> varsToRemove =
-						DataStructureUtils.difference(stateAfterWrite.getVariables(), entry.getValue());
-				postState = stateAfterWrite.removeVariables(varsToRemove);
+				postState = preState.apply(mDomain.getPostOperator(), write);
 			}
-			result.put(write, postState);
+			final Set<IProgramVarOrConst> varsToRemove =
+					DataStructureUtils.difference(postState.getVariables(), entry.getValue());
+			result.put(write, postState.removeVariables(varsToRemove));
 		}
 		return result;
 	}
