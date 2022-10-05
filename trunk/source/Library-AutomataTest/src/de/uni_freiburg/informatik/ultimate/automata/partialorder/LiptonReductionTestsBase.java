@@ -247,8 +247,6 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 	}
 
 	protected static final class CopyPlaceFactory implements ICopyPlaceFactory<String> {
-		public static final CopyPlaceFactory INSTANCE = new CopyPlaceFactory();
-
 		private final Map<String, Integer> mCopyCounter = new HashMap<>();
 		private int freshCounter;
 

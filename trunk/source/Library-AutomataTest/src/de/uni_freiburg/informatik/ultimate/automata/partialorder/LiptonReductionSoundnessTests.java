@@ -68,7 +68,7 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 				+ "example: " + expectedNew.orElse(null), expectedNew.isEmpty());
 
 		final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
-				CopyPlaceFactory.INSTANCE, independence, PostScriptChecker.INSTANCE, null);
+				new CopyPlaceFactory(), independence, PostScriptChecker.INSTANCE, null);
 		reduction.performReduction();
 		final BoundedPetriNet<String, String> actual = reduction.getResult();
 

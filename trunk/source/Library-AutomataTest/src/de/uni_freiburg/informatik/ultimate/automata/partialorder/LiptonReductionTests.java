@@ -46,7 +46,7 @@ public class LiptonReductionTests extends LiptonReductionTestsBase {
 			final BoundedPetriNet<String, String> expected,
 			final IIndependenceRelation<Set<String>, String> independence) throws AutomataLibraryException {
 		final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
-				CopyPlaceFactory.INSTANCE, independence, PostScriptChecker.INSTANCE, null);
+				new CopyPlaceFactory(), independence, PostScriptChecker.INSTANCE, null);
 		reduction.performReduction();
 		final BoundedPetriNet<String, String> actual = reduction.getResult();
 
