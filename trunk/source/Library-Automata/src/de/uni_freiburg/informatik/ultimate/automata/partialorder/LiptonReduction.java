@@ -29,6 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -233,6 +234,276 @@ public class LiptonReduction<L, P> {
 	}
 
 	/**
+	 * Performs the sequence rule on the Petri net.
+	 *
+	 * @param petriNet
+	 *            The Petri net on which the sequence rule should be performed.
+	 * @return new Petri net, where the sequence rule has been performed.
+	 */
+	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
+		final Set<Transition<L, P>> obsoleteTransitions = new HashSet<>();
+		final Set<Transition<L, P>> composedTransitions = new HashSet<>();
+		final Set<Triple<L, Transition<L, P>, Transition<L, P>>> pendingCompositions = new HashSet<>();
+		final Map<P, Set<Transition<L, P>>> transitionsToBeReplaced = new HashMap<>();
+
+		for (final P pivot : petriNet.getPlaces()) {
+			if (!isPivotPlace(petriNet, pivot)) {
+				continue;
+			}
+
+			final Set<Transition<L, P>> incomingTransitions = petriNet.getPredecessors(pivot);
+			final Set<Transition<L, P>> outgoingTransitions = petriNet.getSuccessors(pivot);
+
+			// 1. cartesian product of incomingTransitions and outgoingTransitions (of type PendingComposition)
+			// 2. filter out uncomposable PendingCompositions (label, structural or Lipton)
+			// 3. filter out PendingCompositions involving composedTransitions
+			// 4. split into executable and non-executable PendingCompositions
+			// 5. determine for all incoming and outgoing transitions if they are obsolete
+			// -- (i.e. all pairs involving the transition are still pending or non-executable)
+			// 6. for all obsolete incoming transitions, determine if we need a copy or not
+			// 7. modify the net: delete obsolete, add copies, add pending compositions
+
+			// For transformations that are not Y-V or reverse-Y-V:
+			//
+			// An incoming transition t1 for which some t2 was composed is deleted, but, if
+			// (a) isFirstTransitionNeeded(t1) or
+			// (b) not all (t1, t2) were composed or non-executable,
+			// we create a new copy p' of p, a new copy of t1 with its successor p replaced by p',
+			// and for all t2 not composed (but executable) with t1,
+			// we create a copy t2' with its predecessor p replaced by p'.
+			//
+			// For multiple t1 with the same outgoing set from their p', we can re-use the place p'.
+			// Indeed, we don't even (theoretically) need to only apply this for partially composed t1;
+			// for not-at-all composed t1 we have p' = p.
+			// In practice, we probably want to avoid that overhead.
+			//
+			// For reverse-Y-V transformations, where the pivot has only one successor,
+			// there might exist situations where it's better to have one p' per successor t2 (only one) rather than per
+			// predecessor t1. But we might still need copies of the incoming t1 due to isFirstTransitionNeeded.
+
+			final boolean isYv = incomingTransitions.size() != 1;
+
+			final Set<Transition<L, P>> composedHere = new HashSet<>();
+			boolean completeComposition = true;
+
+			final Set<Transition<L, P>> replacementNeeded = new HashSet<>();
+
+			for (final Transition<L, P> t1 : incomingTransitions) {
+				if (composedTransitions.contains(t1)) {
+					completeComposition = false;
+					continue;
+				}
+
+				for (final Transition<L, P> t2 : outgoingTransitions) {
+					if (composedTransitions.contains(t2)) {
+						completeComposition = false;
+						continue;
+					}
+					if (!isComposableAt(petriNet, t1, t2, pivot)) {
+						completeComposition = false;
+						continue;
+					}
+
+					if (canFireSequenceInOneSafeNet(petriNet, t1, t2)) {
+						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
+						mLogger.debug("Composing " + t1 + " and " + t2);
+						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
+					} else {
+						// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
+						// Either some place would need to have 2 tokens, or some place would receive 2 tokens.
+						//
+						// TODO What is the best course of action here?
+						// TODO As-is, the subsequent modifications (composedHere, replacementNeeded, statistics,
+						// obsoleteTransitions) seem dangerous.
+						mLogger.debug("Discarding composition of " + t1 + " and " + t2 + ".");
+					}
+					composedHere.add(t1);
+					composedHere.add(t2);
+
+					if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(pivot, t1, t2, petriNet)) {
+						// TODO add setting to forbid compositions where t1 must be replaced
+						replacementNeeded.add(t1);
+					}
+
+					// t1 (in an n:1 composition) resp. t2 (in a 1:m composition) is definitely obsolete.
+					obsoleteTransitions.add(isYv ? t1 : t2);
+
+					LiptonReductionStatisticsDefinitions stat;
+					if (mCoEnabledRelation.getImage(t1).isEmpty() && mCoEnabledRelation.getImage(t2).isEmpty()) {
+						stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
+								: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
+					} else {
+						stat = isYv ? LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions
+								: LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions;
+					}
+					mStatistics.reportComposition(stat);
+				}
+			}
+
+			if (completeComposition) {
+				// If the composition is complete, the single outgoing (for n:1 compositions) resp. incoming (for 1:m
+				// compositions) transition is also obsolete.
+				obsoleteTransitions.addAll(isYv ? outgoingTransitions : incomingTransitions);
+			}
+
+			// TODO Why do we delay the addition to "composedTransitions" ?
+			composedTransitions.addAll(composedHere);
+			if (!replacementNeeded.isEmpty()) {
+				transitionsToBeReplaced.put(pivot, replacementNeeded);
+			}
+		}
+
+		for (final Map.Entry<P, Set<Transition<L, P>>> entry : transitionsToBeReplaced.entrySet()) {
+			P deadNonAccepting = null;
+			// P deadAccepting = null;
+
+			for (final Transition<L, P> t : entry.getValue()) {
+				P deadPlace;
+				// if (hasAcceptingSuccessor(t, petriNet)) {
+				// if (deadAccepting == null) {
+				// deadAccepting = mPlaceFactory.copyPlace(entry.getKey());
+				// petriNet.addPlace(deadAccepting, false, true);
+				// }
+				// deadPlace = deadAccepting;
+				// } else {
+				if (deadNonAccepting == null) {
+					deadNonAccepting = mPlaceFactory.copyPlace(entry.getKey());
+					petriNet.addPlace(deadNonAccepting, false, false);
+				}
+				deadPlace = deadNonAccepting;
+				// }
+
+				// TODO Should the transition have those other successors? Not just deadPlace?
+				// TODO (if it just has deadPlace, then deadPlace may have to be accepting)
+				final Set<P> post = new HashSet<>(t.getSuccessors());
+				post.remove(entry.getKey());
+				post.add(deadPlace);
+
+				// TODO Why again do we create this fresh transition rather than keeping the old one?
+				final Transition<L, P> newTransition =
+						petriNet.addTransition(t.getSymbol(), t.getPredecessors(), ImmutableSet.of(post));
+				mNewToOldTransitions.put(newTransition, getOriginalTransition(t));
+				mCoEnabledRelation.copyRelationships(t, newTransition);
+			}
+		}
+
+		final Map<L, Transition<L, P>> composedLetters2Transitions = new HashMap<>();
+		final Map<Transition<L, P>, Transition<L, P>> oldToNewTransitions = new HashMap<>();
+		final BoundedPetriNet<L, P> newNet = copyPetriNetWithModification(petriNet, pendingCompositions,
+				obsoleteTransitions, composedLetters2Transitions, oldToNewTransitions);
+
+		// update information for composed transition
+		for (final Triple<L, Transition<L, P>, Transition<L, P>> composition : pendingCompositions) {
+			final Transition<L, P> composedTransition = composedLetters2Transitions.get(composition.getFirst());
+			mCoEnabledRelation.copyRelationships(composition.getSecond(), composedTransition);
+			updateSequentialCompositions(composedTransition, composition.getSecond(), composition.getThird());
+			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
+					composition.getThird().getSymbol());
+		}
+
+		// delete obsolete information
+		for (final Transition<L, P> t : obsoleteTransitions) {
+			mCoEnabledRelation.deleteElement(t);
+		}
+
+		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
+		return newNet;
+	}
+
+	private static final class PendingComposition<L, P> {
+		private final Transition<L, P> mFirst;
+		private final Transition<L, P> mSecond;
+
+		public PendingComposition(final Transition<L, P> first, final Transition<L, P> second) {
+			mFirst = first;
+			mSecond = second;
+		}
+
+		public Transition<L, P> getFirst() {
+			return mFirst;
+		}
+
+		public L getFirstLabel() {
+			return mFirst.getSymbol();
+		}
+
+		public Transition<L, P> getSecond() {
+			return mSecond;
+		}
+
+		public L getSecondLabel() {
+			return mSecond.getSymbol();
+		}
+
+		public Transition<L, P> constructComposedTransition(final BoundedPetriNet<L, P> net,
+				final ICompositionFactory<L> factory) {
+			final var label = factory.composeSequential(getFirstLabel(), getSecondLabel());
+			final var preds = DataStructureUtils.union(mFirst.getPredecessors(),
+					DataStructureUtils.difference(mSecond.getPredecessors(), mFirst.getSuccessors()));
+			final var succs = DataStructureUtils.union(mSecond.getSuccessors(),
+					DataStructureUtils.difference(mFirst.getSuccessors(), mSecond.getPredecessors()));
+			return net.addTransition(label, ImmutableSet.of(preds), ImmutableSet.of(succs));
+		}
+
+		public boolean isExecutable() {
+			final Set<P> firstSucc = mFirst.getSuccessors();
+			final Set<P> secondPre = mSecond.getPredecessors();
+
+			return DataStructureUtils.intersectionStream(mFirst.getPredecessors(), secondPre)
+					.allMatch(firstSucc::contains)
+					&& DataStructureUtils.intersectionStream(firstSucc, mSecond.getSuccessors())
+							.allMatch(secondPre::contains);
+		}
+	}
+
+	/**
+	 * Identifies place at which the sequence rule can be applied.
+	 */
+	private boolean isPivotPlace(final IPetriNet<L, P> petriNet, final P place) {
+		if (petriNet.getInitialPlaces().contains(place) || petriNet.isAccepting(place)) {
+			return false;
+		}
+
+		final Set<Transition<L, P>> incomingTransitions = petriNet.getPredecessors(place);
+		final Set<Transition<L, P>> outgoingTransitions = petriNet.getSuccessors(place);
+
+		if (incomingTransitions.isEmpty() || outgoingTransitions.isEmpty()) {
+			return false;
+		}
+
+		if (incomingTransitions.size() != 1 && outgoingTransitions.size() != 1) {
+			// At the moment we only allow n:1 or 1:m compositions; because for n:m compositions,
+			// (1) the number of transitions increases (n*m instead of n+m), and
+			// (2) more importantly, it is unclear how to proceed if not all pairs can be composed.
+			//
+			// Possible future extension: If some incoming (resp. outgoing) transition t can be composed with all
+			// outgoing (resp. incoming) transitions, we can perform these compositions and remove transition t.
+			//
+			// Alternatively, we could allow all n:m compositions and redirect the remaining uncomposed transitions
+			// to several different copies of the current place.
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Checks a necessary condition for the two transitions being fireable in direct sequence in a one-safe Petri net.
+	 * Specifically, checks if this firing sequence would either require some place to have two tokens, or would deposit
+	 * two tokens in some place.
+	 */
+	@Deprecated
+	private static <L, P> boolean canFireSequenceInOneSafeNet(final BoundedPetriNet<L, P> petriNet,
+			final Transition<L, P> first, final Transition<L, P> second) {
+		final Set<P> firstSucc = first.getSuccessors();
+		final Set<P> secondPre = second.getPredecessors();
+
+		return DataStructureUtils.intersectionStream(first.getPredecessors(), secondPre).allMatch(firstSucc::contains)
+				&& DataStructureUtils.intersectionStream(firstSucc, second.getSuccessors())
+						.allMatch(secondPre::contains);
+	}
+
+	/**
 	 * Check whether the first transition needs to be kept after composing two transitions.
 	 *
 	 * @param place
@@ -243,10 +514,15 @@ public class LiptonReduction<L, P> {
 	 *            The second transition.
 	 * @param petriNet
 	 *            The Petri net.
-	 * @return true if the first transition is still needed after compossition, false if the transition can be deleted.
+	 * @return true if the first transition is still needed after composition, false if the transition can be deleted.
 	 */
 	private boolean isFirstTransitionNeeded(final P place, final Transition<L, P> t1, final Transition<L, P> t2,
-			final BoundedPetriNet<L, P> petriNet) {
+			final IPetriNet<L, P> petriNet) {
+		if (hasAcceptingSuccessor(t1, petriNet)) {
+			// If any successor of t1 is accepting, we need to preserve t1.
+			return true;
+		}
+
 		if (!mStuckPlaceChecker.mightGetStuck(petriNet, place)) {
 			return false;
 		}
@@ -280,169 +556,8 @@ public class LiptonReduction<L, P> {
 		return false;
 	}
 
-	/**
-	 * Performs the sequence rule on the Petri net.
-	 *
-	 * @param petriNet
-	 *            The Petri net on which the sequence rule should be performed.
-	 * @return new Petri net, where the sequence rule has been performed.
-	 */
-	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
-		final Set<P> places = petriNet.getPlaces();
-		final Set<P> initialPlaces = petriNet.getInitialPlaces();
-
-		final Set<Transition<L, P>> obsoleteTransitions = new HashSet<>();
-		final Set<Transition<L, P>> composedTransitions = new HashSet<>();
-		final Set<Triple<L, Transition<L, P>, Transition<L, P>>> pendingCompositions = new HashSet<>();
-		final Map<P, Set<Transition<L, P>>> transitionsToBeReplaced = new HashMap<>();
-
-		for (final P place : places) {
-			if (initialPlaces.contains(place) || petriNet.getAcceptingPlaces().contains(place)) {
-				continue;
-			}
-
-			final Set<Transition<L, P>> incomingTransitions = petriNet.getPredecessors(place);
-			final Set<Transition<L, P>> outgoingTransitions = petriNet.getSuccessors(place);
-
-			if (incomingTransitions.isEmpty() || outgoingTransitions.isEmpty()) {
-				continue;
-			}
-
-			if (incomingTransitions.size() != 1 && outgoingTransitions.size() != 1) {
-				// At the moment we only allow n:1 or 1:m compositions; because for n:m compositions,
-				// (1) the number of transitions increases (n*m instead of n+m), and
-				// (2) more importantly, it is unclear how to proceed if not all pairs can be composed.
-				//
-				// Possible future extension: If some incoming (resp. outgoing) transition t can be composed with all
-				// outgoing (resp. incoming) transitions, we can perform these compositions and remove transition t.
-				//
-				// Alternatively, we could allow all n:m compositions and redirect the remaining uncomposed transitions
-				// to several different copies of the current place.
-				continue;
-			}
-			final boolean isYv = incomingTransitions.size() != 1;
-
-			final Set<Transition<L, P>> composedHere = new HashSet<>();
-			boolean completeComposition = true;
-
-			final Set<Transition<L, P>> replacementNeeded = new HashSet<>();
-
-			for (final Transition<L, P> t1 : incomingTransitions) {
-				if (composedTransitions.contains(t1) || t1.getPredecessors().contains(place)) {
-					completeComposition = false;
-					continue;
-				}
-
-				for (final Transition<L, P> t2 : outgoingTransitions) {
-					final boolean canCompose =
-							!composedTransitions.contains(t2) && sequenceRuleCheck(t1, t2, place, petriNet);
-					completeComposition = completeComposition && canCompose;
-					if (!canCompose) {
-						continue;
-					}
-
-					if (canFireSequenceInOneSafeNet(petriNet, t1, t2)) {
-						final L composedLetter = mCompositionFactory.composeSequential(t1.getSymbol(), t2.getSymbol());
-						mLogger.debug("Composing " + t1 + " and " + t2);
-						pendingCompositions.add(new Triple<>(composedLetter, t1, t2));
-					} else {
-						// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
-						// Either some place would need to have 2 tokens, or some place would receive 2 tokens.
-						//
-						// TODO What is the best course of action here?
-						// TODO As-is, the subsequent modifications (composedHere, replacementNeeded, statistics,
-						// obsoleteTransitions) seem dangerous.
-						mLogger.debug("Discarding composition of " + t1 + " and " + t2 + ".");
-					}
-					composedHere.add(t1);
-					composedHere.add(t2);
-
-					if (!replacementNeeded.contains(t1) && isFirstTransitionNeeded(place, t1, t2, petriNet)) {
-						// TODO add setting to forbid compositions where t1 must be replaced
-						replacementNeeded.add(t1);
-					}
-
-					// t1 (in an n:1 composition) resp. t2 (in a 1:m composition) is definitely obsolete.
-					obsoleteTransitions.add(isYv ? t1 : t2);
-
-					LiptonReductionStatisticsDefinitions stat;
-					if (mCoEnabledRelation.getImage(t1).isEmpty() && mCoEnabledRelation.getImage(t2).isEmpty()) {
-						stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
-								: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
-					} else {
-						stat = isYv ? LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions
-								: LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions;
-					}
-					mStatistics.reportComposition(stat);
-				}
-			}
-
-			if (completeComposition) {
-				// If the composition is complete, the single outgoing (for n:1 compositions) resp. incoming (for 1:m
-				// compositions) transition is also obsolete.
-				obsoleteTransitions.addAll(isYv ? outgoingTransitions : incomingTransitions);
-			}
-
-			// TODO Why do we delay the addition to "composedTransitions" ?
-			composedTransitions.addAll(composedHere);
-			if (!replacementNeeded.isEmpty()) {
-				transitionsToBeReplaced.put(place, replacementNeeded);
-			}
-		}
-
-		for (final Map.Entry<P, Set<Transition<L, P>>> entry : transitionsToBeReplaced.entrySet()) {
-			final P deadPlace = mPlaceFactory.copyPlace(entry.getKey());
-			petriNet.addPlace(deadPlace, false, false);
-
-			// TODO Why again do we create this fresh transition rather than keeping the old one?
-			for (final Transition<L, P> t : entry.getValue()) {
-				// TODO Should the transition have those other successors? Not just deadPlace?
-				final Set<P> post = new HashSet<>(t.getSuccessors());
-				post.remove(entry.getKey());
-				post.add(deadPlace);
-				final Transition<L, P> newTransition =
-						petriNet.addTransition(t.getSymbol(), t.getPredecessors(), ImmutableSet.of(post));
-				mNewToOldTransitions.put(newTransition, getOriginalTransition(t));
-				mCoEnabledRelation.copyRelationships(t, newTransition);
-			}
-		}
-
-		final Map<L, Transition<L, P>> composedLetters2Transitions = new HashMap<>();
-		final Map<Transition<L, P>, Transition<L, P>> oldToNewTransitions = new HashMap<>();
-		final BoundedPetriNet<L, P> newNet = copyPetriNetWithModification(petriNet, pendingCompositions,
-				obsoleteTransitions, composedLetters2Transitions, oldToNewTransitions);
-
-		// update information for composed transition
-		for (final Triple<L, Transition<L, P>, Transition<L, P>> composition : pendingCompositions) {
-			final Transition<L, P> composedTransition = composedLetters2Transitions.get(composition.getFirst());
-			mCoEnabledRelation.copyRelationships(composition.getSecond(), composedTransition);
-			updateSequentialCompositions(composedTransition, composition.getSecond(), composition.getThird());
-			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
-					composition.getThird().getSymbol());
-		}
-
-		// delete obsolete information
-		for (final Transition<L, P> t : obsoleteTransitions) {
-			mCoEnabledRelation.deleteElement(t);
-		}
-
-		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
-		return newNet;
-	}
-
-	/**
-	 * Checks a necessary condition for the two transitions being fireable in direct sequence in a one-safe Petri net.
-	 * Specifically, checks if this firing sequence would either require some place to have two tokens, or would deposit
-	 * two tokens in some place.
-	 */
-	private static <L, P> boolean canFireSequenceInOneSafeNet(final BoundedPetriNet<L, P> petriNet,
-			final Transition<L, P> first, final Transition<L, P> second) {
-		final Set<P> firstSucc = first.getSuccessors();
-		final Set<P> secondPre = second.getPredecessors();
-
-		return DataStructureUtils.intersectionStream(first.getPredecessors(), secondPre).allMatch(firstSucc::contains)
-				&& DataStructureUtils.intersectionStream(firstSucc, second.getSuccessors())
-						.allMatch(secondPre::contains);
+	private boolean hasAcceptingSuccessor(final Transition<L, P> t, final IPetriNet<L, P> petriNet) {
+		return t.getSuccessors().stream().anyMatch(petriNet::isAccepting);
 	}
 
 	/**
@@ -463,29 +578,33 @@ public class LiptonReduction<L, P> {
 	/**
 	 * Checks whether the sequence Rule can be performed.
 	 *
+	 * @param petriNet
+	 *            The Petri Net.
 	 * @param t1
 	 *            The first transition that might be sequentially composed.
 	 * @param t2
 	 *            The second transition that might be sequentially composed.
-	 * @param place
+	 * @param pivot
 	 *            The place connecting t1 and t2.
-	 * @param petriNet
-	 *            The Petri Net.
 	 * @return true iff the sequence rule can be performed.
 	 */
-	private boolean sequenceRuleCheck(final Transition<L, P> t1, final Transition<L, P> t2, final P place,
-			final BoundedPetriNet<L, P> petriNet) {
-		final boolean composable = mCompositionFactory.isSequentiallyComposable(t1.getSymbol(), t2.getSymbol());
-		if (!composable) {
-			return false;
-		}
+	private boolean isComposableAt(final IPetriNet<L, P> petriNet, final Transition<L, P> t1, final Transition<L, P> t2,
+			final P pivot) {
+		return isLabelComposable(t1, t2) && isStructurallyComposableAt(petriNet, t1, t2, pivot)
+				&& isLiptonComposable(t1, t2);
+	}
 
-		final boolean structurallyCorrect =
-				!t2.getSuccessors().contains(place) && checkForEventsInBetween(t1, t2, place, petriNet);
-		if (!structurallyCorrect) {
-			return false;
-		}
-		return performMoverCheck(petriNet, t1, t2);
+	@Deprecated
+	private boolean isLabelComposable(final Transition<L, P> t1, final Transition<L, P> t2) {
+		return mCompositionFactory.isSequentiallyComposable(t1.getSymbol(), t2.getSymbol());
+	}
+
+	private boolean isStructurallyComposableAt(final IPetriNet<L, P> petriNet, final Transition<L, P> t1,
+			final Transition<L, P> t2, final P pivot) {
+		// TODO First conjunct was in report but not in the code. Is it really needed?
+		// TODO ^--- actually it was checked in sequenceRule() -- might make sense, as it precludes ALL pairs with t1
+		return !t1.getPredecessors().contains(pivot) && !t2.getSuccessors().contains(pivot)
+				&& checkForEventsInBetween2(petriNet, t1, t2, pivot);
 	}
 
 	private Stream<Transition<L, P>> getFirstTransitions(final Transition<L, P> t) {
@@ -528,14 +647,14 @@ public class LiptonReduction<L, P> {
 		return getLastTransitions(t).flatMap(t2 -> mBranchingProcess.getEvents(t2).stream());
 	}
 
-	private boolean checkForEventsInBetween(final Transition<L, P> t1, final Transition<L, P> t2, final P place,
-			final BoundedPetriNet<L, P> petriNet) {
+	private boolean checkForEventsInBetween(final IPetriNet<L, P> petriNet, final Transition<L, P> t1,
+			final Transition<L, P> t2, final P pivot) {
 
 		// TODO What precisely is the purpose of this method? can we simplify it?
 
 		final Set<Transition<L, P>> transitions = DataStructureUtils.difference(t1.getSuccessors().stream()
 				.flatMap(p2 -> petriNet.getSuccessors(p2).stream()).collect(Collectors.toSet()),
-				petriNet.getSuccessors(place));
+				petriNet.getSuccessors(pivot));
 
 		final Set<Event<L, P>> t1Events =
 				transitions.stream().flatMap(this::getFirstEvents).collect(Collectors.toSet());
@@ -552,18 +671,43 @@ public class LiptonReduction<L, P> {
 		return true;
 	}
 
-	// Candidate replacement for checkEventsInBetween
-	// TODO This may not be entirely sound yet: Do we have to consider cutoff events specially?
-	// TODO Is it worth caching this?
-	private boolean checkForEventsInBetween2(final Transition<L, P> t1, final Transition<L, P> t2, final P pivot,
-			final IPetriNet<L, P> petriNet) {
+	// Candidate replacement for checkEventsInBetween.
+	//
+	// Performs a backwards search from events for transition t2, looking for a path to an event for t1 that contains
+	// some event for a predecessor or successor transition of the pivot place (the start and target events excluded).
+	//
+	// The search does not have to go deep: Either an event is found immediately, or a target is reached. In either
+	// case, the search terminates. However, we need special handling for cut-off events.
+	//
+	// The idea is that if no such path exists, then all events occurring between t1 and t2 in a firing sequence
+	// must be co-related with either t1 or t2 (assuming no other predecessor or successor of the pivot place occurs).
+	//
+	private boolean checkForEventsInBetween2(final IPetriNet<L, P> petriNet, final Transition<L, P> t1,
+			final Transition<L, P> t2, final P pivot) {
 		final var targets = getFirstEvents(t1).collect(Collectors.toSet());
-		return getLastEvents(t2).noneMatch(e2 -> searchEventBetween(e2, targets, pivot));
-	}
 
-	private boolean searchEventBetween(final Event<L, P> start, final Set<Event<L, P>> targets, final P pivot) {
-		for (final var pre : start.getPredecessorConditions()) {
-			final var ev = pre.getPredecessorEvent();
+		final var queue = new ArrayDeque<Event<L, P>>();
+		final var visited = new HashSet<Event<L, P>>();
+
+		// TODO potential iteration order nondeterminism
+		getLastEvents(t2).flatMap(e2 -> e2.getPredecessorEvents().stream()).forEach(queue::offer);
+
+		while (!queue.isEmpty()) {
+			final var ev = queue.poll();
+
+			final var unvisited = visited.add(ev);
+			if (!unvisited) {
+				continue;
+			}
+
+			// Add all cut-off events to the stack that have the current event ev as companion.
+			// Such cut-off events result in the same marking as the current event ev,
+			// and hence can also result in the execution of an event start' for the same transition as start.
+			// Since the event start' is not included in the finite prefix,
+			// we simulate backwards search from start' here.
+			// TODO potential iteration order nondeterminism
+			queue.addAll(mCutOffs.getImage(ev));
+
 			if (targets.stream().noneMatch(ev.getLocalConfiguration()::contains)) {
 				// we are not on a path back to a target, so ignore this node
 				continue;
@@ -581,9 +725,9 @@ public class LiptonReduction<L, P> {
 			}
 
 			// the path contains at least event ev; so ev is between start and targets
-			return true;
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	/**
@@ -662,15 +806,16 @@ public class LiptonReduction<L, P> {
 		return newPetriNet;
 	}
 
-	private boolean performMoverCheck(final BoundedPetriNet<L, P> petriNet, final Transition<L, P> t1,
-			final Transition<L, P> t2) {
+	// ************************************************* LIPTON MOVERS *************************************************
+
+	private boolean isLiptonComposable(final Transition<L, P> t1, final Transition<L, P> t2) {
 		final Set<Transition<L, P>> coEnabled1 = mCoEnabledRelation.getImage(t1);
 		final Set<Transition<L, P>> coEnabled2 = mCoEnabledRelation.getImage(t2);
 
 		final boolean all1 = coEnabled1.containsAll(coEnabled2);
 		final boolean all2 = coEnabled2.containsAll(coEnabled1);
 
-		return (all1 && isRightMover(petriNet, t1, coEnabled1)) || (all2 && isLeftMover(petriNet, t2, coEnabled2));
+		return (all1 && isRightMover(t1, coEnabled1)) || (all2 && isLeftMover(t2, coEnabled2));
 	}
 
 	/**
@@ -684,8 +829,7 @@ public class LiptonReduction<L, P> {
 	 *            A set of co-enabled transitions.
 	 * @return true iff t2 is left mover.
 	 */
-	private boolean isLeftMover(final BoundedPetriNet<L, P> petriNet, final Transition<L, P> t2,
-			final Set<Transition<L, P>> coEnabledTransitions) {
+	private boolean isLeftMover(final Transition<L, P> t2, final Set<Transition<L, P>> coEnabledTransitions) {
 		final Set<P> preconditions = t2.getPredecessors();
 		return coEnabledTransitions.stream()
 				.allMatch(t3 -> mMoverCheck.contains(DataStructureUtils.union(preconditions, t3.getPredecessors()),
@@ -703,13 +847,14 @@ public class LiptonReduction<L, P> {
 	 *            A set of co-enabled transitions.
 	 * @return true iff t1 is right mover.
 	 */
-	private boolean isRightMover(final BoundedPetriNet<L, P> petriNet, final Transition<L, P> t1,
-			final Set<Transition<L, P>> coEnabledTransitions) {
+	private boolean isRightMover(final Transition<L, P> t1, final Set<Transition<L, P>> coEnabledTransitions) {
 		final Set<P> preconditions = t1.getPredecessors();
 		return coEnabledTransitions.stream()
 				.allMatch(t3 -> mMoverCheck.contains(DataStructureUtils.union(preconditions, t3.getPredecessors()),
 						t1.getSymbol(), t3.getSymbol()));
 	}
+
+	// ***************************************************** OUTPUT ****************************************************
 
 	public BoundedPetriNet<L, P> getResult() {
 		return mResult;
