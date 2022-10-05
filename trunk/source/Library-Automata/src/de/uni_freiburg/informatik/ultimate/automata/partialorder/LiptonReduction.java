@@ -396,7 +396,13 @@ public class LiptonReduction<L, P> {
 		// update information for composed transition
 		for (final Triple<L, Transition<L, P>, Transition<L, P>> composition : pendingCompositions) {
 			final Transition<L, P> composedTransition = composedLetters2Transitions.get(composition.getFirst());
+
+			// TODO This was ok when the coenabled statements of t1 and t2 were the same.
+			// TODO Now that they may differ, this could either be unsound or too coarse.
+			// TODO Check what the coenabled transitions of composedTransition could actually be
+			// TODO maybe the union or intersection of the coenabled transitions for t1 resp. t2?
 			mCoEnabledRelation.copyRelationships(composition.getSecond(), composedTransition);
+
 			updateSequentialCompositions(composedTransition, composition.getSecond(), composition.getThird());
 			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
