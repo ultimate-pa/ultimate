@@ -159,6 +159,21 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		replaceElement(element, replacement);
 	}
 
+	/**
+	 * For each pair in the relation involving a given element, creates a new corresponding pair involving the other
+	 * element. The original pairs are not removed, they remain in the relation.
+	 *
+	 * @param from
+	 *            The element from which the relationships will be copied.
+	 * @param to
+	 *            The element to which the relationships will be copied.
+	 */
+	public void copyRelationships(final E from, final E to) {
+		for (final E other : getImage(from)) {
+			addPair(to, other);
+		}
+	}
+
 	public Set<Doubleton<E>> buildSetOfDoubletons() {
 		final Set<Doubleton<E>> result = new HashSet<>();
 		for (final Entry<E, E> entry : this) {
