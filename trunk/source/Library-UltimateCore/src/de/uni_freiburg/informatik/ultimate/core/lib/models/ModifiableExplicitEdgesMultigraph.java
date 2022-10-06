@@ -140,6 +140,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	@Override
 	public boolean addOutgoing(E outgoing) {
 		if (outgoing != null) {
+			assert !mOutgoingEdges.contains(outgoing) : "duplicate outgoing edge";
 			assert outgoing.getSource() == this;
 			return mOutgoingEdges.add(outgoing);
 		}

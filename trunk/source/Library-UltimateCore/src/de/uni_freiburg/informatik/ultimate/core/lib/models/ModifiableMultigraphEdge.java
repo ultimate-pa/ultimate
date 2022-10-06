@@ -115,6 +115,7 @@ public abstract class ModifiableMultigraphEdge<V extends IModifiableExplicitEdge
 	public void disconnectSource() {
 		if (mSource != null) {
 			mSource.removeOutgoing((E) this);
+			assert !mSource.getOutgoingEdges().contains(this) : "failed to remove outgoing";
 			mSource = null;
 		}
 	}

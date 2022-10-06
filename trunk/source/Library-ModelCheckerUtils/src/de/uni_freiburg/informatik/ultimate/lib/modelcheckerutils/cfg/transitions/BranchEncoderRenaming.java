@@ -133,7 +133,7 @@ public final class BranchEncoderRenaming {
 		final UnmodifiableTransFormula tf = ((IActionWithBranchEncoders) edge).getTransitionFormulaWithBranchEncoders();
 		final UnmodifiableTransFormula renamedFirstTfWithBe = applyToTransFormula(tf, mgdScript);
 		return edgeBuilder.constructInternalTransition(edge, edge.getSource(), edge.getTarget(), edge.getTransformula(),
-				renamedFirstTfWithBe, false);
+				renamedFirstTfWithBe);
 	}
 
 	/**

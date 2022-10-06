@@ -294,6 +294,8 @@ public class IcfgEdgeBuilder {
 	/**
 	 * Constructs a new internal transition.
 	 *
+	 * NOTE: The new transition is NOT added as outgoing (resp. incoming) edge of the source (resp. target) location.
+	 *
 	 * @param oldTransition
 	 *            A transition to copy annotations from.
 	 * @param source
@@ -306,11 +308,13 @@ public class IcfgEdgeBuilder {
 	 */
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
-		return constructInternalTransition(oldTransition, source, target, tf, tf, true);
+		return constructInternalTransition(oldTransition, source, target, tf, tf);
 	}
 
 	/**
 	 * Constructs a new internal transition.
+	 *
+	 * NOTE: The new transition is NOT added as outgoing (resp. incoming) edge of the source (resp. target) location.
 	 *
 	 * @param oldTransition
 	 *            A transition to copy annotations from.
@@ -322,8 +326,6 @@ public class IcfgEdgeBuilder {
 	 *            The transformula of the transition.
 	 * @param tfWithBranchIndicators
 	 *            The transformula with branch indicators. Can be the same as tf.
-	 * @param connect
-	 *            true if the new transition should be connected to its source and target locations.
 	 * @return A newly created transition.
 	 */
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
@@ -385,19 +387,6 @@ public class IcfgEdgeBuilder {
 		if (connect) {
 			oldTransition.getSource().addOutgoing(rtr);
 			oldTransition.getTarget().addIncoming(rtr);
-		}
-		return rtr;
-	}
-
-	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
-			final IcfgLocation target, final UnmodifiableTransFormula tf, final UnmodifiableTransFormula tfWithBe,
-			final boolean connect) {
-		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
-		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBe);
-		ModelUtils.copyAnnotations(oldTransition, rtr);
-		if (connect) {
-			source.addOutgoing(rtr);
-			target.addIncoming(rtr);
 		}
 		return rtr;
 	}

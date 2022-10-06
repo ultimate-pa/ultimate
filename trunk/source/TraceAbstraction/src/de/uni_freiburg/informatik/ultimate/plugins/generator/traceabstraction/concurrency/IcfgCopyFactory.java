@@ -86,6 +86,6 @@ public class IcfgCopyFactory implements ICopyActionFactory<IcfgEdge> {
 					"TF with branch encoders given for action without branch encoders: " + original);
 		}
 		return mEdgeBuilder.constructInternalTransition(original, original.getSource(), original.getTarget(),
-				newTransformula, newTransformulaWithBE, false);
+				newTransformula, newTransformulaWithBE);
 	}
 }
