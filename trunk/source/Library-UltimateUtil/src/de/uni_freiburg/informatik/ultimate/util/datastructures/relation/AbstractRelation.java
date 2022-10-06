@@ -56,7 +56,8 @@ import java.util.stream.Collectors;
  * @param <MAP>
  *            Type of Map that is used to store the relation.
  */
-public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map<D, SET>> implements Iterable<Entry<D, R>> {
+public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map<D, SET>>
+		implements Iterable<Entry<D, R>> {
 	private static final String NOT_YET_IMPLEMENTED = "not yet implemented";
 
 	protected final MAP mMap;
@@ -67,7 +68,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 
 	public AbstractRelation(final AbstractRelation<D, R, ?, ?> rel) {
 		this();
-		this.addAll(rel);
+		addAll(rel);
 	}
 
 	protected abstract MAP newMap();
@@ -97,12 +98,35 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		if (rangeElems.isEmpty()) {
 			return false;
 		}
-		SET oldRangeElems = mMap.get(domainElem);
-		if (oldRangeElems == null) {
-			oldRangeElems = newSet();
-			mMap.put(domainElem, oldRangeElems);
-		}
+		final SET oldRangeElems = mMap.computeIfAbsent(domainElem, x -> newSet());
 		return oldRangeElems.addAll(rangeElems);
+	}
+
+	/**
+	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but
+	 * constructs new sets if necessary.
+	 */
+	public boolean addAll(final AbstractRelation<D, R, ?, ?> rel) {
+		boolean changed = false;
+		for (final Entry<D, ? extends Set<R>> entry : rel.mMap.entrySet()) {
+			final SET rangeElems = mMap.computeIfAbsent(entry.getKey(), x -> newSet());
+			final boolean modified = rangeElems.addAll(entry.getValue());
+			changed = changed || modified;
+		}
+		return changed;
+	}
+
+	/**
+	 * For all entries (k,v) of the map add the reverse pair (v,k) to this relation.
+	 *
+	 * @return true iff some new element was added
+	 */
+	public boolean reverseAddAll(final Map<R, D> map) {
+		boolean someNewValueAdded = false;
+		for (final Entry<R, D> entry : map.entrySet()) {
+			someNewValueAdded |= addPair(entry.getValue(), entry.getKey());
+		}
+		return someNewValueAdded;
 	}
 
 	/**
@@ -111,24 +135,23 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	 * @return true if the set contained the specified pair.
 	 */
 	public boolean removePair(final D domainElem, final R rangeElem) {
-		final boolean result;
 		final Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
-			result = false;
-		} else {
-			result = rangeElems.remove(rangeElem);
-			if (rangeElems.isEmpty()) {
-				mMap.remove(domainElem);
-			}
+			return false;
+		}
+		final boolean result = rangeElems.remove(rangeElem);
+		if (rangeElems.isEmpty()) {
+			mMap.remove(domainElem);
 		}
 		return result;
 	}
 
 	/**
-	 * Removes all pairs from the given relation from this relation.
-	 * (i.e., subtracts the argument relation from this one)
+	 * Removes all pairs from the given relation from this relation. (i.e., subtracts the argument relation from this
+	 * one)
 	 *
-	 * @param rel relation to subtract from this one
+	 * @param rel
+	 *            relation to subtract from this one
 	 */
 	public void removeAllPairs(final AbstractRelation<D, R, ?, ?> rel) {
 		for (final Entry<D, R> en : rel.getSetOfPairs()) {
@@ -137,12 +160,14 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	}
 
 	/**
-	 * Removes all pairs from this relation whose left entry equals the given key.
+	 * Removes all pairs from this relation whose left entry equals the given element.
 	 *
-	 * @param left
+	 * @param elem
+	 *            the domain element to remove
+	 * @return the set of all elements with which the given element was in relation
 	 */
-	public Set<R> removeDomainElement(final D left) {
-		final Set<R> result = mMap.remove(left);
+	public Set<R> removeDomainElement(final D elem) {
+		final Set<R> result = mMap.remove(elem);
 		assert sanityCheck();
 		return result;
 	}
@@ -202,35 +227,16 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	}
 
 	/**
-	 * @deprecated 2019-12-27 Matthias: I think this method should be replaced by a
-	 * constructor. Modifies the original object but there is no performance gain
-	 * because a temporary copy is constructed.
+	 * @deprecated 2019-12-27 Matthias: I think this method should be replaced by a constructor. Modifies the original
+	 *             object but there is no performance gain because a temporary copy is constructed.
 	 */
 	@Deprecated
 	public void transformElements(final Function<D, D> dTransformer, final Function<R, R> rTransformer) {
 		// TODO: would be nicer if we did not use HashRelation but something more generic for the copy
-		for (final Entry<D, R> pair : new HashRelation<D, R>(this)) {
+		for (final Entry<D, R> pair : new HashRelation<>(this)) {
 			removePair(pair.getKey(), pair.getValue());
 			addPair(dTransformer.apply(pair.getKey()), rTransformer.apply(pair.getValue()));
 		}
-	}
-
-	/**
-	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but
-	 * constructs new sets if necessary.
-	 */
-	public boolean addAll(final AbstractRelation<D, R, ?, ?> rel) {
-		boolean changed = false;
-		for (final Entry<D, ? extends Set<R>> entry : rel.mMap.entrySet()) {
-			SET rangeElems = mMap.get(entry.getKey());
-			if (rangeElems == null) {
-				rangeElems = newSet();
-				mMap.put(entry.getKey(), rangeElems);
-			}
-			final boolean modified = rangeElems.addAll(entry.getValue());
-			changed = changed || modified;
-		}
-		return changed;
 	}
 
 	/**
@@ -372,21 +378,18 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		return true;
 	}
 
-
-
 	public Set<Entry<D, SET>> entrySet() {
 		return mMap.entrySet();
 	}
 
 	/**
-	 * Returns a Set view of the pairs contained in this relation. The set is
-	 * backed by the relation, so changes to the map are reflected in the set,
-	 * and vice-versa.
+	 * Returns a Set view of the pairs contained in this relation. The set is backed by the relation, so changes to the
+	 * map are reflected in the set, and vice-versa.
 	 *
 	 * @return a set view of the pairs contained in this relation
 	 */
 	public Set<Map.Entry<D, R>> getSetOfPairs() {
-		return new Set<Map.Entry<D, R>>() {
+		return new Set<>() {
 
 			@Override
 			public boolean add(final Entry<D, R> arg0) {
@@ -425,7 +428,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 
 			@Override
 			public Iterator<Entry<D, R>> iterator() {
-				return new Iterator<Map.Entry<D, R>>() {
+				return new Iterator<>() {
 					private Entry<D, R> mNextEntry;
 					private Iterator<Entry<D, SET>> mOuterIterator;
 					private Iterator<R> mInnerIterator;
@@ -448,7 +451,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 						if (mInnerIterator != null) {
 							assert mInnerIterator.hasNext();
 							final R next = mInnerIterator.next();
-							return new Entry<D, R>() {
+							return new Entry<>() {
 								private final D mKey;
 								private final R mValue;
 								{
@@ -544,17 +547,5 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 
 	public Set<R> projectToRange(final Set<D> input) {
 		return input.stream().flatMap(x -> getImage(x).stream()).collect(Collectors.toSet());
-	}
-
-	/**
-	 * For all entries (k,v) of the map add the reverse pair (v,k) to this relation.
-	 * @return true iff some new element was added
-	 */
-	public boolean reverseAddAll(final Map<R, D> map) {
-		boolean someNewValueAdded = false;
-		for (final Entry<R, D> entry : map.entrySet()) {
-			someNewValueAdded |= addPair(entry.getValue(), entry.getKey());
-		}
-		return someNewValueAdded;
 	}
 }
