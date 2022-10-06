@@ -81,10 +81,9 @@ public class EQInterpolator {
 	 * @param sign
 	 *            the sign of l1 in the conflict clause. This is -1 if l1 implies l2, and +1 if l2 implies l1.
 	 */
-	public Term[] computeInterpolants(final Term eqLemma) {
+	public Term[] computeInterpolants(InterpolatorClauseInfo lemmaTermInfo) {
 		Term[] interpolants = null;
 
-		final InterpolatorClauseTermInfo lemmaTermInfo = mInterpolator.getClauseTermInfo(eqLemma);
 		final Term[] eqParams = lemmaTermInfo.getLiterals();
 		final Term atom0 = mInterpolator.getAtom(eqParams[0]);
 		final Term atom1 = mInterpolator.getAtom(eqParams[1]);

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript.HeuristicsType;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TimeoutHandler;
 
@@ -59,6 +60,7 @@ public class MusesTest {
 		script.setOption(SMTLIBConstants.PRODUCE_PROOFS, true);
 		script.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
 		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+		script.setOption(SMTInterpolConstants.PROOF_LEVEL, ProofMode.FULL);
 		script.setLogic(logic);
 		return script;
 	}
@@ -69,6 +71,7 @@ public class MusesTest {
 		script.setOption(SMTLIBConstants.PRODUCE_PROOFS, true);
 		script.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
 		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+		script.setOption(SMTInterpolConstants.PROOF_LEVEL, ProofMode.FULL);
 		script.setLogic(logic);
 		return script;
 	}
@@ -78,6 +81,7 @@ public class MusesTest {
 		smtInterpol.setOption(SMTInterpolConstants.PRODUCE_INTERPOLANTS, true);
 		smtInterpol.setOption(SMTLIBConstants.PRODUCE_PROOFS, true);
 		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+		smtInterpol.setOption(SMTInterpolConstants.PROOF_LEVEL, ProofMode.FULL);
 		smtInterpol.setLogic(logic);
 		return new MusEnumerationScript(smtInterpol);
 	}

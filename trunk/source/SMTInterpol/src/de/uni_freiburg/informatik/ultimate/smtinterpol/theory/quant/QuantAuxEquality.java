@@ -18,13 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 /**
- * An auxiliary equality atom of the form "({@pre @}AUXi ...) = true". This also
- * creates the quotedQuant annotation to define the aux literal.
+ * An auxiliary equality atom of the form "({@pre @}AUXi ...) = true".
  *
  * @author Jochen Hoenicke
  */
@@ -32,8 +29,8 @@ public class QuantAuxEquality extends QuantEquality {
 
 	private final Term mDefinition;
 
-	public QuantAuxEquality(final Term term, final Term lhs, final Term rhs, final Term definition) {
-		super(term, lhs, rhs);
+	public QuantAuxEquality(final Term lhs, final Term rhs, final Term definition) {
+		super(lhs, rhs);
 		mDefinition = definition;
 	}
 
@@ -44,13 +41,5 @@ public class QuantAuxEquality extends QuantEquality {
 	 */
 	public Term getDefinition() {
 		return mDefinition;
-	}
-
-	@Override
-	public Term getSMTFormula(final Theory theory, final boolean quoted) {
-		// Aux literals are annotated with the defining term
-		return quoted
-				? theory.annotatedTerm(new Annotation[] { new Annotation(":quotedQuant", mDefinition) }, getTerm())
-				: getTerm();
 	}
 }

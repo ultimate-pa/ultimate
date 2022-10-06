@@ -26,16 +26,21 @@ public class BoolSortInterpretation implements SortInterpretation {
 
 	@Override
 	public Term toSMTLIB(final Theory t, final Sort sort) {
-		throw new InternalError("Should never be called");
+		throw new AssertionError("Should never be called");
 	}
 
 	@Override
 	public Term extendFresh(final Sort sort) {
-		throw new InternalError("Three-valued Bool?");
+		throw new AssertionError("Three-valued Bool?");
 	}
 
 	@Override
 	public Term getModelValue(final int idx, final Sort sort) {
 		return idx == 0 ? sort.getTheory().mFalse : sort.getTheory().mTrue;
+	}
+
+	@Override
+	public void register(Term term) {
+		assert term == term.getTheory().mFalse || term == term.getTheory().mTrue;
 	}
 }

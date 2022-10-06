@@ -198,7 +198,7 @@ public class SortSymbol {
 	 * Checks if this is a sort variable.
 	 * @return true if this is a sort variable.
 	 */
-	public boolean isParametric() {
+	public boolean isSortVariable() {
 		return (mFlags & TYPEPARAM) != 0;
 	}
 	/**

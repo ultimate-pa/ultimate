@@ -33,6 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -67,13 +68,13 @@ public class RewriteDisequality extends TransformerPreprocessor {
 		return new RewriteDisequalityTransformer(script.getScript());
 	}
 
-	private static final class RewriteDisequalityTransformer extends TermTransformer {
+	public static final class RewriteDisequalityTransformer extends TermTransformer {
 
 		private static final Set<String> SUPPORTED_SORTS =
 				new HashSet<>(Arrays.asList(SmtSortUtils.INT_SORT, SmtSortUtils.REAL_SORT));
 		private final Script mScript;
 
-		RewriteDisequalityTransformer(final Script script) {
+		public RewriteDisequalityTransformer(final Script script) {
 			assert script != null;
 			mScript = script;
 		}
@@ -119,6 +120,11 @@ public class RewriteDisequality extends TransformerPreprocessor {
 			setResult(mScript.term("or", param1, param2));
 			return;
 
+		}
+
+		@Override
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+			setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mScript));
 		}
 	}
 }

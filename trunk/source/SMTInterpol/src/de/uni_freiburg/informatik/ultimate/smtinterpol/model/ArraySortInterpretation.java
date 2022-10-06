@@ -184,4 +184,8 @@ public class ArraySortInterpretation implements SortInterpretation {
 	public SortInterpretation getValueInterpretation() {
 		return mValueSort;
 	}
+
+	@Override
+	public void register(final Term t) {
+	}
 }

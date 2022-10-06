@@ -24,6 +24,7 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.DataType;
 import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
@@ -110,8 +111,9 @@ public class ModelEvaluator extends TermTransformer {
 	private final Model mModel;
 
 	/**
-	 * The scoped let map. Each scope corresponds to a partially executed let or a quantifier on the todo stack. It
-	 * gives the mapping for each term variable defined in that scope to the corresponding term.
+	 * The scoped let map. Each scope corresponds to a partially executed let or a
+	 * quantifier on the todo stack. It gives the mapping for each term variable
+	 * defined in that scope to the corresponding term.
 	 */
 	private final ScopedHashMap<TermVariable, Term> mLetMap = new ScopedHashMap<>(false);
 
@@ -278,8 +280,7 @@ public class ModelEvaluator extends TermTransformer {
 		}
 
 		case SMTLIBConstants.ITE:
-			// ite is handled else-where
-			throw new InternalError("ITE not handled in convert?");
+			return args[0] == theory.mTrue ? args[1] : args[2];
 
 		case SMTLIBConstants.PLUS: {
 			Rational val = rationalValue(args[0]);
@@ -382,7 +383,7 @@ public class ModelEvaluator extends TermTransformer {
 		}
 
 		case SMTLIBConstants.MOD: {
-			assert(args.length == 2);
+			assert args.length == 2;
 			final Rational n = rationalValue(args[1]);
 			if (n.equals(Rational.ZERO)) {
 				return lookupFunction(fs, args);
@@ -400,10 +401,10 @@ public class ModelEvaluator extends TermTransformer {
 		}
 
 		case SMTLIBConstants.DIVISIBLE: {
-			assert(args.length == 1);
+			assert args.length == 1;
 			final Rational arg = rationalValue(args[0]);
 			final String[] indices = fs.getIndices();
-			assert(indices.length == 1);
+			assert indices.length == 1;
 			BigInteger divisor;
 			try {
 				divisor = new BigInteger(indices[0]);
@@ -415,26 +416,26 @@ public class ModelEvaluator extends TermTransformer {
 		}
 
 		case SMTLIBConstants.TO_INT: {
-			assert (args.length == 1);
+			assert args.length == 1;
 			final Rational arg = rationalValue(args[0]);
 			return arg.floor().toTerm(fs.getReturnSort());
 		}
 
 		case SMTLIBConstants.TO_REAL: {
-			assert (args.length == 1);
+			assert args.length == 1;
 			final Rational arg = rationalValue(args[0]);
 			return arg.toTerm(fs.getReturnSort());
 		}
 
 		case SMTLIBConstants.IS_INT: {
-			assert (args.length == 1);
+			assert args.length == 1;
 			final Rational arg = rationalValue(args[0]);
 			return arg.isIntegral() ? theory.mTrue : theory.mFalse;
 		}
 
 		case SMTLIBConstants.STORE: {
-			final ArraySortInterpretation array = (ArraySortInterpretation)
-					mModel.provideSortInterpretation(fs.getParameterSorts()[0]);
+			final ArraySortInterpretation array = (ArraySortInterpretation) mModel
+					.provideSortInterpretation(fs.getParameterSorts()[0]);
 			return array.normalizeStoreTerm(theory.term(fs, args));
 		}
 
@@ -442,7 +443,8 @@ public class ModelEvaluator extends TermTransformer {
 			return theory.term(fs, args[0]);
 
 		case SMTLIBConstants.SELECT: {
-			// we assume that the array parameter is a term of the form store(store(...(const v),...))
+			// we assume that the array parameter is a term of the form
+			// store(store(...(const v),...))
 			ApplicationTerm array = (ApplicationTerm) args[0];
 			final Term index = args[1];
 			FunctionSymbol head = array.getFunction();
@@ -459,11 +461,34 @@ public class ModelEvaluator extends TermTransformer {
 		}
 
 		case SMTInterpolConstants.DIFF: {
-			final ArraySortInterpretation array = (ArraySortInterpretation)
-					mModel.provideSortInterpretation(fs.getParameterSorts()[0]);
+			final ArraySortInterpretation array = (ArraySortInterpretation) mModel
+					.provideSortInterpretation(fs.getParameterSorts()[0]);
 			return array.computeDiff(args[0], args[1], fs.getReturnSort());
 		}
+		case "@EQ": {
+			return lookupFunction(fs, args);
+		}
 		default:
+			if (fs.isConstructor()) {
+				return theory.term(fs, args);
+			} else if (fs.isSelector()) {
+				final ApplicationTerm arg = (ApplicationTerm) args[0];
+				final DataType dataType = (DataType) arg.getSort().getSortSymbol();
+				assert arg.getFunction().isConstructor();
+				final Constructor constr = dataType.getConstructor(arg.getFunction().getName());
+				final String[] selectors = constr.getSelectors();
+				for (int i = 0; i < selectors.length; i++) {
+					if (selectors[i].equals(fs.getName())) {
+						return arg.getParameters()[i];
+					}
+				}
+				// undefined case for selector on wrong constructor. use model.
+				return lookupFunction(fs, args);
+			} else if (fs.getName().equals(SMTLIBConstants.IS)) {
+				final ApplicationTerm arg = (ApplicationTerm) args[0];
+				assert arg.getFunction().isConstructor();
+				return arg.getFunction().getName().equals(fs.getIndices()[0]) ? theory.mTrue : theory.mFalse;
+			}
 			throw new AssertionError("Unknown internal function " + fs.getName());
 		}
 	}
