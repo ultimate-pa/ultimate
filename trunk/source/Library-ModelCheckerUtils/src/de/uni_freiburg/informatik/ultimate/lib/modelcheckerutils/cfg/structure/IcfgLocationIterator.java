@@ -98,8 +98,13 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	@Override
 	public LOC next() {
 		final LOC current = mWorklist.removeFirst();
-		current.getOutgoingEdges().stream().map(a -> (LOC) a.getTarget()).filter(mFinished::add)
-				.forEachOrdered(mWorklist::add);
+		for (final var edge : current.getOutgoingEdges()) {
+			final var loc = (LOC) edge.getTarget();
+			final boolean isNew = mFinished.add(loc);
+			if (isNew) {
+				mWorklist.add(loc);
+			}
+		}
 		return current;
 	}
 
