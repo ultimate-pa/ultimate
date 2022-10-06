@@ -63,19 +63,19 @@ public class IcfgCopyFactory implements ICopyActionFactory<IcfgEdge> {
 		if (newTransformulaWithBE == null) {
 			if (original instanceof IcfgForkThreadCurrentTransition) {
 				return mEdgeBuilder.constructForkCurrentTransition((IcfgForkThreadCurrentTransition) original,
-						newTransformula, false);
+						newTransformula);
 			}
 			if (original instanceof IcfgForkThreadOtherTransition) {
 				return mEdgeBuilder.constructForkOtherTransition((IcfgForkThreadOtherTransition) original,
-						newTransformula, false);
+						newTransformula);
 			}
 			if (original instanceof IcfgJoinThreadCurrentTransition) {
 				return mEdgeBuilder.constructJoinCurrentTransition((IcfgJoinThreadCurrentTransition) original,
-						newTransformula, false);
+						newTransformula);
 			}
 			if (original instanceof IcfgJoinThreadOtherTransition) {
 				return mEdgeBuilder.constructJoinOtherTransition((IcfgJoinThreadOtherTransition) original,
-						newTransformula, false);
+						newTransformula);
 			}
 			return mEdgeBuilder.constructInternalTransition(original, original.getSource(), original.getTarget(),
 					newTransformula);

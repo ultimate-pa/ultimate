@@ -339,55 +339,37 @@ public class IcfgEdgeBuilder {
 	}
 
 	public IcfgForkThreadCurrentTransition constructForkCurrentTransition(
-			final IcfgForkThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf,
-			final boolean connect) {
+			final IcfgForkThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf) {
 		final IcfgForkThreadCurrentTransition rtr =
 				mEdgeFactory.createForkThreadCurrentTransition(oldTransition.getSource(), oldTransition.getTarget(),
 						null, tf, oldTransition.getForkSmtArguments(), oldTransition.getNameOfForkedProcedure());
 		ModelUtils.copyAnnotations(oldTransition, rtr);
-		if (connect) {
-			oldTransition.getSource().addOutgoing(rtr);
-			oldTransition.getTarget().addIncoming(rtr);
-		}
 		return rtr;
 	}
 
 	public IcfgForkThreadOtherTransition constructForkOtherTransition(final IcfgForkThreadOtherTransition oldTransition,
-			final UnmodifiableTransFormula tf, final boolean connect) {
+			final UnmodifiableTransFormula tf) {
 		final IcfgForkThreadOtherTransition rtr =
 				mEdgeFactory.createForkThreadOtherTransition(oldTransition.getSource(), oldTransition.getTarget(), null,
 						tf, oldTransition.getCorrespondingIIcfgForkTransitionCurrentThread());
 		ModelUtils.copyAnnotations(oldTransition, rtr);
-		if (connect) {
-			oldTransition.getSource().addOutgoing(rtr);
-			oldTransition.getTarget().addIncoming(rtr);
-		}
 		return rtr;
 	}
 
 	public IcfgJoinThreadCurrentTransition constructJoinCurrentTransition(
-			final IcfgJoinThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf,
-			final boolean connect) {
+			final IcfgJoinThreadCurrentTransition oldTransition, final UnmodifiableTransFormula tf) {
 		final IcfgJoinThreadCurrentTransition rtr = mEdgeFactory.createJoinThreadCurrentTransition(
 				oldTransition.getSource(), oldTransition.getTarget(), null, tf, oldTransition.getJoinSmtArguments());
 		ModelUtils.copyAnnotations(oldTransition, rtr);
-		if (connect) {
-			oldTransition.getSource().addOutgoing(rtr);
-			oldTransition.getTarget().addIncoming(rtr);
-		}
 		return rtr;
 	}
 
 	public IcfgJoinThreadOtherTransition constructJoinOtherTransition(final IcfgJoinThreadOtherTransition oldTransition,
-			final UnmodifiableTransFormula tf, final boolean connect) {
+			final UnmodifiableTransFormula tf) {
 		final IcfgJoinThreadOtherTransition rtr =
 				mEdgeFactory.createJoinThreadOtherTransition(oldTransition.getSource(), oldTransition.getTarget(), null,
 						tf, oldTransition.getCorrespondingIIcfgJoinTransitionCurrentThread());
 		ModelUtils.copyAnnotations(oldTransition, rtr);
-		if (connect) {
-			oldTransition.getSource().addOutgoing(rtr);
-			oldTransition.getTarget().addIncoming(rtr);
-		}
 		return rtr;
 	}
 
