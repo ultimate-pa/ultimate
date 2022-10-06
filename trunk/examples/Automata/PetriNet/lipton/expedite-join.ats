@@ -17,7 +17,7 @@ PetriNet initial = (
 
 PetriNet expected = (
   alphabet    = { "bajoin" },
-  places      = { "l11" "l21" "l22" "lacc" },
+  places      = { "l11" "l21" "lacc" },
   transitions = {
     ({ "l11" "l21" } "bajoin" { "lacc" })
   },
