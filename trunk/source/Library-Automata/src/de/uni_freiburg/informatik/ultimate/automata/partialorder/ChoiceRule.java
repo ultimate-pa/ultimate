@@ -99,7 +99,7 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			// remove obsolete transitions
 			for (final Transition<L, P> component : components) {
 				removeTransition(component);
-				mCoenabledRelation.deleteElement(component);
+				mCoenabledRelation.removeElement(component);
 			}
 
 			// add mover information for composition

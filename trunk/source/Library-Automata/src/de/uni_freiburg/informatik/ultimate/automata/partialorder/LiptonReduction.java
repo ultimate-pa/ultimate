@@ -419,7 +419,7 @@ public class LiptonReduction<L, P> {
 
 		// delete obsolete information
 		for (final Transition<L, P> t : obsoleteTransitions) {
-			mCoEnabledRelation.deleteElement(t);
+			mCoEnabledRelation.removeElement(t);
 		}
 
 		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);

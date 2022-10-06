@@ -92,7 +92,7 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 			mCoenabledRelation.copyRelationships(incoming, newIncoming);
 
 			removeTransition(incoming);
-			mCoenabledRelation.deleteElement(incoming);
+			mCoenabledRelation.removeElement(incoming);
 		}
 
 		for (final var outgoing : new HashSet<>(net.getSuccessors(place))) {
@@ -107,7 +107,7 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 			mCoenabledRelation.copyRelationships(outgoing, newOutgoing);
 
 			removeTransition(outgoing);
-			mCoenabledRelation.deleteElement(outgoing);
+			mCoenabledRelation.removeElement(outgoing);
 		}
 
 		for (final var inhibitable : transitions) {
@@ -124,7 +124,7 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 			}
 
 			removeTransition(inhibitable);
-			mCoenabledRelation.deleteElement(inhibitable);
+			mCoenabledRelation.removeElement(inhibitable);
 		}
 	}
 
