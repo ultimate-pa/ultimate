@@ -113,29 +113,50 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		super.removeAllPairs(rel);
 	}
 
-	@Override
-	public Set<E> removeDomainElement(final E elem) {
+	/**
+	 * Remove all pairs involving a given element from the relation.
+	 *
+	 * @param elem
+	 *            the element to remove
+	 * @return the set of all elements with which the given {@code elem} was in relation
+	 */
+	public Set<E> removeElement(final E elem) {
 		final Set<E> rangeElems = super.removeDomainElement(elem);
 		super.removeRangeElement(elem);
 		return rangeElems;
 	}
 
 	@Override
-	public void removeRangeElement(final E elem) {
-		// On symmetric relations, removing a range element is the same as removing a domain element
-		removeDomainElement(elem);
+	public Set<E> removeDomainElement(final E elem) {
+		return removeElement(elem);
 	}
 
 	@Override
-	public void replaceDomainElement(final E element, final E replacement) {
+	public void removeRangeElement(final E elem) {
+		removeElement(elem);
+	}
+
+	/**
+	 * Replaces all occurrences of an element in this relation by some other element.
+	 *
+	 * @param element
+	 *            the element to replace
+	 * @param replacement
+	 *            the new element
+	 */
+	public void replaceElement(final E element, final E replacement) {
 		super.replaceDomainElement(element, replacement);
 		super.replaceRangeElement(element, replacement);
 	}
 
 	@Override
+	public void replaceDomainElement(final E element, final E replacement) {
+		replaceElement(element, replacement);
+	}
+
+	@Override
 	public void replaceRangeElement(final E element, final E replacement) {
-		// On symmetric relations, replacing a range element is the same as replacing a domain element
-		replaceDomainElement(element, replacement);
+		replaceElement(element, replacement);
 	}
 
 	public Set<Doubleton<E>> buildSetOfDoubletons() {
