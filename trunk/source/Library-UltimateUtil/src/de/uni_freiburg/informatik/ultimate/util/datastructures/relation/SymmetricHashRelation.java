@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2017 University of Freiburg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2017-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -26,23 +27,27 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
- * Implementation of an HashRelation where the add method and the remove method
- * make sure that that relation contains a pair (a,b) iff the relation contains
- * the pair (b,a).
- * <p>
- * WARNING: If you use other ways to modify this relation (e.g., removal during
- * iteration, the result might not be symmetric any more.
- * </p>
+ * Implementation of an HashRelation where the add method and the remove method make sure that that relation contains a
+ * pair (a,b) iff the relation contains the pair (b,a).
+ *
+ * WARNING: If you use other ways to modify this relation (e.g., removal during iteration), the result might not be
+ * symmetric any more.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <E>
+ *            The type of elements in the relation.
  */
 public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 
@@ -56,40 +61,95 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 
 	@Override
 	public boolean addPair(final E domainElem, final E rangeElem) {
-		final boolean wasModified = super.addPair(domainElem, rangeElem);
-		super.addPair(rangeElem, domainElem);
+		final boolean wasModified1 = super.addPair(domainElem, rangeElem);
+		final boolean wasModified2 = super.addPair(rangeElem, domainElem);
+
+		assert wasModified1 == wasModified2;
+
+		return wasModified1;
+	}
+
+	@Override
+	public boolean addAllPairs(final E domainElem, final Collection<E> rangeElems) {
+		final boolean wasModified = super.addAllPairs(domainElem, rangeElems);
+		for (final E rangeElem : rangeElems) {
+			addPair(rangeElem, domainElem);
+		}
 		return wasModified;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see de.uni_freiburg.informatik.ultimate.util.datastructures.relation.
-	 * AbstractRelation#removePair(java.lang.Object, java.lang.Object)
-	 */
+	@Override
+	public boolean addAll(final AbstractRelation<E, E, ?, ?> rel) {
+		final boolean wasModified = super.addAll(rel);
+
+		if (!(rel instanceof SymmetricHashRelation<?>)) {
+			for (final var entry : rel) {
+				super.addPair(entry.getValue(), entry.getKey());
+			}
+		}
+
+		return wasModified;
+	}
+
+	@Override
+	public boolean reverseAddAll(final Map<E, E> map) {
+		// This is fine as long as AbstractRelation internally calls #addPair
+		return super.reverseAddAll(map);
+	}
+
 	@Override
 	public boolean removePair(final E domainElem, final E rangeElem) {
-		// Remove pair in both directions as it is considered to be symmetric
-		final boolean containedPairFirstDirection = super.removePair(domainElem, rangeElem);
-		final boolean containedPairSecondDirection = super.removePair(rangeElem, domainElem);
+		final boolean wasModified1 = super.removePair(domainElem, rangeElem);
+		final boolean wasModified2 = super.removePair(rangeElem, domainElem);
 
-		// A valid symmetric relation always needs to hold both directions if any
-		assert containedPairFirstDirection == containedPairSecondDirection;
+		assert wasModified1 == wasModified2;
 
-		return containedPairFirstDirection;
+		return wasModified1;
+	}
+
+	@Override
+	public void removeAllPairs(final AbstractRelation<E, E, ?, ?> rel) {
+		// This is fine as long as AbstractRelation internally calls #removePair
+		super.removeAllPairs(rel);
+	}
+
+	@Override
+	public Set<E> removeDomainElement(final E elem) {
+		final Set<E> rangeElems = super.removeDomainElement(elem);
+		super.removeRangeElement(elem);
+		return rangeElems;
+	}
+
+	@Override
+	public void removeRangeElement(final E elem) {
+		// On symmetric relations, removing a range element is the same as removing a domain element
+		removeDomainElement(elem);
+	}
+
+	@Override
+	public void replaceDomainElement(final E element, final E replacement) {
+		super.replaceDomainElement(element, replacement);
+		super.replaceRangeElement(element, replacement);
+	}
+
+	@Override
+	public void replaceRangeElement(final E element, final E replacement) {
+		// On symmetric relations, replacing a range element is the same as replacing a domain element
+		replaceDomainElement(element, replacement);
 	}
 
 	public Set<Doubleton<E>> buildSetOfDoubletons() {
 		final Set<Doubleton<E>> result = new HashSet<>();
-		for (final Entry<E, E> entry : getSetOfPairs()) {
+		for (final Entry<E, E> entry : this) {
 			result.add(new Doubleton<>(entry.getKey(), entry.getValue()));
 		}
 		return result;
 	}
 
+	// TODO Maybe this method should be renamed to buildSetOfNonReflexiveDoubletons ?
 	public Set<Doubleton<E>> buildSetOfNonSymmetricDoubletons() {
 		final Set<Doubleton<E>> result = new HashSet<>();
-		for (final Entry<E, E> entry : getSetOfPairs()) {
+		for (final Entry<E, E> entry : this) {
 			if (!entry.getKey().equals(entry.getValue())) {
 				result.add(new Doubleton<>(entry.getKey(), entry.getValue()));
 			}
