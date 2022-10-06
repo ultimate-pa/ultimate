@@ -477,7 +477,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 								@Override
 								public String toString() {
 									return "(" + mKey + ", " + mValue + ")";
-								};
+								}
 							};
 						}
 						return null;
