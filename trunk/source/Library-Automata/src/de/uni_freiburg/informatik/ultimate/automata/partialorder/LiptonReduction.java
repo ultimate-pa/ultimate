@@ -405,13 +405,7 @@ public class LiptonReduction<L, P> {
 		// update information for composed transition
 		for (final Triple<L, Transition<L, P>, Transition<L, P>> composition : pendingCompositions) {
 			final Transition<L, P> composedTransition = composedLetters2Transitions.get(composition.getFirst());
-
-			// TODO This was ok when the coenabled statements of t1 and t2 were the same.
-			// TODO Now that they may differ, this could either be unsound or too coarse.
-			// TODO Check what the coenabled transitions of composedTransition could actually be
-			// TODO maybe the union or intersection of the coenabled transitions for t1 resp. t2?
-			mCoEnabledRelation.copyRelationships(composition.getSecond(), composedTransition);
-
+			updateCoenabledForComposition(composition.getSecond(), composition.getThird(), composedTransition);
 			updateSequentialCompositions(composedTransition, composition.getSecond(), composition.getThird());
 			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
@@ -424,6 +418,26 @@ public class LiptonReduction<L, P> {
 
 		oldToNewTransitions.forEach(mCoEnabledRelation::replaceElement);
 		return newNet;
+	}
+
+	private void updateCoenabledForComposition(final Transition<L, P> t1, final Transition<L, P> t2,
+			final Transition<L, P> composed) {
+		for (final var t : mCoEnabledRelation.getImage(t1)) {
+			if (coenabledTest(t, t1, t2)) {
+				mCoEnabledRelation.addPair(composed, t);
+			}
+		}
+	}
+
+	// Checks a necessary condition for the transition t to be coenabled with the composition of t1 and t2.
+	private boolean coenabledTest(final Transition<L, P> t, final Transition<L, P> t1, final Transition<L, P> t2) {
+		assert mCoEnabledRelation.containsPair(t1, t);
+		if (mCoEnabledRelation.containsPair(t2, t)) {
+			return true;
+		}
+		return DataStructureUtils.haveNonEmptyIntersection(t.getPredecessors(), t2.getPredecessors())
+				&& DataStructureUtils.intersectionStream(t.getPredecessors(), t2.getPredecessors())
+						.allMatch(t1.getSuccessors()::contains);
 	}
 
 	private static final class PendingComposition<L, P> {
