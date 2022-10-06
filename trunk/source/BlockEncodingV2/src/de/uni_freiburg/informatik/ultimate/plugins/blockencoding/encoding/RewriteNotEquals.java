@@ -116,8 +116,8 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 				oldTransFormula.getOutVars(), oldTransFormula.getNonTheoryConsts().isEmpty(),
 				oldTransFormula.getNonTheoryConsts(), oldTransFormula.getBranchEncoders().isEmpty(),
 				oldTransFormula.getBranchEncoders(), oldTransFormula.getAuxVars().isEmpty());
-		tfb.addAuxVarsButRenameToFreshCopies(oldTransFormula.getAuxVars(), mgScript);
 		tfb.setFormula(newTerm);
+		tfb.addAuxVarsButRenameToFreshCopies(oldTransFormula.getAuxVars(), mgScript);
 		tfb.setInfeasibility(oldTransFormula.isInfeasible());
 		return tfb.finishConstruction(mgScript);
 	}
