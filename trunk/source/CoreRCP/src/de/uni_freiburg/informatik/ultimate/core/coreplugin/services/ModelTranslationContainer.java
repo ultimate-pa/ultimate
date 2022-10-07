@@ -168,8 +168,8 @@ class ModelTranslationContainer implements IBacktranslationService {
 		}
 		return current;
 	}
-	
-	
+
+
 
 	@SuppressWarnings("unchecked")
 	private <TTE, STE> List<TTE> translateTrace(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining,
@@ -184,7 +184,7 @@ class ModelTranslationContainer implements IBacktranslationService {
 	@Override
 	public <STE, SE> IProgramExecution<?, ?>
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
+		final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>> current = new ArrayDeque<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
@@ -208,11 +208,12 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@SuppressWarnings("unchecked")
 	private <STE, TTE, SE, TE> IProgramExecution<TTE, TE> translateProgramExecution(
-			final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining, final IProgramExecution<STE, SE> programExecution) {
-		if (remaining.isEmpty()) {
+			final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>> remainingBefore, final IProgramExecution<STE, SE> programExecution) {
+		if (remainingBefore.isEmpty()) {
 			return (IProgramExecution<TTE, TE>) programExecution;
 		}
-		final ITranslator<STE, TTE, SE, TE, ?, ?> translator = (ITranslator<STE, TTE, SE, TE, ?, ?>) remaining.pop();
+		final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>> remainingAfter = new ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>>(remainingBefore);
+		final ITranslator<STE, TTE, SE, TE, ?, ?> translator = (ITranslator<STE, TTE, SE, TE, ?, ?>) remainingAfter.pop();
 		final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
 
 		// System.out.println("-----");
@@ -222,7 +223,7 @@ class ModelTranslationContainer implements IBacktranslationService {
 		// System.out.println(translated);
 		// System.out.println("-----");
 
-		return translateProgramExecution(remaining, translated);
+		return translateProgramExecution(remainingAfter, translated);
 	}
 
 	@Override
@@ -261,17 +262,17 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final ProgramState<TE> translated = translator.translateProgramState(programState);
 		return translateProgramState(remaining, translated);
 	}
-	
+
 	@Override
-	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+	public <SE> String translateProgramStateToString(final ProgramState<SE> programState) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(
 				programState.getClassOfExpression());
 		final ITranslator<?, ?, ?, ?, ?, ?> last = current.firstElement();
 		return translateProgramStateToString(translateProgramState(current, programState), last);
 	}
 
-	
-	private static <TE> String translateProgramStateToString(ProgramState<TE> translateProgramState,
+
+	private static <TE> String translateProgramStateToString(final ProgramState<TE> translateProgramState,
 			final ITranslator<?, ?, ?, ?, ?, ?> trans) {
 		final ITranslator<?, ?, ?, TE, ?, ?> last = (ITranslator<?, ?, ?, TE, ?, ?>) trans;
 		return translateProgramState.toString(x -> last.targetExpressionToString(x));

@@ -1118,14 +1118,7 @@ public class CfgBuilder {
 					mLogger.debug("LocNode for " + labelId + " already" + " constructed, namely: " + locNode);
 				}
 				if (st instanceof Label && locNode.getDebugIdentifier() == labelId) {
-
 					loc.annotate(locNode);
-					if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("LocNode does not have to Location of the while loop" + st.getLocation());
-						}
-						mIcfg.getLoopLocations().add(locNode);
-					}
 				}
 				ModelUtils.copyAnnotations(st, locNode);
 				return locNode;
@@ -1135,9 +1128,6 @@ public class CfgBuilder {
 			mProcLocNodes.put(labelId, locNode);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("LocNode for " + labelId + " has not" + " existed yet. Constructed it");
-			}
-			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
-				mIcfg.getLoopLocations().add(locNode);
 			}
 			return locNode;
 		}
@@ -1150,7 +1140,7 @@ public class CfgBuilder {
 			}
 			final StringDebugIdentifier tmpLabelIdentifier = new StringDebugIdentifier(labelName);
 			if (mCurrent instanceof BoogieIcfgLocation) {
-				// from now on this label is represented by mcurrent
+				// from now on this label is represented by mCurrent
 
 				final BoogieIcfgLocation oldNodeForLabel = mLabel2LocNodes.get(tmpLabelIdentifier);
 				if (oldNodeForLabel != null) {
@@ -1161,9 +1151,9 @@ public class CfgBuilder {
 				mLastLabelName = tmpLabelIdentifier;
 				// mlocSuffix = 0;
 
-				// is there already a LocNode that represents this
-				// label? (This can be the case if this label was destination
-				// of a goto statement) If not construct the LocNode.
+				// Is there already a LocNode that represents this label?
+				// (This can be the case if this label was destination of a goto statement.)
+				// If not construct the LocNode.
 				// If yes, add the Location Object to the existing LocNode.
 				final BoogieIcfgLocation locNode = getLocNodeForLabel(tmpLabelIdentifier, st);
 
@@ -1172,6 +1162,13 @@ public class CfgBuilder {
 					locNode.addIncoming((CodeBlock) mCurrent);
 				}
 				mCurrent = locNode;
+			}
+
+			// Mark the current location as loop location if necessary.
+			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
+			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
+				mLogger.debug("LocNode %s is marked as loop head (location: %s)", mCurrent, st.getLocation());
+				mIcfg.getLoopLocations().add((BoogieIcfgLocation) mCurrent);
 			}
 		}
 
