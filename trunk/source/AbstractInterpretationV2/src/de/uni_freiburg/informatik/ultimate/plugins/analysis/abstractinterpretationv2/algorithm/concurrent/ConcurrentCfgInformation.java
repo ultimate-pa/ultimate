@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +34,10 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
 				.collect(Collectors.toSet());
 		mProceduresToForkLocations = new HashRelation<>();
+		final HashRelation<String, String> forkRelation = new HashRelation<>();
+		getForks().forEach(x -> forkRelation.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
+		final HashRelation<String, String> closureDepending = closure(forkRelation);
+		final HashRelation<String, String> dependingOn = computeDependingProcedures(closureDepending, forkRelation);
 		// mActiveThreadPerLocation = computeInterferingThreadsPerLocation(...);
 		getForks().forEach(x -> mProceduresToForkLocations.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
 	}
@@ -47,9 +50,35 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		return mProceduresToForkLocations.getImage(procedure);
 	}
 
+	// TODO: This is not really nice code
 	public List<String> getTopologicalProcedureOrder() {
-		final List<String> result = getTopologicalOrderReverse();
-		Collections.reverse(result);
+		final Map<String, Set<String>> forkRelation = getForkRelation();
+		final List<String> result = new ArrayList<>();
+		final Map<String, Integer> forkCounter = new HashMap<>();
+		forkRelation.forEach((k, v) -> forkCounter.put(k, 0));
+		getForks().forEach(
+				x -> forkCounter.put(x.getNameOfForkedProcedure(), forkCounter.get(x.getNameOfForkedProcedure()) + 1));
+		final HashRelation<Integer, String> numberOfIncomingForks = new HashRelation<>();
+		forkRelation.forEach((k, v) -> numberOfIncomingForks.addPair(forkCounter.get(k), k));
+		Set<String> noIncoming = numberOfIncomingForks.removeDomainElement(0);
+		while (!noIncoming.isEmpty()) {
+			result.addAll(noIncoming);
+			final Set<String> newNoIncoming = new HashSet<>();
+			for (final String n : noIncoming) {
+				for (final String m : forkRelation.get(n)) {
+					final Integer oldValue = forkCounter.get(m);
+					numberOfIncomingForks.removePair(oldValue, m);
+					if (oldValue == 1) {
+						newNoIncoming.add(m);
+					} else {
+						final Integer newValue = oldValue - 1;
+						forkCounter.put(m, newValue);
+						numberOfIncomingForks.addPair(newValue, m);
+					}
+				}
+			}
+			noIncoming = newNoIncoming;
+		}
 		return result;
 	}
 
@@ -178,6 +207,60 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 				}
 				new IcfgLocationIterator<>(fork.getTarget())
 						.forEachRemaining(x -> result.addAllPairs((LOC) x, activeThreadsAfterFork.getImage(fork)));
+			}
+		}
+		return result;
+	}
+
+	// TODO: This does not quite work yet
+	private static HashRelation<String, String> closure(final HashRelation<String, String> map) {
+		final HashRelation<String, String> result = new HashRelation<>(map);
+		boolean changes = true;
+		while (changes) {
+			changes = false;
+			for (final Entry<String, HashSet<String>> entry : result.entrySet()) {
+				for (final String forked : entry.getValue()) {
+					final String current = entry.getKey();
+					if (DataStructureUtils.haveNonEmptyIntersection(result.getImage(forked),
+							result.getImage(current))) {
+						result.addAllPairs(current, result.getImage(forked));
+						changes = true;
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	private HashRelation<String, String> computeDependingProcedures(final HashRelation<String, String> closureForks,
+			final HashRelation<String, String> forkRelation) {
+		final HashRelation<String, String> result = new HashRelation<>();
+		final ArrayDeque<String> worklist = new ArrayDeque<>();
+		final Set<String> added = new HashSet<>();
+		final String startitem = getTopologicalProcedureOrder().get(0);
+		worklist.add(startitem);
+		added.add(startitem);
+		while (!worklist.isEmpty()) {
+			final String currentItem = worklist.poll();
+			final Set<String> forkedThreads = forkRelation.getImage(currentItem);
+			for (final String forked : forkedThreads) {
+				// copy all entries von item into child
+				result.addAllPairs(forked, result.getImage(currentItem));
+				// add parent
+				result.addPair(forked, currentItem);
+				// add closure over all other children
+				for (final String child : forkedThreads) {
+					if (child.equals(forked)) {
+						continue;
+					}
+					result.addPair(forked, child);
+					result.addAllPairs(forked, closureForks.getImage(child));
+				}
+
+				if (!added.contains(forked)) {
+					worklist.add(forked);
+					added.add(forked);
+				}
 			}
 		}
 		return result;
