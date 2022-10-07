@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -64,7 +65,8 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		final boolean wasModified1 = super.addPair(domainElem, rangeElem);
 		final boolean wasModified2 = super.addPair(rangeElem, domainElem);
 
-		assert wasModified1 == wasModified2;
+		assert wasModified1 == wasModified2 || Objects.equals(domainElem,
+				rangeElem) : "relation contained non-symmetric pair: " + domainElem + " and " + rangeElem;
 
 		return wasModified1;
 	}
@@ -102,7 +104,8 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		final boolean wasModified1 = super.removePair(domainElem, rangeElem);
 		final boolean wasModified2 = super.removePair(rangeElem, domainElem);
 
-		assert wasModified1 == wasModified2;
+		assert wasModified1 == wasModified2 || Objects.equals(domainElem,
+				rangeElem) : "relation contained non-symmetric pair: " + domainElem + " and " + rangeElem;
 
 		return wasModified1;
 	}
