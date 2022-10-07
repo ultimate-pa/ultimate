@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -27,12 +28,14 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
 	private final Set<String> mUnboundedThreads;
+	// private final HashRelation<LOC, String> mActiveThreadPerLocation;
 
 	public ConcurrentCfgInformation(final IIcfg<? extends LOC> icfg) {
 		mIcfg = icfg;
 		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
 				.collect(Collectors.toSet());
 		mProceduresToForkLocations = new HashRelation<>();
+		// mActiveThreadPerLocation = computeInterferingThreadsPerLocation(...);
 		getForks().forEach(x -> mProceduresToForkLocations.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
 	}
 
@@ -98,9 +101,10 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		return !readingProcedures.equals(writingProcedures);
 	}
 
-	public Set<String> getInterferingProcedures(final LOC location) {
+	public Set<String> getInterferingThreads(final LOC location) {
 		// TODO: Do something more precise based on the flow of the forks
 		// (e.g. there should be no interference before a fork)
+		// return mActiveThreadPerLocation.getImage(location);
 		final Set<String> result = new HashSet<>(mIcfg.getProcedureEntryNodes().keySet());
 		final String ownProcedure = location.getProcedure();
 		if (getForkLocations(ownProcedure).size() <= 1 && !mUnboundedThreads.contains(ownProcedure)) {
@@ -152,6 +156,28 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 					worklist.add(x);
 					return new HashSet<>();
 				});
+			}
+		}
+		return result;
+	}
+
+	private HashRelation<LOC, String> computeInterferingThreadsPerLocation(
+			final HashRelation<String, String> initialActiveThreads,
+			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, String> activeThreadsAfterFork) {
+		final HashRelation<LOC, String> result = new HashRelation<>();
+		for (final Entry<String, ? extends LOC> entry : mIcfg.getProcedureEntryNodes().entrySet()) {
+			final String thread = entry.getKey();
+			final Set<String> activeThreads = initialActiveThreads.getImage(thread);
+			if (!activeThreads.isEmpty()) {
+				new IcfgLocationIterator<>(entry.getValue())
+						.forEachRemaining(x -> result.addAllPairs(x, activeThreads));
+			}
+			for (final var fork : getForks()) {
+				if (!fork.getPrecedingProcedure().equals(thread)) {
+					continue;
+				}
+				new IcfgLocationIterator<>(fork.getTarget())
+						.forEachRemaining(x -> result.addAllPairs((LOC) x, activeThreadsAfterFork.getImage(fork)));
 			}
 		}
 		return result;

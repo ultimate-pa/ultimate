@@ -75,7 +75,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mTopologicalOrder = mInfo.getTopologicalProcedureOrder();
 		// TODO: There can be multiple variants of this predicate (e.g. full flow-senstive analysis)
 		// This should be probably an argument or setting.
-		mIsInterfering = (loc, action) -> mInfo.getInterferingProcedures(loc).contains(action.getPrecedingProcedure());
+		mIsInterfering = (loc, action) -> mInfo.getInterferingThreads(loc).contains(action.getPrecedingProcedure());
 		mTopState = new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
 
