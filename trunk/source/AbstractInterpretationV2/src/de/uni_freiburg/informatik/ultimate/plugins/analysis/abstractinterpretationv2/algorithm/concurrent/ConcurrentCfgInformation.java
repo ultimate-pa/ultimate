@@ -212,17 +212,16 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		return result;
 	}
 
-	// TODO: This does not quite work yet
 	private static HashRelation<String, String> closure(final HashRelation<String, String> map) {
 		final HashRelation<String, String> result = new HashRelation<>(map);
 		boolean changes = true;
 		while (changes) {
 			changes = false;
 			for (final Entry<String, HashSet<String>> entry : result.entrySet()) {
-				for (final String forked : entry.getValue()) {
+				// TODO: We need to create a copy to avoid ConcurrentModificationException, is there a better way?
+				for (final String forked : new HashSet<>(entry.getValue())) {
 					final String current = entry.getKey();
-					if (DataStructureUtils.haveNonEmptyIntersection(result.getImage(forked),
-							result.getImage(current))) {
+					if (result.getImage(forked).stream().anyMatch(x -> !entry.getValue().contains(x))) {
 						result.addAllPairs(current, result.getImage(forked));
 						changes = true;
 					}
