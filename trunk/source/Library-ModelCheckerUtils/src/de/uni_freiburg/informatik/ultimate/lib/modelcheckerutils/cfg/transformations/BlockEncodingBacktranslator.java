@@ -182,7 +182,10 @@ public class BlockEncodingBacktranslator<L extends IAction>
 		final ArrayDeque<L> stack = new ArrayDeque<>();
 		final ArrayDeque<Map<TermVariable, Boolean>> branchEncoderStack = new ArrayDeque<>();
 		stack.push(transition);
-		branchEncoderStack.push(branchEncoders == null ? Map.of() : branchEncoders);
+
+		// dummy value emptyBE represents absence of branch encoders (null is not supported by ArrayDeque)
+		final Map<TermVariable, Boolean> emptyBE = Map.of();
+		branchEncoderStack.push(branchEncoders == null ? emptyBE : branchEncoders);
 
 		while (!stack.isEmpty()) {
 			final L current = stack.pop();
@@ -202,16 +205,20 @@ public class BlockEncodingBacktranslator<L extends IAction>
 					stack.push(component);
 
 					final BranchEncoderRenaming renaming = renamings.get(i);
-					branchEncoderStack.push(renaming == null ? currentBE : renaming.applyToValues(currentBE));
+					if (renaming == null || currentBE == emptyBE) {
+						branchEncoderStack.push(currentBE);
+					} else {
+						branchEncoderStack.push(renaming.applyToValues(currentBE));
+					}
 					i++;
 				}
 			} else if (mParallelCompositions.containsKey(current)) {
 				final Set<L> choices = mParallelCompositions.get(current);
 				assert choices != null;
 
-				if (currentBE == null) {
+				if (currentBE == emptyBE) {
 					mLogger.warn("Failed to translate choice composition: Branch encoders not available.");
-					result.addFirst(new Pair<>(current, currentBE));
+					result.addFirst(new Pair<>(current, null));
 					continue;
 				}
 
@@ -221,7 +228,7 @@ public class BlockEncodingBacktranslator<L extends IAction>
 					final TermVariable indicator = mBranchEncoderMapping.get(choice);
 					assert currentBE.get(indicator) != null : "Branch indicator value was unknown: " + indicator
 							+ " in " + currentBE;
-					if (currentBE.get(indicator)) {
+					if (currentBE.get(indicator).booleanValue()) {
 						stack.push(choice);
 						branchEncoderStack.push(currentBE);
 						choiceFound = true;
@@ -235,7 +242,7 @@ public class BlockEncodingBacktranslator<L extends IAction>
 				// Transition is assumed to be original.
 				// As the last transition of a sequence is handled first (top of stack, see
 				// above), we must prepend this transition to the result (instead of appending).
-				result.addFirst(new Pair<>(current, currentBE));
+				result.addFirst(new Pair<>(current, currentBE == emptyBE ? null : currentBE));
 			}
 		}
 		return result;
