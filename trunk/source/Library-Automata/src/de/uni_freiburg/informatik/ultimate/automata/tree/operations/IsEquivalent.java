@@ -287,6 +287,8 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 			this.mExitMessage = "The second operand recognizes a word not recognized by the first one.";
 			return false;
 		}
+
+		mExitMessage = "The operands are equivalent";
 		return true;
 	}
 
