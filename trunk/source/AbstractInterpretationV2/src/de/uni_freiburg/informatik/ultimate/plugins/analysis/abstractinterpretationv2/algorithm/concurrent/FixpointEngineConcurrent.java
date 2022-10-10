@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -50,7 +51,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> mParams;
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final BiPredicate<LOC, ACTION> mIsInterfering;
-	private final DisjunctiveAbstractState<STATE> mTopState;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> factory, final IIcfg<? extends LOC> icfg) {
@@ -73,7 +73,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		// TODO: There can be multiple variants of this predicate (e.g. full flow-senstive analysis)
 		// This should be probably an argument or setting.
 		mIsInterfering = (loc, action) -> mAnalyzer.getInterferingThreads(loc).contains(action.getPrecedingProcedure());
-		mTopState = new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
 
 	@Override
@@ -162,13 +161,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private DisjunctiveAbstractState<STATE> unionStates(final Stream<DisjunctiveAbstractState<STATE>> states,
-			final DisjunctiveAbstractState<STATE> defaultValue) {
-		return states.reduce(DisjunctiveAbstractState::union).orElse(defaultValue);
+			final Supplier<DisjunctiveAbstractState<STATE>> defaultSupplier) {
+		return states.reduce(DisjunctiveAbstractState::union).orElseGet(defaultSupplier);
 	}
 
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
 		return unionStates(mAnalyzer.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState),
-				mTopState);
+				() -> new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState()));
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
@@ -188,7 +187,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
 		return unionStates(relevantPostStates.keySet().stream().filter(x -> mIsInterfering.test(loc, x))
-				.map(relevantPostStates::get), null);
+				.map(relevantPostStates::get), () -> null);
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>>
