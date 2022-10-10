@@ -70,14 +70,36 @@ def find_flaky_tests(server, job_name, number_of_builds):
     return res
 
 
+# TODO: This is quite hacky (but seems to work), is there a better way?
+def get_test_url(base_url, clazz, name):
+    formatted_class = '/'.join(clazz.rsplit('.', 1))
+    formatted_name = name.replace(' ', '_').replace('.', '_').replace('-', '_')
+    return f"{base_url}testReport{formatted_class}/{formatted_name}"
+
+
+def format_build(build_info):
+    return f'[{build_info["displayName"]}]({build_info["url"]})'
+
+
 def format_text(failures, build_info, reference_build_info):
-    formatted_failures = "\n".join(f"* [{n} ({c})]({build_info['url']}testReport/{'/'.join(c.rsplit('.', 1))}/{n.replace(' ', '_').replace('.', '_').replace('-', '_')})" for c, n in sorted(failures))
-    return f"""Compared the latest nightly build [{build_info["displayName"]}]({build_info["url"]}) with the build [{reference_build_info["displayName"]}]({reference_build_info["url"]}) of the reference branch.
+    compared = f'Compared the latest nightly build {format_build(build_info)}'\
+               f' with the build {format_build(reference_build_info)} of the '\
+               'reference branch.'
+    if not failures:
+        return f"{compared}\n\nNo additional tests failed there."
+    formatted = "\n".join(f"* [{n} ({c})]({get_test_url(build_info['url'], c, n)})"
+                          for c, n in sorted(failures))
+    return f'{compared}\n\nThe following {len(failures)} tests failed:\n'\
+           f'{formatted}\n\n'\
+           'Please check these tests before merging this PR.'
 
-The following {len(failures)} tests failed:
-{formatted_failures}
 
-Please check these tests before merging this PR."""
+def get_commit_ids(build_info):
+    res = set()
+    for c in build_info["changeSets"]:
+        for i in c["items"]:
+            res.add(i["commitId"])
+    return res
 
 
 # TODO: It should be possible to compare any build, not only the latest ones
@@ -85,10 +107,14 @@ def compare_jobs_on_latest_build(server, job_name, reference_job_name):
     new_results, new_build = get_latest_test_results(server, job_name)[0]
     old_results, old_build = get_latest_test_results(server,
                                                      reference_job_name)[0]
+    build_info = get_build_info(server, job_name, new_build)
+    reference_build_info = get_build_info(server, reference_job_name, old_build)
+    # Do nothing if there are no more changes in build_info compared
+    # to reference_build_info
+    if get_commit_ids(build_info) <= get_commit_ids(reference_build_info):
+        return None
     failures = compare_test_results(old_results, new_results)
-    return format_text(failures,
-                       get_build_info(server, job_name, new_build),
-                       get_build_info(server, reference_job_name, old_build))
+    return format_text(failures, build_info, reference_build_info)
 
 # TODO: To run the script you need to add:
 # - from jenkins import Jenkins

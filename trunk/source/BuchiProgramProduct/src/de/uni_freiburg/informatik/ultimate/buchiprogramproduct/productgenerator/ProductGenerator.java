@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
@@ -69,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
@@ -94,7 +97,19 @@ public final class ProductGenerator {
 	private final Set<BoogieIcfgLocation> mRCFGLocations;
 	private final Set<BoogieIcfgLocation> mRcfgSinks;
 	private final Set<BoogieIcfgLocation> mHelperProductStates;
-	private final Map<DebugIdentifier, BoogieIcfgLocation> mProductLocations;
+	/**
+	 * Maps {@link BoogieIcfgLocation}s of the input to the corresponding
+	 * {@link BoogieIcfgLocation}s of the output. This map contains only the
+	 * {@link BoogieIcfgLocation}s that were NOT generated as a product of an
+	 * {@link BoogieIcfgLocation} and a state of the automaton.
+	 */
+	private final Map<BoogieIcfgLocation, BoogieIcfgLocation> mResultProgramPointsNoNwa;
+	/**
+	 * Maps pairs whose first component is a {@link BoogieIcfgLocation}s of the
+	 * input and whose second component is a state of the LTL nested word automaton
+	 * to the corresponding {@link BoogieIcfgLocation}s of the output.
+	 */
+	private final NestedMap2<BoogieIcfgLocation, String, BoogieIcfgLocation> mResultProgramPointsProduct;
 	private final Map<BoogieIcfgLocation, List<Call>> mOrigRcfgCallLocs2CallEdges;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
@@ -118,7 +133,8 @@ public final class ProductGenerator {
 
 		// initialize state
 		mRCFGLocations = new HashSet<>();
-		mProductLocations = new HashMap<>();
+		mResultProgramPointsNoNwa = new HashMap<>();
+		mResultProgramPointsProduct = new NestedMap2<>();
 		mOrigRcfgCallLocs2CallEdges = new HashMap<>();
 		mAcceptingNodeAnnotation = new BuchiProgramAcceptingStateAnnotation();
 		mRcfgSinks = new HashSet<>();
@@ -187,8 +203,8 @@ public final class ProductGenerator {
 					.filter(a -> !isNonProductNode((BoogieIcfgLocation) a.getTarget()))
 					.findAny().isPresent()) {
 				mRcfgSinks.add(currentPoint);
-				AssumeStatement stmtTrue = generateNeverClaimAssumeStatement(new BooleanLiteral(null, true));
-				IcfgEdge newEdge = mCodeblockFactory.constructStatementSequence(currentPoint, currentPoint, stmtTrue);
+				final AssumeStatement stmtTrue = generateNeverClaimAssumeStatement(new BooleanLiteral(null, true));
+				final IcfgEdge newEdge = mCodeblockFactory.constructStatementSequence(currentPoint, currentPoint, stmtTrue);
 				new LTLStepAnnotation().annotate(newEdge);
 			}
 
@@ -202,33 +218,26 @@ public final class ProductGenerator {
 	private void createProductStates() {
 		for (final BoogieIcfgLocation origpp : mRCFGLocations) {
 			if (isNonProductNode(origpp)) {
-				final BoogieIcfgLocation newPP = createProductProgramPoint(
-						ProductLocationNameGenerator.generateStateName(origpp), origpp);
-				updateProductStates(newPP, ProductLocationNameGenerator.generateStateName(origpp));
-				continue;
-			}
-
-			for (final String nwaState : mNWA.getStates()) {
-				final BoogieIcfgLocation newPP = createProductProgramPoint(
-						ProductLocationNameGenerator.generateStateName(origpp, nwaState), origpp);
-				updateProductStates(newPP, ProductLocationNameGenerator.generateStateName(origpp, nwaState));
-
-				// accepting states are marked with AcceptingNodeAnnotation
-				if (mNWA.isFinal(nwaState)) {
-					mAcceptingNodeAnnotation.annotate(newPP);
+				final DebugIdentifier di = ProductLocationNameGenerator.generateStateName(origpp);
+				final BoogieIcfgLocation newPP = createProductProgramPoint(di, origpp);
+				final BoogieIcfgLocation oldValue = mResultProgramPointsNoNwa.put(origpp, newPP);
+				if (oldValue != null) {
+					throw new AssertionError("Constructed program point twice");
+				}
+			} else {
+				for (final String nwaState : mNWA.getStates()) {
+					final DebugIdentifier di = ProductLocationNameGenerator.generateStateName(origpp, nwaState);
+					final BoogieIcfgLocation newPP = createProductProgramPoint(di, origpp);
+					final BoogieIcfgLocation oldValue = mResultProgramPointsProduct.put(origpp, nwaState, newPP);
+					if (oldValue != null) {
+						throw new AssertionError("Constructed program point twice");
+					}
+					// accepting states are marked with AcceptingNodeAnnotation
+					if (mNWA.isFinal(nwaState)) {
+						mAcceptingNodeAnnotation.annotate(newPP);
+					}
 				}
 			}
-		}
-	}
-
-	private void updateProductStates(final BoogieIcfgLocation newPP, final DebugIdentifier statename) {
-		assert statename.equals(newPP.getDebugIdentifier()) : String.format(
-				"statename %s does not equal debug identifier %s of location", statename, newPP.getDebugIdentifier());
-		final BoogieIcfgLocation rtr = mProductLocations.put(newPP.getDebugIdentifier(), newPP);
-		if (rtr != null) {
-			throw new AssertionError(
-					String.format("The original RCFG had two locations with the same location name: %s of type %s",
-							newPP.getDebugIdentifier(), newPP.getDebugIdentifier().getClass()));
 		}
 	}
 
@@ -315,8 +324,7 @@ public final class ProductGenerator {
 	private void createReturnEdgesOther(final BoogieIcfgLocation origRcfgSourceLoc, final Return returnEdge,
 			final boolean isProgramStep) {
 		for (final String nwaLoc : mNWA.getStates()) {
-			final BoogieIcfgLocation productSourceLoc = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
+			final BoogieIcfgLocation productSourceLoc = mResultProgramPointsProduct.get(origRcfgSourceLoc, nwaLoc);
 			assert productSourceLoc != null;
 			handleEdgeReturn(productSourceLoc, nwaLoc, returnEdge, isProgramStep);
 		}
@@ -324,8 +332,7 @@ public final class ProductGenerator {
 
 	private void createReturnEdgesNonProductToProduct(final BoogieIcfgLocation origRcfgSourceLoc,
 			final BoogieIcfgLocation origRcfgTargetLoc, final Return returnEdge) {
-		final BoogieIcfgLocation productSourceLoc = mProductLocations
-				.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc));
+		final BoogieIcfgLocation productSourceLoc = mResultProgramPointsNoNwa.get(origRcfgSourceLoc);
 		assert productSourceLoc != null;
 
 		// there must be exactly one corresponding call, as this is
@@ -333,8 +340,7 @@ public final class ProductGenerator {
 		assert mOrigRcfgCallLocs2CallEdges.get(returnEdge.getCallerProgramPoint()).size() == 1;
 
 		for (final String nwaLoc : mNWA.getStates()) {
-			final BoogieIcfgLocation productTargetLoc = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc, nwaLoc));
+			final BoogieIcfgLocation productTargetLoc = mResultProgramPointsProduct.get(origRcfgTargetLoc, nwaLoc);
 			createNewReturnEdge(productSourceLoc, returnEdge, productTargetLoc,
 					mOrigRcfgCallLocs2CallEdges.get(returnEdge.getCallerProgramPoint()).get(0));
 		}
@@ -343,10 +349,8 @@ public final class ProductGenerator {
 	private void createReturnEdgesNonProduct(final BoogieIcfgLocation origRcfgSourceLoc,
 			final BoogieIcfgLocation origRcfgTargetLoc, final Return returnEdge) {
 		// handle all return edges in the non-product part
-		final BoogieIcfgLocation productSourceLoc = mProductLocations
-				.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc));
-		final BoogieIcfgLocation productTargetLoc = mProductLocations
-				.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc));
+		final BoogieIcfgLocation productSourceLoc = mResultProgramPointsNoNwa.get(origRcfgSourceLoc);
+		final BoogieIcfgLocation productTargetLoc = mResultProgramPointsNoNwa.get(origRcfgTargetLoc);
 
 		assert productSourceLoc != null;
 		assert productTargetLoc != null;
@@ -364,8 +368,7 @@ public final class ProductGenerator {
 		// target is also a product state
 		// this is the normal case
 		for (final String nwaLoc : mNWA.getStates()) {
-			final BoogieIcfgLocation productSourceLoc = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
+			final BoogieIcfgLocation productSourceLoc = mResultProgramPointsProduct.get(origRcfgSourceLoc, nwaLoc);
 
 			if (rcfgEdge instanceof StatementSequence) {
 				mLogger.info(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc) + " --> "
@@ -392,10 +395,8 @@ public final class ProductGenerator {
 		// allowed
 
 		for (final String nwaLoc : mNWA.getStates()) {
-			final BoogieIcfgLocation productSourceLoc = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
-			final BoogieIcfgLocation productTargetLoc = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc));
+			final BoogieIcfgLocation productSourceLoc = mResultProgramPointsProduct.get(origRcfgSourceLoc, nwaLoc);
+			final BoogieIcfgLocation productTargetLoc = mResultProgramPointsNoNwa.get(origRcfgTargetLoc);
 
 			assert productSourceLoc != null;
 			assert productTargetLoc != null;
@@ -423,8 +424,7 @@ public final class ProductGenerator {
 		// if its a edge to a sink state its slightly more
 		// complicated.
 
-		final BoogieIcfgLocation productSourceLoc = mProductLocations
-				.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc));
+		final BoogieIcfgLocation productSourceLoc = mResultProgramPointsNoNwa.get(origRcfgSourceLoc);
 		if (rcfgEdge instanceof Call) {
 			handleEdgeCallFromNonProduct(productSourceLoc, (Call) rcfgEdge, origRcfgSourceLoc);
 		} else if (rcfgEdge instanceof Summary) {
@@ -439,10 +439,8 @@ public final class ProductGenerator {
 		// if the current node and its target belong to ignored
 		// procedures, just replicate the RCFG
 
-		final BoogieIcfgLocation productSourceLoc = mProductLocations
-				.get(ProductLocationNameGenerator.generateStateName(origRcfgSourceLoc));
-		final BoogieIcfgLocation productTargetLoc = mProductLocations
-				.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc));
+		final BoogieIcfgLocation productSourceLoc = mResultProgramPointsNoNwa.get(origRcfgSourceLoc);
+		final BoogieIcfgLocation productTargetLoc = mResultProgramPointsNoNwa.get(origRcfgTargetLoc);
 		assert productSourceLoc != null;
 		assert productTargetLoc != null;
 
@@ -563,15 +561,13 @@ public final class ProductGenerator {
 		if (isProgramStep) {
 			for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
 				// add no edges if this is not a program step or not the program flow
-				targetpp = mProductLocations.get(ProductLocationNameGenerator
-						.generateStateName((BoogieIcfgLocation) rcfgEdge.getTarget(), autTrans.getSucc()));
+				targetpp = mResultProgramPointsProduct.get((BoogieIcfgLocation) rcfgEdge.getTarget(), autTrans.getSucc());
 				// append statements of rcfg and ltl
 				createNewStatementSequence(productLoc, rcfgEdge, targetpp, autTrans.getLetter(), isProgramStep);
 			}
 		} else {
 			// add no edges if this is not a program step or not the program flow
-			targetpp = mProductLocations.get(
-					ProductLocationNameGenerator.generateStateName((BoogieIcfgLocation) rcfgEdge.getTarget(), nwaLoc));
+			targetpp = mResultProgramPointsProduct.get((BoogieIcfgLocation) rcfgEdge.getTarget(), nwaLoc);
 			// append statements of rcfg and ltl
 			createNewStatementSequence(productLoc, rcfgEdge, targetpp, null, isProgramStep);
 		}
@@ -622,12 +618,11 @@ public final class ProductGenerator {
 			if (!isProgramStep && !autTrans.getSucc().equals(nwaLoc)) {
 				continue;
 			}
-			BoogieIcfgLocation targetpp = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc, autTrans.getSucc()));
+			BoogieIcfgLocation targetpp = mResultProgramPointsProduct.get(origRcfgTargetLoc, autTrans.getSucc());
 			if (targetpp == null) {
 				// returns may connect with multiple edges to a single state
 				// that is part of the non-product states
-				targetpp = mProductLocations.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc));
+				targetpp = mResultProgramPointsNoNwa.get(origRcfgTargetLoc);
 			}
 			createNewStatementSequence(helper, null, targetpp, autTrans.getLetter(), isProgramStep);
 		}
@@ -644,8 +639,7 @@ public final class ProductGenerator {
 
 		BoogieIcfgLocation targetpp;
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
-			targetpp = mProductLocations.get(ProductLocationNameGenerator
-					.generateStateName((BoogieIcfgLocation) summary.getTarget(), autTrans.getSucc()));
+			targetpp = mResultProgramPointsProduct.get((BoogieIcfgLocation) summary.getTarget(), autTrans.getSucc());
 			final List<CodeBlock> sumAndSs = new ArrayList<>();
 			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(productSourceLoc, targetpp,
 					checkLetter(autTrans.getLetter()), Origin.IMPLEMENTATION);
@@ -663,8 +657,8 @@ public final class ProductGenerator {
 	private void handleEdgeSummaryFromNonProduct(final BoogieIcfgLocation productSourceLoc, final Summary rcfgEdge) {
 		final BoogieIcfgLocation origRcfgTargetLoc = (BoogieIcfgLocation) rcfgEdge.getTarget();
 		for (final String initialNWAState : mNWA.getInitialStates()) {
-			final BoogieIcfgLocation productTargetLoc = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc, initialNWAState));
+			final BoogieIcfgLocation productTargetLoc = mResultProgramPointsProduct.get(origRcfgTargetLoc,
+					initialNWAState);
 			createNewSummaryEdge(productSourceLoc, rcfgEdge, productTargetLoc);
 		}
 
@@ -686,8 +680,7 @@ public final class ProductGenerator {
 		// edge is calculated
 		// like any other edge in the graph.
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaSourceState)) {
-			final BoogieIcfgLocation targetpp = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc, autTrans.getSucc()));
+			final BoogieIcfgLocation targetpp = mResultProgramPointsProduct.get(origRcfgTargetLoc, autTrans.getSucc());
 			// if the transition would lead into another BA state and is no program step
 			// continue
 			if (!isProgramStep && !autTrans.getSucc().equals(nwaSourceState)) {
@@ -701,8 +694,8 @@ public final class ProductGenerator {
 			final BoogieIcfgLocation origRcfgSourceLoc) {
 		final BoogieIcfgLocation origRcfgTargetLoc = (BoogieIcfgLocation) origRcfgEdge.getTarget();
 		for (final String initialNWAState : mNWA.getInitialStates()) {
-			final BoogieIcfgLocation productTargetLoc = mProductLocations
-					.get(ProductLocationNameGenerator.generateStateName(origRcfgTargetLoc, initialNWAState));
+			final BoogieIcfgLocation productTargetLoc = mResultProgramPointsProduct.get(origRcfgTargetLoc,
+					initialNWAState);
 			createNewCallEdge(origRcfgSourceLoc, productSourceLoc, origRcfgEdge, productTargetLoc);
 		}
 	}
@@ -765,8 +758,13 @@ public final class ProductGenerator {
 
 	private BoogieIcfgLocation createProductProgramPoint(final DebugIdentifier debugIdentifier,
 			final BoogieIcfgLocation originalState) {
-		final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, originalState.getProcedure(), false,
-				originalState.getBoogieASTNode());
+		final Predicate<IAnnotations> omitLTLStepAnnotations = (a -> !(a instanceof LTLStepAnnotation));
+
+		final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier,
+				originalState.getProcedure(),
+				false,
+				originalState.getBoogieASTNode(),
+				omitLTLStepAnnotations);
 
 		// update metadata
 		Map<DebugIdentifier, BoogieIcfgLocation> prog2programPoints = mProductRoot.getProgramPoints()

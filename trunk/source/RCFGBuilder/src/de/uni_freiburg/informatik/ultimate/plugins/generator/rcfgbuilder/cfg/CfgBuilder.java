@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AtomicBlockInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
@@ -491,13 +492,17 @@ public class CfgBuilder {
 	}
 
 	/**
-	 * Check it this statement is an <code>assume true</ code> and has an empty list of attributes (or no attributes at
-	 * all).
+	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether
+	 * * it has an empty list of attributes or no attributes at all, and
+	 * * it is not annotated with an LTLStepAnnotation. 
 	 */
-	private static boolean isAssumeTrueStatementWithoutAttributes(final Statement st) {
+	private static boolean isPlainAssumeTrueStatement(final Statement st) {
 		if (st instanceof AssumeStatement) {
 			final AssumeStatement as = (AssumeStatement) st;
 			if (as.getAttributes() != null && as.getAttributes().length > 0) {
+				return false;
+			}
+			if (LTLStepAnnotation.getAnnotation(as) != null) {
 				return false;
 			}
 			if (as.getFormula() instanceof BooleanLiteral) {
@@ -683,7 +688,7 @@ public class CfgBuilder {
 
 				// Rationale: <code>assume true</ code> statements can be omitted, unless they
 				// carry attributes or indicate an overapproximation.
-				if (mRemoveAssumeTrueStmt && isAssumeTrueStatementWithoutAttributes(st) && !isOverapproximation(st)) {
+				if (mRemoveAssumeTrueStmt && isPlainAssumeTrueStatement(st) && !isOverapproximation(st)) {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
