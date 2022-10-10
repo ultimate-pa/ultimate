@@ -76,7 +76,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 				mHTC.checkCall(precond, (ICallAction) transition, postcond);
 			} else if (transition instanceof IReturnAction) {
 				mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
-			} else {
+			} else if (transition instanceof IInternalAction) {
 				mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
 			}
 			return mHTC.isLastOk();
