@@ -27,6 +27,7 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
 	private final Set<String> mUnboundedThreads;
+	private final List<String> mTopologicalOrder;
 	// private final HashRelation<LOC, String> mActiveThreadPerLocation;
 
 	public ConcurrentCfgInformation(final IIcfg<? extends LOC> icfg) {
@@ -34,6 +35,7 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
 				.collect(Collectors.toSet());
 		mProceduresToForkLocations = new HashRelation<>();
+		mTopologicalOrder = computeTopologicalOrder();
 		final HashRelation<String, String> forkRelation = new HashRelation<>();
 		getForks().forEach(x -> forkRelation.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
 		final HashRelation<String, String> closureDepending = closure(forkRelation);
@@ -50,8 +52,11 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		return mProceduresToForkLocations.getImage(procedure);
 	}
 
-	// TODO: This is not really nice code
 	public List<String> getTopologicalProcedureOrder() {
+		return mTopologicalOrder;
+	}
+
+	private List<String> computeTopologicalOrder() {
 		final Map<String, Set<String>> forkRelation = getForkRelation();
 		final List<String> result = new ArrayList<>();
 		final Map<String, Integer> forkCounter = new HashMap<>();
@@ -61,24 +66,28 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		final HashRelation<Integer, String> numberOfIncomingForks = new HashRelation<>();
 		forkRelation.forEach((k, v) -> numberOfIncomingForks.addPair(forkCounter.get(k), k));
 		Set<String> noIncoming = numberOfIncomingForks.removeDomainElement(0);
+		final Set<String> remaining = new HashSet<>(forkRelation.keySet());
 		while (!noIncoming.isEmpty()) {
 			result.addAll(noIncoming);
+			remaining.removeAll(noIncoming);
 			final Set<String> newNoIncoming = new HashSet<>();
-			for (final String n : noIncoming) {
-				for (final String m : forkRelation.get(n)) {
-					final Integer oldValue = forkCounter.get(m);
-					numberOfIncomingForks.removePair(oldValue, m);
+			for (final String thread : noIncoming) {
+				for (final String forked : forkRelation.get(thread)) {
+					final Integer oldValue = forkCounter.get(forked);
+					numberOfIncomingForks.removePair(oldValue, forked);
 					if (oldValue == 1) {
-						newNoIncoming.add(m);
+						newNoIncoming.add(forked);
 					} else {
 						final Integer newValue = oldValue - 1;
-						forkCounter.put(m, newValue);
-						numberOfIncomingForks.addPair(newValue, m);
+						forkCounter.put(forked, newValue);
+						numberOfIncomingForks.addPair(newValue, forked);
 					}
 				}
 			}
 			noIncoming = newNoIncoming;
 		}
+		// Add all remaining procedures (in the case that a loop was found)
+		result.addAll(remaining);
 		return result;
 	}
 
@@ -236,7 +245,7 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 		final HashRelation<String, String> result = new HashRelation<>();
 		final ArrayDeque<String> worklist = new ArrayDeque<>();
 		final Set<String> added = new HashSet<>();
-		final String startitem = getTopologicalProcedureOrder().get(0);
+		final String startitem = mTopologicalOrder.get(0);
 		worklist.add(startitem);
 		added.add(startitem);
 		while (!worklist.isEmpty()) {
