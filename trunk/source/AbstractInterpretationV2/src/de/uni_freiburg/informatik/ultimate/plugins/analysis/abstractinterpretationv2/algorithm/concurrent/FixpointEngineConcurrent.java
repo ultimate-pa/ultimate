@@ -131,11 +131,16 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 					computeNewInterferences(relevantPostStates);
 
 			if (interferencesAreEqual(interferences, newInterferences)) {
+				mLogger.info("Fixpoint after " + iteration + " iterations found.");
 				break;
 			}
 			// Compute the new interferences. Use the newly computed or widen them if necessary.
-			interferences =
-					iteration < mMaxUnwindings ? newInterferences : widenInterferences(interferences, newInterferences);
+			if (iteration < mMaxUnwindings) {
+				interferences = newInterferences;
+			} else {
+				mLogger.info("Applying widenning to the interferences.");
+				interferences = widenInterferences(interferences, newInterferences);
+			}
 			iteration++;
 		}
 	}
