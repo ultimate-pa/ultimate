@@ -22,13 +22,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
+public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
 	private final List<String> mTopologicalOrder;
 	private final HashRelation<LOC, String> mActiveThreadPerLocation;
 
-	public ConcurrentCfgInformation(final IIcfg<? extends LOC> icfg) {
+	public ConcurrentIcfgAnalyzer(final IIcfg<? extends LOC> icfg) {
 		mIcfg = icfg;
 		mTopologicalOrder = computeTopologicalOrder();
 		final HashRelation<String, String> forkRelation = new HashRelation<>();
