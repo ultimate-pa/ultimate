@@ -40,6 +40,12 @@ public class InterferingPostOperator<STATE extends IAbstractState<STATE>, ACTION
 		final Set<STATE> interferingStates = interfereringDisjunctiveState.getStates();
 		final List<STATE> result = new ArrayList<>(postStates.size() * interferingStates.size());
 		for (final STATE postState : postStates) {
+			// Ignore interferences in bottom-states
+			// TODO: Is this sound? Could we generalize this (e.g. check some state inclusion)?
+			if (postState.isBottom()) {
+				result.add(postState);
+				continue;
+			}
 			for (final STATE interferingState : interferingStates) {
 				final Set<IProgramVarOrConst> sharedVars =
 						DataStructureUtils.intersection(interferingState.getVariables(), postState.getVariables());
