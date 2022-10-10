@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -29,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.SummaryMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, VARDECL, LOC extends IcfgLocation>
 		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
@@ -47,10 +45,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> mFixpointEngineFactory;
 	private final Map<String, ? extends LOC> mEntryLocs;
-	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 	private final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> mParams;
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
-	private final BiPredicate<LOC, ACTION> mIsInterfering;
 
 	public FixpointEngineConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> factory, final IIcfg<? extends LOC> icfg) {
@@ -69,10 +65,6 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mFixpointEngineFactory = factory;
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
-		mSharedWrites = mAnalyzer.getSharedWrites();
-		// TODO: There can be multiple variants of this predicate (e.g. full flow-senstive analysis)
-		// This should be probably an argument or setting.
-		mIsInterfering = (loc, action) -> mAnalyzer.getInterferingThreads(loc).contains(action.getPrecedingProcedure());
 	}
 
 	@Override
@@ -121,8 +113,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				}
 			}
 
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates =
-					getRelevantPostStates(mSharedWrites);
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates = getRelevantPostStates();
 			final Map<LOC, DisjunctiveAbstractState<STATE>> newInterferences =
 					computeNewInterferences(relevantPostStates);
 
@@ -186,14 +177,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
-		return unionStates(relevantPostStates.keySet().stream().filter(x -> mIsInterfering.test(loc, x))
-				.map(relevantPostStates::get), () -> null);
+		final Set<ACTION> interferingWrites = mAnalyzer.getInterferingWrites(loc);
+		final Stream<DisjunctiveAbstractState<STATE>> states =
+				relevantPostStates.keySet().stream().filter(interferingWrites::contains).map(relevantPostStates::get);
+		return unionStates(states, () -> null);
 	}
 
-	private Map<ACTION, DisjunctiveAbstractState<STATE>>
-			getRelevantPostStates(final HashRelation<ACTION, IProgramVarOrConst> sharedWrites) {
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> getRelevantPostStates() {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
-		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : sharedWrites.entrySet()) {
+		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : mAnalyzer.getSharedWrites().entrySet()) {
 			final ACTION write = entry.getKey();
 			final DisjunctiveAbstractState<STATE> preState =
 					mStateStorage.getAbstractState(mTransitionProvider.getSource(write));
