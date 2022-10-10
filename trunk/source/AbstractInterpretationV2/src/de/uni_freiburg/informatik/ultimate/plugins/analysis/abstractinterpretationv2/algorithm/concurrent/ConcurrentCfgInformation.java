@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -26,21 +25,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
-	private final Set<String> mUnboundedThreads;
 	private final List<String> mTopologicalOrder;
-	// private final HashRelation<LOC, String> mActiveThreadPerLocation;
+	private final HashRelation<LOC, String> mActiveThreadPerLocation;
 
 	public ConcurrentCfgInformation(final IIcfg<? extends LOC> icfg) {
 		mIcfg = icfg;
-		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
-				.collect(Collectors.toSet());
-		mProceduresToForkLocations = new HashRelation<>();
 		mTopologicalOrder = computeTopologicalOrder();
 		final HashRelation<String, String> forkRelation = new HashRelation<>();
 		getForks().forEach(x -> forkRelation.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
 		final HashRelation<String, String> closureDepending = closure(forkRelation);
 		final HashRelation<String, String> dependingOn = computeDependingProcedures(closureDepending, forkRelation);
-		// mActiveThreadPerLocation = computeInterferingThreadsPerLocation(...);
+		// TODO: This is an imprecise workaround
+		final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, String> activeThreadsAfterFork =
+				new HashRelation<>();
+		getForks().forEach(
+				x -> activeThreadsAfterFork.addAllPairs(x, closureDepending.getImage(x.getPrecedingProcedure())));
+		mActiveThreadPerLocation = computeInterferingThreadsPerLocation(dependingOn, activeThreadsAfterFork);
+		mProceduresToForkLocations = new HashRelation<>();
 		getForks().forEach(x -> mProceduresToForkLocations.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
 	}
 
@@ -140,41 +141,7 @@ public class ConcurrentCfgInformation<ACTION, LOC extends IcfgLocation> {
 	}
 
 	public Set<String> getInterferingThreads(final LOC location) {
-		// TODO: Do something more precise based on the flow of the forks
-		// (e.g. there should be no interference before a fork)
-		// return mActiveThreadPerLocation.getImage(location);
-		final Set<String> result = new HashSet<>(mIcfg.getProcedureEntryNodes().keySet());
-		final String ownProcedure = location.getProcedure();
-		if (getForkLocations(ownProcedure).size() <= 1 && !mUnboundedThreads.contains(ownProcedure)) {
-			result.remove(ownProcedure);
-		}
-		return result;
-	}
-
-	private List<String> getTopologicalOrderReverse() {
-		final Map<String, Set<String>> forkRelation = getForkRelation();
-		final HashRelation<Integer, String> numberOfForks = new HashRelation<>();
-		forkRelation.forEach((t, dep) -> numberOfForks.addPair(dep.size(), t));
-		final List<String> result = new ArrayList<>();
-		while (!numberOfForks.isEmpty()) {
-			final Set<String> candidates = numberOfForks.removeDomainElement(0);
-			if (candidates == null || candidates.isEmpty()) {
-				// TODO: What should we do in that case?
-				throw new UnsupportedOperationException("Cycle found");
-			}
-			result.addAll(candidates);
-			for (final String t : candidates) {
-				// TODO: For one usecase we actually need the fork locations (and know if there are multiple)
-				for (final LOC loc : getForkLocations(t)) {
-					final String forking = loc.getProcedure();
-					final Set<String> forked = forkRelation.get(forking);
-					numberOfForks.removePair(forked.size(), forking);
-					numberOfForks.addPair(forked.size() - 1, forking);
-					forked.remove(t);
-				}
-			}
-		}
-		return result;
+		return mActiveThreadPerLocation.getImage(location);
 	}
 
 	private Map<String, Set<String>> getForkRelation() {
