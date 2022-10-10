@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.function.Supplier;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -58,15 +56,9 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 			final ACTION transition) {
 		final IPredicate pre = createPredicateFromState(preState);
 		final IPredicate post = createPredicateFromState(postState);
-		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(hierPreState));
+		final IPredicate hierPre =
+				transition instanceof IIcfgReturnTransition ? createPredicateFromState(hierPreState) : null;
 		return isPostSound(hierPre, transition, pre, post);
-	}
-
-	private IPredicate getHierachicalPre(final ACTION transition, final Supplier<IPredicate> func) {
-		if (transition instanceof IIcfgReturnTransition<?, ?>) {
-			return func.get();
-		}
-		return null;
 	}
 
 	private boolean isPostSound(final IPredicate precondHier, final ACTION transition, final IPredicate precond,
