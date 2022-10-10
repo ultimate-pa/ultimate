@@ -27,10 +27,14 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
 	private final List<String> mTopologicalOrder;
 	private final HashRelation<LOC, String> mActiveThreadPerLocation;
+	private final HashRelation<String, ACTION> mWritesPerThread;
+	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 
 	public ConcurrentIcfgAnalyzer(final IIcfg<? extends LOC> icfg) {
 		mIcfg = icfg;
 		mTopologicalOrder = computeTopologicalOrder();
+		mWritesPerThread = new HashRelation<>();
+		mSharedWrites = computeSharedWrites();
 		final HashRelation<String, String> forkRelation = new HashRelation<>();
 		getForks().forEach(x -> forkRelation.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
 		final HashRelation<String, String> closureDepending = closure(forkRelation);
@@ -93,6 +97,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	}
 
 	public HashRelation<ACTION, IProgramVarOrConst> getSharedWrites() {
+		return mSharedWrites;
+	}
+
+	private HashRelation<ACTION, IProgramVarOrConst> computeSharedWrites() {
 		final HashRelation<ACTION, IProgramVarOrConst> writesToVariables = new HashRelation<>();
 		final HashRelation<IProgramVar, String> writesToProcedures = new HashRelation<>();
 		final HashRelation<IProgramVar, String> readsToProcedures = new HashRelation<>();
@@ -116,7 +124,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			final Set<IProgramVarOrConst> writtenSharedVars =
 					DataStructureUtils.intersection(entry.getValue(), sharedVars);
 			if (!writtenSharedVars.isEmpty()) {
-				result.addAllPairs(entry.getKey(), writtenSharedVars);
+				final ACTION write = entry.getKey();
+				result.addAllPairs(write, writtenSharedVars);
+				// TODO: Modifying fields as a side effect of a method to return a result is not nice here...
+				mWritesPerThread.addPair(((IcfgEdge) write).getPrecedingProcedure(), write);
 			}
 		}
 		return result;
@@ -140,8 +151,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		return !readingProcedures.equals(writingProcedures);
 	}
 
-	public Set<String> getInterferingThreads(final LOC location) {
-		return mActiveThreadPerLocation.getImage(location);
+	public Set<ACTION> getInterferingWrites(final LOC location) {
+		// TODO: This is really imprecise, compute a HashRelation<LOC, ACTION> instead
+		return mActiveThreadPerLocation.getImage(location).stream().flatMap(x -> mWritesPerThread.getImage(x).stream())
+				.collect(Collectors.toSet());
 	}
 
 	private Map<String, Set<String>> getForkRelation() {
