@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -48,9 +47,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> mFixpointEngineFactory;
 	private final Map<String, ? extends LOC> mEntryLocs;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
-	private final List<String> mTopologicalOrder;
 	private final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> mParams;
-	private final ConcurrentCfgInformation<ACTION, LOC> mInfo;
+	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final BiPredicate<LOC, ACTION> mIsInterfering;
 	private final DisjunctiveAbstractState<STATE> mTopState;
 
@@ -70,12 +68,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 		mFixpointEngineFactory = factory;
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mInfo = new ConcurrentCfgInformation<>(icfg);
-		mSharedWrites = mInfo.getSharedWrites();
-		mTopologicalOrder = mInfo.getTopologicalProcedureOrder();
+		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
+		mSharedWrites = mAnalyzer.getSharedWrites();
 		// TODO: There can be multiple variants of this predicate (e.g. full flow-senstive analysis)
 		// This should be probably an argument or setting.
-		mIsInterfering = (loc, action) -> mInfo.getInterferingThreads(loc).contains(action.getPrecedingProcedure());
+		mIsInterfering = (loc, action) -> mAnalyzer.getInterferingThreads(loc).contains(action.getPrecedingProcedure());
 		mTopState = new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
 
@@ -99,7 +96,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		final Set<LOC> addedErrorLocations = new HashSet<>();
 		while (true) {
 			mLogger.info("Starting outer Fixpoint iteration number " + iteration);
-			for (final String procedure : mTopologicalOrder) {
+			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
 				final DisjunctiveAbstractState<STATE> initialState = getInitialState(procedure);
 				final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> paramsWithInterferences =
 						mParams.setStorage(mStateStorage.copy())
@@ -170,7 +167,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
-		return unionStates(mInfo.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState), mTopState);
+		return unionStates(mAnalyzer.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState),
+				mTopState);
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
