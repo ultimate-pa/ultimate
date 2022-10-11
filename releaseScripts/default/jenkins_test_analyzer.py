@@ -1,5 +1,6 @@
 import json
 from requests import Request
+import re
 
 JENKINS_PROJECT = "Ultimate/Ultimate Nightly"
 FLAKY_THRESHOLD = 3
@@ -73,10 +74,10 @@ def find_flaky_tests(server, job_name, number_of_builds):
 
 
 # TODO: This is quite hacky (but seems to work), is there a better way?
-def get_test_url(base_url, clazz, name):
-    formatted_class = '/'.join(clazz.rsplit('.', 1))
-    formatted_name = name.replace(' ', '_').replace('.', '_').replace('-', '_')
-    return f"{base_url}testReport{formatted_class}/{formatted_name}"
+def get_test_url(base_url, test_class, test_name):
+    formatted_class = '/'.join(test_class.rsplit('.', 1))
+    formatted_name = re.sub(r'[^\w\d]', "_", test_name)
+    return f"{base_url}testReport/{formatted_class}/{formatted_name}"
 
 
 def format_build(build_info):
@@ -90,7 +91,8 @@ def format_comparison(server, build_info, reference_build_info):
                'reference branch.'
     if not failures:
         return f"{compared}\n\nNo additional tests failed there."
-    formatted = "\n".join(f"* [{n} ({c})]({get_test_url(build_info['url'], c, n)})"
+    url = build_info['url']
+    formatted = "\n".join(f"* [{n} ({c})]({get_test_url(url, c, n)})"
                           for c, n in sorted(failures))
     return f'{compared}\n\nThe following {len(failures)} tests failed:\n'\
            f'{formatted}\n\n'\
