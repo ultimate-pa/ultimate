@@ -99,6 +99,12 @@ def format_comparison(server, build_info, reference_build_info):
            'Please check these tests before merging this PR.'
 
 
+def compare_jobs_on_latest_build(server, job_name, reference_job_name):
+    build = get_latest_builds_with_tests(server, job_name)[0]
+    ref_build = get_latest_builds_with_tests(server, reference_job_name)[0]
+    return format_comparison(server, build, ref_build)
+
+
 def get_commit_ids(build_info):
     res = set()
     for c in build_info["changeSets"]:
@@ -107,14 +113,24 @@ def get_commit_ids(build_info):
     return res
 
 
-def compare_jobs_on_latest_build(server, job_name, reference_job_name):
-    build = get_latest_builds_with_tests(server, job_name)[0]
+def check_pull_requests(server, gh_repo, reference_job_name):
     ref_build = get_latest_builds_with_tests(server, reference_job_name)[0]
-    # Do nothing if there are no more changes in build_info compared
-    # to reference_build_info
-    if get_commit_ids(build) <= get_commit_ids(ref_build):
-        return None
-    return format_comparison(server, build, ref_build)
+    for j in server.get_job_info(JENKINS_PROJECT)["jobs"]:
+        # Since we have unstable tests, "yellow" means that those were executed
+        if j["color"] != "yellow":
+            continue
+        m = re.match(r"PR-(\d+)", j["name"])
+        if not m:
+            continue
+        build = get_latest_builds_with_tests(server, j["name"])[0]
+        # Continue if there are no more changes in build compared to ref_build
+        # TODO: Is there a better way to check for an "initial" build?
+        if build["number"] > 1 and \
+           get_commit_ids(build) <= get_commit_ids(ref_build):
+            continue
+        pr = gh_repo.get_pull(int(m.group(1)))
+        pr.create_issue_comment(format_comparison(server, build, ref_build))
+
 
 # TODO: To run the script you need to add:
 # - from jenkins import Jenkins
