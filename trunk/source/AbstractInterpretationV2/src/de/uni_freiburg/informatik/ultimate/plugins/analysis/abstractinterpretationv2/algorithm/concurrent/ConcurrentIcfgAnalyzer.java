@@ -29,7 +29,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
-	private final Pair<List<String>, Set<String>> mTopologicalOrder;
+	private Pair<List<String>, Set<String>> mTopologicalOrderPair;
+	private List<String> mTopologicalOrder;
 	private final HashRelation<String, ACTION> mThreadsToWrites;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 	private final HashRelation<LOC, ACTION> mInterferingWrites;
@@ -40,7 +41,7 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		mIcfg = icfg;
 		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
 				.collect(Collectors.toSet());
-		mTopologicalOrder = computeTopologicalOrder();
+		computeTopologicalOrder();
 		mThreadsToWrites = new HashRelation<>();
 		mSharedWrites = new HashRelation<>();
 		mInterferingWrites = new HashRelation<>();
@@ -56,12 +57,12 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			forkRelation.addPair(forking, forked);
 		}
 		final HashRelation<String, String> closureForks = DataStructureUtils.transitiveClosure(forkRelation);
-		mTopologicalOrder.getFirst().forEach(x -> addInterferences(x, closureForks, Set.of()));
-		if (!mTopologicalOrder.getSecond().isEmpty()) {
+		mTopologicalOrderPair.getFirst().forEach(x -> addInterferences(x, closureForks, Set.of()));
+		if (!mTopologicalOrderPair.getSecond().isEmpty()) {
 			// Add all writes of the remaining thread (i.e. those with loops) as interferences as an overapproximation
-			final Set<ACTION> additionalInterferences = mTopologicalOrder.getSecond().stream()
+			final Set<ACTION> additionalInterferences = mTopologicalOrderPair.getSecond().stream()
 					.flatMap(x -> mThreadsToWrites.getImage(x).stream()).collect(Collectors.toSet());
-			mTopologicalOrder.getSecond().forEach(x -> addInterferences(x, closureForks, additionalInterferences));
+			mTopologicalOrderPair.getSecond().forEach(x -> addInterferences(x, closureForks, additionalInterferences));
 		}
 	}
 
@@ -119,17 +120,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	}
 
 	public List<String> getTopologicalProcedureOrder() {
-		if (mTopologicalOrder.getSecond().isEmpty()) {
-			return mTopologicalOrder.getFirst();
-		}
-		final List<String> result =
-				new ArrayList<>(mTopologicalOrder.getFirst().size() + mTopologicalOrder.getSecond().size());
-		result.addAll(mTopologicalOrder.getFirst());
-		result.addAll(mTopologicalOrder.getSecond());
-		return result;
+		return mTopologicalOrder;
 	}
 
-	private Pair<List<String>, Set<String>> computeTopologicalOrder() {
+	private void computeTopologicalOrder() {
 		final Map<String, Set<String>> forkRelation = getForkRelation();
 		final List<String> order = new ArrayList<>();
 		final Map<String, Integer> forkCounter = new HashMap<>();
@@ -159,7 +153,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			}
 			noIncoming = newNoIncoming;
 		}
-		return new Pair<>(order, remaining);
+		mTopologicalOrderPair = new Pair<>(order, remaining);
+		mTopologicalOrder = new ArrayList<>(order.size() + remaining.size());
+		mTopologicalOrder.addAll(order);
+		mTopologicalOrder.addAll(remaining);
 	}
 
 	public Set<ACTION> getInterferingWrites(final LOC location) {
