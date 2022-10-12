@@ -24,11 +24,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
-	private final List<String> mTopologicalOrder;
+	private final Pair<List<String>, Set<String>> mTopologicalOrder;
 	private final HashRelation<String, ACTION> mThreadsToWrites;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 	private final HashRelation<LOC, ACTION> mInterferingWrites;
@@ -55,13 +56,19 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			forkRelation.addPair(forking, forked);
 		}
 		final HashRelation<String, String> closureForks = DataStructureUtils.transitiveClosure(forkRelation);
-		mTopologicalOrder.forEach(x -> addInterferences(x, closureForks));
+		mTopologicalOrder.getFirst().forEach(x -> addInterferences(x, closureForks, Set.of()));
+		if (!mTopologicalOrder.getSecond().isEmpty()) {
+			// Add all writes of the remaining thread (i.e. those with loops) as interferences as an overapproximation
+			final Set<ACTION> additionalInterferences = mTopologicalOrder.getSecond().stream()
+					.flatMap(x -> mThreadsToWrites.getImage(x).stream()).collect(Collectors.toSet());
+			mTopologicalOrder.getSecond().forEach(x -> addInterferences(x, closureForks, additionalInterferences));
+		}
 	}
 
-	private void addInterferences(final String thread, final HashRelation<String, String> closureForks) {
-		final Set<ACTION> initialInterferences = new HashSet<>();
-		// Add all interferences from each fork location
-		// TODO: Does this work correctly, if the fork relation has a cycle?
+	private void addInterferences(final String thread, final HashRelation<String, String> closureForks,
+			final Set<ACTION> additionalInterferences) {
+		// Add all interferences from each fork location and additoinalInterferences (needed for a cyclc fork relation)
+		final Set<ACTION> initialInterferences = new HashSet<>(additionalInterferences);
 		for (final LOC forkedBy : mProceduresToForkLocations.getImage(thread)) {
 			initialInterferences.addAll(mInterferingWrites.getImage(forkedBy));
 		}
@@ -112,12 +119,19 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	}
 
 	public List<String> getTopologicalProcedureOrder() {
-		return mTopologicalOrder;
+		if (mTopologicalOrder.getSecond().isEmpty()) {
+			return mTopologicalOrder.getFirst();
+		}
+		final List<String> result =
+				new ArrayList<>(mTopologicalOrder.getFirst().size() + mTopologicalOrder.getSecond().size());
+		result.addAll(mTopologicalOrder.getFirst());
+		result.addAll(mTopologicalOrder.getSecond());
+		return result;
 	}
 
-	private List<String> computeTopologicalOrder() {
+	private Pair<List<String>, Set<String>> computeTopologicalOrder() {
 		final Map<String, Set<String>> forkRelation = getForkRelation();
-		final List<String> result = new ArrayList<>();
+		final List<String> order = new ArrayList<>();
 		final Map<String, Integer> forkCounter = new HashMap<>();
 		forkRelation.forEach((k, v) -> forkCounter.put(k, 0));
 		getForks().forEach(
@@ -127,7 +141,7 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		Set<String> noIncoming = numberOfIncomingForks.removeDomainElement(0);
 		final Set<String> remaining = new HashSet<>(forkRelation.keySet());
 		while (!noIncoming.isEmpty()) {
-			result.addAll(noIncoming);
+			order.addAll(noIncoming);
 			remaining.removeAll(noIncoming);
 			final Set<String> newNoIncoming = new HashSet<>();
 			for (final String thread : noIncoming) {
@@ -145,9 +159,7 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			}
 			noIncoming = newNoIncoming;
 		}
-		// Add all remaining procedures (in the case that a loop was found)
-		result.addAll(remaining);
-		return result;
+		return new Pair<>(order, remaining);
 	}
 
 	public Set<ACTION> getInterferingWrites(final LOC location) {
