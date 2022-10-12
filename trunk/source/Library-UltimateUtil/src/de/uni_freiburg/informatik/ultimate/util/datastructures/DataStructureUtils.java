@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -487,5 +488,33 @@ public class DataStructureUtils {
 		assert i == list.size();
 		assert result.size() == list.size() - 1;
 		return result;
+	}
+
+	/**
+	 * Returns the transitive closure of the given relation, i.e. if the pairs (a, b) and (b, c) are contained in the
+	 * relation, then (a, c) is contained in the resulting relation, as well as every pair of the given relation.
+	 *
+	 * @param <T>
+	 *            The type of elements
+	 * @param relation
+	 *            A relation
+	 * @return The transitive closure of the relation
+	 */
+	public static <T> HashRelation<T, T> transitiveClosure(final HashRelation<T, T> relation) {
+		final HashRelation<T, T> result = new HashRelation<>(relation);
+		boolean changes = true;
+		while (changes) {
+			changes = false;
+			for (final Entry<T, HashSet<T>> entry : result.entrySet()) {
+				final Set<T> imageToAdd =
+						entry.getValue().stream().flatMap(x -> result.getImage(x).stream()).collect(Collectors.toSet());
+				if (imageToAdd.stream().anyMatch(x -> !entry.getValue().contains(x))) {
+					result.addAllPairs(entry.getKey(), imageToAdd);
+					changes = true;
+				}
+			}
+		}
+		return result;
+
 	}
 }
