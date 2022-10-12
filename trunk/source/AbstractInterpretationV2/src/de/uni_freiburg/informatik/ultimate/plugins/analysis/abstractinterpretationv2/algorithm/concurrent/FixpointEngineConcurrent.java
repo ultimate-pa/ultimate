@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -150,14 +148,20 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result;
 	}
 
-	private DisjunctiveAbstractState<STATE> unionStates(final Stream<DisjunctiveAbstractState<STATE>> states,
-			final Supplier<DisjunctiveAbstractState<STATE>> defaultSupplier) {
-		return states.reduce(DisjunctiveAbstractState::union).orElseGet(defaultSupplier);
-	}
-
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
-		return unionStates(mAnalyzer.getForkLocations(procedure).stream().map(mStateStorage::getAbstractState),
-				() -> new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState()));
+		DisjunctiveAbstractState<STATE> result = null;
+		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
+			final DisjunctiveAbstractState<STATE> state = mStateStorage.getAbstractState(loc);
+			if (result == null) {
+				result = state;
+			}
+			if (state == null) {
+				result = null;
+				break;
+			}
+			result = result.union(state);
+		}
+		return result != null ? result : new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
@@ -178,8 +182,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> postStates) {
 		final Set<ACTION> interferingWrites = mAnalyzer.getInterferingWrites(loc);
-		return unionStates(postStates.keySet().stream().filter(interferingWrites::contains).map(postStates::get),
-				() -> null);
+		return postStates.keySet().stream().filter(interferingWrites::contains).map(postStates::get)
+				.reduce(DisjunctiveAbstractState::union).orElse(null);
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> getPostStatesOnSharedVariables() {
