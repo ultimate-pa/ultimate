@@ -54,27 +54,8 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			mProceduresToForkLocations.addPair(forked, (LOC) fork.getSource());
 			forkRelation.addPair(forking, forked);
 		}
-		final HashRelation<String, String> closureForks = closure(forkRelation);
+		final HashRelation<String, String> closureForks = DataStructureUtils.transitiveClosure(forkRelation);
 		mTopologicalOrder.forEach(x -> addInterferences(x, closureForks));
-	}
-
-	private static <T> HashRelation<T, T> closure(final HashRelation<T, T> relation) {
-		final HashRelation<T, T> result = new HashRelation<>(relation);
-		boolean changes = true;
-		while (changes) {
-			changes = false;
-			for (final Entry<T, HashSet<T>> entry : result.entrySet()) {
-				// TODO: We need to create a copy to avoid ConcurrentModificationException, is there a better way?
-				for (final T imageElement : new HashSet<>(entry.getValue())) {
-					final T domainElement = entry.getKey();
-					if (result.getImage(imageElement).stream().anyMatch(x -> !entry.getValue().contains(x))) {
-						result.addAllPairs(domainElement, result.getImage(imageElement));
-						changes = true;
-					}
-				}
-			}
-		}
-		return result;
 	}
 
 	private void addInterferences(final String thread, final HashRelation<String, String> closureForks) {
