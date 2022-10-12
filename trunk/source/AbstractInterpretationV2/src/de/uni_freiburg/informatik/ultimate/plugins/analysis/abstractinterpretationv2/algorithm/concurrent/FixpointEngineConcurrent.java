@@ -113,9 +113,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				}
 			}
 
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates = getRelevantPostStates();
 			final Map<LOC, DisjunctiveAbstractState<STATE>> newInterferences =
-					computeNewInterferences(relevantPostStates);
+					computeNewInterferences(getPostStatesOnSharedVariables());
 
 			if (interferencesAreEqual(interferences, newInterferences)) {
 				mLogger.info("Fixpoint after " + iteration + " iterations found.");
@@ -162,11 +161,12 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private Map<LOC, DisjunctiveAbstractState<STATE>>
-			computeNewInterferences(final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
+			computeNewInterferences(final Map<ACTION, DisjunctiveAbstractState<STATE>> postStatesOnSharedVariables) {
 		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final LOC entryLoc : mEntryLocs.values()) {
 			new IcfgLocationIterator<>(entryLoc).forEachRemaining(loc -> {
-				final DisjunctiveAbstractState<STATE> interferingState = getInterferingState(loc, relevantPostStates);
+				final DisjunctiveAbstractState<STATE> interferingState =
+						getInterferingState(loc, postStatesOnSharedVariables);
 				if (interferingState != null) {
 					result.put(loc, interferingState);
 				}
@@ -176,14 +176,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
-			final Map<ACTION, DisjunctiveAbstractState<STATE>> relevantPostStates) {
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> postStates) {
 		final Set<ACTION> interferingWrites = mAnalyzer.getInterferingWrites(loc);
-		final Stream<DisjunctiveAbstractState<STATE>> states =
-				relevantPostStates.keySet().stream().filter(interferingWrites::contains).map(relevantPostStates::get);
-		return unionStates(states, () -> null);
+		return unionStates(postStates.keySet().stream().filter(interferingWrites::contains).map(postStates::get),
+				() -> null);
 	}
 
-	private Map<ACTION, DisjunctiveAbstractState<STATE>> getRelevantPostStates() {
+	private Map<ACTION, DisjunctiveAbstractState<STATE>> getPostStatesOnSharedVariables() {
 		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : mAnalyzer.getSharedWrites().entrySet()) {
 			final ACTION write = entry.getKey();
@@ -209,6 +208,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		if (oldInts.size() != newInts.size()) {
 			return false;
 		}
+		// TODO: Should we keep equal here or use isSubset instead?
 		return oldInts.keySet().stream().allMatch(x -> oldInts.get(x).isEqualTo(newInts.get(x)));
 	}
 }
