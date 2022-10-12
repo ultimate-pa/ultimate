@@ -58,12 +58,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		}
 		final HashRelation<String, String> closureForks = DataStructureUtils.transitiveClosure(forkRelation);
 		mTopologicalOrderPair.getFirst().forEach(x -> addInterferences(x, closureForks, Set.of()));
-		if (!mTopologicalOrderPair.getSecond().isEmpty()) {
-			// Add all writes of the remaining thread (i.e. those with loops) as interferences as an overapproximation
-			final Set<ACTION> additionalInterferences = mTopologicalOrderPair.getSecond().stream()
-					.flatMap(x -> mThreadsToWrites.getImage(x).stream()).collect(Collectors.toSet());
-			mTopologicalOrderPair.getSecond().forEach(x -> addInterferences(x, closureForks, additionalInterferences));
-		}
+		// Add all writes of the remaining thread (i.e. those with loops) as interferences as an overapproximation
+		final Set<ACTION> additionalInterferences = mTopologicalOrderPair.getSecond().stream()
+				.flatMap(x -> mThreadsToWrites.getImage(x).stream()).collect(Collectors.toSet());
+		mTopologicalOrderPair.getSecond().forEach(x -> addInterferences(x, closureForks, additionalInterferences));
 	}
 
 	private void addInterferences(final String thread, final HashRelation<String, String> closureForks,
@@ -85,8 +83,8 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 				// Add all transitively forked writes to every location after the fork
 				mInterferingWrites.addAllPairs(loc, interferingWrites);
 				// Add all writes that occur after the fork to every location of the forked thread
-				locsOfForkedThread
-						.forEach(x -> mInterferingWrites.addAllPairs(x, getSharedWritesAtLocation(loc, closureForks)));
+				final Set<ACTION> sharedWrites = getSharedWritesAtLocation(loc, closureForks);
+				locsOfForkedThread.forEach(x -> mInterferingWrites.addAllPairs(x, sharedWrites));
 			});
 		}
 	}
@@ -171,10 +169,9 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		final HashRelation<ACTION, IProgramVarOrConst> writesToVariables = new HashRelation<>();
 		final HashRelation<IProgramVar, String> writesToProcedures = new HashRelation<>();
 		final HashRelation<IProgramVar, String> readsToProcedures = new HashRelation<>();
-		for (final Entry<String, ?> entry : mIcfg.getProcedureEntryNodes().entrySet()) {
+		for (final Entry<String, ? extends LOC> entry : mIcfg.getProcedureEntryNodes().entrySet()) {
 			final String procedure = entry.getKey();
-			final List<IcfgEdge> initalEdges = ((IcfgLocation) entry.getValue()).getOutgoingEdges();
-			new IcfgEdgeIterator(initalEdges).forEachRemaining(edge -> {
+			new IcfgEdgeIterator(entry.getValue().getOutgoingEdges()).forEachRemaining(edge -> {
 				final TransFormula transformula = edge.getTransformula();
 				for (final IProgramVar written : transformula.getAssignedVars()) {
 					writesToVariables.addPair((ACTION) edge, written);
