@@ -82,7 +82,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private void calculateFixpoint(final Script script) {
 		Map<LOC, DisjunctiveAbstractState<STATE>> interferences = new HashMap<>();
 		int iteration = 1;
-		final Set<LOC> addedErrorLocations = new HashSet<>();
+		final Set<LOC> reachableErrorLocations = new HashSet<>();
 		while (true) {
 			mLogger.info("Starting outer Fixpoint iteration number " + iteration);
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
@@ -105,7 +105,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				for (final var counterExample : threadResult.getCounterexamples()) {
 					final var execution = counterExample.getAbstractExecution();
 					final var errorLocation = execution.get(execution.size() - 1).getSecond();
-					if (addedErrorLocations.add(errorLocation)) {
+					if (reachableErrorLocations.add(errorLocation)) {
 						mResult.addCounterexample(counterExample);
 					}
 				}
