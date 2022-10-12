@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -26,27 +28,94 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final HashRelation<String, LOC> mProceduresToForkLocations;
 	private final List<String> mTopologicalOrder;
-	private final HashRelation<LOC, String> mActiveThreadPerLocation;
-	private final HashRelation<String, ACTION> mWritesPerThread;
+	private final HashRelation<String, ACTION> mThreadsToWrites;
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
+	private final HashRelation<LOC, ACTION> mInterferingWrites;
+	private final HashRelation<String, IIcfgForkTransitionThreadCurrent<IcfgLocation>> mThreadsToForks;
 
 	public ConcurrentIcfgAnalyzer(final IIcfg<? extends LOC> icfg) {
 		mIcfg = icfg;
 		mTopologicalOrder = computeTopologicalOrder();
-		mWritesPerThread = new HashRelation<>();
-		mSharedWrites = computeSharedWrites();
-		final HashRelation<String, String> forkRelation = new HashRelation<>();
-		getForks().forEach(x -> forkRelation.addPair(x.getPrecedingProcedure(), x.getNameOfForkedProcedure()));
-		final HashRelation<String, String> closureDepending = closure(forkRelation);
-		final HashRelation<String, String> dependingOn = computeDependingProcedures(closureDepending, forkRelation);
-		// TODO: This is an imprecise workaround
-		final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, String> activeThreadsAfterFork =
-				new HashRelation<>();
-		getForks().forEach(
-				x -> activeThreadsAfterFork.addAllPairs(x, closureDepending.getImage(x.getPrecedingProcedure())));
-		mActiveThreadPerLocation = computeInterferingThreadsPerLocation(dependingOn, activeThreadsAfterFork);
+		mThreadsToWrites = new HashRelation<>();
+		mSharedWrites = new HashRelation<>();
+		mInterferingWrites = new HashRelation<>();
+		mThreadsToForks = new HashRelation<>();
 		mProceduresToForkLocations = new HashRelation<>();
-		getForks().forEach(x -> mProceduresToForkLocations.addPair(x.getNameOfForkedProcedure(), (LOC) x.getSource()));
+		computeSharedWrites();
+		final HashRelation<String, String> forkRelation = new HashRelation<>();
+		for (final var fork : getForks()) {
+			final String forking = fork.getPrecedingProcedure();
+			final String forked = fork.getNameOfForkedProcedure();
+			mThreadsToForks.addPair(forking, fork);
+			mProceduresToForkLocations.addPair(forked, (LOC) fork.getSource());
+			forkRelation.addPair(forking, forked);
+		}
+		final HashRelation<String, String> closureForks = closure(forkRelation);
+		mTopologicalOrder.forEach(x -> addInterferences(x, closureForks));
+	}
+
+	private static <T> HashRelation<T, T> closure(final HashRelation<T, T> relation) {
+		final HashRelation<T, T> result = new HashRelation<>(relation);
+		boolean changes = true;
+		while (changes) {
+			changes = false;
+			for (final Entry<T, HashSet<T>> entry : result.entrySet()) {
+				// TODO: We need to create a copy to avoid ConcurrentModificationException, is there a better way?
+				for (final T imageElement : new HashSet<>(entry.getValue())) {
+					final T domainElement = entry.getKey();
+					if (result.getImage(imageElement).stream().anyMatch(x -> !entry.getValue().contains(x))) {
+						result.addAllPairs(domainElement, result.getImage(imageElement));
+						changes = true;
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	private void addInterferences(final String thread, final HashRelation<String, String> closureForks) {
+		final Set<ACTION> initialInterferences = new HashSet<>();
+		// Add all interferences from each fork location
+		// TODO: Does this work correctly, if the fork relation has a cycle?
+		for (final LOC forkedBy : mProceduresToForkLocations.getImage(thread)) {
+			initialInterferences.addAll(mInterferingWrites.getImage(forkedBy));
+		}
+		for (final LOC loc : mIcfg.getProgramPoints().get(thread).values()) {
+			mInterferingWrites.addAllPairs(loc, initialInterferences);
+		}
+		for (final var fork : mThreadsToForks.getImage(thread)) {
+			final Set<ACTION> interferingWrites =
+					getTransitivelyForkedWrites(fork.getNameOfForkedProcedure(), closureForks);
+			final Collection<? extends LOC> locsOfForkedThread =
+					mIcfg.getProgramPoints().get(fork.getNameOfForkedProcedure()).values();
+			new IcfgLocationIterator<>((LOC) fork.getTarget()).forEachRemaining(loc -> {
+				// Add all transitively forked writes to every location after the fork
+				mInterferingWrites.addAllPairs(loc, interferingWrites);
+				// Add all writes that occur after the fork to every location of the forked thread
+				locsOfForkedThread
+						.forEach(x -> mInterferingWrites.addAllPairs(x, getSharedWritesAtLocation(loc, closureForks)));
+			});
+		}
+	}
+
+	private Set<ACTION> getSharedWritesAtLocation(final LOC loc, final HashRelation<String, String> closureForks) {
+		final Set<ACTION> result = new HashSet<>();
+		for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+			if (!mSharedWrites.hasEmptyImage((ACTION) edge)) {
+				result.add((ACTION) edge);
+			} else if (edge instanceof IIcfgForkTransitionThreadCurrent) {
+				final Set<ACTION> transitiveWrites = getTransitivelyForkedWrites(
+						((IIcfgForkTransitionThreadCurrent<?>) edge).getNameOfForkedProcedure(), closureForks);
+				result.addAll(transitiveWrites);
+			}
+		}
+		return result;
+	}
+
+	private Set<ACTION> getTransitivelyForkedWrites(final String thread,
+			final HashRelation<String, String> closureForks) {
+		return Stream.concat(Stream.of(thread), closureForks.getImage(thread).stream())
+				.flatMap(x -> mThreadsToWrites.getImage(x).stream()).collect(Collectors.toSet());
 	}
 
 	private Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> getForks() {
@@ -96,15 +165,18 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		return result;
 	}
 
+	public Set<ACTION> getInterferingWrites(final LOC location) {
+		return mInterferingWrites.getImage(location);
+	}
+
 	public HashRelation<ACTION, IProgramVarOrConst> getSharedWrites() {
 		return mSharedWrites;
 	}
 
-	private HashRelation<ACTION, IProgramVarOrConst> computeSharedWrites() {
+	private void computeSharedWrites() {
 		final HashRelation<ACTION, IProgramVarOrConst> writesToVariables = new HashRelation<>();
 		final HashRelation<IProgramVar, String> writesToProcedures = new HashRelation<>();
 		final HashRelation<IProgramVar, String> readsToProcedures = new HashRelation<>();
-		final HashRelation<ACTION, IProgramVarOrConst> result = new HashRelation<>();
 		for (final Entry<String, ?> entry : mIcfg.getProcedureEntryNodes().entrySet()) {
 			final String procedure = entry.getKey();
 			final List<IcfgEdge> initalEdges = ((IcfgLocation) entry.getValue()).getOutgoingEdges();
@@ -125,12 +197,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 					DataStructureUtils.intersection(entry.getValue(), sharedVars);
 			if (!writtenSharedVars.isEmpty()) {
 				final ACTION write = entry.getKey();
-				result.addAllPairs(write, writtenSharedVars);
-				// TODO: Modifying fields as a side effect of a method to return a result is not nice here...
-				mWritesPerThread.addPair(((IcfgEdge) write).getPrecedingProcedure(), write);
+				mSharedWrites.addAllPairs(write, writtenSharedVars);
+				mThreadsToWrites.addPair(((IcfgEdge) write).getPrecedingProcedure(), write);
 			}
 		}
-		return result;
 	}
 
 	private static boolean isSharedVariable(final IProgramVar var,
@@ -151,12 +221,6 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		return !readingProcedures.equals(writingProcedures);
 	}
 
-	public Set<ACTION> getInterferingWrites(final LOC location) {
-		// TODO: This is really imprecise, compute a HashRelation<LOC, ACTION> instead
-		return mActiveThreadPerLocation.getImage(location).stream().flatMap(x -> mWritesPerThread.getImage(x).stream())
-				.collect(Collectors.toSet());
-	}
-
 	private Map<String, Set<String>> getForkRelation() {
 		final Map<String, Set<String>> result = new HashMap<>();
 		final ArrayDeque<String> worklist = new ArrayDeque<>();
@@ -174,81 +238,6 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 					worklist.add(x);
 					return new HashSet<>();
 				});
-			}
-		}
-		return result;
-	}
-
-	private HashRelation<LOC, String> computeInterferingThreadsPerLocation(
-			final HashRelation<String, String> initialActiveThreads,
-			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, String> activeThreadsAfterFork) {
-		final HashRelation<LOC, String> result = new HashRelation<>();
-		for (final Entry<String, ? extends LOC> entry : mIcfg.getProcedureEntryNodes().entrySet()) {
-			final String thread = entry.getKey();
-			final Set<String> activeThreads = initialActiveThreads.getImage(thread);
-			if (!activeThreads.isEmpty()) {
-				new IcfgLocationIterator<>(entry.getValue())
-						.forEachRemaining(x -> result.addAllPairs(x, activeThreads));
-			}
-			for (final var fork : getForks()) {
-				if (!fork.getPrecedingProcedure().equals(thread)) {
-					continue;
-				}
-				new IcfgLocationIterator<>(fork.getTarget())
-						.forEachRemaining(x -> result.addAllPairs((LOC) x, activeThreadsAfterFork.getImage(fork)));
-			}
-		}
-		return result;
-	}
-
-	private static HashRelation<String, String> closure(final HashRelation<String, String> map) {
-		final HashRelation<String, String> result = new HashRelation<>(map);
-		boolean changes = true;
-		while (changes) {
-			changes = false;
-			for (final Entry<String, HashSet<String>> entry : result.entrySet()) {
-				// TODO: We need to create a copy to avoid ConcurrentModificationException, is there a better way?
-				for (final String forked : new HashSet<>(entry.getValue())) {
-					final String current = entry.getKey();
-					if (result.getImage(forked).stream().anyMatch(x -> !entry.getValue().contains(x))) {
-						result.addAllPairs(current, result.getImage(forked));
-						changes = true;
-					}
-				}
-			}
-		}
-		return result;
-	}
-
-	private HashRelation<String, String> computeDependingProcedures(final HashRelation<String, String> closureForks,
-			final HashRelation<String, String> forkRelation) {
-		final HashRelation<String, String> result = new HashRelation<>();
-		final ArrayDeque<String> worklist = new ArrayDeque<>();
-		final Set<String> added = new HashSet<>();
-		final String startitem = mTopologicalOrder.get(0);
-		worklist.add(startitem);
-		added.add(startitem);
-		while (!worklist.isEmpty()) {
-			final String currentItem = worklist.poll();
-			final Set<String> forkedThreads = forkRelation.getImage(currentItem);
-			for (final String forked : forkedThreads) {
-				// copy all entries von item into child
-				result.addAllPairs(forked, result.getImage(currentItem));
-				// add parent
-				result.addPair(forked, currentItem);
-				// add closure over all other children
-				for (final String child : forkedThreads) {
-					if (child.equals(forked)) {
-						continue;
-					}
-					result.addPair(forked, child);
-					result.addAllPairs(forked, closureForks.getImage(child));
-				}
-
-				if (!added.contains(forked)) {
-					worklist.add(forked);
-					added.add(forked);
-				}
 			}
 		}
 		return result;
