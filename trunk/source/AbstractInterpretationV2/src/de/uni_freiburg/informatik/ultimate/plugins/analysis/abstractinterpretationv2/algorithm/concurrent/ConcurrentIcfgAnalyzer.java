@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -32,9 +33,12 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 	private final HashRelation<ACTION, IProgramVarOrConst> mSharedWrites;
 	private final HashRelation<LOC, ACTION> mInterferingWrites;
 	private final HashRelation<String, IIcfgForkTransitionThreadCurrent<IcfgLocation>> mThreadsToForks;
+	private final Set<String> mUnboundedThreads;
 
 	public ConcurrentIcfgAnalyzer(final IIcfg<? extends LOC> icfg) {
 		mIcfg = icfg;
+		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
+				.collect(Collectors.toSet());
 		mTopologicalOrder = computeTopologicalOrder();
 		mThreadsToWrites = new HashRelation<>();
 		mSharedWrites = new HashRelation<>();
@@ -203,8 +207,7 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		}
 	}
 
-	private static boolean isSharedVariable(final IProgramVar var,
-			final HashRelation<IProgramVar, String> writesToProcedures,
+	private boolean isSharedVariable(final IProgramVar var, final HashRelation<IProgramVar, String> writesToProcedures,
 			final HashRelation<IProgramVar, String> readsToProcedures) {
 		final Set<String> writingProcedures = writesToProcedures.getImage(var);
 		if (writingProcedures.isEmpty()) {
@@ -217,8 +220,13 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		if (writingProcedures.size() > 1 || readingProcedures.size() > 1) {
 			return true;
 		}
-		// readingProcedures and writingProcedures are both singleton, return true iff they are different
-		return !readingProcedures.equals(writingProcedures);
+		// readingProcedures and writingProcedures are both singletons, return true iff they are different
+		if (!readingProcedures.equals(writingProcedures)) {
+			return true;
+		}
+		// ... or iff it's the same thread, but can interfere with itself (unbounded or forked multiple times)
+		final String thread = readingProcedures.iterator().next();
+		return mUnboundedThreads.contains(thread) || mProceduresToForkLocations.getImage(thread).size() > 1;
 	}
 
 	private Map<String, Set<String>> getForkRelation() {
