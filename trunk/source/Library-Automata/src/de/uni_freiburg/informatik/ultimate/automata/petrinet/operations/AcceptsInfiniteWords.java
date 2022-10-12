@@ -100,6 +100,9 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	 * @return boolean representing if word is accepted by net.
 	 */
 	private final boolean isWordAcceptedByOmegaNet() throws PetriNetNot1SafeException {
+		if (mLassoWord.getLoop().length() < 1) {
+			return false;
+		}
 		computeMarkingsFromFirstWordRun();
 		return computeLoopMarkingsAndCheckForAcceptance();
 	}

@@ -178,4 +178,32 @@ public class BuchiPetriNetEmptinessCheckWithAcceptsTest {
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
+
+	@Test
+	public final void testPartialConfigurationThesis() throws AutomataLibraryException {
+		final Set<String> alphabet = Set.of("a", "b", "c", "d", "e", "f", "g", "h");
+		final BoundedPetriNet<String, String> petriNet = new BoundedPetriNet<>(mServices, alphabet, false);
+		petriNet.addPlace("p1", true, false);
+		petriNet.addPlace("p2", false, false);
+		petriNet.addPlace("p3", false, true);
+		petriNet.addPlace("p4", false, false);
+		petriNet.addPlace("p5", false, false);
+		petriNet.addPlace("p6", false, false);
+
+		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
+		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p3")));
+		petriNet.addTransition("c", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p4")));
+
+		petriNet.addTransition("d", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p5")));
+		petriNet.addTransition("e", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p6")));
+		petriNet.addTransition("f", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p3")));
+
+		petriNet.addTransition("g", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
+		petriNet.addTransition("h", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
+
+		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final boolean notEmpty = !isempty.getResult();
+		isempty.checkResult(new StringFactory());
+		assertThat("Lasso should be found.", notEmpty);
+	}
 }

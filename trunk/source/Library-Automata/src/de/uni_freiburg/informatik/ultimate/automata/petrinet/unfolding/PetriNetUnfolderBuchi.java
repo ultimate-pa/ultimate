@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<LETTER, PLACE> {
 	PetriNetLassoRun<LETTER, PLACE> mLassoRun;
@@ -71,50 +72,65 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 		return false;
 	}
 
+	/**
+	 * Checks words contained in local configuration for being accepted lasso words.
+	 *
+	 * @param configLoopPart
+	 * @param configStemPart
+	 * @return if lassoword was found
+	 * @throws PetriNetNot1SafeException
+	 */
 	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart) throws PetriNetNot1SafeException {
-		Marking<PLACE> startMarking = new Marking<>(ImmutableSet.of(mUnfolding.getNet().getInitialPlaces()));
-		final List<LETTER> stemLetters = new ArrayList<>();
-		final List<LETTER> loopLetters = new ArrayList<>();
-		final List<Marking<PLACE>> sequenceOfStemMarkings = new ArrayList<>();
-		final List<Marking<PLACE>> sequenceOfLassoMarkings = new ArrayList<>();
+		mLogger.info("Type 2 Lasso search started.");
 		final List<Transition<LETTER, PLACE>> stemTransitions = new ArrayList<>();
 		final List<Transition<LETTER, PLACE>> loopTransitions = new ArrayList<>();
 
+		boolean acceptingPlaceShotintoInLoop = false;
 		for (final Event<LETTER, PLACE> loopEvent : configLoopPart) {
+			if (loopEvent.getTransition().getSuccessors().stream().anyMatch(mUnfolding.getNet()::isAccepting)) {
+				acceptingPlaceShotintoInLoop = true;
+			}
 			loopTransitions.add(loopEvent.getTransition());
+		}
+		if (!acceptingPlaceShotintoInLoop) {
+			mLogger.info("Type 2 Lasso search ended.");
+			return false;
 		}
 
 		for (final Event<LETTER, PLACE> stemEvent : configStemPart) {
 			stemTransitions.add(stemEvent.getTransition());
 		}
 
-		// TODO: Check this method for theroetical correctness
+		final Marking<PLACE> startMarking = new Marking<>(ImmutableSet.of(mUnfolding.getNet().getInitialPlaces()));
+
+		final var pair = constructFeasibleLetterAndMarkingSequence(startMarking, stemTransitions);
+		if (pair == null) {
+			return false;
+		}
+		final List<LETTER> stemLetters = pair.getFirst();
+		final List<Marking<PLACE>> sequenceOfStemMarkings = pair.getSecond();
+
+		final var pair2 = constructFeasibleLetterAndMarkingSequence(
+				sequenceOfStemMarkings.get(sequenceOfStemMarkings.size() - 1), loopTransitions);
+		if (pair2 == null) {
+			return false;
+		}
+		final List<LETTER> loopLetters = pair2.getFirst();
+		final List<Marking<PLACE>> sequenceOfLassoMarkings = pair2.getSecond();
+
+		mLogger.info("Type 2 Lasso search ended.");
+		return createAndCheckLassoRun(stemLetters, sequenceOfStemMarkings, loopLetters, sequenceOfLassoMarkings);
+	}
+
+	private final Pair<List<LETTER>, List<Marking<PLACE>>> constructFeasibleLetterAndMarkingSequence(
+			Marking<PLACE> startMarking, final List<Transition<LETTER, PLACE>> loopTransitions)
+			throws PetriNetNot1SafeException {
 		// Since some number of events might be in concurrency the sorting might have not returned the correct
 		// order of events. We thus juggle non enabled events in this stack always trying if they are enabled
 		// in the next iteration.
-		final Deque<Transition<LETTER, PLACE>> waitingStemTransitionStack = new ArrayDeque<>();
-		sequenceOfStemMarkings.add(startMarking);
-		for (final Transition<LETTER, PLACE> transition : stemTransitions) {
-			for (int i = 0; i < waitingStemTransitionStack.size(); i++) {
-				final var waitingTransition = waitingStemTransitionStack.pop();
-				if (startMarking.isTransitionEnabled(waitingTransition)) {
-					stemLetters.add(waitingTransition.getSymbol());
-					startMarking = startMarking.fireTransition(waitingTransition);
-					sequenceOfStemMarkings.add(startMarking);
-				} else {
-					waitingStemTransitionStack.addFirst(transition);
-				}
-			}
-
-			if (!startMarking.isTransitionEnabled(transition)) {
-				return false;
-			}
-			stemLetters.add(transition.getSymbol());
-			startMarking = startMarking.fireTransition(transition);
-			sequenceOfStemMarkings.add(startMarking);
-		}
-
+		final List<LETTER> loopLetters = new ArrayList<>();
+		final List<Marking<PLACE>> sequenceOfLassoMarkings = new ArrayList<>();
 		final Deque<Transition<LETTER, PLACE>> waitingLoopTransitionStack = new ArrayDeque<>();
 		sequenceOfLassoMarkings.add(startMarking);
 		for (final Transition<LETTER, PLACE> transition : loopTransitions) {
@@ -138,6 +154,12 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 			sequenceOfLassoMarkings.add(startMarking);
 		}
 
+		return new Pair<>(loopLetters, sequenceOfLassoMarkings);
+	}
+
+	private final boolean createAndCheckLassoRun(final List<LETTER> stemLetters,
+			final List<Marking<PLACE>> sequenceOfStemMarkings, final List<LETTER> loopLetters,
+			final List<Marking<PLACE>> sequenceOfLassoMarkings) throws PetriNetNot1SafeException {
 		@SuppressWarnings("unchecked")
 		final LETTER[] stem = (LETTER[]) stemLetters.toArray();
 		final Word<LETTER> stemWord = new Word<>(stem);
@@ -152,6 +174,7 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 		final PetriNetRun<LETTER, PLACE> stemRun = new PetriNetRun<>(sequenceOfStemMarkings, nestedstemWord);
 		final PetriNetRun<LETTER, PLACE> loopRun = new PetriNetRun<>(sequenceOfLassoMarkings, nestedloopWord);
 		final PetriNetLassoRun<LETTER, PLACE> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
+		// this BuchiAccepts should not be needed, but acts as a last correctness check for unknown edge cases
 		final BuchiAccepts<LETTER, PLACE> accepts = new BuchiAccepts<>(mServices,
 				(IPetriNetTransitionProvider<LETTER, PLACE>) mUnfolding.getNet(), nestedLassoWord);
 		final boolean accpted = accepts.getResult();
