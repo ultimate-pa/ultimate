@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -182,29 +183,34 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> postStates) {
 		final Set<ACTION> interferingWrites = mAnalyzer.getInterferingWrites(loc);
+		// TODO: The union does not work in general, since we might have different written variables.
+		// What is the solution to this?
 		return postStates.keySet().stream().filter(interferingWrites::contains).map(postStates::get)
 				.reduce(DisjunctiveAbstractState::union).orElse(null);
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> getPostStatesOnSharedVariables() {
-		final Map<ACTION, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
-		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : mAnalyzer.getSharedWrites().entrySet()) {
-			final ACTION write = entry.getKey();
-			final DisjunctiveAbstractState<STATE> preState =
-					mStateStorage.getAbstractState(mTransitionProvider.getSource(write));
-			final DisjunctiveAbstractState<STATE> postState;
-			if (preState == null) {
-				// If the source is not present in mStateStorage, fall back to the target
-				// TODO: Is it possible that neither the source nor the target are present?
-				postState = mStateStorage.getAbstractState(mTransitionProvider.getTarget(write));
-			} else {
-				postState = preState.apply(mDomain.getPostOperator(), write);
-			}
-			final Set<IProgramVarOrConst> varsToRemove =
-					DataStructureUtils.difference(postState.getVariables(), entry.getValue());
-			result.put(write, postState.removeVariables(varsToRemove));
+		return mAnalyzer.getSharedWrites().entrySet().stream()
+				.collect(Collectors.toMap(Entry::getKey, x -> getStateAfterWrite(x.getKey(), x.getValue())));
+	}
+
+	private DisjunctiveAbstractState<STATE> getStateAfterWrite(final ACTION write,
+			final Set<IProgramVarOrConst> variables) {
+		final DisjunctiveAbstractState<STATE> preState =
+				mStateStorage.getAbstractState(mTransitionProvider.getSource(write));
+		final DisjunctiveAbstractState<STATE> postState;
+		if (preState == null) {
+			// If the source is not present in mStateStorage, fall back to the target
+			postState = mStateStorage.getAbstractState(mTransitionProvider.getTarget(write));
+		} else {
+			// Otherwise apply the post operator
+			postState = preState.apply(mDomain.getPostOperator(), write);
 		}
-		return result;
+		// If the post state is still null (i.e. neither source nor target are in mStateStorage), return a top state
+		if (postState == null) {
+			return new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState()).addVariables(variables);
+		}
+		return postState.removeVariables(DataStructureUtils.difference(postState.getVariables(), variables));
 	}
 
 	private boolean interferencesAreEqual(final Map<LOC, DisjunctiveAbstractState<STATE>> oldInts,
