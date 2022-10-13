@@ -186,10 +186,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	private DisjunctiveAbstractState<STATE> getInterferingState(final LOC loc,
 			final Map<ACTION, DisjunctiveAbstractState<STATE>> postStates) {
 		final Set<ACTION> interferingWrites = mAnalyzer.getInterferingWrites(loc);
-		// TODO: The union does not work in general, since we might have different written variables.
-		// What is the solution to this?
 		return postStates.keySet().stream().filter(interferingWrites::contains).map(postStates::get)
-				.reduce(DisjunctiveAbstractState::union).orElse(null);
+				.reduce(FixpointEngineConcurrentUtils::unionOnSharedVariables).orElse(null);
 	}
 
 	private Map<ACTION, DisjunctiveAbstractState<STATE>> getPostStatesOnSharedVariables() {
