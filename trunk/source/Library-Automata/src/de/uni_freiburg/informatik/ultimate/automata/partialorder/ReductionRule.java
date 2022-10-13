@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -95,5 +97,11 @@ public abstract class ReductionRule<L, P> {
 	protected void removeTransition(final Transition<L, P> transition) {
 		// TODO record data about PN change
 		mNet.removeTransition(transition);
+	}
+
+	protected void pruneAlphabet() {
+		final Set<L> newAlphabet =
+				mNet.getTransitions().stream().map(Transition::getSymbol).collect(Collectors.toSet());
+		mNet.getAlphabet().retainAll(newAlphabet);
 	}
 }

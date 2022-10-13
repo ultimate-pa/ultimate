@@ -111,6 +111,8 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
 			mCompositions.put(composed, components);
 		}
+
+		pruneAlphabet();
 	}
 
 	private Set<Pair<L, List<Transition<L, P>>>> findCompositions(final IPetriNet<L, P> net) {
