@@ -83,7 +83,7 @@ public class InterferingDomain<STATE extends IAbstractState<STATE>, ACTION, LOC>
 
 	@Override
 	public boolean isAbstractable(final Term term) {
-		return mUnderlying.isAbstractable(null);
+		return mUnderlying.isAbstractable(term);
 	}
 
 	@Override
