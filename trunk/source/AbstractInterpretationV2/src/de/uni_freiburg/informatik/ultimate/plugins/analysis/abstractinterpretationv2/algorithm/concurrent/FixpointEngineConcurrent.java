@@ -100,10 +100,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 						fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
 
 				// Merge mStateStorage and result.getLoc2States
-				for (final var locAndStates : threadResult.getLoc2States().entrySet()) {
-					mStateStorage.addAbstractState(locAndStates.getKey(),
-							DisjunctiveAbstractState.createDisjunction(locAndStates.getValue()));
-				}
+				threadResult.getLoc2States().forEach(
+						(k, v) -> mStateStorage.addAbstractState(k, DisjunctiveAbstractState.createDisjunction(v)));
 				// Add present counterexamples
 				for (final var counterExample : threadResult.getCounterexamples()) {
 					final var execution = counterExample.getAbstractExecution();
