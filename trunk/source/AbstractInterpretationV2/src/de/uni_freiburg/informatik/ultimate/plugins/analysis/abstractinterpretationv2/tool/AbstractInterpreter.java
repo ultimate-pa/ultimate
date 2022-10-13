@@ -1,7 +1,9 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
+ * Copyright (C) 2015-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -79,6 +81,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * Should be used by other tools to run abstract interpretation on various parts of the RCFG.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  */
 public final class AbstractInterpreter {
 
@@ -86,14 +90,6 @@ public final class AbstractInterpreter {
 		// do not instantiate AbstractInterpreter; its a facade
 	}
 
-	/**
-	 *
-	 * @param root
-	 * @param timer
-	 * @param services
-	 * @param useFuture
-	 * @param concurrent
-	 */
 	private static <STATE extends IAbstractState<STATE>>
 			FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation>
 			buildParameters(final IIcfg<? extends IcfgLocation> root, final IProgressAwareTimer timer,

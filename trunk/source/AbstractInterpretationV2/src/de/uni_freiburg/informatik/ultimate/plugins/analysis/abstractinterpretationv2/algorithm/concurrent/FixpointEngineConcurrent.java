@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2022 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * Fixpoint engine for a thread modular approach using another {@code IFixpointEngine}.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Johannes Wahl (johannes.wahl@merkur.uni-freiburg.de)
  */
 public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, VARDECL, LOC extends IcfgLocation>
 		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
