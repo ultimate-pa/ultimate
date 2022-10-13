@@ -43,18 +43,18 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 public class InterferingVariableProvider<STATE extends IAbstractState<STATE>, ACTION>
 		implements IVariableProvider<STATE, ACTION> {
 	private final IVariableProvider<STATE, ACTION> mUnderlying;
-	private final DisjunctiveAbstractState<STATE> mInterferingState;
+	private final DisjunctiveAbstractState<STATE> mInitialState;
 
 	public InterferingVariableProvider(final IVariableProvider<STATE, ACTION> underlying,
-			final DisjunctiveAbstractState<STATE> interferingState) {
+			final DisjunctiveAbstractState<STATE> initialState) {
 		mUnderlying = underlying;
-		mInterferingState = interferingState;
+		mInitialState = initialState;
 	}
 
 	@Override
 	public DisjunctiveAbstractState<STATE> defineInitialVariables(final ACTION current,
 			final DisjunctiveAbstractState<STATE> state) {
-		return mUnderlying.defineInitialVariables(current, mInterferingState);
+		return mUnderlying.defineInitialVariables(current, mInitialState);
 	}
 
 	@Override
