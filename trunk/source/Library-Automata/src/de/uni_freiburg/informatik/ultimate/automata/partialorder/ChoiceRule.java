@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -73,10 +74,10 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	 *            Optionally, cached independence information. When letters are composed, their independence information
 	 *            stored in the cache is combined for the composed letter.
 	 */
-	public ChoiceRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
-			final CoenabledRelation<L, P> coenabledRelation, final ICompositionFactory<L> compositionFactory,
-			final IIndependenceCache<?, L> independenceCache) {
-		super(statistics, net, coenabledRelation, independenceCache);
+	public ChoiceRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
+			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
+			final ICompositionFactory<L> compositionFactory, final IIndependenceCache<?, L> independenceCache) {
+		super(services, statistics, net, coenabledRelation, independenceCache);
 		mCompositionFactory = compositionFactory;
 	}
 

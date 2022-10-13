@@ -209,8 +209,8 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-15")
 	private BoundedPetriNet<L, P> synthesizeLockRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final BoundedPetriNet<L, P> copiedNet = copyNetAndUpdateData(petriNet);
-		final SynthesizeLockRule<L, P> rule = new SynthesizeLockRule<>(mStatistics, copiedNet, mCoEnabledRelation,
-				mIndependenceCache, mMoverCheck, mPlaceFactory, true);
+		final SynthesizeLockRule<L, P> rule = new SynthesizeLockRule<>(mServices, mStatistics, copiedNet,
+				mCoEnabledRelation, mIndependenceCache, mMoverCheck, mPlaceFactory, true);
 		rule.apply();
 
 		return copiedNet;
@@ -222,8 +222,8 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-14")
 	private BoundedPetriNet<L, P> choiceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final BoundedPetriNet<L, P> copiedNet = copyNetAndUpdateData(petriNet);
-		final ChoiceRule<L, P> rule =
-				new ChoiceRule<>(mStatistics, copiedNet, mCoEnabledRelation, mCompositionFactory, mIndependenceCache);
+		final ChoiceRule<L, P> rule = new ChoiceRule<>(mServices, mStatistics, copiedNet, mCoEnabledRelation,
+				mCompositionFactory, mIndependenceCache);
 		rule.apply();
 
 		mChoiceCompositions.putAll(rule.getCompositions());

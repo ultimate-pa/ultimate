@@ -30,10 +30,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -47,14 +49,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of places in the Petri net
  */
 public abstract class ReductionRule<L, P> {
+	protected final ILogger mLogger;
+
 	private final BoundedPetriNet<L, P> mNet;
 	protected final CoenabledRelation<L, P> mCoenabledRelation;
 
 	protected final LiptonReductionStatisticsGenerator mStatistics;
 	private final IIndependenceCache<?, L> mIndependenceCache;
 
-	public ReductionRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
-			final CoenabledRelation<L, P> coenabledRelation, final IIndependenceCache<?, L> independenceCache) {
+	public ReductionRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
+			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
+			final IIndependenceCache<?, L> independenceCache) {
+		mLogger = services.getLoggingService().getLogger(getClass());
 		mNet = net;
 		mCoenabledRelation = coenabledRelation;
 		mStatistics = statistics;

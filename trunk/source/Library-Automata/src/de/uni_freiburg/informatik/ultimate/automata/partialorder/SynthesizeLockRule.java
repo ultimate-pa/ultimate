@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -59,11 +60,12 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 	private final IIndependenceRelation<Set<P>, L> mIndependence;
 	private final ICopyPlaceFactory<P> mPlaceFactory;
 
-	public SynthesizeLockRule(final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
+	public SynthesizeLockRule(final AutomataLibraryServices services,
+			final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
 			final CoenabledRelation<L, P> coenabledRelation, final IIndependenceCache<?, L> independenceCache,
 			final IIndependenceRelation<Set<P>, L> independence, final ICopyPlaceFactory<P> placeFactory,
 			final boolean requireLoop) {
-		super(statistics, net, coenabledRelation, independenceCache);
+		super(services, statistics, net, coenabledRelation, independenceCache);
 		mIndependence = independence;
 		mPlaceFactory = placeFactory;
 		mRequireLoop = requireLoop;
