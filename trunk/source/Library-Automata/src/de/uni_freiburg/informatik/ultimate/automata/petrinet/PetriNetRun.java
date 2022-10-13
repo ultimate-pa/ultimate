@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * A Petri net run is a sequence of markings <tt>m0 ... m_{n+1}</tt> and a word <tt>w_0 ... w_n</tt>.
@@ -161,5 +162,55 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 	@Override
 	public List<Marking<PLACE>> getStateSequence() {
 		return mMarkingSequence;
+	}
+
+	/**
+	 * Check if this run is actually possible in the given Petri net
+	 *
+	 * @param net
+	 *            A Petri net
+	 * @return true if the run can be replicated on the given net, false otherwise
+	 * @throws PetriNetNot1SafeException
+	 *             if the run (or some prefix of the run) can be replicated, but results in a marking where some place
+	 *             has more than one token
+	 */
+	public boolean isRunOf(final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
+		final var initialMarking = new Marking<>(ImmutableSet.of(net.getInitialPlaces()));
+		if (!mMarkingSequence.get(0).equals(initialMarking)) {
+			return false;
+		}
+
+		var marking = initialMarking;
+		for (int i = 0; i < mTransitionSequence.size(); ++i) {
+			final var transition = mTransitionSequence.get(i);
+			final var letter = mWord.getSymbol(i);
+			if (!letter.equals(transition.getSymbol())) {
+				return false;
+			}
+
+			if (!marking.isTransitionEnabled(transition)) {
+				return false;
+			}
+
+			final var expectedMarking = marking.fireTransition(transition);
+			final var actualMarking = mMarkingSequence.get(i + 1);
+			if (!expectedMarking.equals(actualMarking)) {
+				return false;
+			}
+
+			marking = actualMarking;
+		}
+		return true;
+	}
+
+	/**
+	 * Check if the run is an accepting run of the given Petri net
+	 *
+	 * @param net
+	 *            A Petri net, in which certain places are accepting
+	 * @return true if the final marking of the run is accepting
+	 */
+	public boolean isAccepting(final IPetriNet<LETTER, PLACE> net) {
+		return net.isAccepting(getMarking(mMarkingSequence.size() - 1));
 	}
 }
