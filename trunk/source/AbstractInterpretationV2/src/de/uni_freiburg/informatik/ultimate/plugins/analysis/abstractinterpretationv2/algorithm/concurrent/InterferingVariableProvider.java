@@ -76,7 +76,7 @@ public class InterferingVariableProvider<STATE extends IAbstractState<STATE>, AC
 
 	@Override
 	public IVariableProvider<STATE, ACTION> createNewVariableProvider(final CfgSmtToolkit toolkit) {
-		return mUnderlying.createNewVariableProvider(toolkit);
+		return new InterferingVariableProvider<>(mUnderlying.createNewVariableProvider(toolkit), mInitialState);
 	}
 
 	@Override
