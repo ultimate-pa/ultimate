@@ -92,15 +92,17 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			// add composed transition
 			final Transition<L, P> composed =
 					addTransition(composedLetter, firstComponent.getPredecessors(), firstComponent.getSuccessors());
-			assert components.stream().allMatch(x -> mCoenabledRelation.getImage(x).equals(mCoenabledRelation
-					.getImage(firstComponent))) : "parallel letters with different coenabled transitions";
-			mCoenabledRelation.copyRelationships(firstComponent, composed);
 
 			// remove obsolete transitions
 			for (final Transition<L, P> component : components) {
 				removeTransition(component);
 				mCoenabledRelation.removeElement(component);
 			}
+
+			// update coenabled relation
+			assert components.stream().allMatch(x -> mCoenabledRelation.getImage(x).equals(mCoenabledRelation
+					.getImage(firstComponent))) : "parallel letters with different coenabled transitions";
+			mCoenabledRelation.copyRelationships(firstComponent, composed);
 
 			// add mover information for composition
 			transferMoverProperties(composedLetter,
