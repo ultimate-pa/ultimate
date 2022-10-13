@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionN
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.CoveringMode;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;

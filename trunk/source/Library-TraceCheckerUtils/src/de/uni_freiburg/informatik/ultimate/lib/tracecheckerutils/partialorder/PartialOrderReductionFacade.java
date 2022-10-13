@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTrave
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
