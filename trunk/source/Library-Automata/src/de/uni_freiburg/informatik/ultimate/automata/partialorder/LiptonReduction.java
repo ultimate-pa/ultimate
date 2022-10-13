@@ -30,19 +30,24 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
@@ -55,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -812,6 +818,151 @@ public class LiptonReduction<L, P> {
 		}
 
 		return false;
+	}
+
+	private PetriNetRun<L, P> adaptRunForChoiceRule(final PetriNetRun<L, P> oldRun, final List<Transition<L, P>> old,
+			final Transition<L, P> composed) {
+		final List<Transition<L, P>> transitions = new ArrayList<>();
+		final List<L> letters = new ArrayList<>();
+
+		for (int i = 0; i < oldRun.getLength(); ++i) {
+			final var transition = oldRun.getTransition(i);
+			if (old.contains(transition)) {
+				transitions.add(composed);
+				letters.add(composed.getSymbol());
+			} else {
+				transitions.add(transition);
+				letters.add(transition.getSymbol());
+			}
+		}
+
+		final Word<L> word = new Word<>((L[]) letters.toArray());
+		final var run = new PetriNetRun<>(oldRun.getStateSequence(), word, transitions);
+
+		try {
+			assert run.isRunOf(mPetriNet);
+		} catch (final PetriNetNot1SafeException e) {
+			throw new AssertionError("Petri net has become unsafe");
+		}
+		return run;
+	}
+
+	// TODO This method does not yet account for postscripts / mightGetStuck. How can this be added?
+	// TODO Unclear if efficiency is an issue -- if so, can algorithm be made linear using LinkedList and ListIterator?
+	private PetriNetRun<L, P> adaptRunForSequenceRule(final PetriNetRun<L, P> oldRun, final P pivot, final P pivotCopy,
+			final Set<PendingComposition<L, P>> compositions, final Map<Transition<L, P>, Transition<L, P>> oldToCopy) {
+		final var map =
+				compositions.stream().collect(Collectors.toMap(c -> new Pair<>(c.getFirst(), c.getSecond()), c -> c));
+
+		final List<Marking<P>> markings = new ArrayList<>(oldRun.getStateSequence());
+		final List<Transition<L, P>> transitions = IntStream.range(0, oldRun.getLength())
+				.mapToObj(oldRun::getTransition).collect(Collectors.toCollection(ArrayList::new));
+
+		int i = 0;
+		while (i < transitions.size()) {
+			final var transition = transitions.get(i);
+			if (!transition.getSuccessors().contains(pivot)) {
+				// Transition was definitely not involved in the composition, hence skip and continue traversing.
+				i++;
+				continue;
+			}
+
+			final var optJ = IntStream.range(i + 1, transitions.size())
+					.filter(k -> transitions.get(k).getPredecessors().contains(pivot)).findFirst();
+			if (optJ.isEmpty()) {
+				// no successor of pivot is executed, hence pivot has a token in all future markings
+				assert markings.subList(i + 1, markings.size()).stream().allMatch(m -> m.contains(pivot));
+
+				if (!oldToCopy.containsKey(transition)) {
+					// transition was not fused, hence there is nothing to do
+					// TODO or it could have been fused, but because of postScript / mightGetStuck no copy exists
+					i++;
+					continue;
+				}
+
+				// replace transition by its un-fused copy
+				transitions.set(i, oldToCopy.get(transition));
+
+				// replace pivot by pivotCopy in all future markings
+				for (int k = i + 1; k < markings.size(); ++k) {
+					markings.set(k, replace(markings.get(k), pivot, pivotCopy));
+				}
+
+				// no other predecessor of pivot can be executed, otherwise pivot would have 2 tokens
+				assert transitions.subList(i + 1, transitions.size()).stream()
+						.allMatch(t -> !t.getSuccessors().contains(pivot));
+				break;
+			}
+
+			final int j = optJ.getAsInt();
+
+			final var secondTransition = transitions.get(j);
+			final var composition = map.get(new Pair<>(transition, secondTransition));
+			assert composition != null;
+
+			// TODO
+			final boolean wasRightMoverComposition = true;
+
+			// TODO
+			final var composed = composition.constructComposedTransition(null, null);
+
+			if (wasRightMoverComposition) {
+				transitions.set(j, composed);
+				transitions.remove(i);
+
+				// adjust markings: remove marking at i+1, and for all markings up to j remove successors of t1
+				markings.remove(i + 1);
+				for (int k = i; k <= j; ++k) {
+					markings.set(k, removeAll(markings.get(k), transition.getSuccessors()));
+				}
+			} else {
+				transitions.set(i, composed);
+				transitions.remove(j);
+
+				// adjust markings: remove marking j+1, and for all markings up to j add successors of t2
+				markings.remove(j + 1);
+				for (int k = i + 1; k < j; ++k) {
+					markings.set(k, addAll(markings.get(k), secondTransition.getSuccessors()));
+				}
+			}
+
+			// anything between (old) i and j cannot be a predecessor of pivot, otherwise pivot would have two tokens
+			// hence skip ahead to the position after secondTransition (which is j now, because we removed a transition)
+			i = j;
+		}
+
+		final var word = new Word<>((L[]) transitions.stream().map(Transition::getSymbol).toArray());
+		final var run = new PetriNetRun<>(markings, word, transitions);
+
+		try {
+			assert run.isRunOf(mPetriNet);
+		} catch (final PetriNetNot1SafeException e) {
+			throw new AssertionError("Petri net has become unsafe");
+		}
+		return run;
+	}
+
+	private Marking<P> replace(final Marking<P> oldMarking, final P oldPlace, final P newPlace) {
+		final var newMarking = oldMarking.stream().collect(Collectors.toCollection(HashSet::new));
+		final var removed = newMarking.remove(oldPlace);
+		assert removed;
+		final var added = newMarking.add(newPlace);
+		assert added;
+		return new Marking<>(ImmutableSet.of(newMarking));
+	}
+
+	private Marking<P> removeAll(final Marking<P> oldMarking, final Set<P> oldPlaces) {
+		final var newMarking = oldMarking.stream().collect(Collectors.toCollection(HashSet::new));
+		newMarking.removeAll(oldPlaces);
+		assert oldMarking.size() - newMarking.size() == oldPlaces.size();
+		return new Marking<>(ImmutableSet.of(newMarking));
+	}
+
+	private Marking<P> addAll(final Marking<P> oldMarking, final Set<P> newPlaces) {
+		final var newMarking = oldMarking.stream().collect(Collectors.toCollection(HashSet::new));
+		newMarking.addAll(newPlaces);
+		assert newMarking.size() - oldMarking.size() == newPlaces.size();
+		return new Marking<>(ImmutableSet.of(newMarking));
 	}
 
 	/**
