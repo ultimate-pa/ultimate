@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
@@ -153,14 +155,15 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		DisjunctiveAbstractState<STATE> result = null;
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
 			final DisjunctiveAbstractState<STATE> state = mStateStorage.getAbstractState(loc);
-			if (result == null) {
-				result = state;
-			}
 			if (state == null) {
 				result = null;
 				break;
 			}
-			result = result.union(state);
+			// TODO: Is it safe to remove all not IProgramNonOldVar, or should we just remove the ILocalProgramVars?
+			final List<IProgramVarOrConst> varsToRemove = state.getVariables().stream()
+					.filter(x -> !(x instanceof IProgramNonOldVar)).collect(Collectors.toList());
+			final DisjunctiveAbstractState<STATE> clearedState = state.removeVariables(varsToRemove);
+			result = result == null ? clearedState : result.union(clearedState);
 		}
 		return result != null ? result : new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
