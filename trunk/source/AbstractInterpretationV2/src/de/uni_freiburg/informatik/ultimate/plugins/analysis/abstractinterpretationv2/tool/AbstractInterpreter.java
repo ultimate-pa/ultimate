@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFixpointEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFixpointEngineFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
@@ -295,7 +296,7 @@ public final class AbstractInterpreter {
 			runFuture(final IIcfg<?> root, final IUltimateServiceProvider services, final ILogger logger,
 					final boolean isSilent,
 					final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> initialParams,
-					final FixpointEngineFactory<STATE> funCreateEngine) {
+					final IFixpointEngineFactory<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> funCreateEngine) {
 
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 
@@ -305,7 +306,8 @@ public final class AbstractInterpreter {
 		final FixpointEngineFutureParameterFactory paramFac = new FixpointEngineFutureParameterFactory(root, services);
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				paramFac.addDefaultParamsFuture(initialParams, transProvider, loopDetector);
-		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = funCreateEngine.create(params);
+		final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe =
+				funCreateEngine.constructFixpointEngine(params);
 
 		final Set<IcfgLocation> initialNodes;
 		if (fxpe instanceof BackwardFixpointEngine<?, ?, ?, ?>) {
@@ -363,11 +365,5 @@ public final class AbstractInterpreter {
 	private static Set<IcfgLocation> getSinks(final IIcfg<?> root) {
 		return new IcfgLocationIterator<>(root).asStream().filter(a -> a.getOutgoingEdges().isEmpty())
 				.collect(Collectors.toSet());
-	}
-
-	@FunctionalInterface
-	private interface FixpointEngineFactory<STATE extends IAbstractState<STATE>> {
-		IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation>
-				create(FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params);
 	}
 }
