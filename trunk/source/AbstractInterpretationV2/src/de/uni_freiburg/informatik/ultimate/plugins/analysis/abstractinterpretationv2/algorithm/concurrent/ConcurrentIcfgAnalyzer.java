@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -196,6 +197,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 
 	private boolean isSharedVariable(final IProgramVar var, final HashRelation<IProgramVar, String> writesToProcedures,
 			final HashRelation<IProgramVar, String> readsToProcedures) {
+		// Only a IProgramNonOldVar can be a shared variable, not e.g. local variables
+		if (!(var instanceof IProgramNonOldVar)) {
+			return false;
+		}
 		final Set<String> writingProcedures = writesToProcedures.getImage(var);
 		if (writingProcedures.isEmpty()) {
 			return false;
