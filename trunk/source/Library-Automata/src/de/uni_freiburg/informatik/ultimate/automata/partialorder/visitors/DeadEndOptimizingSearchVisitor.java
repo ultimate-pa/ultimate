@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
 
 /**
  * A visitor that implements a dead-end removal optimization. Each instance can be used in multiple traversals, if it is

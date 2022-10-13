@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoveringOptimizationVisitor.ICoveringRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.ICoveringRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
