@@ -42,12 +42,8 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		mUnboundedThreads = IcfgUtils.getForksInLoop(icfg).stream().map(x -> x.getNameOfForkedProcedure())
 				.collect(Collectors.toSet());
 		computeTopologicalOrder();
-		mThreadsToWrites = new HashRelation<>();
-		mSharedWrites = new HashRelation<>();
-		mInterferingWrites = new HashRelation<>();
 		mThreadsToForks = new HashRelation<>();
 		mProceduresToForkLocations = new HashRelation<>();
-		computeSharedWrites();
 		final HashRelation<String, String> forkRelation = new HashRelation<>();
 		for (final var fork : getForks()) {
 			final String forking = fork.getPrecedingProcedure();
@@ -56,6 +52,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			mProceduresToForkLocations.addPair(forked, (LOC) fork.getSource());
 			forkRelation.addPair(forking, forked);
 		}
+		mThreadsToWrites = new HashRelation<>();
+		mSharedWrites = new HashRelation<>();
+		computeSharedWrites();
+		mInterferingWrites = new HashRelation<>();
 		final HashRelation<String, String> closureForks = DataStructureUtils.transitiveClosure(forkRelation);
 		mTopologicalOrderPair.getFirst().forEach(x -> addInterferences(x, closureForks, Set.of()));
 		// Add all writes of the remaining thread (i.e. those with loops) as interferences as an overapproximation
