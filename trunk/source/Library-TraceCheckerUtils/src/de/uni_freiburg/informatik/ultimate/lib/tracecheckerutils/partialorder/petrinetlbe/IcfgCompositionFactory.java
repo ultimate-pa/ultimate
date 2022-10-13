@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,11 +41,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.BranchEncoderRenaming;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge> {
+public class IcfgCompositionFactory implements ICompositionFactoryWithBacktranslator<IcfgEdge> {
 
 	// Simplify composed TransFormula because various other algorithms in Ultimate have to work with this term.
 	private static final boolean SIMPLIFY_SEQ_COMP = true;
@@ -75,18 +75,13 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final IcfgEdgeBuilder mEdgeBuilder;
-
-	// Branch encoders introduced in parallel compositions (mapping from each input edge to its branch encoder)
-	private final Map<IcfgEdge, TermVariable> mBranchEncoders = new HashMap<>();
-
-	// In sequential compositions of edges with shared branch encoders, we must rename branch encoders in one of the
-	// edges. Here we map a composed edge to the branch encoder renaming used for the first argument of the composition.
-	private final Map<IcfgEdge, BranchEncoderRenaming> mBranchEncoderRenamingInFirst = new HashMap<>();
+	private final BlockEncodingBacktranslator<IcfgEdge> mBacktranslator;
 
 	public IcfgCompositionFactory(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit) {
 		mLogger = services.getLoggingService().getLogger(IcfgCompositionFactory.class);
 		mMgdScript = cfgSmtToolkit.getManagedScript();
 		mEdgeBuilder = new IcfgEdgeBuilder(cfgSmtToolkit, services, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
+		mBacktranslator = new BlockEncodingBacktranslator<>(IcfgEdge.class, Term.class, mLogger);
 	}
 
 	@Override
@@ -130,10 +125,8 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 		final IcfgEdge composition = mEdgeBuilder.constructSequentialComposition(first.getSource(), second.getTarget(),
 				Arrays.asList(renamedFirst, second), SIMPLIFY_SEQ_COMP, TRY_AUX_VAR_ELIMINATION, false);
 
-		if (branchEncoderRenaming != null) {
-			// remember the branch encoder renaming used in this composition
-			mBranchEncoderRenamingInFirst.put(composition, branchEncoderRenaming);
-		}
+		mBacktranslator.mapEdges(composition, first, branchEncoderRenaming);
+		mBacktranslator.mapEdges(composition, second);
 
 		return composition;
 	}
@@ -154,24 +147,15 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 
 		final Map<TermVariable, IcfgEdge> branchIndicator2edge =
 				mEdgeBuilder.constructBranchIndicatorToEdgeMapping(transitions);
-		storeBranchEncoders(branchIndicator2edge);
-		return mEdgeBuilder.constructParallelComposition(source, target, branchIndicator2edge);
-	}
 
-	private void storeBranchEncoders(final Map<TermVariable, IcfgEdge> indicators) {
-		for (final Map.Entry<TermVariable, IcfgEdge> entry : indicators.entrySet()) {
-			assert !mBranchEncoders.containsKey(entry.getValue()) : "Ambiguous branch encoder for transition";
-			mBranchEncoders.put(entry.getValue(), entry.getKey());
-		}
+		final var composition = mEdgeBuilder.constructParallelComposition(source, target, branchIndicator2edge);
+		mBacktranslator.mapEdges(composition, branchIndicator2edge);
+
+		return composition;
 	}
 
 	@Override
-	public Map<IcfgEdge, TermVariable> getBranchEncoders() {
-		return mBranchEncoders;
-	}
-
-	@Override
-	public Map<IcfgEdge, BranchEncoderRenaming> getBranchEncoderRenamings() {
-		return mBranchEncoderRenamingInFirst;
+	public BlockEncodingBacktranslator<IcfgEdge> getBacktranslator() {
+		return mBacktranslator;
 	}
 }

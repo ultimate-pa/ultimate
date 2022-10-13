@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.ICompositionFactoryWithBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTransition<?>>
 		extends CegarLoopForPetriNet<L> {
 
-	private final IPLBECompositionFactory<L> mCompositionFactory;
+	private final ICompositionFactoryWithBacktranslator<L> mCompositionFactory;
 	private IIndependenceCache<?, L> mIndependenceCache;
 
 	/**
@@ -79,7 +79,7 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 			final BoundedPetriNet<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
-			final IPLBECompositionFactory<L> compositionFactory, final Class<L> transitionClazz,
+			final ICompositionFactoryWithBacktranslator<L> compositionFactory, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, services,
 				transitionClazz, stateFactoryForRefinement);
@@ -101,7 +101,7 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 				mIndependenceCache, mTransitionClazz);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 		mIndependenceCache = lbe.getIndependenceCache();
-		getServices().getBacktranslationService().addTranslator(lbe.getBacktranslator());
+		getServices().getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
 
 		final long end_time = System.currentTimeMillis();
 		final long difference = end_time - start_time;

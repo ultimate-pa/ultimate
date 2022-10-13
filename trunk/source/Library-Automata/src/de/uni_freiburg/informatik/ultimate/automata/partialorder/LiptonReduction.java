@@ -1072,16 +1072,6 @@ public class LiptonReduction<L, P> {
 		return mResult;
 	}
 
-	public Map<L, List<L>> getSequentialCompositions() {
-		return mSequentialCompositions.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getSymbol(),
-				e -> e.getValue().stream().map(Transition::getSymbol).collect(Collectors.toList())));
-	}
-
-	public Map<L, Set<L>> getChoiceCompositions() {
-		return mChoiceCompositions.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getSymbol(),
-				e -> e.getValue().stream().map(Transition::getSymbol).collect(Collectors.toSet())));
-	}
-
 	public LiptonReductionStatisticsGenerator getStatistics() {
 		return mStatistics;
 	}

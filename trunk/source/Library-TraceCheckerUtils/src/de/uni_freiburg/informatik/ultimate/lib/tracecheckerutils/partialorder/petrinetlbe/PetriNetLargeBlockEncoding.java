@@ -29,8 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -55,8 +53,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.BranchEncoderRenaming;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -67,8 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticConditionEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SyntacticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Performs a Large Block Encoding on Petri nets. This operation performs Lipton reduction ({@link LiptonReduction}) and
@@ -92,7 +86,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, IPredicate> mResult;
-	private final BlockEncodingBacktranslator<L> mBacktranslator;
 
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics;
 
@@ -121,7 +114,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
-			final IPLBECompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
+			final ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
 			final IIndependenceCache<?, L> independenceCache, final Class<L> clazz)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -143,7 +136,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 					compositionFactory, placeFactory, moverCheck, postScriptChecker, mIndependenceCache);
 			lipton.performReduction();
 			mResult = lipton.getResult();
-			mBacktranslator = createBacktranslator(clazz, lipton, compositionFactory);
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
 					moverCheck.getStatistics());
 		} catch (final AutomataOperationCanceledException | ToolchainCanceledException ce) {
@@ -254,50 +246,11 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return "applying " + getClass().getSimpleName() + " to Petri net that " + petriNet.sizeInformation();
 	}
 
-	private BlockEncodingBacktranslator<L> createBacktranslator(final Class<L> clazz,
-			final LiptonReduction<L, IPredicate> reduction, final IPLBECompositionFactory<L> compositionFactory) {
-		final BlockEncodingBacktranslator<L> translator = new BlockEncodingBacktranslator<>(clazz, Term.class, mLogger);
-
-		final Map<L, BranchEncoderRenaming> renamings = compositionFactory.getBranchEncoderRenamings();
-		for (final Map.Entry<L, List<L>> seq : reduction.getSequentialCompositions().entrySet()) {
-			final L newEdge = seq.getKey();
-			int i = 0;
-			for (final L originalEdge : seq.getValue()) {
-				translator.mapEdges(newEdge, originalEdge, i == 0 ? renamings.get(newEdge) : null);
-				i++;
-			}
-		}
-
-		final Map<L, TermVariable> branchEncoders = compositionFactory.getBranchEncoders();
-		for (final Map.Entry<L, Set<L>> choice : reduction.getChoiceCompositions().entrySet()) {
-			final L newEdge = choice.getKey();
-			for (final L originalEdge : choice.getValue()) {
-				final TermVariable branchEncoder = branchEncoders.get(originalEdge);
-				translator.mapEdges(newEdge, originalEdge, branchEncoder);
-			}
-		}
-
-		return translator;
-	}
-
 	public BoundedPetriNet<L, IPredicate> getResult() {
 		return mResult;
 	}
 
-	public BlockEncodingBacktranslator<L> getBacktranslator() {
-		return mBacktranslator;
-	}
-
 	public PetriNetLargeBlockEncodingBenchmarks getStatistics() {
 		return new PetriNetLargeBlockEncodingBenchmarks(mStatistics);
-	}
-
-	/**
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 */
-	public interface IPLBECompositionFactory<L> extends ICompositionFactory<L> {
-		Map<L, TermVariable> getBranchEncoders();
-
-		Map<L, BranchEncoderRenaming> getBranchEncoderRenamings();
 	}
 }

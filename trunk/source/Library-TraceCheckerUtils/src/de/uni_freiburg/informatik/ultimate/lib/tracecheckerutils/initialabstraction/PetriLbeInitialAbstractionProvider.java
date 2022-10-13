@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.ICompositionFactoryWithBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 
 /**
  * Transforms an initial abstraction by applying one-shot Petri LBE.
@@ -54,7 +54,7 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 
 	private final IUltimateServiceProvider mServices;
 	private final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> mUnderlying;
-	private final IPLBECompositionFactory<L> mCompositionFactory;
+	private final ICompositionFactoryWithBacktranslator<L> mCompositionFactory;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final Class<L> mTransitionClazz;
 	private final IndependenceSettings mIndependenceSettings;
@@ -79,7 +79,7 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	public PetriLbeInitialAbstractionProvider(
 			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final IndependenceSettings independenceSettings, final IPLBECompositionFactory<L> compositionFactory,
+			final IndependenceSettings independenceSettings, final ICompositionFactoryWithBacktranslator<L> compositionFactory,
 			final BasicPredicateFactory predicateFactory, final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
@@ -99,7 +99,7 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 				net, mIndependenceSettings, mCompositionFactory, mPredicateFactory, null, mTransitionClazz);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
-		mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
+		mServices.getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
 		// TODO add statistics support to IInitialAbstractionProvider
 		mServices.getResultService().reportResult(mPluginId,
 				new StatisticsResult<>(mPluginId, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));

@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.ICompositionFactoryWithBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNetWithRepeatedLiptonReduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
@@ -90,14 +90,14 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 	private final Class<L> mTransitionClazz;
 	private final TAPreferences mPrefs;
-	private final Supplier<IPLBECompositionFactory<L>> mCreateCompositionFactory;
+	private final Supplier<ICompositionFactoryWithBacktranslator<L>> mCreateCompositionFactory;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final boolean mComputeHoareAnnotation;
 
 	private CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	public CegarLoopFactory(final Class<L> transitionClazz, final TAPreferences taPrefs,
-			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
+			final Supplier<ICompositionFactoryWithBacktranslator<L>> createCompositionFactory,
 			final ICopyActionFactory<L> copyFactory, final boolean computeHoareAnnotation) {
 		mTransitionClazz = transitionClazz;
 		mPrefs = taPrefs;
@@ -292,7 +292,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 	@Deprecated
 	public static <L extends IIcfgTransition<?>> BoundedPetriNet<L, IPredicate> createPetriAbstraction(
-			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
+			final IUltimateServiceProvider services, final ICompositionFactoryWithBacktranslator<L> compositionFactory,
 			final PredicateFactory predicateFactory, final Class<L> transitionClazz, final TAPreferences pref,
 			final boolean removeDead, final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs) {
 		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, null, false)
