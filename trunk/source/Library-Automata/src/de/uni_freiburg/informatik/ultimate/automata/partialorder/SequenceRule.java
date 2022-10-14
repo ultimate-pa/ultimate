@@ -66,8 +66,6 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 	private final ICopyPlaceFactory<P> mPlaceFactory;
 	private final IPostScriptChecker<L, P> mPostScriptChecker;
 
-	// private final Map<Transition<L, P>, List<Transition<L, P>>> mCompositions = new HashMap<>();
-
 	public SequenceRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
 			final ModifiableRetroMorphism<L, P> retromorphism, final IIndependenceRelation<Set<P>, L> independence,
