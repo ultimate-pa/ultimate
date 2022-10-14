@@ -21,7 +21,6 @@ modifies s, t;
 procedure ULTIMATE.start() returns()
 modifies s, t;
 {
-  i := 0;
   s := 0;
   t := 0;
 
