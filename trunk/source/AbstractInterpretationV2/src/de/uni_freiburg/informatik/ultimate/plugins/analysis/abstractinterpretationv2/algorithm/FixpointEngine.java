@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -267,7 +269,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			final DisjunctiveAbstractState<STATE> preStateWithFreshVariables,
 			final DisjunctiveAbstractState<STATE> hierachicalPreState,
 			final DisjunctiveAbstractState<STATE> postState) {
+		// TODO: For now joins and forks are excluded (since the hoare triple checker does not support them)
 		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
+				|| currentAction instanceof IForkActionThreadCurrent
+				|| currentAction instanceof IIcfgJoinTransitionThreadCurrent
 				|| mDebugHelper.isPostSound(preState, hierachicalPreState, postState, currentAction);
 		if (rtr) {
 			return true;
