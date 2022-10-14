@@ -72,11 +72,12 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 	}
 
 	@Override
-	protected void applyInternal(final IPetriNet<L, P> net) {
+	protected boolean applyInternal(final IPetriNet<L, P> net) {
 		final Map<P, Set<Transition<L, P>>> compositions = findCompositions(net);
 		for (final var entry : compositions.entrySet()) {
 			inhibitTransitions(net, entry.getKey(), entry.getValue());
 		}
+		return !compositions.isEmpty();
 	}
 
 	private void inhibitTransitions(final IPetriNet<L, P> net, final P place, final Set<Transition<L, P>> transitions) {

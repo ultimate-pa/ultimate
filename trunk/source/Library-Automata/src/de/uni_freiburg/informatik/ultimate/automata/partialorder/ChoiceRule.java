@@ -29,16 +29,16 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -56,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of places in the Petri net
  */
 public class ChoiceRule<L, P> extends ReductionRule<L, P> {
+	private final ModifiableRetroMorphism<L, P> mRetromorphism;
 	private final ICompositionFactory<L> mCompositionFactory;
-	private final Map<Transition<L, P>, List<Transition<L, P>>> mCompositions = new HashMap<>();
 
 	/**
 	 * Creates a new instance of the rule.
@@ -76,13 +76,15 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	 */
 	public ChoiceRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
-			final ICompositionFactory<L> compositionFactory, final IIndependenceCache<?, L> independenceCache) {
+			final ModifiableRetroMorphism<L, P> retromorphism, final ICompositionFactory<L> compositionFactory,
+			final IIndependenceCache<?, L> independenceCache) {
 		super(services, statistics, net, coenabledRelation, independenceCache);
+		mRetromorphism = retromorphism;
 		mCompositionFactory = compositionFactory;
 	}
 
 	@Override
-	protected void applyInternal(final IPetriNet<L, P> net) {
+	protected boolean applyInternal(final IPetriNet<L, P> net) {
 		final Set<Pair<L, List<Transition<L, P>>>> pendingCompositions = findCompositions(net);
 
 		for (final Pair<L, List<Transition<L, P>>> pair : pendingCompositions) {
@@ -94,26 +96,30 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 			final Transition<L, P> composed =
 					addTransition(composedLetter, firstComponent.getPredecessors(), firstComponent.getSuccessors());
 
-			// remove obsolete transitions
-			for (final Transition<L, P> component : components) {
-				removeTransition(component);
-				mCoenabledRelation.removeElement(component);
-			}
+			// update retromorphism
+			mRetromorphism.addTransition(composed, components, components);
 
 			// update coenabled relation
 			assert components.stream().allMatch(x -> mCoenabledRelation.getImage(x).equals(mCoenabledRelation
 					.getImage(firstComponent))) : "parallel letters with different coenabled transitions";
 			mCoenabledRelation.copyRelationships(firstComponent, composed);
 
+			// remove obsolete transitions
+			for (final Transition<L, P> component : components) {
+				removeTransition(component);
+				mCoenabledRelation.removeElement(component);
+				mRetromorphism.deleteTransition(component);
+			}
+
 			// add mover information for composition
 			transferMoverProperties(composedLetter,
 					components.stream().map(Transition::getSymbol).collect(Collectors.toList()));
 
 			mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
-			mCompositions.put(composed, components);
 		}
 
 		pruneAlphabet();
+		return !pendingCompositions.isEmpty();
 	}
 
 	private Set<Pair<L, List<Transition<L, P>>>> findCompositions(final IPetriNet<L, P> net) {
@@ -143,7 +149,30 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 		return compositions;
 	}
 
-	public Map<Transition<L, P>, List<Transition<L, P>>> getCompositions() {
-		return mCompositions;
+	private PetriNetRun<L, P> adaptRun(final PetriNetRun<L, P> oldRun, final List<Transition<L, P>> old,
+			final Transition<L, P> composed) {
+		final List<Transition<L, P>> transitions = new ArrayList<>();
+		final List<L> letters = new ArrayList<>();
+
+		for (int i = 0; i < oldRun.getLength(); ++i) {
+			final var transition = oldRun.getTransition(i);
+			if (old.contains(transition)) {
+				transitions.add(composed);
+				letters.add(composed.getSymbol());
+			} else {
+				transitions.add(transition);
+				letters.add(transition.getSymbol());
+			}
+		}
+
+		final Word<L> word = new Word<>((L[]) letters.toArray());
+		final var run = new PetriNetRun<>(oldRun.getStateSequence(), word, transitions);
+
+		// try {
+		// assert run.isRunOf(mPetriNet);
+		// } catch (final PetriNetNot1SafeException e) {
+		// throw new AssertionError("Petri net has become unsafe");
+		// }
+		return run;
 	}
 }

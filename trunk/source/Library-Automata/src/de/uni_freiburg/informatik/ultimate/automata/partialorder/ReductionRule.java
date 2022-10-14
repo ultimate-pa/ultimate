@@ -74,11 +74,11 @@ public abstract class ReductionRule<L, P> {
 	 *            A read-only view of the input net. All modifications of the net should be made through methods
 	 *            provided by this class.
 	 */
-	protected abstract void applyInternal(IPetriNet<L, P> net);
+	protected abstract boolean applyInternal(IPetriNet<L, P> net);
 
-	public void apply() {
+	public boolean apply() {
 		// TODO reset per-application data
-		applyInternal(mNet);
+		return applyInternal(mNet);
 		// TODO fixed-point iteration
 		// TODO return data about application
 	}
@@ -103,6 +103,10 @@ public abstract class ReductionRule<L, P> {
 	protected void removeTransition(final Transition<L, P> transition) {
 		// TODO record data about PN change
 		mNet.removeTransition(transition);
+	}
+
+	protected void removePlace(final P place) {
+		mNet.removePlace(place);
 	}
 
 	protected void pruneAlphabet() {
