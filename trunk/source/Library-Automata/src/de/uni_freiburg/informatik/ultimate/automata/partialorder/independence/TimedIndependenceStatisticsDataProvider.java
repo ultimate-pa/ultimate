@@ -24,11 +24,11 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
 import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceResultAggregator.Timer;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceResultAggregator.Timer;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 

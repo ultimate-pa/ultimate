@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 

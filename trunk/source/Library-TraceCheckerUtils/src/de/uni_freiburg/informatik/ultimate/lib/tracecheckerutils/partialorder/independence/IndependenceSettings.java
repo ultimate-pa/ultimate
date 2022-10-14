@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 /**
  * Bundles various settings specifying an independence relation to be used.
  *
- * @see de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation
+ * @see de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */

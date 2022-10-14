@@ -25,7 +25,9 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
+
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 
 /**
  * Interface for visitors used in depth-first traversal of finite automata, e.g. by {@link DepthFirstTraversal}, or by
