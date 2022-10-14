@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -74,16 +73,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
-		final String creator = graphType.getCreator();
-		switch (creator) {
-		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
-			mObserver = new ArrayList<>();
-			mObserver.add(new AbstractInterpretationRcfgObserver(mServices));
-			break;
-		default:
-			mObserver = null;
-			break;
-		}
+		mObserver = List.of(new AbstractInterpretationRcfgObserver(mServices));
 	}
 
 	@Override

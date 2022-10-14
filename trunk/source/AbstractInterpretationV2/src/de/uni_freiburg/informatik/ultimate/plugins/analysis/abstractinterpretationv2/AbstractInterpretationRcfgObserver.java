@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
@@ -55,10 +55,10 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 	@Override
 	public boolean process(final IElement elem) throws Throwable {
-		if (!(elem instanceof BoogieIcfgContainer)) {
+		if (!(elem instanceof IIcfg)) {
 			throw new IllegalArgumentException("You cannot use this observer for " + elem.getClass().getSimpleName());
 		}
-		final BoogieIcfgContainer root = (BoogieIcfgContainer) elem;
+		final IIcfg<?> root = (IIcfg<?>) elem;
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final IProgressAwareTimer timer;
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_RUN_AS_PRE_ANALYSIS)) {
