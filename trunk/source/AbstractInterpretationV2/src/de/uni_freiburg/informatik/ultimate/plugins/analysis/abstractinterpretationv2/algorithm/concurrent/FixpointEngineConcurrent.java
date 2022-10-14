@@ -144,7 +144,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		int iteration = 1;
 		final Set<LOC> reachableErrorLocations = new HashSet<>();
 		while (true) {
-			mLogger.info("Starting outer Fixpoint iteration number " + iteration);
+			mLogger.info("Starting thread modular fixpoint engine iteration " + iteration);
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
 				final DisjunctiveAbstractState<STATE> initialState = getInitialState(procedure);
 				final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> paramsWithInterferences =
