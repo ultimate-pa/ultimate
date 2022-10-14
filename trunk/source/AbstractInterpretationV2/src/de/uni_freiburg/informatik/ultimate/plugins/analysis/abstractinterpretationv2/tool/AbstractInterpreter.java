@@ -32,7 +32,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -330,23 +329,6 @@ public final class AbstractInterpreter {
 
 		logger.info(result.getBenchmark());
 		return result;
-	}
-
-	private static <STATE extends IAbstractState<STATE>, LOC> IAbstractInterpretationResult<STATE, IcfgEdge, LOC>
-			runSilently(final Supplier<IAbstractInterpretationResult<STATE, IcfgEdge, LOC>> fun, final ILogger logger) {
-		try {
-			return fun.get();
-		} catch (final OutOfMemoryError oom) {
-			throw oom;
-		} catch (final IllegalArgumentException iae) {
-			throw iae;
-		} catch (final ToolchainCanceledException tce) {
-			// suppress timeout results / timeouts
-			return null;
-		} catch (final Throwable t) {
-			logger.fatal("Suppressed exception in AIv2: " + t.getMessage());
-			return null;
-		}
 	}
 
 	private static <STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge, LOC extends IcfgLocation>
