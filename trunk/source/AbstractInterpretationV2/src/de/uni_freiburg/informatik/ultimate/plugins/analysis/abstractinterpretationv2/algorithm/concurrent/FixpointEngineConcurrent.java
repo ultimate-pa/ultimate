@@ -114,7 +114,28 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
 		mDomain.afterFixpointComputation(mResult);
+		assert areStatesInterferenceFree();
 		return mResult;
+	}
+
+	private boolean areStatesInterferenceFree() {
+		final Map<LOC, DisjunctiveAbstractState<STATE>> loc2States =
+				mResult.getLoc2States().entrySet().stream().collect(Collectors.toMap(x -> x.getKey(),
+						x -> DisjunctiveAbstractState.createDisjunction(x.getValue())));
+		for (final Entry<LOC, DisjunctiveAbstractState<STATE>> entry : loc2States.entrySet()) {
+			final DisjunctiveAbstractState<STATE> state = removeLocalVars(entry.getValue());
+			for (final ACTION interfering : mAnalyzer.getInterferingWrites(entry.getKey())) {
+				final DisjunctiveAbstractState<STATE> preInterfering =
+						loc2States.get(mTransitionProvider.getSource(interfering));
+				if (preInterfering == null) {
+					continue;
+				}
+				if (!mParams.getDebugHelper().isInterferenceFree(state, preInterfering, interfering)) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private void calculateFixpoint(final Script script) {
@@ -184,6 +205,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result;
 	}
 
+	private DisjunctiveAbstractState<STATE> removeLocalVars(final DisjunctiveAbstractState<STATE> state) {
+		// TODO: Is it safe to remove all not IProgramNonOldVar, or should we just remove the ILocalProgramVars?
+		final List<IProgramVarOrConst> varsToRemove = state.getVariables().stream()
+				.filter(x -> !(x instanceof IProgramNonOldVar)).collect(Collectors.toList());
+		return state.removeVariables(varsToRemove);
+	}
+
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
 		DisjunctiveAbstractState<STATE> result = null;
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
@@ -192,10 +220,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				result = null;
 				break;
 			}
-			// TODO: Is it safe to remove all not IProgramNonOldVar, or should we just remove the ILocalProgramVars?
-			final List<IProgramVarOrConst> varsToRemove = state.getVariables().stream()
-					.filter(x -> !(x instanceof IProgramNonOldVar)).collect(Collectors.toList());
-			final DisjunctiveAbstractState<STATE> clearedState = state.removeVariables(varsToRemove);
+			final DisjunctiveAbstractState<STATE> clearedState = removeLocalVars(state);
 			result = result == null ? clearedState : result.union(clearedState);
 		}
 		return result != null ? result : new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
