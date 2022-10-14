@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -18,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IDebugHelper;
@@ -61,6 +65,15 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 		return isPostSound(hierPre, transition, pre, post);
 	}
 
+	@Override
+	public boolean isInterferenceFree(final DisjunctiveAbstractState<STATE> state,
+			final DisjunctiveAbstractState<STATE> interferingPreState, final ACTION transition) {
+		assert transition instanceof IInternalAction;
+		final IPredicate pre = createPredicateFromStates(Set.of(state, interferingPreState));
+		final IPredicate post = createPredicateFromState(state);
+		return isPostSound(null, transition, pre, post);
+	}
+
 	private boolean isPostSound(final IPredicate precondHier, final ACTION transition, final IPredicate precond,
 			final IPredicate postcond) {
 		try {
@@ -78,11 +91,16 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 	}
 
 	private IPredicate createPredicateFromState(final DisjunctiveAbstractState<STATE> state) {
-		final Term acc = state.getTerm(mMgdScript.getScript());
+		return createPredicateFromStates(Set.of(state));
+	}
+
+	private IPredicate createPredicateFromStates(final Set<DisjunctiveAbstractState<STATE>> states) {
+		final Set<Term> terms = states.stream().map(x -> x.getTerm(mMgdScript.getScript())).collect(Collectors.toSet());
+		final Term acc = SmtUtils.and(mMgdScript.getScript(), terms);
 		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(acc, mMgdScript, mSymbolTable);
 		return new AbsIntPredicate<>(
 				new BasicPredicate(getIllegalPredicateId(), acc, tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula()),
-				state);
+				states);
 	}
 
 	private static int getIllegalPredicateId() {
