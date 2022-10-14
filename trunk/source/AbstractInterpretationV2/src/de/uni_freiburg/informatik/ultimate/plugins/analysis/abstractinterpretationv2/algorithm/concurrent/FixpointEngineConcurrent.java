@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -171,7 +172,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			final Map<LOC, DisjunctiveAbstractState<STATE>> newInterferences =
 					computeNewInterferences(getPostStatesOnSharedVariables());
 
-			if (interferencesAreEqual(interferences, newInterferences)) {
+			if (interferencesReachedFixpoint(interferences, newInterferences)) {
 				mLogger.info("Fixpoint after " + iteration + " iterations found.");
 				break;
 			}
@@ -272,12 +273,11 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return postState.removeVariables(DataStructureUtils.difference(postState.getVariables(), variables));
 	}
 
-	private boolean interferencesAreEqual(final Map<LOC, DisjunctiveAbstractState<STATE>> oldInts,
+	private boolean interferencesReachedFixpoint(final Map<LOC, DisjunctiveAbstractState<STATE>> oldInts,
 			final Map<LOC, DisjunctiveAbstractState<STATE>> newInts) {
 		if (oldInts.size() != newInts.size()) {
 			return false;
 		}
-		// TODO: Should we keep equal here or use isSubset instead?
-		return oldInts.keySet().stream().allMatch(x -> oldInts.get(x).isEqualTo(newInts.get(x)));
+		return oldInts.keySet().stream().allMatch(x -> oldInts.get(x).isSubsetOf(newInts.get(x)) != SubsetResult.NONE);
 	}
 }
