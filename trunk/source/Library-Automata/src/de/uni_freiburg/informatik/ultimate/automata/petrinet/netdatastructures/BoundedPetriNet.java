@@ -245,7 +245,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final ImmutableSet<PLACE> preds,
 			final ImmutableSet<PLACE> succs) {
-		return addTransition(letter, preds, succs, mTransitions.size());
+		return addTransition(letter, preds, succs, mTransitionIds.size());
 	}
 
 	public void removeTransition(final Transition<LETTER, PLACE> transition) {
