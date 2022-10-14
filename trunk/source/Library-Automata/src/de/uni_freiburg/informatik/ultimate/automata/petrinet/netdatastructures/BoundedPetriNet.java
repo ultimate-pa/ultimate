@@ -256,6 +256,22 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		mSizeOfFlowRelation -= transition.getPredecessors().size() + transition.getSuccessors().size();
 	}
 
+	public void removePlace(final PLACE place) {
+		final var predecessors = mPredecessors.getImage(place);
+		if (!predecessors.isEmpty()) {
+			throw new UnsupportedOperationException();
+		}
+
+		final var successors = mSuccessors.getImage(place);
+		if (!successors.isEmpty()) {
+			throw new UnsupportedOperationException();
+		}
+
+		mPredecessors.removeDomainElement(place);
+		mSuccessors.removeDomainElement(place);
+		mPlaces.remove(place);
+	}
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mAlphabet;
