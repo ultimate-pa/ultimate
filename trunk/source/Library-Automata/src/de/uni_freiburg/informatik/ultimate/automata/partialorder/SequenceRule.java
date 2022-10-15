@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -85,188 +87,83 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 	@Override
 	protected boolean applyInternal(final IPetriNet<L, P> net) {
-
 		mLogger.debug("----------------------");
 		mLogger.debug("applying sequence rule");
 		mLogger.debug("----------------------");
 
 		boolean changes = false;
 
-		final Set<Transition<L, P>> obsoleteTransitions = new HashSet<>();
-		final Set<Transition<L, P>> composedTransitions = new HashSet<>();
-		final List<EvaluatedComposition<L, P>> pendingCompositions = new ArrayList<>();
-		final Map<P, Set<Transition<L, P>>> transitionsToBeReplaced = new HashMap<>();
+		final Set<Transition<L, P>> allDeleted = new HashSet<>();
+		final Set<P> places = new HashSet<>(net.getPlaces());
 
-		for (final P pivot : net.getPlaces()) {
+		// TODO iteration order nondeterminism
+		for (final P pivot : places) {
 			if (!isPivotPlace(net, pivot)) {
 				continue;
 			}
 
 			mLogger.debug("considering pivot place %s", pivot);
 
-			final Set<Transition<L, P>> incomingTransitions = net.getPredecessors(pivot);
-			final Set<Transition<L, P>> outgoingTransitions = net.getSuccessors(pivot);
+			// consider all compositions of incoming and outgoing transitions of pivot
+			final var compositions = getCompositionsAt(pivot, net)
+					// filter compositions where the labels cannot be composed
+					.filter(this::isLabelComposable)
+					// filter compositions that cannot be executed due to the net structure
+					.filter(c -> isStructurallyComposable(c, net))
+					// evaluate compositions and filter those that should not be executed.
+					.map(c -> evaluateComposition(c, net)).filter(c -> c != null)
+					// collect
+					.collect(Collectors.toList());
 
-			// 1. cartesian product of incomingTransitions and outgoingTransitions (of type PendingComposition)
-			// 2. filter out uncomposable PendingCompositions (label, structural or Lipton)
-			// 3. filter out PendingCompositions involving composedTransitions
-			// 4. split into executable and non-executable PendingCompositions
-			// 5. determine for all incoming and outgoing transitions if they are obsolete
-			// -- (i.e. all pairs involving the transition are still pending or non-executable)
-			// 6. for all obsolete incoming transitions, determine if we need a copy or not
-			// 7. modify the net: delete obsolete, add copies, add pending compositions
+			// figure out which transitions need to be copied and which need to be deleted
+			final var copyAndDelete = classifyTransitions(net, pivot, compositions);
+			final var copyTransitions = copyAndDelete.getFirst();
+			final var deleteTransitions = copyAndDelete.getSecond();
 
-			// For transformations that are not Y-V or reverse-Y-V:
-			//
-			// An incoming transition t1 for which some t2 was composed is deleted, but, if
-			// (a) isFirstTransitionNeeded(t1) or
-			// (b) not all (t1, t2) were composed or non-executable,
-			// we create a new copy p' of p, a new copy of t1 with its successor p replaced by p',
-			// and for all t2 not composed (but executable) with t1,
-			// we create a copy t2' with its predecessor p replaced by p'.
-			//
-			// For multiple t1 with the same outgoing set from their p', we can re-use the place p'.
-			// Indeed, we don't even (theoretically) need to only apply this for partially composed t1;
-			// for not-at-all composed t1 we have p' = p.
-			// In practice, we probably want to avoid that overhead.
-			//
-			// For reverse-Y-V transformations, where the pivot has only one successor,
-			// there might exist situations where it's better to have one p' per successor t2 (only one) rather than per
-			// predecessor t1. But we might still need copies of the incoming t1 due to isFirstTransitionNeeded.
+			final var transition2Copy = copyTransitions(net, pivot, copyTransitions);
 
-			final boolean isYv = incomingTransitions.size() != 1;
-
-			final Set<Transition<L, P>> composedHere = new HashSet<>();
-			boolean completeComposition = true;
-
-			final Set<Transition<L, P>> replacementNeeded = new HashSet<>();
-
-			for (final Transition<L, P> t1 : incomingTransitions) {
-				if (composedTransitions.contains(t1)) {
-					completeComposition = false;
+			// execute compositions for pivot place
+			final var executedCompositions = new ArrayList<ExecutedComposition<L, P>>(compositions.size());
+			for (final var comp : compositions) {
+				if (!comp.isExecutable()) {
+					// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
+					// Either some place would need to have 2 tokens, or some place would receive 2 tokens.
+					//
+					// TODO What is the best course of action here?
+					mLogger.debug(" Discarding composition of %s and %s", comp.getFirst(), comp.getSecond());
 					continue;
 				}
 
-				for (final Transition<L, P> t2 : outgoingTransitions) {
-					if (composedTransitions.contains(t2)) {
-						completeComposition = false;
-						continue;
-					}
-
-					final var composition = new Composition<>(t1, pivot, t2);
-					final var evaluated = evaluateComposition(composition, net, !replacementNeeded.contains(t1));
-					if (evaluated == null) {
-						completeComposition = false;
-						continue;
-					}
-
-					if (evaluated.isExecutable()) {
-						mLogger.debug(" Composing %s and %s at pivot place %s", t1, t2, pivot);
-						pendingCompositions.add(evaluated);
-					} else {
-						// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
-						// Either some place would need to have 2 tokens, or some place would receive 2 tokens.
-						//
-						// TODO What is the best course of action here?
-						// TODO As-is, the subsequent modifications (composedHere, replacementNeeded, statistics,
-						// obsoleteTransitions) seem dangerous.
-						mLogger.debug(" Discarding composition of " + t1 + " and " + t2 + ".");
-					}
-					composedHere.add(t1);
-					composedHere.add(t2);
-					changes = true;
-
-					if (evaluated.requiresFirstTransition()) {
-						mLogger.debug(" keeping first transition " + t1);
-						replacementNeeded.add(t1);
-					}
-
-					// t1 (in an n:1 composition) resp. t2 (in a 1:m composition) is definitely obsolete.
-					obsoleteTransitions.add(isYv ? t1 : t2);
-
-					LiptonReductionStatisticsDefinitions stat;
-					if (mCoenabledRelation.getImage(t1).isEmpty() && mCoenabledRelation.getImage(t2).isEmpty()) {
-						stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
-								: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
-					} else {
-						stat = isYv ? LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions
-								: LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions;
-					}
-					mStatistics.reportComposition(stat);
-				}
+				final var executed = executeComposition(comp);
+				executedCompositions.add(executed);
 			}
 
-			if (completeComposition) {
-				// If the composition is complete, the single outgoing (for n:1 compositions) resp. incoming (for 1:m
-				// compositions) transition is also obsolete.
-				obsoleteTransitions.addAll(isYv ? outgoingTransitions : incomingTransitions);
+			// delete obsolete transitions
+			deleteAll(deleteTransitions);
+			allDeleted.addAll(deleteTransitions);
+
+			// TODO adapt run
+
+			changes = changes || !executedCompositions.isEmpty() || !copyTransitions.isEmpty()
+					|| !deleteTransitions.isEmpty();
+
+			final boolean isYv = net.getPredecessors(pivot).size() != 1;
+			LiptonReductionStatisticsDefinitions stat;
+			if (executedCompositions.stream().allMatch(EvaluatedComposition::isTrivial)) {
+				stat = isYv ? LiptonReductionStatisticsDefinitions.TrivialYvCompositions
+						: LiptonReductionStatisticsDefinitions.TrivialSequentialCompositions;
+			} else {
+				stat = isYv ? LiptonReductionStatisticsDefinitions.ConcurrentYvCompositions
+						: LiptonReductionStatisticsDefinitions.ConcurrentSequentialCompositions;
 			}
-
-			// TODO Why do we delay the addition to "composedTransitions" ?
-			composedTransitions.addAll(composedHere);
-			if (!replacementNeeded.isEmpty()) {
-				transitionsToBeReplaced.put(pivot, replacementNeeded);
-			}
+			mStatistics.reportComposition(stat);
 		}
 
-		for (final Map.Entry<P, Set<Transition<L, P>>> entry : transitionsToBeReplaced.entrySet()) {
-			P deadNonAccepting = null;
-			// P deadAccepting = null;
+		// delete obsolete neighbours of deleted transitions
+		deleteObsoleteNeighbours(net, allDeleted);
 
-			for (final Transition<L, P> t : entry.getValue()) {
-				P deadPlace;
-				// if (hasAcceptingSuccessor(t, petriNet)) {
-				// if (deadAccepting == null) {
-				// deadAccepting = mPlaceFactory.copyPlace(entry.getKey());
-				// petriNet.addPlace(deadAccepting, false, true);
-				// }
-				// deadPlace = deadAccepting;
-				// } else {
-				if (deadNonAccepting == null) {
-					deadNonAccepting = mPlaceFactory.copyPlace(entry.getKey());
-					addPlace(deadNonAccepting, false, false);
-				}
-				deadPlace = deadNonAccepting;
-				// }
-
-				// TODO Should the transition have those other successors? Not just deadPlace?
-				// TODO (if it just has deadPlace, then deadPlace may have to be accepting)
-				final Set<P> post = new HashSet<>(t.getSuccessors());
-				post.remove(entry.getKey());
-				post.add(deadPlace);
-
-				// TODO Why again do we create this fresh transition rather than keeping the old one?
-				final Transition<L, P> newTransition =
-						addTransition(t.getSymbol(), t.getPredecessors(), ImmutableSet.of(post));
-				mRetromorphism.copyTransition(t, newTransition);
-				mCoenabledRelation.copyRelationships(t, newTransition);
-			}
-		}
-
-		final var executedCompositions = applyModifications(pendingCompositions, obsoleteTransitions);
-
-		// update information for composed transition
-		for (final var comp : executedCompositions) {
-			updateCoenabled(comp);
-			mRetromorphism.addTransition(comp.getComposedTransition(), Set.of(comp.getFirst()),
-					Set.of(comp.getSecond()));
-			transferMoverProperties(comp.getComposedLabel(), List.of(comp.getFirstLabel(), comp.getSecondLabel()));
-		}
-
-		// delete obsolete information
-		for (final Transition<L, P> t : obsoleteTransitions) {
-			mCoenabledRelation.removeElement(t);
-			mRetromorphism.deleteTransition(t);
-		}
-
-		final var obsoleteNeighbours = obsoleteTransitions.stream()
-				.flatMap(t -> Stream.concat(t.getPredecessors().stream(), t.getSuccessors().stream()))
-				.collect(Collectors.toSet());
-		for (final var neighbour : obsoleteNeighbours) {
-			if (net.getPredecessors(neighbour).isEmpty() && net.getSuccessors(neighbour).isEmpty()) {
-				removePlace(neighbour);
-			}
-		}
+		// remove unused letters from the alphabet
+		pruneAlphabet();
 
 		return changes;
 	}
@@ -296,38 +193,133 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			//
 			// Alternatively, we could allow all n:m compositions and redirect the remaining uncomposed transitions
 			// to several different copies of the current place.
+
+			// For transformations that are not Y-V or reverse-Y-V:
+			//
+			// An incoming transition t1 for which some t2 was composed is deleted, but, if
+			// (a) isFirstTransitionNeeded(t1) or
+			// (b) not all (t1, t2) were composed or non-executable,
+			// we create a new copy p' of p, a new copy of t1 with its successor p replaced by p',
+			// and for all t2 not composed (but executable) with t1,
+			// we create a copy t2' with its predecessor p replaced by p'.
+			//
+			// For multiple t1 with the same outgoing set from their p', we can re-use the place p'.
+			// Indeed, we don't even (theoretically) need to only apply this for partially composed t1;
+			// for not-at-all composed t1 we have p' = p.
+			// In practice, we probably want to avoid that overhead.
+			//
+			// For reverse-Y-V transformations, where the pivot has only one successor,
+			// there might exist situations where it's better to have one p' per successor t2 (only one) rather than per
+			// predecessor t1. But we might still need copies of the incoming t1 due to isFirstTransitionNeeded.
 			return false;
 		}
 
 		return true;
 	}
 
-	// *****************************************************************************************************************
+	private Stream<Composition<L, P>> getCompositionsAt(final P pivot, final IPetriNet<L, P> net) {
+		return DataStructureUtils.cartesianProduct(net.getPredecessors(pivot), net.getSuccessors(pivot),
+				(t1, t2) -> new Composition<>(t1, pivot, t2));
+	}
 
-	private void updateCoenabled(final ExecutedComposition<L, P> composition) {
-		final var composed = composition.getComposedTransition();
-		for (final var t : mCoenabledRelation.getImage(composition.getFirst())) {
-			if (coenabledTest(t, composition.getFirst(), composition.getSecond())) {
-				mCoenabledRelation.addPair(composed, t);
+	private Pair<Set<Transition<L, P>>, Set<Transition<L, P>>> classifyTransitions(final IPetriNet<L, P> net,
+			final P pivot, final List<EvaluatedComposition<L, P>> compositions) {
+		final int numOutgoing = net.getSuccessors(pivot).size();
+		final var first2Comp = compositions.stream().collect(Collectors.groupingBy(Composition::getFirst));
+
+		final Set<Transition<L, P>> copyTransitions = new HashSet<>();
+		final Set<Transition<L, P>> obsoleteTransitions = new HashSet<>();
+		for (final var t1 : net.getPredecessors(pivot)) {
+			final var t1Compositions = first2Comp.getOrDefault(t1, Collections.emptyList());
+			if (t1Compositions.size() < numOutgoing) {
+				// the original transition must be preserved
+				mLogger.debug(" keeping first transition " + t1);
+			} else if (t1Compositions.stream().anyMatch(c -> isFirstTransitionNeeded(c, net))) {
+				// the transition t1 must be copied (with a copy of pivot as successor), the original t1 deleted
+				mLogger.debug(" making copy of first transition " + t1);
+				copyTransitions.add(t1);
+				obsoleteTransitions.add(t1);
+			} else {
+				// the transition t1 must be deleted
+				obsoleteTransitions.add(t1);
 			}
+		}
+
+		final int numIncoming = net.getPredecessors(pivot).size();
+		final var second2Comp = compositions.stream().collect(Collectors.groupingBy(Composition::getSecond));
+
+		for (final var t2 : net.getSuccessors(pivot)) {
+			final var t2Compositions = second2Comp.getOrDefault(t2, Collections.emptyList());
+			if (t2Compositions.size() < numIncoming) {
+				// the original transition must be preserved
+				mLogger.debug(" keeping second transition " + t2);
+			} else {
+				// the transition t1 must be deleted
+				obsoleteTransitions.add(t2);
+			}
+		}
+
+		return new Pair<>(copyTransitions, obsoleteTransitions);
+	}
+
+	private Map<Transition<L, P>, Transition<L, P>> copyTransitions(final IPetriNet<L, P> net, final P pivot,
+			final Collection<Transition<L, P>> transitions) {
+		P pivotCopyNonAccepting = null;
+		// P pivotCopyAccepting = null;
+
+		final Map<Transition<L, P>, Transition<L, P>> transition2Copy = new HashMap<>();
+		for (final Transition<L, P> t : transitions) {
+			P pivotCopy;
+			// if (hasAcceptingSuccessor(t, petriNet)) {
+			// if (pivotCopyAccepting == null) {
+			// pivotCopyAccepting = mPlaceFactory.copyPlace(entry.getKey());
+			// petriNet.addPlace(pivotCopyAccepting, false, true);
+			// }
+			// pivotCopy = pivotCopyAccepting;
+			// } else {
+			if (pivotCopyNonAccepting == null) {
+				pivotCopyNonAccepting = mPlaceFactory.copyPlace(pivot);
+				addPlace(pivotCopyNonAccepting, false, false);
+			}
+			pivotCopy = pivotCopyNonAccepting;
+			// }
+
+			// TODO Should the transition have those other successors? Not just deadPlace?
+			// TODO (if it just has deadPlace, then deadPlace may have to be accepting)
+			final Set<P> post = new HashSet<>(t.getSuccessors());
+			post.remove(pivot);
+			post.add(pivotCopy);
+
+			final Transition<L, P> newTransition =
+					addTransition(t.getSymbol(), t.getPredecessors(), ImmutableSet.of(post));
+			mRetromorphism.copyTransition(t, newTransition);
+			mCoenabledRelation.copyRelationships(t, newTransition);
+
+			transition2Copy.put(t, newTransition);
+		}
+
+		return transition2Copy;
+	}
+
+	private void deleteAll(final Collection<Transition<L, P>> obsolete) {
+		for (final var transition : obsolete) {
+			removeTransition(transition);
+			mCoenabledRelation.removeElement(transition);
+			mRetromorphism.deleteTransition(transition);
 		}
 	}
 
-	// Checks a necessary condition for the transition t to be coenabled with the composition of t1 and t2.
-	private boolean coenabledTest(final Transition<L, P> t, final Transition<L, P> t1, final Transition<L, P> t2) {
-		assert mCoenabledRelation.containsPair(t1, t);
-		if (mCoenabledRelation.containsPair(t2, t)) {
-			return true;
-		}
-		return DataStructureUtils.haveNonEmptyIntersection(t.getPredecessors(), t2.getPredecessors())
-				&& DataStructureUtils.intersectionStream(t.getPredecessors(), t2.getPredecessors())
-						.allMatch(t1.getSuccessors()::contains);
+	private void deleteObsoleteNeighbours(final IPetriNet<L, P> net,
+			final Collection<Transition<L, P>> deletedTransitions) {
+		deletedTransitions.stream()
+				.flatMap(t -> Stream.concat(t.getPredecessors().stream(), t.getSuccessors().stream()))
+				.filter(p -> net.getPredecessors(p).isEmpty() && net.getSuccessors(p).isEmpty())
+				.forEach(this::removePlace);
 	}
 
 	// *************************************************** EVALUATE ****************************************************
 
-	private EvaluatedComposition<L, P> evaluateComposition(final Composition<L, P> comp, final IPetriNet<L, P> net,
-			final boolean evaluateNeedForFirstTransition) {
+	private EvaluatedComposition<L, P> evaluateComposition(final Composition<L, P> comp, final IPetriNet<L, P> net) {
 		if (!isLabelComposable(comp)) {
 			mLogger.debug(" The labels of %s and %s cannot be composed", comp.getFirst(), comp.getSecond());
 			return null;
@@ -345,26 +337,25 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			return null;
 		}
 
-		final boolean requiresFirstTransition;
-		if (evaluateNeedForFirstTransition) {
-			// TODO add setting to forbid compositions where first transition needed
-			requiresFirstTransition = isFirstTransitionNeeded(comp, net);
-		} else {
-			requiresFirstTransition = false;
-		}
+		final boolean isTrivial = mCoenabledRelation.getImage(comp.getFirst()).isEmpty()
+				&& mCoenabledRelation.getImage(comp.getSecond()).isEmpty();
 
-		return new EvaluatedComposition<>(comp, compositionType, requiresFirstTransition);
+		return new EvaluatedComposition<>(comp, compositionType, isTrivial);
 	}
 
 	private boolean isLabelComposable(final Composition<L, ?> comp) {
-		return mCompositionFactory.isSequentiallyComposable(comp.getFirstLabel(), comp.getSecondLabel());
+		final boolean result =
+				mCompositionFactory.isSequentiallyComposable(comp.getFirstLabel(), comp.getSecondLabel());
+		if (!result) {
+			mLogger.debug(" The labels of %s and %s cannot be composed", comp.getFirst(), comp.getSecond());
+		}
+		return result;
 	}
 
 	private boolean isStructurallyComposable(final Composition<L, P> comp, final IPetriNet<L, P> petriNet) {
-		final var t1 = comp.getFirst();
-		final var t2 = comp.getSecond();
 		final var pivot = comp.getPivot();
 
+		final var t1 = comp.getFirst();
 		if (t1.getPredecessors().contains(pivot)) {
 			// TODO This condition was in report but not in the code. Is it really needed?
 			// TODO ^--- actually it was checked in sequenceRule() -- might make sense: it precludes ALL pairs with t1
@@ -372,6 +363,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			return false;
 		}
 
+		final var t2 = comp.getSecond();
 		if (t2.getSuccessors().contains(pivot)) {
 			mLogger.debug("  cannot compose t2 = %s at pivot place %s because it loops", t2, pivot);
 			return false;
@@ -624,24 +616,38 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 	// **************************************************** EXECUTE ****************************************************
 
-	private List<ExecutedComposition<L, P>> applyModifications(final List<EvaluatedComposition<L, P>> pending,
-			final Set<Transition<L, P>> obsoleteTransitions) {
-		final var result = new ArrayList<ExecutedComposition<L, P>>();
-		for (final var composition : pending) {
-			final var executed = executeComposition(composition);
-			result.add(executed);
-		}
-		for (final var obsolete : obsoleteTransitions) {
-			removeTransition(obsolete);
-		}
-		pruneAlphabet();
-		return result;
-	}
-
 	private ExecutedComposition<L, P> executeComposition(final EvaluatedComposition<L, P> comp) {
+		mLogger.debug(" Composing %s and %s at pivot place %s", comp.getFirst(), comp.getSecond(), comp.getPivot());
+
 		final var label = mCompositionFactory.composeSequential(comp.getFirstLabel(), comp.getSecondLabel());
 		final var transition = addTransition(label, comp.getPredecessors(), comp.getSuccessors());
-		return new ExecutedComposition<>(comp, transition);
+		final var executed = new ExecutedComposition<>(comp, transition);
+
+		updateCoenabled(executed);
+		mRetromorphism.addTransition(transition, Set.of(comp.getFirst()), Set.of(comp.getSecond()));
+		transferMoverProperties(label, List.of(comp.getFirstLabel(), comp.getSecondLabel()));
+
+		return executed;
+	}
+
+	private void updateCoenabled(final ExecutedComposition<L, P> composition) {
+		final var composed = composition.getComposedTransition();
+		for (final var t : mCoenabledRelation.getImage(composition.getFirst())) {
+			if (coenabledTest(t, composition.getFirst(), composition.getSecond())) {
+				mCoenabledRelation.addPair(composed, t);
+			}
+		}
+	}
+
+	// Checks a necessary condition for the transition t to be coenabled with the composition of t1 and t2.
+	private boolean coenabledTest(final Transition<L, P> t, final Transition<L, P> t1, final Transition<L, P> t2) {
+		assert mCoenabledRelation.containsPair(t1, t);
+		if (mCoenabledRelation.containsPair(t2, t)) {
+			return true;
+		}
+		return DataStructureUtils.haveNonEmptyIntersection(t.getPredecessors(), t2.getPredecessors())
+				&& DataStructureUtils.intersectionStream(t.getPredecessors(), t2.getPredecessors())
+						.allMatch(t1.getSuccessors()::contains);
 	}
 
 	// *************************************************** ADAPT RUN ***************************************************
@@ -822,21 +828,21 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 	private static class EvaluatedComposition<L, P> extends Composition<L, P> {
 		private final CompositionType mCompositionType;
-		private final boolean mRequiresFirstTransition;
+		private final boolean mIsTrivial;
 
 		public EvaluatedComposition(final Composition<L, P> pending, final CompositionType compositionType,
-				final boolean requiresFirstTransition) {
+				final boolean isTrivial) {
 			super(pending.getFirst(), pending.getPivot(), pending.getSecond());
 			mCompositionType = compositionType;
-			mRequiresFirstTransition = requiresFirstTransition;
+			mIsTrivial = isTrivial;
 		}
 
 		public CompositionType getCompositionType() {
 			return mCompositionType;
 		}
 
-		public boolean requiresFirstTransition() {
-			return mRequiresFirstTransition;
+		public boolean isTrivial() {
+			return mIsTrivial;
 		}
 	}
 
@@ -845,12 +851,8 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 		public ExecutedComposition(final EvaluatedComposition<L, P> pending,
 				final Transition<L, P> composedTransition) {
-			super(pending, pending.getCompositionType(), pending.requiresFirstTransition());
+			super(pending, pending.getCompositionType(), pending.isTrivial());
 			mComposedTransition = composedTransition;
-		}
-
-		public L getComposedLabel() {
-			return mComposedTransition.getSymbol();
 		}
 
 		public Transition<L, P> getComposedTransition() {

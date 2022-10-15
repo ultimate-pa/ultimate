@@ -39,10 +39,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -438,5 +440,14 @@ public class DataStructureUtils {
 	public static <T> Set<T> asSet(final Stream<T> stream) {
 		final Object[] elements = stream.toArray();
 		return (Set<T>) Set.of(elements);
+	}
+
+	public static <S, T> Stream<Pair<S, T>> cartesianProduct(final Collection<S> coll1, final Collection<T> coll2) {
+		return cartesianProduct(coll1, coll2, Pair::new);
+	}
+
+	public static <S, T, R> Stream<R> cartesianProduct(final Collection<S> coll1, final Collection<T> coll2,
+			final BiFunction<S, T, R> mapper) {
+		return coll1.stream().flatMap(t1 -> coll2.stream().map(t2 -> mapper.apply(t1, t2)));
 	}
 }
