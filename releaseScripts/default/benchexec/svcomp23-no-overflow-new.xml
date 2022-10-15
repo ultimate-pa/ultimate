@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="60" hardtimelimit="62" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90s" hardtimelimit="90s" cpuCores="2">
     
 	<option name="--force-no-wrapper" />
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
