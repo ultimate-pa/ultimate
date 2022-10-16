@@ -431,7 +431,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 			final Term div = SmtUtils.div(script, sum, SmtUtils.constructIntegerValue(script, getSort(), divisor));
 			final AVAR avar = constructAbstractVar(div);
-			final Rational oldCoeffcient = variables2coeffcient.put(avar, Rational.ONE);
+			final Rational oldCoeffcient = variables2coeffcient.get(avar);
 			if (oldCoeffcient == null) {
 				variables2coeffcient.put(avar, Rational.ONE);
 			} else {
