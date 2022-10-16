@@ -436,7 +436,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				variables2coeffcient.put(avar, Rational.ONE);
 			} else {
 				final Rational newCoefficient = oldCoeffcient.add(Rational.ONE);
-				variables2coeffcient.put(avar, newCoefficient);
+				if (newCoefficient.equals(Rational.ZERO)) {
+					variables2coeffcient.remove(avar);
+				} else {
+					variables2coeffcient.put(avar, newCoefficient);
+				}
 			}
 		}
 		return constructNew(getSort(), constant, variables2coeffcient);

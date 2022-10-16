@@ -1000,9 +1000,22 @@ public class PolynomialRelationTest {
 	 * other in an abstract map.
 	 */
 	@Test
-	public void bugAbstractDivVarFromTwoSources() {
+	public void bugAbstractDivVarFromTwoSources01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(<= (+ (* 7 x) (* 700 (div (+ y (- 7)) 7)) (* (- 1) y) 7) 0)";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Revealed but related to the bug above. If we apply div, we can get two
+	 * similar abstract variables for the result of the polynomial. We have to add
+	 * their coefficients. The coefficient can become zero. In this case the entry
+	 * must not be added to the map.
+	 */
+	@Test
+	public void bugAbstractDivVarFromTwoSources02() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= (+ (* 7 x) (* 7 (div (+ y (- 7)) 7)) (* (- 1) y) 7) 0)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
