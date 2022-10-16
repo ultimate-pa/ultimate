@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script that deploys a new version to SVCOMP 22. You have to call makeFresh.sh before.
+# Script that deploys a new version to SVCOMP 23. You have to call makeFresh.sh before.
 
 SVCOMP_GITLAB_DIR="/storage/repos/svcomp-archives-2023/2023"
 SVCOMP_COVERITEAM_DIR="/storage/repos/coveriteam-trusted-ultimate"
@@ -14,7 +14,7 @@ EXPECTED_FILES=(
 
 VALIDATOR="uautomizer.zip"
 VALIDATOR_SYMLINK="val_uautomizer.zip"
-VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+VERSION=$(git describe --tags "$(git for-each-ref refs/tags/v* --sort=-creatordate --format='%(objectname)' --count=1)")
 VERSION="${VERSION}-"$(git rev-parse HEAD | cut -c1-8)
 
 function git_is_clean() {
