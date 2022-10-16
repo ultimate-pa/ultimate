@@ -87,8 +87,7 @@ function git_push_default_remote() {
   git add -A
   local title="Update Ultimate tool family (uautomizer, ukojak, utaipan, ugemcutter) to version $VERSION"
   git commit -a -m"${title}"
-  git push -f -o merge_request.create -o merge_request.title="${title}"
-  echo "Now file a pull request and wait for its acceptance!"
+  git push -f
   pop_dir
 }
 
@@ -96,6 +95,7 @@ prepare_repo "$SVCOMP_GITLAB_DIR"
 if copy_zips "$SVCOMP_GITLAB_DIR" ; then
   create_validator_symlinks "$SVCOMP_GITLAB_DIR"
   git_push_default_remote "$SVCOMP_GITLAB_DIR"
+  echo "Now file a pull request and wait for its acceptance!"
 fi
 
 prepare_repo "$SVCOMP_COVERITEAM_DIR"
