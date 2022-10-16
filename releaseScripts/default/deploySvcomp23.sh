@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script that deploys a new version to SVCOMP 22. You have to call makeFresh.sh before.
 
-SVCOMP_GITLAB_DIR="/storage/repos/svcomp-archives-2022/2022"
+SVCOMP_GITLAB_DIR="/storage/repos/svcomp-archives-2023/2023"
 SVCOMP_COVERITEAM_DIR="/storage/repos/coveriteam-trusted-ultimate"
 POST_FINAL=false
 
