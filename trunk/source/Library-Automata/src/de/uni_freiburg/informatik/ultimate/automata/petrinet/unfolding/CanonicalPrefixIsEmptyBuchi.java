@@ -11,25 +11,17 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Checks if complete finite prefix contains accepting lasso configuration.
  *
+ *
  */
-public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
+public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
 	BranchingProcess<LETTER, PLACE> mCompletePrefix;
 	Set<Event<LETTER, PLACE>> mCutoffEventsWithDistantCompanion = new HashSet<>();
 	Set<Event<LETTER, PLACE>> mLoopCutoffEvents = new HashSet<>();
@@ -37,16 +29,15 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 	private PetriNetLassoRun<LETTER, PLACE> mRun = null;
 	AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
-	private Map<Event<LETTER, PLACE>, Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>>> mReachableCutoffsMapAccepting;
-	private Map<Event<LETTER, PLACE>, Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>>> mReachableCutoffsMap;
+	Boolean searchAllLassoTypes = false;
 
-	public CFPrefixIsEmptyBuchi(final AutomataLibraryServices services,
+	public CanonicalPrefixIsEmptyBuchi(final AutomataLibraryServices services,
 			final BranchingProcess<LETTER, PLACE> completePrefix) throws PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mCompletePrefix = completePrefix;
 		mLogger.info("Starting emptiness check.");
-		search();
+		classifyCutoffEvents();
 		investigateCutOffs();
 		mLogger.info("Finished emptiness check, language is " + (getResult() ? "empty" : "not empty"));
 	}
@@ -59,7 +50,7 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 		return mRun == null;
 	}
 
-	private void search() {
+	private void classifyCutoffEvents() {
 		mLogger.info("Starting cutoff event analysis.");
 		for (final Event<LETTER, PLACE> event : mCompletePrefix.getCutoffEvents()) {
 			if (event.getLocalConfiguration().contains(event.getCompanion())) {
@@ -74,7 +65,23 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 	}
 
 	private void investigateCutOffs() throws PetriNetNot1SafeException {
-		// Type 1 lassos are edge cases where the stem-event of the Unfolding is an event companion
+		investigateTypeOneLassos();
+
+		// Type two lassos are already searched in PetrinetUnfolderBuchi.
+		if (searchAllLassoTypes) {
+			investigateTypeTwoLassos();
+		}
+
+		investigateTypeThreeLassos();
+	}
+
+	/**
+	 * (edge case) Lasso word contained in local configuration where the stem-event of the Unfolding is an event
+	 * companion.
+	 *
+	 * @throws PetriNetNot1SafeException
+	 */
+	private void investigateTypeOneLassos() throws PetriNetNot1SafeException {
 		mLogger.info("Type 1 Lasso search started.");
 		for (final Event<LETTER, PLACE> event : mOriginLoopCutoffEvents) {
 			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
@@ -87,7 +94,40 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 			}
 		}
 		mLogger.info("Type 1 Lasso search ended.");
+	}
 
+	/**
+	 * Lasso word contained in local configuration
+	 *
+	 * @throws PetriNetNot1SafeException
+	 */
+	private void investigateTypeTwoLassos() throws PetriNetNot1SafeException {
+		mLogger.info("Type 2 Lasso search started.");
+		for (final Event<LETTER, PLACE> event : mLoopCutoffEvents) {
+			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
+			final List<Event<LETTER, PLACE>> configStemEvents = new ArrayList<>();
+			for (final Event<LETTER, PLACE> configEvent : event.getLocalConfiguration()
+					.getSortedConfiguration(mCompletePrefix.getOrder())) {
+				if (configEvent != event.getCompanion()
+						&& configEvent.getLocalConfiguration().contains(event.getCompanion())) {
+					configLoopEvents.add(configEvent);
+				} else {
+					configStemEvents.add(configEvent);
+				}
+			}
+			if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
+				return;
+			}
+		}
+		mLogger.info("Type 2 Lasso search ended.");
+	}
+
+	/**
+	 * Lasso word contained in partial configuration
+	 *
+	 * @throws PetriNetNot1SafeException
+	 */
+	private void investigateTypeThreeLassos() throws PetriNetNot1SafeException {
 		mLogger.info("Type 3 Lasso search started.");
 		// First denote for all companion events of the cutoff events we investigate, if they can even reach an
 		// accepting event.
@@ -99,9 +139,10 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 		for (final Event<LETTER, PLACE> event : mCutoffEventsWithDistantCompanion) {
 			needReachableInformationAcc.add(event.getCompanion());
 		}
-		mReachableCutoffsMapAccepting = new HashMap<>();
+		final Map<Event<LETTER, PLACE>, Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>>> reachableCutoffsMapAccepting =
+				new HashMap<>();
 		for (final Event<LETTER, PLACE> accevent : acceptingEvents) {
-			fillReachableInformation(accevent, needReachableInformationAcc, mReachableCutoffsMapAccepting);
+			fillReachableInformation(accevent, needReachableInformationAcc, reachableCutoffsMapAccepting);
 		}
 
 		// For every cutoff event check if its companion event can reach an accepting event and then the cutoff event
@@ -115,17 +156,23 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 
 			final Set<Event<LETTER, PLACE>> needReachableInformation = new HashSet<>(acceptingEvents);
 			needReachableInformation.add(event.getCompanion());
-			mReachableCutoffsMap = new HashMap<>();
-			fillReachableInformation(event, needReachableInformation, mReachableCutoffsMap);
-			if (mReachableCutoffsMapAccepting.get(event.getCompanion()) == null
-					|| mReachableCutoffsMap.get(event.getCompanion()) == null) {
+			final Map<Event<LETTER, PLACE>, Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>>> reachableCutoffsMap =
+					new HashMap<>();
+			fillReachableInformation(event, needReachableInformation, reachableCutoffsMap);
+			if (reachableCutoffsMapAccepting.get(event.getCompanion()) == null
+					|| reachableCutoffsMap.get(event.getCompanion()) == null) {
 				continue;
 			}
 
-			for (final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair : mReachableCutoffsMapAccepting
+			// reachableCutoffsMapAccepting contains partial configurations of (event) companion and accepting
+			// conditions,
+			// reachableCutoffsMap contains partial configurations of accepting conditions and (event).
+			// If the concatination of two such partial configurations is a valid partial configuration,
+			// it contains a lasso word.
+			for (final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair : reachableCutoffsMapAccepting
 					.get(event.getCompanion())) {
-				if (acceptingEvents.contains(pair.getFirst()) && mReachableCutoffsMap.get(pair.getFirst()) != null) {
-					for (final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair2 : mReachableCutoffsMap
+				if (acceptingEvents.contains(pair.getFirst()) && reachableCutoffsMap.get(pair.getFirst()) != null) {
+					for (final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair2 : reachableCutoffsMap
 							.get(pair.getFirst())) {
 						if (pair2.getFirst() == event && pair.getSecond().containsAll(pair2.getSecond())) {
 							if (buildAndCheckPartialConfig(event, pair, pair2)) {
@@ -140,11 +187,12 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 	}
 
 	/**
-	 * Breadth first traversal of Unfolding, starting from (event) and going through every local configuration linked by
-	 * cuttoff events and their companion events. We mark every event of interest, given with needReachableInformation,
-	 * if it can build a partial configuration with (event). (in other words if the transition in the net reflected by
-	 * (event) is reachable from the transition reflected by the event of interest, given the marking of the final state
-	 * of the event of interest).
+	 * Breadth first traversal of Unfolding, starting from (event) and going through every local configuration of cutoff
+	 * events linked by their companion events that we find during traversal (recursively). We mark every event of
+	 * interest, given with needReachableInformation, if it can build a partial configuration with (event). (in other
+	 * words if the transition in the net reflected by (event) is reachable from the transition reflected by the event
+	 * of interest, given the marking of the final state of the event of interest). The information for the described
+	 * full partial configurations is stored in the map.
 	 *
 	 * Stack used to simulate recursive tree traversal.
 	 *
@@ -213,8 +261,11 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 	 *
 	 * @param event
 	 * @param pair
+	 *            Constains all cutoff events from (event) companion to cutoff event containing accepting condition in
+	 *            local config.
 	 * @param pair2
-	 * @return
+	 *            Contains all cutoff events leading from (pair) cutoff events to (event) cutoff event.
+	 * @return Boolean representing if given partial configuration contains accepting lasso word.
 	 * @throws PetriNetNot1SafeException
 	 */
 	private boolean buildAndCheckPartialConfig(final Event<LETTER, PLACE> event,
@@ -269,114 +320,11 @@ public class CFPrefixIsEmptyBuchi<LETTER, PLACE> {
 		return false;
 	}
 
-	/**
-	 * Given loop and stem events we build a {@link PetriNetLassoRun}.
-	 *
-	 * @param configLoopPart
-	 * @param configStemPart
-	 * @return
-	 * @throws PetriNetNot1SafeException
-	 */
 	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart) throws PetriNetNot1SafeException {
-		final List<Transition<LETTER, PLACE>> stemTransitions = new ArrayList<>();
-		final List<Transition<LETTER, PLACE>> loopTransitions = new ArrayList<>();
-
-		boolean acceptingPlaceShotintoInLoop = false;
-		for (final Event<LETTER, PLACE> loopEvent : configLoopPart) {
-			if (loopEvent.getTransition().getSuccessors().stream().anyMatch(mCompletePrefix.getNet()::isAccepting)) {
-				acceptingPlaceShotintoInLoop = true;
-			}
-			loopTransitions.add(loopEvent.getTransition());
-		}
-		if (!acceptingPlaceShotintoInLoop) {
-			return false;
-		}
-
-		for (final Event<LETTER, PLACE> stemEvent : configStemPart) {
-			stemTransitions.add(stemEvent.getTransition());
-		}
-
-		final Marking<PLACE> startMarking = new Marking<>(ImmutableSet.of(mCompletePrefix.getNet().getInitialPlaces()));
-
-		final var pair = constructFeasibleLetterAndMarkingSequence(startMarking, stemTransitions);
-		if (pair == null) {
-			return false;
-		}
-		final List<LETTER> stemLetters = pair.getFirst();
-		final List<Marking<PLACE>> sequenceOfStemMarkings = pair.getSecond();
-
-		final var pair2 = constructFeasibleLetterAndMarkingSequence(
-				sequenceOfStemMarkings.get(sequenceOfStemMarkings.size() - 1), loopTransitions);
-		if (pair2 == null) {
-			return false;
-		}
-		final List<LETTER> loopLetters = pair2.getFirst();
-		final List<Marking<PLACE>> sequenceOfLassoMarkings = pair2.getSecond();
-
-		return createAndCheckLassoRun(stemLetters, sequenceOfStemMarkings, loopLetters, sequenceOfLassoMarkings);
-	}
-
-	private final Pair<List<LETTER>, List<Marking<PLACE>>> constructFeasibleLetterAndMarkingSequence(
-			Marking<PLACE> startMarking, final List<Transition<LETTER, PLACE>> loopTransitions)
-			throws PetriNetNot1SafeException {
-		// TODO: Check this method for theroetical correctness
-		// Since some number of events might be in concurrency the sorting might have not returned the correct
-		// order of events. We thus juggle non enabled events in this stack always trying if they are enabled
-		// in the next iteration.
-		final List<LETTER> loopLetters = new ArrayList<>();
-		final List<Marking<PLACE>> sequenceOfLassoMarkings = new ArrayList<>();
-		final Deque<Transition<LETTER, PLACE>> waitingLoopTransitionStack = new ArrayDeque<>();
-		sequenceOfLassoMarkings.add(startMarking);
-		for (final Transition<LETTER, PLACE> transition : loopTransitions) {
-			for (int i = 0; i < waitingLoopTransitionStack.size(); i++) {
-				final var waitingTransition = waitingLoopTransitionStack.pop();
-				if (startMarking.isTransitionEnabled(waitingTransition)) {
-					loopLetters.add(waitingTransition.getSymbol());
-					startMarking = startMarking.fireTransition(waitingTransition);
-					sequenceOfLassoMarkings.add(startMarking);
-				} else {
-					waitingLoopTransitionStack.addFirst(transition);
-				}
-			}
-
-			if (!startMarking.isTransitionEnabled(transition)) {
-				waitingLoopTransitionStack.push(transition);
-				continue;
-			}
-			loopLetters.add(transition.getSymbol());
-			startMarking = startMarking.fireTransition(transition);
-			sequenceOfLassoMarkings.add(startMarking);
-		}
-
-		return new Pair<>(loopLetters, sequenceOfLassoMarkings);
-	}
-
-	private final boolean createAndCheckLassoRun(final List<LETTER> stemLetters,
-			final List<Marking<PLACE>> sequenceOfStemMarkings, final List<LETTER> loopLetters,
-			final List<Marking<PLACE>> sequenceOfLassoMarkings) throws PetriNetNot1SafeException {
-		@SuppressWarnings("unchecked")
-		final LETTER[] stem = (LETTER[]) stemLetters.toArray();
-		final Word<LETTER> stemWord = new Word<>(stem);
-		@SuppressWarnings("unchecked")
-		final LETTER[] loop = (LETTER[]) loopLetters.toArray();
-		final Word<LETTER> loopWord = new Word<>(loop);
-
-		final NestedWord<LETTER> nestedstemWord = NestedWord.nestedWord(stemWord);
-		final NestedWord<LETTER> nestedloopWord = NestedWord.nestedWord(loopWord);
-
-		final NestedLassoWord<LETTER> nestedLassoWord = new NestedLassoWord<>(nestedstemWord, nestedloopWord);
-		final PetriNetRun<LETTER, PLACE> stemRun = new PetriNetRun<>(sequenceOfStemMarkings, nestedstemWord);
-		final PetriNetRun<LETTER, PLACE> loopRun = new PetriNetRun<>(sequenceOfLassoMarkings, nestedloopWord);
-		final PetriNetLassoRun<LETTER, PLACE> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
-		// this BuchiAccepts should not be needed, but acts as a last correctness check for unknown edge cases
-		final BuchiAccepts<LETTER, PLACE> accepts = new BuchiAccepts<>(mServices,
-				(IPetriNetTransitionProvider<LETTER, PLACE>) mCompletePrefix.getNet(), nestedLassoWord);
-		final boolean accpted = accepts.getResult();
-		if (accpted) {
-			mRun = lassoRun;
-			return true;
-		}
-		return false;
+		final var buildAndCheck =
+				new Events2PetriNetLassoRunBuchi<>(mServices, configLoopPart, configStemPart, mCompletePrefix);
+		mRun = buildAndCheck.getLassoRun();
+		return (mRun != null);
 	}
 }

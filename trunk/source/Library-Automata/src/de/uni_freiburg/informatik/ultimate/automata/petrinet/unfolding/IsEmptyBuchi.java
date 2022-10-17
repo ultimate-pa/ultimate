@@ -40,8 +40,8 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 				new PetriNetUnfolderBuchi<>(mServices, operand, PetriNetUnfolder.EventOrderEnum.ERV, false, true);
 		mRun = unfolder.getAcceptingRun();
 		if (mRun == null) {
-			final CFPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
-					new CFPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
+			final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
+					new CanonicalPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
 			mRun = checkBuchi.getLassoRun();
 		}
 		mResult = mRun == null;
@@ -70,8 +70,8 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 				new PetriNetUnfolderBuchi<>(mServices, operand, order, sameTransitionCutOff, true);
 		mRun = unfolder.getAcceptingRun();
 		if (mRun == null) {
-			final CFPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
-					new CFPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
+			final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
+					new CanonicalPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
 			mRun = checkBuchi.getLassoRun();
 		}
 		mResult = mRun == null;
