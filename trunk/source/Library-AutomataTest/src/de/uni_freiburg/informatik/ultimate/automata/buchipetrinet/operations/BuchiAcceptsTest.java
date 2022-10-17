@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class BuchiPetrinetAcceptsTest {
+public class BuchiAcceptsTest {
 
 	private AutomataLibraryServices mServices;
 

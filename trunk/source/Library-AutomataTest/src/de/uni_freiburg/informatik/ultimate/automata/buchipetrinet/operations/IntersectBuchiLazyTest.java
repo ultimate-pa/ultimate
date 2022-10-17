@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class BuchiPetrinetBuchiIntersectionLazyTest {
+public class IntersectBuchiLazyTest {
 
 	private AutomataLibraryServices mServices;
 

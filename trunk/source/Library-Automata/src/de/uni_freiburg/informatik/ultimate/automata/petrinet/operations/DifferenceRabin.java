@@ -7,26 +7,15 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncludedBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedRabinPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Eager difference of Rabin-petri net minuend and buchi automata subtrahend.
+ * Eager difference of Rabin-Petri-net minuend and Buchi automata subtrahend. Buchi automata must be complete.
  *
  */
 public class DifferenceRabin<LETTER, PLACE>
@@ -52,7 +41,7 @@ public class DifferenceRabin<LETTER, PLACE>
 	}
 
 	@Override
-	public IPetriNet<LETTER, PLACE> getResult() {
+	public IRabinPetriNet<LETTER, PLACE> getResult() {
 		return mDifferenceNet;
 	}
 
@@ -68,17 +57,16 @@ public class DifferenceRabin<LETTER, PLACE>
 
 	private final void addOriginalPetriPlaces() {
 		for (final PLACE place : mPetriNet.getPlaces()) {
-			mDifferenceNet.addPlace(place, mPetriNet.getInitialPlaces().contains(place), false);
+			mDifferenceNet.addPlace(place, mPetriNet.getInitialPlaces().contains(place), mPetriNet.isAccepting(place));
 		}
 	}
 
 	private final void addOriginalBuchiPlaces() {
 		for (final PLACE place : mBuchiAutomata.getStates()) {
+			mDifferenceNet.addPlace(place, mBuchiAutomata.isInitial(place), false);
 			if (mBuchiAutomata.isFinal(place)) {
 				mDifferenceNet.addFinitePlace(place);
-				continue;
 			}
-			mDifferenceNet.addPlace(place, mBuchiAutomata.isInitial(place), false);
 		}
 	}
 
@@ -126,35 +114,9 @@ public class DifferenceRabin<LETTER, PLACE>
 		return successorSet;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> operandAsNwa =
-				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
-						(IBlackWhiteStateFactory<PLACE>) stateFactory, mPetriNet)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> resultAsNwa =
-				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
-						(IBlackWhiteStateFactory<PLACE>) stateFactory, mDifferenceNet)).getResult();
-
-		final NestedWordAutomatonReachableStates<LETTER, PLACE> automatonDifference =
-				(NestedWordAutomatonReachableStates<LETTER, PLACE>) (new BuchiDifferenceFKV(mServices,
-						(IDeterminizeStateFactory<PLACE>) stateFactory, operandAsNwa, mBuchiAutomata)).getResult();
-		final IsIncludedBuchi<LETTER, PLACE> isSubset = new IsIncludedBuchi<>(mServices,
-				(INwaInclusionStateFactory<PLACE>) stateFactory, resultAsNwa, automatonDifference);
-		if (!isSubset.getResult()) {
-			final NestedLassoWord<LETTER> ctx = isSubset.getCounterexample().getNestedLassoWord();
-			final ILogger logger = mServices.getLoggingService().getLogger(PetriNetUtils.class);
-			logger.error("Intersection recognizes incorrect word : " + ctx);
-
-		}
-		final IsIncludedBuchi<LETTER, PLACE> isSuperset = new IsIncludedBuchi<>(mServices,
-				(INwaInclusionStateFactory<PLACE>) stateFactory, automatonDifference, resultAsNwa);
-		if (!isSuperset.getResult()) {
-			final NestedLassoWord<LETTER> ctx = isSuperset.getCounterexample().getNestedLassoWord();
-			final ILogger logger = mServices.getLoggingService().getLogger(PetriNetUtils.class);
-			logger.error("Intersection not recognizing word of correct intersection : " + ctx);
-		}
-		return isSubset.getResult() && isSuperset.getResult();
+		return false;
 	}
 }
