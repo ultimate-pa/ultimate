@@ -40,12 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Performs a form of Lipton reduction on Petri nets. This reduction fuses sequences of transition into one, if given
@@ -76,15 +74,12 @@ public class LiptonReduction<L, P> {
 	private final IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
+
 	private BranchingProcess<L, P> mBranchingProcess;
+	private final ModifiableRetroMorphism<L, P> mRetromorphism;
 	private CoenabledRelation<L, P> mCoEnabledRelation;
 
-	private final HashRelation<Event<L, P>, Event<L, P>> mCutOffs = new HashRelation<>();
-
-	private BoundedPetriNet<L, P> mResult;
 	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
-
-	private final ModifiableRetroMorphism<L, P> mRetromorphism;
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -132,8 +127,6 @@ public class LiptonReduction<L, P> {
 		try {
 			// TODO Why call FinitePrefix and not PetriNetUnfolder directly?
 			mBranchingProcess = new FinitePrefix<>(mServices, mPetriNet).getResult();
-			mBranchingProcess.getEvents().stream().filter(Event::isCutoffEvent)
-					.forEach(e -> mCutOffs.addPair(e.getCompanion(), e));
 			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
@@ -151,7 +144,6 @@ public class LiptonReduction<L, P> {
 				changes = sequenceRuleWrapper(mPetriNet) || changes;
 				changes = choiceRuleWrapper(mPetriNet) || changes;
 			} while (changes);
-			mResult = mPetriNet;
 
 			mLogger.info("Total number of compositions: "
 					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.TotalNumberOfCompositions));
@@ -163,7 +155,7 @@ public class LiptonReduction<L, P> {
 			mStatistics.stop(LiptonReductionStatisticsDefinitions.ReductionTime);
 		}
 
-		mStatistics.collectFinalStatistics(mResult);
+		mStatistics.collectFinalStatistics(mPetriNet);
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<L, P> petriNet) {
@@ -208,7 +200,7 @@ public class LiptonReduction<L, P> {
 	// ***************************************************** OUTPUT ****************************************************
 
 	public BoundedPetriNet<L, P> getResult() {
-		return mResult;
+		return mPetriNet;
 	}
 
 	public LiptonReductionStatisticsGenerator getStatistics() {
