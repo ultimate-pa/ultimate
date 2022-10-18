@@ -1601,8 +1601,9 @@ public class StandardFunctionHandler {
 		} else {
 			throw new IllegalArgumentException("unknown allocation method; " + methodName);
 		}
-		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(exprResConverted.getLrValue().getValue(),
-				auxvar.getLhs(), loc, memArea));
+		final Expression wrapped = mExpressionTranslation.applyNutzTransformationWraparound(loc, mTypeSizes,
+				(CPrimitive) exprResConverted.getCType(), exprResConverted.getLrValue().getValue());
+		erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(wrapped, auxvar.getLhs(), loc, memArea));
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		// for alloc a we have to free the variable ourselves when the

@@ -1408,4 +1408,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression fail = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
 		return new ExpressionResultBuilder().setLrValue(new RValue(fail, intCPrimitive)).build();
 	}
+
+
+	@Override
+	public Expression applyNutzTransformationWraparound(final ILocation loc, final TypeSizes typeSizes, final CPrimitive cPrimitive,
+			final Expression operand) {
+		// Nutz transformation not needed in the bitvector translation
+		return operand;
+	}
 }

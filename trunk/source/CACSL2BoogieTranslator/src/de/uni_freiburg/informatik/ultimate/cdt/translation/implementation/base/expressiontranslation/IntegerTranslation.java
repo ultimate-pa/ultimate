@@ -149,6 +149,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return ExpressionFactory.newBinaryExpression(loc, op, leftExpr, rightExpr);
 	}
 
+	@Override
+	public Expression applyNutzTransformationWraparound(final ILocation loc, final TypeSizes typeSizes,
+			final CPrimitive cPrimitive, final Expression operand) {
+		return applyWraparound(loc, typeSizes, cPrimitive, operand);
+	}
+
 	public static Expression applyWraparound(final ILocation loc, final TypeSizes typeSizes,
 			final CPrimitive cPrimitive, final Expression operand) {
 		if (cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {

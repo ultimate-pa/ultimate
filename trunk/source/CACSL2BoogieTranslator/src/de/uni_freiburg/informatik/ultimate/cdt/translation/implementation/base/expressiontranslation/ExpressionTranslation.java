@@ -569,4 +569,7 @@ public abstract class ExpressionTranslation {
 	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
 			AuxVarInfoBuilder auxVarInfoBuilder);
 
+	public abstract Expression applyNutzTransformationWraparound(ILocation loc, TypeSizes typeSizes,
+			CPrimitive cPrimitive, Expression operand);
+
 }
