@@ -313,7 +313,8 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			final Collection<Transition<L, P>> deletedTransitions) {
 		deletedTransitions.stream()
 				.flatMap(t -> Stream.concat(t.getPredecessors().stream(), t.getSuccessors().stream()))
-				.filter(p -> net.getPredecessors(p).isEmpty() && net.getSuccessors(p).isEmpty())
+				.filter(p -> net.getPredecessors(p).isEmpty() && net.getSuccessors(p).isEmpty()
+						&& !net.getInitialPlaces().contains(p))
 				.forEach(this::removePlace);
 	}
 

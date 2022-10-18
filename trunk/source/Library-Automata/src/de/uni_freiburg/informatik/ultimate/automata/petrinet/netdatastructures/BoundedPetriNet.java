@@ -270,6 +270,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		mPredecessors.removeDomainElement(place);
 		mSuccessors.removeDomainElement(place);
 		mPlaces.remove(place);
+		mAcceptingPlaces.remove(place);
+		mInitialPlaces.remove(place);
 	}
 
 	@Override
