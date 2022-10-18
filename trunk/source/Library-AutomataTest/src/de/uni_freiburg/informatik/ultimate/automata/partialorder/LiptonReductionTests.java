@@ -48,7 +48,6 @@ public class LiptonReductionTests extends LiptonReductionTestsBase {
 			final IIndependenceRelation<Set<String>, String> independence) throws AutomataLibraryException {
 		final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
 				new CopyPlaceFactory(), independence, PostScriptChecker.INSTANCE, null);
-		reduction.performReduction();
 		final BoundedPetriNet<String, String> actual = reduction.getResult();
 
 		assertThat("PNs differ, expected " + expected + " but actual was " + actual, areEqual(expected, actual));

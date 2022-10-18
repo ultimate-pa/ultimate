@@ -101,11 +101,14 @@ public class LiptonReduction<L, P> {
 	 *            The independence relation used for mover checks.
 	 * @param stuckPlaceChecker
 	 *            An {@link IPostScriptChecker}.
+	 * @throws AutomataOperationCanceledException
+	 * @throws PetriNetNot1SafeException
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
-			final IPostScriptChecker<L, P> stuckPlaceChecker, final IIndependenceCache<?, L> cache) {
+			final IPostScriptChecker<L, P> stuckPlaceChecker, final IIndependenceCache<?, L> cache)
+			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LiptonReduction.class);
 		mCompositionFactory = compositionFactory;
@@ -117,17 +120,11 @@ public class LiptonReduction<L, P> {
 		mPetriNet = CopySubnet.copy(mServices, petriNet, new HashSet<>(petriNet.getTransitions()),
 				new HashSet<>(petriNet.getAlphabet()), true);
 		mRetromorphism = new ModifiableRetroMorphism<>(mPetriNet);
+
+		performReduction();
 	}
 
-	/**
-	 * Performs the Lipton Reduction. Needs to be called once before using any other functions.
-	 *
-	 * @throws PetriNetNot1SafeException
-	 *             if Petri Net is not 1-safe.
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled.
-	 */
-	public void performReduction() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+	private void performReduction() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mStatistics.start(LiptonReductionStatisticsDefinitions.ReductionTime);
 		mStatistics.collectInitialStatistics(mPetriNet);
 		mLogger.info("Starting Lipton reduction on Petri net that " + mPetriNet.sizeInformation());
