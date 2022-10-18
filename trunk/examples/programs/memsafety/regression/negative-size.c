@@ -1,4 +1,4 @@
-//# Safe
+//#Safe
 /*
   Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
   Date: 2022-10-17  
@@ -18,6 +18,6 @@ void assume_abort_if_not(int cond) {
 int main() {
   int size = __VERIFIER_nondet_int();
   assume_abort_if_not(size != 0);
-	int *a = malloc(sizeof(int) * size);
-	int x = a[0];
+  int *a = malloc(sizeof(int) * size);
+  int x = a[0];
 }

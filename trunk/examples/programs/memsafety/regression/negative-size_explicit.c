@@ -1,4 +1,4 @@
-//# Safe
+//#Safe
 /*
   Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
   Date: 2022-10-18

@@ -1,4 +1,4 @@
-//# Safe
+//#Safe
 /*
   Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
   Date: 2022-10-17  
@@ -16,6 +16,6 @@ void assume_abort_if_not(int cond) {
 int main() {
   unsigned int size = __VERIFIER_nondet_uint();
   assume_abort_if_not(size != 0);
-	int a[size];
+  int a[size];
   a[0] = 5;
 }
