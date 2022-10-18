@@ -1,4 +1,4 @@
-//@ commutativity (b, c) (c, b)
+//@ commutativity (c, b)
 
 PetriNet initial = (
   alphabet    = { "a" "b" "c" "d" },
@@ -14,10 +14,11 @@ PetriNet initial = (
 );
 
 PetriNet expected = (
-  alphabet    = { "abcdb" },
-  places      = { "l11" "l14" "l12" },
+  alphabet    = { "abcd" "abcdb" },
+  places      = { "l11" "l14" "l13" "l12_copy1" },
   transitions = {
-    ({ "l11" } "abcdb" { "l14" "l12" })
+    ({ "l11" } "abcd" { "l12_copy1" "l14" })
+    ({ "l11" } "abcdb" { "l14" "l13" })
   },
   initialMarking  = { "l11" },
   acceptingPlaces = { "l14" }
