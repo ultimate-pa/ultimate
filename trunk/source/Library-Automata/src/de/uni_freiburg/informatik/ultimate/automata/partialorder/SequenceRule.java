@@ -312,7 +312,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 	private void deleteObsoleteNeighbours(final IPetriNet<L, P> net,
 			final Collection<Transition<L, P>> deletedTransitions) {
 		deletedTransitions.stream()
-				.flatMap(t -> Stream.concat(t.getPredecessors().stream(), t.getSuccessors().stream()))
+				.flatMap(t -> Stream.concat(t.getPredecessors().stream(), t.getSuccessors().stream())).distinct()
 				.filter(p -> net.getPredecessors(p).isEmpty() && net.getSuccessors(p).isEmpty()
 						&& !net.getInitialPlaces().contains(p))
 				.forEach(this::removePlace);
