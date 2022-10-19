@@ -1,12 +1,12 @@
 //#Safe
 /*
   Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
-  Date: 2022-10-17  
+  Date: 2022-10-17
 */
 
 typedef long unsigned int size_t;
 
-extern int __VERIFIER_nondet_uint(void);
+extern unsigned int __VERIFIER_nondet_uint(void);
 
 extern void abort(void);
 void assume_abort_if_not(int cond) {
