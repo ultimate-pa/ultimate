@@ -20,6 +20,7 @@ int main() {
   unsigned int size = __VERIFIER_nondet_uint();
   assume_abort_if_not(size > 0 && size < 4294967296 / sizeof(int));
   int *a = malloc(sizeof(int) * size);
+  a[0] = 5;
   int x = a[0];
   free(a);
 }

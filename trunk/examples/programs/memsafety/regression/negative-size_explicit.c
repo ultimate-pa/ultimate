@@ -16,6 +16,7 @@ void assume_abort_if_not(int cond) {
 
 int main() {
   int *a = malloc(-1);
+  a[0] = 5;
   int x = a[0];
   free(a);
 }
