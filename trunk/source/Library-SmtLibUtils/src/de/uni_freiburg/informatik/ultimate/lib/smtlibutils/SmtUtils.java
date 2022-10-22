@@ -1436,8 +1436,8 @@ public final class SmtUtils {
 			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case "div":
-			if (params.length != 2) {
-				throw new IllegalArgumentException("no div");
+			if (params.length < 2) {
+				throw new IllegalArgumentException("div needs at least two arguments");
 			}
 			result = div(script, params[0], params[1]);
 			break;
