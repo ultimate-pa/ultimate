@@ -563,6 +563,9 @@ public class SolveForSubjectUtils {
 			for (final Term abstractVariable : m.getVariable2Exponent().keySet()) {
 				if (SmtUtils.isIntDiv(abstractVariable) || SmtUtils.isIntMod(abstractVariable)) {
 					final ApplicationTerm appTerm = (ApplicationTerm) abstractVariable;
+					if (appTerm.getParameters().length > 2) {
+						throw new UnsupportedOperationException("Div with more than two parameters");
+					}
 					final boolean dividentContainsSubject = SmtUtils.isSubterm(appTerm.getParameters()[0], subject);
 					final boolean tailIsConstant = tailIsConstant(Arrays.asList(appTerm.getParameters()));
 					if (dividentContainsSubject) {
