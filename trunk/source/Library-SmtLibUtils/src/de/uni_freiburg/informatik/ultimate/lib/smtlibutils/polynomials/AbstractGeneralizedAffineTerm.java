@@ -102,15 +102,20 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
-		assert !SmtSortUtils.isBitvecSort(s) || !constant.isNegative() : "Negative constant in bitvector term";
-		assert !SmtSortUtils.isBitvecSort(s)
-				|| allCoefficientsAreNonNegative(variables2coeffcient) : "Negative coefficients in bitvector term "
-						+ variables2coeffcient;
+		assert !SmtSortUtils.isBitvecSort(s) || !constant.isNegative() : "Negative constant in BitVec term";
+		assert !SmtSortUtils.isBitvecSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> !x.isNegative()) : "Negative coefficient in BitVec term " + variables2coeffcient;
+		assert !SmtSortUtils.isBitvecSort(s) || constant.isIntegral() : "Non-integral constant in BitVec term";
+		assert !SmtSortUtils.isBitvecSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> x.isIntegral()) : "Non-integral coefficient in BitVec term " + variables2coeffcient;
+		assert !SmtSortUtils.isIntSort(s) || constant.isIntegral() : "Non-integral constant in Int term";
+		assert !SmtSortUtils.isIntSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> x.isIntegral()) : "Non-integral coefficient in Int term " + variables2coeffcient;
 		mAbstractVariable2Coefficient = variables2coeffcient;
 	}
 
-	private static boolean allCoefficientsAreNonNegative(final Map<?, Rational> variables2coeffcient) {
-		return variables2coeffcient.entrySet().stream().allMatch(x -> !x.getValue().isNegative());
+	private static boolean isTrueForAllCoefficients(final Map<?, Rational> variable2coeffcient, final Predicate<Rational> p) {
+		return variable2coeffcient.entrySet().stream().allMatch(x -> p.test(x.getValue()));
 	}
 
 	protected abstract AbstractGeneralizedAffineTerm<?> constructNew(final Sort sort, final Rational constant,
