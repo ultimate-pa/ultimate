@@ -334,8 +334,9 @@ public class PolynomialTest {
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
 		final String inputAsString = "(/ 42.0 x 5.0 2.0 y 21.0 2.0)";
-		final String expectedOutputAsString = "(* (/ 1.0 42.0) (/ 42.0 x 10.0 y))";
-		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
+		final String expectedOutputAsString = "(* (/ 1.0 42.0) (/ (* (/ 1.0 10.0) (/ 42.0 x)) y))";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
 	/**
@@ -348,8 +349,9 @@ public class PolynomialTest {
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
 		final String inputAsString = "(/ 42.0 0.0 5.0 2.0 0.0 21.0 2.0)";
-		final String expectedOutputAsString = "(* (/ 1.0 42.0) (/ 42.0 0.0 10.0 0.0))";
-		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
+		final String expectedOutputAsString = "(* (/ (* (/ 42.0 0.0) (/ 1.0 10.0)) 0.0) (/ 1.0 42.0))";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
 	/**
