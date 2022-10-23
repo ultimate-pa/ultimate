@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -112,8 +113,17 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		return variables2coeffcient.entrySet().stream().allMatch(x -> !x.getValue().isNegative());
 	}
 
-	protected abstract IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+	protected abstract AbstractGeneralizedAffineTerm<?> constructNew(final Sort sort, final Rational constant,
 			final Map<AVAR, Rational> variables2coeffcient);
+
+	/**
+	 * Construct a new {@link AffineTerm} in which term is the only variable. This
+	 * is usually a bad idea and useful only in rare cases. Hence, this method is
+	 * private.
+	 */
+	private static AffineTerm constructNewSingleVariableTerm(final Term term) {
+		return new AffineTerm(term.getSort(), Rational.ZERO, Collections.singletonMap(term, Rational.ONE));
+	}
 
 	protected abstract AVAR constructAbstractVar(Term term);
 
@@ -400,9 +410,99 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 	public abstract AbstractGeneralizedAffineTerm<?> removeAndNegate(Monomial monomialOfSubject);
 
-	public IPolynomialTerm div(final Script script, final BigInteger divisor, final Set<TermVariable> bannedForDivCapture) {
+	private ApplicationTerm isDivision(final String funcname) {
+		if (!mConstant.equals(Rational.ZERO)) {
+			return null;
+		}
+		if (mAbstractVariable2Coefficient.size() != 1) {
+			return null;
+		}
+		final Entry<AVAR, Rational> entry = mAbstractVariable2Coefficient.entrySet().iterator().next();
+		if (!entry.getValue().equals(Rational.ONE)) {
+			return null;
+		}
+		final AVAR avar = entry.getKey();
+		final Term singleVar;
+		if (avar instanceof Monomial) {
+			final Monomial monominal = (Monomial) avar;
+			singleVar = monominal.getSingleVariable();
+		} else if (avar instanceof Term) {
+			singleVar = (Term) avar;
+		} else {
+			throw new AssertionError();
+		}
+		if (!(singleVar instanceof ApplicationTerm)) {
+			return null;
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) singleVar;
+		if (!appTerm.getFunction().getApplicationString().equals(funcname)) {
+			return null;
+		}
+		return appTerm;
+	}
+
+	@Override
+	public IPolynomialTerm div(final Script script, final IPolynomialTerm... divisors) {
+		AbstractGeneralizedAffineTerm<?> current = this;
+		for (final IPolynomialTerm divisor : divisors) {
+			if (divisor.isConstant()) {
+				if (SmtSortUtils.isIntSort(mSort)) {
+					current = current.divInt(script, divisor.getConstant().numerator(), Collections.emptySet());
+				} else if (SmtSortUtils.isBitvecSort(mSort)) {
+					throw new UnsupportedOperationException();
+				} else if (SmtSortUtils.isRealSort(mSort)) {
+					current = current.divReal(script, divisor.getConstant());
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			} else {
+				final String funcname = getDivisionFuncname(getSort());
+				// TODO: extract gcd from divisor and divide by gcd separately
+				current = constructDivResultForNonSimplifiableCase(script, funcname, current, divisor.toTerm(script));
+			}
+		}
+		return current;
+	}
+
+	public static String getDivisionFuncname(final Sort sort) {
+		final String funcname;
+		if (SmtSortUtils.isIntSort(sort)) {
+			funcname = "div";
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			throw new UnsupportedOperationException();
+		} else if (SmtSortUtils.isRealSort(sort)) {
+			funcname = "/";
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		return funcname;
+	}
+
+	/**
+	 * If divisor is zero (for Int and for Real, not for bitvector) or not a
+	 * literal, we cannot simplify besides flattening and return an
+	 * {@link AffineTerm} whose only variable is the divisibility result.
+	 *
+	 */
+	private static AffineTerm constructDivResultForNonSimplifiableCase(final Script script, final String funcname,
+			final IPolynomialTerm divident, final Term divisor) {
+		return constructNewSingleVariableTerm(
+				SmtUtils.flattenIntoFirstArgument(script, funcname, divident.toTerm(script), divisor));
+	}
+
+	public AbstractGeneralizedAffineTerm<?> divInt(final Script script, final BigInteger divisor,
+			final Set<TermVariable> bannedForDivCapture) {
 		if (!SmtSortUtils.isIntSort(getSort())) {
 			throw new AssertionError("only for int");
+		}
+		if (divisor.equals(BigInteger.ZERO)) {
+			// A non-initial zero cannot be simplified (semantics of division by zero
+			// similar to uninterpreted function see
+			// http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that
+			// an initial zero does not make the result zero, because 0 is not equivalent to
+			// (div 0 0).
+			return constructDivResultForNonSimplifiableCase(script, "div", this,
+					SmtUtils.constructIntegerValue(script, getSort(), divisor));
 		}
 		final Map<AVAR, Rational> variables2coeffcient = new HashMap<>();
 		final List<Term> summandsOfDiv = new ArrayList<>();
@@ -416,20 +516,29 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				if (getFreeVars(entry.getKey()).stream().anyMatch(bannedForDivCapture::contains)) {
 					return null;
 				}
-				summandsOfDiv.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
+				summandsOfDiv
+						.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
 			}
 		}
 		final Rational constant;
 		if (summandsOfDiv.isEmpty()) {
+			// since all coefficients could be divided without remainder, it is sound to
+			// divide the constant even if it is not divisible without remainder
 			constant = euclideanDivision(getConstant(), divisor);
 		} else {
-			constant = Rational.ZERO;
-			if (!getConstant().equals(Rational.ZERO)) {
-				summandsOfDiv.add(getConstant().toTerm(getSort()));
+			if (getConstant().div(Rational.valueOf(divisor, BigInteger.ONE)).isIntegral()) {
+				// constant can be divided without remainder
+				constant = euclideanDivision(getConstant(), divisor);
+			} else {
+				// constant cannot be divided without remainder, we have to add the constant to
+				// the sum (to which we apply the div operator)
+				constant = Rational.ZERO;
+				if (!getConstant().equals(Rational.ZERO)) {
+					summandsOfDiv.add(getConstant().toTerm(getSort()));
+				}
 			}
 			final Term sum = SmtUtils.sum(script, getSort(), summandsOfDiv.toArray(new Term[summandsOfDiv.size()]));
-
-			final Term div = SmtUtils.div(script, sum, SmtUtils.constructIntegerValue(script, getSort(), divisor));
+			final Term div = SmtUtils.divIntFlatten(script, sum, divisor);
 			final AVAR avar = constructAbstractVar(div);
 			final Rational oldCoeffcient = variables2coeffcient.get(avar);
 			if (oldCoeffcient == null) {
@@ -444,6 +553,17 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			}
 		}
 		return constructNew(getSort(), constant, variables2coeffcient);
+	}
+
+
+	public AbstractGeneralizedAffineTerm<?> divReal(final Script script, final Rational divisor) {
+		if (!SmtSortUtils.isRealSort(getSort())) {
+			throw new AssertionError("only for Real");
+		}
+		if (divisor.equals(Rational.ZERO)) {
+			return constructDivResultForNonSimplifiableCase(script, "/", this, divisor.toTerm(getSort()));
+		}
+		return (AbstractGeneralizedAffineTerm<?>) this.mul(divisor.inverse());
 	}
 
 	protected Rational euclideanDivision(final Rational divident, final BigInteger divisor) {

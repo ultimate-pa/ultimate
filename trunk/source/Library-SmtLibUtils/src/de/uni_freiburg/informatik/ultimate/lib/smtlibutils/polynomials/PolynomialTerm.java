@@ -50,7 +50,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	@Override
-	protected IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+	protected AbstractGeneralizedAffineTerm<?> constructNew(final Sort sort, final Rational constant,
 			final Map<Monomial, Rational> variables2coeffcient) {
 		return PolynomialTerm.minimalRepresentation(sort, constant, variables2coeffcient);
 	}
@@ -194,62 +194,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		} else {
 			return ((PolynomialTerm) poly).getMonomial2Coefficient();
 		}
-	}
-
-	/**
-	 * Returns a PolynomialTerm which represents the quotient of the given arguments
-	 * (see {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
-	 */
-	public static IPolynomialTerm divide(final IPolynomialTerm[] polynomialTerms, final Script script) {
-		if (!divisionPossible(polynomialTerms)) {
-			// In case we cannot handle this division properly (e.g. dividing by variables)
-			// we treat this
-			// whole term as an unique variable.
-			return PolynomialTermUtils.simplifyImpossibleDivision("/", polynomialTerms, script);
-		}
-		return constructDivision(polynomialTerms, script);
-	}
-
-	/**
-	 * Returns a PolynomialTerm which represents the integral quotient of the given
-	 * arguments (see {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
-	 */
-	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs, final Script script) {
-		if (!divisionPossible(polynomialArgs)) {
-			// In case we cannot handle this division properly (e.g. dividing by variables)
-			// we treat this
-			// whole term as an unique variable.
-			return PolynomialTermUtils.simplifyImpossibleDivision("div", polynomialArgs, script);
-		}
-		final IPolynomialTerm result = constructDivision(polynomialArgs, script);
-		if (result.isIntegral()) {
-			return result;
-		}
-		return PolynomialTermUtils.simplifyImpossibleDivision("div", polynomialArgs, script);
-	}
-
-	/**
-	 * Given an array of polynomialTerms, this determines whether a division is
-	 * actually possible at the moment. If it is return true, false otherwise.
-	 */
-	public static boolean divisionPossible(final IPolynomialTerm[] polynomialTerms) {
-		for (int i = 1; i < polynomialTerms.length; i++) {
-			if (!polynomialTerms[i].isConstant() || polynomialTerms[i].isZero()) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Construct the division of the given polynomialTerms.
-	 */
-	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] polynomialTerms, final Script script) {
-		IPolynomialTerm poly = PolynomialTerm.mul(polynomialTerms[0], polynomialTerms[1].getConstant().inverse());
-		for (int i = 2; i < polynomialTerms.length; i++) {
-			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
-		}
-		return poly;
 	}
 
 	@Override

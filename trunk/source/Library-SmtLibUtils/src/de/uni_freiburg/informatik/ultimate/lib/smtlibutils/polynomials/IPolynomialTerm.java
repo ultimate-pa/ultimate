@@ -149,4 +149,6 @@ public interface IPolynomialTerm {
 	 */
 	Rational computeGcdOfCoefficients();
 
+	IPolynomialTerm div(final Script script, final IPolynomialTerm... divisors);
+
 }

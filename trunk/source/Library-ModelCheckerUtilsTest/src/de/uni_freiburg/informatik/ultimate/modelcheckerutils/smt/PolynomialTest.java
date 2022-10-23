@@ -392,6 +392,32 @@ public class PolynomialTest {
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 
+	@Test
+	public void intDivisionLeftAssoc04() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(div (div (div (div (div (* 8 (div x 2342)) 16) y) 5) 3) z 7 6) ";
+		final String expectedOutputAsString = "(div (* (div x 2342) 8) 16 y 15 z 42)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
+	/**
+	 * A non-initial zero cannot be simplified (semantics of division by zero
+	 * similar to uninterpreted function see
+	 * http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that
+	 * an initial zero does not make the result zero, because 0 is not equivalent to
+	 * (div 0 0).
+	 */
+	@Test
+	public void intDivisionLeftAssoc05() {
+		final String inputAsString = "(div 0 0)";
+		runDefaultTest(inputAsString, inputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
 	/**
 	 * Result should be
 	 * <pre>(* 42.0 x y)</pre>
@@ -444,6 +470,71 @@ public class PolynomialTest {
 		final String inputAsString = "(+ 42.0 2.0 x)";
 		final String expectedOutputAsString = "(+ 44.0 x)";
 		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * We can apply `div` to some summands.
+	 */
+	@Test
+	public void intDivisionDistributivity01() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div (+ (* 14 x) (* 15 y) 21) 7)";
+		final String expectedOutputAsString = "(+ 3 (* 2 x) (div (* y 15) 7))";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * We cannot compute the constant if it is not divisible.
+	 */
+	@Test
+	public void intDivisionDistributivity02() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div (+ (* 14 x) (* 15 y) 20) 7)";
+		final String expectedOutputAsString = "(+ (div (+ 20 (* y 15)) 7) (* 2 x))";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * We cannot compute the constant although is not divisible, because all
+	 * coefficients are divisible.
+	 */
+	@Test
+	public void intDivisionDistributivity03() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div (+ (* 14 x) (* 21 y) 20) 7)";
+		final String expectedOutputAsString = "(+ 2 (* 3 y) (* 2 x))";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * Preceding test works also if dividend is negative.
+	 */
+	@Test
+	public void intDivisionDistributivity04() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div (+ (* 14 x) (* 21 y) 20) (- 7))";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
+	/**
+	 * Since `div` can only be applied to some summands we temporarily get two
+	 * similar abstract variables and have to add their coefficients.
+	 */
+	@Test
+	public void bugAbstractDivVarFromTwoSources() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div (+ (* (- 7) (div (+ y (- 7)) 7)) y (- 7)) 7)";
+		final String expectedOutputAsString = "0";
+		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 
 	/**
