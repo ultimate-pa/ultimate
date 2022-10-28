@@ -1006,7 +1006,7 @@ public class CHandler {
 		final BigInteger operandTypeByteSize =
 				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
 
-		if (operandTypeByteSize.intValueExact() == 0) {
+		if (operandTypeByteSize.signum() == 0) {
 			// operand's type has size 0 -- not sure what makes sense to do here, doing
 			// nothing
 			// case where I encountered it was a struct with a 0-sized array in it; if
