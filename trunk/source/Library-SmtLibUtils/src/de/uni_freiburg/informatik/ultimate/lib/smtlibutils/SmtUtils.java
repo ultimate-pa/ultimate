@@ -1440,7 +1440,7 @@ public final class SmtUtils {
 			if (params.length < 2) {
 				throw new IllegalArgumentException("div needs at least two arguments");
 			}
-			result = div(script, params[0], params[1]);
+			result = divInt(script, params);
 			break;
 		case "mod":
 			if (params.length != 2) {
@@ -1637,25 +1637,6 @@ public final class SmtUtils {
 
 	public static String sanitizeStringAsSmtIdentifier(final String name) {
 		return name.replaceAll("\\|", "BAR").replaceAll(" ", "_");
-	}
-
-	/**
-	 * Returns a possibly simplified version of the Term (div dividend divisor). If dividend and divisor are both
-	 * literals the returned Term is a literal which is equivalent to the result of the operation
-	 */
-	public static Term div(final Script script, final Term dividend, final Term divisor) {
-		assert SmtSortUtils.isIntSort(dividend.getSort()) : "Integer division requires sort Int";
-		assert SmtSortUtils.isIntSort(divisor.getSort()) : "Integer division requires sort Int";
-		if (!(divisor instanceof ConstantTerm)) {
-			// we can only simplify division by literals
-			return script.term("div", dividend, divisor);
-		}
-		final Rational divisorAsRational = toRational((ConstantTerm) divisor);
-		final BigInteger divisorAsBigInteger = divisorAsRational.numerator();
-		final IPolynomialTerm poly = PolynomialTermTransformer.convert(script, dividend);
-		final AbstractGeneralizedAffineTerm<?> agat = (AbstractGeneralizedAffineTerm<?>) poly;
-		final IPolynomialTerm quot = agat.divInt(script, divisorAsBigInteger, Collections.emptySet());
-		return quot.toTerm(script);
 	}
 
 	public static Term abs(final Script script, final Term operand) {
