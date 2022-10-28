@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTer
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStore3;
@@ -1744,9 +1743,10 @@ public final class SmtUtils {
 	 * Division for ints with the several simplifications.
 	 */
 	public static Term divInt(final Script script, final Term... inputParams) {
-		final PolynomialTerm[] polynomialArgs = new PolynomialTerm[inputParams.length];
+		final AbstractGeneralizedAffineTerm<?>[] polynomialArgs = new AbstractGeneralizedAffineTerm<?>[inputParams.length];
 		for (int i = 0; i < inputParams.length; i++) {
-			polynomialArgs[i] = (PolynomialTerm) PolynomialTermTransformer.convert(script, inputParams[i]);
+			polynomialArgs[i] = (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script,
+					inputParams[i]);
 		}
 		return polynomialArgs[0].div(script, Arrays.copyOfRange(polynomialArgs, 1, polynomialArgs.length))
 				.toTerm(script);
