@@ -2022,12 +2022,10 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
 	@Test
 	public void bvAntiDerOnlyOneAndMone01() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x") };
 		final String formulaAsString = "(exists ((|ULTIMATE.start_main_~n~0#1| (_ BitVec 32))) (and (not (bvsle x |ULTIMATE.start_main_~n~0#1|)) (bvsle (_ bv1 32) |ULTIMATE.start_main_~n~0#1|) (not (= (_ bv2 32) (bvmul |ULTIMATE.start_main_~n~0#1| (_ bv2 32))))))";
-
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -2036,7 +2034,6 @@ public class QuantifierEliminationRegressionTest {
 	public void bvAntiDerOnlyOneAndMone02() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x") };
 		final String formulaAsString = "(exists ((|ULTIMATE.start_main_~n~0#1| (_ BitVec 32))) (and (not (bvslt x |ULTIMATE.start_main_~n~0#1|)) (bvsle (_ bv1 32) |ULTIMATE.start_main_~n~0#1|) (not (= (_ bv2 32) (bvmul |ULTIMATE.start_main_~n~0#1| (_ bv4294967295 32))))))";
-
 		final String expectedResult = "(bvsle (_ bv1 32) x)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
