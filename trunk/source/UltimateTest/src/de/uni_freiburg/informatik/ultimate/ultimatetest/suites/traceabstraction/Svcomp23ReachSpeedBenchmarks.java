@@ -121,11 +121,13 @@ public class Svcomp23ReachSpeedBenchmarks extends AbstractTraceAbstractionTestSu
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
-		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"
+		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
+		"default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 	};
 
 	private static final String[] TOOLCHAINS = {
 		"AutomizerCInline.xml",
+		"AutomizerC.xml",
 	};
 	// @formatter:on
 
