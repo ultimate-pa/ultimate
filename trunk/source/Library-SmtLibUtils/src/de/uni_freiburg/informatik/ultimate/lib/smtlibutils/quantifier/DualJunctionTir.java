@@ -351,6 +351,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				if (!elpr.getLhsMonomial().isLinear()) {
 					return null;
 				}
+				if (SmtSortUtils.isBitvecSort(elpr.getLhsMonomial().getSort())) {
+					if (elpr.getLhsCoefficient() != Rational.ONE && !SmtUtils
+							.isBvMinusOneButNotOne(elpr.getLhsCoefficient(), elpr.getLhsMonomial().getSort())) {
+						return null;
+					}
+				}
 			}
 			switch (elpr.getRelationSymbol()) {
 			case GEQ:
