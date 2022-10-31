@@ -157,7 +157,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
-		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg, true);
+		Boolean enableHeuristic = true;
+		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg, enableHeuristic);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 
 		// TODO decouple dead end support from this class
@@ -197,100 +198,18 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final String threads,
 			final int maxStep, final IIcfg<?> icfg, final Boolean heuristicEnabled) {
 		// TODO Add support for all orders previously supported in #getDfsOrder
-
-		//get all global Variables, then iterate over the cfg and mark variables if a procedure accesses it
-		Set<IProgramVar> allProgramVars = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
-		HashMap<IProgramVar, Set<String>> sharedVarsMap = new HashMap<>();
-		for (IProgramVar var : allProgramVars) {
-			sharedVarsMap.put(var, new HashSet<String>());
-		}
-		IcfgEdgeIterator iterator = new IcfgEdgeIterator(icfg);
-		while (iterator.hasNext()) {
-			IcfgEdge current = iterator.next();
-			String currentProcedure = current.getPrecedingProcedure();
-			//only mark with procedures different from "ULTIMATE.start"
-			if (!currentProcedure.equals("ULTIMATE.start")) {
-				Set<IProgramVar> currentVars = new HashSet<>();
-				currentVars.addAll(current.getTransformula().getInVars().keySet());
-				currentVars.addAll(current.getTransformula().getOutVars().keySet());
-				for (IProgramVar var : currentVars) {
-					if (!sharedVarsMap.get(var).contains(currentProcedure)) {
-						Set<String> procedures = sharedVarsMap.get(var);
-						procedures.add(currentProcedure);
-						sharedVarsMap.put(var, procedures);
-					}
-				}
-			}
-			
-		}
-
-		//remove all variables that are marked at most once at the end to calculate the effective global variables
-		HashMap<String, Set<IProgramVar>> sharedVarsMapReversed = new HashMap<>();
-		final List<String> allThreads = new ArrayList<>();
-		allThreads.addAll(IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()));
-		final String start = "ULTIMATE.start";
-		for (int i = allThreads.indexOf(start); i > 0; i--) {
-			allThreads.set(i, allThreads.get(i - 1));
-		}
-		allThreads.set(0, start);
-		for (String procedure : allThreads) {
-			sharedVarsMapReversed.put(procedure, new HashSet<>());
-		}
 		
-		Set<IProgramVar> effectiveGlobalVars = new HashSet<>();
-		for (IProgramVar var : sharedVarsMap.keySet()) {
-			if (sharedVarsMap.get(var).size() > 1) {
-				effectiveGlobalVars.add(var);
-				for (String procedure : sharedVarsMap.get(var)) {
-					Set<IProgramVar> vars = sharedVarsMapReversed.get(procedure);
-					vars.add(var);
-					sharedVarsMapReversed.put(procedure, vars);
-				}
-			}
-		}
-
+		ParameterizedPreferenceOrderUtils<L> paramPrefUtils = 
+				new ParameterizedPreferenceOrderUtils<>(icfg, threads, maxStep, heuristicEnabled);
+		Set<IProgramVar> effectiveGlobalVars = paramPrefUtils.getEffectiveGlobalVars();
+		List<Integer> maxSteps = paramPrefUtils.getMaxSteps();
+		List<String> threadList = paramPrefUtils.getThreadList();
 		
-		String[] pairList;
-		if (heuristicEnabled) {
-			PreferenceOrderHeuristic<L> heuristic = new PreferenceOrderHeuristic<>(icfg, allThreads,
-					effectiveGlobalVars, sharedVarsMapReversed);
-			heuristic.computeParameterizedOrder();
-			pairList = heuristic.getParameterizedOrderSequence().split("\\s+");
-		} else {
-			pairList = threads.split("\\s+");
-		}
-		
-
-		List<Integer> maxSteps = new ArrayList<>();
-		final List<String> threadList = new ArrayList<>();
-		if (pairList[0].equals("X")) {
-			threadList.addAll(allThreads);
-			maxSteps = Collections.nCopies(threadList.size(), maxStep);
-		} else {
-			final List<Boolean> allThreadsBool = new ArrayList<>();
-			allThreadsBool.addAll(Collections.nCopies(allThreads.size(), false));
-			for (final String pair : pairList) {
-				final String[] splittedPair = pair.split(",");
-				final Integer index = Integer.parseInt(splittedPair[0]);
-				if (allThreads.size() > index) {
-					threadList.add(allThreads.get(index));
-					maxSteps.add(Integer.parseInt(splittedPair[1]));
-					if (!allThreadsBool.get(index)) {
-						allThreadsBool.set(index, true);
-					}
-				}
-			}
-			for (int i = 0; i < allThreadsBool.size(); i++) {
-				if (!allThreadsBool.get(i)) {
-					threadList.add(allThreads.get(i));
-					maxSteps.add(1);
-				}
-			}
-		}
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
 		
 		final IPreferenceOrder<L, IPredicate, ?> order =
-				new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, getStepDefinition(icfg, steptype, effectiveGlobalVars));
+				new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, 
+						getStepDefinition(icfg, steptype, effectiveGlobalVars));
 
 		if (order.getMonitor() != null) {
 			final var splitter = mStateSplitter;
