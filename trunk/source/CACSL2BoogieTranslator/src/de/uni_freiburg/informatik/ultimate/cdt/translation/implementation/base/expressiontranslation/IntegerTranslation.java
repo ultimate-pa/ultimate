@@ -84,9 +84,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private static final boolean OVERAPPROXIMATE_INT_POINTER_CONVERSION = true;
 
+	private final BitabsTranslation mBitabsTranslation;
+
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
 		super(typeSizeConstants, settings, typeHandler, symboltable);
+		mBitabsTranslation = new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
 	}
 
 	@Override
@@ -167,26 +170,22 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final String funcname;
-		final BitabsTranslation bitAbs =
-				new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-
-			return bitAbs.abstractAnd(loc, left, typeLeft, right, typeRight);
+			return mBitabsTranslation.abstractAnd(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			return bitAbs.abstractOr(loc, left, typeLeft, right, typeRight);
+			return mBitabsTranslation.abstractOr(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			return bitAbs.abstractXor(loc, left, typeLeft, right, typeRight);
+			return mBitabsTranslation.abstractXor(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return bitAbs.abstractShiftLeft(loc, left, typeLeft, right, typeRight, hook);
+			return mBitabsTranslation.abstractShiftLeft(loc, left, typeLeft, right, typeRight, hook);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			return bitAbs.abstractShiftRight(loc, left, typeLeft, right, typeRight, hook);
+			return mBitabsTranslation.abstractShiftRight(loc, left, typeLeft, right, typeRight, hook);
 		default:
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -198,23 +197,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive type) {
 		switch (op) {
 		case IASTUnaryExpression.op_tilde:
-			return constructUnaryIntExprTilde(loc, expr, type);
+			return mBitabsTranslation.abstractCompl(loc, expr, type);
 		case IASTUnaryExpression.op_minus:
 			return constructUnaryIntExprMinus(loc, expr, type);
 		default:
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-	}
-
-	private Expression constructUnaryIntExprTilde(final ILocation loc, final Expression expr, final CPrimitive type) {
-		final String funcname = "bitwiseComplement";
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
-		// for bitwise complement translation
-		final BitabsTranslation bitAbs =
-				new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
-		return bitAbs.abstractCompl(loc, expr, type);
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
