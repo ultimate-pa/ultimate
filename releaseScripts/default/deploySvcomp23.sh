@@ -1,8 +1,11 @@
 #!/bin/bash
 # Script that deploys a new version to SVCOMP 23. You have to call makeFresh.sh before.
 
-SVCOMP_GITLAB_DIR="/storage/repos/svcomp-archives-2023/2023"
+SVCOMP_GITLAB_ROOT="/storage/repos/svcomp-archives-2023"
+SVCOMP_GITLAB_DIR="$SVCOMP_GITLAB_ROOT/2023"
 SVCOMP_COVERITEAM_DIR="/storage/repos/coveriteam-trusted-ultimate"
+SVCOMP_REMOTE_GIT="git@gitlab.com:sosy-lab/sv-comp/archives-2023.git"
+# SVCOMP_REMOTE_GIT="git@gitlab.com:danieldietsch/archives-2023.git"
 POST_FINAL=false
 
 EXPECTED_FILES=(
@@ -17,19 +20,19 @@ VALIDATOR_SYMLINK="val_uautomizer.zip"
 VERSION=$(git describe --tags "$(git for-each-ref refs/tags/v* --sort=-creatordate --format='%(objectname)' --count=1)")
 VERSION="${VERSION}-"$(git rev-parse HEAD | cut -c1-8)
 
-function git_is_clean() {
+git_is_clean() {
   git diff-index --quiet HEAD --
 }
 
-function push_dir() {
+push_dir() {
   pushd "$1" > /dev/null || { echo "Could not switch to directory $1" ; exit 1 ; }
 }
 
-function pop_dir() {
+pop_dir() {
 popd > /dev/null || { echo "Could not exit directory $PWD" ; exit 1 ; }
 }
 
-function prepare_repo() {
+prepare_repo() {
   if [ ! -d "$1" ]; then
     echo "Directory $1 does not exist"
     exit 1
@@ -50,7 +53,21 @@ function prepare_repo() {
   pop_dir
 }
 
-function copy_zips() {
+prepare_svcomp_repo_shallow() {
+  if [ ! -d "$1" ]; then
+    echo "Directory $1 does not exist"
+    exit 1
+  fi
+  rm -rf "$1"
+  git clone --filter=blob:none --no-checkout "$SVCOMP_REMOTE_GIT" "$1"
+  push_dir "$1"
+  git sparse-checkout set --no-cone /2023/uautomizer.zip /2023/utaipan.zip /2023/ukojak.zip /2023/ugemcutter.zip /2023/val_uautomizer.zip
+  git switch -c ultimate
+  git checkout 
+  pop_dir
+}
+
+copy_zips() {
   echo "Copying .zip files for version $VERSION to SVCOMP GitLab repo in $1"
   for z in "${EXPECTED_FILES[@]}"; do
       if [ ! -f "$z" ]; then
@@ -73,7 +90,7 @@ function copy_zips() {
   return 0
 }
 
-function create_validator_symlinks() {
+create_validator_symlinks() {
   push_dir "$SVCOMP_GITLAB_DIR"
   if [ ! -L "${1}/${VALIDATOR_SYMLINK}" ]; then
     ln -s "$VALIDATOR" "$VALIDATOR_SYMLINK"
@@ -81,24 +98,29 @@ function create_validator_symlinks() {
   pop_dir
 }
 
-function git_push_default_remote() {
+git_commit() {
   push_dir "$1"
   echo "Pushing to remote "
   git add -A
   local title="Update Ultimate tool family (uautomizer, ukojak, utaipan, ugemcutter) to version $VERSION"
   git commit -a -m"${title}"
-  git push -f
   pop_dir
 }
 
-prepare_repo "$SVCOMP_GITLAB_DIR"
+prepare_svcomp_repo_shallow "$SVCOMP_GITLAB_ROOT"
 if copy_zips "$SVCOMP_GITLAB_DIR" ; then
   create_validator_symlinks "$SVCOMP_GITLAB_DIR"
-  git_push_default_remote "$SVCOMP_GITLAB_DIR"
+  git_commit "$SVCOMP_GITLAB_DIR"
+  push_dir "$SVCOMP_GITLAB_DIR"
+  git push origin ultimate
+  pop_dir
   echo "Now file a pull request and wait for its acceptance!"
 fi
 
 prepare_repo "$SVCOMP_COVERITEAM_DIR"
 if copy_zips "$SVCOMP_COVERITEAM_DIR"; then
-  git_push_default_remote "$SVCOMP_COVERITEAM_DIR"
+  git_commit "$SVCOMP_COVERITEAM_DIR"
+    push_dir "$SVCOMP_COVERITEAM_DIR"
+    git push -f
+    pop_dir
 fi
