@@ -393,6 +393,8 @@ public class BitabsTranslation {
 				mTypeHandler.getBoogieTypeForCType(type));
 	}
 
+	// TODO: This is not used anymore, but are there any additional useful transformations here?
+	@Deprecated
 	public Result abstractAssign(final CHandler chandler, final ProcedureManager procedureManager,
 			final List<Declaration> declarations, final ExpressionTranslation expressionTranslation,
 			final INameHandler nameHandler, final AuxVarInfoBuilder auxVarInfoBuilder,
