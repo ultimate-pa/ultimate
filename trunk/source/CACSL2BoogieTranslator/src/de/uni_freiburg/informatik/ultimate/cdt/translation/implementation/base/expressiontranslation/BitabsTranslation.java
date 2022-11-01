@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -114,7 +113,25 @@ public class BitabsTranslation {
 
 	public Expression abstractAnd(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight) {
-		final String funcname = "bitwiseAnd";
+		if (left instanceof IntegerLiteral) {
+			final String valueLeft = ((IntegerLiteral) left).getValue();
+			if (valueLeft.equals("1")) {
+				return right;
+			}
+			if (valueLeft.equals("0")) {
+				return left;
+			}
+		}
+		if (right instanceof IntegerLiteral) {
+			final String valueRight = ((IntegerLiteral) right).getValue();
+			if (valueRight.equals("1")) {
+				return left;
+			}
+			if (valueRight.equals("0")) {
+				return right;
+			}
+
+		}
 		// if decides_to_apply(CYRUS_AND_0_LEFT, left, right)
 		// If left is equal literal 0 or right is equal literal 0.
 		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
@@ -139,45 +156,11 @@ public class BitabsTranslation {
 		final Expression rightPos =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, right, lit0);
 
-		if (left instanceof IntegerLiteral) {
-			final String valueLeft = ((IntegerLiteral) left).getValue();
-			if (valueLeft.equals("1")) {
-				return right;
-			}
-			if (valueLeft.equals("0")) {
-				return left;
-			}
-		} else if (right instanceof IntegerLiteral) {
-			final String valueRight = ((IntegerLiteral) right).getValue();
-			if (valueRight.equals("1")) {
-				return left;
-			}
-			if (valueRight.equals("0")) {
-				return right;
-			}
-
-		} else if (isCompareOperator(left) && isCompareOperator(right)) {
-
-			final Expression leftNeq0 =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, left, lit0);
-			final Expression rightNeq0 =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, right, lit0);
-			final Expression logicAnd =
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftNeq0, rightNeq0);
-
-			// Ultimate compares all the expression result with 0 in final step for if //
-			// condition! So if the return type is bool, we need to set it back to int.
-			return ExpressionFactory.constructIfThenElseExpression(loc, logicAnd, lit1, lit0);
-		}
-
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-
 		final Expression condAnd0 =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR, leftEq0, rightEq0);
 
-		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
+		final Expression func = declareAndApplyFunction(loc, "bitwiseAnd", typeLeft,
+				new CPrimitive[] { typeLeft, typeRight }, new Expression[] { left, right });
 
 		// a>0, a&1 <==> a%2
 		final Expression leftMod2 =
@@ -205,7 +188,6 @@ public class BitabsTranslation {
 
 	public Expression abstractOr(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight) {
-		final String funcname = "bitwiseOr";
 		if (left instanceof IntegerLiteral) {
 			final String valueLeft = ((IntegerLiteral) left).getValue();
 			if (valueLeft.equals("1")) {
@@ -214,7 +196,8 @@ public class BitabsTranslation {
 			if (valueLeft.equals("0")) {
 				return right;
 			}
-		} else if (right instanceof IntegerLiteral) {
+		}
+		if (right instanceof IntegerLiteral) {
 			final String valueRight = ((IntegerLiteral) right).getValue();
 			if (valueRight.equals("1")) {
 				return right;
@@ -236,10 +219,8 @@ public class BitabsTranslation {
 		final Expression rightCmp0 =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, right, lit0);
 
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
+		final Expression func = declareAndApplyFunction(loc, "bitwiseOr", typeLeft,
+				new CPrimitive[] { typeLeft, typeRight }, new Expression[] { left, right });
 
 		// bit-size(left/right) = 1 <==> (left/right == 1) || (left/right ==0)
 		final Expression leftSize1 =
@@ -270,12 +251,11 @@ public class BitabsTranslation {
 
 	/**
 	 * Construct right shift rules. In c for the gcc compiler with defualt settings, the a>>31 && a<0, return -1.
-	 * 
+	 *
 	 **/
 
 	public Expression abstractShiftRight(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final String funcname = "shiftRight";
 		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		final Expression lit1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
 		final Expression lit31 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "31");
@@ -307,10 +287,8 @@ public class BitabsTranslation {
 			func = constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
 					Operator.ARITHDIV);
 		} else {
-			final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-			declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
-			func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
+			func = declareAndApplyFunction(loc, "shiftRight", typeLeft, new CPrimitive[] { typeLeft, typeRight },
+					new Expression[] { left, right });
 		}
 		final Expression posIte = ExpressionFactory.constructIfThenElseExpression(loc, leftCondPos, lit0, func);
 
@@ -330,8 +308,6 @@ public class BitabsTranslation {
 	 */
 	public Expression abstractXor(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight) {
-		final String funcname = "bitwiseXOr";
-
 		final Expression lit1 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "1");
 		final Expression lit0 = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
@@ -357,11 +333,8 @@ public class BitabsTranslation {
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leftSize1, rightSize1);
 
 		// Thinking about in binary world, when it comes to bit 0 or 1
-
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
+		final Expression func = declareAndApplyFunction(loc, "bitwiseXOr", typeLeft,
+				new CPrimitive[] { typeLeft, typeRight }, new Expression[] { left, right });
 
 		// rule xor-0, for xor-1 rule, not stand, 0111 ^ 0001, negate doesn't work
 		final Expression rightIte0 = ExpressionFactory.constructIfThenElseExpression(loc, rightCmp0, left, func);
@@ -376,21 +349,9 @@ public class BitabsTranslation {
 	 * solution: integer eqauls to 0 or 1, complement-logic rule
 	 */
 	public Expression abstractCompl(final ILocation loc, final Expression expr, final CPrimitive type) {
-		final String funcname = "bitwiseComplement";
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
-
-		if (expr instanceof IfThenElseExpression) {
-			final IfThenElseExpression ite = (IfThenElseExpression) expr;
-			final Expression cond = ite.getCondition();
-			final Expression thenPart = ite.getThenPart();
-			final Expression elsePart = ite.getElsePart();
-			// operand already translated into boogie
-			return ExpressionFactory.constructIfThenElseExpression(loc, cond, elsePart, thenPart);
-
-		}
-		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
-				mTypeHandler.getBoogieTypeForCType(type));
+		// TODO: Is there any possible and sound optimization?
+		return declareAndApplyFunction(loc, "bitwiseComplement", type, new CPrimitive[] { type },
+				new Expression[] { expr });
 	}
 
 	// TODO: This is not used anymore, but are there any additional useful transformations here?
@@ -674,9 +635,9 @@ public class BitabsTranslation {
 
 	/**
 	 * Method to make assume abstraction for general bitwise and/or
-	 * 
+	 *
 	 * @param bexpr
-	 * 
+	 *
 	 */
 	private static IfStatement assumeIte(final CHandler cHandler, final ProcedureManager procedureManager,
 			final ExpressionResultBuilder builder, final CType lType, final IASTBinaryExpression node,
@@ -764,12 +725,12 @@ public class BitabsTranslation {
 
 	/**
 	 * method to decide if an expression has bitwise operator
-	 * 
+	 *
 	 * @param bexpr
 	 *            for now we consider all binary cases, because the unary complement rule is not clear yet.
-	 * 
+	 *
 	 */
-	public static boolean containBitwise(final IASTExpression expr) {
+	private static boolean containBitwise(final IASTExpression expr) {
 		if (!(expr instanceof IASTBinaryExpression)) {
 			if (expr instanceof IASTUnaryExpression) {
 				final IASTUnaryExpression uexpr = (IASTUnaryExpression) expr;
@@ -795,7 +756,7 @@ public class BitabsTranslation {
 	}
 
 	// Justify if an operator is bitwise operator
-	public static boolean isBitwiseOperator(final int opcd) {
+	private static boolean isBitwiseOperator(final int opcd) {
 
 		switch (opcd) {
 		case IASTBinaryExpression.op_binaryAnd:
@@ -811,15 +772,9 @@ public class BitabsTranslation {
 		}
 	}
 
-	// Based on the heuristics ultimate translations on from comparison to ITE
-	// expressions(an optimization from the Ultimate?)
-	public static boolean isCompareOperator(final Expression expr) {
-		return expr instanceof IfThenElseExpression;
-	}
-
 	// Justify if an operator is bitwise operator we should return a list that
 	// collect all the bit-wise expressions.
-	public static IASTBinaryExpression getBitwiseBinary(final IASTBinaryExpression binExpr) {
+	private static IASTBinaryExpression getBitwiseBinary(final IASTBinaryExpression binExpr) {
 		final int opcd = binExpr.getOperator();
 		switch (opcd) {
 		case IASTBinaryExpression.op_binaryAnd:
@@ -844,14 +799,15 @@ public class BitabsTranslation {
 		}
 	}
 
-	private void declareBitvectorFunction(final ILocation loc, final String prefixedFunctionName,
-			final boolean boogieResultTypeBool, final CPrimitive resultCType, final CPrimitive... paramCType) {
-		final String functionName = prefixedFunctionName.substring(1);
+	private Expression declareAndApplyFunction(final ILocation loc, final String functionName,
+			final CPrimitive resultType, final CPrimitive[] paramTypes, final Expression[] expressions) {
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + functionName;
 		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 				new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-		final Attribute[] attributes = { attribute };
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes,
-				boogieResultTypeBool, resultCType, paramCType);
+		mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, new Attribute[] { attribute }, false,
+				resultType, paramTypes);
+		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, expressions,
+				mTypeHandler.getBoogieTypeForCType(resultType));
 	}
 
 	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
