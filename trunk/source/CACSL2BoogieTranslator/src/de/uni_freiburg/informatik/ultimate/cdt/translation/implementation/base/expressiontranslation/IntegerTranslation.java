@@ -183,13 +183,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return bitAbs.abstractXor(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
-			if (shiftLeftLiteralValue != null) {
-				return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
-						Operator.ARITHMUL);
-			}
-			funcname = "shiftLeft";
-			break;
+			return bitAbs.abstractShiftLeft(loc, left, typeLeft, right, typeRight, hook);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
 			return bitAbs.abstractShiftRight(loc, left, typeLeft, right, typeRight, hook);
@@ -197,25 +191,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
-		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
-	}
-
-	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
-			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
-		// 2017-11-18 Matthias: this could be done analogously in the
-		// bitprecise translation
-		int exponent;
-		try {
-			exponent = integerLiteralValue.intValueExact();
-		} catch (final ArithmeticException ae) {
-			throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
-		}
-		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
-		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
-		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 	}
 
 	@Override

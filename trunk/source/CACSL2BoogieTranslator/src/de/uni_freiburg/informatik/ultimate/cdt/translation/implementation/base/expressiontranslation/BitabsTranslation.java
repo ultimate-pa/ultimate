@@ -249,6 +249,17 @@ public class BitabsTranslation {
 		return ExpressionFactory.constructIfThenElseExpression(loc, right0, left, left0Ite);
 	}
 
+	public Expression abstractShiftLeft(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+		final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+		if (shiftLeftLiteralValue != null) {
+			return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
+					Operator.ARITHMUL);
+		}
+		return declareAndApplyFunction(loc, "shiftLeft", typeLeft, new CPrimitive[] { typeLeft, typeRight },
+				new Expression[] { left, right });
+	}
+
 	/**
 	 * Construct right shift rules. In c for the gcc compiler with defualt settings, the a>>31 && a<0, return -1.
 	 *
@@ -818,11 +829,10 @@ public class BitabsTranslation {
 		try {
 			exponent = integerLiteralValue.intValueExact();
 		} catch (final ArithmeticException ae) {
-			throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
+			throw new UnsupportedOperationException("RHS of shift is larger than C standard allows " + ae);
 		}
 		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
 		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
 		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 	}
-
 }
