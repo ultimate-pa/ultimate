@@ -738,8 +738,8 @@ public class CHandler {
 			// And how should we integrate this deprecated method?
 			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
 					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
-				return mExpressionTranslation.abstractAssginWithBitwiseOp(this, mProcedureManager, mDeclarations,
-						mNameHandler, mAuxVarInfoBuilder, mExprResultTransformer, main, mLocationFactory, node);
+				return mExpressionTranslation.abstractAssginWithBitwiseOp(mExprResultTransformer, main,
+						mLocationFactory, node);
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
