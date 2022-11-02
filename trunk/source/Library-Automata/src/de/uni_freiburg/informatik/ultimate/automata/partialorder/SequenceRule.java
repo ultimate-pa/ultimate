@@ -57,7 +57,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SequenceRule<L, P> extends ReductionRule<L, P> {
-	private static final boolean LIBERAL_ACCEPTING_TRANSITION_CHECK = true;
+	// 0: Dominik, 1: Dominik+Elisabeth, 2: Dennis
+	private static final int ACCEPTING_TRANSITION_CHECK_STRICTNESS = 0;
 
 	private final ModifiableRetroMorphism<L, P> mRetromorphism;
 	private final BranchingProcess<L, P> mBranchingProcess;
@@ -488,19 +489,30 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			return false;
 		}
 
-		if (LIBERAL_ACCEPTING_TRANSITION_CHECK) {
+		if (ACCEPTING_TRANSITION_CHECK_STRICTNESS == 0) {
 			return Stream
 					.concat(mCoenabledRelation.getImage(comp.getFirst()).stream(),
 							mCoenabledRelation.getImage(comp.getSecond()).stream())
 					.distinct().anyMatch(t -> hasAcceptingSuccessor(t, petriNet));
 		}
 
+		final Set<Transition<L, P>> relevantTransitions = new HashSet<>();
+		if (ACCEPTING_TRANSITION_CHECK_STRICTNESS == 1) {
+			if (Stream
+					.concat(mCoenabledRelation.getImage(comp.getFirst()).stream(),
+							mCoenabledRelation.getImage(comp.getSecond()).stream())
+					.distinct().anyMatch(t -> hasAcceptingSuccessor(t, petriNet))) {
+				return true;
+			}
+		} else {
+			relevantTransitions.addAll(mCoenabledRelation.getImage(comp.getFirst()));
+			relevantTransitions.addAll(mCoenabledRelation.getImage(comp.getSecond()));
+		}
+
 		// Check whether any transition which either
 		// - is co-enabled to t1 or t2, or
 		// - is a successor of a successor place of t1 other than the given place
 		// is an ancestor of an accepting place.
-		final Set<Transition<L, P>> relevantTransitions = new HashSet<>(mCoenabledRelation.getImage(comp.getFirst()));
-		relevantTransitions.addAll(mCoenabledRelation.getImage(comp.getSecond()));
 
 		// TODO Which version is correct? Or neither? Or something different? (see tests)
 		// t1.getSuccessors().stream().filter(p -> p != place).flatMap(p -> petriNet.getSuccessors(p).stream())
