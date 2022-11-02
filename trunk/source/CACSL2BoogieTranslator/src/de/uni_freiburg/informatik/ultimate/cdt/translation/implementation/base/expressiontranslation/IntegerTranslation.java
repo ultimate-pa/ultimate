@@ -918,7 +918,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public boolean shouldAbstractAssignWithBitwiseOp(final IASTBinaryExpression node) {
-		return BitabsTranslation.containBitwise(node.getOperand2()) && node.getOperand1() instanceof IASTIdExpression;
+		return BitabsTranslation.isBitwiseOperator(node.getOperand2()) && node.getOperand1() instanceof IASTIdExpression;
 	}
 
 	@Override
