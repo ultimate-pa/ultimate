@@ -739,7 +739,7 @@ public class BitabsTranslation {
 	 *            for now we consider all binary cases, because the unary complement rule is not clear yet.
 	 *
 	 */
-	private static boolean containBitwise(final IASTExpression expr) {
+	public static boolean containBitwise(final IASTExpression expr) {
 		if (!(expr instanceof IASTBinaryExpression)) {
 			if (expr instanceof IASTUnaryExpression) {
 				final IASTUnaryExpression uexpr = (IASTUnaryExpression) expr;
