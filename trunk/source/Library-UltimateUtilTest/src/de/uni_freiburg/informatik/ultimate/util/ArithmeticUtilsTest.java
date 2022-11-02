@@ -97,4 +97,10 @@ public class ArithmeticUtilsTest {
 		return BigInteger.valueOf(i);
 	}
 
+	@Test
+	public void extendedEuclidean01() {
+		final int result = ArithmeticUtils.extendedEuclidean(3, 256);
+		Assert.assertTrue(result == 171);
+	}
+
 }

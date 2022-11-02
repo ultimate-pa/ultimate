@@ -73,4 +73,39 @@ public final class ArithmeticUtils {
 				.equals(dividend) : "incorrect euclidean division";
 		return result;
 	}
+
+	/**
+	 * The input `a` is the number for which the inverse should be found the divisor
+	 * is the integer which defines the field 0 <= a and a < divisor and
+	 * gcd(divisor, a) = 1
+	 *
+	 * @param a
+	 * @param divisor
+	 * @return
+	 */
+	public static int extendedEuclidean(final int a, final int divisor) {
+		int inverse = 0; // inverse of a in the field Z/divisorZ
+		int remainder = divisor;
+		int newInverse = 1;
+		int newRemainder = a;
+		int oldRemainder;
+		int oldInverse;
+		int quotient;
+		while (newRemainder != 0) {
+			// while-loop ends if remainder = 1
+			quotient = remainder / newRemainder;
+			// update the inverse
+			oldInverse = inverse;
+			inverse = newInverse;
+			newInverse = oldInverse - quotient * newInverse;
+			// update the remainder
+			oldRemainder = remainder;
+			remainder = newRemainder;
+			newRemainder = oldRemainder - quotient * newRemainder;
+		}
+		if (inverse < 0) {
+			inverse = inverse + divisor;
+		}
+		return inverse;
+	}
 }
