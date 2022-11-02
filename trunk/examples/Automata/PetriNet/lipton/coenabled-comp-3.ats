@@ -1,0 +1,26 @@
+// Test that arose from the discussion of the coenabled transitions after a composition:
+// A transition like "c" is not coenabled with the fused transition "ab".
+
+PetriNet initial = (
+  alphabet    = { "a" "b" "c" },
+  places      = { "l1" "l2" "l3" "l4" },
+  transitions = {
+    ({ "l1" } "a" { "l2" "l3" })
+    ({ "l2" "l3" } "b" { "l4" })
+    ({ "l3" } "c" { "l4" })
+  },
+  initialMarking = { "l1" },
+  acceptingPlaces = { "l4" }
+);
+
+PetriNet expected = (
+  alphabet    = { "ab" "ac" },
+  places      = { "l1" "l2_copy1" "l4" },
+  transitions = {
+    ({ "l1" } "ab" { "l4" })
+    ({ "l1" } "ac" { "l4" "l2_copy1" })
+  },
+  initialMarking = { "l1" },
+  acceptingPlaces = { "l4" }
+);
+
