@@ -19,7 +19,6 @@
 int main() {
     int p, n;
     p = 42;
-	//@ loop invariant n >= 0;
     while ( n>=0 ) {
         //@ assert p != 0;
         if (n == 0) {
