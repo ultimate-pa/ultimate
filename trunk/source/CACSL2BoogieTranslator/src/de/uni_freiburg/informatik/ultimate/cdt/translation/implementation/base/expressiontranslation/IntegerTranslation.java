@@ -98,7 +98,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
 		super(typeSizeConstants, settings, typeHandler, symboltable);
-		mBitabsTranslation = new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
+		mBitabsTranslation = new BitabsTranslation(mTypeSizes, mTypeHandler, mFunctionDeclarations);
 	}
 
 	@Override
@@ -930,8 +930,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final List<Declaration> declarations, final INameHandler nameHandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
 			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
-		return new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations).abstractAssign(
-				chandler, procedureManager, declarations, this, nameHandler, auxVarInfoBuilder, exprResultTransformer,
-				main, locationFactory, node);
+		return mBitabsTranslation.abstractAssign(exprResultTransformer, main, locationFactory, node);
 	}
 }

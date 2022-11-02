@@ -30,7 +30,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import java.math.BigInteger;
-import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -42,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -50,14 +48,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -66,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -83,13 +76,11 @@ public class BitabsTranslation {
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final TypeSizes mTypeSizes;
 	private final ITypeHandler mTypeHandler;
-	private final FlatSymbolTable mSymboltable;
 
 	public BitabsTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final FlatSymbolTable symboltable, final FunctionDeclarations functionDeclarations) {
+			final FunctionDeclarations functionDeclarations) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
-		mSymboltable = symboltable;
 		mFunctionDeclarations = functionDeclarations;
 	}
 
@@ -211,10 +202,7 @@ public class BitabsTranslation {
 
 	// TODO: This is more of a workaround, ideally we should handle everything on statements.
 	// But to be more precise, this requires additional aux-variables.
-	public Result abstractAssign(final CHandler chandler, final ProcedureManager procedureManager,
-			final List<Declaration> declarations, final ExpressionTranslation expressionTranslation,
-			final INameHandler nameHandler, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final ExpressionResultTransformer exprResultTransformer, final IDispatcher main,
+	public Result abstractAssign(final ExpressionResultTransformer exprResultTransformer, final IDispatcher main,
 			final LocationFactory locationFactory, final IASTBinaryExpression node) {
 		final ILocation loc = locationFactory.createCLocation(node);
 		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
