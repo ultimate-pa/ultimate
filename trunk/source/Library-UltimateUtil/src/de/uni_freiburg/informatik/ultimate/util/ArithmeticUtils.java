@@ -29,7 +29,8 @@ package de.uni_freiburg.informatik.ultimate.util;
 import java.math.BigInteger;
 
 /**
- * Provides auxiliary methods for Java datatypes.
+ * This class provides static methods that implement algorithms for Java's
+ * arithmetic data types.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -40,10 +41,21 @@ public final class ArithmeticUtils {
 		// do not instantiate this utility class
 	}
 
+	/**
+	 * There exist several definitions the division operation and the modulo
+	 * operation. The Euclidean modulo is the modulo operation whose result is
+	 * always positive E.g., -8 modulo 7 is 6, because we have that -2*7+6=-8.
+	 *
+	 */
 	public static BigInteger euclideanMod(final BigInteger dividend, final BigInteger divisor) {
 		return dividend.mod(divisor.abs());
 	}
 
+	/**
+	 * There exist several definitions the division operation and the modulo
+	 * operation. The Euclidean division is the divison operation whose remainder is
+	 * always positive E.g., -8 div 7 is -2, because we have that -2*7+6=-8.
+	 */
 	public static BigInteger euclideanDiv(final BigInteger dividend, final BigInteger divisor) {
 		final BigInteger nonEuclideanQuotient = dividend.divide(divisor);
 		final BigInteger nonEuclideanRemainder = dividend.remainder(divisor);
