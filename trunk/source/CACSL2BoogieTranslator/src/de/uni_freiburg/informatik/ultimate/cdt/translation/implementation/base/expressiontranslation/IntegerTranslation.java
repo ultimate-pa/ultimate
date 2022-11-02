@@ -219,16 +219,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 		throw new IllegalArgumentException("Unsupported type for unary minus: " + type);
 	}
 
-	private void declareBitvectorFunction(final ILocation loc, final String prefixedFunctionName,
-			final boolean boogieResultTypeBool, final CPrimitive resultCType, final CPrimitive... paramCType) {
-		final String functionName = prefixedFunctionName.substring(1);
-		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-				new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-		final Attribute[] attributes = { attribute };
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes,
-				boogieResultTypeBool, resultCType, paramCType);
-	}
-
 	@Override
 	public Expression constructArithmeticIntegerExpression(final ILocation loc, final int nodeOperator,
 			final Expression leftExp, final CPrimitive leftType, final Expression rightExp,
