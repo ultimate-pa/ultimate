@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -57,8 +58,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SequenceRule<L, P> extends ReductionRule<L, P> {
-	// 0: Dominik, 1: Dominik+Elisabeth, 2: Dennis
-	private static final int ACCEPTING_TRANSITION_CHECK_STRICTNESS = 0;
+	// 0: Dominik, 1: Dominik+Elisabeth, 2: Dennis but per-event, 3: Dennis
+	private static final int ACCEPTING_TRANSITION_CHECK_STRICTNESS = 2;
 
 	private final ModifiableRetroMorphism<L, P> mRetromorphism;
 	private final BranchingProcess<L, P> mBranchingProcess;
@@ -242,6 +243,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 				obsoleteTransitions.add(t1);
 			} else {
 				// the transition t1 must be deleted
+				mLogger.debug("  deleting transition %s without copy", t1);
 				obsoleteTransitions.add(t1);
 			}
 		}
@@ -496,6 +498,10 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 					.distinct().anyMatch(t -> hasAcceptingSuccessor(t, petriNet));
 		}
 
+		if (ACCEPTING_TRANSITION_CHECK_STRICTNESS == 2) {
+			return isFirstTransitionNeeded2(comp, petriNet);
+		}
+
 		final Set<Transition<L, P>> relevantTransitions = new HashSet<>();
 		if (ACCEPTING_TRANSITION_CHECK_STRICTNESS == 1) {
 			if (Stream
@@ -538,6 +544,54 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 		return false;
 	}
 
+	private boolean isFirstTransitionNeeded2(final Composition<L, P> comp, final IPetriNet<L, P> petriNet) {
+		if (Stream
+				.concat(mCoenabledRelation.getImage(comp.getFirst()).stream(),
+						mCoenabledRelation.getImage(comp.getSecond()).stream())
+				.distinct().anyMatch(t -> hasAcceptingSuccessor(t, petriNet))) {
+			return true;
+		}
+
+		final var events1 = getLastEvents(comp.getFirst()).collect(Collectors.toList());
+
+		// TODO events2 doesn't work right if t2 is a composition -- it need not be the first event on the path!
+		final var events2 = getFirstEvents(comp.getSecond()).collect(Collectors.toSet());
+
+		final Set<Event<L, P>> errorEvents =
+				petriNet.getAcceptingPlaces().stream().flatMap(p -> petriNet.getPredecessors(p).stream())
+						.flatMap(this::getLastEvents).collect(Collectors.toSet());
+
+		for (final var e1 : events1) {
+
+			final Predicate<Event<L, P>> except;
+			final var e2Opt = e1.getSuccessorConditions().stream().filter(c -> c.getPlace() == comp.getPivot())
+					.flatMap(c -> c.getSuccessorEvents().stream()).filter(e -> events2.contains(e)).findFirst();
+			if (e2Opt.isEmpty()) {
+				except = (e -> false);
+			} else {
+				final var e2 = e2Opt.get();
+				except = e -> e.getLocalConfiguration().contains(e2);
+			}
+
+			final var relevantEvents =
+					e1.getSuccessorConditions().stream().flatMap(c -> c.getSuccessorEvents().stream())
+							.filter(e -> !e.getTransition().getPredecessors().contains(comp.getPivot()))
+							.collect(Collectors.toList());
+
+			for (final var e3 : relevantEvents) {
+				for (final var err : errorEvents) {
+					if (isAncestorEventExcept(e3, err, except, new HashSet<>())) {
+						mLogger.debug("  first transition %s is needed because of error event %s", comp.getFirst(),
+								err);
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+
+	}
+
 	private boolean hasAcceptingSuccessor(final Transition<L, P> t, final IPetriNet<L, P> petriNet) {
 		return t.getSuccessors().stream().anyMatch(petriNet::isAccepting);
 	}
@@ -559,6 +613,28 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			for (final Event<L, P> cutoff : mCutOffs.getImage(e3)) {
 				final boolean unvisited = cutOffsVisited.add(cutoff);
 				if (unvisited && isAncestorEvent(e1, cutoff, cutOffsVisited)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private boolean isAncestorEventExcept(final Event<L, P> src, final Event<L, P> tgt,
+			final Predicate<Event<L, P>> except, final HashSet<Event<L, P>> cutOffsVisited) {
+		if (except.test(tgt) || except.test(src)) {
+			return false;
+		}
+
+		if (tgt.getLocalConfiguration().contains(src)) {
+			return true;
+		}
+
+		for (final Event<L, P> mid : tgt.getLocalConfiguration()) {
+			for (final Event<L, P> cutoff : mCutOffs.getImage(mid)) {
+				final boolean unvisited = cutOffsVisited.add(cutoff);
+				if (unvisited && isAncestorEventExcept(src, cutoff, except, cutOffsVisited)) {
 					return true;
 				}
 			}
