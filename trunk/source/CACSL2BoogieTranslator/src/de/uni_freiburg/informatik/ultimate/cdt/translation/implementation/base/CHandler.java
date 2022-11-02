@@ -730,6 +730,17 @@ public class CHandler {
 		// with binary expression, we check bitwise operator first
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
+			// In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are
+			// positive, and rhs is a bitwise binary expression.
+
+			// TODO Frank 2022-10-31: Checking for HeapLValue is just a workaround to avoid issues in
+			// abstractAssginWithBitwiseOp (when working with addresses)! Is there a better way to check this?
+			// And how should we integrate this deprecated method?
+			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
+					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
+				return mExpressionTranslation.abstractAssginWithBitwiseOp(this, mProcedureManager, mDeclarations,
+						mNameHandler, mAuxVarInfoBuilder, mExprResultTransformer, main, mLocationFactory, node);
+			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
 			final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
