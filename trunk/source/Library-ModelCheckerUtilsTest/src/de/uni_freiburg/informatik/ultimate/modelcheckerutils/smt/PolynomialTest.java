@@ -615,7 +615,9 @@ public class PolynomialTest {
 	}
 
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
-		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);
+		// Do not use equality method from {@link SMTUtils} because we want to test an
+		// algorithm that could have utilized this method.
+		final Term equality = script.term("=", formulaAsTerm, resultAsTerm);
 		final Term negatedEquality = SmtUtils.not(script, equality);
 		script.push(1);
 		script.assertTerm(negatedEquality);
