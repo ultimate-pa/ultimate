@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -918,7 +919,39 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public boolean shouldAbstractAssignWithBitwiseOp(final IASTBinaryExpression node) {
-		return BitabsTranslation.isBitwiseOperator(node.getOperand2()) && node.getOperand1() instanceof IASTIdExpression;
+		return isBitwiseOperation(node.getOperand2()) && node.getOperand1() instanceof IASTIdExpression;
+	}
+
+	/**
+	 * Returns true iff {@code expr} is a bitwise expression (&, |, ^, ~).
+	 *
+	 * @param expr
+	 *            An expression
+	 * @return true iff {@code expr} is a bitwise expression
+	 */
+	private static boolean isBitwiseOperation(final IASTExpression expr) {
+		if (!(expr instanceof IASTBinaryExpression)) {
+			if (expr instanceof IASTUnaryExpression) {
+				final IASTUnaryExpression uexpr = (IASTUnaryExpression) expr;
+				if (uexpr.getOperator() == IASTUnaryExpression.op_tilde) {
+					return true;
+				}
+			}
+			return false;
+		}
+		final IASTBinaryExpression bexpr = (IASTBinaryExpression) expr;
+		switch (bexpr.getOperator()) {
+		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryAndAssign:
+		case IASTBinaryExpression.op_binaryOr:
+		case IASTBinaryExpression.op_binaryOrAssign:
+		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_binaryXorAssign:
+			return true;
+		default: {
+			return false;
+		}
+		}
 	}
 
 	@Override

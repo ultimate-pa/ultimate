@@ -32,7 +32,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
@@ -353,38 +352,6 @@ public class BitabsTranslation {
 
 		}
 		return builder.build();
-	}
-
-	/**
-	 * Returns true iff {@code expr} is a bitwise expression (&, |, ^, ~).
-	 *
-	 * @param expr
-	 *            An expression
-	 * @return true iff {@code expr} is a bitwise expression
-	 */
-	public static boolean isBitwiseOperator(final IASTExpression expr) {
-		if (!(expr instanceof IASTBinaryExpression)) {
-			if (expr instanceof IASTUnaryExpression) {
-				final IASTUnaryExpression uexpr = (IASTUnaryExpression) expr;
-				if (uexpr.getOperator() == IASTUnaryExpression.op_tilde) {
-					return true;
-				}
-			}
-			return false;
-		}
-		final IASTBinaryExpression bexpr = (IASTBinaryExpression) expr;
-		switch (bexpr.getOperator()) {
-		case IASTBinaryExpression.op_binaryAnd:
-		case IASTBinaryExpression.op_binaryAndAssign:
-		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryOrAssign:
-		case IASTBinaryExpression.op_binaryXor:
-		case IASTBinaryExpression.op_binaryXorAssign:
-			return true;
-		default: {
-			return false;
-		}
-		}
 	}
 
 	private Expression declareAndApplyFunction(final ILocation loc, final String functionName,
