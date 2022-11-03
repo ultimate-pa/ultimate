@@ -69,9 +69,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  */
 public class BitabsTranslation {
-
-	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 8;
-
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final TypeSizes mTypeSizes;
 	private final ITypeHandler mTypeHandler;
@@ -332,7 +329,6 @@ public class BitabsTranslation {
 				builder.addStatement(ifOuter);
 				return builder.build();
 			}
-			throw new UnsupportedOperationException("No general rules for bitiwse operator other than &, | in assume");
 		}
 		if (node.getOperand2() instanceof IASTUnaryExpression) {
 			final IASTUnaryExpression uIexpr = (IASTUnaryExpression) node.getOperand2();
@@ -349,9 +345,10 @@ public class BitabsTranslation {
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expr, zero),
 							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, idLeft, zero))));
+			return builder.build();
 
 		}
-		return builder.build();
+		throw new UnsupportedOperationException("Only the bitwise operators &, |, ^, ~ are supported.");
 	}
 
 	private Expression declareAndApplyFunction(final ILocation loc, final String functionName,
