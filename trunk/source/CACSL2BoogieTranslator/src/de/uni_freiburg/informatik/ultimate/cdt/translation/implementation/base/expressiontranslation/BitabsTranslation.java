@@ -82,12 +82,14 @@ public class BitabsTranslation {
 
 	public Expression abstractAnd(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight) {
+		// 0 & a = a & 0 = 0
 		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
 			return left;
 		}
 		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
 			return right;
 		}
+		// a & a = a
 		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
 				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
 			return left;
@@ -109,12 +111,14 @@ public class BitabsTranslation {
 
 	public Expression abstractOr(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight) {
+		// 0 | a = a | 0 = a
 		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
 			return right;
 		}
 		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
 			return left;
 		}
+		// a | a = a
 		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
 				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
 			return left;
@@ -159,17 +163,16 @@ public class BitabsTranslation {
 				new Expression[] { left, right });
 	}
 
-	/*
-	 * solution: integer eqauls to 0 or 1, xor-1 rule
-	 */
 	public Expression abstractXor(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight) {
+		// 0 ^ a = a ^ 0 = 0
 		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
 			return right;
 		}
 		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
 			return left;
 		}
+		// a ^ a = 0
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
 				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
@@ -198,6 +201,7 @@ public class BitabsTranslation {
 
 	// TODO: This is more of a workaround, ideally we should handle everything on statements.
 	// But to be more precise, this requires additional aux-variables.
+	// TODO: We could use more precise assumptions, if the expression has a signed type
 	public Result abstractAssign(final ExpressionResultTransformer exprResultTransformer, final IDispatcher main,
 			final LocationFactory locationFactory, final IASTBinaryExpression node) {
 		final ILocation loc = locationFactory.createCLocation(node);
@@ -258,20 +262,23 @@ public class BitabsTranslation {
 
 				final Expression bothNegative =
 						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNegative);
-				final Expression smallerThanBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, idLeft, left),
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, idLeft, right));
-				final Expression nonNegative =
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, zero);
+				final Expression lessThanEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, left),
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, right));
 
+				// If a >= 0 and b >= 0, then a & b <= a and a & b <= b
+				final Expression maximum =
+						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, lessThanEqualBoth);
+				// If a >= b or b >= 0, then a & b >= 0
+				final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+						bothNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, zero));
+
+				// 0 & a = a & 0 = 0
+				// a & a = a
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
-								new AssumeStatement(loc,
-										ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
-												smallerThanBoth)),
-								new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-										bothNegative, nonNegative)) });
+								new AssumeStatement(loc, maximum), new AssumeStatement(loc, nonNegative) });
 				final Statement ifOuter = StatementFactory.constructIfStatement(loc, oneEqualsZero,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, zero) },
 						new Statement[] { ifInner });
@@ -286,15 +293,25 @@ public class BitabsTranslation {
 				final Expression function = declareAndApplyFunction(loc, "bitwiseOr", lType,
 						new CPrimitive[] { lType, lType }, new Expression[] { left, right });
 
+				// If a >= 0 and b >= 0, then a | b >= a and a | b >= b
 				final Expression greaterEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, left),
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, right));
+				final Expression minimum =
+						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, greaterEqualBoth);
+				// Otherwise a | b < 0
+				final Expression bothNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
+				final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, idLeft, zero));
 
+				// 0 | a = a | 0 = a
+				// a | a = a
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, rightEqualsZero,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
-								new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-										oneNegative, greaterEqualBoth)), });
+								new AssumeStatement(loc, minimum), new AssumeStatement(loc, negative) });
 				final Statement ifOuter = StatementFactory.constructIfStatement(loc, leftEqualsZeroOrRight,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, right) },
 						new Statement[] { ifInner });
@@ -311,14 +328,18 @@ public class BitabsTranslation {
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, left, zero),
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, right, zero));
 
+				// If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
+				final Expression positiveCase1 =
+						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, positive);
+				final Expression positiveCase2 =
+						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, onePositive, positive);
+
+				// 0 ^ a = a ^ 0 = a
+				// a ^ a = 0
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, zero) },
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
-								new AssumeStatement(loc,
-										ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
-												positive)),
-								new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-										onePositive, positive)) });
+								new AssumeStatement(loc, positiveCase1), new AssumeStatement(loc, positiveCase2) });
 				final Statement ifMiddle = StatementFactory.constructIfStatement(loc, rightEqualsZero,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
 						new Statement[] { ifInner });
@@ -339,8 +360,10 @@ public class BitabsTranslation {
 			final Expression function = declareAndApplyFunction(loc, "bitwiseComplement", lType,
 					new CPrimitive[] { lType }, new Expression[] { expr });
 			builder.addStatement(StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function));
+			// ~a != a
 			builder.addStatement(new AssumeStatement(loc,
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, idLeft, expr)));
+			// If a < 0, then ~a > 0
 			builder.addStatement(new AssumeStatement(loc,
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expr, zero),
