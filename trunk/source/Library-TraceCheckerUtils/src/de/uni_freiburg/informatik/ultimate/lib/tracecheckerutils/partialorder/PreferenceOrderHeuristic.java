@@ -33,7 +33,9 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -42,11 +44,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
@@ -62,13 +63,17 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 	private HashMap<String, Set<IProgramVar>> mSharedVarsMap;
 	private String mSequence;
 
+	private final ManagedScript mMgdScript;
+
 	private enum SearchType {
 		MAIN, THREAD, LOOPSEARCH, LOOPBUILDPATH
 	}
 
 	public PreferenceOrderHeuristic(final IIcfg<?> icfg, final List<String> allProcedures,
-			final Set<IProgramVar> effectiveGlobalVars, final HashMap<String, Set<IProgramVar>> sharedVars) {
-		this(icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet()));
+			final Set<IProgramVar> effectiveGlobalVars, final HashMap<String, Set<IProgramVar>> sharedVars,
+			final ManagedScript mgdScript) {
+		this(icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet()),
+				mgdScript);
 		mIcfg = icfg;
 		mAllProcedures = allProcedures;
 		mAllLoopProcedures = new ArrayList<>();
@@ -78,11 +83,12 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 		mSharedVarsMap = sharedVars;
 	}
 
-	public <T extends IcfgEdge> PreferenceOrderHeuristic(final Collection<T> edges) {
+	// TODO Why are there 2 constructors? And why does one of them only initialize some of the fields? Dangerous!
+	public <T extends IcfgEdge> PreferenceOrderHeuristic(final Collection<T> edges, final ManagedScript mgdScript) {
 		mBFSWorklist = new ArrayDeque<>();
 		mBFSWorklist.addAll(edges);
-		mFinished = new HashSet<>();
-		mFinished.addAll(mBFSWorklist);
+		mFinished = new HashSet<>(mBFSWorklist);
+		mMgdScript = mgdScript;
 	}
 
 	private void applyBFS(final IcfgLocation start, final SearchType searchType, final IcfgLocation goal) {
@@ -195,18 +201,19 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 		}
 
 		computeLoopVarAccesses();
-		final ManagedScript M = mIcfg.getCfgSmtToolkit().getManagedScript();
-		final Script MScript = mIcfg.getCfgSmtToolkit().getManagedScript().getScript();
-		MScript.push(1);
+		mMgdScript.lock(this);
+		mMgdScript.push(this, 1);
 		// SMTInterpol SMTInterpol = new SMTInterpol();
 		// SMTInterpol.setLogic("QF_LIA");
 		// String just for debugging
-		String SMTScriptString = "(set-logic QF_LIA)\r\n";
-		for (final String procedure : mAllLoopProcedures) {
-			SMTScriptString += String.format("(declare-fun %s () Int)\r\n", procedure);
-			// SMTInterpol.declareFun(procedure, new Sort[0], SMTInterpol.sort("Int"));
-			MScript.declareFun(procedure, new Sort[0], MScript.sort("Int"));
-		}
+		// String SMTScriptString = "(set-logic QF_LIA)\r\n";
+		// for (final String procedure : mAllLoopProcedures) {
+		// SMTScriptString += String.format("(declare-fun %s () Int)\r\n", procedure);
+		// SMTInterpol.declareFun(procedure, new Sort[0], SMTInterpol.sort("Int"));
+		// mMgdScript.declareFun(this, procedure, new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
+		// }
+		var procConstants = declareProcedureConstants(mAllLoopProcedures);
+		final var script = mMgdScript.getScript();
 
 		final HashMap<Term, Integer> termEvaluationMap = new HashMap<>();
 
@@ -230,8 +237,8 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 							sndSharedAccesses += sndVarMap.get(var);
 						}
 					}
-					SMTScriptString += String.format("(assert (= (* %d %s) (* %d %s)))\r\n", fstSharedAccesses,
-							fstProcedure, sndSharedAccesses, sndProcedure);
+					// SMTScriptString += String.format("(assert (= (* %d %s) (* %d %s)))\r\n", fstSharedAccesses,
+					// fstProcedure, sndSharedAccesses, sndProcedure);
 					/*
 					 * Term fstSA = SMTInterpol.numeral(Integer.toString(fstSharedAccesses)); Term sndSA =
 					 * SMTInterpol.numeral(Integer.toString(sndSharedAccesses)); Term fstP =
@@ -242,42 +249,50 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 
 					final Rational fstSA = SmtUtils.toRational(fstSharedAccesses);
 					final Rational sndSA = SmtUtils.toRational(sndSharedAccesses);
-					final Term fstP = MScript.term(fstProcedure);
-					final Term sndP = MScript.term(sndProcedure);
-					final Term fstMul = SmtUtils.mul(MScript, fstSA, fstP);
-					final Term sndMul = SmtUtils.mul(MScript, sndSA, sndP);
-					final Term equation = SmtUtils.equality(MScript, fstMul, sndMul);
-					MScript.assertTerm(equation);
+					// final Term fstP = script.term(fstProcedure);
+					// final Term sndP = script.term(sndProcedure);
+					final Term fstMul = SmtUtils.mul(script, fstSA, procConstants.get(fstProcedure));
+					final Term sndMul = SmtUtils.mul(script, sndSA, procConstants.get(sndProcedure));
+					final Term equation = SmtUtils.equality(script, fstMul, sndMul);
+					mMgdScript.assertTerm(this, equation);
 				}
 			}
-			SMTScriptString += String.format("(assert (< 0 %s))\r\n", fstProcedure);
+			// SMTScriptString += String.format("(assert (< 0 %s))\r\n", fstProcedure);
 
 			/*
 			 * Term procedure = SMTInterpol.term(fstProcedure); Term zero = SMTInterpol.numeral("0"); Term condition =
 			 * SMTInterpol.term("<", zero, procedure); SMTInterpol.assertTerm(condition);
 			 */
 
-			final Term procedure = MScript.term(fstProcedure);
-			final Term zero = SmtUtils.toRational(0).toTerm(MScript.sort("Int"));
-			final Term condition = SmtUtils.less(MScript, zero, procedure);
-			MScript.assertTerm(condition);
+			// final Term procedure = script.term(fstProcedure);
+			final Term zero = SmtUtils.toRational(0).toTerm(script.sort(SmtSortUtils.INT_SORT));
+			final Term condition = SmtUtils.less(script, zero, procConstants.get(fstProcedure));
+			mMgdScript.assertTerm(this, condition);
 
-			termEvaluationMap.put(procedure, null);
+			termEvaluationMap.put(procConstants.get(fstProcedure), null);
 		}
 		// try to solve equation system
-		SMTScriptString += "(check-sat)\r\n" + "(get-model)";
+		// SMTScriptString += "(check-sat)\r\n" + "(get-model)";
 		String sequence = "";
-		if (// !SMTInterpol.checkSat().equals(Script.LBool.SAT)
-		!MScript.checkSat().equals(Script.LBool.SAT)) {
+		final var result = mMgdScript.checkSat(this);
+
+		// !SMTInterpol.checkSat().equals(Script.LBool.SAT)
+		// !script.checkSat() == LBool.SAT
+		if (result != LBool.SAT) {
 			// if not solvable, then calculate the accesses on shared vars for all procedures at once
 			termEvaluationMap.clear();
 
 			// SMTInterpol.resetAssertions();
 			// SMTInterpol.declareFun("dummy", new Sort[0], SMTInterpol.sort("Int"));
-			MScript.pop(1);
-			MScript.push(1);
+			mMgdScript.pop(this, 1);
+			mMgdScript.push(this, 1);
+
+			procConstants = declareProcedureConstants(mAllLoopProcedures);
+
 			// MScript.setLogic("(set-logic QF_LIA)\r\n");
-			MScript.declareFun("dummy", new Sort[0], MScript.sort("Int"));
+			// script.declareFun("dummy", new Sort[0], script.sort("Int"));
+			final var dummy = SmtUtils.buildNewConstant(script, "dummy", SmtSortUtils.INT_SORT);
+
 			for (final String procedure : mAllLoopProcedures) {
 				int sharedAccesses = 0;
 				final HashMap<IProgramVar, Integer> varMap = mLoopPathVarsMap.get(procedure);
@@ -296,31 +311,36 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 				 */
 
 				final Rational procedureSA = SmtUtils.toRational(sharedAccesses);
-				MScript.declareFun(procedure, new Sort[0], MScript.sort("Int"));
-				final Term procedureTerm = MScript.term(procedure);
-				final Term mult = SmtUtils.mul(MScript, procedureSA, procedureTerm);
-				final Term dummy = MScript.term("dummy");
-				final Term equation = SmtUtils.equality(MScript, dummy, mult);
-				MScript.assertTerm(equation);
-				final Term zero = SmtUtils.toRational(0).toTerm(MScript.sort("Int"));
-				final Term condition = SmtUtils.less(MScript, zero, procedureTerm);
-				MScript.assertTerm(condition);
+				// script.declareFun(procedure, new Sort[0], script.sort("Int"));
+				// final Term procedureTerm = script.term(procedure);
+				// final Term dummy = script.term("dummy");
+				final Term mult = SmtUtils.mul(script, procedureSA, procConstants.get(procedure));
+				final Term equation = SmtUtils.equality(script, dummy, mult);
+				mMgdScript.assertTerm(this, equation);
 
-				termEvaluationMap.put(procedureTerm, null);
+				final Term zero = SmtUtils.toRational(0).toTerm(script.sort(SmtSortUtils.INT_SORT));
+				final Term condition = SmtUtils.less(script, zero, procConstants.get(procedure));
+				mMgdScript.assertTerm(this, condition);
+
+				termEvaluationMap.put(procConstants.get(procedure), null);
 			}
 
 			// SMTInterpol.checkSat();
-			MScript.checkSat();
+			mMgdScript.checkSat(this);
 		}
 		// Model model = SMTInterpol.getModel();
-		final Model model = MScript.getModel();
-		final ArrayList<Term> termList = new ArrayList<>();
+		// final Model model = script.getModel();
+		// final ArrayList<Term> termList = new ArrayList<>();
 
+		final var termValues = mMgdScript.getValue(this, termEvaluationMap.keySet().toArray(Term[]::new));
 		for (final Term term : termEvaluationMap.keySet()) {
-			final Term value = model.evaluate(term);
-			final int intValue = Integer.parseInt(value.toString());
-			termEvaluationMap.put(term, intValue);
-			termList.add(term);
+			// final Term value = model.evaluate(term);
+			final Term value = termValues.get(term);
+			final var rational = SmtUtils.tryToConvertToLiteral(value);
+			assert rational != null && rational.isIntegral();
+
+			termEvaluationMap.put(term, rational.numerator().intValue());
+			// termList.add(term);
 		}
 
 		if (!mAllLoopProcedures.isEmpty()) {
@@ -331,15 +351,23 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		final HashSet<String> remainingProcedures = new HashSet<>();
-		remainingProcedures.addAll(
-				mAllProcedures.stream().filter(p -> !mAllLoopProcedures.contains(p)).collect(Collectors.toList()));
+		final var remainingProcedures =
+				mAllProcedures.stream().filter(p -> !mAllLoopProcedures.contains(p)).collect(Collectors.toList());
 		for (final String procedure : remainingProcedures) {
 			sequence += String.format("%d,1 ", mAllProcedures.indexOf(procedure));
 		}
 		sequence = sequence.substring(0, sequence.length() - 1);
 		mSequence = sequence;
-		MScript.pop(1);
+		mMgdScript.pop(this, 1);
+		mMgdScript.unlock(this);
+	}
+
+	private Map<String, Term> declareProcedureConstants(final List<String> procedures) {
+		return procedures.stream().collect(Collectors.toMap(Function.identity(), this::makeProcedureConstant));
+	}
+
+	private Term makeProcedureConstant(final String name) {
+		return SmtUtils.buildNewConstant(mMgdScript.getScript(), name, SmtSortUtils.INT_SORT);
 	}
 
 	private void computeLoopVarAccesses() {
@@ -366,7 +394,6 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 				mLoopPathVarsMap.put(procedure, varMap);
 			}
 		}
-
 	}
 
 	public String getParameterizedOrderSequence() {

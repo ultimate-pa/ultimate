@@ -63,8 +63,8 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 
 		String[] pairList;
 		if (heuristicEnabled) {
-			final PreferenceOrderHeuristic<L> heuristic =
-					new PreferenceOrderHeuristic<>(icfg, allThreads, mEffectiveGlobalVars, mSharedVarsMapReversed);
+			final PreferenceOrderHeuristic<L> heuristic = new PreferenceOrderHeuristic<>(icfg, allThreads,
+					mEffectiveGlobalVars, mSharedVarsMapReversed, icfg.getCfgSmtToolkit().getManagedScript());
 			heuristic.computeParameterizedOrder();
 			pairList = heuristic.getParameterizedOrderSequence().split("\\s+");
 		} else {

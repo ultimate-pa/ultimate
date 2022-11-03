@@ -34,11 +34,10 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State> {
+public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPreferenceOrder<L, S1, State> {
 	private final List<Integer> mMaxSteps;
 	private final List<String> mThreads;
 	private final INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
@@ -59,6 +58,16 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
 	}
 
+	@Override
+	public boolean isPositional() {
+		return true;
+	}
+
+	@Override
+	public INwaOutgoingLetterAndTransitionProvider<L, State> getMonitor() {
+		return mMonitor;
+	}
+
 	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final Integer mLastIndex;
@@ -76,14 +85,22 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 		@Override
 		public int compare(final L x, final L y) {
 
-			/*
-			 * String xThread = x.getPrecedingProcedure(); String yThread = y.getPrecedingProcedure(); List<String>
-			 * shiftedThreadList = new ArrayList<>(); shiftedThreadList.addAll(mThreads.subList(mLastIndex,
-			 * mThreads.size())); shiftedThreadList.addAll(mThreads.subList(0, mLastIndex)); if (xThread == yThread) {
-			 * return 0; } else if (xThread == mLastThread) { return -1; } else if (yThread == mLastThread) { return 1;
-			 * } else if (shiftedThreadList.indexOf(xThread) < shiftedThreadList.indexOf(yThread)) { return -1; } else {
-			 * return 1; }
-			 */
+			// String xThread = x.getPrecedingProcedure();
+			// String yThread = y.getPrecedingProcedure();
+			// List<String> shiftedThreadList = new ArrayList<>();
+			// shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
+			// shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
+			// if (xThread == yThread) {
+			// return 0;
+			// } else if (xThread == mLastThread) {
+			// return -1;
+			// } else if (yThread == mLastThread) {
+			// return 1;
+			// } else if (shiftedThreadList.indexOf(xThread) < shiftedThreadList.indexOf(yThread)) {
+			// return -1;
+			// } else {
+			// return 1;
+			// }
 
 			// idee ist hier die Liste vom aktuellen index ausgehend zu betrachten und falls ein thread mehrfach
 			// vorkommt,
@@ -92,13 +109,13 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			if (x.getPrecedingProcedure() == mLastThread) {
 				return -1;
 			}
-			/*
-			 * List<String> shiftedThreadList = new ArrayList<>(); shiftedThreadList.addAll(mThreads.subList(mLastIndex,
-			 * mThreads.size())); shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
-			 *
-			 * final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure()); final int yThreadIndex =
-			 * shiftedThreadList.indexOf(y.getPrecedingProcedure()); return Integer.compare(xThreadIndex, yThreadIndex);
-			 */
+
+			// List<String> shiftedThreadList = new ArrayList<>();
+			// shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
+			// shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
+			// final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure());
+			// final int yThreadIndex = shiftedThreadList.indexOf(y.getPrecedingProcedure());
+			// return Integer.compare(xThreadIndex, yThreadIndex);
 
 			final int xThreadIndex = DataStructureUtils.indexOf(mThreads, x.getPrecedingProcedure(), mLastIndex);
 			final int yThreadIndex = DataStructureUtils.indexOf(mThreads, y.getPrecedingProcedure(), mLastIndex);
@@ -111,7 +128,6 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 				return -1;
 			}
 			return Integer.compare(xThreadIndex, yThreadIndex);
-
 		}
 
 		@Override
@@ -135,26 +151,4 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 					&& Objects.equals(mThreads, other.mThreads) && Objects.equals(mLastIndex, other.mLastIndex);
 		}
 	}
-
-	@Override
-	public boolean isPositional() {
-		return true;
-	}
-
-	@Override
-	public INwaOutgoingLetterAndTransitionProvider<L, State> getMonitor() {
-		return mMonitor;
-	}
-	/*
-	 * public class ShiftedList<String> extends ArrayList<String>{
-	 *
-	 * public int indexOf(String s, int i) {
-	 *
-	 * int index = indexOfRange(s, i, this.size()); if (index != -1) { return index; } return indexOfRange(s, 0, i); }
-	 *
-	 * int indexOfRange(Object o, int start, int end) { //Object[] es = this.elementData; if (o == null) { for (int i =
-	 * start; i < end; i++) { if (this.get(i) == null) { return i; } } } else { for (int i = start; i < end; i++) { if
-	 * (o.equals(this.get(i))) { return i; } } } return -1; } }
-	 */
-
 }
