@@ -43,12 +43,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 
 public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 	private Set<IProgramVar> mEffectiveGlobalVars;
-	private List<Integer> mMaxSteps;
-	private List<String> mThreadList;
-	private IIcfg<?> mIcfg;
+	private final List<Integer> mMaxSteps;
+	private final List<String> mThreadList;
+	private final IIcfg<?> mIcfg;
 	private HashMap<String, Set<IProgramVar>> mSharedVarsMapReversed;
 
-	ParameterizedPreferenceOrderUtils(final IIcfg<?> icfg, String threads, int maxStep, Boolean heuristicEnabled){
+	ParameterizedPreferenceOrderUtils(final IIcfg<?> icfg, final String threads, final int maxStep,
+			final Boolean heuristicEnabled) {
 		mIcfg = icfg;
 		final List<String> allThreads = new ArrayList<>();
 		allThreads.addAll(IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()));
@@ -57,19 +58,18 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 			allThreads.set(i, allThreads.get(i - 1));
 		}
 		allThreads.set(0, start);
-		
+
 		computeEffectiveGlobalVars(allThreads);
-		
+
 		String[] pairList;
 		if (heuristicEnabled) {
-			PreferenceOrderHeuristic<L> heuristic = new PreferenceOrderHeuristic<>(icfg, allThreads,
-					mEffectiveGlobalVars, mSharedVarsMapReversed);
+			final PreferenceOrderHeuristic<L> heuristic =
+					new PreferenceOrderHeuristic<>(icfg, allThreads, mEffectiveGlobalVars, mSharedVarsMapReversed);
 			heuristic.computeParameterizedOrder();
 			pairList = heuristic.getParameterizedOrderSequence().split("\\s+");
 		} else {
 			pairList = threads.split("\\s+");
 		}
-		
 
 		List<Integer> maxSteps = new ArrayList<>();
 		final List<String> threadList = new ArrayList<>();
@@ -99,48 +99,47 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 		}
 		mMaxSteps = maxSteps;
 		mThreadList = threadList;
-		
+
 	}
-	
-	
-	private void computeEffectiveGlobalVars(List<String> allThreads) {
-		//get all global Variables, then iterate over the cfg and mark variables if a procedure accesses it
-		Set<IProgramVar> allProgramVars = IcfgUtils.collectAllProgramVars(mIcfg.getCfgSmtToolkit());
-		HashMap<IProgramVar, Set<String>> sharedVarsMap = new HashMap<>();
-		for (IProgramVar var : allProgramVars) {
+
+	private void computeEffectiveGlobalVars(final List<String> allThreads) {
+		// get all global Variables, then iterate over the cfg and mark variables if a procedure accesses it
+		final Set<IProgramVar> allProgramVars = IcfgUtils.collectAllProgramVars(mIcfg.getCfgSmtToolkit());
+		final HashMap<IProgramVar, Set<String>> sharedVarsMap = new HashMap<>();
+		for (final IProgramVar var : allProgramVars) {
 			sharedVarsMap.put(var, new HashSet<String>());
 		}
-		IcfgEdgeIterator iterator = new IcfgEdgeIterator(mIcfg);
+		final IcfgEdgeIterator iterator = new IcfgEdgeIterator(mIcfg);
 		while (iterator.hasNext()) {
-			IcfgEdge current = iterator.next();
-			String currentProcedure = current.getPrecedingProcedure();
-			//only mark with procedures different from "ULTIMATE.start"
+			final IcfgEdge current = iterator.next();
+			final String currentProcedure = current.getPrecedingProcedure();
+			// only mark with procedures different from "ULTIMATE.start"
 			if (!currentProcedure.equals("ULTIMATE.start")) {
-				Set<IProgramVar> currentVars = new HashSet<>();
+				final Set<IProgramVar> currentVars = new HashSet<>();
 				currentVars.addAll(current.getTransformula().getInVars().keySet());
 				currentVars.addAll(current.getTransformula().getOutVars().keySet());
-				for (IProgramVar var : currentVars) {
+				for (final IProgramVar var : currentVars) {
 					if (!sharedVarsMap.get(var).contains(currentProcedure)) {
-						Set<String> procedures = sharedVarsMap.get(var);
+						final Set<String> procedures = sharedVarsMap.get(var);
 						procedures.add(currentProcedure);
 						sharedVarsMap.put(var, procedures);
 					}
 				}
 			}
-			
+
 		}
-		
-		HashMap<String, Set<IProgramVar>> sharedVarsMapReversed = new HashMap<>();
-		for (String procedure : allThreads) {
+
+		final HashMap<String, Set<IProgramVar>> sharedVarsMapReversed = new HashMap<>();
+		for (final String procedure : allThreads) {
 			sharedVarsMapReversed.put(procedure, new HashSet<>());
 		}
-		
-		Set<IProgramVar> effectiveGlobalVars = new HashSet<>();
-		for (IProgramVar var : sharedVarsMap.keySet()) {
+
+		final Set<IProgramVar> effectiveGlobalVars = new HashSet<>();
+		for (final IProgramVar var : sharedVarsMap.keySet()) {
 			if (sharedVarsMap.get(var).size() > 1) {
 				effectiveGlobalVars.add(var);
-				for (String procedure : sharedVarsMap.get(var)) {
-					Set<IProgramVar> vars = sharedVarsMapReversed.get(procedure);
+				for (final String procedure : sharedVarsMap.get(var)) {
+					final Set<IProgramVar> vars = sharedVarsMapReversed.get(procedure);
 					vars.add(var);
 					sharedVarsMapReversed.put(procedure, vars);
 				}
@@ -150,16 +149,13 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 		mSharedVarsMapReversed = sharedVarsMapReversed;
 	}
 
-
-	public Set<IProgramVar> getEffectiveGlobalVars(){
+	public Set<IProgramVar> getEffectiveGlobalVars() {
 		return mEffectiveGlobalVars;
 	}
-	
 
 	public List<Integer> getMaxSteps() {
 		return mMaxSteps;
 	}
-
 
 	public List<String> getThreadList() {
 		return mThreadList;

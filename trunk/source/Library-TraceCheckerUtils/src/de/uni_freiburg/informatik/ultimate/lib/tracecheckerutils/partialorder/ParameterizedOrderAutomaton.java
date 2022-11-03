@@ -26,17 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -46,30 +41,29 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
-
 public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
-implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State>{
-	private List<Integer> mMaxSteps;
+		implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State> {
+	private final List<Integer> mMaxSteps;
 	private final Map<Integer, Map<Integer, State>> mCreatedStates = new HashMap<>();
 	private final List<String> mThreads;
-	private String mInitialThread;
-	private java.util.function.Predicate<L> mIsStep;
-	private VpAlphabet<L> mAlphabet;
-	private ShiftedList<String> mShiftedThreads;
+	private final String mInitialThread;
+	private final java.util.function.Predicate<L> mIsStep;
+	private final VpAlphabet<L> mAlphabet;
+	private final ShiftedList<String> mShiftedThreads;
 
-	
 	public ParameterizedOrderAutomaton(final List<Integer> maxSteps, final List<String> threads,
-			ShiftedList<String> shiftedThreads, VpAlphabet<L> alphabet,  java.util.function.Predicate<L> isStep) {
+			final ShiftedList<String> shiftedThreads, final VpAlphabet<L> alphabet,
+			final java.util.function.Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
-		mThreads=threads;
+		mThreads = threads;
 		mShiftedThreads = shiftedThreads;
 		mIsStep = isStep;
 		mAlphabet = alphabet;
-		for (int index = 0; index<mThreads.size(); index++) {
-			mCreatedStates.put(index, new HashMap<>());		
+		for (int index = 0; index < mThreads.size(); index++) {
+			mCreatedStates.put(index, new HashMap<>());
 		}
 		mInitialThread = threads.get(0);
-		
+
 	}
 
 	@Override
@@ -89,30 +83,29 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 
 	@Override
 	public Iterable<State> getInitialStates() {
-		Set<State> initialSet = new HashSet<>();
-		initialSet.add(getOrCreateState(mInitialThread,0,0));
+		final Set<State> initialSet = new HashSet<>();
+		initialSet.add(getOrCreateState(mInitialThread, 0, 0));
 		return initialSet;
 	}
 
-
-	private State getOrCreateState(String thread, Integer index, Integer counter) {
-		Map<Integer, State> counterMap = mCreatedStates.get(index);
-		if (counterMap.get(counter)==null) {
-			State state = new State(thread, index, counter);
+	private State getOrCreateState(final String thread, final Integer index, final Integer counter) {
+		final Map<Integer, State> counterMap = mCreatedStates.get(index);
+		if (counterMap.get(counter) == null) {
+			final State state = new State(thread, index, counter);
 			counterMap.put(counter, state);
 			mCreatedStates.put(index, counterMap);
 		}
 		return counterMap.get(counter);
-		
+
 	}
 
 	@Override
-	public boolean isInitial(State state) {
-		return (state.getIndex()==0 && state.getCounter()==0);
+	public boolean isInitial(final State state) {
+		return (state.getIndex() == 0 && state.getCounter() == 0);
 	}
 
 	@Override
-	public boolean isFinal(State state) {
+	public boolean isFinal(final State state) {
 		return true;
 	}
 
@@ -127,44 +120,40 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, State>> internalSuccessors(State state, L letter) {
+	public Iterable<OutgoingInternalTransition<L, State>> internalSuccessors(final State state, final L letter) {
 		if (mIsStep.test(letter)) {
-			if(letter.getPrecedingProcedure() != state.getThread()) {
-				
-				//return Set.of(new OutgoingInternalTransition<>(letter, state));
-				
+			if (letter.getPrecedingProcedure() != state.getThread()) {
+
+				// return Set.of(new OutgoingInternalTransition<>(letter, state));
+
 				/*
-				String nextThread = letter.getPrecedingProcedure();
-				List<String> shiftedThreadList = new ArrayList<>();
-				shiftedThreadList.addAll(mThreads.subList(state.getIndex(), mThreads.size()));
-				shiftedThreadList.addAll(mThreads.subList(0, state.getIndex()));
-				int nextIndex = (shiftedThreadList.indexOf(nextThread)+state.getIndex()) % mThreads.size();
-				*/
-				
-				
-				String nextThread = letter.getPrecedingProcedure();
+				 * String nextThread = letter.getPrecedingProcedure(); List<String> shiftedThreadList = new
+				 * ArrayList<>(); shiftedThreadList.addAll(mThreads.subList(state.getIndex(), mThreads.size()));
+				 * shiftedThreadList.addAll(mThreads.subList(0, state.getIndex())); int nextIndex =
+				 * (shiftedThreadList.indexOf(nextThread)+state.getIndex()) % mThreads.size();
+				 */
+
+				final String nextThread = letter.getPrecedingProcedure();
 				int nextIndex = (mShiftedThreads.indexOf(nextThread, state.getIndex()));
-				
+
 				/*
-				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread,
-						nextIndex,0)));
-				*/
-				
-				if(mMaxSteps.get(nextIndex)==1) {
-					nextIndex = (nextIndex+1) % mThreads.size();
-					return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(mThreads.get(nextIndex),
-							nextIndex,0)));
+				 * return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread, nextIndex,0)));
+				 */
+
+				if (mMaxSteps.get(nextIndex) == 1) {
+					nextIndex = (nextIndex + 1) % mThreads.size();
+					return Set.of(new OutgoingInternalTransition<>(letter,
+							getOrCreateState(mThreads.get(nextIndex), nextIndex, 0)));
 				}
-				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread,
-						nextIndex,1)));
-				
-			} else if (state.getCounter()==mMaxSteps.get(state.getIndex())-1) {
-				int nextThreadIndex = ((state.getIndex()+1) % mThreads.size());
-				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(mThreads.get(nextThreadIndex),
-						nextThreadIndex,0)));
+				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread, nextIndex, 1)));
+
+			} else if (state.getCounter() == mMaxSteps.get(state.getIndex()) - 1) {
+				final int nextThreadIndex = ((state.getIndex() + 1) % mThreads.size());
+				return Set.of(new OutgoingInternalTransition<>(letter,
+						getOrCreateState(mThreads.get(nextThreadIndex), nextThreadIndex, 0)));
 			} else {
-				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(state.getThread(),
-						state.getIndex(),state.getCounter()+1)));
+				return Set.of(new OutgoingInternalTransition<>(letter,
+						getOrCreateState(state.getThread(), state.getIndex(), state.getCounter() + 1)));
 			}
 		} else {
 			return Set.of(new OutgoingInternalTransition<>(letter, state));
@@ -172,35 +161,35 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<L, State>> callSuccessors(State state, L letter) {
+	public Iterable<OutgoingCallTransition<L, State>> callSuccessors(final State state, final L letter) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<L, State>> returnSuccessors(State state, State hier,
-			L letter) {
+	public Iterable<OutgoingReturnTransition<L, State>> returnSuccessors(final State state, final State hier,
+			final L letter) {
 		throw new UnsupportedOperationException();
 	}
-	
-	public static final class State{
+
+	public static final class State {
 		private final String mThread;
 		private final Integer mIndex;
 		private final Integer mCounter;
-		
+
 		public State(final String thread, final Integer index, final Integer counter) {
 			mThread = thread;
 			mIndex = index;
 			mCounter = counter;
 		}
-		
+
 		public String getThread() {
 			return mThread;
 		}
-		
+
 		public Integer getIndex() {
 			return mIndex;
 		}
-		
+
 		public Integer getCounter() {
 			return mCounter;
 		}
@@ -220,12 +209,11 @@ implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomato
 			return Objects.equals(mThread, other.mThread) && Objects.equals(mIndex, other.mIndex)
 					&& Objects.equals(mCounter, other.mCounter);
 		}
-		
+
 		@Override
 		public int hashCode() {
 			return Objects.hash(mThread, mIndex, mCounter);
 		}
 	}
-
 
 }

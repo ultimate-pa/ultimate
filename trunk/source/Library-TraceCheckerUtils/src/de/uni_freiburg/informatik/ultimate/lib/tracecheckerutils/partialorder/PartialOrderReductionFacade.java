@@ -28,10 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -73,11 +70,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
@@ -157,7 +152,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
-		Boolean enableHeuristic = true;
+		final Boolean enableHeuristic = true;
 		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg, enableHeuristic);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 
@@ -198,18 +193,17 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final String threads,
 			final int maxStep, final IIcfg<?> icfg, final Boolean heuristicEnabled) {
 		// TODO Add support for all orders previously supported in #getDfsOrder
-		
-		ParameterizedPreferenceOrderUtils<L> paramPrefUtils = 
+
+		final ParameterizedPreferenceOrderUtils<L> paramPrefUtils =
 				new ParameterizedPreferenceOrderUtils<>(icfg, threads, maxStep, heuristicEnabled);
-		Set<IProgramVar> effectiveGlobalVars = paramPrefUtils.getEffectiveGlobalVars();
-		List<Integer> maxSteps = paramPrefUtils.getMaxSteps();
-		List<String> threadList = paramPrefUtils.getThreadList();
-		
+		final Set<IProgramVar> effectiveGlobalVars = paramPrefUtils.getEffectiveGlobalVars();
+		final List<Integer> maxSteps = paramPrefUtils.getMaxSteps();
+		final List<String> threadList = paramPrefUtils.getThreadList();
+
 		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
-		
-		final IPreferenceOrder<L, IPredicate, ?> order =
-				new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet, 
-						getStepDefinition(icfg, steptype, effectiveGlobalVars));
+
+		final IPreferenceOrder<L, IPredicate, ?> order = new ParameterizedPreferenceOrder<>(maxSteps, threadList,
+				alphabet, getStepDefinition(icfg, steptype, effectiveGlobalVars));
 
 		if (order.getMonitor() != null) {
 			final var splitter = mStateSplitter;
@@ -224,8 +218,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return order;
 	}
 
-	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype
-			, final Set<IProgramVar> effectiveGlobalVars) {
+	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype,
+			final Set<IProgramVar> effectiveGlobalVars) {
 
 		switch (steptype) {
 		case ALL_READ_WRITE:
@@ -244,7 +238,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 		throw new UnsupportedOperationException("Unknown step type: " + steptype);
 	}
-
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
 			createSleepFactory(final PredicateFactory predicateFactory) {

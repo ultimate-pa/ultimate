@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -38,37 +37,36 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 
-public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State>{
-	private List<Integer> mMaxSteps;
-	private List<String> mThreads;
-	private ShiftedList<String> mShiftedThreads;
-	private INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
+public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State> {
+	private final List<Integer> mMaxSteps;
+	private final List<String> mThreads;
+	private final ShiftedList<String> mShiftedThreads;
+	private final INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
-	public ParameterizedPreferenceOrder(List<Integer> maxSteps, List<String> threads, VpAlphabet<L> alphabet,
-			java.util.function.Predicate<L> isStep) {
+	public ParameterizedPreferenceOrder(final List<Integer> maxSteps, final List<String> threads,
+			final VpAlphabet<L> alphabet, final java.util.function.Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
 		mThreads = threads;
-		mShiftedThreads = new ShiftedList<String>();
+		mShiftedThreads = new ShiftedList<>();
 		mShiftedThreads.addAll(threads);
-		mMonitor = new ParameterizedOrderAutomaton<L>(mMaxSteps, mThreads, mShiftedThreads, alphabet , isStep);
+		mMonitor = new ParameterizedOrderAutomaton<>(mMaxSteps, mThreads, mShiftedThreads, alphabet, isStep);
 	}
 
 	@Override
-	public Comparator<L> getOrder(S1 stateProgram, State stateMonitor) {
+	public Comparator<L> getOrder(final S1 stateProgram, final State stateMonitor) {
 		final String lastThread = stateMonitor.getThread();
-		int lastIndex = stateMonitor.getIndex();
+		final int lastIndex = stateMonitor.getIndex();
 		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads, mShiftedThreads);
 	}
-	
+
 	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final Integer mLastIndex;
 		private final Comparator<L> mFallback;
-		private List<String> mThreads;
-		private ShiftedList<String> mShiftedThreads;
-		
+		private final List<String> mThreads;
+		private final ShiftedList<String> mShiftedThreads;
 
 		public PreferenceOrderComparator(final String lastThread, final Integer lastIndex, final Comparator<L> fallback,
 				final List<String> threads, final ShiftedList<String> shiftedThreads) {
@@ -76,47 +74,36 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			mLastIndex = lastIndex;
 			mFallback = fallback;
 			mThreads = threads;
-			mShiftedThreads=shiftedThreads;
+			mShiftedThreads = shiftedThreads;
 		}
 
 		@Override
 		public int compare(final L x, final L y) {
-			
+
 			/*
-			String xThread = x.getPrecedingProcedure();
-			String yThread = y.getPrecedingProcedure();
-			List<String> shiftedThreadList = new ArrayList<>();
-			shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
-			shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
-			if (xThread == yThread) {
-				return 0;
-			}
-			else if (xThread == mLastThread) {
-				return -1;
-			} else if (yThread == mLastThread) {
-				return 1;
-			} else if (shiftedThreadList.indexOf(xThread) < shiftedThreadList.indexOf(yThread)) {
-				return -1;
-			} else {
-				return 1;
-			}*/
-			
-			//idee ist hier die Liste vom aktuellen index ausgehend zu betrachten und falls ein thread mehrfach vorkommt,
-			//ist der relevante index der erste auf den aktuellen thread folgende
-			
-			if(x.getPrecedingProcedure()==mLastThread) {
+			 * String xThread = x.getPrecedingProcedure(); String yThread = y.getPrecedingProcedure(); List<String>
+			 * shiftedThreadList = new ArrayList<>(); shiftedThreadList.addAll(mThreads.subList(mLastIndex,
+			 * mThreads.size())); shiftedThreadList.addAll(mThreads.subList(0, mLastIndex)); if (xThread == yThread) {
+			 * return 0; } else if (xThread == mLastThread) { return -1; } else if (yThread == mLastThread) { return 1;
+			 * } else if (shiftedThreadList.indexOf(xThread) < shiftedThreadList.indexOf(yThread)) { return -1; } else {
+			 * return 1; }
+			 */
+
+			// idee ist hier die Liste vom aktuellen index ausgehend zu betrachten und falls ein thread mehrfach
+			// vorkommt,
+			// ist der relevante index der erste auf den aktuellen thread folgende
+
+			if (x.getPrecedingProcedure() == mLastThread) {
 				return -1;
 			}
 			/*
-			List<String> shiftedThreadList = new ArrayList<>();
-			shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
-			shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
-			
-			final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure());
-			final int yThreadIndex = shiftedThreadList.indexOf(y.getPrecedingProcedure());
-			return Integer.compare(xThreadIndex, yThreadIndex);*/
-			
-			
+			 * List<String> shiftedThreadList = new ArrayList<>(); shiftedThreadList.addAll(mThreads.subList(mLastIndex,
+			 * mThreads.size())); shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
+			 * 
+			 * final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure()); final int yThreadIndex =
+			 * shiftedThreadList.indexOf(y.getPrecedingProcedure()); return Integer.compare(xThreadIndex, yThreadIndex);
+			 */
+
 			final int xThreadIndex = mShiftedThreads.indexOf(x.getPrecedingProcedure(), mLastIndex);
 			final int yThreadIndex = mShiftedThreads.indexOf(y.getPrecedingProcedure(), mLastIndex);
 			final boolean xBefore = xThreadIndex < mLastIndex;
@@ -127,8 +114,8 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			if (yBefore && !xBefore) {
 				return -1;
 			}
-			return Integer.compare(xThreadIndex, yThreadIndex);		
-			
+			return Integer.compare(xThreadIndex, yThreadIndex);
+
 		}
 
 		@Override
@@ -148,7 +135,7 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 				return false;
 			}
 			final PreferenceOrderComparator<L> other = (PreferenceOrderComparator<L>) obj;
-			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread) 
+			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread)
 					&& Objects.equals(mThreads, other.mThreads) && Objects.equals(mLastIndex, other.mLastIndex);
 		}
 	}
@@ -157,40 +144,21 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 	public boolean isPositional() {
 		return true;
 	}
-	
+
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, State> getMonitor() {
 		return mMonitor;
 	}
 	/*
-	public class ShiftedList<String> extends ArrayList<String>{
-		
-		public int indexOf(String s, int i) {
-			
-	        int index = indexOfRange(s, i, this.size());
-	        if (index != -1) {
-	        	return index;
-	        }
-	        return indexOfRange(s, 0, i);
-	    }
-
-	    int indexOfRange(Object o, int start, int end) {
-	       //Object[] es = this.elementData;
-	        if (o == null) {
-	            for (int i = start; i < end; i++) {
-	                if (this.get(i) == null) {
-	                    return i;
-	                }
-	            }
-	        } else {
-	            for (int i = start; i < end; i++) {
-	                if (o.equals(this.get(i))) {
-	                    return i;
-	                }
-	            }
-	        }
-	        return -1;
-	    }
-	}*/
+	 * public class ShiftedList<String> extends ArrayList<String>{
+	 * 
+	 * public int indexOf(String s, int i) {
+	 * 
+	 * int index = indexOfRange(s, i, this.size()); if (index != -1) { return index; } return indexOfRange(s, 0, i); }
+	 * 
+	 * int indexOfRange(Object o, int start, int end) { //Object[] es = this.elementData; if (o == null) { for (int i =
+	 * start; i < end; i++) { if (this.get(i) == null) { return i; } } } else { for (int i = start; i < end; i++) { if
+	 * (o.equals(this.get(i))) { return i; } } } return -1; } }
+	 */
 
 }

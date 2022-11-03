@@ -32,15 +32,15 @@ import java.util.Comparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 
-public class Dfs2PreferenceOrder<L, S1, S2> implements IPreferenceOrder<L,S1,S2> {
-	  private IDfsOrder<L,S1> mDFSOrder;
+public class Dfs2PreferenceOrder<L, S1, S2> implements IPreferenceOrder<L, S1, S2> {
+	private final IDfsOrder<L, S1> mDFSOrder;
 
-	public Dfs2PreferenceOrder(IDfsOrder<L,S1> underlying) {
-		  mDFSOrder = underlying;
-	  }
+	public Dfs2PreferenceOrder(final IDfsOrder<L, S1> underlying) {
+		mDFSOrder = underlying;
+	}
 
 	@Override
-	public Comparator<L> getOrder(S1 stateProgram, S2 stateMonitor) {
+	public Comparator<L> getOrder(final S1 stateProgram, final S2 stateMonitor) {
 		return mDFSOrder.getOrder(stateProgram);
 	}
 
@@ -54,4 +54,4 @@ public class Dfs2PreferenceOrder<L, S1, S2> implements IPreferenceOrder<L,S1,S2>
 		return null;
 	}
 
-	}
+}
