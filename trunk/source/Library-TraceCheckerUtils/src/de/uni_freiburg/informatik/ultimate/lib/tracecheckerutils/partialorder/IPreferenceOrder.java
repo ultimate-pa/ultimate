@@ -38,6 +38,5 @@ public interface IPreferenceOrder<L, S1, S2> extends IPartialPreferenceOrder<L, 
 	@Override
 	default IPartialComparator<L> getPartialOrder(final S1 stateProgram, final S2 stateMonitor) {
 		return IPartialComparator.fromNonPartialComparator(this.getOrder(stateProgram, stateMonitor), true);
-
 	}
 }

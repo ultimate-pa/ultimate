@@ -36,11 +36,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> implements IPreferenceOrder<L, S1, State> {
 	private final List<Integer> mMaxSteps;
 	private final List<String> mThreads;
-	private final ShiftedList<String> mShiftedThreads;
 	private final INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
@@ -49,16 +49,14 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			final VpAlphabet<L> alphabet, final java.util.function.Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
 		mThreads = threads;
-		mShiftedThreads = new ShiftedList<>();
-		mShiftedThreads.addAll(threads);
-		mMonitor = new ParameterizedOrderAutomaton<>(mMaxSteps, mThreads, mShiftedThreads, alphabet, isStep);
+		mMonitor = new ParameterizedOrderAutomaton<>(mMaxSteps, mThreads, alphabet, isStep);
 	}
 
 	@Override
 	public Comparator<L> getOrder(final S1 stateProgram, final State stateMonitor) {
 		final String lastThread = stateMonitor.getThread();
 		final int lastIndex = stateMonitor.getIndex();
-		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads, mShiftedThreads);
+		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
 	}
 
 	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
@@ -66,15 +64,13 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 		private final Integer mLastIndex;
 		private final Comparator<L> mFallback;
 		private final List<String> mThreads;
-		private final ShiftedList<String> mShiftedThreads;
 
 		public PreferenceOrderComparator(final String lastThread, final Integer lastIndex, final Comparator<L> fallback,
-				final List<String> threads, final ShiftedList<String> shiftedThreads) {
+				final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mLastIndex = lastIndex;
 			mFallback = fallback;
 			mThreads = threads;
-			mShiftedThreads = shiftedThreads;
 		}
 
 		@Override
@@ -99,13 +95,13 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 			/*
 			 * List<String> shiftedThreadList = new ArrayList<>(); shiftedThreadList.addAll(mThreads.subList(mLastIndex,
 			 * mThreads.size())); shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
-			 * 
+			 *
 			 * final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure()); final int yThreadIndex =
 			 * shiftedThreadList.indexOf(y.getPrecedingProcedure()); return Integer.compare(xThreadIndex, yThreadIndex);
 			 */
 
-			final int xThreadIndex = mShiftedThreads.indexOf(x.getPrecedingProcedure(), mLastIndex);
-			final int yThreadIndex = mShiftedThreads.indexOf(y.getPrecedingProcedure(), mLastIndex);
+			final int xThreadIndex = DataStructureUtils.indexOf(mThreads, x.getPrecedingProcedure(), mLastIndex);
+			final int yThreadIndex = DataStructureUtils.indexOf(mThreads, y.getPrecedingProcedure(), mLastIndex);
 			final boolean xBefore = xThreadIndex < mLastIndex;
 			final boolean yBefore = yThreadIndex < mLastIndex;
 			if (xBefore && !yBefore) {
@@ -151,11 +147,11 @@ public class ParameterizedPreferenceOrder<L extends IIcfgTransition<?>, S1> impl
 	}
 	/*
 	 * public class ShiftedList<String> extends ArrayList<String>{
-	 * 
+	 *
 	 * public int indexOf(String s, int i) {
-	 * 
+	 *
 	 * int index = indexOfRange(s, i, this.size()); if (index != -1) { return index; } return indexOfRange(s, 0, i); }
-	 * 
+	 *
 	 * int indexOfRange(Object o, int start, int end) { //Object[] es = this.elementData; if (o == null) { for (int i =
 	 * start; i < end; i++) { if (this.get(i) == null) { return i; } } } else { for (int i = start; i < end; i++) { if
 	 * (o.equals(this.get(i))) { return i; } } } return -1; } }

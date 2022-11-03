@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -434,5 +435,37 @@ public class DataStructureUtils {
 	public static <T> Set<T> asSet(final Stream<T> stream) {
 		final Object[] elements = stream.toArray();
 		return (Set<T>) Set.of(elements);
+	}
+
+	/**
+	 * Get the index of an element's first occurrence in a list, starting at a given offset and wrapping around to the
+	 * start if no occurrence is found before the end of the list.
+	 *
+	 * @param <T>
+	 *            the type of elements in the list
+	 * @param list
+	 *            the list to search through (should be random-access)
+	 * @param elem
+	 *            the element to search for
+	 * @param offset
+	 *            the offset, i.e., the minimum index at which to search
+	 * @return the minimal index >= offset at which the given element occurs, or if there is no such index, the minimal
+	 *         index < offset at which the element occurs. If the element does not occur at all, returns -1.
+	 */
+	public static <T> int indexOf(final List<T> list, final T elem, final int offset) {
+		final int index = indexOfWithinRange(list, elem, offset, list.size());
+		if (index != -1) {
+			return index;
+		}
+		return indexOfWithinRange(list, elem, 0, offset);
+	}
+
+	private static <T> int indexOfWithinRange(final List<T> list, final T elem, final int start, final int end) {
+		for (int i = start; i < end; i++) {
+			if (Objects.equals(elem, list.get(i))) {
+				return i;
+			}
+		}
+		return -1;
 	}
 }

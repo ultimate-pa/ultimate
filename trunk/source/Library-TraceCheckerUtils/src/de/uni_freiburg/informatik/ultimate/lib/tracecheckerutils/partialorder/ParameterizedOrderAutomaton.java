@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State> {
@@ -49,14 +50,11 @@ public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
 	private final String mInitialThread;
 	private final java.util.function.Predicate<L> mIsStep;
 	private final VpAlphabet<L> mAlphabet;
-	private final ShiftedList<String> mShiftedThreads;
 
 	public ParameterizedOrderAutomaton(final List<Integer> maxSteps, final List<String> threads,
-			final ShiftedList<String> shiftedThreads, final VpAlphabet<L> alphabet,
-			final java.util.function.Predicate<L> isStep) {
+			final VpAlphabet<L> alphabet, final java.util.function.Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
 		mThreads = threads;
-		mShiftedThreads = shiftedThreads;
 		mIsStep = isStep;
 		mAlphabet = alphabet;
 		for (int index = 0; index < mThreads.size(); index++) {
@@ -134,7 +132,7 @@ public class ParameterizedOrderAutomaton<L extends IIcfgTransition<?>>
 				 */
 
 				final String nextThread = letter.getPrecedingProcedure();
-				int nextIndex = (mShiftedThreads.indexOf(nextThread, state.getIndex()));
+				int nextIndex = DataStructureUtils.indexOf(mThreads, nextThread, state.getIndex());
 
 				/*
 				 * return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread, nextIndex,0)));
