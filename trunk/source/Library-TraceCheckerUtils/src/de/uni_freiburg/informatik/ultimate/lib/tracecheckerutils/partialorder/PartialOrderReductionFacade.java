@@ -328,6 +328,11 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			// compatibility of persistent sets.
 			return new Pair<>(((IMLPredicate) state).getProgramPoints(), mDfsOrder.getOrder(state));
 		}
+		if (mMode.hasFixedOrder() && mPreferenceOrder.getMonitor() != null) {
+			// For stateful orders, we need to include the chosen order in the normalization if we want to guarantee
+			// compatibility of persistent sets.
+			return new Pair<>(((IMLPredicate) state).getProgramPoints(), mDfsOrder.getOrder(state));
+		}
 		return ((IMLPredicate) state).getProgramPoints();
 	}
 
