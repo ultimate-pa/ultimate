@@ -49,7 +49,7 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 	private HashMap<String, Set<IProgramVar>> mSharedVarsMapReversed;
 
 	ParameterizedPreferenceOrderUtils(final IIcfg<?> icfg, final String threads, final int maxStep,
-			final Boolean heuristicEnabled) {
+			final boolean heuristicEnabled) {
 		mIcfg = icfg;
 		final List<String> allThreads = new ArrayList<>();
 		allThreads.addAll(IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()));

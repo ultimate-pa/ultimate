@@ -152,7 +152,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
-		final Boolean enableHeuristic = true;
+		final boolean enableHeuristic = true;
 		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg, enableHeuristic);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 
@@ -191,7 +191,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final String threads,
-			final int maxStep, final IIcfg<?> icfg, final Boolean heuristicEnabled) {
+			final int maxStep, final IIcfg<?> icfg, final boolean heuristicEnabled) {
 		// TODO Add support for all orders previously supported in #getDfsOrder
 
 		final ParameterizedPreferenceOrderUtils<L> paramPrefUtils =
