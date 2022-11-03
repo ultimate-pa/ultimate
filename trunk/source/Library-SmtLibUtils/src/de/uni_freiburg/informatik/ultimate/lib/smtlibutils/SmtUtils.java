@@ -1777,7 +1777,7 @@ public final class SmtUtils {
 			}
 			final Term lastElement = divArguments.get(divArguments.size() - 1);
 			final Rational lastElementRat = SmtUtils.tryToConvertToLiteral(lastElement);
-			if (lastElementRat != null) {
+			if (lastElementRat != null && !lastElementRat.equals(Rational.ZERO)) {
 				final BigInteger lastElementBigInteger = lastElementRat.numerator();
 				final BigInteger newLastElement = lastElementBigInteger.multiply(divisorBigInt);
 				divArguments.set(divArguments.size() - 1, SmtUtils.constructIntValue(script, newLastElement));
