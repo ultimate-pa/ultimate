@@ -260,6 +260,41 @@ public class PolynomialTest {
 	}
 
 	/**
+	 * <li>check that initial literals are simplified by division
+	 * <li>check that commutativity is not applied
+	 * <li>check that integrality of literals is kept
+	 * <li>check that intermediate literals are not simplified by multiplication
+	 * <li>check that a non-initial zero cannot be simplified
+	 */
+	@Test
+	public void intDivision08() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div 10 2 3 x 0 3 5 y)";
+		final String expectedOutputAsString = "(div 1 x 0 15 y)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
+	}
+
+	/**
+	 * <li>check that initial zero can be simplified
+	 * <li>check that intermediate one is dropped
+	 */
+	@Test
+	public void intDivision09() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div 0 2 x 1 y)";
+		final String expectedOutputAsString = "(div 0 x y)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
+	}
+
+
+
+	/**
 	 * Test addition of AffineTerm and a PolynomialTerm.
 	 */
 	@Test
