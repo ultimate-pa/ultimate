@@ -1944,7 +1944,7 @@ public final class SmtUtils {
 
 	/**
 	 * Check if term represents a literal. If this is the case, then return its value as a {@link Rational} otherwise
-	 * return true.
+	 * return null.
 	 */
 	public static Rational tryToConvertToLiteral(final Term term) {
 		final Rational result;
