@@ -2404,10 +2404,13 @@ public class CHandler {
 
 			return dr;
 		}
+		case IASTTypeIdExpression.op_alignof:
+			throw new UnsupportedSyntaxException(loc, "__alignof__ is not supported");
 		default:
 			break;
 		}
-		final String msg = "Unsupported boogie AST node type: " + node.getClass();
+		final String msg =
+				"Unsupported AST node type: " + node.getClass() + " with operator " + node.getOperator() + ": " + loc;
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
