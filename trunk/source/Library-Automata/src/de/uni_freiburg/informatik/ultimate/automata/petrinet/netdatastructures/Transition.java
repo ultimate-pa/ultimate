@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class Transition<LETTER, PLACE> implements Serializable, Comparable<Transition<LETTER, PLACE>> {
 	private static final long serialVersionUID = 5948089529814334197L;
 
+	// See https://github.com/ultimate-pa/ultimate/pull/595 for discussion
+	private static final boolean USE_HASH_JENKINS = false;
+
 	private final int mHashCode;
 	private final LETTER mSymbol;
 	private final ImmutableSet<PLACE> mPredecessors;
@@ -71,8 +74,14 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 		mPredecessors = predecessors;
 		mSuccessors = successors;
 		mTotalOrderId = totalOrderId;
-		// FIXME: Compute hash code here or use static method
-		mHashCode = computeHashCode();
+
+		if (USE_HASH_JENKINS) {
+			// The totalOrderId should not be used verbatim as hash code,
+			// because this would cause frequent hash collisions for e.g. sets or lists of transitions.
+			mHashCode = HashUtils.hashJenkins(29, mTotalOrderId);
+		} else {
+			mHashCode = mTotalOrderId;
+		}
 	}
 
 	public LETTER getSymbol() {
@@ -92,21 +101,10 @@ public class Transition<LETTER, PLACE> implements Serializable, Comparable<Trans
 		return mHashCode;
 	}
 
-	private int computeHashCode() {
-		return HashUtils.hashJenkins(13, mTotalOrderId, mPredecessors, mSuccessors, mSymbol);
-	}
-
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final Transition<?, ?> other = (Transition<?, ?>) obj;
-		return mTotalOrderId == other.mTotalOrderId && mPredecessors.equals(other.mPredecessors)
-				&& mSuccessors.equals(other.mSuccessors) && mSymbol.equals(other.mSymbol);
+		// Transitions are unified by the TransitionUnifier class, hence reference equality suffices here.
+		return this == obj;
 	}
 
 	@Override
