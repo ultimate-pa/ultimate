@@ -480,10 +480,22 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	 */
 	private static int getBrokenCallStackIndexForTrace(final ILogger logger,
 			final List<? extends AtomicTraceElement<?>> trace) {
-		final Deque<String> callStack = new ArrayDeque<>();
+		final int mainThreadId = 0;
+
+		final Map<Integer, Deque<String>> callStacks = new HashMap<>();
+		callStacks.put(mainThreadId, new ArrayDeque<>());
+
 		int i = 0;
 		for (final AtomicTraceElement<?> elem : trace) {
 			i++;
+
+			final int threadId = elem.hasThreadId() ? elem.getThreadId() : mainThreadId;
+			final var callStack = callStacks.get(threadId);
+			if (callStack == null) {
+				logger.fatal("No callstack for unknown thread with threadid %d", threadId);
+				return i;
+			}
+
 			if (elem.hasStepInfo(StepInfo.PROC_CALL)) {
 				if (elem.getSucceedingProcedure() == null) {
 					logger.fatal("Callstack has procedure call flag but succeeding procedure is empty at " + elem);
@@ -501,6 +513,20 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 					logger.fatal("Callstack is " + lastCall + " but returning with " + elem);
 					return i;
 				}
+			}
+			if (elem.hasStepInfo(StepInfo.FORK)) {
+				if (callStacks.containsKey(elem.getForkedThreadId())) {
+					logger.fatal("Forking thread with threadid %d which is already in use", elem.getForkedThreadId());
+					return i;
+				}
+				callStacks.put(elem.getForkedThreadId(), new ArrayDeque<>());
+			}
+			if (elem.hasStepInfo(StepInfo.JOIN)) {
+				if (!callStacks.containsKey(elem.getJoinedThreadId())) {
+					logger.fatal("Joining thread with threadid %d which does not exist", elem.getJoinedThreadId());
+					return i;
+				}
+				callStacks.remove(elem.getJoinedThreadId());
 			}
 		}
 		return -1;
