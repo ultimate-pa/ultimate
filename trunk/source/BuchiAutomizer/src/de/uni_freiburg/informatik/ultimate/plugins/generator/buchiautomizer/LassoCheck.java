@@ -560,7 +560,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 							mPredicateFactory, mCounterexample.getStem(), loopTF);
 					if (fixpointCheck2.getResult() != fixpointCheck.getResult()) {
 						throw new AssertionError(String.format(
-								"Contradiciting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
+								"Contradicting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
 								fixpointCheck.getResult(), fixpointCheck2.getResult(),
 								mCounterexample.getStem().getLength(), mCounterexample.getLoop().getLength()));
 					}
