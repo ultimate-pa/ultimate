@@ -273,6 +273,12 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 				ateBuilder.setStepInfo(StepInfo.FORK);
 				assert threadIdMap != null;
 			} else if (te instanceof IIcfgJoinTransitionThreadOther<?>) {
+				final IIcfgTransition<?> teTrans = (IIcfgTransition<?>) te;
+				if (threadIdMap != null) {
+					final Integer joinedThreadId = threadIdMap.get(teTrans.getSource().getProcedure());
+					assert joinedThreadId != null;
+					ateBuilder.setJoinedThreadId(joinedThreadId);
+				}
 				ateBuilder.setStepInfo(StepInfo.JOIN);
 				assert threadIdMap != null;
 			} else if (te instanceof IIcfgJoinTransitionThreadCurrent<?>) {

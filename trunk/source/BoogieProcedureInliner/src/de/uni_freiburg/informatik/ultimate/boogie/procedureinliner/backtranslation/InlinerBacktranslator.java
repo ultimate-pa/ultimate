@@ -202,7 +202,7 @@ public class InlinerBacktranslator
 			if (progState != null) {
 				final String currentProc;
 				if (traceElemMapping != null) {
-					currentProc	= computeCurrectProc(traceElemMapping);
+					currentProc = computeCurrectProc(traceElemMapping);
 				} else {
 					currentProc = traceElem.getSucceedingProcedure();
 				}
@@ -247,6 +247,9 @@ public class InlinerBacktranslator
 		}
 		if (ate.hasStepInfo(StepInfo.FORK)) {
 			builder.setForkedThreadId(ate.getForkedThreadId());
+		}
+		if (ate.hasStepInfo(StepInfo.JOIN)) {
+			builder.setJoinedThreadId(ate.getJoinedThreadId());
 		}
 		builder.setToStringFunc(BoogiePrettyPrinter.getBoogieToStringProvider());
 		builder.setElement(elem);
