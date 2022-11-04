@@ -118,6 +118,7 @@ known_timeouts:
 
 known_safe:
   "We were not able to verify any specifiation because the program does not contain any specification":
+  "We were not able to verify any specification because the program does not contain any specification":
   "specifications checked. All of them hold":
   "TerminationAnalysisResult: Termination proven":
 
