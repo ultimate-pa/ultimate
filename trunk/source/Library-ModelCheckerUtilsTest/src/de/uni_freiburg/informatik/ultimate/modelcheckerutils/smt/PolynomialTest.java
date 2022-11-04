@@ -130,6 +130,54 @@ public class PolynomialTest {
 	}
 
 	/**
+	 * <li>check that initial literals are simplified by division
+	 * <li>check that commutativity transformation is not applied
+	 * <li>check that intermediate literals are simplified by multiplication
+	 * <li>check that a non-initial zero cannot be simplified
+	 */
+	@Test
+	public void realDiv01() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(/ 10.0 2.0 x 0.0 3.0 5.0 y)";
+		final String expectedOutputAsString = "(/ (* (/ 1.0 15.0) (/ 5.0 x 0.0)) y)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
+	/**
+	 * <li>check that initial zero can be simplified
+	 * <li>check that intermediate one is dropped
+	 */
+	@Test
+	public void realDiv02() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(/ 0.0 2.0 x 1.0 y)";
+		final String expectedOutputAsString = "(/ 0.0 x y)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
+	/**
+	 * check that non-integer rationals are represented as binary real divison terms
+	 * (This is the default representation of SMTInterpol's libraries, we do not
+	 * want to change that add allow nested division terms for these cases
+	 */
+	@Test
+	public void realDiv03() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(/ 7.0 0.5 4.0 x 11.5)";
+		final String expectedOutputAsString = "(* (/ (/ 7.0 2.0) x) (/ 2.0 23.0))";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
+	/**
 	 * Test multiplication of equal variables.
 	 */
 	@Test
