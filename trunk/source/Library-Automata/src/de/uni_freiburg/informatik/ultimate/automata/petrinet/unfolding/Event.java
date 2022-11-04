@@ -55,6 +55,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public final class Event<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
+
+	// See https://github.com/ultimate-pa/ultimate/pull/595 for discussion
+	private static final boolean USE_HASH_JENKINS = false;
 	private static final int HASH_PRIME = 89;
 
 	/**
@@ -98,7 +101,12 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mTransition = transition;
 		mSuccessors = transition.getSuccessors().stream().map(p -> bp.constructCondition(this, p))
 				.collect(Collectors.toSet());
-		mHashCode = HashUtils.hashJenkins(HASH_PRIME, hashCode);
+
+		if (USE_HASH_JENKINS) {
+			mHashCode = HashUtils.hashJenkins(HASH_PRIME, hashCode);
+		} else {
+			mHashCode = hashCode;
+		}
 
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mDepth = 0;
@@ -355,7 +363,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public String toString() {
-		if (mSerialNumber == 0 ) {
+		if (mSerialNumber == 0) {
 			return "Dummy event whose successors are the initial conditions of the branching process";
 		} else {
 			return mSerialNumber + ":" + +mLocalConfiguration.size() + "A:" + getTransition().toString();

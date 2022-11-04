@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class Condition<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
 
+	// See https://github.com/ultimate-pa/ultimate/pull/595 for discussion
+	private static final boolean USE_HASH_JENKINS = false;
+
 	private final Event<LETTER, PLACE> mPredecessor;
 	private final Collection<Event<LETTER, PLACE>> mSuccessors;
 	private final PLACE mPlace;
@@ -62,10 +65,14 @@ public class Condition<LETTER, PLACE> implements Serializable {
 		mPredecessor = predecessor;
 		mSuccessors = new HashSet<>();
 		mPlace = place;
-		// Serial numbers should not be used verbatim for hash codes,
-		// because this would cause frequent hash collisions for e.g. sets or lists of
-		// conditions.
-		mHashCode = HashUtils.hashJenkins(17, mSerialNumber);
+
+		if (USE_HASH_JENKINS) {
+			// Serial numbers should not be used verbatim for hash codes,
+			// because this would cause frequent hash collisions for e.g. sets or lists of conditions.
+			mHashCode = HashUtils.hashJenkins(17, mSerialNumber);
+		} else {
+			mHashCode = mSerialNumber;
+		}
 	}
 
 	/**
