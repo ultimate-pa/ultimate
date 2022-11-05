@@ -50,7 +50,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
+	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
 			final IPredicate succ) {
 		assert preHier == null;
 		return preLin == succ && mHelper.sdecCallSelfloop(preLin, (ICallAction) act) == Validity.VALID;

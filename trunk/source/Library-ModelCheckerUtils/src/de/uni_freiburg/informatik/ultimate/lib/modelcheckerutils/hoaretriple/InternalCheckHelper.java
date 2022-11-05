@@ -81,7 +81,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	 * Returns HTTV.VALID if selfloop is inductive. Returns null if we are not able to determine inductivity selfloop.
 	 */
 	@Override
-	public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
+	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
 			final IPredicate succ) {
 		assert preHier == null;
 		if (preLin != succ) {

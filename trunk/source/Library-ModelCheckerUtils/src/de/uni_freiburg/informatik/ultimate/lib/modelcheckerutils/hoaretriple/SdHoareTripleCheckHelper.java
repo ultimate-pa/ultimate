@@ -100,7 +100,7 @@ public abstract class SdHoareTripleCheckHelper {
 			return Validity.UNKNOWN;
 		}
 
-		final boolean isInductiveSelfloop = isInductiveSefloop(preLin, preHier, act, succ);
+		final boolean isInductiveSelfloop = isInductiveSelfloop(preLin, preHier, act, succ);
 		if (isInductiveSelfloop) {
 			return Validity.VALID;
 		}
@@ -164,7 +164,7 @@ public abstract class SdHoareTripleCheckHelper {
 
 	public abstract Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act);
 
-	public abstract boolean isInductiveSefloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+	public abstract boolean isInductiveSelfloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
 
 	public abstract Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
 
