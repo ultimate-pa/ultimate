@@ -69,8 +69,8 @@ public final class ArithmeticUtils {
 		} else {
 			result = nonEuclideanQuotient;
 		}
-		assert result.multiply(divisor).add(euclideanMod(dividend, divisor))
-				.equals(dividend) : "incorrect euclidean division";
+		assert result.multiply(divisor).add(euclideanMod(dividend, divisor)).equals(dividend)
+				: "incorrect euclidean division";
 		return result;
 	}
 
@@ -83,29 +83,43 @@ public final class ArithmeticUtils {
 	 * @param divisor
 	 * @return
 	 */
-	public static int extendedEuclidean(final int a, final int divisor) {
-		int inverse = 0; // inverse of a in the field Z/divisorZ
-		int remainder = divisor;
-		int newInverse = 1;
-		int newRemainder = a;
-		int oldRemainder;
-		int oldInverse;
-		int quotient;
-		while (newRemainder != 0) {
+	public static BigInteger extendedEuclidean(BigInteger a, BigInteger divisor) {
+		if (a.equals(BigInteger.valueOf(0))) {
+			throw new IllegalArgumentException("0 does not have a multiplicative inverse");
+		}
+		if (a.compareTo(divisor) >= 0) {
+			BigInteger newa = a.mod(divisor);
+			extendedEuclidean(newa, divisor);
+		}
+		// inverse of a in the field Z/divisorZ
+		BigInteger inverse = BigInteger.valueOf(0);
+		BigInteger remainder = divisor;
+		BigInteger newInverse = BigInteger.valueOf(1);
+		BigInteger newRemainder = a;
+		BigInteger oldRemainder;
+		BigInteger oldInverse;
+		BigInteger quotient;
+		while (!newRemainder.equals(BigInteger.valueOf(0))) {
 			// while-loop ends if remainder = 1
-			quotient = remainder / newRemainder;
+			quotient = remainder.divide(newRemainder);
 			// update the inverse
 			oldInverse = inverse;
 			inverse = newInverse;
-			newInverse = oldInverse - quotient * newInverse;
+			newInverse = oldInverse.subtract(quotient.multiply(newInverse));
 			// update the remainder
 			oldRemainder = remainder;
 			remainder = newRemainder;
-			newRemainder = oldRemainder - quotient * newRemainder;
+			newRemainder = oldRemainder.subtract(quotient.multiply(newRemainder));
 		}
-		if (inverse < 0) {
-			inverse = inverse + divisor;
+		// gcd(a, divisor) > 1
+		if (remainder.compareTo(BigInteger.valueOf(1)) > 0) {
+			throw new IllegalArgumentException("a has no multiplicative inverse mod divisor");
 		}
+		if (inverse.compareTo(BigInteger.valueOf(0)) < 0) {
+			inverse = inverse.add(divisor);
+		}
+		// Check if result is inverse of (a mod divisor)
+		assert ((inverse.multiply(a)).mod(divisor)).equals(BigInteger.valueOf(1));
 		return inverse;
 	}
 }
