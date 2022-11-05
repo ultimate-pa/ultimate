@@ -225,36 +225,7 @@ public class SdHoareTripleCheckerHelper {
 	// else return false;
 	// }
 
-	/**
-	 * FIXME 20210810 Matthias: Bad name: "incomplete" would be better than "lazy".
-	 * Idea: If succedent of implication does (in NNF) not contain a disjunction and
-	 * contains some variable that does not occur in the antecedent the implication
-	 * does not hold very often.
-	 */
 	@Deprecated
-	public Validity sdLazyEcInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
-		if (isOrIteFormula(post)) {
-			return sdecInternal(pre, act, post);
-		}
-		for (final IProgramVar bv : post.getVars()) {
-			if (!pre.getVars().contains(bv) || !act.getTransformula().getInVars().containsKey(bv)
-					|| !act.getTransformula().getOutVars().containsKey(bv)) {
-				// occurs neither in pre not in codeBlock, probably unsat
-				mHoareTripleCheckerStatistics.getSdLazyCounter().incIn();
-				return Validity.INVALID;
-			}
-		}
-		return null;
-	}
-
-	public Validity sdecCallToFalse(final IPredicate pre, final ICallAction act) {
-		// TODO:
-		// there could be a contradiction if the Call is not a simple call
-		// but interprocedural sequential composition
-		mHoareTripleCheckerStatistics.getSDtfsCounter().incCa();
-		return Validity.INVALID;
-	}
-
 	public Validity sdecCall(final IPredicate pre, final ICallAction act, final IPredicate post) {
 		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, act.getPrecedingProcedure())
 				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, act.getSucceedingProcedure())) {
@@ -280,27 +251,6 @@ public class SdHoareTripleCheckerHelper {
 		}
 		if (preHierIndependent(post, pre, act.getLocalVarsAssignment(), act.getSucceedingProcedure())) {
 			mHoareTripleCheckerStatistics.getSDsCounter().incCa();
-			return Validity.INVALID;
-		}
-		return null;
-	}
-
-	public Validity sdLazyEcCall(final IPredicate pre, final ICallAction cb, final IPredicate post) {
-		if (isOrIteFormula(post)) {
-			return sdecCall(pre, cb, post);
-		}
-		final UnmodifiableTransFormula locVarAssignTf = cb.getLocalVarsAssignment();
-		final boolean argumentsRestrictedByPre = !varSetDisjoint(locVarAssignTf.getInVars().keySet(), pre.getVars());
-		for (final IProgramVar bv : post.getVars()) {
-			if (bv.isGlobal()) {
-				continue;
-			}
-			if (locVarAssignTf.getAssignedVars().contains(bv)) {
-				if (argumentsRestrictedByPre) {
-					continue;
-				}
-			}
-			mHoareTripleCheckerStatistics.getSdLazyCounter().incCa();
 			return Validity.INVALID;
 		}
 		return null;
@@ -599,22 +549,6 @@ public class SdHoareTripleCheckerHelper {
 		return Validity.VALID;
 	}
 
-	/**
-	 * Returns UNSAT if p contains only non-old globals.
-	 */
-	public Validity sdecCallSelfloop(final IPredicate p, final ICallAction call) {
-		for (final IProgramVar bv : p.getVars()) {
-			if (!bv.isGlobal()) {
-				return null;
-			}
-			if (bv.isOldvar()) {
-				return null;
-			}
-		}
-		mHoareTripleCheckerStatistics.getSDsluCounter().incCa();
-		return Validity.VALID;
-	}
-
 	public Validity sdecReturnSelfloopPre(final IPredicate p, final IReturnAction ret) {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		for (final IProgramVar bv : p.getVars()) {
@@ -651,6 +585,7 @@ public class SdHoareTripleCheckerHelper {
 	/**
 	 * Returns true if the formula of this predicate is an or-term or an ite-term.
 	 */
+	@Deprecated
 	public static boolean isOrIteFormula(final IPredicate p) {
 		final Term formula = p.getFormula();
 		if (formula instanceof ApplicationTerm) {

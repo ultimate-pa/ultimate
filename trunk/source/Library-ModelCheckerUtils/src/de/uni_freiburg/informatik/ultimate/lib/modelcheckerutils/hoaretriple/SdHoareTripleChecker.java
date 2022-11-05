@@ -59,7 +59,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 
 		mInternalCheckHelper = new InternalCheckHelper(coverage, falsePredicate, truePredicate, mStatistics,
 				csToolkit.getModifiableGlobalsTable());
-		mCallCheckHelper = new CallCheckHelper(coverage, helper, falsePredicate, truePredicate, mStatistics,
+		mCallCheckHelper = new CallCheckHelper(coverage, falsePredicate, truePredicate, mStatistics,
 				csToolkit.getModifiableGlobalsTable());
 		mReturnCheckHelper = new ReturnCheckHelper(coverage, helper, falsePredicate, truePredicate, mStatistics,
 				csToolkit.getModifiableGlobalsTable());

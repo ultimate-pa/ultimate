@@ -27,47 +27,154 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 
 class CallCheckHelper extends SdHoareTripleCheckHelper {
-	private final SdHoareTripleCheckerHelper mHelper;
+	private static final String PRE_HIER_ERROR = "Unexpected hierarchical precondition for call action";
 
-	CallCheckHelper(final IPredicateCoverageChecker coverage, final SdHoareTripleCheckerHelper helper,
-			final IPredicate falsePredicate, final IPredicate truePredicate,
-			final HoareTripleCheckerStatisticsGenerator statistics, final ModifiableGlobalsTable modifiableGlobals) {
+	CallCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
+			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics,
+			final ModifiableGlobalsTable modifiableGlobals) {
 		super(coverage, falsePredicate, truePredicate, statistics, modifiableGlobals);
-		mHelper = helper;
 	}
 
 	@Override
 	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
-		assert preHier == null;
-		return mHelper.sdecCallToFalse(preLin, (ICallAction) act);
+		assert preHier == null : PRE_HIER_ERROR;
+		// TODO: there could be a contradiction if the Call is not a simple call
+		// but interprocedural sequential composition
+		mStatistics.getSDtfsCounter().incCa();
+		return Validity.INVALID;
+	}
+
+	/**
+	 * Returns UNSAT if p contains only non-old globals.
+	 */
+	@Override
+	public boolean isInductiveSelfloop(final IPredicate pre, final IPredicate preHier, final IAction act,
+			final IPredicate post) {
+		assert preHier == null : PRE_HIER_ERROR;
+		if (pre != post) {
+			return false;
+		}
+
+		for (final IProgramVar bv : pre.getVars()) {
+			if (!bv.isGlobal()) {
+				return false;
+			}
+			if (bv.isOldvar()) {
+				return false;
+			}
+		}
+		mStatistics.getSDsluCounter().incCa();
+		return true;
 	}
 
 	@Override
-	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
-			final IPredicate succ) {
-		assert preHier == null;
-		return preLin == succ && mHelper.sdecCallSelfloop(preLin, (ICallAction) act) == Validity.VALID;
+	public Validity sdec(final IPredicate pre, final IPredicate preHier, final IAction act, final IPredicate post) {
+		assert preHier == null : PRE_HIER_ERROR;
+
+		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, act.getPrecedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, act.getSucceedingProcedure())) {
+			return null;
+		}
+		for (final IProgramVar bv : post.getVars()) {
+			if (bv.isOldvar()) {
+				// if oldVar occurs this edge might be inductive since
+				// old(g)=g is true
+				return null;
+			}
+			if (bv.isGlobal()) {
+				assert !bv.isOldvar();
+				if (pre.getVars().contains(bv)) {
+					return null;
+				}
+			}
+		}
+
+		// workaround see preHierIndependent()
+		final var call = (ICallAction) act;
+		final UnmodifiableTransFormula locVarAssignTf = call.getLocalVarsAssignment();
+		if (!varsDisjointFromAssignedVars(pre, locVarAssignTf)) {
+			return null;
+		}
+		if (preHierIndependent(post, pre, call.getLocalVarsAssignment(), act.getSucceedingProcedure())) {
+			mStatistics.getSDsCounter().incCa();
+			return Validity.INVALID;
+		}
+		return null;
 	}
 
 	@Override
-	public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate succ) {
-		assert preHier == null;
-		return mHelper.sdecCall(preLin, (ICallAction) act, succ);
+	public Validity sdLazyEc(final IPredicate pre, final IPredicate preHier, final IAction act, final IPredicate post) {
+		assert preHier == null : PRE_HIER_ERROR;
+
+		if (isOrIteFormula(post)) {
+			return sdec(pre, null, act, post);
+		}
+
+		final var call = (ICallAction) act;
+		final UnmodifiableTransFormula locVarAssignTf = call.getLocalVarsAssignment();
+		final boolean argumentsRestrictedByPre = !varsDisjointFromInVars(pre, locVarAssignTf);
+		for (final IProgramVar bv : post.getVars()) {
+			if (bv.isGlobal()) {
+				continue;
+			}
+			if (locVarAssignTf.getAssignedVars().contains(bv)) {
+				if (argumentsRestrictedByPre) {
+					continue;
+				}
+			}
+			mStatistics.getSdLazyCounter().incCa();
+			return Validity.INVALID;
+		}
+		return null;
 	}
 
-	@Override
-	public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
-			final IPredicate succ) {
-		assert preHier == null;
-		return mHelper.sdLazyEcCall(preLin, (ICallAction) act, succ);
-	}
+	private boolean preHierIndependent(final IPredicate pre, final IPredicate hier,
+			final UnmodifiableTransFormula localVarsAssignment, final String calledProcedure) {
+		// TODO: Matthias 7.10.2012 I hoped following would be sufficient.
+		// But this is not sufficient when constant assigned to invar
+		// e.g. pre is x!=0 and call is x_Out=1. Might be solved with
+		// dataflow map.
+		// 8.10.2012 consider also case where inVar is non-modifiable global
+		// which does not occur in hier, but in pre
+		// if (!varSetDisjoint(hier.getVars(), locVarAssignTf.getInVars().keySet())
+		// && !varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
+		// return false;
+		// }
+		// workaround for preceding problem
+		if (!varsDisjointFromAssignedVars(pre, localVarsAssignment)) {
+			return false;
+		}
 
+		// cases where pre and hier share non-modifiable var g, or
+		// g occurs in hier, and old(g) occurs in pre.
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
+
+		for (final IProgramVar bv : pre.getVars()) {
+			if (bv.isGlobal()) {
+				if (bv.isOldvar()) {
+					if (hier.getVars().contains(((IProgramOldVar) bv).getNonOldVar())) {
+						return false;
+					}
+				} else if (!modifiableGlobals.contains(bv) && hier.getVars().contains(bv)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 }

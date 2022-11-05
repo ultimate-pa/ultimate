@@ -39,8 +39,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper {
 
 	ReturnCheckHelper(final IPredicateCoverageChecker coverage, final SdHoareTripleCheckerHelper helper,
 			final IPredicate falsePredicate, final IPredicate truePredicate,
-			final HoareTripleCheckerStatisticsGenerator statistics,
-			final ModifiableGlobalsTable modifiableGlobals) {
+			final HoareTripleCheckerStatisticsGenerator statistics, final ModifiableGlobalsTable modifiableGlobals) {
 		super(coverage, falsePredicate, truePredicate, statistics, modifiableGlobals);
 		mHelper = helper;
 	}
@@ -69,5 +68,4 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper {
 			final IPredicate succ) {
 		return mHelper.sdLazyEcReturn(preLin, preHier, (IReturnAction) act, succ);
 	}
-
 }

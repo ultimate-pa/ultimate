@@ -194,7 +194,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
 			final IPredicate succ) {
 		assert preHier == null : PRE_HIER_ERROR;
-		if (SdHoareTripleCheckerHelper.isOrIteFormula(succ)) {
+		if (isOrIteFormula(succ)) {
 			return sdec(preLin, null, act, succ);
 		}
 		for (final IProgramVar bv : succ.getVars()) {

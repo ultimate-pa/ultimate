@@ -37,6 +37,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -177,6 +180,19 @@ public abstract class SdHoareTripleCheckHelper {
 
 	protected static boolean varsDisjointFromAssignedVars(final IPredicate state, final UnmodifiableTransFormula tf) {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
+	}
+
+	/**
+	 * Returns true if the formula of this predicate is an or-term or an ite-term.
+	 */
+	protected static boolean isOrIteFormula(final IPredicate p) {
+		final Term formula = p.getFormula();
+		if (formula instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) formula;
+			final FunctionSymbol symbol = appTerm.getFunction();
+			return "or".equals(symbol.getName()) || "ite".equals(symbol.getName());
+		}
+		return false;
 	}
 
 }
