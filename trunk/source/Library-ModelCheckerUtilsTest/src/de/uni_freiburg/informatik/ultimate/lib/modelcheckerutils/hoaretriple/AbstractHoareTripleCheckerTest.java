@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.Concurrency
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicCallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -84,6 +85,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public abstract class AbstractHoareTripleCheckerTest {
 
 	private static final String PROCEDURE = AbstractHoareTripleCheckerTest.class.getSimpleName();
+	private static final String CALLER = "caller";
+	private static final String CALLEE = "callee";
 
 	protected IUltimateServiceProvider mServices;
 	protected Script mScript;
@@ -117,6 +120,8 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 		final var modifiable = new HashRelation<String, IProgramNonOldVar>();
 		modifiable.addPair(PROCEDURE, x);
+		modifiable.addPair(CALLER, x);
+		modifiable.addPair(CALLEE, x);
 		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(modifiable);
 
 		final IcfgEdgeFactory icfgEdgeFactory = new IcfgEdgeFactory(new SerialProvider());
@@ -137,6 +142,18 @@ public abstract class AbstractHoareTripleCheckerTest {
 		final IHoareTripleChecker htc = getHtc();
 		final Validity actual =
 				htc.checkInternal(precond, new BasicInternalAction(PROCEDURE, PROCEDURE, act), postcond);
+		Assert.assertEquals("Unexpected validity for " + validity + " Hoare triple:", expected, actual);
+	}
+
+	private void testCall(final Validity validity, final Validity expected, final String pre,
+			final UnmodifiableTransFormula act, final String post) {
+		assert validity == Validity.VALID || validity == Validity.INVALID : "Triple must be either valid or invalid";
+		assert validity == expected || expected == Validity.UNKNOWN : "Inconsistent expected validity";
+
+		final IPredicate precond = pred(pre);
+		final IPredicate postcond = pred(post);
+		final IHoareTripleChecker htc = getHtc();
+		final Validity actual = htc.checkCall(precond, new BasicCallAction(CALLER, CALLEE, act), postcond);
 		Assert.assertEquals("Unexpected validity for " + validity + " Hoare triple:", expected, actual);
 	}
 
@@ -318,11 +335,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
 				PROCEDURE) : "Test requires y to be non-modifiable";
 
-		// Build "assume true" statement
-		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
-		tfb.setFormula(mScript.term("true"));
-		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		final var tf = tfb.finishConstruction(mMgdScript);
+		final var tf = assumeTrue();
 
 		// This Hoare triple is valid because y is not modifiable in the procedure.
 		testInternal(Validity.VALID, nonModifiableOldVarVerdict(), "(= y 42)", tf, "(= |old(y)| 42)");
@@ -336,11 +349,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 	public void nonModifiedOldVar() {
 		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, PROCEDURE) : "Test requires x to be modifiable";
 
-		// Build "assume true" statement
-		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
-		tfb.setFormula(mScript.term("true"));
-		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		final var tf = tfb.finishConstruction(mMgdScript);
+		final var tf = assumeTrue();
 
 		// This Hoare triple is invalid, because x is modifiable in the procedure.
 		testInternal(Validity.INVALID, nonModifiedOldVarVerdict(), "(= x 42)", tf, "(= |old(x)| 42)");
@@ -357,16 +366,68 @@ public abstract class AbstractHoareTripleCheckerTest {
 		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(z,
 				PROCEDURE) : "Test requires z to be non-modifiable";
 
-		// Build "assume true" statement
-		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
-		tfb.setFormula(mScript.term("true"));
-		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		final var tf = tfb.finishConstruction(mMgdScript);
-
+		final var tf = assumeTrue();
 		testInternal(Validity.INVALID, differentNonModifiableOldVarsVerdict(), "(= y 42)", tf, "(= |old(z)| 42)");
 	}
 
 	protected Validity differentNonModifiableOldVarsVerdict() {
 		return Validity.INVALID;
+	}
+
+	@Test
+	public void callNonModifiableOldNonOld() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, CALLEE) : "Test requires y to be non-modifiable";
+
+		final var tf = assumeTrue();
+		testCall(Validity.VALID, callNonModifiableOldNonOldVerdict(), "(= y 0)", tf, "(= |old(y)| 0)");
+	}
+
+	protected Validity callNonModifiableOldNonOldVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void callModifiableOldNonOld() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, CALLEE) : "Test requires x to be modifiable";
+
+		final var tf = assumeTrue();
+		testCall(Validity.VALID, callModifiableOldNonOldVerdict(), "(= x 0)", tf, "(= |old(x)| 0)");
+	}
+
+	protected Validity callModifiableOldNonOldVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void callNonModifiableOld() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, CALLEE) : "Test requires y to be non-modifiable";
+
+		final var tf = assumeTrue();
+		testCall(Validity.VALID, callNonModifiableOldVerdict(), "(= |old(y)| 0)", tf, "(= |old(y)| 0)");
+	}
+
+	protected Validity callNonModifiableOldVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void callModifiableOld() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, CALLER) : "Test requires x to be modifiable";
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, CALLEE) : "Test requires x to be modifiable";
+
+		final var tf = assumeTrue();
+		testCall(Validity.INVALID, callModifiableOldVerdict(), "(= |old(x)| 0)", tf, "(= |old(x)| 0)");
+	}
+
+	protected Validity callModifiableOldVerdict() {
+		return Validity.INVALID;
+	}
+
+	private UnmodifiableTransFormula assumeTrue() {
+		// Build "assume true" statement
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
+		tfb.setFormula(mScript.term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mMgdScript);
 	}
 }
