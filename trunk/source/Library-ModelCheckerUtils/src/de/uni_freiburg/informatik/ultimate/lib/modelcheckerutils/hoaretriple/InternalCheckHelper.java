@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
@@ -77,26 +75,22 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	/**
-	 * If the assigned vars of cb are disjoint from the variables in p the selfloop (p,cb,p) is trivially inductive.
-	 * Returns HTTV.VALID if selfloop is inductive. Returns null if we are not able to determine inductivity selfloop.
+	 * If pre- and postcondition are equal, and the assigned variables of the action are disjoint from the variables in
+	 * the pre/postcondition, the Hoare triple is trivially valid.
 	 */
 	@Override
 	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
 			final IPredicate succ) {
-		assert preHier == null;
+		assert preHier == null : "Unexpected hierarchical precondition for internal action";
 		if (preLin != succ) {
 			return false;
 		}
 
-		final Set<IProgramVar> assignedVars = act.getTransformula().getAssignedVars();
-		final Set<IProgramVar> occVars = preLin.getVars();
-		for (final IProgramVar occVar : occVars) {
-			if (assignedVars.contains(occVar)) {
-				return false;
-			}
+		if (varsDisjointFromAssignedVars(preLin, act.getTransformula())) {
+			mStatistics.getSDsluCounter().incIn();
+			return true;
 		}
-		mStatistics.getSDsluCounter().incIn();
-		return true;
+		return false;
 	}
 
 	/**
@@ -201,5 +195,9 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 			}
 		}
 		return null;
+	}
+
+	protected static boolean varsDisjointFromAssignedVars(final IPredicate state, final UnmodifiableTransFormula tf) {
+		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
 	}
 }
