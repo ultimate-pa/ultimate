@@ -623,6 +623,153 @@ public class PolynomialTest {
 	}
 
 	/**
+	 * We omit inner modulo terms if possible.
+	 */
+	@Test
+	public void mod01() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 3 (mod x 8)) (* 5 (mod y (- 24))) (* 7 (mod z 2))) (- 8))";
+		final String expectedOutputAsString = "(mod (+ (* 3 x) (* 5 y) (* 7 (mod z 2))) 8)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * We apply modulo to all coefficients of a polynomial.
+	 */
+	@Test
+	public void mod02() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 16 x) (* 15 y) (* 7 z) 801) (- 8))";
+		final String expectedOutputAsString = "(mod (+ 1 (* 7 z) (* 7 y)) 8)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * Result may be mod-free.
+	 */
+	@Test
+	public void mod03() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 16 x) (* 32 y) (* 8 z) 801) (- 8))";
+		final String expectedOutputAsString = "1";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * Change of variables affects coefficient
+	 */
+	@Test
+	public void mod04() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 2 x) (* 3 (mod x 16)) 23) (- 8))";
+		final String expectedOutputAsString = "(mod (+ 7 (* 5 x)) 8)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+
+	/**
+	 * Change of variables affects coefficient and make it zero
+	 */
+	@Test
+	public void mod05() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 5 x) (* 3 (mod x 16)) 23) (- 8))";
+		final String expectedOutputAsString = "7";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * We can pull out the GCD.
+	 */
+	@Test
+	public void mod06() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 6 x) (* 20 y) 14) (- 32))";
+		final String expectedOutputAsString = "(* 2 (mod (+ (* 3 x) 7 (* y 10)) 16))";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * Pulling out the CGD allows us to drop inner `mod` applications
+	 */
+	@Test
+	public void mod07() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 6 x) (* 20 (mod y 16)) 14) 32)";
+		final String expectedOutputAsString = "(* 2 (mod (+ (* 3 x) 7 (* y 10)) 16))";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * Pulling out the CGD allows us to drop inner `mod` applications, which allows
+	 * further simplification.
+	 */
+	@Test
+	public void mod08() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		mScript.declareFun("z", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (* 12 x) (* 20 (mod x 16)) 2) 32)";
+		final String expectedOutputAsString = "2";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * Divison by zero can't be simplified
+	 */
+	@Test
+	public void mod09() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		final String inputAsString = "(mod 0 0)";
+		final String expectedOutputAsString = "(mod 0 0)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
+	 * Take absolut value of divisor.
+	 */
+	@Test
+	public void mod10() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		final String inputAsString = "(mod x (- 7))";
+		final String expectedOutputAsString = "(mod x 7)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
+	/**
 	 * Test whether transformed input is syntactically equivalent to expected
 	 * output.
 	 */

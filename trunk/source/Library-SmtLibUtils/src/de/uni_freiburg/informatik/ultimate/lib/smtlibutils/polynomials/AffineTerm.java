@@ -152,12 +152,6 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
 
-	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
-			final BigInteger divident) {
-		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
-		return PolynomialTermUtils.applyModuloToAllCoefficients(affineTerm, divident, constructor);
-	}
-
 	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
 		return mAbstractVariable2Coefficient.entrySet().stream()

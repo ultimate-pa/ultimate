@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -210,12 +209,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	@Override
 	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Monomial abstractVariable, final Rational coeff) {
 		return abstractVariable.timesCoefficientToTerm(script, coeff);
-	}
-
-	public static PolynomialTerm applyModuloToAllCoefficients(final PolynomialTerm polynomialTerm,
-			final BigInteger divident) {
-		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
-		return PolynomialTermUtils.applyModuloToAllCoefficients(polynomialTerm, divident, constructor);
 	}
 
 	@Override

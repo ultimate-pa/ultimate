@@ -119,7 +119,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private static boolean isPolynomialFunctionSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
 				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul")
-				|| funName.equals("div"));
+				|| funName.equals("div") || funName.equals("mod"));
 	}
 
 	@Override
@@ -182,6 +182,11 @@ public class PolynomialTermTransformer extends TermTransformer {
 				throw new AssertionError("Division needs at least one argument");
 			}
 			return polynomialArgs[0].div(mScript, Arrays.copyOfRange(polynomialArgs, 1, polynomialArgs.length));
+		case "mod":
+			if (polynomialArgs.length > 2) {
+				throw new AssertionError("Modulo needs exactly two arguments");
+			}
+			return polynomialArgs[0].mod(mScript, polynomialArgs[1]);
 		default:
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}

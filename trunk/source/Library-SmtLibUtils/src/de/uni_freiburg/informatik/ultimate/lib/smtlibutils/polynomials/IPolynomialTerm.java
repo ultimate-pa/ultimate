@@ -151,4 +151,6 @@ public interface IPolynomialTerm {
 
 	IPolynomialTerm div(final Script script, final IPolynomialTerm... divisors);
 
+	IPolynomialTerm mod(final Script script, final IPolynomialTerm divisor);
+
 }

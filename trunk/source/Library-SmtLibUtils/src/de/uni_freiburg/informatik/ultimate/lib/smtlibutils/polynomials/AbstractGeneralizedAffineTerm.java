@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -368,7 +369,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final AbstractGeneralizedAffineTerm other = (AbstractGeneralizedAffineTerm) obj;
+		final AbstractGeneralizedAffineTerm<?> other = (AbstractGeneralizedAffineTerm<?>) obj;
 		if (mConstant == null) {
 			if (other.mConstant != null) {
 				return false;
@@ -580,6 +581,116 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 	private static Rational toRational(final BigInteger bi) {
 		return Rational.valueOf(bi, BigInteger.ONE);
+	}
+
+	@Override
+	public IPolynomialTerm mod(final Script script, final IPolynomialTerm divisor) {
+		if (divisor.isConstant()) {
+			return mod(script, divisor.getConstant().numerator());
+		} else {
+			return constructNewSingleVariableTerm(script.term("mod", this.toTerm(script), divisor.toTerm(script)));
+		}
+	}
+
+	public IPolynomialTerm mod(final Script script, final BigInteger divisor) {
+		if (divisor.equals(BigInteger.ZERO)) {
+			final Term resultAsTerm = script.term("mod", this.toTerm(script),
+					SmtUtils.constructIntegerValue(script, getSort(), divisor));
+			return constructNewSingleVariableTerm(resultAsTerm);
+		}
+		final Map<AVAR, Rational> preprocessedMap = modPreprocessMap(script, divisor.abs());
+		final Rational preprocessedConstant = SmtUtils
+				.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(getConstant()), divisor.abs()));
+		final AbstractGeneralizedAffineTerm<?> intermediateResult = constructNew(getSort(), preprocessedConstant,
+				preprocessedMap);
+		if (preprocessedMap.isEmpty()) {
+			// Result is a constant. Effect of the modulo was already taken into account
+			return intermediateResult;
+		}
+		final Rational gcd = computeGcdOfValues(preprocessedMap).gcd(preprocessedConstant)
+				.gcd(Rational.valueOf(divisor, BigInteger.ONE));
+		assert !gcd.isNegative() && !gcd.equals(Rational.ZERO);
+		if (gcd.equals(Rational.ONE)) {
+			// No further simplification possible. Return AffineTerm whose single variable
+			// is
+			// the modulo term.
+			final Term intermediateResultAsTerm = script.term("mod", intermediateResult.toTerm(script),
+					SmtUtils.constructIntegerValue(script, getSort(), divisor.abs()));
+			return constructNewSingleVariableTerm(intermediateResultAsTerm);
+		} else {
+			// GCD is > 1. We pull out the GCD (divide coeff+const and divisor by GCD,
+			// multiply result by GCD).
+			final AbstractGeneralizedAffineTerm<?> quotientPoly = (AbstractGeneralizedAffineTerm<?>) intermediateResult
+					.divInvertible(gcd);
+			final BigInteger quotientDivisor = divisor.abs().divide(gcd.numerator());
+			// Call method recursively because the new divisor might enable further
+			// simplifications in the polynomial
+			final IPolynomialTerm recResult = quotientPoly.mod(script, quotientDivisor);
+			return recResult.mul(gcd);
+		}
+	}
+
+	/**
+	 * Apply two transformations the variable map of an affine term.
+	 * <li>If the variable has the form `(mod t k)` and k is divisible by `divisor`
+	 * we replace the variable by `t`
+	 * <li>We apply modulo to all coefficients.
+	 */
+	private Map<AVAR, Rational> modPreprocessMap(final Script script, final BigInteger divisor) {
+		assert divisor.compareTo(BigInteger.ZERO) > 0 : "Divisor must be positive";
+		final SparseMapBuilder<AVAR, Rational> smb = new SparseMapBuilder<>();
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			final Rational newCoefficient = SmtUtils
+					.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divisor));
+			if (newCoefficient.equals(Rational.ZERO)) {
+				continue;
+			}
+			final AVAR newAvar = constructAbstractVarForModulo(script, entry.getKey(), divisor);
+			// Changing a variable may require a merge of two map entries via addition of
+			// the coefficients
+			if (smb.containsKey(newAvar)) {
+				final Rational oldEntry = smb.get(newAvar);
+				final Rational sumTmp = oldEntry.add(entry.getValue());
+				// An addition of coefficients requires that we apply the modulo operation
+				// again.
+				final Rational sum = SmtUtils.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(sumTmp), divisor));
+				if (sum.equals(Rational.ZERO)) {
+					smb.remove(newAvar);
+				} else {
+					smb.put(newAvar, sum);
+				}
+			} else {
+				smb.put(newAvar, newCoefficient);
+			}
+		}
+		return smb.getBuiltMap();
+	}
+
+	/**
+	 * Prepare abstract variable for an application of `mod`. In case the abstract
+	 * variable is itself a `mod` term and its divisor is divisible by the divisor
+	 * of our `mod` application, we can omit the inner `mod`. <br>
+	 * E.g., `(mod (mod x 32) 4)` is (mod x 4).
+	 */
+	private AVAR constructAbstractVarForModulo(final Script script, final AVAR abstractVar, final BigInteger divisor) {
+		final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(abstractVariableToTerm(script, abstractVar),
+				"mod");
+		if (appTerm == null) {
+			return abstractVar;
+		}
+		assert appTerm.getParameters().length == 2;
+		final Term innerDivisorTerm = appTerm.getParameters()[1];
+		final Rational innerDivisorRational = SmtUtils.tryToConvertToLiteral(innerDivisorTerm);
+		if (innerDivisorRational == null) {
+			return abstractVar;
+		}
+		if (innerDivisorRational.div(Rational.valueOf(divisor, BigInteger.ONE)).isIntegral()) {
+			// inner divisor is divisible by outer divisor
+			final Term divident = appTerm.getParameters()[0];
+			return constructAbstractVar(divident);
+		} else {
+			return abstractVar;
+		}
 	}
 
 	@Override
@@ -1105,8 +1216,13 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	 */
 	@Override
 	public Rational computeGcdOfCoefficients() {
+		final Map<?, Rational> map = mAbstractVariable2Coefficient;
+		return computeGcdOfValues(map);
+	}
+
+	private static Rational computeGcdOfValues(final Map<?, Rational> map) {
 		Rational gcd = Rational.ZERO;
-		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+		for (final Entry<?, Rational> entry : map.entrySet()) {
 			gcd = gcd.gcd(entry.getValue());
 		}
 		return gcd;

@@ -80,35 +80,6 @@ public class PolynomialTermUtils {
 	}
 
 	/**
-	 * Generalized method for applying Modulo to the coefficients and the constant
-	 * of {@link AffineTerm}s and {@link PolynomialTerm}s. The type parameter T
-	 * refers either to {@link AffineTerm} or {@link PolynomialTerm}. The type
-	 * parameter MNL is a {@link Term} for {@link AffineTerm}s and a
-	 * {@link Monomial} for {@link PolynomialTerm}s.
-	 *
-	 * @param term2map
-	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
-	 *            map.
-	 * @param constructor
-	 *            Methods that constructs the term of type T.
-	 */
-	public static <T extends AbstractGeneralizedAffineTerm<MNL>, MNL> T applyModuloToAllCoefficients(
-			final T agAffineTerm, final BigInteger divident, final GeneralizedConstructor<MNL, T> constructor) {
-		assert SmtSortUtils.isIntSort(agAffineTerm.getSort());
-		final SparseMapBuilder<MNL, Rational> mapBuilder = new SparseMapBuilder<>();
-		Rational newCoeff;
-		for (final Entry<MNL, Rational> entry : agAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
-			newCoeff = SmtUtils.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
-			if (newCoeff != Rational.ZERO) {
-				mapBuilder.put(entry.getKey(), newCoeff);
-			}
-		}
-		final Rational constant = SmtUtils
-				.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(agAffineTerm.getConstant()), divident));
-		return constructor.apply(agAffineTerm.getSort(), constant, mapBuilder.getBuiltMap());
-	}
-
-	/**
 	 * It may occur, that the PolynomialTerm-class is used to represent a term, that
 	 * could be represented by the AffineTerm-class. Hence, this method checks,
 	 * whether the term given by the map could be represented by the

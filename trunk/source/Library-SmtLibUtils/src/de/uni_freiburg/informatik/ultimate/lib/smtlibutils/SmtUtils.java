@@ -89,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -1812,40 +1811,20 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns a possibly simplified version of the Term (mod dividend divisor). If dividend and divisor are both
-	 * literals the returned Term is a literal which is equivalent to the result of the operation. If only the divisor
-	 * is a literal we apply modulo to all coefficients of the dividend (helpful simplification in case where
-	 * coefficient becomes zero).
+	 * Returns a possibly simplified version of the Term (mod dividend divisor). See
+	 * {@link PolynomialTest} for examples.
 	 */
 	public static Term mod(final Script script, final Term divident, final Term divisor) {
-		final AffineTerm affineDivident = (AffineTerm) new AffineTermTransformer(script).transform(divident);
-		final AffineTerm affineDivisor = (AffineTerm) new AffineTermTransformer(script).transform(divisor);
-		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
+		final Rational divisorAsRational = tryToConvertToLiteral(divisor);
+		if (divisorAsRational == null) {
+			// cannot simplify
 			return script.term("mod", divident, divisor);
+		} else {
+			assert divisorAsRational.isIntegral();
+			final AbstractGeneralizedAffineTerm<?> agat = (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer
+					.convert(script, divident);
+			return agat.mod(script, divisorAsRational.numerator()).toTerm(script);
 		}
-		if (affineDivisor.isZero()) {
-			// pass the problem how to deal with division by zero to the
-			// subsequent analysis
-			return script.term("mod", divident, divisor);
-		}
-		if (affineDivisor.isConstant()) {
-			// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
-			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant()).abs();
-			if (affineDivident.isConstant()) {
-				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
-				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
-				return constructIntValue(script, modulus);
-			}
-			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
-			if (simplifiedNestedModulo != null) {
-				return simplifiedNestedModulo;
-			}
-			final AffineTerm moduloApplied =
-					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
-			return script.term("mod", moduloApplied.toTerm(script),
-					affineDivisor.getConstant().abs().toTerm(affineDivisor.getSort()));
-		}
-		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
 	}
 
 	/**
