@@ -1,0 +1,97 @@
+package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
+
+import java.util.Collection;
+
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
+
+/**
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
+public class Svcomp23ConcurrencySpeedBenchmarks extends AbstractTraceAbstractionTestSuite {
+
+	private static final boolean USE_SAFE_BENCHMARKS = true;
+	private static final boolean USE_UNSAFE_BENCHMARKS = true;
+	private static final int TIMEOUT_IN_SECONDS = 60;
+
+	// @formatter:off
+	private static final String[] BENCHMARKS_UNSAFE_32BIT = {
+			"examples/svcomp/goblint-regression/13-privatized_19-publish-precision_unknown_1_pos.i",
+			"examples/svcomp/ldv-races/race-2_3-container_of.i",
+			"examples/svcomp/pthread-atomic/qrcu-2.i",
+			"examples/svcomp/pthread-lit/fkp2013_variant-2.i",
+			"examples/svcomp/pthread-wmm/rfi005.i",
+			"examples/svcomp/pthread/lazy01.i",
+	};
+
+	private static final String[] BENCHMARKS_SAFE_32BIT = {
+			"examples/svcomp/goblint-regression/13-privatized_45-traces-per-global-and-current-lock-mine-incomparable_true.i",
+			"examples/svcomp/ldv-races/race-1_1-join.i",
+			"examples/svcomp/pthread-atomic/dekker.i",
+			"examples/svcomp/pthread-divine/condvar.i",
+			"examples/svcomp/pthread-ext/17_szymanski.i",
+			"examples/svcomp/pthread-lit/qw2004-1.i",
+			"examples/svcomp/pthread-wmm/safe020_pso.oepc_pso.opt_tso.oepc_tso.opt.i",
+			"examples/svcomp/pthread/singleton_with-uninit-problems.i",
+			"examples/svcomp/weaver/parallel-bluetooth.wvr.c",
+	};
+
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
+		return new SvcompReachTestResultDecider(urd, false);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return TIMEOUT_IN_SECONDS * 1000;
+	}
+
+	/**
+	 * List of setting files, path defined relative to the folder
+	 * "trunk/examples/settings/",
+	 */
+	private static final String[] SETTINGS_32BIT = {
+		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
+		"default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
+	};
+
+	private static final String[] TOOLCHAINS = {
+		"AutomizerCInline.xml",
+		"AutomizerC.xml",
+	};
+	// @formatter:on
+
+	@Override
+	public Collection<UltimateTestCase> createTestCases() {
+		if (USE_SAFE_BENCHMARKS) {
+			for (final String file : BENCHMARKS_SAFE_32BIT) {
+				for (final String setting : SETTINGS_32BIT) {
+					for (final String toolchain : TOOLCHAINS) {
+						addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, setting, toolchain,
+								getTimeout()));
+					}
+				}
+			}
+		}
+		if (USE_UNSAFE_BENCHMARKS) {
+			for (final String file : BENCHMARKS_UNSAFE_32BIT) {
+				for (final String setting : SETTINGS_32BIT) {
+					for (final String toolchain : TOOLCHAINS) {
+						addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(file, setting, toolchain,
+								getTimeout()));
+					}
+				}
+			}
+		}
+		return super.createTestCases();
+	}
+
+}
