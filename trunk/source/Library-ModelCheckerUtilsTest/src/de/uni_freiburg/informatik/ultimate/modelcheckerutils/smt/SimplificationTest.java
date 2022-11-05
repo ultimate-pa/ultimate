@@ -584,7 +584,7 @@ public class SimplificationTest {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "b"),};
 		final String formulaAsString = "(= (mod (let ((.cse0 (mod b 4294967296))) (mod (mod (+ b .cse0) 4294967296) .cse0)) 4294967296) 0)";
-		final String simplified = "true";
+		final String simplified = null;
 		runSimplificationTest(funDecls, formulaAsString, simplified, mServices, mLogger, mMgdScript);
 	}
 
