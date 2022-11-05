@@ -69,55 +69,37 @@ public abstract class SdHoareTripleCheckHelper {
 		}
 
 		boolean unknownCoverage = false;
+
 		// check if preLin is equivalent to false
-		switch (mCoverage.isCovered(preLin, mFalsePredicate)) {
-		case INVALID:
-			break;
-		case NOT_CHECKED:
-			throw new AssertionError("unchecked predicate");
-		case UNKNOWN:
+		final Boolean isPreFalse = isCovered(preLin, mFalsePredicate);
+		if (isPreFalse == null) {
 			unknownCoverage = true;
-			break;
-		case VALID:
+		} else if (isPreFalse) {
 			return Validity.VALID;
-		default:
-			throw new AssertionError("unknown case");
 		}
 
 		// check if preHier is equivalent to false
 		if (preHier != null) {
-			switch (mCoverage.isCovered(preHier, mFalsePredicate)) {
-			case INVALID:
-				break;
-			case NOT_CHECKED:
-				throw new AssertionError("unchecked predicate");
-			case UNKNOWN:
+			final Boolean isPreHierFalse = isCovered(preHier, mFalsePredicate);
+			if (isPreHierFalse == null) {
 				unknownCoverage = true;
-				break;
-			case VALID:
+			} else if (isPreHierFalse) {
 				return Validity.VALID;
-			default:
-				throw new AssertionError("unknown case");
 			}
 		}
 
 		// check if succ is equivalent to true
-		switch (mCoverage.isCovered(mTruePredicate, succ)) {
-		case INVALID:
-			break;
-		case NOT_CHECKED:
-			throw new AssertionError("unchecked predicate");
-		case UNKNOWN:
+		final Boolean isSuccTrue = isCovered(mTruePredicate, succ);
+		if (isSuccTrue == null) {
 			unknownCoverage = true;
-			break;
-		case VALID:
+		} else if (isSuccTrue) {
 			return Validity.VALID;
-		default:
-			throw new AssertionError("unknown case");
 		}
+
 		if (unknownCoverage) {
 			return Validity.UNKNOWN;
 		}
+
 		final boolean isInductiveSelfloop = isInductiveSefloop(preLin, preHier, act, succ);
 		if (isInductiveSelfloop) {
 			return Validity.VALID;
@@ -163,6 +145,21 @@ public abstract class SdHoareTripleCheckHelper {
 			}
 		}
 		return Validity.UNKNOWN;
+	}
+
+	private Boolean isCovered(final IPredicate lhs, final IPredicate rhs) {
+		switch (mCoverage.isCovered(lhs, rhs)) {
+		case INVALID:
+			return false;
+		case NOT_CHECKED:
+			throw new AssertionError("unchecked predicate");
+		case UNKNOWN:
+			return null;
+		case VALID:
+			return true;
+		default:
+			throw new AssertionError("unknown case");
+		}
 	}
 
 	public abstract Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act);
