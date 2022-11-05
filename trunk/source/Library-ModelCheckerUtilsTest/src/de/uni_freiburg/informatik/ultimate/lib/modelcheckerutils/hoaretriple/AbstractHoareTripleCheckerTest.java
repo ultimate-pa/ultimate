@@ -93,8 +93,8 @@ public abstract class AbstractHoareTripleCheckerTest {
 	protected CfgSmtToolkit mCsToolkit;
 	protected final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 
-	private IProgramConst c;
-	private IProgramNonOldVar x, y;
+	private IProgramConst c, d;
+	private IProgramNonOldVar x, y, z;
 
 	protected abstract IHoareTripleChecker getHtc();
 
@@ -107,8 +107,10 @@ public abstract class AbstractHoareTripleCheckerTest {
 		mScript.setLogic(Logics.ALL);
 
 		c = constructConst("c", SmtSortUtils.getIntSort(mScript));
+		d = constructConst("d", SmtSortUtils.getIntSort(mScript));
 		x = constructVar("x", SmtSortUtils.getIntSort(mScript));
 		y = constructVar("y", SmtSortUtils.getIntSort(mScript));
+		z = constructVar("z", SmtSortUtils.getIntSort(mScript));
 		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
 		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -193,32 +195,6 @@ public abstract class AbstractHoareTripleCheckerTest {
 	 */
 
 	@Test
-	public void sdHtcTest01() {
-		// From
-		// Rerun
-		// de.uni_freiburg.informatik.ultimate.regressiontest.generic.TerminationRegressionTestSuite.I_lassos_regression_SyntaxSupportConst02.bpl
-		// S_lassos_regression_BuchiAutomizerBpl-nonlinear.epf T_lassos_regression_BuchiAutomizerBpl.xml
-		// I_lassos_regression_SyntaxSupportConst02.bpl S_lassos_regression_BuchiAutomizerBpl-nonlinear.epf
-		// T_lassos_regression_BuchiAutomizerBpl.xml(de.uni_freiburg.informatik.ultimate.regressiontest.generic.TerminationRegressionTestSuite)
-		// de.uni_freiburg.informatik.ultimate.test.UltimateTestFailureException: ExpectedResult: TERMINATING
-		// UltimateResult: EXCEPTION_OR_ERROR [de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer:
-		// AssertionError: HoareTripleChecker results differ between SdHoareTripleChecker (result: INVALID) and
-		// MonolithicHoareTripleChecker (result: VALID):
-		// de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker$ReviewedProtectedHtc.createAssertionError(ChainingHoareTripleChecker.java:367)]
-		//
-		// at de.uni_freiburg.informatik.ultimate.test.test(UltimateTestCase.java)
-		//
-		//
-		//
-
-		// {34#(and (>= oldRank0 (+ (* 2 x) 1)) (>= (+ (- 1) c) 0))}
-		// assume x >= 0;x := x - c;
-		// {36#(and (or unseeded (and (>= oldRank0 0) (> oldRank0 (+ (* 2 x) 1)))) (>= (+ (- 1) c) 0))}
-
-		new SdHoareTripleChecker(mCsToolkit, mPredicateUnifier);
-	}
-
-	@Test
 	public void disjointVarsButConst() {
 		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), false, Set.of(c), true, null, true);
 		tfb.setFormula(parseWithInOutVariables("(>= c 0)"));
@@ -242,6 +218,32 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	protected Validity disjointVarsButConstToFalseVerdict() {
 		return Validity.VALID;
+	}
+
+	@Test
+	public void constsButDisjoint() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), false, Set.of(d), true, null, true);
+		tfb.setFormula(parseWithInOutVariables("(>= d 0)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.INVALID, constsButDisjointVerdict(), "true", tf, "(>= c 0)");
+	}
+
+	protected Validity constsButDisjointVerdict() {
+		return Validity.INVALID;
+	}
+
+	@Test
+	public void constsButDisjointToFalse() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), false, Set.of(d), true, null, true);
+		tfb.setFormula(parseWithInOutVariables("(>= d 0)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.INVALID, constsButDisjointToFalseVerdict(), "(<= c 0)", tf, "false");
+	}
+
+	protected Validity constsButDisjointToFalseVerdict() {
+		return Validity.INVALID;
 	}
 
 	@Test
@@ -269,6 +271,32 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	protected Validity preImplPostButAssignsVerdict() {
 		return Validity.INVALID;
+	}
+
+	@Test
+	public void preImplPostAssignPreNotPost() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(x, outVar(x)), false, Set.of(), true, null, true);
+		tfb.setFormula(parseWithInOutVariables("(= x_out 3)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.VALID, preImplPostAssignPreNotPostVerdict(), "(and (= x 0) (= x y))", tf, "(<= y 0)");
+	}
+
+	protected Validity preImplPostAssignPreNotPostVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void preImplPostAssignPostNotPre() {
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(x, outVar(x)), false, Set.of(), true, null, true);
+		tfb.setFormula(parseWithInOutVariables("(= x_out 3)"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+		testInternal(Validity.VALID, preImplPostAssignPostNotPreVerdict(), "(= y 0)", tf, "(or (<= y 0) (= x 0))");
+	}
+
+	protected Validity preImplPostAssignPostNotPreVerdict() {
+		return Validity.VALID;
 	}
 
 	@Test
@@ -319,6 +347,27 @@ public abstract class AbstractHoareTripleCheckerTest {
 	}
 
 	protected Validity nonModifiedOldVarVerdict() {
+		return Validity.INVALID;
+	}
+
+	@Test
+	public void differentNonModifiableOldVars() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
+				PROCEDURE) : "Test requires y to be non-modifiable";
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(z,
+				PROCEDURE) : "Test requires z to be non-modifiable";
+
+		// Build "assume true" statement
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
+		tfb.setFormula(mScript.term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		final var tf = tfb.finishConstruction(mMgdScript);
+
+		// This Hoare triple is valid because y is not modifiable in the procedure.
+		testInternal(Validity.INVALID, differentNonModifiableOldVarsVerdict(), "(= y 42)", tf, "(= |old(z)| 42)");
+	}
+
+	protected Validity differentNonModifiableOldVarsVerdict() {
 		return Validity.INVALID;
 	}
 }
