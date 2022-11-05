@@ -363,7 +363,6 @@ public abstract class AbstractHoareTripleCheckerTest {
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		final var tf = tfb.finishConstruction(mMgdScript);
 
-		// This Hoare triple is valid because y is not modifiable in the procedure.
 		testInternal(Validity.INVALID, differentNonModifiableOldVarsVerdict(), "(= y 42)", tf, "(= |old(z)| 42)");
 	}
 
