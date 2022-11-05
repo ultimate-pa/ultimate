@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -38,8 +39,8 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 
 	CallCheckHelper(final IPredicateCoverageChecker coverage, final SdHoareTripleCheckerHelper helper,
 			final IPredicate falsePredicate, final IPredicate truePredicate,
-			final HoareTripleCheckerStatisticsGenerator statistics) {
-		super(coverage, falsePredicate, truePredicate, statistics);
+			final HoareTripleCheckerStatisticsGenerator statistics, final ModifiableGlobalsTable modifiableGlobals) {
+		super(coverage, falsePredicate, truePredicate, statistics, modifiableGlobals);
 		mHelper = helper;
 	}
 

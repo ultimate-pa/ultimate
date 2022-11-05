@@ -27,48 +27,59 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * Implements simple dataflow-based Hoare triple checks for internal actions.
+ *
+ * This class is only meant for internal usage by {@link SdHoareTripleChecker}.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 class InternalCheckHelper extends SdHoareTripleCheckHelper {
+	private static final String PRE_HIER_ERROR = "Unexpected hierarchical precondition for internal action";
+
 	InternalCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
-			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics) {
-		super(coverage, falsePredicate, truePredicate, statistics);
+			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics,
+			final ModifiableGlobalsTable modifiableGlobals) {
+		super(coverage, falsePredicate, truePredicate, statistics, modifiableGlobals);
 	}
 
 	/**
-	 * Idea: If the formula of the code block is satisfiable, the predecessor is satisfiable and the vars of predecessor
-	 * are disjoint from the inVars of the code block, then a transition to false is not inductive. Idea with UNKNOWN:
-	 * if the solver was unable to decide feasibility of cb, the predecessor is satisfiable and the vars of predecessor
-	 * are disjoint from the inVars of the code block, then the solver will be unable to show that a transition to false
-	 * is inductive.
+	 * This method handles 2 cases of Hoare triples where the postcondition is "false":
 	 *
-	 * FIXME: Check for precondition false, not for precondition true.
+	 * 1. If the action is infeasible, the Hoare triple is valid.
+	 *
+	 * 2. If the action is feasible, and does not constrain any variables or constants mentioned in pre, then the Hoare
+	 * triple is invalid.
 	 */
 	@Override
-	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
-		assert preHier == null;
-		final Infeasibility infeasiblity = act.getTransformula().isInfeasible();
-		if (infeasiblity == Infeasibility.UNPROVEABLE) {
-			if (varsDisjointFromInVars(preLin, act.getTransformula())
-					&& act.getTransformula().getNonTheoryConsts().isEmpty()) {
+	public Validity sdecToFalse(final IPredicate pre, final IPredicate preHier, final IAction act) {
+		assert preHier == null : PRE_HIER_ERROR;
+		final var tf = act.getTransformula();
+		switch (tf.isInfeasible()) {
+		case INFEASIBLE:
+			return Validity.VALID;
+		case UNPROVEABLE:
+			// TODO We could instead check if tf has any constants in common with pre.
+			// However, this requires IAbstractPredicate::getConstants to be supported.
+			if (varsDisjointFromInVars(pre, tf) && tf.getNonTheoryConsts().isEmpty()) {
 				mStatistics.getSDtfsCounter().incIn();
 				return Validity.INVALID;
 			}
 			return null;
-		}
-		if (infeasiblity == Infeasibility.INFEASIBLE) {
-			return Validity.VALID;
-		}
-		if (infeasiblity == Infeasibility.NOT_DETERMINED) {
+		case NOT_DETERMINED:
 			return null;
 		}
 		throw new IllegalArgumentException();
@@ -81,7 +92,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	@Override
 	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
 			final IPredicate succ) {
-		assert preHier == null : "Unexpected hierarchical precondition for internal action";
+		assert preHier == null : PRE_HIER_ERROR;
 		if (preLin != succ) {
 			return false;
 		}
@@ -94,36 +105,46 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	/**
-	 * FIXME: Mention assumptions. Idea: If
-	 * <ul>
-	 * <li>the formula of the code block is satisfiable,
-	 * <li>the predecessor is satisfiable,
-	 * <li>the successor is not unsatisfiable,
-	 * <li>the variables of the predecessor are disjoint from the invars of the code block, and
-	 * <li>the variables of the successor are disjoint from the outvars of the code block, from the invars of the code
-	 * block and from the vars of the predecessor,
-	 * </ul>
-	 * then a transition (pre, act, post) is not inductive.
+	 * This method essentially handles 2 cases:
 	 *
-	 * FIXME: Check for preconditions, postcondition?
+	 * 1. If pre implies post, and no relevant variables are modified by the action, then the Hoare triple is valid.
+	 *
+	 * 2. If pre does not imply post, pre and post do not constrain the variables and constants read or assigned by the
+	 * action, and the action is feasible, then the Hoare triple is invalid.
+	 *
+	 * The method assumes that the given action is not marked as infeasible.
+	 *
+	 * {@inheritDoc}
 	 */
 	@Override
-	public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate succ) {
-		assert preHier == null;
+	public Validity sdec(final IPredicate pre, final IPredicate preHier, final IAction act, final IPredicate post) {
+		assert preHier == null : PRE_HIER_ERROR;
 
 		final UnmodifiableTransFormula tf = act.getTransformula();
 
-		// If pre implies post, and act does not modify any variable in pre, then the Hoare triple is valid.
-		if (mCoverage.isCovered(preLin, succ) == Validity.VALID
-				&& DataStructureUtils.haveEmptyIntersection(preLin.getVars(), tf.getAssignedVars())) {
-			mStatistics.getSDsluCounter().incIn();
-			return Validity.VALID;
+		// TODO In the presence of axioms, we have to check (pre /\ axiom |= post).
+		final Validity preImpliesPost = mCoverage.isCovered(pre, post);
+		switch (preImpliesPost) {
+		case VALID:
+			// If pre implies post, and act does not modify any variable in pre, then the Hoare triple is valid.
+			// Similarly, if act does not modify any variable in post, the Hoare triple is also valid.
+			if (varsDisjointFromAssignedVars(pre, tf) || varsDisjointFromAssignedVars(post, tf)) {
+				mStatistics.getSDsluCounter().incIn();
+				return Validity.VALID;
+			}
+			return null;
+		case INVALID:
+			// continue below
+			break;
+		case UNKNOWN:
+		case NOT_CHECKED:
+			return null;
+		default:
+			throw new AssertionError("illegal value");
 		}
 
-		// TODO Why no check for pre and outVars?
-		if (DataStructureUtils.haveNonEmptyIntersection(preLin.getVars(), tf.getInVars().keySet())
-				|| DataStructureUtils.haveNonEmptyIntersection(succ.getVars(), tf.getInVars().keySet())
-				|| DataStructureUtils.haveNonEmptyIntersection(succ.getVars(), tf.getOutVars().keySet())) {
+		if (!varsDisjointFromInVars(pre, tf) || !varsDisjointFromInVars(post, tf)
+				|| !varsDisjointFromAssignedVars(post, tf)) {
 			return null;
 		}
 
@@ -133,41 +154,30 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 			return null;
 		}
 
-		// Now, we know that the variables of pre and post are both disjoint from the variables of act, and act does not
-		// constrain the value of any program constants.
-		// Hence the Hoare triple is valid iff pre implies post.
-		final Validity sat = mCoverage.isCovered(preLin, succ);
-		if (sat == Validity.VALID) {
-			mStatistics.getSDsluCounter().incIn();
-			return Validity.VALID;
-		}
-		if (sat == Validity.UNKNOWN) {
+		// We need some special handling for non-modifiable global variables:
+		// If y is not modifiable, a Hoare triple like {y=0} assume true {old(y)=0} is considered valid.
+		final String proc = act.getPrecedingProcedure();
+		if (!proc.equals(act.getSucceedingProcedure())) {
+			assert act instanceof IIcfgForkTransitionThreadOther<?>
+					|| act instanceof IIcfgJoinTransitionThreadOther<?> : "internal statement must not change procedure";
+			// Unclear what we can do for fork and join statements.
 			return null;
 		}
-		if (sat == Validity.NOT_CHECKED) {
+		if (containsConflictingNonModifiableOldVars(proc, pre, post)) {
 			return null;
 		}
-		if (sat == Validity.INVALID) {
-			final String proc = act.getPrecedingProcedure();
-			assert proc.equals(act.getSucceedingProcedure()) || act instanceof IcfgForkThreadOtherTransition
-					|| act instanceof IcfgJoinThreadOtherTransition : "internal statement must not change procedure";
 
-			// TODO Commented out per discussion with Matthias. Run tests to see effects, then delete.
-			// if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(preLin, proc)
-			// || mModifiableGlobalVariableManager.containsNonModifiableOldVars(succ, proc)) {
-			// return null;
-			// }
-			// // continue and return Validity.INVALID
-		}
-
-		mStatistics.getSDsCounter().incIn();
+		// We know that the variables of pre and post are both disjoint from the variables of act, and act does not
+		// constrain the value of any program constants. Thus, if act is feasible, the Hoare triple must be invalid.
+		// TODO In the presence of axioms, we need feasibility modulo the axioms.
 		switch (act.getTransformula().isInfeasible()) {
 		case INFEASIBLE:
 			throw new IllegalArgumentException("case should have been handled before");
 		case NOT_DETERMINED:
 			return null;
 		case UNPROVEABLE:
-			// FIXME: only invalid if feasibility of transformula proven
+			// FIXME only invalid if feasibility of transformula proven
+			mStatistics.getSDsCounter().incIn();
 			return Validity.INVALID;
 		default:
 			throw new AssertionError("illegal value");
@@ -179,10 +189,11 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	 * does (in NNF) not contain a disjunction and contains some variable that does not occur in the antecedent the
 	 * implication does not hold very often.
 	 */
+	@Deprecated
 	@Override
 	public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
 			final IPredicate succ) {
-		assert preHier == null;
+		assert preHier == null : PRE_HIER_ERROR;
 		if (SdHoareTripleCheckerHelper.isOrIteFormula(succ)) {
 			return sdec(preLin, null, act, succ);
 		}
@@ -197,7 +208,23 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 		return null;
 	}
 
-	protected static boolean varsDisjointFromAssignedVars(final IPredicate state, final UnmodifiableTransFormula tf) {
-		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
+	// Checks if one predicate contains a non-modifiable global variable x and the other contains old(x).
+	private boolean containsConflictingNonModifiableOldVars(final String proc, final IPredicate p1,
+			final IPredicate p2) {
+		for (final var pv : p1.getVars()) {
+			if (pv instanceof IProgramOldVar) {
+				final var pnov = ((IProgramOldVar) pv).getNonOldVar();
+				if (!mModifiableGlobalVariableManager.isModifiable(pnov, proc) && p2.getVars().contains(pnov)) {
+					return true;
+				}
+			} else if (pv instanceof IProgramNonOldVar) {
+				final var pnov = (IProgramNonOldVar) pv;
+				if (!mModifiableGlobalVariableManager.isModifiable(pnov, proc)
+						&& p2.getVars().contains(pnov.getOldVar())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

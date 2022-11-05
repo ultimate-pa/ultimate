@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+@Deprecated
 public class SdHoareTripleCheckerHelper {
 
 	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;

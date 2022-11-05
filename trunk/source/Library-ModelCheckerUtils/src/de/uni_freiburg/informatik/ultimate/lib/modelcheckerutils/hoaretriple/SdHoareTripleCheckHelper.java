@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -44,23 +45,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * hierarchical state) and use null as hierarchical state for call and internal.
  */
 public abstract class SdHoareTripleCheckHelper {
-	/**
-	 *
-	 */
 	protected final IPredicateCoverageChecker mCoverage;
 	protected final IPredicate mFalsePredicate;
 	protected final IPredicate mTruePredicate;
 	protected final HoareTripleCheckerStatisticsGenerator mStatistics;
+	protected final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 
 	/**
 	 * @param sdHoareTripleChecker
 	 */
 	SdHoareTripleCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
-			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics) {
+			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics,
+			final ModifiableGlobalsTable modifiableGlobals) {
 		mCoverage = Objects.requireNonNull(coverage);
 		mFalsePredicate = falsePredicate;
 		mTruePredicate = truePredicate;
 		mStatistics = statistics;
+		mModifiableGlobalVariableManager = modifiableGlobals;
 	}
 
 	public Validity check(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate succ) {
@@ -172,6 +173,10 @@ public abstract class SdHoareTripleCheckHelper {
 
 	protected static boolean varsDisjointFromInVars(final IPredicate state, final UnmodifiableTransFormula tf) {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getInVars().keySet());
+	}
+
+	protected static boolean varsDisjointFromAssignedVars(final IPredicate state, final UnmodifiableTransFormula tf) {
+		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
 	}
 
 }
