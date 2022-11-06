@@ -205,6 +205,14 @@ public abstract class AbstractHoareTripleCheckerTest {
 		return mScript.variable(x.getTermVariable().getName() + "_in", x.getSort());
 	}
 
+	private UnmodifiableTransFormula assumeTrue() {
+		// Build "assume true" statement
+		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
+		tfb.setFormula(mScript.term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mMgdScript);
+	}
+
 	/*
 	 * ****************************************************************************************************************
 	 * Actual tests.
@@ -261,6 +269,26 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	protected Validity constsButDisjointToFalseVerdict() {
 		return Validity.INVALID;
+	}
+
+	@Test
+	public void constsPreservedInternal() {
+		final var tf = assumeTrue();
+		testInternal(Validity.VALID, constsPreservedInternalVerdict(), "(<= c 0)", tf, "(<= c 0)");
+	}
+
+	protected Validity constsPreservedInternalVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void constsWeakenedInternal() {
+		final var tf = assumeTrue();
+		testInternal(Validity.VALID, constsWeakenedInternalVerdict(), "(= c 0)", tf, "(<= c 0)");
+	}
+
+	protected Validity constsWeakenedInternalVerdict() {
+		return Validity.VALID;
 	}
 
 	@Test
@@ -423,11 +451,23 @@ public abstract class AbstractHoareTripleCheckerTest {
 		return Validity.INVALID;
 	}
 
-	private UnmodifiableTransFormula assumeTrue() {
-		// Build "assume true" statement
-		final var tfb = new TransFormulaBuilder(Map.of(), Map.of(), true, Set.of(), true, null, true);
-		tfb.setFormula(mScript.term("true"));
-		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mMgdScript);
+	@Test
+	public void constsPreservedCall() {
+		final var tf = assumeTrue();
+		testCall(Validity.VALID, constsPreservedCallVerdict(), "(<= c 0)", tf, "(<= c 0)");
+	}
+
+	protected Validity constsPreservedCallVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void constsWeakenedCall() {
+		final var tf = assumeTrue();
+		testCall(Validity.VALID, constsWeakenedCallVerdict(), "(= c 0)", tf, "(<= c 0)");
+	}
+
+	protected Validity constsWeakenedCallVerdict() {
+		return Validity.VALID;
 	}
 }
