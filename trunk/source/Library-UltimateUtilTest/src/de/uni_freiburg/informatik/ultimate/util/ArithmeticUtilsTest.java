@@ -123,7 +123,7 @@ public class ArithmeticUtilsTest {
 		Assert.assertTrue(result == BigInteger.valueOf(85));
 	}
     @Test
-	public void extendedEuclidean07() {
+	public void extendedEuclidean06() {
 		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(7), BigInteger.valueOf(1));
 		Assert.assertTrue(result == BigInteger.valueOf(0));
 	}
