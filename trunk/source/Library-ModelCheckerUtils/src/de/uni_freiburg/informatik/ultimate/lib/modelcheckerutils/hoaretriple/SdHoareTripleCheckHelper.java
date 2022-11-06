@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableG
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -180,6 +181,19 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 
 	protected static boolean varsDisjointFromAssignedVars(final IPredicate state, final UnmodifiableTransFormula tf) {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
+	}
+
+	// Checks if the predicate contains both a non-modifiable global variable x and old(x).
+	protected boolean containsConflictingNonModifiableOldVars(final String proc, final IPredicate p) {
+		for (final var pv : p.getVars()) {
+			if (pv.isOldvar()) {
+				final var pnov = ((IProgramOldVar) pv).getNonOldVar();
+				if (!mModifiableGlobalVariableManager.isModifiable(pnov, proc) && p.getVars().contains(pnov)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

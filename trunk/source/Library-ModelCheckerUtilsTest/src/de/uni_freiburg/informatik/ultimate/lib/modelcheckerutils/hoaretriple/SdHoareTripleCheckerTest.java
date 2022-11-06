@@ -97,7 +97,22 @@ public class SdHoareTripleCheckerTest extends AbstractHoareTripleCheckerTest {
 	}
 
 	@Override
-	protected Validity callModifiableOldVerdict() {
+	protected Validity pseudoInconsistentPreInternalVerdict() {
+		return Validity.UNKNOWN;
+	}
+
+	@Override
+	protected Validity pseudoInconsistentPreCallVerdict() {
+		return Validity.UNKNOWN;
+	}
+
+	@Override
+	protected Validity pseudoTautologicalPostCallVerdict() {
+		return Validity.UNKNOWN;
+	}
+
+	@Override
+	protected Validity pseudoTautologicalPostInternalVerdict() {
 		return Validity.UNKNOWN;
 	}
 }

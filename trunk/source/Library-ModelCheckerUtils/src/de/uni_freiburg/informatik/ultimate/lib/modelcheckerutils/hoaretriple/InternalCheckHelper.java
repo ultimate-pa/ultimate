@@ -68,13 +68,15 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 	public Validity sdecToFalse(final IPredicate pre, final IPredicate preHier, final IInternalAction act) {
 		assert preHier == null : PRE_HIER_ERROR;
 		final var tf = act.getTransformula();
+
 		switch (tf.isInfeasible()) {
 		case INFEASIBLE:
 			return Validity.VALID;
 		case UNPROVEABLE:
 			// TODO We could instead check if tf has any constants in common with pre.
 			// However, this requires IAbstractPredicate::getConstants to be supported.
-			if (varsDisjointFromInVars(pre, tf) && tf.getNonTheoryConsts().isEmpty()) {
+			if (varsDisjointFromInVars(pre, tf) && tf.getNonTheoryConsts().isEmpty()
+					&& !containsConflictingNonModifiableOldVars(act.getPrecedingProcedure(), pre)) {
 				mStatistics.getSDtfsCounter().incIn();
 				return Validity.INVALID;
 			}
@@ -167,7 +169,9 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 			// Unclear what we can do for fork and join statements.
 			return null;
 		}
-		if (containsConflictingNonModifiableOldVars(proc, pre, post)) {
+		if (containsConflictingNonModifiableOldVars(proc, pre, post)
+				|| containsConflictingNonModifiableOldVars(proc, pre)
+				|| containsConflictingNonModifiableOldVars(proc, post)) {
 			return null;
 		}
 
@@ -229,6 +233,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 				}
 			}
 		}
+
 		return false;
 	}
 }

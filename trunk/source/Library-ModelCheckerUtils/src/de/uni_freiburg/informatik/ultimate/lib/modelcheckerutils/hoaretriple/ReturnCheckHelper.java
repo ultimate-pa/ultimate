@@ -51,7 +51,6 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 		if (preHierNotFalse(preLin, preHier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure())) {
 			mStatistics.getSDtfsCounter().incRe();
 			return Validity.INVALID;
-
 		}
 		return null;
 	}

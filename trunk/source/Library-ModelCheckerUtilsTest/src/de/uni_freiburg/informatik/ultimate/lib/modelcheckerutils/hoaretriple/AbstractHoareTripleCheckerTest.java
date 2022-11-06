@@ -485,4 +485,102 @@ public abstract class AbstractHoareTripleCheckerTest {
 	protected Validity constsWeakenedCallVerdict() {
 		return Validity.VALID;
 	}
+
+	@Test
+	public void pseudoTautologicalPostInternal() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
+				PROCEDURE) : "Test requires y to be unmodifiable";
+
+		final var tf = assumeTrue();
+		testInternal(Validity.VALID, pseudoTautologicalPostInternalVerdict(), "true", tf, "(= y |old(y)|)");
+	}
+
+	protected Validity pseudoTautologicalPostInternalVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void nonPseudoTautologicalPostInternal() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, PROCEDURE) : "Test requires x to be modifiable";
+
+		final var tf = assumeTrue();
+		testInternal(Validity.INVALID, nonPseudoTautologicalPostInternalVerdict(), "true", tf, "(= x |old(x)|)");
+	}
+
+	protected Validity nonPseudoTautologicalPostInternalVerdict() {
+		return Validity.INVALID;
+	}
+
+	@Test
+	public void pseudoTautologicalPostCall() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, CALLEE) : "Test requires y to be unmodifiable";
+
+		final var tf = assumeTrue();
+		testCall(Validity.VALID, pseudoTautologicalPostCallVerdict(), "true", tf, "(= y |old(y)|)");
+	}
+
+	protected Validity pseudoTautologicalPostCallVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void nonPseudoTautologicalPostCall() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, CALLEE) : "Test requires x to be modifiable";
+
+		final var tf = assumeTrue();
+		testInternal(Validity.INVALID, nonPseudoTautologicalPostCallVerdict(), "true", tf, "(= x |old(x)|)");
+	}
+
+	protected Validity nonPseudoTautologicalPostCallVerdict() {
+		return Validity.INVALID;
+	}
+
+	@Test
+	public void pseudoInconsistentPreInternal() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
+				PROCEDURE) : "Test requires y to be unmodifiable";
+
+		final var tf = assumeTrue();
+		testInternal(Validity.VALID, pseudoInconsistentPreInternalVerdict(), "(distinct y |old(y)|)", tf, "false");
+	}
+
+	protected Validity pseudoInconsistentPreInternalVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void nonPseudoInconsistentPreInternal() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, PROCEDURE) : "Test requires x to be modifiable";
+
+		final var tf = assumeTrue();
+		testInternal(Validity.INVALID, nonPseudoInconsistentPreInternalVerdict(), "(distinct x |old(x)|)", tf, "false");
+	}
+
+	protected Validity nonPseudoInconsistentPreInternalVerdict() {
+		return Validity.INVALID;
+	}
+
+	@Test
+	public void pseudoInconsistentPreCall() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, CALLER) : "Test requires y to be unmodifiable";
+
+		final var tf = assumeTrue();
+		testCall(Validity.VALID, pseudoInconsistentPreCallVerdict(), "(distinct y |old(y)|)", tf, "false");
+	}
+
+	protected Validity pseudoInconsistentPreCallVerdict() {
+		return Validity.VALID;
+	}
+
+	@Test
+	public void nonPseudoInconsistentPreCall() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, CALLEE) : "Test requires x to be modifiable";
+
+		final var tf = assumeTrue();
+		testInternal(Validity.INVALID, nonPseudoInconsistentPreCallVerdict(), "(distinct x |old(x)|)", tf, "false");
+	}
+
+	protected Validity nonPseudoInconsistentPreCallVerdict() {
+		return Validity.INVALID;
+	}
 }

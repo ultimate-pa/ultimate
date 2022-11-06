@@ -49,8 +49,12 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 	}
 
 	@Override
-	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final ICallAction call) {
+	public Validity sdecToFalse(final IPredicate pre, final IPredicate preHier, final ICallAction call) {
 		assert preHier == null : PRE_HIER_ERROR;
+
+		if (containsConflictingNonModifiableOldVars(call.getPrecedingProcedure(), pre)) {
+			return null;
+		}
 
 		// TODO: there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition
