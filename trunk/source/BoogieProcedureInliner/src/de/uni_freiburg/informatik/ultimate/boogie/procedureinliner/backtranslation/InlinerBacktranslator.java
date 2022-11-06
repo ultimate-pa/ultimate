@@ -256,6 +256,7 @@ public class InlinerBacktranslator
 		builder.setStep(step);
 		builder.setStepInfo(ate.getStepInfo());
 		builder.setRelevanceInformation(ate.getRelevanceInformation());
+		builder.setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 		return builder.build();
 	}
 
