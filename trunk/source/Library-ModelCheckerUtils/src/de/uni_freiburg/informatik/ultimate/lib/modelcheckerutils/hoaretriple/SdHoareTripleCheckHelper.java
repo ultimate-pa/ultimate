@@ -47,6 +47,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * Abstract class for data-flow based Hoare triple checks. Subclasses are checks for internal, call, and return. Because
  * we can only override methods with the same signature (in Java) we use the 3-parameter-signature for return (with
  * hierarchical state) and use null as hierarchical state for call and internal.
+ *
+ * @param <L>
+ *            The type of actions for which Hoare triples are checked.
  */
 public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 	protected final IPredicateCoverageChecker mCoverage;
