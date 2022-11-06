@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -40,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 
-class CallCheckHelper extends SdHoareTripleCheckHelper {
+class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 	private static final String PRE_HIER_ERROR = "Unexpected hierarchical precondition for call action";
 
 	CallCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
@@ -50,7 +49,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
+	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final ICallAction call) {
 		assert preHier == null : PRE_HIER_ERROR;
 
 		// TODO: there could be a contradiction if the Call is not a simple call
@@ -64,7 +63,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 	 * Returns true if p contains only non-old globals, or non-modifiable old variables.
 	 */
 	@Override
-	public boolean isInductiveSelfloop(final IPredicate pre, final IPredicate preHier, final IAction act,
+	public boolean isInductiveSelfloop(final IPredicate pre, final IPredicate preHier, final ICallAction call,
 			final IPredicate post) {
 		assert preHier == null : PRE_HIER_ERROR;
 		if (pre != post) {
@@ -75,7 +74,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 		// or havoced) by the call.
 		// Similarly, pre must also not contain any final old variables belonging to modifiable global variables, as
 		// such old variables could also be modified by the call.
-		final String caller = act.getPrecedingProcedure();
+		final String caller = call.getPrecedingProcedure();
 		for (final IProgramVar bv : pre.getVars()) {
 			if (!bv.isGlobal()) {
 				return false;
@@ -94,11 +93,12 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public Validity sdec(final IPredicate pre, final IPredicate preHier, final IAction act, final IPredicate post) {
+	public Validity sdec(final IPredicate pre, final IPredicate preHier, final ICallAction call,
+			final IPredicate post) {
 		assert preHier == null : PRE_HIER_ERROR;
 
-		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, act.getPrecedingProcedure())
-				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, act.getSucceedingProcedure())) {
+		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, call.getPrecedingProcedure())
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, call.getSucceedingProcedure())) {
 			return null;
 		}
 		for (final IProgramVar bv : post.getVars()) {
@@ -115,12 +115,11 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 		}
 
 		// workaround see preHierIndependent()
-		final var call = (ICallAction) act;
 		final UnmodifiableTransFormula locVarAssignTf = call.getLocalVarsAssignment();
 		if (!varsDisjointFromAssignedVars(pre, locVarAssignTf)) {
 			return null;
 		}
-		if (preHierIndependent(post, pre, call.getLocalVarsAssignment(), act.getSucceedingProcedure())) {
+		if (preHierIndependent(post, pre, call.getLocalVarsAssignment(), call.getSucceedingProcedure())) {
 			mStatistics.getSDsCounter().incCa();
 			return Validity.INVALID;
 		}
@@ -128,14 +127,14 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public Validity sdLazyEc(final IPredicate pre, final IPredicate preHier, final IAction act, final IPredicate post) {
+	public Validity sdLazyEc(final IPredicate pre, final IPredicate preHier, final ICallAction call,
+			final IPredicate post) {
 		assert preHier == null : PRE_HIER_ERROR;
 
 		if (isOrIteFormula(post)) {
-			return sdec(pre, null, act, post);
+			return sdec(pre, null, call, post);
 		}
 
-		final var call = (ICallAction) act;
 		final UnmodifiableTransFormula locVarAssignTf = call.getLocalVarsAssignment();
 		final boolean argumentsRestrictedByPre = !varsDisjointFromInVars(pre, locVarAssignTf);
 		for (final IProgramVar bv : post.getVars()) {

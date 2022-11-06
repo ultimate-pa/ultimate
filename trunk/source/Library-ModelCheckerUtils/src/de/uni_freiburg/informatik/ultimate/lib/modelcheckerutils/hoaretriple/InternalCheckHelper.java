@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-class InternalCheckHelper extends SdHoareTripleCheckHelper {
+class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 	private static final String PRE_HIER_ERROR = "Unexpected hierarchical precondition for internal action";
 
 	InternalCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
@@ -65,7 +65,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	 * triple is invalid.
 	 */
 	@Override
-	public Validity sdecToFalse(final IPredicate pre, final IPredicate preHier, final IAction act) {
+	public Validity sdecToFalse(final IPredicate pre, final IPredicate preHier, final IInternalAction act) {
 		assert preHier == null : PRE_HIER_ERROR;
 		final var tf = act.getTransformula();
 		switch (tf.isInfeasible()) {
@@ -90,7 +90,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	 * the pre/postcondition, the Hoare triple is trivially valid.
 	 */
 	@Override
-	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
+	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IInternalAction act,
 			final IPredicate succ) {
 		assert preHier == null : PRE_HIER_ERROR;
 		if (preLin != succ) {
@@ -117,7 +117,8 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Validity sdec(final IPredicate pre, final IPredicate preHier, final IAction act, final IPredicate post) {
+	public Validity sdec(final IPredicate pre, final IPredicate preHier, final IInternalAction act,
+			final IPredicate post) {
 		assert preHier == null : PRE_HIER_ERROR;
 
 		final UnmodifiableTransFormula tf = act.getTransformula();
@@ -194,7 +195,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 	 */
 	@Deprecated
 	@Override
-	public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
+	public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IInternalAction act,
 			final IPredicate succ) {
 		assert preHier == null : PRE_HIER_ERROR;
 		if (isOrIteFormula(succ)) {

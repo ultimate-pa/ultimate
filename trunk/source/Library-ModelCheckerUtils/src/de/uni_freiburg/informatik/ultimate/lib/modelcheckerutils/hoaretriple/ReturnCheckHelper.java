@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -40,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 
-public class ReturnCheckHelper extends SdHoareTripleCheckHelper {
+public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 	ReturnCheckHelper(final IPredicateCoverageChecker coverage, final IPredicate falsePredicate,
 			final IPredicate truePredicate, final HoareTripleCheckerStatisticsGenerator statistics,
 			final ModifiableGlobalsTable modifiableGlobals) {
@@ -48,9 +47,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
-		final var ret = (IReturnAction) act;
-
+	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IReturnAction ret) {
 		if (preHierNotFalse(preLin, preHier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure())) {
 			mStatistics.getSDtfsCounter().incRe();
 			return Validity.INVALID;
@@ -60,12 +57,12 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
+	public boolean isInductiveSelfloop(final IPredicate preLin, final IPredicate preHier, final IReturnAction ret,
 			final IPredicate succ) {
-		if (preLin == succ && sdecReturnSelfloopPre(preLin, (IReturnAction) act) == Validity.VALID) {
+		if (preLin == succ && sdecReturnSelfloopPre(preLin, ret) == Validity.VALID) {
 			return true;
 		}
-		return preHier == succ && sdecReturnSelfloopHier(preHier, (IReturnAction) act) == Validity.VALID;
+		return preHier == succ && sdecReturnSelfloopHier(preHier, ret) == Validity.VALID;
 	}
 
 	private Validity sdecReturnSelfloopPre(final IPredicate p, final IReturnAction ret) {
@@ -102,8 +99,8 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate post) {
-		final var ret = (IReturnAction) act;
+	public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IReturnAction ret,
+			final IPredicate post) {
 		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(preLin, ret.getPrecedingProcedure())
 				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(preHier, ret.getSucceedingProcedure())
 				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, ret.getSucceedingProcedure())) {
@@ -120,9 +117,8 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper {
 	}
 
 	@Override
-	public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
+	public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IReturnAction ret,
 			final IPredicate post) {
-		final var ret = (IReturnAction) act;
 		if (isOrIteFormula(post)) {
 			return sdec(preLin, preHier, ret, post);
 		}

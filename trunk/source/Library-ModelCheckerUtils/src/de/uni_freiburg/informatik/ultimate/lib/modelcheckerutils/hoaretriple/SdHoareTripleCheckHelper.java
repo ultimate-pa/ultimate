@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * we can only override methods with the same signature (in Java) we use the 3-parameter-signature for return (with
  * hierarchical state) and use null as hierarchical state for call and internal.
  */
-public abstract class SdHoareTripleCheckHelper {
+public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 	protected final IPredicateCoverageChecker mCoverage;
 	protected final IPredicate mFalsePredicate;
 	protected final IPredicate mTruePredicate;
@@ -67,7 +67,7 @@ public abstract class SdHoareTripleCheckHelper {
 		mModifiableGlobalVariableManager = modifiableGlobals;
 	}
 
-	public Validity check(final IPredicate preLin, final IPredicate preHier, final IAction act, final IPredicate succ) {
+	public Validity check(final IPredicate preLin, final IPredicate preHier, final L act, final IPredicate succ) {
 		if (act.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return Validity.VALID;
 		}
@@ -166,13 +166,13 @@ public abstract class SdHoareTripleCheckHelper {
 		}
 	}
 
-	public abstract Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act);
+	public abstract Validity sdecToFalse(IPredicate preLin, IPredicate preHier, L act);
 
-	public abstract boolean isInductiveSelfloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+	public abstract boolean isInductiveSelfloop(IPredicate preLin, IPredicate preHier, L act, IPredicate succ);
 
-	public abstract Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+	public abstract Validity sdec(IPredicate preLin, IPredicate preHier, L act, IPredicate succ);
 
-	public abstract Validity sdLazyEc(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
+	public abstract Validity sdLazyEc(IPredicate preLin, IPredicate preHier, L act, IPredicate succ);
 
 	protected static boolean varsDisjointFromInVars(final IPredicate state, final UnmodifiableTransFormula tf) {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getInVars().keySet());
