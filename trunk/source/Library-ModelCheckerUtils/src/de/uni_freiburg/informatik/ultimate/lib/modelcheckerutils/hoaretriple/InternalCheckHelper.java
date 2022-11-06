@@ -154,8 +154,11 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper {
 			return null;
 		}
 
-		// We need some special handling for non-modifiable global variables:
-		// If y is not modifiable, a Hoare triple like {y=0} assume true {old(y)=0} is considered valid.
+		// The lines below address a special case that is relevant for e.g., the following example. Let's assume that x
+		// is a global variable, pre is `x = 42`, post is `old(x) = 42`, and the action represents an `assume true`
+		// statement. Hence, all variables are disjoint, pre does not imply post, and at a first glance it seems like
+		// the Hoare triple is invalid. If however the preceding and succeeding procedure of the action does not have
+		// `x` in its modifies clause, we consider the Hoare triple to be valid.
 		final String proc = act.getPrecedingProcedure();
 		if (!proc.equals(act.getSucceedingProcedure())) {
 			assert act instanceof IIcfgForkTransitionThreadOther<?>
