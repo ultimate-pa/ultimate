@@ -84,7 +84,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 	private Validity sdecReturnSelfloopHier(final IPredicate p, final IReturnAction ret) {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		final String proc = ret.getPrecedingProcedure();
-		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);
 
 		for (final IProgramVar bv : p.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
@@ -100,9 +100,9 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 	@Override
 	public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IReturnAction ret,
 			final IPredicate post) {
-		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(preLin, ret.getPrecedingProcedure())
-				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(preHier, ret.getSucceedingProcedure())
-				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, ret.getSucceedingProcedure())) {
+		if (mModifiableGlobals.containsNonModifiableOldVars(preLin, ret.getPrecedingProcedure())
+				|| mModifiableGlobals.containsNonModifiableOldVars(preHier, ret.getSucceedingProcedure())
+				|| mModifiableGlobals.containsNonModifiableOldVars(post, ret.getSucceedingProcedure())) {
 			return null;
 		}
 		if (hierPostIndependent(preHier, ret, post)
@@ -137,7 +137,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 		}
 
 		final String proc = ret.getPrecedingProcedure();
-		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);
 		final boolean assignedVarsRestrictedByPre = !varsDisjointFromInVars(preLin, ret.getAssignmentOfReturn());
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		for (final IProgramVar bv : post.getVars()) {
@@ -193,8 +193,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 		// local in disjoint or local out disjoint
 		// not if pre contains old and global in hier or localVarsAssignment
 		// or not modifiable and hier contains oldvar
-		final Set<IProgramNonOldVar> modifiableGlobals =
-				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
+		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(calledProcedure);
 		final boolean isSelfConnectedViaLocalVarsAssignment =
 				isSelfConnectedViaLocalVarsAssignment(pre, localVarsAssignment);
 		if (isSelfConnectedViaLocalVarsAssignment) {
@@ -308,7 +307,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 
 		final String proc = ret.getPrecedingProcedure();
-		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);
 
 		for (final IProgramVar bv : post.getVars()) {
 			if (modifiableGlobals.contains(bv)) {

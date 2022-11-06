@@ -56,7 +56,7 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 	protected final IPredicate mFalsePredicate;
 	protected final IPredicate mTruePredicate;
 	protected final HoareTripleCheckerStatisticsGenerator mStatistics;
-	protected final ModifiableGlobalsTable mModifiableGlobalVariableManager;
+	protected final ModifiableGlobalsTable mModifiableGlobals;
 
 	/**
 	 * @param sdHoareTripleChecker
@@ -68,7 +68,7 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 		mFalsePredicate = falsePredicate;
 		mTruePredicate = truePredicate;
 		mStatistics = statistics;
-		mModifiableGlobalVariableManager = modifiableGlobals;
+		mModifiableGlobals = modifiableGlobals;
 	}
 
 	public Validity check(final IPredicate preLin, final IPredicate preHier, final L act, final IPredicate succ) {
@@ -191,7 +191,7 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 		for (final var pv : p.getVars()) {
 			if (pv.isOldvar()) {
 				final var pnov = ((IProgramOldVar) pv).getNonOldVar();
-				if (!mModifiableGlobalVariableManager.isModifiable(pnov, proc) && p.getVars().contains(pnov)) {
+				if (!mModifiableGlobals.isModifiable(pnov, proc) && p.getVars().contains(pnov)) {
 					return true;
 				}
 			}

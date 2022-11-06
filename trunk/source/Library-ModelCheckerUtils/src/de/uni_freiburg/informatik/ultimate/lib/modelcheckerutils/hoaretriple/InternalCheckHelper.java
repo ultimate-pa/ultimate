@@ -222,13 +222,12 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 		for (final var pv : p1.getVars()) {
 			if (pv instanceof IProgramOldVar) {
 				final var pnov = ((IProgramOldVar) pv).getNonOldVar();
-				if (!mModifiableGlobalVariableManager.isModifiable(pnov, proc) && p2.getVars().contains(pnov)) {
+				if (!mModifiableGlobals.isModifiable(pnov, proc) && p2.getVars().contains(pnov)) {
 					return true;
 				}
 			} else if (pv instanceof IProgramNonOldVar) {
 				final var pnov = (IProgramNonOldVar) pv;
-				if (!mModifiableGlobalVariableManager.isModifiable(pnov, proc)
-						&& p2.getVars().contains(pnov.getOldVar())) {
+				if (!mModifiableGlobals.isModifiable(pnov, proc) && p2.getVars().contains(pnov.getOldVar())) {
 					return true;
 				}
 			}

@@ -80,7 +80,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			}
 			// Similarly, pre must also not contain any final old variables belonging to modifiable global variables, as
 			// such old variables could also be modified by the call.
-			if (bv.isOldvar() && mModifiableGlobalVariableManager.isModifiable((IProgramOldVar) bv, caller)) {
+			if (bv.isOldvar() && mModifiableGlobals.isModifiable((IProgramOldVar) bv, caller)) {
 				return false;
 			}
 		}
@@ -101,8 +101,8 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 		final var caller = call.getPrecedingProcedure();
 		final var callee = call.getSucceedingProcedure();
 
-		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, caller)
-				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, callee)) {
+		if (mModifiableGlobals.containsNonModifiableOldVars(pre, caller)
+				|| mModifiableGlobals.containsNonModifiableOldVars(post, callee)) {
 			return null;
 		}
 		for (final IProgramVar bv : post.getVars()) {
@@ -111,7 +111,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 				if (pre.getVars().contains(pov.getNonOldVar())) {
 					return null;
 				}
-				if (!mModifiableGlobalVariableManager.isModifiable(pov, caller) && pre.getVars().contains(pov)) {
+				if (!mModifiableGlobals.isModifiable(pov, caller) && pre.getVars().contains(pov)) {
 					return null;
 				}
 			} else if (bv.isGlobal() && pre.getVars().contains(bv)) {
