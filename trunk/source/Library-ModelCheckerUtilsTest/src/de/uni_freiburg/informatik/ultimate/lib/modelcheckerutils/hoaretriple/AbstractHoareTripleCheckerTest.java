@@ -122,6 +122,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 		modifiable.addPair(PROCEDURE, x);
 		modifiable.addPair(CALLER, x);
 		modifiable.addPair(CALLEE, x);
+		modifiable.addPair(CALLER, z);
 		final ModifiableGlobalsTable modGlobTab = new ModifiableGlobalsTable(modifiable);
 
 		final IcfgEdgeFactory icfgEdgeFactory = new IcfgEdgeFactory(new SerialProvider());
@@ -428,6 +429,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	@Test
 	public void callNonModifiableOld() {
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, CALLER) : "Test requires y to be non-modifiable";
 		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, CALLEE) : "Test requires y to be non-modifiable";
 
 		final var tf = assumeTrue();
@@ -436,6 +438,19 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	protected Validity callNonModifiableOldVerdict() {
 		return Validity.VALID;
+	}
+
+	@Test
+	public void callCallerModifiableOld() {
+		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(z, CALLER) : "Test requires z to be modifiable";
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, CALLEE) : "Test requires z to be non-modifiable";
+
+		final var tf = assumeTrue();
+		testCall(Validity.INVALID, callCallerModifiableOldVerdict(), "(= |old(z)| 0)", tf, "(= |old(z)| 0)");
+	}
+
+	protected Validity callCallerModifiableOldVerdict() {
+		return Validity.INVALID;
 	}
 
 	@Test

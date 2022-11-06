@@ -52,14 +52,16 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 	@Override
 	public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
 		assert preHier == null : PRE_HIER_ERROR;
+
 		// TODO: there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition
+
 		mStatistics.getSDtfsCounter().incCa();
 		return Validity.INVALID;
 	}
 
 	/**
-	 * Returns UNSAT if p contains only non-old globals.
+	 * Returns true if p contains only non-old globals, or non-modifiable old variables.
 	 */
 	@Override
 	public boolean isInductiveSelfloop(final IPredicate pre, final IPredicate preHier, final IAction act,
@@ -69,14 +71,24 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 			return false;
 		}
 
+		// If pre contains a local variable, the triple might be invalid, as local variables could be modified (assigned
+		// or havoced) by the call.
+		// Similarly, pre must also not contain any final old variables belonging to modifiable global variables, as
+		// such old variables could also be modified by the call.
+		final String caller = act.getPrecedingProcedure();
 		for (final IProgramVar bv : pre.getVars()) {
 			if (!bv.isGlobal()) {
 				return false;
 			}
-			if (bv.isOldvar()) {
+			if (bv.isOldvar() && mModifiableGlobalVariableManager.isModifiable((IProgramOldVar) bv, caller)) {
 				return false;
 			}
 		}
+
+		// TODO Is this really enough? In particular, interprocedural compositions might assign global variables, right?
+		// TODO So wouldn't it be better to examine the assigned variables of the transition formula?
+		// TODO But do those contain ALL the modifications (params, local vars of caller and callee, old vars) ?
+
 		mStatistics.getSDsluCounter().incCa();
 		return true;
 	}
@@ -91,8 +103,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 		}
 		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
-				// if oldVar occurs this edge might be inductive since
-				// old(g)=g is true
+				// if oldVar occurs this edge might be inductive since old(g)=g is true
 				return null;
 			}
 			if (bv.isGlobal()) {
@@ -159,8 +170,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper {
 			return false;
 		}
 
-		// cases where pre and hier share non-modifiable var g, or
-		// g occurs in hier, and old(g) occurs in pre.
+		// cases where pre and hier share non-modifiable var g, or g occurs in hier, and old(g) occurs in pre.
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
 

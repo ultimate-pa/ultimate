@@ -92,7 +92,7 @@ public class SdHoareTripleCheckerTest extends AbstractHoareTripleCheckerTest {
 	}
 
 	@Override
-	protected Validity callNonModifiableOldVerdict() {
+	protected Validity callCallerModifiableOldVerdict() {
 		return Validity.UNKNOWN;
 	}
 
