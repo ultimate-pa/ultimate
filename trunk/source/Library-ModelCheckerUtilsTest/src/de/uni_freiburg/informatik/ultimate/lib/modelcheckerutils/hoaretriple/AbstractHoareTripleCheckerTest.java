@@ -528,11 +528,11 @@ public abstract class AbstractHoareTripleCheckerTest {
 		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, CALLEE) : "Test requires x to be modifiable";
 
 		final var tf = assumeTrue();
-		testInternal(Validity.INVALID, nonPseudoTautologicalPostCallVerdict(), "true", tf, "(= x |old(x)|)");
+		testCall(Validity.VALID, nonPseudoTautologicalPostCallVerdict(), "true", tf, "(= x |old(x)|)");
 	}
 
 	protected Validity nonPseudoTautologicalPostCallVerdict() {
-		return Validity.INVALID;
+		return Validity.VALID;
 	}
 
 	@Test
@@ -577,7 +577,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 		assert mCsToolkit.getModifiableGlobalsTable().isModifiable(x, CALLEE) : "Test requires x to be modifiable";
 
 		final var tf = assumeTrue();
-		testInternal(Validity.INVALID, nonPseudoInconsistentPreCallVerdict(), "(distinct x |old(x)|)", tf, "false");
+		testCall(Validity.INVALID, nonPseudoInconsistentPreCallVerdict(), "(distinct x |old(x)|)", tf, "false");
 	}
 
 	protected Validity nonPseudoInconsistentPreCallVerdict() {

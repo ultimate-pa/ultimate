@@ -105,15 +105,19 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 				|| mModifiableGlobals.containsNonModifiableOldVars(post, callee)) {
 			return null;
 		}
+
 		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
-				final var pov = (IProgramOldVar) bv;
-				if (pre.getVars().contains(pov.getNonOldVar())) {
-					return null;
-				}
-				if (!mModifiableGlobals.isModifiable(pov, caller) && pre.getVars().contains(pov)) {
-					return null;
-				}
+				// If post contains old vars, e.g. post is x=old(x), the triple could be valid.
+				return null;
+
+				// final var pov = (IProgramOldVar) bv;
+				// if (pre.getVars().contains(pov.getNonOldVar())) {
+				// return null;
+				// }
+				// if (!mModifiableGlobals.isModifiable(pov, caller) && pre.getVars().contains(pov)) {
+				// return null;
+				// }
 			} else if (bv.isGlobal() && pre.getVars().contains(bv)) {
 				return null;
 			}
