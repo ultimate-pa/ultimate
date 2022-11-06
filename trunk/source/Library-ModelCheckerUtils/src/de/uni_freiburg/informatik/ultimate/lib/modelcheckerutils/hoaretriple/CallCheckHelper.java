@@ -27,12 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -74,15 +71,15 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			return false;
 		}
 
-		// If pre contains a local variable, the triple might be invalid, as local variables could be modified (assigned
-		// or havoced) by the call.
-		// Similarly, pre must also not contain any final old variables belonging to modifiable global variables, as
-		// such old variables could also be modified by the call.
 		final String caller = call.getPrecedingProcedure();
 		for (final IProgramVar bv : pre.getVars()) {
+			// If pre contains a local variable, the triple might be invalid, as local variables could be modified
+			// (assigned or havoced) by the call.
 			if (!bv.isGlobal()) {
 				return false;
 			}
+			// Similarly, pre must also not contain any final old variables belonging to modifiable global variables, as
+			// such old variables could also be modified by the call.
 			if (bv.isOldvar() && mModifiableGlobalVariableManager.isModifiable((IProgramOldVar) bv, caller)) {
 				return false;
 			}
@@ -101,20 +98,24 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			final IPredicate post) {
 		assert preHier == null : PRE_HIER_ERROR;
 
-		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, call.getPrecedingProcedure())
-				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, call.getSucceedingProcedure())) {
+		final var caller = call.getPrecedingProcedure();
+		final var callee = call.getSucceedingProcedure();
+
+		if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, caller)
+				|| mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, callee)) {
 			return null;
 		}
 		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
-				// if oldVar occurs this edge might be inductive since old(g)=g is true
-				return null;
-			}
-			if (bv.isGlobal()) {
-				assert !bv.isOldvar();
-				if (pre.getVars().contains(bv)) {
+				final var pov = (IProgramOldVar) bv;
+				if (pre.getVars().contains(pov.getNonOldVar())) {
 					return null;
 				}
+				if (!mModifiableGlobalVariableManager.isModifiable(pov, caller) && pre.getVars().contains(pov)) {
+					return null;
+				}
+			} else if (bv.isGlobal() && pre.getVars().contains(bv)) {
+				return null;
 			}
 		}
 
@@ -123,11 +124,23 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 		if (!varsDisjointFromAssignedVars(pre, locVarAssignTf)) {
 			return null;
 		}
-		if (preHierIndependent(post, pre, call.getLocalVarsAssignment(), call.getSucceedingProcedure())) {
-			mStatistics.getSDsCounter().incCa();
-			return Validity.INVALID;
+		// TODO: Matthias 7.10.2012 I hoped following would be sufficient. But this is not sufficient when constant
+		// assigned to invar, e.g. post is x!=0 and call is x_Out=1. Might be solved with dataflow map.
+		//
+		// 8.10.2012 consider also case where inVar is non-modifiable global which does not occur in pre, but in post
+		//
+		// if (!varSetDisjoint(pre.getVars(), locVarAssignTf.getInVars().keySet())
+		// && !varSetDisjoint(locVarAssignTf.getAssignedVars(), post.getVars())) {
+		// return false;
+		// }
+		//
+		// workaround for preceding problem
+		if (!varsDisjointFromAssignedVars(post, locVarAssignTf)) {
+			return null;
 		}
-		return null;
+
+		mStatistics.getSDsCounter().incCa();
+		return Validity.INVALID;
 	}
 
 	@Override
@@ -154,40 +167,5 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			return Validity.INVALID;
 		}
 		return null;
-	}
-
-	private boolean preHierIndependent(final IPredicate pre, final IPredicate hier,
-			final UnmodifiableTransFormula localVarsAssignment, final String calledProcedure) {
-		// TODO: Matthias 7.10.2012 I hoped following would be sufficient.
-		// But this is not sufficient when constant assigned to invar
-		// e.g. pre is x!=0 and call is x_Out=1. Might be solved with
-		// dataflow map.
-		// 8.10.2012 consider also case where inVar is non-modifiable global
-		// which does not occur in hier, but in pre
-		// if (!varSetDisjoint(hier.getVars(), locVarAssignTf.getInVars().keySet())
-		// && !varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
-		// return false;
-		// }
-		// workaround for preceding problem
-		if (!varsDisjointFromAssignedVars(pre, localVarsAssignment)) {
-			return false;
-		}
-
-		// cases where pre and hier share non-modifiable var g, or g occurs in hier, and old(g) occurs in pre.
-		final Set<IProgramNonOldVar> modifiableGlobals =
-				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
-
-		for (final IProgramVar bv : pre.getVars()) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					if (hier.getVars().contains(((IProgramOldVar) bv).getNonOldVar())) {
-						return false;
-					}
-				} else if (!modifiableGlobals.contains(bv) && hier.getVars().contains(bv)) {
-					return false;
-				}
-			}
-		}
-		return true;
 	}
 }
