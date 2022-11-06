@@ -197,12 +197,12 @@ public abstract class AbstractHoareTripleCheckerTest {
 		return mPredicateUnifier.getOrConstructPredicate(parseWithVariables(formula));
 	}
 
-	private TermVariable outVar(final IProgramVar x) {
-		return mScript.variable(x.getTermVariable().getName() + "_out", x.getSort());
+	private TermVariable outVar(final IProgramVar variable) {
+		return mScript.variable(variable.getTermVariable().getName() + "_out", variable.getSort());
 	}
 
-	private TermVariable inVar(final IProgramVar x) {
-		return mScript.variable(x.getTermVariable().getName() + "_in", x.getSort());
+	private TermVariable inVar(final IProgramVar variable) {
+		return mScript.variable(variable.getTermVariable().getName() + "_in", variable.getSort());
 	}
 
 	private UnmodifiableTransFormula assumeTrue() {
