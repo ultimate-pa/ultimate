@@ -55,13 +55,12 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 
 		mStatistics = new HoareTripleCheckerStatisticsGenerator();
-		final var helper = new SdHoareTripleCheckerHelper(csToolkit, coverage, mStatistics);
 
 		mInternalCheckHelper = new InternalCheckHelper(coverage, falsePredicate, truePredicate, mStatistics,
 				csToolkit.getModifiableGlobalsTable());
 		mCallCheckHelper = new CallCheckHelper(coverage, falsePredicate, truePredicate, mStatistics,
 				csToolkit.getModifiableGlobalsTable());
-		mReturnCheckHelper = new ReturnCheckHelper(coverage, helper, falsePredicate, truePredicate, mStatistics,
+		mReturnCheckHelper = new ReturnCheckHelper(coverage, falsePredicate, truePredicate, mStatistics,
 				csToolkit.getModifiableGlobalsTable());
 	}
 
