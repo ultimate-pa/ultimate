@@ -113,7 +113,7 @@ public final class ArithmeticUtils {
 		}
 		// gcd(a, divisor) > 1
 		if (remainder.compareTo(BigInteger.valueOf(1)) > 0) {
-			throw new IllegalArgumentException("a has no multiplicative inverse mod divisor");
+			throw new IllegalArgumentException("a has no multiplicative inverse mod divisor: gcd(a, divisor) > 1");
 		}
 		if (inverse.compareTo(BigInteger.valueOf(0)) < 0) {
 			inverse = inverse.add(divisor);
