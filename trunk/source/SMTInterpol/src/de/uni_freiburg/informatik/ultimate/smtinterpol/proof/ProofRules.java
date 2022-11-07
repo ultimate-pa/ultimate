@@ -165,12 +165,12 @@ public class ProofRules {
 		final Sort[] generic = mTheory.createSortVariables("X");
 		final Sort[] bool1 = new Sort[] { boolSort };
 		final Sort[] sort0 = new Sort[0];
+		final Sort[] lambda1 = new Sort[] { mTheory.getSort(SMTLIBConstants.FUNC, generic[0], boolSort) };
 
 		mTheory.declareInternalFunction(PREFIX + RES, new Sort[] { boolSort, proofSort, proofSort }, proofSort, 0);
 		mTheory.declareInternalFunction(PREFIX + AXIOM, sort0, proofSort, 0);
 		mTheory.declareInternalFunction(PREFIX + ASSUME, bool1, proofSort, 0);
-		mTheory.declareInternalPolymorphicFunction(PREFIX + CHOOSE, generic, bool1, generic[0],
-				FunctionSymbol.RETURNOVERLOAD);
+		mTheory.declareInternalPolymorphicFunction(PREFIX + CHOOSE, generic, lambda1, generic[0], 0);
 	}
 
 	public Theory getTheory() {
@@ -240,9 +240,8 @@ public class ProofRules {
 	}
 
 	public Term choose(final TermVariable tv, final Term formula) {
-		final FunctionSymbol choose = mTheory.getFunctionWithResult(PREFIX + CHOOSE, null, tv.getSort(),
-				formula.getSort());
-		return mTheory.term(choose, mTheory.lambda(new TermVariable[] { tv }, formula));
+		final Term lambda = mTheory.lambda(new TermVariable[] { tv }, formula);
+		return mTheory.term(PREFIX + CHOOSE, lambda);
 	}
 
 	public Term[] getSkolemVars(final TermVariable[] termVars, final Term subterm, final boolean isForall) {

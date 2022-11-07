@@ -181,7 +181,7 @@ public class ProofSimplifier extends TermTransformer {
 				condition = ((ApplicationTerm) condition).getParameters()[0];
 				conditionPositive = !conditionPositive;
 			}
-			ProofLiteral clauseLit = conditionLits.get(condition);
+			final ProofLiteral clauseLit = conditionLits.get(condition);
 			if (conditionPositive == clauseLit.getPolarity()) {
 				proofs.add(removeNot(mProofRules.ite2(iteTerm), iteParams[0], true));
 				iteTerm = iteParams[2];
@@ -4022,7 +4022,7 @@ public class ProofSimplifier extends TermTransformer {
 			} else {
 				final ApplicationTerm appTerm = (ApplicationTerm) selectTerm;
 				assert appTerm.getFunction().isSelector();
-				assert consTerm.getSort() == appTerm.getParameters()[0].getSort();
+				assert consTerm == appTerm.getParameters()[0];
 				final DataType dataType = (DataType) consTerm.getSort().getSortSymbol();
 				final Constructor[] constrs = dataType.getConstructors();
 				findSelector: {

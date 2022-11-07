@@ -170,6 +170,8 @@ public class Theory {
 				generic1[0], 0);
 		mTrue = (ApplicationTerm) term(declareInternalFunction("true", noarg, mBooleanSort, 0));
 		mFalse = (ApplicationTerm) term(declareInternalFunction("false", noarg, mBooleanSort, 0));
+		declareInternalSort(SMTLIBConstants.FUNC, 2, SortSymbol.FUNCTION);
+
 		// Finally, declare logic specific functions
 		setLogic(logic);
 	}
@@ -764,6 +766,10 @@ public class Theory {
 		declareInternalPolymorphicFunction("store", generic2, new Sort[] { array, generic2[0], generic2[1] }, array, 0);
 		// const : (Y) -> (Array X Y)
 		declareInternalPolymorphicFunction(SMTLIBConstants.CONST, generic2, new Sort[] { generic2[1] }, array,
+				FunctionSymbol.INTERNAL | FunctionSymbol.RETURNOVERLOAD);
+		final Sort lambdaSort = getSort(SMTLIBConstants.FUNC, generic2);
+		// arrayof : (-> X Y) -> (Array X Y)
+		declareInternalPolymorphicFunction(SMTLIBConstants.ARRAYOF, generic2, new Sort[] { lambdaSort }, array,
 				FunctionSymbol.INTERNAL | FunctionSymbol.RETURNOVERLOAD);
 	}
 
