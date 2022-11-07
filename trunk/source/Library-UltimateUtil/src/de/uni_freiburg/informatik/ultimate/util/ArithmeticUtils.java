@@ -84,6 +84,10 @@ public final class ArithmeticUtils {
 	 * @return
 	 */
 	public static BigInteger extendedEuclidean(BigInteger a, BigInteger divisor) {
+		// the inverse of any number mod 1 is always 0
+		if (divisor.equals(BigInteger.valueOf(1))){
+			return BigInteger.valueOf(0);
+		}
 		if (a.equals(BigInteger.valueOf(0))) {
 			throw new IllegalArgumentException("0 does not have a multiplicative inverse");
 		}
@@ -114,6 +118,10 @@ public final class ArithmeticUtils {
 		// gcd(a, divisor) > 1
 		if (remainder.compareTo(BigInteger.valueOf(1)) > 0) {
 			throw new IllegalArgumentException("a has no multiplicative inverse mod divisor");
+		}
+		// correct inverse if 'a' is a negative number
+		if (inverse.compareTo(BigInteger.valueOf(0)) < 0 & a.compareTo(BigInteger.valueOf(0)) < 0) {
+			inverse = inverse.negate();
 		}
 		if (inverse.compareTo(BigInteger.valueOf(0)) < 0) {
 			inverse = inverse.add(divisor);
