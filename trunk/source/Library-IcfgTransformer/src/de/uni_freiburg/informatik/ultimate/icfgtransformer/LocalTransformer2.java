@@ -77,10 +77,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * {@link ITransformulaTransformer} that can transform each {@link TransFormula}
- * separately (without knowing the whole {@link IIcfg}.
- * TODO 20211228 Matthias: This class is a workaround for running the BvToInt translation
- * We will generalize this later.
+ * {@link ITransformulaTransformer} that can transform each {@link TransFormula} separately (without knowing the whole
+ * {@link IIcfg}. TODO 20211228 Matthias: This class is a workaround for running the BvToInt translation We will
+ * generalize this later.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -89,12 +88,12 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 
 	private final ManagedScript mMgdScript;
 	private final Function<Sort, Sort> mSortTranslation;
-//	private CfgSmtToolkit csToolkit
+	// private CfgSmtToolkit csToolkit
 	private HashRelation<String, IProgramNonOldVar> mNewModifiableGlobals;
 	private VariableTranslation mVarTrans;
 	private IIcfgSymbolTable mNewSymbolTable;
 	private final ConstraintsForBitwiseOperations mCfbo;
-
+	private final boolean mNutzTransformation;
 
 	/**
 	 * Default constructor using a sequence of {@link TransitionPreprocessor}s.
@@ -108,10 +107,12 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 	 * @param replacementVarFactory
 	 *            A {@link ReplacementVarFactory} instance.
 	 */
-	public LocalTransformer2(final ManagedScript managedScript, final ConstraintsForBitwiseOperations cfbo) {
+	public LocalTransformer2(final ManagedScript managedScript, final ConstraintsForBitwiseOperations cfbo,
+			final boolean useNutzTransformation) {
 		mMgdScript = Objects.requireNonNull(managedScript);
 		mSortTranslation = x -> BvToIntTransformation.bvToIntSort(mMgdScript, x);
 		mCfbo = cfbo;
+		mNutzTransformation = useNutzTransformation;
 	}
 
 	@Override
@@ -181,7 +182,7 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 
 	private Triple<Term, Set<TermVariable>, Boolean> translateTerm(final ManagedScript mgdScript,
 			final Map<Term, Term> translationMap, final Term term) {
-		final TranslationManager translationManager = new TranslationManager(mgdScript, mCfbo);
+		final TranslationManager translationManager = new TranslationManager(mgdScript, mCfbo, mNutzTransformation);
 		translationManager.setReplacementVarMaps(new LinkedHashMap<>(translationMap));
 		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(term);
 		return translated;
@@ -190,13 +191,13 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 	@Override
 	public AxiomTransformationResult transform(final IPredicate oldAxioms) {
 
-		final Triple<Term, Set<TermVariable>, Boolean> result = translateTerm(mMgdScript,
-				new HashMap<>(mVarTrans.getIProgramConstTermMap()), oldAxioms.getFormula());
+		final Triple<Term, Set<TermVariable>, Boolean> result =
+				translateTerm(mMgdScript, new HashMap<>(mVarTrans.getIProgramConstTermMap()), oldAxioms.getFormula());
 		// Quantify auxiliary variables
 		final Term withoutAuxVars = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS,
 				result.getSecond(), result.getFirst());
-		final IPredicate transformedAxiom = new BasicPredicate(0, new String[0], withoutAuxVars, Collections.emptySet(),
-				withoutAuxVars);
+		final IPredicate transformedAxiom =
+				new BasicPredicate(0, new String[0], withoutAuxVars, Collections.emptySet(), withoutAuxVars);
 		final boolean isOverappoximation = result.getThird();
 		return new AxiomTransformationResult(transformedAxiom, isOverappoximation);
 	}
@@ -216,34 +217,42 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 	public void preprocessIcfg(final IIcfg<?> icfg) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		mVarTrans = new VariableTranslation("Int");
-		mNewModifiableGlobals = constructNewProc2Globals(csToolkit.getModifiableGlobalsTable().getProcToGlobals(), mMgdScript, mMgdScript, mVarTrans);
+		mNewModifiableGlobals = constructNewProc2Globals(csToolkit.getModifiableGlobalsTable().getProcToGlobals(),
+				mMgdScript, mMgdScript, mVarTrans);
 		mNewSymbolTable = constructNewSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures(), mVarTrans);
-//		csToolkit = constructNewCfgSmtToolkit(icfg.getCfgSmtToolkit(), mMgdScript, mMgdScript);
-
+		// csToolkit = constructNewCfgSmtToolkit(icfg.getCfgSmtToolkit(), mMgdScript, mMgdScript);
 
 	}
 
-	private CfgSmtToolkit constructNewCfgSmtToolkit(final CfgSmtToolkit csToolkit, final ManagedScript oldMgdScript, final ManagedScript newMgdScript) {
+	private CfgSmtToolkit constructNewCfgSmtToolkit(final CfgSmtToolkit csToolkit, final ManagedScript oldMgdScript,
+			final ManagedScript newMgdScript) {
 		final VariableTranslation varTrans = new VariableTranslation("Int");
-		final HashRelation<String, IProgramNonOldVar> proc2globals = constructNewProc2Globals(csToolkit.getModifiableGlobalsTable().getProcToGlobals(), oldMgdScript, newMgdScript, varTrans);
+		final HashRelation<String, IProgramNonOldVar> proc2globals = constructNewProc2Globals(
+				csToolkit.getModifiableGlobalsTable().getProcToGlobals(), oldMgdScript, newMgdScript, varTrans);
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		final IIcfgSymbolTable symbolTable = constructNewSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures(), varTrans);
+		final IIcfgSymbolTable symbolTable =
+				constructNewSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures(), varTrans);
 		final Map<String, List<ILocalProgramVar>> inParams = constructNewParams(csToolkit.getInParams(), varTrans);
 		final Map<String, List<ILocalProgramVar>> outParams = constructNewParams(csToolkit.getOutParams(), varTrans);
 		final SmtFunctionsAndAxioms smtFunctionsAndAxioms = null;
-		return new CfgSmtToolkit(modifiableGlobalsTable, newMgdScript, symbolTable, csToolkit.getProcedures(), inParams, outParams, csToolkit.getIcfgEdgeFactory(), csToolkit.getConcurrencyInformation(), smtFunctionsAndAxioms);
+		return new CfgSmtToolkit(modifiableGlobalsTable, newMgdScript, symbolTable, csToolkit.getProcedures(), inParams,
+				outParams, csToolkit.getIcfgEdgeFactory(), csToolkit.getConcurrencyInformation(),
+				smtFunctionsAndAxioms);
 	}
 
-	private static Map<String, List<ILocalProgramVar>> constructNewParams(final Map<String, List<ILocalProgramVar>> inParams, final VariableTranslation variableTranslation) {
+	private static Map<String, List<ILocalProgramVar>> constructNewParams(
+			final Map<String, List<ILocalProgramVar>> inParams, final VariableTranslation variableTranslation) {
 		final Map<String, List<ILocalProgramVar>> result = new HashMap<>();
 		for (final Entry<String, List<ILocalProgramVar>> entry : inParams.entrySet()) {
-			final List<ILocalProgramVar> newList = entry.getValue().stream().map(x -> variableTranslation.getOrConstruct(x)).collect(Collectors.toList());
+			final List<ILocalProgramVar> newList = entry.getValue().stream()
+					.map(x -> variableTranslation.getOrConstruct(x)).collect(Collectors.toList());
 			result.put(entry.getKey(), newList);
 		}
 		return result;
 	}
 
-	private static IIcfgSymbolTable constructNewSymbolTable(final IIcfgSymbolTable symbolTable, final Set<String> procedures, final VariableTranslation varTrans) {
+	private static IIcfgSymbolTable constructNewSymbolTable(final IIcfgSymbolTable symbolTable,
+			final Set<String> procedures, final VariableTranslation varTrans) {
 		final DefaultIcfgSymbolTable result = new DefaultIcfgSymbolTable();
 		for (final IProgramConst c : symbolTable.getConstants()) {
 			result.add(varTrans.getOrConstruct(c));
@@ -287,7 +296,7 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 		private final ConstructionCache<ILocalProgramVar, ILocalProgramVar> mILocalProgramVarCC;
 		private final ConstructionCache<IProgramNonOldVar, IProgramNonOldVar> mIProgramNonOldVarCC;
 		private final ConstructionCache<IProgramConst, IProgramConst> mIProgramConstCC;
-		private final Map<Term, Term>  mBacktranslation;
+		private final Map<Term, Term> mBacktranslation;
 
 		public VariableTranslation(final String varSuffix) {
 			super();
@@ -307,8 +316,8 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 					return newPv;
 				}
 			});
-			mIProgramNonOldVarCC = new ConstructionCache<>(
-					new IValueConstruction<IProgramNonOldVar, IProgramNonOldVar>() {
+			mIProgramNonOldVarCC =
+					new ConstructionCache<>(new IValueConstruction<IProgramNonOldVar, IProgramNonOldVar>() {
 
 						@Override
 						public IProgramNonOldVar constructValue(final IProgramNonOldVar oldPv) {
@@ -332,7 +341,8 @@ public final class LocalTransformer2 implements ITransformulaTransformer {
 							final String newIdentifier = oldPv.getIdentifier() + mVarSuffix;
 							final Sort newSort = mSortTranslation.apply(oldPv.getSort());
 							mMgdScript.declareFun(null, newIdentifier, new Sort[0], newSort);
-							final ApplicationTerm newSmtConstant = (ApplicationTerm) mMgdScript.term(null, newIdentifier);
+							final ApplicationTerm newSmtConstant =
+									(ApplicationTerm) mMgdScript.term(null, newIdentifier);
 							mBacktranslation.put(newSmtConstant, oldPv.getDefaultConstant());
 							return new ProgramConst(newIdentifier, newSmtConstant, false);
 						}

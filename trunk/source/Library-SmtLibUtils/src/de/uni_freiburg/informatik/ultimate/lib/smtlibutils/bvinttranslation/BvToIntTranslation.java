@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class BvToIntTranslation extends TermTransformer {
 	private final Script mScript;
 	private static final String BITVEC_CONST_PATTERN = "bv\\d+";
-	private boolean mNutzTransformation;
+	private final boolean mNutzTransformation;
 	private final ManagedScript mMgdScript;
 	private final TermVariable[] mFreeVars;
 	private final TranslationConstrainer mTc;
@@ -63,33 +63,28 @@ public class BvToIntTranslation extends TermTransformer {
 	private boolean mIsOverapproximation;
 
 	/*
-	 * Translates a formula over bit-vector to a formula over integers.
-	 * Can translate arrays and quantifiers.
+	 * Translates a formula over bit-vector to a formula over integers. Can translate arrays and quantifiers.
 	 *
 	 * TODO mNutzTransformation not fully implemented yet
 	 */
 	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
-			final TranslationConstrainer tc, final TermVariable[] freeVars) {
+			final TranslationConstrainer tc, final TermVariable[] freeVars, final boolean useNutzTransformation) {
 
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
-		mNutzTransformation = false;
+		mNutzTransformation = useNutzTransformation;
 		mFreeVars = freeVars;
 		if (variableMap != null) {
 			mVariableMap = variableMap;
 		} else {
-			mVariableMap = new LinkedHashMap<Term, Term>();
+			mVariableMap = new LinkedHashMap<>();
 		}
 
-		mReversedVarMap = new LinkedHashMap<Term, Term>();
-		mArraySelectConstraintMap = new LinkedHashMap<Term, Term>();
+		mReversedVarMap = new LinkedHashMap<>();
+		mArraySelectConstraintMap = new LinkedHashMap<>();
 		mOverapproxVariables = new HashSet<>();
 		mIsOverapproximation = false;
 		mTc = tc;
-	}
-
-	public void setNutzTransformation(final boolean bool) {
-		mNutzTransformation = bool;
 	}
 
 	@Override
@@ -236,8 +231,7 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	/*
-	 * This method gets as input an application term with function symbol bvsrem and returns the definition of
-	 * bvsrem.
+	 * This method gets as input an application term with function symbol bvsrem and returns the definition of bvsrem.
 	 */
 	private Term bvsremAbbriviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
@@ -282,8 +276,7 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	/*
-	 * This method gets as input an application term with function symbol bvsdiv and returns the definition of
-	 * bvsdiv.
+	 * This method gets as input an application term with function symbol bvsdiv and returns the definition of bvsdiv.
 	 */
 	private Term bvsdivAbbriviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
@@ -347,9 +340,8 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	/*
-	 * translate variables and uninterpreted constants of bit-vector sort or array sort
-	 * adds bv and int variable to mVariableMap and mReversedVarMap
-	 * returns the new variable (translation results)
+	 * translate variables and uninterpreted constants of bit-vector sort or array sort adds bv and int variable to
+	 * mVariableMap and mReversedVarMap returns the new variable (translation results)
 	 */
 	private Term translateVars(final Term term, final boolean addToVarMap) {
 		if (mVariableMap.containsKey(term)) {
@@ -364,9 +356,9 @@ public class BvToIntTranslation extends TermTransformer {
 					arrayVar = SmtUtils.termVariable2constant(mScript, (TermVariable) arrayVar, true);
 				}
 				if (addToVarMap) {
-				mVariableMap.put(term, arrayVar);
-				mReversedVarMap.put(arrayVar, term);
-			}
+					mVariableMap.put(term, arrayVar);
+					mReversedVarMap.put(arrayVar, term);
+				}
 				return arrayVar;
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				Term intVar;
@@ -375,9 +367,9 @@ public class BvToIntTranslation extends TermTransformer {
 					intVar = SmtUtils.termVariable2constant(mScript, (TermVariable) intVar, true);
 				}
 				if (addToVarMap) {
-				mVariableMap.put(term, intVar);
-				mReversedVarMap.put(intVar, term);
-			}
+					mVariableMap.put(term, intVar);
+					mReversedVarMap.put(intVar, term);
+				}
 				return intVar;
 			} else {
 				return term;
@@ -398,7 +390,7 @@ public class BvToIntTranslation extends TermTransformer {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
 					newTermVars.add((TermVariable) mVariableMap.get(old.getVariables()[i]));
-					if (!getNutzFlag()) {
+					if (!mNutzTransformation) {
 						tvConstraints.add(
 								mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
 					}
@@ -657,8 +649,8 @@ public class BvToIntTranslation extends TermTransformer {
 		final int lowerIndex = Integer.parseInt(appTerm.getFunction().getIndices()[1]);
 		final int upperIndex = Integer.parseInt(appTerm.getFunction().getIndices()[0]);
 
-		final Term divby = SmtUtils.rational2Term(mScript,
-				Rational.valueOf(two.pow(lowerIndex), BigInteger.ONE), intSort);
+		final Term divby =
+				SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(lowerIndex), BigInteger.ONE), intSort);
 		final Term modby = SmtUtils.rational2Term(mScript,
 				Rational.valueOf(two.pow(upperIndex - lowerIndex + 1), BigInteger.ONE), intSort);
 		return mScript.term("mod", mScript.term("div", translatedLHS, divby), modby);
@@ -885,10 +877,6 @@ public class BvToIntTranslation extends TermTransformer {
 
 	public LinkedHashMap<Term, Term> getReversedVarMap() {
 		return mReversedVarMap;
-	}
-
-	public boolean getNutzFlag() {
-		return mNutzTransformation;
 	}
 
 	public Set<TermVariable> getOverapproxVariables() {

@@ -364,8 +364,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
 			final Class<OUTLOC> outlocClass, final IcfgTransformationBacktranslator backtranslationTracker,
 			final IUltimateServiceProvider services, final ConstraintsForBitwiseOperations cfbo) {
+		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		final LocalTransformer2 transformer = new LocalTransformer2(icfg.getCfgSmtToolkit().getManagedScript(), cfbo);
+		final LocalTransformer2 transformer = new LocalTransformer2(icfg.getCfgSmtToolkit().getManagedScript(), cfbo,
+				ups.getBoolean(IcfgTransformationPreferences.LABEL_NUTZ_TRANSFORMATION));
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		final UnaryOperator<Term> backtranslation =
