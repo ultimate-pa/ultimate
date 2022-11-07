@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBac
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer2;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
@@ -366,7 +366,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IUltimateServiceProvider services, final ConstraintsForBitwiseOperations cfbo) {
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		final LocalTransformer2 transformer = new LocalTransformer2(icfg.getCfgSmtToolkit().getManagedScript(), cfbo,
+		final BvToIntTransformulaTransformer transformer = new BvToIntTransformulaTransformer(icfg.getCfgSmtToolkit().getManagedScript(), cfbo,
 				ups.getBoolean(IcfgTransformationPreferences.LABEL_NUTZ_TRANSFORMATION));
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
