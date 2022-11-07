@@ -253,6 +253,13 @@ public class BitabsTranslation {
 
 			final Expression oneNegative =
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
+			final Expression bothNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
+			final Expression bothNegative =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNegative);
+
+			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
 
 			if (binary.getOperator() == IASTBinaryExpression.op_binaryAnd) {
 				final Expression oneEqualsZero =
@@ -260,8 +267,6 @@ public class BitabsTranslation {
 				final Expression function = declareAndApplyFunction(loc, "bitwiseAnd", lType,
 						new CPrimitive[] { lType, lType }, new Expression[] { left, right });
 
-				final Expression bothNegative =
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNegative);
 				final Expression lessThanEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, left),
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, right));
@@ -272,13 +277,17 @@ public class BitabsTranslation {
 				// If a >= b or b >= 0, then a & b >= 0
 				final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 						bothNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, zero));
+				// If a < 0 or b < 0, then a & b > a + b
+				final Expression greaterSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, idLeft, sum));
 
 				// 0 & a = a & 0 = 0
 				// a & a = a
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
-								new AssumeStatement(loc, maximum), new AssumeStatement(loc, nonNegative) });
+								new AssumeStatement(loc, maximum), new AssumeStatement(loc, nonNegative),
+								new AssumeStatement(loc, greaterSum) });
 				final Statement ifOuter = StatementFactory.constructIfStatement(loc, oneEqualsZero,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, zero) },
 						new Statement[] { ifInner });
@@ -300,18 +309,19 @@ public class BitabsTranslation {
 				final Expression minimum =
 						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, greaterEqualBoth);
 				// Otherwise a | b < 0
-				final Expression bothNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
 				final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, idLeft, zero));
+				// If a >= 0 or b >= 0, then a | b <= a + b
+				final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, sum));
 
 				// 0 | a = a | 0 = a
 				// a | a = a
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, rightEqualsZero,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
-								new AssumeStatement(loc, minimum), new AssumeStatement(loc, negative) });
+								new AssumeStatement(loc, minimum), new AssumeStatement(loc, negative),
+								new AssumeStatement(loc, leqSum) });
 				final Statement ifOuter = StatementFactory.constructIfStatement(loc, leftEqualsZeroOrRight,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, right) },
 						new Statement[] { ifInner });
@@ -333,13 +343,17 @@ public class BitabsTranslation {
 						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, positive);
 				final Expression positiveCase2 =
 						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, onePositive, positive);
+				// If a >= 0 or b >= 0, then a ^ b <= a + b
+				final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, sum));
 
 				// 0 ^ a = a ^ 0 = a
 				// a ^ a = 0
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, zero) },
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
-								new AssumeStatement(loc, positiveCase1), new AssumeStatement(loc, positiveCase2) });
+								new AssumeStatement(loc, positiveCase1), new AssumeStatement(loc, positiveCase2),
+								new AssumeStatement(loc, leqSum) });
 				final Statement ifMiddle = StatementFactory.constructIfStatement(loc, rightEqualsZero,
 						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
 						new Statement[] { ifInner });
