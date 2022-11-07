@@ -203,15 +203,7 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 		computeLoopVarAccesses();
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-		// SMTInterpol SMTInterpol = new SMTInterpol();
-		// SMTInterpol.setLogic("QF_LIA");
-		// String just for debugging
-		// String SMTScriptString = "(set-logic QF_LIA)\r\n";
-		// for (final String procedure : mAllLoopProcedures) {
-		// SMTScriptString += String.format("(declare-fun %s () Int)\r\n", procedure);
-		// SMTInterpol.declareFun(procedure, new Sort[0], SMTInterpol.sort("Int"));
-		// mMgdScript.declareFun(this, procedure, new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		// }
+		//String SMTScriptString = "(set-logic QF_LIA)\r\n";
 		var procConstants = declareProcedureConstants(mAllLoopProcedures);
 		final var script = mMgdScript.getScript();
 
@@ -237,32 +229,18 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 							sndSharedAccesses += sndVarMap.get(var);
 						}
 					}
-					// SMTScriptString += String.format("(assert (= (* %d %s) (* %d %s)))\r\n", fstSharedAccesses,
-					// fstProcedure, sndSharedAccesses, sndProcedure);
-					/*
-					 * Term fstSA = SMTInterpol.numeral(Integer.toString(fstSharedAccesses)); Term sndSA =
-					 * SMTInterpol.numeral(Integer.toString(sndSharedAccesses)); Term fstP =
-					 * SMTInterpol.term(fstProcedure); Term sndP = SMTInterpol.term(sndProcedure); Term fstMult =
-					 * SMTInterpol.term("*", fstSA, fstP); Term sndMult = SMTInterpol.term("*", sndSA, sndP); Term
-					 * equation = SMTInterpol.term("=", fstMult, sndMult); SMTInterpol.assertTerm(equation);
-					 */
+					 //SMTScriptString += String.format("(assert (= (* %d %s) (* %d %s)))\r\n", fstSharedAccesses,
+					 //fstProcedure, sndSharedAccesses, sndProcedure);
 
 					final Rational fstSA = SmtUtils.toRational(fstSharedAccesses);
 					final Rational sndSA = SmtUtils.toRational(sndSharedAccesses);
-					// final Term fstP = script.term(fstProcedure);
-					// final Term sndP = script.term(sndProcedure);
 					final Term fstMul = SmtUtils.mul(script, fstSA, procConstants.get(fstProcedure));
 					final Term sndMul = SmtUtils.mul(script, sndSA, procConstants.get(sndProcedure));
 					final Term equation = SmtUtils.equality(script, fstMul, sndMul);
 					mMgdScript.assertTerm(this, equation);
 				}
 			}
-			// SMTScriptString += String.format("(assert (< 0 %s))\r\n", fstProcedure);
-
-			/*
-			 * Term procedure = SMTInterpol.term(fstProcedure); Term zero = SMTInterpol.numeral("0"); Term condition =
-			 * SMTInterpol.term("<", zero, procedure); SMTInterpol.assertTerm(condition);
-			 */
+			 //SMTScriptString += String.format("(assert (< 0 %s))\r\n", fstProcedure);
 
 			// final Term procedure = script.term(fstProcedure);
 			final Term zero = SmtUtils.toRational(0).toTerm(script.sort(SmtSortUtils.INT_SORT));
@@ -272,25 +250,17 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 			termEvaluationMap.put(procConstants.get(fstProcedure), null);
 		}
 		// try to solve equation system
-		// SMTScriptString += "(check-sat)\r\n" + "(get-model)";
+		//SMTScriptString += "(check-sat)\r\n" + "(get-model)";
 		String sequence = "";
 		final var result = mMgdScript.checkSat(this);
 
-		// !SMTInterpol.checkSat().equals(Script.LBool.SAT)
-		// !script.checkSat() == LBool.SAT
 		if (result != LBool.SAT) {
 			// if not solvable, then calculate the accesses on shared vars for all procedures at once
 			termEvaluationMap.clear();
-
-			// SMTInterpol.resetAssertions();
-			// SMTInterpol.declareFun("dummy", new Sort[0], SMTInterpol.sort("Int"));
 			mMgdScript.pop(this, 1);
 			mMgdScript.push(this, 1);
 
 			procConstants = declareProcedureConstants(mAllLoopProcedures);
-
-			// MScript.setLogic("(set-logic QF_LIA)\r\n");
-			// script.declareFun("dummy", new Sort[0], script.sort("Int"));
 			final var dummy = SmtUtils.buildNewConstant(script, "dummy", SmtSortUtils.INT_SORT);
 
 			for (final String procedure : mAllLoopProcedures) {
@@ -301,19 +271,8 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 						sharedAccesses += varMap.get(var);
 					}
 				}
-				/*
-				 * Term procedureSA = SMTInterpol.numeral(Integer.toString(sharedAccesses));
-				 * SMTInterpol.declareFun(procedure, new Sort[0], SMTInterpol.sort("Int")); Term procedureTerm =
-				 * SMTInterpol.term(procedure); Term mult = SMTInterpol.term("*", procedureSA, procedureTerm); Term
-				 * dummy = SMTInterpol.term("dummy"); Term equation = SMTInterpol.term("=", dummy, mult);
-				 * SMTInterpol.assertTerm(equation); Term zero = SMTInterpol.numeral("0"); Term condition =
-				 * SMTInterpol.term("<", zero, procedureTerm); SMTInterpol.assertTerm(condition);
-				 */
 
 				final Rational procedureSA = SmtUtils.toRational(sharedAccesses);
-				// script.declareFun(procedure, new Sort[0], script.sort("Int"));
-				// final Term procedureTerm = script.term(procedure);
-				// final Term dummy = script.term("dummy");
 				final Term mult = SmtUtils.mul(script, procedureSA, procConstants.get(procedure));
 				final Term equation = SmtUtils.equality(script, dummy, mult);
 				mMgdScript.assertTerm(this, equation);
@@ -324,23 +283,16 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 
 				termEvaluationMap.put(procConstants.get(procedure), null);
 			}
-
-			// SMTInterpol.checkSat();
 			mMgdScript.checkSat(this);
 		}
-		// Model model = SMTInterpol.getModel();
-		// final Model model = script.getModel();
-		// final ArrayList<Term> termList = new ArrayList<>();
 
 		final var termValues = mMgdScript.getValue(this, termEvaluationMap.keySet().toArray(Term[]::new));
 		for (final Term term : termEvaluationMap.keySet()) {
-			// final Term value = model.evaluate(term);
 			final Term value = termValues.get(term);
 			final var rational = SmtUtils.tryToConvertToLiteral(value);
 			assert rational != null && rational.isIntegral();
 
 			termEvaluationMap.put(term, rational.numerator().intValue());
-			// termList.add(term);
 		}
 
 		if (!mAllLoopProcedures.isEmpty()) {

@@ -85,38 +85,11 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 		@Override
 		public int compare(final L x, final L y) {
 
-			// String xThread = x.getPrecedingProcedure();
-			// String yThread = y.getPrecedingProcedure();
-			// List<String> shiftedThreadList = new ArrayList<>();
-			// shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
-			// shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
-			// if (xThread == yThread) {
-			// return 0;
-			// } else if (xThread == mLastThread) {
-			// return -1;
-			// } else if (yThread == mLastThread) {
-			// return 1;
-			// } else if (shiftedThreadList.indexOf(xThread) < shiftedThreadList.indexOf(yThread)) {
-			// return -1;
-			// } else {
-			// return 1;
-			// }
-
-			// idee ist hier die Liste vom aktuellen index ausgehend zu betrachten und falls ein thread mehrfach
-			// vorkommt,
-			// ist der relevante index der erste auf den aktuellen thread folgende
-
 			if (x.getPrecedingProcedure() == mLastThread) {
 				return -1;
 			}
-
-			// List<String> shiftedThreadList = new ArrayList<>();
-			// shiftedThreadList.addAll(mThreads.subList(mLastIndex, mThreads.size()));
-			// shiftedThreadList.addAll(mThreads.subList(0, mLastIndex));
-			// final int xThreadIndex = shiftedThreadList.indexOf(x.getPrecedingProcedure());
-			// final int yThreadIndex = shiftedThreadList.indexOf(y.getPrecedingProcedure());
-			// return Integer.compare(xThreadIndex, yThreadIndex);
-
+			
+			//start the comparison from the current index
 			final int xThreadIndex = DataStructureUtils.indexOf(mThreads, x.getPrecedingProcedure(), mLastIndex);
 			final int yThreadIndex = DataStructureUtils.indexOf(mThreads, y.getPrecedingProcedure(), mLastIndex);
 			final boolean xBefore = xThreadIndex < mLastIndex;
