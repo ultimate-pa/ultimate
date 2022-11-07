@@ -49,6 +49,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 	public Validity sdecToFalse(final IPredicate pre, final IPredicate preHier, final ICallAction call) {
 		assert preHier == null : PRE_HIER_ERROR;
 
+		// If the precondition is e.g. (distinct x |old(x)|) for some non-modifiable x, the triple is valid.
 		if (containsConflictingNonModifiableOldVars(call.getPrecedingProcedure(), pre)) {
 			return null;
 		}
@@ -108,16 +109,9 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 
 		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
-				// If post contains old vars, e.g. post is x=old(x), the triple could be valid.
+				// If post contains old vars, e.g. post is (= x |old(x)|), the triple could be valid.
+				// Unlike other cases, here it does not matter whether x is modifiable or not.
 				return null;
-
-				// final var pov = (IProgramOldVar) bv;
-				// if (pre.getVars().contains(pov.getNonOldVar())) {
-				// return null;
-				// }
-				// if (!mModifiableGlobals.isModifiable(pov, caller) && pre.getVars().contains(pov)) {
-				// return null;
-				// }
 			} else if (bv.isGlobal() && pre.getVars().contains(bv)) {
 				return null;
 			}

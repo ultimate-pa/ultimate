@@ -186,7 +186,20 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
 	}
 
-	// Checks if the predicate contains both a non-modifiable global variable x and old(x).
+	/**
+	 * Checks if the predicate contains both a non-modifiable global variable x and old(x).
+	 *
+	 * In such cases, we can often not not give a verdict, because a formula such as (= x |old(x)|) always evaluates to
+	 * true within the context of the procedure, but this is not detected by mCoverage (because it does not take
+	 * procedure context into account). Similarly, a formula such as (distinct x |old(x)|) essentially behaves like it
+	 * is inconsistent, but mCoverage does not detect this.
+	 *
+	 * @param proc
+	 *            The procedure within which the predicate is evaluated
+	 * @param p
+	 *            The predicate to examine
+	 * @return (as described above)
+	 */
 	protected boolean containsConflictingNonModifiableOldVars(final String proc, final IPredicate p) {
 		for (final var pv : p.getVars()) {
 			if (pv.isOldvar()) {
