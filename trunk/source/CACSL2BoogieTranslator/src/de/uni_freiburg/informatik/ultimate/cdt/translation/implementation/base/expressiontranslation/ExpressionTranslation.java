@@ -75,8 +75,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 
 public abstract class ExpressionTranslation {
 
-	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 8;
-
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
 	protected final ITypeHandler mTypeHandler;

@@ -1960,7 +1960,7 @@ public class CHandler {
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
 		final boolean writeValues =
-				stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
+				stringLiteral.getByteValues().size() < mSettings.getStringOverapproximationThreshold();
 		if (writeValues) {
 			final ExpressionResult exprRes =
 					mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
