@@ -84,7 +84,6 @@ public class PolynomialTest {
 		mScript.exit();
 	}
 
-
 	@Test
 	public void realDivisionByConst() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
@@ -162,9 +161,8 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * check that non-integer rationals are represented as binary real divison terms
-	 * (This is the default representation of SMTInterpol's libraries, we do not
-	 * want to change that add allow nested division terms for these cases
+	 * check that non-integer rationals are represented as binary real divison terms (This is the default representation
+	 * of SMTInterpol's libraries, we do not want to change that add allow nested division terms for these cases
 	 */
 	@Test
 	public void realDiv03() {
@@ -340,8 +338,6 @@ public class PolynomialTest {
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
-
-
 	/**
 	 * Test addition of AffineTerm and a PolynomialTerm.
 	 */
@@ -356,9 +352,18 @@ public class PolynomialTest {
 
 	/**
 	 * Result should be
-	 * <pre>(/ 42.0 x y)</pre>
+	 *
+	 * <pre>
+	 * (/ 42.0 x y)
+	 * </pre>
+	 *
 	 * instead of
-	 * <pre>(/ 42.0 (/ x y))</pre>.
+	 *
+	 * <pre>
+	 * (/ 42.0 (/ x y))
+	 * </pre>
+	 *
+	 * .
 	 */
 	@Test
 	public void realDivisionLeftAssoc01() {
@@ -368,7 +373,6 @@ public class PolynomialTest {
 		final String inputAsString = "(/ 42.0 x y)";
 		runDefaultTest(inputAsString, inputAsString);
 	}
-
 
 	/**
 	 * Check that non-polynomial terms get partially simplified
@@ -397,7 +401,10 @@ public class PolynomialTest {
 
 	/**
 	 * Result should be
-	 * <pre>(div (+ (* 21 x x) 1) x)</pre>
+	 *
+	 * <pre>
+	 * (div (+ (* 21 x x) 1) x)
+	 * </pre>
 	 */
 	@Test
 	public void realDivisionLeftAssoc04() {
@@ -423,8 +430,8 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Similar as {@link PolynomialTest#realDivisionLeftAssoc05} but where
-	 * variables have been replaced by the zero literal.
+	 * Similar as {@link PolynomialTest#realDivisionLeftAssoc05} but where variables have been replaced by the zero
+	 * literal.
 	 */
 	@Test
 	public void realDivisionLeftAssoc05ZeroLiteral() {
@@ -439,9 +446,18 @@ public class PolynomialTest {
 
 	/**
 	 * Result should be
-	 * <pre>(/ 42 x y)</pre>
+	 *
+	 * <pre>
+	 * (/ 42 x y)
+	 * </pre>
+	 *
 	 * instead of
-	 * <pre>(/ 42 (/ x y))</pre>.
+	 *
+	 * <pre>
+	 * (/ 42 (/ x y))
+	 * </pre>
+	 *
+	 * .
 	 */
 	@Test
 	public void intDivisionLeftAssoc01() {
@@ -466,7 +482,10 @@ public class PolynomialTest {
 
 	/**
 	 * Result should be
-	 * <pre>(div (* 21 x) x)</pre>
+	 *
+	 * <pre>
+	 * (div (* 21 x) x)
+	 * </pre>
 	 */
 	@Test
 	public void intDivisionLeftAssoc03() {
@@ -490,11 +509,9 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * A non-initial zero cannot be simplified (semantics of division by zero
-	 * similar to uninterpreted function see
-	 * http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that
-	 * an initial zero does not make the result zero, because 0 is not equivalent to
-	 * (div 0 0).
+	 * A non-initial zero cannot be simplified (semantics of division by zero similar to uninterpreted function see
+	 * http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that an initial zero does not make the
+	 * result zero, because 0 is not equivalent to (div 0 0).
 	 */
 	@Test
 	public void intDivisionLeftAssoc05() {
@@ -505,9 +522,18 @@ public class PolynomialTest {
 
 	/**
 	 * Result should be
-	 * <pre>(* 42.0 x y)</pre>
+	 *
+	 * <pre>
+	 * (* 42.0 x y)
+	 * </pre>
+	 *
 	 * instead of
-	 * <pre>(* 42.0 (* x y))</pre>.
+	 *
+	 * <pre>
+	 * (* 42.0 (* x y))
+	 * </pre>
+	 *
+	 * .
 	 */
 	@Test
 	public void realMultiplicationLeftAssoc01() {
@@ -532,9 +558,18 @@ public class PolynomialTest {
 
 	/**
 	 * Result should be
-	 * <pre>(+ 42.0 x y)</pre>
+	 *
+	 * <pre>
+	 * (+ 42.0 x y)
+	 * </pre>
+	 *
 	 * instead of
-	 * <pre>(+ 42.0 (+ x y))</pre>.
+	 *
+	 * <pre>
+	 * (+ 42.0 (+ x y))
+	 * </pre>
+	 *
+	 * .
 	 */
 	@Test
 	public void realAdditionLeftAssoc01() {
@@ -584,8 +619,7 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * We cannot compute the constant although is not divisible, because all
-	 * coefficients are divisible.
+	 * We cannot compute the constant although is not divisible, because all coefficients are divisible.
 	 */
 	@Test
 	public void intDivisionDistributivity03() {
@@ -610,8 +644,8 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Since `div` can only be applied to some summands we temporarily get two
-	 * similar abstract variables and have to add their coefficients.
+	 * Since `div` can only be applied to some summands we temporarily get two similar abstract variables and have to
+	 * add their coefficients.
 	 */
 	@Test
 	public void bugAbstractDivVarFromTwoSources() {
@@ -682,7 +716,6 @@ public class PolynomialTest {
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 
-
 	/**
 	 * Change of variables affects coefficient and make it zero
 	 */
@@ -729,8 +762,7 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Pulling out the CGD allows us to drop inner `mod` applications, which allows
-	 * further simplification.
+	 * Pulling out the CGD allows us to drop inner `mod` applications, which allows further simplification.
 	 */
 	@Test
 	public void mod08() {
@@ -769,9 +801,17 @@ public class PolynomialTest {
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 
+	@Test
+	public void multiplicationWithAddition() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		final String inputAsString = "(* (+ x 1) (- x 1))";
+		final String expectedOutputAsString = "(+ (- 1) (* x x))";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
 	/**
-	 * Test whether transformed input is syntactically equivalent to expected
-	 * output.
+	 * Test whether transformed input is syntactically equivalent to expected output.
 	 */
 	private void runDefaultTest(final String inputAsString, final String expectedOutputAsString) {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
@@ -786,8 +826,8 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Test whether transformed input is syntactically equivalent to expected
-	 * output, except for permutation. Only works for "flattened" Terms.
+	 * Test whether transformed input is syntactically equivalent to expected output, except for permutation. Only works
+	 * for "flattened" Terms.
 	 */
 	private void runSyntaxWithoutPermutationsTest(final String inputAsString, final String expectedOutputAsString) {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
@@ -797,7 +837,7 @@ public class PolynomialTest {
 		final Term outputAsTerm = output.toTerm(mScript);
 		mLogger.info("Output: " + outputAsTerm);
 		mLogger.info("Expected output: " + expectedOutputAsTerm);
-		//Trim braces
+		// Trim braces
 		final String expectedTrimmed = expectedOutputAsString.substring(1, expectedOutputAsString.length() - 1);
 		final String outputTrimmed = outputAsTerm.toString().substring(1, outputAsTerm.toString().length() - 1);
 		final String[] expectedArgs = expectedTrimmed.split("\\s");
@@ -829,7 +869,9 @@ public class PolynomialTest {
 
 	/**
 	 * Test whether the transformed input is logically equivalent to the input.
-	 * @param checkOutputIsAffine check that transformed input is an {@link AffineTerm}
+	 *
+	 * @param checkOutputIsAffine
+	 *            check that transformed input is an {@link AffineTerm}
 	 */
 	private void runLogicalEquivalenceBasedTest(final String inputAsString, final boolean checkOutputIsAffine) {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
