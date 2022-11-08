@@ -157,7 +157,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			final SparseMapBuilder<Monomial, Rational> builder, final IPolynomialTerm poly1,
 			final IPolynomialTerm poly2) {
 		for (final Map.Entry<Monomial, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
-			final Rational coeff = builder.get(summand.getKey());
+			final Rational coeff = builder.remove(summand.getKey());
 			final Rational newCoeff;
 			final Rational tempCoeff;
 
