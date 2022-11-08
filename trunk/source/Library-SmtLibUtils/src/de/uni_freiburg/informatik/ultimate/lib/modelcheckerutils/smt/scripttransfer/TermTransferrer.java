@@ -200,7 +200,9 @@ public class TermTransferrer extends TermTransformer {
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		final TermVariable[] vars = new TermVariable[old.getVariables().length];
 		for (int i = 0; i < old.getVariables().length; i++) {
-			vars[i] = transferTermVariable(old.getVariables()[i]);
+			// Check mTransferMapping first, in case a different mapping was already recorded.
+			vars[i] = (TermVariable) mTransferMapping.computeIfAbsent(old.getVariables()[i],
+					x -> transferTermVariable((TermVariable) x));
 		}
 		final Term result = mNewScript.quantifier(old.getQuantifier(), vars, newBody);
 		setResult(result);
