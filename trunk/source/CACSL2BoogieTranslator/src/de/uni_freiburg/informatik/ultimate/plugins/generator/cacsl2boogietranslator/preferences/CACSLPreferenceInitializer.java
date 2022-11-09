@@ -128,6 +128,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "on we attempt to detect this case, and automatically set the memory model to a higher resolution.";
 
 	public static final String LABEL_STRING_OVERAPPROXIMATION_THRESHOLD = "String overapproximation threshold";
+	public static final String DESC_STRING_OVERAPPROXIMATION_THRESHOLD = "String literals that require this number of "
+			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
 	private static final int DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD = 9;
 
 	public enum PointerCheckMode {
@@ -315,7 +317,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
 						DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
-						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, PreferenceType.Integer) };
+						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
+						PreferenceType.Integer) };
 
 	}
 }
