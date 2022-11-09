@@ -14,7 +14,7 @@ enum
 };
 
 int main() {
-	if (delta != 6) {
+	if (omicron != 6) {
 		//@ assert \false;
 	}
 	return 0;
