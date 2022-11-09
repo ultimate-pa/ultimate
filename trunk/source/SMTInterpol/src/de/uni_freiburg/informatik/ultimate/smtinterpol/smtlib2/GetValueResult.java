@@ -25,21 +25,28 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 
 /**
- * Class to represent a list of assertions.  These are used for the getAssertion response, which should
- * print the assertions as they were given (without let conversion).
- * 
- * @author hoenicke
+ * Class to represent a list of values. These are used for the get-value
+ * response, which should print the values in SMT-LIB format.
+ *
+ * @author Jochen Hoenicke
  */
 public class GetValueResult {
-	private Map<Term,Term> mValues;
+	private final Map<Term,Term> mValues;
 
+	/**
+	 * Create a get-value response.
+	 *
+	 * @param result a map from terms to their values (in the order they should be
+	 *               output).
+	 */
 	public GetValueResult(Map<Term, Term> result) {
-		this.mValues = result;
+		mValues = result;
 	}
 
 	/**
 	 * Convert S-expression to its string representation.
 	 */
+	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		final PrintTerm pt = new PrintTerm();
@@ -55,6 +62,7 @@ public class GetValueResult {
 			sb.append(')');
 			sep = itemSep;
 		}
+		sb.append(')');
 		return sb.toString();
 	}
 }

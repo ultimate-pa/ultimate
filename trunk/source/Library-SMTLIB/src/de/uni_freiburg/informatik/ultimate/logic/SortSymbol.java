@@ -62,6 +62,10 @@ public class SortSymbol {
 	 * Flag to indicate data types.
 	 */
 	static final int DATATYPE  = 0x20;
+	/**
+	 * Flag to indicate the function types.
+	 */
+	static final int FUNCTION  = 0x40;
 
 	final Theory mTheory;
 	final String mName;
@@ -208,6 +212,7 @@ public class SortSymbol {
 	public boolean isNumeric() {
 		return (mFlags & NUMERIC) != 0;
 	}
+
 	/**
 	 * Check if this sort symbol corresponds to an array sort.
 	 * @return true if this sort is an array sort.
@@ -215,12 +220,24 @@ public class SortSymbol {
 	public boolean isArray() {
 		return (mFlags & ARRAY) != 0;
 	}
+
 	/**
 	 * Check if this sort symbol is a datatype.
+	 *
 	 * @return true if this sort symbol is a datatype.
 	 */
 	public boolean isDatatype() {
 		return (mFlags & DATATYPE) != 0;
+	}
+
+	/**
+	 * Check if this sort symbol is a function type, i.e. the sort symbol
+	 * {@code ->}.
+	 *
+	 * @return true if this sort symbol is a function type.
+	 */
+	public boolean isFunction() {
+		return (mFlags & FUNCTION) != 0;
 	}
 
 	@Override

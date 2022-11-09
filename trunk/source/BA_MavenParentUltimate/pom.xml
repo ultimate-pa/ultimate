@@ -383,7 +383,7 @@
 						<goals>
 							<goal>revision</goal>
 						</goals>
-						<phase>generate-sources</phase>
+						<phase>initialize</phase>
 					</execution>
 				</executions>
 
@@ -392,7 +392,7 @@
 					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
 					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
 					<format>properties</format>
-					<useNativeGit>true</useNativeGit>
+					<useNativeGit>false</useNativeGit>
 
 					<skipPoms>false</skipPoms>
 					<runOnlyOnce>true</runOnlyOnce>

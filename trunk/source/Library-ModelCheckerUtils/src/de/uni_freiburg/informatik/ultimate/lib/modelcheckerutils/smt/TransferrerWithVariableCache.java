@@ -58,13 +58,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class TransferrerWithVariableCache {
 	private final ManagedScript mTargetScript;
 	private final TermTransferrer mTransferrer;
+	private final SmtFreePredicateFactory mFactory;
 
-	private final SmtFreePredicateFactory mFactory = new SmtFreePredicateFactory();
 	private final Map<IProgramVarOrConst, IProgramVarOrConst> mCache = new HashMap<>();
+	private final Map<IPredicate, BasicPredicate> mPredicateCache = new HashMap<>();
 
 	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript) {
+		this(sourceScript, targetScript, new SmtFreePredicateFactory());
+	}
+
+	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript,
+			final SmtFreePredicateFactory factory) {
 		mTargetScript = targetScript;
 		mTransferrer = new TermTransferrer(sourceScript, targetScript.getScript(), new HashMap<>(), false);
+		mFactory = factory;
 	}
 
 	public IProgramVar transferProgramVar(final IProgramVar oldPv) {
@@ -86,6 +93,10 @@ public class TransferrerWithVariableCache {
 	}
 
 	public BasicPredicate transferPredicate(final IPredicate predicate) {
+		return mPredicateCache.computeIfAbsent(predicate, this::transferPredicateHelper);
+	}
+
+	private BasicPredicate transferPredicateHelper(final IPredicate predicate) {
 		final Set<IProgramVar> variables = transferVariables(predicate.getVars());
 		final Term transferredFormula = transferTerm(predicate.getFormula());
 		final Term transferredClosed = transferTerm(predicate.getClosedFormula());

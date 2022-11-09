@@ -22,3 +22,13 @@ modifies x,y;
 //  assert y == 4 || y == 10 || y == -7 || y == -13 || y == 16 || y == -19;
   assert y < 1000;
 }
+
+
+//even
+// y := -(-y + x) + -x
+// y := y -2x
+// y := y - k * 2x
+// x := x
+//odd
+// y := -y+x+k*2x
+// y := -y+(k*2+1)x

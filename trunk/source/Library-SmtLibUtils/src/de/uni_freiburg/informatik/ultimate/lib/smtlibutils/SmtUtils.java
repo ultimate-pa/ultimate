@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.Equivalence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -88,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -1436,10 +1436,10 @@ public final class SmtUtils {
 			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case "div":
-			if (params.length != 2) {
-				throw new IllegalArgumentException("no div");
+			if (params.length < 2) {
+				throw new IllegalArgumentException("div needs at least two arguments");
 			}
-			result = div(script, params[0], params[1]);
+			result = divInt(script, params);
 			break;
 		case "mod":
 			if (params.length != 2) {
@@ -1638,27 +1638,6 @@ public final class SmtUtils {
 		return name.replaceAll("\\|", "BAR").replaceAll(" ", "_");
 	}
 
-	/**
-	 * Returns a possibly simplified version of the Term (div dividend divisor). If dividend and divisor are both
-	 * literals the returned Term is a literal which is equivalent to the result of the operation
-	 */
-	public static Term div(final Script script, final Term dividend, final Term divisor) {
-		if (dividend instanceof ConstantTerm && dividend.getSort().isNumericSort() && divisor instanceof ConstantTerm
-				&& divisor.getSort().isNumericSort()) {
-			final Rational dividentAsRational = toRational((ConstantTerm) dividend);
-			final Rational divisorAsRational = toRational((ConstantTerm) divisor);
-			final Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
-			Rational result;
-			if (divisorAsRational.isNegative()) {
-				result = quotientAsRational.ceil();
-			} else {
-				result = quotientAsRational.floor();
-			}
-			return result.toTerm(dividend.getSort());
-		}
-		return script.term("div", dividend, divisor);
-	}
-
 	public static Term abs(final Script script, final Term operand) {
 		if (operand instanceof ConstantTerm && SmtSortUtils.isIntSort(operand.getSort())) {
 			final Rational operandAsRational = toRational((ConstantTerm) operand);
@@ -1741,71 +1720,74 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Division for ints with the following simplifications.
-	 * <ul>
-	 * <li>Initial literals are simplified by division as long as the result is integral.
-	 * <li>A non-initial zero cannot be simplified (semantics of division by zero similar to uninterpreted function see
-	 * http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that an initial zero does not make the
-	 * result zero, because 0 is not equivalent to (div 0 0).
-	 * <li>An intermediate 1 literal is dropped.
-	 * </ul>
-	 *
-	 * See {@link SmtUtilsTest#divIntTest01} for tests. TODO: Apply flattening such that (div (div x y) z) becomes (div
-	 * x y z).
+	 * Division for ints with the several simplifications.
 	 */
 	public static Term divInt(final Script script, final Term... inputParams) {
-		final List<Term> resultParams = new ArrayList<>();
-		boolean simplificationPossible = true;
-		if (inputParams.length == 0) {
-			throw new IllegalArgumentException("int division needs at least one argument");
+		final AbstractGeneralizedAffineTerm<?>[] polynomialArgs = new AbstractGeneralizedAffineTerm<?>[inputParams.length];
+		for (int i = 0; i < inputParams.length; i++) {
+			polynomialArgs[i] = (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script,
+					inputParams[i]);
 		}
-		resultParams.add(inputParams[0]);
-		for (int i = 1; i < inputParams.length; i++) {
-			if (simplificationPossible) {
-				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
-				if (nextAsRational == null) {
-					// cannot simplify - is not at literal
-					resultParams.add(inputParams[i]);
-					simplificationPossible = false;
-				} else if (nextAsRational.numerator() == BigInteger.ZERO) {
-					// cannot simplify
-					resultParams.add(inputParams[i]);
-					simplificationPossible = false;
-				} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
-					// do nothing
-				} else {
-					final Rational numerator = tryToConvertToLiteral(resultParams.get(0));
-					if (numerator == null) {
-						// cannot simplify
-						resultParams.add(inputParams[i]);
-						simplificationPossible = false;
-					} else {
-						if (!numerator.isIntegral() || !nextAsRational.isIntegral()) {
-							throw new AssertionError("no integers");
-						}
-						// Euclidean division. E.g. (div -5 2) is -3
-						final BigInteger div =
-								ArithmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
-						final Term resultTerm = SmtUtils.rational2Term(script, Rational.valueOf(div, BigInteger.ONE),
-								resultParams.get(0).getSort());
-						resultParams.set(0, resultTerm);
-					}
+		return polynomialArgs[0].div(script, Arrays.copyOfRange(polynomialArgs, 1, polynomialArgs.length))
+				.toTerm(script);
+	}
+
+	/**
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` and `d` are
+	 * non-zero literals and convert it to `(div a1 ... an d)` otherwise.
+	 */
+	public static Term divIntFlatten(final Script script, final Term divident, final Term divisor) {
+		final Rational divisorRat = SmtUtils.tryToConvertToLiteral(divisor);
+		Term result;
+		if (divisorRat != null) {
+			final BigInteger divisorBigInt = divisorRat.numerator();
+			result = divIntFlatten(script, divident, divisorBigInt);
+		} else {
+			final ApplicationTerm divTerm = SmtUtils.getFunctionApplication(divident, "div");
+			if (divTerm != null) {
+				final List<Term> divArguments = new ArrayList<>(Arrays.asList(divTerm.getParameters()));
+				if (divArguments.size() < 2) {
+					throw new AssertionError();
 				}
+				divArguments.add(divisor);
+				// Can't be simplified.
+				// Do not use {@link SmtUtils#div} to avoid nonterminating loop.
+				result = script.term("div", divArguments.toArray(new Term[divArguments.size()]));
 			} else {
-				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
-				if (nextAsRational == null) {
-					resultParams.add(inputParams[i]);
-				} else if (nextAsRational.numerator() == BigInteger.ONE) {
-					// do nothing
-				} else {
-					resultParams.add(inputParams[i]);
-				}
+				// Can't be simplified.
+				// Do not use {@link SmtUtils#div} to avoid nonterminating loop.
+				result = script.term("div", divident, divisor);
 			}
 		}
-		if (resultParams.size() == 1) {
-			return resultParams.get(0);
+		return result;
+	}
+
+	/**
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a
+	 * non-zero literal and convert it to `(div a1 ... an d)` otherwise.
+	 */
+	public static Term divIntFlatten(final Script script, final Term divident, final BigInteger divisorBigInt) {
+		final Term result;
+		final ApplicationTerm divTerm = SmtUtils.getFunctionApplication(divident, "div");
+		if (divTerm != null) {
+			final List<Term> divArguments = new ArrayList<>(Arrays.asList(divTerm.getParameters()));
+			if (divArguments.size() < 2) {
+				throw new AssertionError();
+			}
+			final Term lastElement = divArguments.get(divArguments.size() - 1);
+			final Rational lastElementRat = SmtUtils.tryToConvertToLiteral(lastElement);
+			if (lastElementRat != null && !lastElementRat.equals(Rational.ZERO)) {
+				final BigInteger lastElementBigInteger = lastElementRat.numerator();
+				final BigInteger newLastElement = lastElementBigInteger.multiply(divisorBigInt);
+				divArguments.set(divArguments.size() - 1, SmtUtils.constructIntValue(script, newLastElement));
+			} else {
+				divArguments.add(SmtUtils.constructIntValue(script, divisorBigInt));
+			}
+			result = script.term("div", divArguments.toArray(new Term[divArguments.size()]));
+		} else {
+			result = script.term("div", divident, SmtUtils.constructIntValue(script, divisorBigInt));
 		}
-		return script.term("div", resultParams.toArray(new Term[resultParams.size()]));
+		return result;
 	}
 
 	/**
@@ -1829,40 +1811,20 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns a possibly simplified version of the Term (mod dividend divisor). If dividend and divisor are both
-	 * literals the returned Term is a literal which is equivalent to the result of the operation. If only the divisor
-	 * is a literal we apply modulo to all coefficients of the dividend (helpful simplification in case where
-	 * coefficient becomes zero).
+	 * Returns a possibly simplified version of the Term (mod dividend divisor). See
+	 * {@link PolynomialTest} for examples.
 	 */
 	public static Term mod(final Script script, final Term divident, final Term divisor) {
-		final AffineTerm affineDivident = (AffineTerm) new AffineTermTransformer(script).transform(divident);
-		final AffineTerm affineDivisor = (AffineTerm) new AffineTermTransformer(script).transform(divisor);
-		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
+		final Rational divisorAsRational = tryToConvertToLiteral(divisor);
+		if (divisorAsRational == null) {
+			// cannot simplify
 			return script.term("mod", divident, divisor);
+		} else {
+			assert divisorAsRational.isIntegral();
+			final AbstractGeneralizedAffineTerm<?> agat = (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer
+					.convert(script, divident);
+			return agat.mod(script, divisorAsRational.numerator()).toTerm(script);
 		}
-		if (affineDivisor.isZero()) {
-			// pass the problem how to deal with division by zero to the
-			// subsequent analysis
-			return script.term("mod", divident, divisor);
-		}
-		if (affineDivisor.isConstant()) {
-			// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
-			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant()).abs();
-			if (affineDivident.isConstant()) {
-				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
-				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
-				return constructIntValue(script, modulus);
-			}
-			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
-			if (simplifiedNestedModulo != null) {
-				return simplifiedNestedModulo;
-			}
-			final AffineTerm moduloApplied =
-					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
-			return script.term("mod", moduloApplied.toTerm(script),
-					affineDivisor.getConstant().abs().toTerm(affineDivisor.getSort()));
-		}
-		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
 	}
 
 	/**
@@ -2622,6 +2584,32 @@ public final class SmtUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Flatten `(⊕ (⊕ x1 ... xn) y1 .. yn)` to `(⊕ x1 ... xn y1 .. yn)`. Sound is ⊕
+	 * left-associative. Warning: Flattening sometimes allow further
+	 * simplifications, especially if ⊕ is commutative. These simplifications are
+	 * not done if you use this method. Do not change this such that it utilizes
+	 * simplifications afterwards. This might lead to nonterminating loops since
+	 * this is a low-level methods that is utilized by simplifications itself.
+	 */
+	public static Term flattenIntoFirstArgument(final Script script, final String funcname, final Term firstParam,
+			final Term... otherParams) {
+		final List<Term> resultParams;
+		if ((firstParam instanceof ApplicationTerm)
+				&& ((ApplicationTerm) firstParam).getFunction().getApplicationString().equals(funcname)) {
+			// same operator, we can flatten
+			final ApplicationTerm appTerm = (ApplicationTerm) firstParam;
+			resultParams = new ArrayList<>(appTerm.getParameters().length + otherParams.length);
+			resultParams.addAll(Arrays.asList(appTerm.getParameters()));
+			resultParams.addAll(Arrays.asList(otherParams));
+		} else {
+			resultParams = new ArrayList<>(otherParams.length + 1);
+			resultParams.add(firstParam);
+			resultParams.addAll(Arrays.asList(otherParams));
+		}
+		return script.term(funcname, resultParams.toArray(new Term[resultParams.size()]));
 	}
 
 	/**

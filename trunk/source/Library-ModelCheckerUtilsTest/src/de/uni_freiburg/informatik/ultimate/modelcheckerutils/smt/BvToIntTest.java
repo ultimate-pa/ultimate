@@ -86,8 +86,8 @@ public class BvToIntTest {
 	}
 
 	private Term translateQelimBacktranslate(final Term input) {
-		final TranslationManager translationManager = new TranslationManager(mMgdScript,
-				ConstraintsForBitwiseOperations.SUM);
+		final TranslationManager translationManager =
+				new TranslationManager(mMgdScript, ConstraintsForBitwiseOperations.SUM, false);
 		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(input);
 		if (!translated.getSecond().isEmpty() || translated.getThird()) {
 			throw new UnsupportedOperationException();

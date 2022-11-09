@@ -26,19 +26,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMap;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 class SleepMapStateFactory<L> implements ISleepMapStateFactory<L, IPredicate, IPredicate> {
 
 	private final IPredicate mEmptyStack;
 
-	private final NestedMap3<IPredicate, SleepMap<L, IPredicate>, Integer, SleepMapPredicate<L>> mMap =
-			new NestedMap3<>();
+	// This map is used to ensure we don't create several equal instances.
+	private final Map<SleepMapPredicate<L>, SleepMapPredicate<L>> mUnifyingMap = new HashMap<>();
 
 	public SleepMapStateFactory(final PredicateFactory predicateFactory) {
 		mEmptyStack = predicateFactory.newEmptyStackPredicate();
@@ -52,14 +55,8 @@ class SleepMapStateFactory<L> implements ISleepMapStateFactory<L, IPredicate, IP
 	@Override
 	public IPredicate createSleepMapState(final IPredicate state, final SleepMap<L, IPredicate> sleepMap,
 			final int budget) {
-		final SleepMapPredicate<L> existing = mMap.get(state, sleepMap, budget);
-		if (existing != null) {
-			return existing;
-		}
-
-		final SleepMapPredicate<L> predicate = new SleepMapPredicate<>((IMLPredicate) state, sleepMap, budget);
-		mMap.put(state, sleepMap, budget, predicate);
-		return predicate;
+		final var sleepState = new SleepMapPredicate<>((IMLPredicate) state, sleepMap, budget);
+		return mUnifyingMap.computeIfAbsent(sleepState, Function.identity());
 	}
 
 	@Override
@@ -75,5 +72,9 @@ class SleepMapStateFactory<L> implements ISleepMapStateFactory<L, IPredicate, IP
 	@Override
 	public int getBudget(final IPredicate sleepMapState) {
 		return ((SleepMapPredicate<?>) sleepMapState).getBudget();
+	}
+
+	public void reset() {
+		mUnifyingMap.clear();
 	}
 }

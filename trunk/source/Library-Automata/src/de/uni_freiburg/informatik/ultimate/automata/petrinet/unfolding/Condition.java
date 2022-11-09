@@ -31,6 +31,8 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 /**
  * A condition.
  *
@@ -44,12 +46,15 @@ import java.util.HashSet;
 public class Condition<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
 
+	// See https://github.com/ultimate-pa/ultimate/pull/595 for discussion
+	private static final boolean USE_HASH_JENKINS = false;
 
 	private final Event<LETTER, PLACE> mPredecessor;
 	private final Collection<Event<LETTER, PLACE>> mSuccessors;
 	private final PLACE mPlace;
 
 	private final int mSerialNumber;
+	private final int mHashCode;
 
 	/**
 	 * Construct conditions only via {@link BranchingProcess}
@@ -60,6 +65,14 @@ public class Condition<LETTER, PLACE> implements Serializable {
 		mPredecessor = predecessor;
 		mSuccessors = new HashSet<>();
 		mPlace = place;
+
+		if (USE_HASH_JENKINS) {
+			// Serial numbers should not be used verbatim for hash codes,
+			// because this would cause frequent hash collisions for e.g. sets or lists of conditions.
+			mHashCode = HashUtils.hashJenkins(17, mSerialNumber);
+		} else {
+			mHashCode = mSerialNumber;
+		}
 	}
 
 	/**
@@ -91,14 +104,14 @@ public class Condition<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return mSerialNumber;
+		return mHashCode;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		return mSerialNumber == ((Condition) obj).mSerialNumber;
+		// We intentionally use reference equality here:
+		// - An efficient equality check is crucial for unfolding performance.
+		// - The unfolding should never create two instances representing "equal" conditions.
+		return this == obj;
 	}
 }

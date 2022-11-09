@@ -108,10 +108,10 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 				if (nextLine == null) {
 					throw new UnsupportedOperationException("Cannot understand YAML file");
 				} else {
-					if (nextLine.contains(VERDICT_TRUE)) {
+					if (nextLine.toLowerCase().contains(VERDICT_TRUE)) {
 						br.close();
 						return mResultMap.get(propertyFile, String.valueOf(true));
-					} else if (nextLine.contains(VERDICT_FALSE)) {
+					} else if (nextLine.toLowerCase().contains(VERDICT_FALSE)) {
 						final Map<String, OVERALL_RESULT> map = mResultMap.get(propertyFile);
 						if (map.containsKey(String.valueOf(false))) {
 							// there are no subproperties for this property

@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
@@ -118,40 +118,73 @@ public final class SleepMap<L, S> {
 	 *
 	 * @param state
 	 *            The source state of the transition
-	 * @param letter
+	 * @param transitionLetter
 	 *            The letter labeling the transition
 	 * @param lesserLetters
 	 *            A map associating all letters less than the given letter with their price
+	 * @param budget
+	 *            The budget for the successor state, i.e., the index of the maximal independence relation that can be
+	 *            used from the successor state on.
 	 * @return A sleep map for the successor state after the given transition.
 	 */
-	public SleepMap<L, S> computeSuccessor(final S state, final L letter, final Map<L, Integer> lesserLetters,
+	public SleepMap<L, S> computeSuccessor(final S state, final L transitionLetter, final Map<L, Integer> lesserLetters,
 			final int budget) {
 		final Map<L, Integer> successorMap = new HashMap<>();
 
-		// transfer elements of current set
-		for (final Map.Entry<L, Integer> entry : mSleepMap.entrySet()) {
-			final Integer level = minimumRelation(state, letter, entry.getKey(), entry.getValue());
-			if (level != null && level <= budget) {
-				successorMap.put(entry.getKey(), level);
+		for (final var entry : mSleepMap.entrySet()) {
+			final L currentLetter = entry.getKey();
+			assert !successorMap.containsKey(currentLetter) : "budget should not be computed twice";
+
+			// Compute the "cost" of currentLetter:
+			// The minimum of its budget at the current state (but only if it is ordered before transitionLetter)
+			// and its price in the old sleep map.
+			final Integer freshPrice = lesserLetters.get(currentLetter);
+			final int cost = freshPrice == null ? entry.getValue() : Integer.min(freshPrice, entry.getValue());
+
+			// "Transfer" the currentLetter across the transition labeled with "transitionLetter":
+			// Increase the price to a relation where the two letters are independent (if such a relation exists).
+			final Integer transferred = minimumRelation(state, transitionLetter, currentLetter, cost, budget);
+			if (transferred != null) {
+				// Check that the price is "constrained": It must not exceed the budget.
+				// The method #minimumRelation already ensures this.
+				assert transferred <= budget : "computed price is not constrained by budget";
+
+				// Enter the letter with the computed price in the new sleep map.
+				successorMap.put(currentLetter, transferred);
 			}
 		}
 
-		// transfer lesser letters
-		for (final Map.Entry<L, Integer> entry : lesserLetters.entrySet()) {
-			assert entry.getValue() != null : "Associated price must not be null";
-			final Integer oldLevel = successorMap.get(letter);
-			final Integer minLevel = oldLevel == null ? entry.getValue() : Integer.min(oldLevel, entry.getValue());
-			final Integer level = minimumRelation(state, letter, entry.getKey(), minLevel);
-			if (level != null && level <= budget) {
-				successorMap.put(entry.getKey(), level);
+		for (final var entry : lesserLetters.entrySet()) {
+			final L currentLetter = entry.getKey();
+			if (mSleepMap.containsKey(currentLetter)) {
+				// already dealt with in the loop above
+				continue;
+			}
+			assert !successorMap.containsKey(currentLetter) : "budget should not be computed twice";
+
+			// Compute the "cost" of currentLetter: Its budget at the current state.
+			// (Because of the conditional above, we know the letter is not in the old sleep map.)
+			assert !mSleepMap.containsKey(currentLetter);
+			final int cost = entry.getValue();
+
+			// "Transfer" the currentLetter across the transition labeled with "transitionLetter":
+			// Increase the price to a relation where the two letters are independent (if such a relation exists).
+			final Integer transferred = minimumRelation(state, transitionLetter, currentLetter, cost, budget);
+			if (transferred != null) {
+				// Check that the price is "constrained": It must not exceed the budget.
+				// The method #minimumRelation already ensures this.
+				assert transferred <= budget : "computed price is not constrained by budget";
+
+				// Enter the letter with the computed price in the new sleep map.
+				successorMap.put(currentLetter, transferred);
 			}
 		}
 
-		return new SleepMap<>(mRelations, successorMap);
+		return new SleepMap<>(mRelations, Map.copyOf(successorMap));
 	}
 
-	private Integer minimumRelation(final S state, final L a, final L b, final int minLevel) {
-		for (int i = minLevel; i < mRelations.size(); i++) {
+	private Integer minimumRelation(final S state, final L a, final L b, final int minLevel, final int maxLevel) {
+		for (int i = minLevel; i <= maxLevel; i++) {
 			if (mRelations.get(i).contains(state, a, b)) {
 				return i;
 			}

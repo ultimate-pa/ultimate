@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -43,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -53,12 +53,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -75,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -93,9 +90,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private static final boolean OVERAPPROXIMATE_INT_POINTER_CONVERSION = true;
 
+	private final BitabsTranslation mBitabsTranslation;
+
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
 		super(typeSizeConstants, settings, typeHandler, symboltable);
+		mBitabsTranslation = new BitabsTranslation(mTypeSizes, mTypeHandler, mFunctionDeclarations);
 	}
 
 	@Override
@@ -149,6 +149,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return ExpressionFactory.newBinaryExpression(loc, op, leftExpr, rightExpr);
 	}
 
+	@Override
+	public Expression applyNutzTransformationWraparound(final ILocation loc, final TypeSizes typeSizes,
+			final CPrimitive cPrimitive, final Expression operand) {
+		return applyWraparound(loc, typeSizes, cPrimitive, operand);
+	}
+
 	public static Expression applyWraparound(final ILocation loc, final TypeSizes typeSizes,
 			final CPrimitive cPrimitive, final Expression operand) {
 		if (cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
@@ -170,55 +176,26 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
 			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final String funcname;
-		final BitabsTranslation bitAbs =
-				new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-
-			return bitAbs.abstractAnd(loc, left, typeLeft, right, typeRight);
+			return mBitabsTranslation.abstractAnd(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			return bitAbs.abstractOr(loc, left, typeLeft, right, typeRight);
+			return mBitabsTranslation.abstractOr(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			return bitAbs.abstractXor(loc, left, typeLeft, right, typeRight);
+			return mBitabsTranslation.abstractXor(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
-			if (shiftLeftLiteralValue != null) {
-				return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
-						Operator.ARITHMUL);
-			}
-			funcname = "shiftLeft";
-			break;
+			return mBitabsTranslation.abstractShiftLeft(loc, left, typeLeft, right, typeRight, hook);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			return bitAbs.abstractShiftRight(loc, left, typeLeft, right, typeRight, hook);
+			return mBitabsTranslation.abstractShiftRight(loc, left, typeLeft, right, typeRight, hook);
 		default:
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
-		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { left, right }, mTypeHandler.getBoogieTypeForCType(typeLeft));
-	}
-
-	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
-			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
-		// 2017-11-18 Matthias: this could be done analogously in the
-		// bitprecise translation
-		int exponent;
-		try {
-			exponent = integerLiteralValue.intValueExact();
-		} catch (final ArithmeticException ae) {
-			throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
-		}
-		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
-		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
-		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 	}
 
 	@Override
@@ -226,23 +203,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive type) {
 		switch (op) {
 		case IASTUnaryExpression.op_tilde:
-			return constructUnaryIntExprTilde(loc, expr, type);
+			return mBitabsTranslation.abstractCompl(loc, expr, type);
 		case IASTUnaryExpression.op_minus:
 			return constructUnaryIntExprMinus(loc, expr, type);
 		default:
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-	}
-
-	private Expression constructUnaryIntExprTilde(final ILocation loc, final Expression expr, final CPrimitive type) {
-		final String funcname = "bitwiseComplement";
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
-		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
-		// for bitwise complement translation
-		final BitabsTranslation bitAbs =
-				new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations);
-		return bitAbs.abstractCompl(loc, expr, type);
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -256,16 +223,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 					ExpressionFactory.createRealLiteral(loc, "0.0"), expr);
 		}
 		throw new IllegalArgumentException("Unsupported type for unary minus: " + type);
-	}
-
-	private void declareBitvectorFunction(final ILocation loc, final String prefixedFunctionName,
-			final boolean boogieResultTypeBool, final CPrimitive resultCType, final CPrimitive... paramCType) {
-		final String functionName = prefixedFunctionName.substring(1);
-		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-				new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-		final Attribute[] attributes = { attribute };
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes,
-				boogieResultTypeBool, resultCType, paramCType);
 	}
 
 	@Override
@@ -962,16 +919,44 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public boolean shouldAbstractAssignWithBitwiseOp(final IASTBinaryExpression node) {
-		return BitabsTranslation.containBitwise(node.getOperand2()) && node.getOperand1() instanceof IASTIdExpression;
+		return isBitwiseOperation(node.getOperand2()) && node.getOperand1() instanceof IASTIdExpression;
+	}
+
+	/**
+	 * Returns true iff {@code expr} is a bitwise expression (&, |, ^, ~).
+	 *
+	 * @param expr
+	 *            An expression
+	 * @return true iff {@code expr} is a bitwise expression
+	 */
+	private static boolean isBitwiseOperation(final IASTExpression expr) {
+		if (!(expr instanceof IASTBinaryExpression)) {
+			if (expr instanceof IASTUnaryExpression) {
+				final IASTUnaryExpression uexpr = (IASTUnaryExpression) expr;
+				if (uexpr.getOperator() == IASTUnaryExpression.op_tilde) {
+					return true;
+				}
+			}
+			return false;
+		}
+		final IASTBinaryExpression bexpr = (IASTBinaryExpression) expr;
+		switch (bexpr.getOperator()) {
+		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryAndAssign:
+		case IASTBinaryExpression.op_binaryOr:
+		case IASTBinaryExpression.op_binaryOrAssign:
+		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_binaryXorAssign:
+			return true;
+		default: {
+			return false;
+		}
+		}
 	}
 
 	@Override
-	public Result abstractAssginWithBitwiseOp(final CHandler chandler, final ProcedureManager procedureManager,
-			final List<Declaration> declarations, final INameHandler nameHandler,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
+	public Result abstractAssginWithBitwiseOp(final ExpressionResultTransformer exprResultTransformer,
 			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
-		return new BitabsTranslation(mTypeSizes, mTypeHandler, mSymboltable, mFunctionDeclarations).abstractAssign(
-				chandler, procedureManager, declarations, this, nameHandler, auxVarInfoBuilder, exprResultTransformer,
-				main, locationFactory, node);
+		return mBitabsTranslation.abstractAssign(exprResultTransformer, main, locationFactory, node);
 	}
 }

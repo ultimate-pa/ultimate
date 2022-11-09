@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetition;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetitionWithExecution;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -42,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -68,7 +69,8 @@ public class NonterminationArgumentStatistics implements ICsvProviderProvider<St
 			mGEVZero = gevZero;
 			mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + mNumberOfGevs + "GEVs " + "Lambdas: "
 					+ lambdas + " Mus: " + gnta.getNus();
-		} else if (nta instanceof InfiniteFixpointRepetition) {
+		} else if (nta instanceof InfiniteFixpointRepetition
+				|| nta instanceof InfiniteFixpointRepetitionWithExecution) {
 			mNtar = "Fixpoint";
 			mLambdaZero = true;
 			mGEVZero = true;
@@ -77,7 +79,7 @@ public class NonterminationArgumentStatistics implements ICsvProviderProvider<St
 			throw new IllegalArgumentException("unknown NonTerminationArgument");
 		}
 	}
-	
+
 	private int computeNumberOfGevs(final List<Map<IProgramVar, Rational>> gevs) {
 		return (int) gevs.stream().filter(x -> x.entrySet().stream().anyMatch(y -> !y.getValue().equals(Rational.ZERO)))
 				.count();
