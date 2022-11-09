@@ -66,8 +66,8 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 	}
 
 	@Override
-	public boolean contains(final STATE state, final L a, final L b) {
-		final boolean result = mRelations.stream().anyMatch(r -> r.contains(state, a, b));
+	public boolean isIndependent(final STATE state, final L a, final L b) {
+		final boolean result = mRelations.stream().anyMatch(r -> r.isIndependent(state, a, b));
 		mStatistics.reportQuery(result, state != null);
 		return result;
 	}

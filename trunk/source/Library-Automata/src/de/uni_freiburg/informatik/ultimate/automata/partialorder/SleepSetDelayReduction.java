@@ -219,7 +219,7 @@ public class SleepSetDelayReduction<L, S, R> {
 				final S succState = currentTransition.getSucc();
 				// TODO factor out sleep set successor computation
 				final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
-						.filter(l -> mIndependenceRelation.contains(currentRedState, currentLetter, l))
+						.filter(l -> mIndependenceRelation.isIndependent(currentRedState, currentLetter, l))
 						.collect(ImmutableSet.collector());
 				final R successor = getReductionState(succState, succSleepSet);
 

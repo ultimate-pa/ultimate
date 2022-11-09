@@ -160,7 +160,7 @@ public class SleepSetNewStateReduction<L, S, R> {
 				final S succState = currentTransition.getSucc();
 				// TODO factor out sleep set successor computation
 				final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
-						.filter(l -> mIndependenceRelation.contains(currentState, currentLetter, l))
+						.filter(l -> mIndependenceRelation.isIndependent(currentState, currentLetter, l))
 						.collect(ImmutableSet.collector());
 				final R succSleepSetState = getSleepSetState(succState, succSleepSet);
 

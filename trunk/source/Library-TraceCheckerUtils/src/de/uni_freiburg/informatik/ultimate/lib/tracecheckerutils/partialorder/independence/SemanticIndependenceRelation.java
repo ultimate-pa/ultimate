@@ -115,13 +115,13 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	@Override
-	public boolean contains(final IPredicate state, final L a, final L b) {
+	public boolean isIndependent(final IPredicate state, final L a, final L b) {
 		return containsLBool(state, a, b) == LBool.UNSAT;
 	}
 
 	/**
-	 * Implements {@link #contains(IPredicate, IAction, IAction)} but returns {@code UNKNOWN} if the solver is unable to
-	 * decide commutativity.
+	 * Implements {@link #isIndependent(IPredicate, IAction, IAction)} but returns {@code UNKNOWN} if the solver is
+	 * unable to decide commutativity.
 	 *
 	 * TODO This should be the signature of #contains in {@link IIndependenceRelation}.
 	 */

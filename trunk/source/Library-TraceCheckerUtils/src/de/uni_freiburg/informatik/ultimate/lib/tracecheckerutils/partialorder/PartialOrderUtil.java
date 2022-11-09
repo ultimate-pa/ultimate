@@ -92,7 +92,7 @@ public final class PartialOrderUtil {
 				}
 				boolean isNext = true;
 				for (int i = 0; i < index; ++i) {
-					if (!independence.contains(null, suff.get(i), x)) {
+					if (!independence.isIndependent(null, suff.get(i), x)) {
 						isNext = false;
 						break;
 					}

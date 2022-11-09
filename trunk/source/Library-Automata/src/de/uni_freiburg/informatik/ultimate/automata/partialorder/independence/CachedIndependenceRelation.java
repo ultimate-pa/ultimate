@@ -94,7 +94,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
+	public boolean isIndependent(final S state, final L a, final L b) {
 		final S condition = isConditional() ? state : null;
 
 		final LBool cached = mCache.contains(condition, a, b);
@@ -117,7 +117,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 			}
 		}
 
-		final boolean result = mUnderlying.contains(condition, a, b);
+		final boolean result = mUnderlying.isIndependent(condition, a, b);
 		mCache.cacheResult(condition, a, b, result);
 		mStatistics.reportUncachedQuery(result, condition != null);
 		return result;

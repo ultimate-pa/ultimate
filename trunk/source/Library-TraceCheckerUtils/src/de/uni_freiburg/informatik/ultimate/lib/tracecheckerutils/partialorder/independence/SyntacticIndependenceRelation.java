@@ -65,7 +65,7 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 	}
 
 	@Override
-	public boolean contains(final STATE state, final L a, final L b) {
+	public boolean isIndependent(final STATE state, final L a, final L b) {
 		final TransFormula tf1 = a.getTransformula();
 		final TransFormula tf2 = b.getTransformula();
 

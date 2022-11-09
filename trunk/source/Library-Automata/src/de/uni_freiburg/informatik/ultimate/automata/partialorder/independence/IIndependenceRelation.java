@@ -61,7 +61,7 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	 * where this was replaced by "ab". We also sometimes say that {@code a} is a right-mover for {@code b} (in the
 	 * given {@code state}, if the relation is conditional), or resp., {@code b} is a left mover for {@code a}.
 	 */
-	boolean contains(STATE state, LETTER a, LETTER b);
+	boolean isIndependent(STATE state, LETTER a, LETTER b);
 
 	/**
 	 * An optional method that allows collecting statistics about the history of queries made to this independence

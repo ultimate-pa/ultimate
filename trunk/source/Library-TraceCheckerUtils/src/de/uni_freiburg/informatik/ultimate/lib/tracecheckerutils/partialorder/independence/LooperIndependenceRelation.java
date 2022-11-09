@@ -61,7 +61,7 @@ public class LooperIndependenceRelation<L extends IAction, S> implements IIndepe
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
+	public boolean isIndependent(final S state, final L a, final L b) {
 		return mLooperCheck.isUniversalLooper(a, mPredicates) || mLooperCheck.isUniversalLooper(b, mPredicates);
 	}
 

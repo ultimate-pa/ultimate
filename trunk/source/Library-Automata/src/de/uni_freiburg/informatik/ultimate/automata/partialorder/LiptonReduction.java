@@ -449,7 +449,7 @@ public class LiptonReduction<L, P> {
 	private boolean isLeftMover(final Transition<L, P> t1) {
 		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
+		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.isIndependent(null, t2, t1.getSymbol()));
 	}
 
 	/**
@@ -462,7 +462,7 @@ public class LiptonReduction<L, P> {
 	private boolean isRightMover(final Transition<L, P> t1) {
 		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
+		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.isIndependent(null, t1.getSymbol(), t2));
 	}
 
 	public BoundedPetriNet<L, P> getResult() {

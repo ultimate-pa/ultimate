@@ -163,7 +163,7 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 		// TODO factor out sleep set successor computation
 		final ImmutableSet<L> succSleepSet =
 				ImmutableSet.of((Set<L>) Set.of(Stream.concat(currentSleepSet.stream(), explored)
-						.filter(l -> mIndependence.contains(currentState, letter, l)).toArray()));
+						.filter(l -> mIndependence.isIndependent(currentState, letter, l)).toArray()));
 
 		final R succSleepSetState =
 				mStateFactory.createSleepSetState(currentTransitionOpt.get().getSucc(), succSleepSet);

@@ -364,7 +364,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		return canReachConflict(persistentLoc, sourceLoc,
 				// TODO (optimization) filter persistentLoc.getOutgoingEdges(): only enabled; or: no join / no fork ?
 				e -> persistentLoc.getOutgoingEdges().stream()
-						.anyMatch(persAction -> !mIndependence.contains(null, e, persAction)),
+						.anyMatch(persAction -> !mIndependence.isIndependent(null, e, persAction)),
 				e -> !ExtendedConcurrencyInformation.isThreadLocal(e) || mInfo.mustBeJoinOf(persistentThread, e),
 				mCommutativityConflicts);
 	}

@@ -185,7 +185,7 @@ public final class SleepMap<L, S> {
 
 	private Integer minimumRelation(final S state, final L a, final L b, final int minLevel, final int maxLevel) {
 		for (int i = minLevel; i <= maxLevel; i++) {
-			if (mRelations.get(i).contains(state, a, b)) {
+			if (mRelations.get(i).isIndependent(state, a, b)) {
 				return i;
 			}
 		}

@@ -66,12 +66,12 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
+	public boolean isIndependent(final S state, final L a, final L b) {
 		if (fromSameThread(a, b)) {
 			mStatistics.reportSameThreadQuery(state != null);
 			return false;
 		}
-		final boolean result = mUnderlying.contains(state, a, b);
+		final boolean result = mUnderlying.isIndependent(state, a, b);
 		mStatistics.reportQuery(result, state != null);
 		return result;
 	}
