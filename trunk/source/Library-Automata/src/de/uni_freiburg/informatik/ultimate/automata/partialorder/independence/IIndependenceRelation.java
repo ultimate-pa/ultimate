@@ -52,8 +52,8 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	boolean isSymmetric();
 
 	/**
-	 * Indicates whether this relation is conditional, i.e., the result of {@link contains} may differ depending on the
-	 * given states.
+	 * Indicates whether this relation is conditional, i.e., the result of {@link isIndependent} may differ depending on
+	 * the given states.
 	 */
 	boolean isConditional();
 
