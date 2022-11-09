@@ -97,7 +97,7 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 
 		private void reportSameThreadQuery(final boolean conditional) {
 			mSameThreadQueries++;
-			reportNegativeQuery(conditional);
+			reportDependentQuery(conditional);
 		}
 	}
 }

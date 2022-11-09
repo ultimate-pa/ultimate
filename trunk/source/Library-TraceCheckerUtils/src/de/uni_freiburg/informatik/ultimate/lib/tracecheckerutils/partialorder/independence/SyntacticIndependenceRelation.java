@@ -71,30 +71,30 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 
 		if (DataStructureUtils.haveNonEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet())) {
 			// write-read conflict
-			mStatistics.reportNegativeQuery(false);
+			mStatistics.reportDependentQuery(false);
 			return Dependence.DEPENDENT;
 		}
 
 		if (DataStructureUtils.haveNonEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars())) {
 			// read-write conflict
-			mStatistics.reportNegativeQuery(false);
+			mStatistics.reportDependentQuery(false);
 			return Dependence.DEPENDENT;
 		}
 
-		final boolean noWWConflict;
+		final boolean wwConflict;
 		if (ALLOW_MUTUAL_HAVOCS) {
-			noWWConflict = DataStructureUtils.intersection(tf1.getAssignedVars(), tf2.getAssignedVars()).stream()
-					.allMatch(x -> tf1.isHavocedOut(x) && tf2.isHavocedOut(x));
+			wwConflict = DataStructureUtils.intersection(tf1.getAssignedVars(), tf2.getAssignedVars()).stream()
+					.anyMatch(x -> !tf1.isHavocedOut(x) || !tf2.isHavocedOut(x));
 		} else {
-			noWWConflict = DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
+			wwConflict = DataStructureUtils.haveNonEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
 		}
-		if (noWWConflict) {
-			mStatistics.reportPositiveQuery(false);
-			return Dependence.INDEPENDENT;
+		if (wwConflict) {
+			mStatistics.reportDependentQuery(false);
+			return Dependence.DEPENDENT;
 		}
 
-		mStatistics.reportNegativeQuery(false);
-		return Dependence.DEPENDENT;
+		mStatistics.reportIndependentQuery(false);
+		return Dependence.INDEPENDENT;
 	}
 
 	@Override

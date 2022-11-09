@@ -116,7 +116,9 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public Dependence isIndependent(final IPredicate state, final L a, final L b) {
-		return toDependence(contains(state, a, b));
+		final var result = toDependence(contains(state, a, b));
+		mStatistics.reportQuery(result, mConditional && state != null);
+		return result;
 	}
 
 	/**
@@ -137,15 +139,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		// TODO We do composition twice for symmetric relations (in performInclusionCheck). Why?
 		final LBool subset = performInclusionCheck(context, tfA, tfB);
-		final LBool result;
-		if (mSymmetric) {
-			result = and(subset, () -> performInclusionCheck(context, tfB, tfA));
-		} else {
-			result = subset;
+		if (!mSymmetric) {
+			return subset;
 		}
 
-		mStatistics.reportQuery(result, context != null);
-		return result;
+		return and(subset, () -> performInclusionCheck(context, tfB, tfA));
 	}
 
 	private UnmodifiableTransFormula getTransFormula(final L a) {

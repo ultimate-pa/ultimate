@@ -150,7 +150,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 		private void reportUncachedQuery(final Dependence result, final boolean conditional) {
 			reportQuery(result, conditional);
-			mCacheQueries.incrementUnknown(conditional);
+			mCacheQueries.increment(Dependence.UNKNOWN, conditional);
 		}
 	}
 

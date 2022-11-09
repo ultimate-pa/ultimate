@@ -111,15 +111,15 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 		mQueryCounter.increment(result, conditional);
 	}
 
-	public void reportPositiveQuery(final boolean conditional) {
+	public void reportIndependentQuery(final boolean conditional) {
 		mQueryCounter.increment(Dependence.INDEPENDENT, conditional);
 	}
 
-	public void reportNegativeQuery(final boolean conditional) {
+	public void reportDependentQuery(final boolean conditional) {
 		mQueryCounter.increment(Dependence.DEPENDENT, conditional);
 	}
 
 	public void reportUnknownQuery(final boolean conditional) {
-		mQueryCounter.incrementUnknown(conditional);
+		mQueryCounter.increment(Dependence.UNKNOWN, conditional);
 	}
 }

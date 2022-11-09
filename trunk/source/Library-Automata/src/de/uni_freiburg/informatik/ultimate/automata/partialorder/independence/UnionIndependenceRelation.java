@@ -72,7 +72,7 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 		for (final var relation : mRelations) {
 			final var result = relation.isIndependent(state, a, b);
 			if (result == Dependence.INDEPENDENT) {
-				mStatistics.reportPositiveQuery(state != null);
+				mStatistics.reportIndependentQuery(state != null);
 				return Dependence.INDEPENDENT;
 			}
 			anyUnknown |= result == Dependence.UNKNOWN;
@@ -83,7 +83,7 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 			return Dependence.UNKNOWN;
 		}
 
-		mStatistics.reportNegativeQuery(state != null);
+		mStatistics.reportDependentQuery(state != null);
 		return Dependence.DEPENDENT;
 	}
 
