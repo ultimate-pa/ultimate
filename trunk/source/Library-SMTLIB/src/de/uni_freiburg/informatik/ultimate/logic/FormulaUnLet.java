@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2009-2022 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -20,13 +20,28 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
- * This class removes all let terms from the formula.  The result
+ * This class removes all let terms from the formula. It's a term transformer
+ * that transforms a term with lets into an equivalent term without let.
+ *
+ * A tricky issue here are variable name clashes that can appear when renaming.
+ * This class will check whether renaming is necessary, i.e., if a let makes a
+ * variable with the same name as a bounded variable visible inside the
+ * quantifier. A simple example is
+ * {@code (let ((y x)) (exists ((x Int)) (= x y)))}. In this case the variable
+ * of the inner quantifier is renamed by adding dots in front of it. Note that
+ * symbols starting with a dot are reserved for solver use.
+ *
+ * By renaming in a consistent manner and by only renaming if there is a name
+ * clash, the unletted form of an assumed term in a proof should be equal to the
+ * unletted asserted term.
+ *
  * @author Jochen Hoenicke
  */
 public class FormulaUnLet extends TermTransformer {
@@ -117,27 +132,97 @@ public class FormulaUnLet extends TermTransformer {
 		return transform(term);
 	}
 
-	public void startVarScope(final TermVariable[] vars) {
-		/* check which variables are in the image of the substitution */
-		final HashSet<TermVariable> used = new HashSet<>();
-		for (final Map.Entry<TermVariable, Term> substTerms : mLetMap.entrySet()) {
-			if (!Arrays.asList(vars).contains(substTerms.getKey())) {
-				used.addAll(Arrays.asList(substTerms.getValue().getFreeVars()));
+	private boolean isRenamedVar(String name) {
+		// Renamed variables are of the form .[1-9][0-9]*.originalname.
+		return name.charAt(0) == '.' && name.charAt(1) >= '1' && name.charAt(1) <= '9';
+	}
+
+	private void noteUsage(Map<String, Integer> usageMap, TermVariable usedTv) {
+		/*
+		 * we do bounded renaming on variables. For each variables x, we use the
+		 * internal variables x, .1.x, .2.x, ... The generation is 0 for the original
+		 * variable, otherwise it is the number after the r. We remember the maximum
+		 * generation in usageMap, so that we rename every variable to the next
+		 * generation after it.
+		 */
+		String name = usedTv.getName();
+		int generation = 0;
+		if (isRenamedVar(name)) {
+			final int dotPos = name.indexOf('.', 2);
+			generation = Integer.valueOf(name.substring(1, dotPos));
+			name = name.substring(dotPos + 1);
+		}
+		final Integer oldGen = usageMap.put(name, generation);
+		if (oldGen != null && oldGen > generation) {
+			usageMap.put(name, oldGen);
+		}
+	}
+
+	private String boundedRename(Map<String, Integer> usageMap, String name) {
+		if (isRenamedVar(name)) {
+			name = name.substring(name.indexOf('.', 2) + 1);
+		}
+		final Integer usedOutside = usageMap.get(name);
+		if (usedOutside == null) {
+			return name;
+		} else {
+			return "." + (usedOutside + 1) + "." + name;
+		}
+	}
+
+	/**
+	 * This is called for each quantifier, lambda term, or match term that
+	 * introduces new bound variables. It determines if there is a name clash and
+	 * renamed the bound variables accordingly. It adds the corresponding renaming
+	 * to the let map.
+	 *
+	 * This also adds a new scope to the let map.
+	 *
+	 * @param body The term that contains the bounded variables.
+	 * @param vars The bounded variables that may need to be renamed.
+	 */
+	public void startVarScope(final Term body, final TermVariable[] vars) {
+		/* compute all variables that are indirectly used inside the body */
+		final HashMap<String, Integer> usedOutside = new HashMap<>();
+		final HashSet<TermVariable> bodyVars = new HashSet<>();
+		bodyVars.addAll(Arrays.asList(body.getFreeVars()));
+		for (final TermVariable tv : vars) {
+			bodyVars.remove(tv);
+		}
+		for (final TermVariable tv : bodyVars) {
+			final Term refTerm = mLetMap.get(tv);
+			if (refTerm == null) {
+				noteUsage(usedOutside, tv);
+			} else {
+				for (final TermVariable usedTv : refTerm.getFreeVars()) {
+					noteUsage(usedOutside, usedTv);
+				}
 			}
 		}
 
 		mLetMap.beginScope();
 		for (int i = 0; i < vars.length; i++) {
-			if (used.contains(vars[i])) {
-				mLetMap.put(vars[i], vars[i].getTheory().createFreshTermVariable("unlet", vars[i].getSort()));
-			} else {
+			final String name = vars[i].getName();
+			final String newName = boundedRename(usedOutside, name);
+			if (newName.equals(name)) {
+				// remove the name from mLetMap so that it is kept.
 				if (mLetMap.containsKey(vars[i])) {
 					mLetMap.remove(vars[i]);
 				}
+			} else {
+				// do bounded renaming.
+				mLetMap.put(vars[i], vars[i].getTheory().createTermVariable(newName, vars[i].getSort()));
 			}
 		}
 	}
 
+	/**
+	 * Ends a variable scope and determines the renamed bounded variables.
+	 *
+	 * @param vars the bounded variables of the exists, lambda or match term.
+	 * @return the renamed variables in case renaming bounded variables were
+	 *         necessary (returns vars if no renaming was necessary).
+	 */
 	public TermVariable[] endVarScope(final TermVariable[] vars) {
 		TermVariable[] newVars = vars;
 		for (int i = 0; i < vars.length; i++) {
@@ -169,11 +254,11 @@ public class FormulaUnLet extends TermTransformer {
 			preConvertLet(letTerm, letTerm.getValues());
 		} else if (term instanceof LambdaTerm) {
 			final LambdaTerm lambda = (LambdaTerm) term;
-			startVarScope(lambda.getVariables());
+			startVarScope(lambda.getSubterm(), lambda.getVariables());
 			super.convert(term);
 		} else if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula)term;
-			startVarScope(qf.getVariables());
+			startVarScope(qf.getSubformula(), qf.getVariables());
 			super.convert(term);
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
@@ -255,7 +340,7 @@ public class FormulaUnLet extends TermTransformer {
 		if (caseNr > 0) {
 			mMatchVars.add(endVarScope(oldMatch.getVariables()[caseNr - 1]));
 		}
-		startVarScope(oldMatch.getVariables()[caseNr]);
+		startVarScope(oldMatch.getCases()[caseNr], oldMatch.getVariables()[caseNr]);
 		super.preConvertMatchCase(oldMatch, caseNr);
 	}
 

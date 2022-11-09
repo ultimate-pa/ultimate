@@ -122,7 +122,7 @@ public class BenchmarkTest {
 
 		long actualTime = 100;
 		double measuredTime = -1;
-		final double allowedEpsilon = 2;
+		final double allowedEpsilon = 8;
 		final String title = "TimePauseSingle";
 
 		final Benchmark bench = new Benchmark();
@@ -216,7 +216,7 @@ public class BenchmarkTest {
 	public void AllMultiple() throws InterruptedException {
 		final long sleepTime = 100;
 		double measuredTime = -1;
-		final double allowedEpsilon = 2;
+		final double allowedEpsilon = 8;
 		long actualTime = 3 * sleepTime;
 		final int watches = 10;
 

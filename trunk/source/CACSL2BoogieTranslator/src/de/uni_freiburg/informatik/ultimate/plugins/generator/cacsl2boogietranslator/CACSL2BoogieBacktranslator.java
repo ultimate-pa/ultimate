@@ -608,7 +608,7 @@ public class CACSL2BoogieBacktranslator
 		for (; j < programExecution.getLength(); ++j) {
 			// search for other nodes that have the same location in order to merge them all into one new statement
 			final AtomicTraceElement<BoogieASTNode> lookahead = programExecution.getTraceElement(j);
-			if (!lookahead.getTraceElement().getLocation().equals(loc)) {
+			if (!loc.equals(lookahead.getTraceElement().getLocation())) {
 				j--;
 				break;
 			}

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
@@ -989,6 +990,33 @@ public class PolynomialRelationTest {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(<= 20 (* 2 x 6))";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Revealed a bug in {@link AbstractGeneralizedAffineTerm}. If we divide, a
+	 * `div` term may originate from two sources. (1) It was already there in the
+	 * input. (2) It stems from the summands whose coefficients could not be divided
+	 * without remainder. The bug was that one abstract variable was overriding the
+	 * other in an abstract map.
+	 */
+	@Test
+	public void bugAbstractDivVarFromTwoSources01() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= (+ (* 7 x) (* 700 (div (+ y (- 7)) 7)) (* (- 1) y) 7) 0)";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Revealed but related to the bug above. If we apply div, we can get two
+	 * similar abstract variables for the result of the polynomial. We have to add
+	 * their coefficients. The coefficient can become zero. In this case the entry
+	 * must not be added to the map.
+	 */
+	@Test
+	public void bugAbstractDivVarFromTwoSources02() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= (+ (* 7 x) (* 7 (div (+ y (- 7)) 7)) (* (- 1) y) 7) 0)";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 }

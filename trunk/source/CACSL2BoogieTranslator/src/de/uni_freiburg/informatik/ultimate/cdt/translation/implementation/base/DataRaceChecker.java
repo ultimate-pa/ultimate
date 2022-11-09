@@ -111,6 +111,15 @@ public final class DataRaceChecker {
 		mIsPreRun = isPreRun;
 	}
 
+	/**
+	 * Adds a data race check appropriate for read accesses.
+	 *
+	 * @param erb
+	 *            An {@link ExpressionResultBuilder} to which the data race check statements are added
+	 * @param loc
+	 * @param lrVal
+	 *            The value being read
+	 */
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -147,6 +156,15 @@ public final class DataRaceChecker {
 		return mMemoryHandler.getBooleanArrayHelper().constructFalse();
 	}
 
+	/**
+	 * Adds a data race check appropriate for write accesses.
+	 *
+	 * @param erb
+	 *            An {@link ExpressionResultBuilder} to which the data race check statements and declarations are added
+	 * @param loc
+	 * @param lrVal
+	 *            The value being written
+	 */
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this

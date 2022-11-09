@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -56,9 +57,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 	 * @param fac
 	 * @param mgdScript
 	 * @param useNeighbors
-	 *            If set to false we obtain the underapproximation where we
-	 *            assume that the modulo operator is the identity for the
-	 *            first argument.
+	 *            If set to false we obtain the underapproximation where we assume that the modulo operator is the
+	 *            identity for the first argument.
 	 */
 	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac,
 			final ManagedScript mgdScript) {
@@ -84,9 +84,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		// null, false, null, false, null, false);
 		final ModifiableTransFormula newIntTF = new ModifiableTransFormula(tf);
 
-
 		final LinkedHashMap<Term, Term> varMap = new LinkedHashMap<Term, Term>();
-		for (final IProgramVar progVar : ModifiableTransFormula.collectAllProgramVars(tf)) {
+		for (final IProgramVar progVar : TransFormula.collectAllProgramVars(tf)) {
 
 			final IReplacementVarOrConst repVar = mFac.getOrConstuctReplacementVar(progVar.getTermVariable(), true,
 					bvToIntSort(mgdScript, progVar.getTerm().getSort()));
@@ -97,9 +96,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 			if ((tf.getInVars().get(progVar) != null) && (tf.getOutVars().get(progVar) != null)) {
 				if (tf.getInVars().get(progVar).equals(tf.getOutVars().get(progVar))) {
-					final TermVariable intInAndOutVar =
-							mgdScript.constructFreshTermVariable("intInAndOutVar",
-									bvToIntSort(mgdScript, tf.getInVars().get(progVar).getSort()));
+					final TermVariable intInAndOutVar = mgdScript.constructFreshTermVariable("intInAndOutVar",
+							bvToIntSort(mgdScript, tf.getInVars().get(progVar).getSort()));
 					intInVar = intInAndOutVar;
 					intOutVar = intInAndOutVar;
 				} else {
@@ -130,22 +128,21 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			}
 		}
 
-
-
 		// construct new auxVar for each existing auxVar
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = mgdScript.constructFreshTermVariable(auxVar.getName(),
-					bvToIntSort(mgdScript, auxVar.getSort()));
+			final TermVariable newAuxVar =
+					mgdScript.constructFreshTermVariable(auxVar.getName(), bvToIntSort(mgdScript, auxVar.getSort()));
 			varMap.put(auxVar, newAuxVar);
 			newIntTF.addAuxVars(Collections.singleton(newAuxVar));
 		}
 
 		final TranslationManager mTranslationManager;
-		mTranslationManager = new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM);
+		// TODO: Add a setting for the Nutz transformation here
+		mTranslationManager = new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM, false);
 		mTranslationManager.setReplacementVarMaps(varMap);
 
-		final Triple<Term, Set<TermVariable>, Boolean> translated = mTranslationManager
-				.translateBvtoInt(tf.getFormula());
+		final Triple<Term, Set<TermVariable>, Boolean> translated =
+				mTranslationManager.translateBvtoInt(tf.getFormula());
 		if (!translated.getSecond().isEmpty() || translated.getThird()) {
 			throw new UnsupportedOperationException();
 		}
@@ -170,7 +167,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			return sort;
 		} else {
 			return sort;
-//			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
+			// throw new UnsupportedOperationException("Unexpected Sort: " + sort);
 		}
 
 	}

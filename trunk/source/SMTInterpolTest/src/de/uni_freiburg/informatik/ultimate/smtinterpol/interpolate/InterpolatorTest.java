@@ -36,7 +36,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 @RunWith(JUnit4.class)
@@ -49,9 +50,6 @@ public class InterpolatorTest {
 
 	Sort mReal;
 	Term mA, mB, mS;
-
-	Annotation[] QUOTED_LA = new Annotation[] { new Annotation(":quotedLA", null) };
-	Annotation[] QUOTED_CC = new Annotation[] { new Annotation(":quotedCC", null) };
 
 	public InterpolatorTest() {
 		mSolver = new SMTInterpol(new DefaultLogger());
@@ -70,7 +68,7 @@ public class InterpolatorTest {
 		mTheory = mSolver.getTheory();
 	}
 
-	public void doTestEq(final boolean ccswap, final boolean abswap, final boolean clauseswap, final boolean litswap,
+	public void doTestEq(final boolean ccswap, final boolean abswap, final boolean laIsNeg, final boolean litswap,
 			final boolean doubleab, final boolean addconst, boolean addvar) {
 		addvar = false;
 		final Term a = mA;
@@ -95,21 +93,15 @@ public class InterpolatorTest {
 		}
 		final Term aSmt = aterm.toSMTLib(mTheory, false);
 		final Term bSmt = bterm.toSMTLib(mTheory, false);
-		Term cceq = ccswap ? mTheory.term("=", aSmt, bSmt) : mTheory.term("=", bSmt, aSmt);
-		cceq = mTheory.annotatedTerm(QUOTED_CC, cceq);
+		final Term cceq = ccswap ? mTheory.term("=", aSmt, bSmt) : mTheory.term("=", bSmt, aSmt);
 		final InterpolatorAffineTerm linTerm = new InterpolatorAffineTerm(aterm);
 		linTerm.add(Rational.MONE, bterm);
 		linTerm.mul(linTerm.getGcd().inverse());
-		Term laeq = mTheory.term("=", linTerm.toSMTLib(mTheory, false), Rational.ZERO.toTerm(mReal));
-		laeq = mTheory.annotatedTerm(QUOTED_LA, laeq);
-		final Term[] lits = clauseswap
-				? litswap ? new Term[] { mTheory.term("not", cceq), laeq }
-						: new Term[] { laeq, mTheory.term("not", cceq) }
-				: litswap ? new Term[] { mTheory.term("not", laeq), cceq }
-						: new Term[] { cceq, mTheory.term("not", laeq) };
-		final Term clause = mTheory.term("or", lits);
+		final Term laeq = mTheory.term("=", linTerm.toSMTLib(mTheory, false), Rational.ZERO.toTerm(mReal));
+		final ProofLiteral[] lits = new ProofLiteral[] { new ProofLiteral(laIsNeg ^ litswap ? laeq : cceq, !litswap),
+				new ProofLiteral(laIsNeg ^ litswap ? cceq : laeq, litswap) };
 		final Annotation[] mAnnots = new Annotation[] { new Annotation(":EQ", null) };
-		final Term lemma = mTheory.term(ProofConstants.FN_LEMMA, mTheory.annotatedTerm(mAnnots, clause));
+		final Term lemma = new ProofRules(mTheory).oracle(lits, mAnnots);
 		final Set<String> empty = Collections.emptySet();
 		@SuppressWarnings("unchecked")
 		final Set<String>[] partition = new Set[] { empty, empty };
@@ -132,7 +124,7 @@ public class InterpolatorTest {
 		final TermVariable laVar = mInterpolator.getAtomOccurenceInfo(laeq).getMixedVar();
 		Term var;
 		final InterpolatorAffineTerm summands = new InterpolatorAffineTerm();
-		if (clauseswap) {
+		if (laIsNeg) {
 			Rational factor = Rational.ONE;
 			if (doubleab) {
 				factor = Rational.TWO.inverse();

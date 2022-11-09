@@ -2003,10 +2003,43 @@ public class QuantifierEliminationRegressionTest {
 	@Test
 	public void sameVarOnBothSides02Bitvector() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "a") };
-		final String inputSTR = "(exists ((x (_ BitVec 32)) (y (_ BitVec 32))) (and (= x (bvmul (_ bv2 32) y)) (= (bvmul (_ bv2 32) x) (bvadd a (bvmul (_ bv4 32) y)))))";
-		final String expectedResult = inputSTR;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String formulaAsString = "(exists ((x (_ BitVec 32)) (y (_ BitVec 32))) (and (= x (bvmul (_ bv2 32) y)) (= (bvmul (_ bv2 32) x) (bvadd a (bvmul (_ bv4 32) y)))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	/**
+	 * I had the impression that there is a bug in the quantifier elimination, but
+	 * the bug was that we dropped arguments of div. Maybe it does not make sense to
+	 * divide by integer variables. In case we stop dividing by integer variables,
+	 * then this benchmark is useless.
+	 */
+	@Test
+	public void divMultiArgumentBug() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x_in", "x_out", "y_in", "y_out") };
+		final String formulaAsString = "(exists ((itFinHalf Int)) (let ((.cse0 (* (* itFinHalf x_in) 2))) (or (and (>= itFinHalf 0) (= (+ x_in x_out) 0) (= (+ x_in .cse0) (+ y_in y_out))) (and (= x_in x_out) (= y_in (+ y_out .cse0)) (> itFinHalf 0)))))";
+		final String expectedResultAsString = "(let ((.cse7 (= x_in 0))) (let ((.cse3 (not .cse7)) (.cse4 (- y_in))) (or (and (= (+ x_in x_out) 0) (let ((.cse2 (+ (- y_out) .cse4 x_in))) (let ((.cse1 (= (mod (+ y_out x_in y_in) 2) 0)) (.cse0 (div .cse2 (- 2)))) (or (and (= (mod .cse0 x_in) 0) .cse1 (<= 0 (div .cse2 (- 2) x_in)) .cse3) (and .cse1 (= .cse0 0)))))) (and (= x_in x_out) (let ((.cse8 (+ y_out .cse4))) (let ((.cse5 (div .cse8 (- 2))) (.cse6 (= (mod (+ y_out y_in) 2) 0))) (or (and (= .cse5 0) .cse6 .cse7) (and (< 0 (div .cse8 (- 2) x_in)) (= (mod .cse5 x_in) 0) .cse6 .cse3))))))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvAntiDerOnlyOneAndMone01() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x") };
+		final String formulaAsString = "(exists ((|ULTIMATE.start_main_~n~0#1| (_ BitVec 32))) (and (not (bvsle x |ULTIMATE.start_main_~n~0#1|)) (bvsle (_ bv1 32) |ULTIMATE.start_main_~n~0#1|) (not (= (_ bv2 32) (bvmul |ULTIMATE.start_main_~n~0#1| (_ bv2 32))))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvAntiDerOnlyOneAndMone02() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x") };
+		final String formulaAsString = "(exists ((|ULTIMATE.start_main_~n~0#1| (_ BitVec 32))) (and (not (bvslt x |ULTIMATE.start_main_~n~0#1|)) (bvsle (_ bv1 32) |ULTIMATE.start_main_~n~0#1|) (not (= (_ bv2 32) (bvmul |ULTIMATE.start_main_~n~0#1| (_ bv4294967295 32))))))";
+		final String expectedResult = "(bvsle (_ bv1 32) x)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+
 
 
 	//@formatter:on

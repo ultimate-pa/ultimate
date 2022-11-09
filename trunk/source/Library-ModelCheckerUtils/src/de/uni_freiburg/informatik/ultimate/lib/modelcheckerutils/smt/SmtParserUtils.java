@@ -28,10 +28,12 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
@@ -92,8 +94,10 @@ public final class SmtParserUtils {
 	 */
 	public static Term parseWithVariables(final String syntax, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable) {
-		final var termVars =
-				symbolTable.getGlobals().stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		final var termVars = Stream
+				.concat(symbolTable.getGlobals().stream(),
+						symbolTable.getGlobals().stream().map(IProgramNonOldVar::getOldVar))
+				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 		return parseWithVariables(syntax, services, mgdScript, termVars);
 	}
 
@@ -116,7 +120,7 @@ public final class SmtParserUtils {
 			return parse(syntax, services, mgdScript);
 		}
 
-		final String template = "(%1$s %2$s)";
+		final String template = "(|%1$s| %2$s)";
 		final String declarations = variables.stream().map(tv -> String.format(template, tv.getName(), tv.getSort()))
 				.collect(Collectors.joining(" "));
 		final String fullSyntax = "(forall (" + declarations + ") " + syntax + ")";

@@ -192,6 +192,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mTcSmtManager = managedScriptTc;
 		mCsToolkit = csToolkit;
 		mBoogie2SmtSymbolTable = csToolkit.getSymbolTable();
+		if (trace.length() == 0) {
+			throw new IllegalArgumentException(
+					"Only non-empty traces supported. For empty traces we are unable to determine the procedure in which precondition and postcondition are evaluated (needed to check whether a global var and the corresponding oldvar are equivalent)");
+		}
 		mTrace = trace;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;

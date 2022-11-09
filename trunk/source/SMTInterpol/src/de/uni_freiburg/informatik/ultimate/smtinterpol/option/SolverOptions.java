@@ -198,7 +198,7 @@ public class SolverOptions {
 		ProofMode level = mProofLevel.getValue();
 		if (level == ProofMode.NONE) {
 			if (isProduceProofs() || isProofCheckModeActive()) {
-				level = ProofMode.FULL;
+				level = ProofMode.LOWLEVEL;
 			} else if (isProduceInterpolants() || (Boolean) mOptions.get(SMTLIBConstants.PRODUCE_UNSAT_CORES)) {
 				level = ProofMode.CLAUSES;
 			}

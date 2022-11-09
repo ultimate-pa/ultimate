@@ -93,6 +93,8 @@ public final class ResultSummarizer {
 					}
 				} else if (result instanceof CounterExampleResult) {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.INCORRECT);
+				} else if (result instanceof DataRaceFoundResult<?, ?, ?>) {
+					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.INCORRECT);
 				} else if (result instanceof PositiveResult) {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
 				} else if (result instanceof ITimeoutResult) {

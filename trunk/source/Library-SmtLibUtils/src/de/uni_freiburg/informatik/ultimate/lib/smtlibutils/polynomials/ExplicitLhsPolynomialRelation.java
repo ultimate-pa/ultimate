@@ -695,7 +695,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		} else if (SmtSortUtils.isBitvecSort(mRhs.getSort())) {
 			if (!mLhsCoefficient.equals(Rational.ONE)
 					&& !SmtUtils.isBvMinusOneButNotOne(mLhsCoefficient, mRhs.getSort())) {
-				throw new AssertionError("Expect that bitvector relations can only habe coefficient 1 and -1.");
+				throw new AssertionError("Expect that bitvector relations can only have coefficient 1 and -1.");
 			}
 			divisor = mLhsCoefficient;
 		} else if (SmtSortUtils.isIntSort(mRhs.getSort())) {

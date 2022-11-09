@@ -32,7 +32,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;

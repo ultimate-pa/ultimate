@@ -637,7 +637,7 @@ public class CHandler {
 		// constants for initializations
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
-		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, globalHook));
+		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, globalHook, mDataRaceChecker));
 		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
@@ -733,9 +733,13 @@ public class CHandler {
 			// In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are
 			// positive, and rhs is a bitwise binary expression.
 
-			if (mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
-				return mExpressionTranslation.abstractAssginWithBitwiseOp(this, mProcedureManager, mDeclarations,
-						mNameHandler, mAuxVarInfoBuilder, mExprResultTransformer, main, mLocationFactory, node);
+			// TODO Frank 2022-10-31: Checking for HeapLValue is just a workaround to avoid issues in
+			// abstractAssginWithBitwiseOp (when working with addresses)! Is there a better way to check this?
+			// And how should we integrate this deprecated method?
+			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
+					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
+				return mExpressionTranslation.abstractAssginWithBitwiseOp(mExprResultTransformer, main,
+						mLocationFactory, node);
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
@@ -1006,7 +1010,7 @@ public class CHandler {
 		final BigInteger operandTypeByteSize =
 				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
 
-		if (operandTypeByteSize.intValueExact() == 0) {
+		if (operandTypeByteSize.signum() == 0) {
 			// operand's type has size 0 -- not sure what makes sense to do here, doing
 			// nothing
 			// case where I encountered it was a struct with a 0-sized array in it; if
@@ -1956,7 +1960,7 @@ public class CHandler {
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
 		final boolean writeValues =
-				stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
+				stringLiteral.getByteValues().size() < mSettings.getStringOverapproximationThreshold();
 		if (writeValues) {
 			final ExpressionResult exprRes =
 					mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
@@ -2400,10 +2404,13 @@ public class CHandler {
 
 			return dr;
 		}
+		case IASTTypeIdExpression.op_alignof:
+			throw new UnsupportedSyntaxException(loc, "__alignof__ is not supported");
 		default:
 			break;
 		}
-		final String msg = "Unsupported boogie AST node type: " + node.getClass();
+		final String msg =
+				"Unsupported AST node type: " + node.getClass() + " with operator " + node.getOperator() + ": " + loc;
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 

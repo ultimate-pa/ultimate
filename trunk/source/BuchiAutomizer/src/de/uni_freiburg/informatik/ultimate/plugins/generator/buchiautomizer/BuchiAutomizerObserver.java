@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHol
 import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLInfiniteCounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.LassoShapedNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.NonterminationArgumentStatistics;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetition;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetitionWithExecution;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
@@ -201,9 +203,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(),
 					gnta.getNus(), mServices.getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		}
+		if (nta instanceof InfiniteFixpointRepetitionWithExecution) {
+			return new LassoShapedNonTerminationArgument<>(hondaAction, Activator.PLUGIN_NAME,
+					mServices.getBacktranslationService(), Term.class, stemExecution, loopExecution);
+		}
 		if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
-
 			return new FixpointNonTerminationResult<>(hondaAction, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
 					ifr.getValuesAtHonda(), mServices.getBacktranslationService(), Term.class, stemExecution,
 					loopExecution);
@@ -249,10 +254,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (result.getStem().length() == 0) {
 			stemPE = IcfgProgramExecution.create(IcfgEdge.class);
 		} else {
-			stemPE = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
+			if (result.getNonTerminationArgument() instanceof InfiniteFixpointRepetitionWithExecution) {
+				stemPE = (IcfgProgramExecution<IcfgEdge>) ((InfiniteFixpointRepetitionWithExecution) result
+						.getNonTerminationArgument()).getStemExecution();
+			} else {
+				stemPE = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
+			}
 		}
-		final IcfgProgramExecution<IcfgEdge> loopPE =
-				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
+		final IcfgProgramExecution<IcfgEdge> loopPE = TraceCheckUtils
+				.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
 		final IcfgEdge hondaAction = result.getLoop().getSymbol(0);
 
 		if (ltlAnnot == null) {
