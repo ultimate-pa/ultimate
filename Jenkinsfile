@@ -41,7 +41,7 @@ ${changeMessage}
 
 
 pipeline {
-  agent { label 'linux' && 'java' }
+  agent { label 'linux && java' }
   options {
     skipDefaultCheckout()
     timeout(time: 12, unit: 'HOURS')
