@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -163,7 +164,8 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 		// TODO factor out sleep set successor computation
 		final ImmutableSet<L> succSleepSet =
 				ImmutableSet.of((Set<L>) Set.of(Stream.concat(currentSleepSet.stream(), explored)
-						.filter(l -> mIndependence.isIndependent(currentState, letter, l)).toArray()));
+						.filter(l -> mIndependence.isIndependent(currentState, letter, l) == Dependence.INDEPENDENT)
+						.toArray()));
 
 		final R succSleepSetState =
 				mStateFactory.createSleepSetState(currentTransitionOpt.get().getSucc(), succSleepSet);

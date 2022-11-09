@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceResultAggregator.Timer;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
@@ -65,9 +66,9 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 	}
 
 	@Override
-	public void reportQuery(final boolean positive, final boolean conditional) {
-		mTimer.stop(positive, conditional);
-		super.reportQuery(positive, conditional);
+	public void reportQuery(final Dependence result, final boolean conditional) {
+		mTimer.stop(result, conditional);
+		super.reportQuery(result, conditional);
 	}
 
 	public void reportQuery(final LBool result, final boolean conditional) {
@@ -86,13 +87,13 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 
 	@Override
 	public void reportPositiveQuery(final boolean conditional) {
-		mTimer.stop(true, conditional);
+		mTimer.stop(Dependence.INDEPENDENT, conditional);
 		super.reportPositiveQuery(conditional);
 	}
 
 	@Override
 	public void reportNegativeQuery(final boolean conditional) {
-		mTimer.stop(false, conditional);
+		mTimer.stop(Dependence.DEPENDENT, conditional);
 		super.reportNegativeQuery(conditional);
 	}
 

@@ -33,10 +33,10 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
  * An {@link IIndependenceCache} implementation that takes advantage of the (assumed) monotonicity of the underlying
@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredicate, L> {
 	private final Map<L, Map<L, Set<IPredicate>>> mPositiveCache = new HashMap<>();
 	private final Map<L, Map<L, Set<IPredicate>>> mNegativeCache = new HashMap<>();
+	private final Map<L, Map<L, Set<IPredicate>>> mUnknownCache = new HashMap<>();
 	private final IPredicateCoverageChecker mCoverageChecker;
 
 	/**
@@ -63,13 +64,13 @@ public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredic
 	}
 
 	@Override
-	public LBool contains(final IPredicate condition, final L a, final L b) {
+	public Dependence contains(final IPredicate condition, final L a, final L b) {
 		// Check if a and b are known to be independent under some weaker context p.
 		final Set<IPredicate> positiveEntry = getCacheEntry(mPositiveCache, a, b);
 		final boolean positive =
 				positiveEntry.stream().anyMatch(p -> mCoverageChecker.isCovered(condition, p) == Validity.VALID);
 		if (positive) {
-			return LBool.SAT;
+			return Dependence.INDEPENDENT;
 		}
 
 		// Check if a and b are known to be dependent under some stronger context p.
@@ -77,10 +78,16 @@ public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredic
 		final boolean negative =
 				negativeEntry.stream().anyMatch(p -> mCoverageChecker.isCovered(p, condition) == Validity.VALID);
 		if (negative) {
-			return LBool.UNSAT;
+			return Dependence.DEPENDENT;
 		}
 
-		return LBool.UNKNOWN;
+		// Check if independence of a and b is unknown under the given context.
+		final Set<IPredicate> unknownEntry = getCacheEntry(mUnknownCache, a, b);
+		if (unknownEntry.contains(condition)) {
+			return Dependence.UNKNOWN;
+		}
+
+		return null;
 	}
 
 	private Set<IPredicate> getCacheEntry(final Map<L, Map<L, Set<IPredicate>>> cache, final L a, final L b) {
@@ -108,12 +115,19 @@ public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredic
 	}
 
 	@Override
-	public void cacheResult(final IPredicate condition, final L a, final L b, final boolean independent) {
-		if (independent) {
+	public void cacheResult(final IPredicate condition, final L a, final L b, final Dependence result) {
+		switch (result) {
+		case INDEPENDENT:
 			addPositiveCacheEntry(condition, a, b);
-		} else {
+			return;
+		case DEPENDENT:
 			addNegativeCacheEntry(condition, a, b);
+			return;
+		case UNKNOWN:
+			addUnknownCacheEntry(condition, a, b);
+			return;
 		}
+		throw new IllegalArgumentException("Unknown value " + result);
 	}
 
 	private void addPositiveCacheEntry(final IPredicate state, final L a, final L b) {
@@ -128,6 +142,13 @@ public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredic
 		final Set<IPredicate> entry = row.computeIfAbsent(b, x -> new HashSet<>());
 		entry.removeIf(p -> mCoverageChecker.isCovered(state, p) == Validity.VALID);
 		entry.add(state);
+	}
+
+	private void addUnknownCacheEntry(final IPredicate state, final L a, final L b) {
+		final Map<L, Set<IPredicate>> row = mUnknownCache.computeIfAbsent(a, x -> new HashMap<>());
+		final Set<IPredicate> entry = row.computeIfAbsent(b, x -> new HashSet<>());
+		entry.add(state);
+		// Nothing to remove here
 	}
 
 	/**

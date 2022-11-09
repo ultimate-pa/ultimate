@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters whose independence is defined by the relation.
  */
 public interface IIndependenceRelation<STATE, LETTER> {
+
+	enum Dependence {
+		INDEPENDENT, DEPENDENT, UNKNOWN
+	}
+
 	/**
 	 * Indicates whether this relation is symmetric (i.e., captures full commutativity) or not (i.e., captures
 	 * semicommutativity, Lipton movers).
@@ -61,7 +66,7 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	 * where this was replaced by "ab". We also sometimes say that {@code a} is a right-mover for {@code b} (in the
 	 * given {@code state}, if the relation is conditional), or resp., {@code b} is a left mover for {@code a}.
 	 */
-	boolean isIndependent(STATE state, LETTER a, LETTER b);
+	Dependence isIndependent(STATE state, LETTER a, LETTER b);
 
 	/**
 	 * An optional method that allows collecting statistics about the history of queries made to this independence

@@ -66,10 +66,25 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 	}
 
 	@Override
-	public boolean isIndependent(final STATE state, final L a, final L b) {
-		final boolean result = mRelations.stream().anyMatch(r -> r.isIndependent(state, a, b));
-		mStatistics.reportQuery(result, state != null);
-		return result;
+	public Dependence isIndependent(final STATE state, final L a, final L b) {
+		boolean anyUnknown = false;
+
+		for (final var relation : mRelations) {
+			final var result = relation.isIndependent(state, a, b);
+			if (result == Dependence.INDEPENDENT) {
+				mStatistics.reportPositiveQuery(state != null);
+				return Dependence.INDEPENDENT;
+			}
+			anyUnknown |= result == Dependence.UNKNOWN;
+		}
+
+		if (anyUnknown) {
+			mStatistics.reportUnknownQuery(state != null);
+			return Dependence.UNKNOWN;
+		}
+
+		mStatistics.reportNegativeQuery(state != null);
+		return Dependence.DEPENDENT;
 	}
 
 	@Override

@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
+
 /**
  * Collects data on independence query, separating between conditional and unconditional queries as well as based on the
  * result of the query.
@@ -57,12 +59,19 @@ public class IndependenceResultAggregator<T> {
 		mAggregator = aggregator;
 	}
 
-	protected void aggregate(final T data, final boolean result, final boolean conditional) {
-		if (result) {
+	protected void aggregate(final T data, final Dependence result, final boolean conditional) {
+		switch (result) {
+		case DEPENDENT:
 			aggregatePositive(data, conditional);
-		} else {
+			return;
+		case INDEPENDENT:
 			aggregateNegative(data, conditional);
+			return;
+		case UNKNOWN:
+			aggregateUnknown(data, conditional);
+			return;
 		}
+		throw new IllegalArgumentException("Unknown value: " + result);
 	}
 
 	protected void aggregatePositive(final T data, final boolean conditional) {
@@ -193,7 +202,7 @@ public class IndependenceResultAggregator<T> {
 			super(0, (x, y) -> x + y);
 		}
 
-		public void increment(final boolean result, final boolean conditional) {
+		public void increment(final Dependence result, final boolean conditional) {
 			aggregate(1, result, conditional);
 		}
 
@@ -221,7 +230,7 @@ public class IndependenceResultAggregator<T> {
 			mStartTime = System.nanoTime();
 		}
 
-		public void stop(final boolean result, final boolean conditional) {
+		public void stop(final Dependence result, final boolean conditional) {
 			assert mStartTime != 0L : "Timer was not running";
 			final long elapsed = System.nanoTime() - mStartTime;
 			aggregate(elapsed, result, conditional);

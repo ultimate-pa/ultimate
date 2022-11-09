@@ -34,6 +34,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -210,7 +211,7 @@ public class SemanticIndependenceConditionGeneratorTest {
 		if (expected == null) {
 			if (actual != null) {
 				assert checkIndependence(axiomPredicate, actual, tfA,
-						tfB) == LBool.SAT : "No commutativity condition expected, but found working condition "
+						tfB) == Dependence.DEPENDENT : "No commutativity condition expected, but found working condition "
 								+ actual.getFormula();
 			}
 			assert actual == null : "No commutativity condition expected, but found " + actual.getFormula();
@@ -222,16 +223,16 @@ public class SemanticIndependenceConditionGeneratorTest {
 					+ " does not imply expected condition " + expected;
 
 			assert checkIndependence(axiomPredicate, mPredicateFactory.newPredicate(expected), tfA,
-					tfB) != LBool.SAT : "expected condition insufficient: " + expected;
-			assert checkIndependence(axiomPredicate, actual, tfA, tfB) != LBool.SAT : "condition insufficient: "
-					+ actual.getFormula();
+					tfB) != Dependence.DEPENDENT : "expected condition insufficient: " + expected;
+			assert checkIndependence(axiomPredicate, actual, tfA,
+					tfB) != Dependence.DEPENDENT : "condition insufficient: " + actual.getFormula();
 		}
 	}
 
-	private final LBool checkIndependence(final IPredicate axioms, final IPredicate condition,
+	private final Dependence checkIndependence(final IPredicate axioms, final IPredicate condition,
 			final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB) {
 		final IPredicate conditionWithAxioms = mPredicateFactory.and(axioms, condition);
-		return mIndependence.containsLBool(conditionWithAxioms, toAction(tfA), toAction(tfB));
+		return mIndependence.isIndependent(conditionWithAxioms, toAction(tfA), toAction(tfB));
 	}
 
 	private static BasicInternalAction toAction(final UnmodifiableTransFormula tf) {

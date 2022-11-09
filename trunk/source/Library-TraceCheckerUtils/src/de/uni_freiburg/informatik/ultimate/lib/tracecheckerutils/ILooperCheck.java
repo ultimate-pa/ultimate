@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -56,9 +57,11 @@ public interface ILooperCheck<L> {
 	 * @param htc
 	 * @param coverage
 	 *
-	 * @return true if the letter can be guaranteed to be a looper.
+	 * @return UNSAT if the letter can be guaranteed to be a looper, SAT if it is not a looper, and UNKNOWN if no
+	 *         determination could be made.
 	 */
-	boolean isUniversalLooper(final L letter, final Set<IPredicate> states);
+	// TODO use a better suited return type
+	LBool isUniversalLooper(final L letter, final Set<IPredicate> states);
 
 	/**
 	 * An efficient sound but (very) incomplete check for loopers: A letter is considered a looper, if it does not share
@@ -69,17 +72,17 @@ public interface ILooperCheck<L> {
 	 */
 	class IndependentLooperCheck<L extends IAction> implements ILooperCheck<L> {
 		@Override
-		public boolean isUniversalLooper(final L letter, final Set<IPredicate> states) {
+		public LBool isUniversalLooper(final L letter, final Set<IPredicate> states) {
 			if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
-				return false;
+				return LBool.SAT;
 			}
 			for (final IPredicate predicate : states) {
 				final boolean isIndependent = isIndependent(letter, predicate);
 				if (!isIndependent) {
-					return false;
+					return LBool.SAT;
 				}
 			}
-			return true;
+			return LBool.UNSAT;
 		}
 
 		private boolean isIndependent(final L letter, final IPredicate predicate) {
@@ -107,33 +110,50 @@ public interface ILooperCheck<L> {
 		}
 
 		@Override
-		public boolean isUniversalLooper(final L letter, final Set<IPredicate> states) {
+		public LBool isUniversalLooper(final L letter, final Set<IPredicate> states) {
 			if (letter.getTransformula().isInfeasible() != Infeasibility.UNPROVEABLE) {
-				return false;
+				return LBool.SAT;
 			}
-			if (mIndependentCheck.isUniversalLooper(letter, states)) {
-				return true;
+			if (mIndependentCheck.isUniversalLooper(letter, states) == LBool.UNSAT) {
+				return LBool.UNSAT;
 			}
 
 			for (final IPredicate predicate : states) {
-				final boolean isInvariant =
-						mHtc.checkInternal(predicate, (IInternalAction) letter, predicate) == Validity.VALID;
-				if (!isInvariant) {
-					return false;
+				final Validity isInvariant = mHtc.checkInternal(predicate, (IInternalAction) letter, predicate);
+				switch (isInvariant) {
+				case INVALID:
+					return LBool.SAT;
+				case NOT_CHECKED:
+				case UNKNOWN:
+					return LBool.UNKNOWN;
+				case VALID:
+					// continue below
+					break;
+				default:
+					throw new IllegalArgumentException("unknown Validity " + isInvariant);
 				}
 
 				for (final IPredicate post : states) {
 					if (mCoverage.isCovered(predicate, post) == Validity.VALID) {
 						continue;
 					}
-					final boolean mayIntroduce =
-							mHtc.checkInternal(predicate, (IInternalAction) letter, post) != Validity.INVALID;
-					if (mayIntroduce) {
-						return false;
+
+					final Validity mayIntroduce = mHtc.checkInternal(predicate, (IInternalAction) letter, post);
+					switch (mayIntroduce) {
+					case NOT_CHECKED:
+					case UNKNOWN:
+						return LBool.UNKNOWN;
+					case VALID:
+						return LBool.SAT;
+					case INVALID:
+						// continue the loop
+						break;
+					default:
+						throw new IllegalArgumentException("unknown Validity " + mayIntroduce);
 					}
 				}
 			}
-			return true;
+			return LBool.UNSAT;
 		}
 	}
 }

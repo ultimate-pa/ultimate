@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceResultAggregator.Counter;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -106,16 +107,16 @@ public class IndependenceStatisticsDataProvider extends AbstractStatisticsDataPr
 		return mQueryCounter;
 	}
 
-	public void reportQuery(final boolean positive, final boolean conditional) {
-		mQueryCounter.increment(positive, conditional);
+	public void reportQuery(final Dependence result, final boolean conditional) {
+		mQueryCounter.increment(result, conditional);
 	}
 
 	public void reportPositiveQuery(final boolean conditional) {
-		mQueryCounter.increment(true, conditional);
+		mQueryCounter.increment(Dependence.INDEPENDENT, conditional);
 	}
 
 	public void reportNegativeQuery(final boolean conditional) {
-		mQueryCounter.increment(false, conditional);
+		mQueryCounter.increment(Dependence.DEPENDENT, conditional);
 	}
 
 	public void reportUnknownQuery(final boolean conditional) {

@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalLatticeForMaps;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
@@ -185,7 +186,7 @@ public final class SleepMap<L, S> {
 
 	private Integer minimumRelation(final S state, final L a, final L b, final int minLevel, final int maxLevel) {
 		for (int i = minLevel; i <= maxLevel; i++) {
-			if (mRelations.get(i).isIndependent(state, a, b)) {
+			if (mRelations.get(i).isIndependent(state, a, b) == Dependence.INDEPENDENT) {
 				return i;
 			}
 		}

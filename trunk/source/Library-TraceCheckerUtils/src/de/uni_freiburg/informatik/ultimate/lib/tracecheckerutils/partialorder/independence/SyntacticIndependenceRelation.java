@@ -65,14 +65,21 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 	}
 
 	@Override
-	public boolean isIndependent(final STATE state, final L a, final L b) {
+	public Dependence isIndependent(final STATE state, final L a, final L b) {
 		final TransFormula tf1 = a.getTransformula();
 		final TransFormula tf2 = b.getTransformula();
 
-		final boolean noWRConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet());
-		final boolean noRWConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars());
+		if (DataStructureUtils.haveNonEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet())) {
+			// write-read conflict
+			mStatistics.reportNegativeQuery(false);
+			return Dependence.DEPENDENT;
+		}
+
+		if (DataStructureUtils.haveNonEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars())) {
+			// read-write conflict
+			mStatistics.reportNegativeQuery(false);
+			return Dependence.DEPENDENT;
+		}
 
 		final boolean noWWConflict;
 		if (ALLOW_MUTUAL_HAVOCS) {
@@ -81,10 +88,13 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 		} else {
 			noWWConflict = DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
 		}
+		if (noWWConflict) {
+			mStatistics.reportPositiveQuery(false);
+			return Dependence.INDEPENDENT;
+		}
 
-		final boolean result = noWWConflict && noWRConflict && noRWConflict;
-		mStatistics.reportQuery(result, false);
-		return result;
+		mStatistics.reportNegativeQuery(false);
+		return Dependence.DEPENDENT;
 	}
 
 	@Override

@@ -73,9 +73,9 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 	}
 
 	@Override
-	public boolean isIndependent(final C state, final L a, final L b) {
+	public Dependence isIndependent(final C state, final L a, final L b) {
 		if (state == null || state.isEmpty()) {
-			final boolean result = mUnderlying.isIndependent(null, a, b);
+			final Dependence result = mUnderlying.isIndependent(null, a, b);
 			mStatistics.reportQuery(result, false);
 			return result;
 		}
@@ -83,15 +83,15 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 		int i = 0;
 		for (final S condition : state) {
 			mStatistics.reportQueriedIndex(i);
-			if (mUnderlying.isIndependent(condition, a, b)) {
+			if (mUnderlying.isIndependent(condition, a, b) == Dependence.INDEPENDENT) {
 				mStatistics.reportPositiveQuery(true);
-				return true;
+				return Dependence.INDEPENDENT;
 			}
 			i++;
 		}
 
 		mStatistics.reportNegativeQuery(true);
-		return false;
+		return Dependence.INDEPENDENT;
 	}
 
 	@Override

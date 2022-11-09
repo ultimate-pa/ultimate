@@ -115,17 +115,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	@Override
-	public boolean isIndependent(final IPredicate state, final L a, final L b) {
-		return containsLBool(state, a, b) == LBool.UNSAT;
+	public Dependence isIndependent(final IPredicate state, final L a, final L b) {
+		return toDependence(contains(state, a, b));
 	}
 
 	/**
 	 * Implements {@link #isIndependent(IPredicate, IAction, IAction)} but returns {@code UNKNOWN} if the solver is
 	 * unable to decide commutativity.
-	 *
-	 * TODO This should be the signature of #contains in {@link IIndependenceRelation}.
 	 */
-	public LBool containsLBool(final IPredicate state, final L a, final L b) {
+	private LBool contains(final IPredicate state, final L a, final L b) {
 		final IPredicate context = mConditional ? state : null;
 		if (context instanceof IMLPredicate) {
 			// Locations will be ignored. However, using predicates with the same formula but different locations will
@@ -216,6 +214,18 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			return LBool.UNSAT;
 		}
 		return LBool.UNKNOWN;
+	}
+
+	private static Dependence toDependence(final LBool value) {
+		switch (value) {
+		case UNSAT:
+			return Dependence.INDEPENDENT;
+		case SAT:
+			return Dependence.DEPENDENT;
+		case UNKNOWN:
+			return Dependence.UNKNOWN;
+		}
+		throw new IllegalArgumentException("Unknown value: " + value);
 	}
 
 	@Override
