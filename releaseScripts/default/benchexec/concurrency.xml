@@ -4,9 +4,6 @@
 
   <option name="--force-no-wrapper" />
 
-  <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
-  <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
-
   <!-- === No Partial Order Reduction === -->
   <!-- ================================== -->
 
@@ -159,9 +156,21 @@
     <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
   </rundefinition-->
 
-  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
-  </rundefinition-->
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.Badger">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.PerError">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
@@ -429,9 +438,15 @@
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-ConcreteSyntactic.epf</option>
   </rundefinition-->
 
-  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
-  </rundefinition-->
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.Badger">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.WithAssertions">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
