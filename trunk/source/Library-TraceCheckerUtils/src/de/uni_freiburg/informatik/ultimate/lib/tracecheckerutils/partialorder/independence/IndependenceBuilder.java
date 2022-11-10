@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.Co
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DisjunctiveConditionalIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ProtectedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IndependenceRelationWithAbstraction;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Transferrer
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -356,6 +358,15 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 				return mCreator.apply(mRelation);
 			}
 			return mCreator.apply(new IndependenceRelationWithAbstraction<>(mRelation, abstraction, level));
+		}
+
+		/**
+		 * Ensures only actions with quantifier-free transition formulas are queried for independence. IF an action
+		 * contains quantifiers, {@code UNKNOWN} is returned instead.
+		 */
+		public B protectAgainstQuantifiers() {
+			return mCreator.apply(new ProtectedIndependenceRelation<>(mRelation,
+					a -> QuantifierUtils.isQuantifierFree(a.getTransformula().getFormula())));
 		}
 
 		/**
