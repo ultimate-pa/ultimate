@@ -58,9 +58,8 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	boolean isConditional();
 
 	/**
-	 * Tests if the given pair of actions is in the relation for the given state. Undetermined checks should return
-	 * {@code false} to remain conservative. Unconditional relations (see {@link isConditional}) should accept
-	 * {@code null} as state.
+	 * Tests if the given pair of actions is in the relation for the given state. Unconditional relations (see
+	 * {@link isConditional}) should accept {@code null} as state.
 	 *
 	 * The intuition is that correctness of a trace containing the subsequence "ba" implies the correctness of the trace
 	 * where this was replaced by "ab". We also sometimes say that {@code a} is a right-mover for {@code b} (in the
