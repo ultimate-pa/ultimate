@@ -164,6 +164,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// the condition predicates to the independenceScript.
 				.ifThen(tfsAlreadyTransferred && settings.useConditional(),
 						b -> b.withTransformedPredicates(transferrer::transferPredicate))
+				// Protect the SMT solver against checks with quantifiers that are unlikely to succeed anyway.
+				.protectAgainstQuantifiers()
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
 				// Cache independence query results.
