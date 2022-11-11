@@ -106,7 +106,7 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 			final Dependence symCached = mCache.contains(condition, b, a);
 			if (symCached != null) {
 				mStatistics.reportCachedQuery(symCached, condition != null);
-				return cached;
+				return symCached;
 			}
 		}
 
