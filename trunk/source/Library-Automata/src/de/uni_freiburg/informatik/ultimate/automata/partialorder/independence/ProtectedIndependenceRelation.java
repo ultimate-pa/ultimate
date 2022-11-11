@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+
 /**
  * An independence relation that protects an underlying relation from certain queries (e.g. queries that are expected to
  * be expensive) and returns {@code Dependence.UNKNOWN} instead.
@@ -40,6 +43,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelation<S, L> {
 	private final IIndependenceRelation<S, L> mUnderlying;
 	private final IFilter<L> mFilter;
+	private final Statistics mStatistics;
 
 	/**
 	 * Create a new protecting wrapper around a given relation.
@@ -52,6 +56,7 @@ public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelatio
 	public ProtectedIndependenceRelation(final IIndependenceRelation<S, L> underlying, final IFilter<L> filter) {
 		mUnderlying = underlying;
 		mFilter = filter;
+		mStatistics = new Statistics();
 	}
 
 	@Override
@@ -69,9 +74,16 @@ public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelatio
 		if (mFilter.test(a) && mFilter.test(b)) {
 			final var result = mUnderlying.isIndependent(state, a, b);
 			mFilter.update(a, b, result);
+			mStatistics.reportQuery(result, state != null);
 			return result;
 		}
+		mStatistics.reportProtectedQuery(state != null);
 		return Dependence.UNKNOWN;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	/**
@@ -107,6 +119,22 @@ public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelatio
 		 */
 		default void update(final L a, final L b, final Dependence result) {
 			// by default, do nothing
+		}
+	}
+
+	private final class Statistics extends IndependenceStatisticsDataProvider {
+		public static final String PROTECTED_QUERIES = "Protected Queries";
+
+		private int mProtectedQueries;
+
+		private Statistics() {
+			super(ProtectedIndependenceRelation.class, mUnderlying);
+			declare(PROTECTED_QUERIES, () -> mProtectedQueries, KeyType.COUNTER);
+		}
+
+		private void reportProtectedQuery(final boolean isConditional) {
+			mProtectedQueries++;
+			reportQuery(Dependence.UNKNOWN, isConditional);
 		}
 	}
 }
