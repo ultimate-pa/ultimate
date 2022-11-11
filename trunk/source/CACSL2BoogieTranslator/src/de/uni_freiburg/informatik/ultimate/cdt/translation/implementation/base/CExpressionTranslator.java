@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
@@ -835,7 +837,15 @@ public class CExpressionTranslator {
 			// default case: the types of the operands (should) match --> we choose one of them as the result CType
 			resultCType = opPositive.getLrValue().getCType();
 		}
+		return constructResultForConditionalOperator(loc, opCondition, opPositive, opNegative, resultCType, secondArgIsVoid, thirdArgIsVoid);
+	}
 
+	/**
+	 * Takes preprocessing from {@link CExpressionTranslator#handleConditionalOperator}
+	 */
+	private ExpressionResult constructResultForConditionalOperator(final ILocation loc,
+			final ExpressionResult opCondition, final ExpressionResult opPositive, final ExpressionResult opNegative,
+			final CType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary
@@ -845,14 +855,56 @@ public class CExpressionTranslator {
 		// * assignment.
 		// */
 
-		resultBuilder.addAllExceptLrValue(opCondition, opPositive, opNegative);
-		if (!resultCType.isVoidType()) {
-			/* the result has a value only if the result type is not void.. */
-			final Expression ite = ExpressionFactory.constructIfThenElseExpression(loc,
-					opCondition.getLrValue().getValue(), opPositive.getLrValue().getValue(),
-					opNegative.getLrValue().getValue());
-			resultBuilder.setLrValue(new RValue(ite, resultCType));
+		if (opPositive.getStatements().isEmpty() && opNegative.getStatements().isEmpty()) {
+			// neither second nor third operand have side-effects, we can translate to
+			// a Boogie if-then-else expression
+			resultBuilder.addAllExceptLrValue(opCondition, opPositive, opNegative);
+			if (resultCType.isVoidType()) {
+				// result type is void the value is not assigned
+			} else {
+				final Expression ite = ExpressionFactory.constructIfThenElseExpression(loc,
+						opCondition.getLrValue().getValue(), opPositive.getLrValue().getValue(),
+						opNegative.getLrValue().getValue());
+				resultBuilder.setLrValue(new RValue(ite, resultCType));
+			}
+		} else {
+			// Second or third operand has side-effects, we have to translate to an
+			// if-then-else statement to make sure that side-effect are only execute if the
+			// respective branch is taken.
+
+			resultBuilder.addAllExceptLrValue(opCondition);
+
+			// auxvar that will hold the result of the ite expression
+			final AuxVarInfo auxvar;
+			if (resultCType.isVoidType()) {
+				/*
+				 * in this case we will not make any assignment, so we do not need the aux var
+				 */
+				auxvar = null;
+			} else {
+				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultCType, SFO.AUXVAR.ITE);
+				resultBuilder.addDeclaration(auxvar.getVarDec());
+				resultBuilder.addAuxVar(auxvar);
+			}
+
+			final List<Statement> ifStatements = new ArrayList<>();
+			final List<Statement> elseStatements = new ArrayList<>();
+			assignAuxVar(loc, opPositive, resultBuilder, auxvar, ifStatements, secondArgIsVoid);
+			assignAuxVar(loc, opNegative, resultBuilder, auxvar, elseStatements, thirdArgIsVoid);
+			final Statement rtrStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
+					ifStatements.toArray(new Statement[ifStatements.size()]),
+					elseStatements.toArray(new Statement[elseStatements.size()]));
+			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
+				overapprItem.annotate(rtrStatement);
+			}
+			resultBuilder.addStatement(rtrStatement);
+			if (resultCType.isVoidType()) {
+				// result type is void the value is not assigned
+			} else {
+				resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
+			}
 		}
+
 		return resultBuilder.build();
 	}
 
