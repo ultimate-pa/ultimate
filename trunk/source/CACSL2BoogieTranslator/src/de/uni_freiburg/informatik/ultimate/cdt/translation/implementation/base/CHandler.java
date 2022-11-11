@@ -2810,23 +2810,6 @@ public class CHandler {
 			final DeclaratorResult declResult, final IASTDeclarator hook, final CDeclaration cDec,
 			final CStorageClass storageClass) {
 
-		// if the same variable is declared multiple times (within the same scope), we
-		// only keep one declaration if one of them has an initializer, we keep that
-		// one.
-		// if we are inside a struct declaration however, this does not apply, we
-		// proceed as normal, as the result is needed to build the struct type
-
-		final boolean isInsideStructDeclaration = mSymbolTable.isInsideStructDeclaration(hook);
-
-		if (!isInsideStructDeclaration) {
-			final SymbolTableValue stv = mSymbolTable.findCSymbolInInnermostScope(hook, cDec.getName());
-			if (stv != null && (!stv.getCDecl().hasInitializer() || cDec.hasInitializer())
-					&& mProcedureManager.isGlobalScope()) {
-				// Keep the last STV with an initializer
-				mStaticObjectsHandler.removeDeclaration(mSymbolTable.findCSymbol(hook, cDec.getName()).getBoogieDecl());
-			}
-		}
-
 		final boolean onHeap = cDec.isOnHeap();
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
 				onHeap, cDec.getType());
@@ -2891,6 +2874,8 @@ public class CHandler {
 			 */
 			final boolean hasRealInitializer =
 					cDec.hasInitializer() && (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
+
+			final boolean isInsideStructDeclaration = mSymbolTable.isInsideStructDeclaration(hook);
 
 			if (!hasRealInitializer && !mProcedureManager.isGlobalScope() && !isInsideStructDeclaration) {
 				// in case of a local variable declaration without an
