@@ -15,7 +15,7 @@
 set -e
 
 GIT_FETCH_URL="https://github.com/Z3Prover/z3.git"
-ADDITIONAL_FLAGS="--staticbin"
+ADDITIONAL_FLAGS="--staticbin --optimize"
 
 WORKING_DIR="z3temp"
 DEFAULT_WORKING=true
