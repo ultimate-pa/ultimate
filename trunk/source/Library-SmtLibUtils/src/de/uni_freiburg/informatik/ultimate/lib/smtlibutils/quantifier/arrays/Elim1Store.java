@@ -242,9 +242,6 @@ public class Elim1Store {
 
 		final Map<MultiDimensionalNestedStore, Term> storeTermEquivalenceMapping = computeStoreTermEquivalenceMapping(
 				mScript, auxVarConstructor, quantifier, eliminatee,  input.getTerm(), stores);
-		final Term hiddenWeakArrayEqualities = computeHiddenWeakArrayEqualities(mScript, quantifier, storeTermEquivalenceMapping);
-		assert !Arrays.asList(hiddenWeakArrayEqualities.getFreeVars()).contains(eliminatee) : "var is still there: "
-				+ eliminatee;
 
 		final Map<ArrayIndex, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives,
 				storeTermEquivalenceMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee, quantifier,
@@ -289,12 +286,18 @@ public class Elim1Store {
 		final Term indexEqualityInformationTerm = indexEquivalencesToTerm(mScript, indexEqualityInformation,
 				quantifier, aiem);
 		assert indexEqualityInformationTerm == QuantifierUtils.getAbsorbingElement(mScript, quantifier) : "strange equivalences";
+		final Term hiddenWeakArrayEqualities = computeHiddenWeakArrayEqualities(mScript, quantifier,
+				storeTermEquivalenceMapping);
+		// hiddenWeakArrayEqualities neither introduce new store terms on eliminatee and
+		// all its select terms have already been seen before, so we can add it late to
+		// an intermediate term
 		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				indexAuxVarDefinitionsTerm,  input.getTerm());
+				indexAuxVarDefinitionsTerm,  input.getTerm(), hiddenWeakArrayEqualities);
+		final Term transformedTerm = Substitution.apply(mMgdScript, substitutionMapping, intermediateTerm);
+		assert !Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee) : "var is still there: "
+		+ eliminatee;
 
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
-
-		final Term transformedTerm = Substitution.apply(mMgdScript, substitutionMapping, intermediateTerm);
 //		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
 //				indexMapping, substitutionMapping, indexEqualityInformation);
 		if (Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee)) {
@@ -304,7 +307,7 @@ public class Elim1Store {
 			throw new ElimStorePlain.ElimStorePlainException(ElimStorePlainException.CAPTURED_INDEX);
 		}
 		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, transformedTerm,
-				singleCaseTerm, hiddenWeakArrayEqualities);
+				singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {
 			final Term doubleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 					doubleCaseJuncts);
