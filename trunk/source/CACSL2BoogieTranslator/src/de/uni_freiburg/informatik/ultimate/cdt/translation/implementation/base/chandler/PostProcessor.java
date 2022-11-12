@@ -763,8 +763,7 @@ public class PostProcessor {
 		final List<Statement> staticObjectInitStatements = new ArrayList<>();
 
 		// initialization for statics and other globals
-		for (final Entry<VariableDeclaration, CDeclaration> en : mStaticObjectsHandler
-				.getGlobalVariableDeclsWithAssociatedCDecls().entrySet()) {
+		for (final Pair<VariableDeclaration, CDeclaration> en : mStaticObjectsHandler.computeSuitableGlobalVarDecls()) {
 			final ILocation currentDeclsLoc = en.getKey().getLocation();
 			final InitializerResult initializer = en.getValue().getInitializer();
 

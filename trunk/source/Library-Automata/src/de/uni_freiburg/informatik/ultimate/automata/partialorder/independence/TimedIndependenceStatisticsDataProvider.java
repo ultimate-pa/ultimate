@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceResultAggregator.Timer;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 
 /**
@@ -65,40 +65,26 @@ public class TimedIndependenceStatisticsDataProvider extends IndependenceStatist
 	}
 
 	@Override
-	public void reportQuery(final boolean positive, final boolean conditional) {
-		mTimer.stop(positive, conditional);
-		super.reportQuery(positive, conditional);
-	}
-
-	public void reportQuery(final LBool result, final boolean conditional) {
-		switch (result) {
-		case UNSAT:
-			reportPositiveQuery(conditional);
-			break;
-		case SAT:
-			reportNegativeQuery(conditional);
-			break;
-		case UNKNOWN:
-			reportUnknownQuery(conditional);
-			break;
-		}
+	public void reportQuery(final Dependence result, final boolean conditional) {
+		mTimer.stop(result, conditional);
+		super.reportQuery(result, conditional);
 	}
 
 	@Override
-	public void reportPositiveQuery(final boolean conditional) {
-		mTimer.stop(true, conditional);
-		super.reportPositiveQuery(conditional);
+	public void reportIndependentQuery(final boolean conditional) {
+		mTimer.stop(Dependence.INDEPENDENT, conditional);
+		super.reportIndependentQuery(conditional);
 	}
 
 	@Override
-	public void reportNegativeQuery(final boolean conditional) {
-		mTimer.stop(false, conditional);
-		super.reportNegativeQuery(conditional);
+	public void reportDependentQuery(final boolean conditional) {
+		mTimer.stop(Dependence.DEPENDENT, conditional);
+		super.reportDependentQuery(conditional);
 	}
 
 	@Override
 	public void reportUnknownQuery(final boolean conditional) {
-		mTimer.stopUnknown(conditional);
+		mTimer.stop(Dependence.UNKNOWN, conditional);
 		super.reportUnknownQuery(conditional);
 	}
 }

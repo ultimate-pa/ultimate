@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsDefinitions;
@@ -567,7 +568,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			throw new AssertionError("Unsupported looper check");
 		}
 
-		return alphabet.stream().filter(letter -> looperCheck.isUniversalLooper(letter, states))
+		return alphabet.stream().filter(letter -> looperCheck.isUniversalLooper(letter, states) == LBool.UNSAT)
 				.collect(Collectors.toSet());
 	}
 

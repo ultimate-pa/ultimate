@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters whose independence is defined by the relation.
  */
 public interface IIndependenceRelation<STATE, LETTER> {
+
+	enum Dependence {
+		INDEPENDENT, DEPENDENT, UNKNOWN
+	}
+
 	/**
 	 * Indicates whether this relation is symmetric (i.e., captures full commutativity) or not (i.e., captures
 	 * semicommutativity, Lipton movers).
@@ -47,21 +52,20 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	boolean isSymmetric();
 
 	/**
-	 * Indicates whether this relation is conditional, i.e., the result of {@link contains} may differ depending on the
-	 * given states.
+	 * Indicates whether this relation is conditional, i.e., the result of {@link isIndependent} may differ depending on
+	 * the given states.
 	 */
 	boolean isConditional();
 
 	/**
-	 * Tests if the given pair of actions is in the relation for the given state. Undetermined checks should return
-	 * {@code false} to remain conservative. Unconditional relations (see {@link isConditional}) should accept
-	 * {@code null} as state.
+	 * Tests if the given pair of actions is in the relation for the given state. Unconditional relations (see
+	 * {@link isConditional}) should accept {@code null} as state.
 	 *
 	 * The intuition is that correctness of a trace containing the subsequence "ba" implies the correctness of the trace
 	 * where this was replaced by "ab". We also sometimes say that {@code a} is a right-mover for {@code b} (in the
 	 * given {@code state}, if the relation is conditional), or resp., {@code b} is a left mover for {@code a}.
 	 */
-	boolean contains(STATE state, LETTER a, LETTER b);
+	Dependence isIndependent(STATE state, LETTER a, LETTER b);
 
 	/**
 	 * An optional method that allows collecting statistics about the history of queries made to this independence

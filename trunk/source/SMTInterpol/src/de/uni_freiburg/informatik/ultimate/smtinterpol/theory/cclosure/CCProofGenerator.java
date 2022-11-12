@@ -27,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -542,8 +543,15 @@ public class CCProofGenerator {
 		}
 		for (final ProofInfo entry : info.getSubProofs()) {
 			if (!auxLiterals.containsKey(entry.getDiseq())) {
-				final Term lhs = entry.getDiseq().getFirst().getFlatTerm();
-				final Term rhs = entry.getDiseq().getSecond().getFlatTerm();
+				Term lhs = entry.getDiseq().getFirst().getFlatTerm();
+				Term rhs = entry.getDiseq().getSecond().getFlatTerm();
+				// to make cc equalities different from la equalities, ensure that rhs is not a
+				// constant.
+				if (rhs.getSort().isNumericSort() && rhs instanceof ConstantTerm) {
+					final Term constantTerm = rhs;
+					rhs = lhs;
+					lhs = constantTerm;
+				}
 				auxLiterals.put(entry.getDiseq(), theory.term("=", lhs, rhs));
 			}
 			/* these are always negated equalities */

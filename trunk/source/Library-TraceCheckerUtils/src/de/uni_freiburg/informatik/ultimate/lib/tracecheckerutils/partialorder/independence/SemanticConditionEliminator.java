@@ -88,9 +88,9 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 	}
 
 	@Override
-	public boolean contains(final IPredicate state, final L a, final L b) {
+	public Dependence isIndependent(final IPredicate state, final L a, final L b) {
 		final IPredicate condition = state == null ? null : normalize(state, a, b);
-		final boolean result = mUnderlying.contains(condition, a, b);
+		final Dependence result = mUnderlying.isIndependent(condition, a, b);
 		mStatistics.reportQuery(result, condition != null);
 		return result;
 	}

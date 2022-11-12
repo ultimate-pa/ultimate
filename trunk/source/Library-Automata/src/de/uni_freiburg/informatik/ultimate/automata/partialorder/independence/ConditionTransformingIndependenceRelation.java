@@ -82,9 +82,9 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
+	public Dependence isIndependent(final S state, final L a, final L b) {
 		final T condition = state == null ? null : mTransformer.apply(state);
-		final boolean result = mUnderlying.contains(condition, a, b);
+		final Dependence result = mUnderlying.isIndependent(condition, a, b);
 		mStatistics.reportQuery(result, condition != null);
 		return result;
 	}

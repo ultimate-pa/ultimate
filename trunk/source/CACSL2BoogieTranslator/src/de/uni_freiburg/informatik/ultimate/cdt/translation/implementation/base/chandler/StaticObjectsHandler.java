@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class manages objects (in the meaning that the word has in the C-standard) with static storage duration.
@@ -62,11 +64,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class StaticObjectsHandler {
 
-	private final List<Declaration> mGlobalDeclarations;
 	private final List<Statement> mStatementsForUltimateInit;
+	private final List<ConstDeclaration> mConstDeclarations = new ArrayList<>();
+	private final List<Axiom> mAxioms = new ArrayList<>();
 
 	private boolean mIsFrozen;
-	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration;
+	private final HashRelation<String, Pair<VariableDeclaration, CDeclaration>> mGlobalVarsForCVars = new HashRelation<>();
+	private final List<VariableDeclaration> mGlobalVarsWithoutCVar = new ArrayList<>();
 
 	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
 	private final Map<String, TypeDeclaration> mIncompleteType2TypeDecl;
@@ -74,9 +78,7 @@ public class StaticObjectsHandler {
 	private final ILogger mLogger;
 
 	public StaticObjectsHandler(final ILogger logger) {
-		mGlobalDeclarations = new ArrayList<>();
 		mStatementsForUltimateInit = new ArrayList<>();
-		mVariableDeclarationToAssociatedCDeclaration = new LinkedHashMap<>();
 		mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
 		mIncompleteType2TypeDecl = new HashMap<>();
 		mIsFrozen = false;
@@ -89,7 +91,15 @@ public class StaticObjectsHandler {
 	 */
 	public List<Declaration> getGlobalDeclarations() {
 		assert mIsFrozen;
-		return mGlobalDeclarations;
+		final List<Declaration> globalDecls = new ArrayList<>();
+		globalDecls.addAll(mTypeDeclarationToCDeclaration.keySet());
+		globalDecls.addAll(mConstDeclarations);
+		globalDecls.addAll(mAxioms);
+		globalDecls.addAll(mGlobalVarsWithoutCVar);
+		for (final Pair<VariableDeclaration, CDeclaration> pair : computeSuitableGlobalVarDecls()) {
+			globalDecls.add(pair.getFirst());
+		}
+		return globalDecls;
 	}
 
 	public List<Statement> getStatementsForUltimateInit() {
@@ -104,7 +114,6 @@ public class StaticObjectsHandler {
 
 	public void addGlobalTypeDeclaration(final TypeDeclaration boogieDec, final CDeclaration cDec) {
 		assert boogieDec != null && cDec != null : "Part of global type declaration is null";
-		mGlobalDeclarations.add(boogieDec);
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final CType cType = cDec.getType();
 		if (cType.isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
@@ -119,15 +128,54 @@ public class StaticObjectsHandler {
 	}
 
 	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec) {
-		mGlobalDeclarations.add(boogieDec);
-		mVariableDeclarationToAssociatedCDeclaration.put(boogieDec, cDec);
+		mGlobalVarsForCVars.addPair(cDec.getName(), new Pair<>(boogieDec, cDec));
+	}
+
+	/**
+	 * If the same variable is declared multiple times (within the same scope), we
+	 * only keep one declaration if one of them has an initializer, we keep that
+	 * one.
+	 */
+	public List<Pair<VariableDeclaration, CDeclaration>> computeSuitableGlobalVarDecls() {
+		// Matthias 20221110: Unfortunately, we cannot require that this object is frozen.
+		// This method is called by the PostProcessor and something modifies this object afterwards.
+		final List<Pair<VariableDeclaration, CDeclaration>> result = new ArrayList<>();
+		for (final String id : mGlobalVarsForCVars.getDomain()) {
+			final Set<Pair<VariableDeclaration, CDeclaration>> decls = mGlobalVarsForCVars.getImage(id);
+			final Pair<VariableDeclaration, CDeclaration> varDecl = computeSuitableVarDecl(decls);
+			result.add(varDecl);
+		}
+		return result;
+	}
+
+	private Pair<VariableDeclaration, CDeclaration> computeSuitableVarDecl(
+			final Set<Pair<VariableDeclaration, CDeclaration>> decls) {
+		if (decls.size() == 1) {
+			return decls.iterator().next();
+		} else {
+			Pair<VariableDeclaration, CDeclaration> suiteableDecl = null;
+			for (final Pair<VariableDeclaration, CDeclaration> pair : decls) {
+				if (pair.getSecond().getInitializer() != null) {
+					if (suiteableDecl == null) {
+						suiteableDecl = pair;
+					} else {
+						throw new AssertionError("Two decls with initializer " + pair.getSecond().getName());
+					}
+				}
+			}
+			if (suiteableDecl == null) {
+				// no declaration has an initializer, pick some
+				suiteableDecl = decls.iterator().next();
+			}
+			return suiteableDecl;
+		}
 	}
 
 	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,
 			final Axiom axiom) {
-		mGlobalDeclarations.add(cd);
+		mConstDeclarations.add(cd);
 		if (axiom != null) {
-			mGlobalDeclarations.add(axiom);
+			mAxioms.add(axiom);
 		}
 	}
 
@@ -154,18 +202,8 @@ public class StaticObjectsHandler {
 				oldBoogieDec.getAttributes(), oldBoogieDec.isFinite(), oldBoogieDec.getIdentifier(),
 				oldBoogieDec.getTypeParams(), typeHandler.cType2AstType(oldBoogieDec.getLocation(), completedType));
 
-		removeDeclaration(oldBoogieDec);
+		mTypeDeclarationToCDeclaration.remove(oldBoogieDec);
 		addGlobalTypeDeclaration(newBoogieDec, oldCDec);
-	}
-
-	public void removeDeclaration(final Declaration boogieDecl) {
-		mGlobalDeclarations.remove(boogieDecl);
-		mVariableDeclarationToAssociatedCDeclaration.remove(boogieDecl);
-		mTypeDeclarationToCDeclaration.remove(boogieDecl);
-	}
-
-	public Map<VariableDeclaration, CDeclaration> getGlobalVariableDeclsWithAssociatedCDecls() {
-		return Collections.unmodifiableMap(mVariableDeclarationToAssociatedCDeclaration);
 	}
 
 	/**
@@ -176,7 +214,7 @@ public class StaticObjectsHandler {
 	 * @param varDec
 	 */
 	public void addGlobalVarDeclarationWithoutCDeclaration(final VariableDeclaration varDec) {
-		mGlobalDeclarations.add(varDec);
+		mGlobalVarsWithoutCVar.add(varDec);
 	}
 
 	public void addStatementsForUltimateInit(final List<Statement> stmts) {
