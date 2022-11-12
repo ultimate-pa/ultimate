@@ -266,29 +266,19 @@ public class Elim1Store {
 		newAuxVars.addAll(imp.getConstructedAuxVars());
 		final Term indexAuxVarDefinitionsTerm = imp.constructAuxVarDefinitions(mScript, quantifier);
 
-		final Map<MultiDimensionalNestedStore, Term> newArrayMapping = new HashMap<>();
-		for (final MultiDimensionalNestedStore store : stores) {
-			final Term newArray;
-			final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
-			final Term eqArray = eqProvider.getEqTerm(store.toTerm(mScript));
-			if (eqArray != null) {
-				newArray = eqArray;
-			} else {
-				newArray = auxVarConstructor.constructAuxVar(AUX_VAR_NEW_ARRAY, eliminatee.getSort());
-			}
-			newArrayMapping.put(store, newArray);
-		}
-		final Term hiddenWeakArrayEqualities = computeHiddenWeakArrayEqualities(mScript, quantifier, newArrayMapping);
+		final Map<MultiDimensionalNestedStore, Term> storeTermEquivalenceMapping = computeStoreTermEquivalenceMapping(
+				mScript, auxVarConstructor, quantifier, eliminatee, preprocessedInput, stores);
+		final Term hiddenWeakArrayEqualities = computeHiddenWeakArrayEqualities(mScript, quantifier, storeTermEquivalenceMapping);
 		assert !Arrays.asList(hiddenWeakArrayEqualities.getFreeVars()).contains(eliminatee) : "var is still there: "
 				+ eliminatee;
 
 		final Map<ArrayIndex, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives,
-				newArrayMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee, quantifier,
+				storeTermEquivalenceMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee, quantifier,
 				indexEqualityInformation, mScript);
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
+		for (final Entry<MultiDimensionalNestedStore, Term> entry : storeTermEquivalenceMapping.entrySet()) {
 			assert entry.getKey().toTerm(mScript).getSort() == entry.getValue().getSort() : "incompatible sorts";
 			substitutionMapping.put(entry.getKey().toTerm(mScript), entry.getValue());
 		}
@@ -311,7 +301,7 @@ public class Elim1Store {
 
 		final Pair<List<Term>, List<Term>> wc = constructWriteConstraints2(selectIndexRepresentatives,
 				indexEqualityInformation, mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier,
-				newArrayMapping, substitutionMapping, equalityInformation, aiem);
+				storeTermEquivalenceMapping, substitutionMapping, equalityInformation, aiem);
 		singleCaseJuncts.addAll(wc.getFirst());
 		doubleCaseJuncts.addAll(wc.getSecond());
 
@@ -423,6 +413,29 @@ public class Elim1Store {
 		assert !mMgdScript.isLocked() : "Solver still locked";
 		return resultEt;
 
+	}
+
+	/**
+	 * Construct a map that assigns to each store term (that stores on eliminatee)
+	 * an equivalent term that does not contain the eliminatee. If such a term does
+	 * not exist then map to a fresh variable.
+	 */
+	private Map<MultiDimensionalNestedStore, Term> computeStoreTermEquivalenceMapping(final Script script,
+			final AuxVarConstructor auxVarConstructor, final int quantifier, final TermVariable eliminatee,
+			final Term preprocessedInput, final List<MultiDimensionalNestedStore> stores) {
+		final Map<MultiDimensionalNestedStore, Term> result = new HashMap<>();
+		for (final MultiDimensionalNestedStore store : stores) {
+			final Term newArray;
+			final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
+			final Term eqArray = eqProvider.getEqTerm(store.toTerm(script));
+			if (eqArray != null) {
+				newArray = eqArray;
+			} else {
+				newArray = auxVarConstructor.constructAuxVar(AUX_VAR_NEW_ARRAY, eliminatee.getSort());
+			}
+			result.put(store, newArray);
+		}
+		return result;
 	}
 
 
