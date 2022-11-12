@@ -147,7 +147,7 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		}
 
 		final L firstComponent = components.get(0);
-		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
+		for (final HashRelation<L, L> relation : mIndependentCache.values()) {
 			// [forall x . (x, c) in R] --> (composed, c) in R
 			for (final L c : relation.getImage(firstComponent)) {
 				if (components.stream().allMatch(x -> relation.containsPair(x, c))) {

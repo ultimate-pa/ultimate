@@ -218,8 +218,8 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 		}
 
 		@Override
-		public boolean contains(final Set<String> state, final String a, final String b) {
-			return mRelation.containsPair(a, b);
+		public Dependence isIndependent(final Set<String> state, final String a, final String b) {
+			return mRelation.containsPair(a, b) ? Dependence.INDEPENDENT : Dependence.DEPENDENT;
 		}
 	}
 

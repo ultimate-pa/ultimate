@@ -39,6 +39,7 @@ import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -132,8 +133,8 @@ public final class CoveringIterator<L> implements Iterator<Word<L>> {
 
 			for (final int i : positions) {
 				final L letter = mWord.getSymbol(i);
-				final int[] remainingPositions = Arrays.stream(positions)
-						.filter(j -> j != i && (i < j || mIndependence.contains(null, mWord.getSymbol(j), letter)))
+				final int[] remainingPositions = Arrays.stream(positions).filter(j -> j != i && (i < j
+						|| mIndependence.isIndependent(null, mWord.getSymbol(j), letter) == Dependence.INDEPENDENT))
 						.toArray();
 				mStack.push(new Pair<>(remainingPositions, new ImmutableList<>(letter, prefix)));
 			}

@@ -34,6 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -186,6 +187,7 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 		} else {
 			preconditions = null;
 		}
-		return mIndependence.contains(preconditions, first.getSymbol(), second.getSymbol());
+		return mIndependence.isIndependent(preconditions, first.getSymbol(),
+				second.getSymbol()) == Dependence.INDEPENDENT;
 	}
 }

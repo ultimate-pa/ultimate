@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
@@ -700,7 +701,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 		} else {
 			preconditions = null;
 		}
-		return mIndependence.contains(preconditions, t1.getSymbol(), t2.getSymbol());
+		return mIndependence.isIndependent(preconditions, t1.getSymbol(), t2.getSymbol()) == Dependence.INDEPENDENT;
 	}
 
 	// **************************************************** EXECUTE ****************************************************
