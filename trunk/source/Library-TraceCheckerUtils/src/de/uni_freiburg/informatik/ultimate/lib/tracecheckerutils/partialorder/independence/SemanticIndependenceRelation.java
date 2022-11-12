@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.TimedIndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.TimedIndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
@@ -115,17 +115,17 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	@Override
-	public boolean contains(final IPredicate state, final L a, final L b) {
-		return containsLBool(state, a, b) == LBool.UNSAT;
+	public Dependence isIndependent(final IPredicate state, final L a, final L b) {
+		final var result = toDependence(contains(state, a, b));
+		mStatistics.reportQuery(result, mConditional && state != null);
+		return result;
 	}
 
 	/**
-	 * Implements {@link #contains(IPredicate, IAction, IAction)} but returns {@code UNKNOWN} if the solver is unable to
-	 * decide commutativity.
-	 *
-	 * TODO This should be the signature of #contains in {@link IIndependenceRelation}.
+	 * Implements {@link #isIndependent(IPredicate, IAction, IAction)} but returns {@code UNKNOWN} if the solver is
+	 * unable to decide commutativity.
 	 */
-	public LBool containsLBool(final IPredicate state, final L a, final L b) {
+	private LBool contains(final IPredicate state, final L a, final L b) {
 		final IPredicate context = mConditional ? state : null;
 		if (context instanceof IMLPredicate) {
 			// Locations will be ignored. However, using predicates with the same formula but different locations will
@@ -139,15 +139,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		// TODO We do composition twice for symmetric relations (in performInclusionCheck). Why?
 		final LBool subset = performInclusionCheck(context, tfA, tfB);
-		final LBool result;
-		if (mSymmetric) {
-			result = and(subset, () -> performInclusionCheck(context, tfB, tfA));
-		} else {
-			result = subset;
+		if (!mSymmetric) {
+			return subset;
 		}
 
-		mStatistics.reportQuery(result, context != null);
-		return result;
+		return and(subset, () -> performInclusionCheck(context, tfB, tfA));
 	}
 
 	private UnmodifiableTransFormula getTransFormula(final L a) {
@@ -216,6 +212,18 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			return LBool.UNSAT;
 		}
 		return LBool.UNKNOWN;
+	}
+
+	private static Dependence toDependence(final LBool value) {
+		switch (value) {
+		case UNSAT:
+			return Dependence.INDEPENDENT;
+		case SAT:
+			return Dependence.DEPENDENT;
+		case UNKNOWN:
+			return Dependence.UNKNOWN;
+		}
+		throw new IllegalArgumentException("Unknown value: " + value);
 	}
 
 	@Override

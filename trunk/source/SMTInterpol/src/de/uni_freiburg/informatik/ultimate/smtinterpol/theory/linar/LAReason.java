@@ -136,7 +136,7 @@ public abstract class LAReason {
 		if (!mIsUpper) {
 			at.add(mVar.getEpsilon());
 		}
-		final Term posTerm = at.toSMTLibLeq0(smtTheory, useAuxVars);
+		final Term posTerm = at.toSMTLibLeq0(smtTheory);
 		return (mIsUpper ? posTerm : smtTheory.term("not", posTerm));
 	}
 }

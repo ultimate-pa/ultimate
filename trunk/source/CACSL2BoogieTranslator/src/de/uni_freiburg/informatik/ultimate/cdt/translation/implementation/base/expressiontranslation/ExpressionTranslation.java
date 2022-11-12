@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -47,12 +46,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -71,15 +68,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 public abstract class ExpressionTranslation {
-
-	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 8;
 
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
@@ -423,9 +417,7 @@ public abstract class ExpressionTranslation {
 	 * @deprecated do not use this method; it is a workaround
 	 */
 	@Deprecated
-	public Result abstractAssginWithBitwiseOp(final CHandler chandler, final ProcedureManager procedureManager,
-			final List<Declaration> declarations, final INameHandler nameHandler,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
+	public Result abstractAssginWithBitwiseOp(final ExpressionResultTransformer exprResultTransformer,
 			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
 		throw new UnsupportedOperationException();
 	}
@@ -568,5 +560,8 @@ public abstract class ExpressionTranslation {
 
 	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
 			AuxVarInfoBuilder auxVarInfoBuilder);
+
+	public abstract Expression applyNutzTransformationWraparound(ILocation loc, TypeSizes typeSizes,
+			CPrimitive cPrimitive, Expression operand);
 
 }

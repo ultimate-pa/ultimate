@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -66,12 +66,12 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
+	public Dependence isIndependent(final S state, final L a, final L b) {
 		if (fromSameThread(a, b)) {
 			mStatistics.reportSameThreadQuery(state != null);
-			return false;
+			return Dependence.DEPENDENT;
 		}
-		final boolean result = mUnderlying.contains(state, a, b);
+		final Dependence result = mUnderlying.isIndependent(state, a, b);
 		mStatistics.reportQuery(result, state != null);
 		return result;
 	}
@@ -97,7 +97,7 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 
 		private void reportSameThreadQuery(final boolean conditional) {
 			mSameThreadQueries++;
-			reportNegativeQuery(conditional);
+			reportDependentQuery(conditional);
 		}
 	}
 }

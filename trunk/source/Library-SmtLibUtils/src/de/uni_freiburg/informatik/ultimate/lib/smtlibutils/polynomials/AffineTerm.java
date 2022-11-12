@@ -83,7 +83,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	}
 
 	@Override
-	protected IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+	protected AffineTerm constructNew(final Sort sort, final Rational constant,
 			final Map<Term, Rational> variables2coeffcient) {
 		return new AffineTerm(sort, constant, variables2coeffcient);
 	}
@@ -96,8 +96,22 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	/**
 	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given {@link Rational} value.
 	 */
-	public static AffineTerm constructConstant(final Sort s, final Rational constant) {
-		return new AffineTerm(s, constant, Collections.emptyMap());
+	public static AffineTerm constructConstant(final Sort s, final Rational value) {
+		return new AffineTerm(s, value, Collections.emptyMap());
+	}
+
+	/**
+	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given {@link Rational} value.
+	 */
+	public static AffineTerm constructConstant(final Sort s, final BigInteger value) {
+		return new AffineTerm(s, Rational.valueOf(value, BigInteger.ONE), Collections.emptyMap());
+	}
+
+	/**
+	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given long value.
+	 */
+	public static AffineTerm constructConstant(final Sort s, final long value) {
+		return new AffineTerm(s, Rational.valueOf(value, 1), Collections.emptyMap());
 	}
 
 	/**
@@ -132,80 +146,10 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	}
 
 	/**
-	 * Returns an AffineTerm which represents the quotient of the given arguments (see
-	 * {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
-	 */
-	public static IPolynomialTerm divide(final IPolynomialTerm[] affineArgs, final Script script) {
-		return constructDivision(affineArgs, "/", script);
-	}
-
-	/**
-	 * Construct the division of the given polynomialTerms. If this is not possible, treat the whole
-	 * division term as a variable and return it, wrapped in an AffineTerm. To distinguish, which
-	 * division is used here, funcName is needed. This should be either "div" or "/".
-	 */
-	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] affineArgs,
-													 final String funcName,
-													 final Script script) {
-		final IPolynomialTerm affineTerm;
-		Rational multiplier;
-		if (affineArgs[0].isConstant()) {
-			affineTerm = null;
-			multiplier = affineArgs[0].getConstant();
-		} else {
-			affineTerm = affineArgs[0];
-			multiplier = Rational.ONE;
-		}
-		final AffineTerm result;
-		for (int i = 1; i < affineArgs.length; i++) {
-			if (affineArgs[i].isConstant() && !affineArgs[i].isZero()) {
-				multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
-			} else {
-				// Only the argument at position 0 may be a non-constant,
-				// all other arguments must be literals,
-				// divisors must not be zero.
-				if (funcName == "div") {
-					return PolynomialTermUtils.simplifyImpossibleDivision("div", affineArgs, script);
-				}else if (funcName == "/") {
-					return PolynomialTermUtils.simplifyImpossibleDivision("/", affineArgs, script);
-				}else {
-					throw new UnsupportedOperationException("FuncName does not match any known division.");
-				}
-			}
-		}
-		if (affineTerm == null) {
-			result = AffineTerm.constructConstant(affineArgs[0].getSort(), multiplier);
-		} else {
-			result = AffineTerm.mul(affineTerm, multiplier);
-		}
-		return result;
-	}
-
-
-
-	/**
-	 * Returns an AffineTerm which represents the integral quotient of the given arguments (see
-	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
-	 */
-	public static IPolynomialTerm div(final IPolynomialTerm[] affineArgs, final Script script) {
-		final IPolynomialTerm result = constructDivision(affineArgs, "div", script);
-		if (result.isIntegral()) {
-			return result;
-		}
-		return PolynomialTermUtils.simplifyImpossibleDivision("div", affineArgs, script);
-	}
-
-	/**
 	 * @return unmodifiable map where each variable is mapped to its coefficient.
 	 */
 	public Map<Term, Rational> getVariable2Coefficient() {
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
-	}
-
-	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
-			final BigInteger divident) {
-		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
-		return PolynomialTermUtils.applyModuloToAllCoefficients(affineTerm, divident, constructor);
 	}
 
 	@Override

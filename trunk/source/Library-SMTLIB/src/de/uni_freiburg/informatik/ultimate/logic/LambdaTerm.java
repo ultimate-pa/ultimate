@@ -36,11 +36,17 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class LambdaTerm extends Term {
 	private final TermVariable[] mVariables;
 	private final Term mSubTerm;
+	private final Sort mSort;
 
 	LambdaTerm(final TermVariable[] vars, final Term subterm, final int hash) {
 		super(hash);
 		mVariables = vars;
 		mSubTerm = subterm;
+		Sort mySort = subterm.getSort();
+		for (int i = vars.length - 1; i >= 0; i--) {
+			mySort = mySort.getTheory().getSort(SMTLIBConstants.FUNC, vars[i].getSort(), mySort);
+		}
+		mSort = mySort;
 	}
 
 	/**
@@ -61,7 +67,7 @@ public class LambdaTerm extends Term {
 
 	@Override
 	public Sort getSort() {
-		return mSubTerm.getSort();
+		return mSort;
 	}
 
 	public static final int hashLambda(final TermVariable[] vars, final Term f) {

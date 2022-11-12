@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -65,26 +65,36 @@ public class SyntacticIndependenceRelation<STATE, L extends IAction> implements 
 	}
 
 	@Override
-	public boolean contains(final STATE state, final L a, final L b) {
+	public Dependence isIndependent(final STATE state, final L a, final L b) {
 		final TransFormula tf1 = a.getTransformula();
 		final TransFormula tf2 = b.getTransformula();
 
-		final boolean noWRConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet());
-		final boolean noRWConflict =
-				DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars());
-
-		final boolean noWWConflict;
-		if (ALLOW_MUTUAL_HAVOCS) {
-			noWWConflict = DataStructureUtils.intersection(tf1.getAssignedVars(), tf2.getAssignedVars()).stream()
-					.allMatch(x -> tf1.isHavocedOut(x) && tf2.isHavocedOut(x));
-		} else {
-			noWWConflict = DataStructureUtils.haveEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
+		if (DataStructureUtils.haveNonEmptyIntersection(tf1.getAssignedVars(), tf2.getInVars().keySet())) {
+			// write-read conflict
+			mStatistics.reportDependentQuery(false);
+			return Dependence.DEPENDENT;
 		}
 
-		final boolean result = noWWConflict && noWRConflict && noRWConflict;
-		mStatistics.reportQuery(result, false);
-		return result;
+		if (DataStructureUtils.haveNonEmptyIntersection(tf1.getInVars().keySet(), tf2.getAssignedVars())) {
+			// read-write conflict
+			mStatistics.reportDependentQuery(false);
+			return Dependence.DEPENDENT;
+		}
+
+		final boolean wwConflict;
+		if (ALLOW_MUTUAL_HAVOCS) {
+			wwConflict = DataStructureUtils.intersection(tf1.getAssignedVars(), tf2.getAssignedVars()).stream()
+					.anyMatch(x -> !tf1.isHavocedOut(x) || !tf2.isHavocedOut(x));
+		} else {
+			wwConflict = DataStructureUtils.haveNonEmptyIntersection(tf1.getAssignedVars(), tf2.getAssignedVars());
+		}
+		if (wwConflict) {
+			mStatistics.reportDependentQuery(false);
+			return Dependence.DEPENDENT;
+		}
+
+		mStatistics.reportIndependentQuery(false);
+		return Dependence.INDEPENDENT;
 	}
 
 	@Override

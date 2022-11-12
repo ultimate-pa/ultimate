@@ -73,7 +73,8 @@ public class DTReverseTrigger extends ReverseTrigger {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void activate(final CCAppTerm appTerm) {
+	public void activate(final CCAppTerm appTerm, final boolean isFresh) {
+		mClausifier.getLogger().info("DTReverseTrigger: %s on %s", appTerm, mArg);
 		final ApplicationTerm argAT = (ApplicationTerm) mArg.mFlatTerm;
 		final SymmetricPair<CCTerm>[] reason;
 		if (appTerm.getArg() != mArg) {
@@ -96,6 +97,9 @@ public class DTReverseTrigger extends ReverseTrigger {
 			final SymmetricPair<CCTerm> mainEq = new SymmetricPair<>(appTerm, mClausifier.getCCTerm(truthValue));
 			final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, mainEq, reason, mArg);
 			mDTTheory.addPendingLemma(lemma);
+			if (isFresh) {
+				mDTTheory.addRecheckOnBacktrack(appTerm);
+			}
 		} else {
 			// If appTerm is a selector function, set it equal to the matching argument of mArg.
 			final FunctionSymbol fs = argAT.getFunction();
@@ -107,6 +111,9 @@ public class DTReverseTrigger extends ReverseTrigger {
 							mClausifier.getCCTerm(argAT.getParameters()[i]));
 					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, mainEq, reason, mArg);
 					mDTTheory.addPendingLemma(lemma);
+					if (isFresh) {
+						mDTTheory.addRecheckOnBacktrack(appTerm);
+					}
 					return;
 				}
 			}

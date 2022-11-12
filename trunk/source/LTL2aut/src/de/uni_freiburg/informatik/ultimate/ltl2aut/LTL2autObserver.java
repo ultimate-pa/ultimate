@@ -36,25 +36,40 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -65,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class reads a definition of a property in LTL and returns the AST of the description of the LTL formula as a
@@ -114,7 +130,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 				throw new UnsupportedOperationException(
 						"We currently support only one LTL property at a time, but found " + specification.length);
 			}
-			mCheck = createCheckFromPropertyString(specification[0]);
+			mCheck = createCheckFromPropertyString(specification[0], mSymbolTable);
 		}
 		final Map<String, CheckableExpression> irs = mCheck.getCheckableAtomicPropositions();
 
@@ -128,8 +144,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		mCheck.annotate(mNWAContainer);
 	}
 
-	private LTLPropertyCheck createCheckFromPropertyString(final String ltlProperty) throws Throwable {
-		final Map<String, CheckableExpression> apIrs = parseAtomicPropositions(ltlProperty);
+	private LTLPropertyCheck createCheckFromPropertyString(final String ltlProperty, final BoogieSymbolTable symbolTable) throws Throwable {
+		final Map<String, CheckableExpression> apIrs = parseAtomicPropositions(ltlProperty, symbolTable);
 		if (apIrs.isEmpty()) {
 			throw new IllegalArgumentException("No atomic propositions in " + ltlProperty);
 		}
@@ -149,7 +165,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	// Parse atomic propositions while respecting proper parenthesis nesting.
-	private Map<String, CheckableExpression> parseAtomicPropositions(final String ltlProperty) {
+	private Map<String, CheckableExpression> parseAtomicPropositions(final String ltlProperty, final BoogieSymbolTable symbolTable) {
 		final Map<String, CheckableExpression> apIrs = new LinkedHashMap<>();
 
 		int pos = ltlProperty.indexOf("AP(");
@@ -174,7 +190,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 			final int end = pos - 1;
 			final String code = ltlProperty.substring(start, end);
-			final CheckableExpression expr = createCheckableExpression(code);
+			final CheckableExpression expr = createCheckableExpression(code, symbolTable);
 			apIrs.put("AP(" + code + ")", expr);
 
 			pos = ltlProperty.indexOf("AP(", pos);
@@ -183,7 +199,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		return apIrs;
 	}
 
-	private CheckableExpression createCheckableExpression(final String expr) {
+	private CheckableExpression createCheckableExpression(final String expr, final BoogieSymbolTable symbolTable) {
 
 		final String niceProgram = "procedure main() { #thevar := %s ;}";
 
@@ -200,8 +216,11 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			final Procedure proc = (Procedure) x.getDeclarations()[0];
 			final AssignmentStatement stmt = (AssignmentStatement) proc.getBody().getBlock()[0];
 			final Expression bExpr = stmt.getRhs()[0];
-			final Expression newBExpr = bExpr.accept(new DeclarationInformationAdder());
-			return new CheckableExpression(newBExpr, Collections.emptyList());
+			// The bExpr has been parsed, but has not been type checked, yet. Type check it now.
+			// We do so by inductively constructing a fully typed copy of the original expression
+			// using the type information from the symbol table of the underlying Boogie program.
+			final Expression apExpr = bExpr.accept(new TypeAdder(symbolTable));
+			return new CheckableExpression(apExpr, Collections.emptyList());
 		} catch (final Exception e) {
 			mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s", expr, e));
 			throw new RuntimeException(e);
@@ -225,7 +244,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	private String[] getLTLPropertyString() throws IOException {
 		final String[] properties;
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
+		                .getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
 			properties = extractPropertyFromInputFile();
 			if (properties.length > 0) {
 				return properties;
@@ -323,11 +342,168 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		return mNWAContainer;
 	}
 
-	private static final class DeclarationInformationAdder extends GeneratedBoogieAstTransformer {
+	/*
+	 * Implements a post-order traversal of an expression that constructs a fully typed expression using
+         * an existing symbol table.
+	 */
+	private static final class TypeAdder extends GeneratedBoogieAstTransformer {
+		private Pair<String, Expression> mTypeError;
+		private BoogieSymbolTable mSymbolTable;
+
+		public String toString() {
+			return "Transformer that adds type information to atomic propositions";
+		}
+
+		public Pair<String, Expression> getTypeError() {
+			return mTypeError;
+		}
+
+		public TypeAdder(BoogieSymbolTable symbolTable) {
+			mSymbolTable = symbolTable;
+		}
+
+		@Override
+		public Expression transform(final IntegerLiteral node) {
+			return ExpressionFactory.createIntegerLiteral(node.getLoc(), node.getValue());
+		}
+
+		@Override
+		public Expression transform(final StringLiteral node) {
+			return ExpressionFactory.createStringLiteral(node.getLoc(), node.getValue());
+		}
+
+		@Override
+		public Expression transform(final BooleanLiteral node) {
+			return ExpressionFactory.createBooleanLiteral(node.getLoc(), node.getValue());
+		}
+
+		@Override
+		public Expression transform(final RealLiteral node) {
+			return ExpressionFactory.createRealLiteral(node.getLoc(), node.getValue());
+		}
+
+		@Override
+		public Expression transform(final BitvecLiteral node) {
+			return ExpressionFactory.createBitvecLiteral(node.getLoc(), node.getValue(), node.getLength());
+		}
+
 		@Override
 		public Expression transform(final IdentifierExpression node) {
-			return new IdentifierExpression(node.getLocation(), node.getType(), node.getIdentifier(),
-					DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			// Look up the Boogie type of the identifier in the underlying (real) Boogie program.
+			final IBoogieType boogieType;
+			boogieType = mSymbolTable.getTypeForVariableSymbol(node.getIdentifier(), DeclarationInformation.StorageClass.GLOBAL, "GLOBAL");
+			return new IdentifierExpression(node.getLoc(), boogieType, node.getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		}
+
+		@Override
+		public Expression transform(final BinaryExpression node) {
+			final Expression lExpr = node.getLeft().accept(this);
+			final Expression rExpr = node.getRight().accept(this);
+			try {
+				return ExpressionFactory.newBinaryExpression(node.getLoc(), node.getOperator(), lExpr, rExpr);
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		@Override
+		public Expression transform(final IfThenElseExpression node) {
+			final Expression condExpr = node.getCondition().accept(this);
+			final Expression thenExpr = node.getThenPart().accept(this);
+			final Expression elseExpr = node.getElsePart().accept(this);
+			try {
+				return ExpressionFactory.constructIfThenElseExpression(node.getLoc(), condExpr, thenExpr, elseExpr);
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		@Override
+		public Expression transform(final UnaryExpression node) {
+			final Expression argExpr = node.getExpr().accept(this);
+			try {
+				return ExpressionFactory.constructUnaryExpression(node.getLoc(), node.getOperator(), argExpr);
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		@Override
+		public Expression transform(final BitVectorAccessExpression node) {
+			final Expression bvExpr = node.getBitvec().accept(this);
+			try {
+				return ExpressionFactory.constructBitvectorAccessExpression(node.getLoc(), bvExpr, node.getEnd(), node.getStart());
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		@Override
+		public Expression transform(final ArrayAccessExpression node) {
+			final Expression arrayExpr = node.getArray().accept(this);
+			final Expression[] untypedIdxExprs = node.getIndices();
+			final Expression[] typedIdxExprs = new Expression[untypedIdxExprs.length];
+			for (int i = 0; i < untypedIdxExprs.length; ++i) {
+				typedIdxExprs[i] = untypedIdxExprs[i].accept(this);
+			}
+			try {
+				return ExpressionFactory.constructNestedArrayAccessExpression(node.getLoc(), arrayExpr, typedIdxExprs);
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		@Override
+		public Expression transform(final ArrayStoreExpression node) {
+			final Expression arrayExpr = node.getArray().accept(this);
+			final Expression[] untypedIdxExprs = node.getIndices();
+			final Expression valExpr = node.getValue().accept(this);
+			final Expression[] typedIdxExprs = new Expression[untypedIdxExprs.length];
+			for (int i = 0; i < untypedIdxExprs.length; ++i) {
+				typedIdxExprs[i] = untypedIdxExprs[i].accept(this);
+			}
+			try {
+				return ExpressionFactory.constructArrayStoreExpression(node.getLoc(), arrayExpr, typedIdxExprs, valExpr);
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		@Override
+		public Expression transform(final StructAccessExpression node) {
+			final Expression structExpr = node.getStruct().accept(this);
+			try {
+				return ExpressionFactory.constructStructAccessExpression(node.getLoc(), structExpr, node.getField());
+			} catch (final TypeCheckException ex) {
+				setTypeError(ex.getMessage(), node);
+				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			}
+		}
+
+		/**
+		 * Save first encountered type error.
+		 *
+		 * @param message
+		 * @param node
+		 */
+		private void setTypeError(final String message, final Expression node) {
+			if (mTypeError != null) {
+				return;
+			}
+			mTypeError = new Pair<>(message, node);
 		}
 	}
 

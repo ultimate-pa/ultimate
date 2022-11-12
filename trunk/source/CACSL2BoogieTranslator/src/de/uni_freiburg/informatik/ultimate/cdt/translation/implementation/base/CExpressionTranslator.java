@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -696,18 +695,18 @@ public class CExpressionTranslator {
 	 */
 	public ExpressionResult handleConditionalOperator(final ILocation loc, final ExpressionResult opConditionRaw,
 			final ExpressionResult opPositiveRaw, final ExpressionResult opNegativeRaw, final IASTNode hook) {
-	
+
 		final ExpressionResult opCondition = mExprResultTransformer.rexIntToBool(opConditionRaw, loc);
 		ExpressionResult opPositive = mExprResultTransformer.rexBoolToInt(opPositiveRaw, loc);
 		ExpressionResult opNegative = mExprResultTransformer.rexBoolToInt(opNegativeRaw, loc);
-	
+
 		/*
 		 * C11 6.5.15.2 The first operand shall have scalar type.
 		 */
 		if (!opCondition.getLrValue().getCType().isScalarType()) {
 			throw new IncorrectSyntaxException(loc, "first operand of a conditional operator must have scalar type");
 		}
-	
+
 		/*
 		 * C11 6.5.15.3 One of the following shall hold for the second and third operands: <li> both operands have
 		 * arithmetic type; <li> both operands have the same structure or union type; <li> both operands have void type;
@@ -715,7 +714,7 @@ public class CExpressionTranslator {
 		 * a pointer and the other is a null pointer constant; or <li> one operand is a pointer to an object type and
 		 * the other is a pointer to a qualified or unqualified version of void.
 		 */
-	
+
 		/*
 		 * C11 6.5.15.4 The first operand is evaluated; there is a sequence point between its evaluation and the
 		 * evaluation of the second or third operand (whichever is evaluated). The second operand is evaluated only if
@@ -726,14 +725,14 @@ public class CExpressionTranslator {
 		 * --> we translate this by a Boogie if-statement, such that the side effects of the evaluation of each C
 		 * expression go into the respective branch of the Boogie if statement.
 		 */
-	
+
 		/*
 		 * C11 6.5.15.5 If both the second and third operands have arithmetic type, the result type that would be
 		 * determined by the usual arithmetic conversions, were they applied to those two operands, is the type of the
 		 * result. If both the operands have structure or union type, the result has that type. If both operands have
 		 * void type, the result has void type.
 		 */
-	
+
 		/*
 		 * C11 6.5.15.6 If both the second and third operands are pointers or one is a null pointer constant and the
 		 * other is a pointer, the result type is a pointer to a type qualified with all the type qualifiers of the
@@ -746,7 +745,7 @@ public class CExpressionTranslator {
 		 * TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
 		 * currently.
 		 */
-	
+
 		/*
 		 * Treatment of the cases where one or both branches have void type and the LRValue of the dispatch result of
 		 * the branch is is null: We give a dummy LRValue, whose BoogieType is a type error so it cannot be used
@@ -766,7 +765,7 @@ public class CExpressionTranslator {
 				thirdArgIsVoid = true;
 			}
 		}
-	
+
 		final CType resultCType;
 		if (opPositive.getLrValue().getCType().isArithmeticType()
 				&& opNegative.getLrValue().getCType().isArithmeticType()) {
@@ -804,7 +803,7 @@ public class CExpressionTranslator {
 			} else {
 				resultCType = opNegative.getLrValue().getCType();
 			}
-	
+
 		} else if (opNegative.getLrValue().isNullPointerConstant()
 				|| opNegative.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
@@ -838,39 +837,56 @@ public class CExpressionTranslator {
 			// default case: the types of the operands (should) match --> we choose one of them as the result CType
 			resultCType = opPositive.getLrValue().getCType();
 		}
-	
+		return constructResultForConditionalOperator(loc, opCondition, opPositive, opNegative, resultCType, secondArgIsVoid, thirdArgIsVoid);
+	}
+
+	/**
+	 * Takes preprocessing from {@link CExpressionTranslator#handleConditionalOperator}
+	 */
+	private ExpressionResult constructResultForConditionalOperator(final ILocation loc,
+			final ExpressionResult opCondition, final ExpressionResult opPositive, final ExpressionResult opNegative,
+			final CType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-	
+
 		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary
 		// /*
 		// * the value of this aux var may never be used outside the translation of this conditional operator.
 		// * Using the aux var in the hope of detecting such errors easier. Otherwise one could just not make the
 		// * assignment.
 		// */
-	
-		resultBuilder.addAllExceptLrValue(opCondition);
-	
-		// auxvar that will hold the result of the ite expression
-		final AuxVarInfo auxvar;
-		final Boolean isBranchDead;
-		if (opCondition.getLrValue().getValue() instanceof BooleanLiteral) {
-			isBranchDead = ((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
+
+		if (opPositive.getStatements().isEmpty() && opNegative.getStatements().isEmpty()) {
+			// neither second nor third operand have side-effects, we can translate to
+			// a Boogie if-then-else expression
+			resultBuilder.addAllExceptLrValue(opCondition, opPositive, opNegative);
+			if (resultCType.isVoidType()) {
+				// result type is void the value is not assigned
+			} else {
+				final Expression ite = ExpressionFactory.constructIfThenElseExpression(loc,
+						opCondition.getLrValue().getValue(), opPositive.getLrValue().getValue(),
+						opNegative.getLrValue().getValue());
+				resultBuilder.setLrValue(new RValue(ite, resultCType));
+			}
 		} else {
-			isBranchDead = null;
-		}
-	
-		if (resultCType.isVoidType() || isBranchDead != null) {
-			/* in this case we will not make any assignment, so we do not need the aux var */
-			auxvar = null;
-		} else {
-			auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultCType, SFO.AUXVAR.ITE);
-			resultBuilder.addDeclaration(auxvar.getVarDec());
-			resultBuilder.addAuxVar(auxvar);
-		}
-	
-		// collect side effects of "then" branch
-		// collect side effects of "else" branch
-		if (isBranchDead == null) {
+			// Second or third operand has side-effects, we have to translate to an
+			// if-then-else statement to make sure that side-effect are only execute if the
+			// respective branch is taken.
+
+			resultBuilder.addAllExceptLrValue(opCondition);
+
+			// auxvar that will hold the result of the ite expression
+			final AuxVarInfo auxvar;
+			if (resultCType.isVoidType()) {
+				/*
+				 * in this case we will not make any assignment, so we do not need the aux var
+				 */
+				auxvar = null;
+			} else {
+				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultCType, SFO.AUXVAR.ITE);
+				resultBuilder.addDeclaration(auxvar.getVarDec());
+				resultBuilder.addAuxVar(auxvar);
+			}
+
 			final List<Statement> ifStatements = new ArrayList<>();
 			final List<Statement> elseStatements = new ArrayList<>();
 			assignAuxVar(loc, opPositive, resultBuilder, auxvar, ifStatements, secondArgIsVoid);
@@ -882,19 +898,11 @@ public class CExpressionTranslator {
 				overapprItem.annotate(rtrStatement);
 			}
 			resultBuilder.addStatement(rtrStatement);
-
-			if (!resultCType.isVoidType()) {
-				/* the result has a value only if the result type is not void.. */
-				resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
+			if (resultCType.isVoidType()) {
+				// result type is void the value is not assigned
 			} else {
-				// for better error detection we give the dummy void value here (edit: see the todo above)
+				resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
 			}
-		} else if (isBranchDead) {
-			// the else branch is dead
-			resultBuilder.addAllIncludingLrValue(opPositive);
-		} else {
-			// the then branch is dead
-			resultBuilder.addAllIncludingLrValue(opNegative);
 		}
 
 		return resultBuilder.build();

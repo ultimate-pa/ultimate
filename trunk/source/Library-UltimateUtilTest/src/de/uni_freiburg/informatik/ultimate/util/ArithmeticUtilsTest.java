@@ -43,17 +43,17 @@ public class ArithmeticUtilsTest {
 	 */
 	@Test
 	public void euclideanDivAndMod1() {
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(16), bi(10)).equals(bi(1)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(16), bi(10)).equals(bi(6)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(16), toBigInteger(10)).equals(toBigInteger(1)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(16), toBigInteger(10)).equals(toBigInteger(6)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(16), bi(-10)).equals(bi(-1)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(16), bi(-10)).equals(bi(6)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(16), toBigInteger(-10)).equals(toBigInteger(-1)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(16), toBigInteger(-10)).equals(toBigInteger(6)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(-16), bi(10)).equals(bi(-2)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(-16), bi(10)).equals(bi(4)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(-16), toBigInteger(10)).equals(toBigInteger(-2)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(-16), toBigInteger(10)).equals(toBigInteger(4)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(-16), bi(-10)).equals(bi(2)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(-16), bi(-10)).equals(bi(4)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(-16), toBigInteger(-10)).equals(toBigInteger(2)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(-16), toBigInteger(-10)).equals(toBigInteger(4)));
 	}
 
 	/**
@@ -62,17 +62,17 @@ public class ArithmeticUtilsTest {
 	 */
 	@Test
 	public void euclideanDivAndMod2() {
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(1), bi(256)).equals(bi(0)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(1), bi(256)).equals(bi(1)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(1), toBigInteger(256)).equals(toBigInteger(0)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(1), toBigInteger(256)).equals(toBigInteger(1)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(1), bi(-256)).equals(bi(0)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(1), bi(-256)).equals(bi(1)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(1), toBigInteger(-256)).equals(toBigInteger(0)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(1), toBigInteger(-256)).equals(toBigInteger(1)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(-1), bi(256)).equals(bi(-1)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(-1), bi(256)).equals(bi(255)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(-1), toBigInteger(256)).equals(toBigInteger(-1)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(-1), toBigInteger(256)).equals(toBigInteger(255)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(-1), bi(-256)).equals(bi(1)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(-1), bi(-256)).equals(bi(255)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(-1), toBigInteger(-256)).equals(toBigInteger(1)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(-1), toBigInteger(-256)).equals(toBigInteger(255)));
 	}
 
 	/**
@@ -80,21 +80,52 @@ public class ArithmeticUtilsTest {
 	 */
 	@Test
 	public void euclideanDivAndMod3() {
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(20), bi(10)).equals(bi(2)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(20), bi(10)).equals(bi(0)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(20), toBigInteger(10)).equals(toBigInteger(2)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(20), toBigInteger(10)).equals(toBigInteger(0)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(20), bi(-10)).equals(bi(-2)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(20), bi(-10)).equals(bi(0)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(20), toBigInteger(-10)).equals(toBigInteger(-2)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(20), toBigInteger(-10)).equals(toBigInteger(0)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(-20), bi(10)).equals(bi(-2)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(-20), bi(10)).equals(bi(0)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(-20), toBigInteger(10)).equals(toBigInteger(-2)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(-20), toBigInteger(10)).equals(toBigInteger(0)));
 
-		Assert.assertTrue(ArithmeticUtils.euclideanDiv(bi(-20), bi(-10)).equals(bi(2)));
-		Assert.assertTrue(ArithmeticUtils.euclideanMod(bi(-20), bi(-10)).equals(bi(0)));
+		Assert.assertTrue(ArithmeticUtils.euclideanDiv(toBigInteger(-20), toBigInteger(-10)).equals(toBigInteger(2)));
+		Assert.assertTrue(ArithmeticUtils.euclideanMod(toBigInteger(-20), toBigInteger(-10)).equals(toBigInteger(0)));
 	}
 
-	private static BigInteger bi(final int i) {
+	private static BigInteger toBigInteger(final int i) {
 		return BigInteger.valueOf(i);
+	}
+
+	@Test
+	public void extendedEuclidean01() {
+		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(3), BigInteger.valueOf(256));
+		Assert.assertTrue(result.equals(BigInteger.valueOf(171)));
+	}
+    @Test
+	public void extendedEuclidean02() {
+		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(5), BigInteger.valueOf(128));
+		Assert.assertTrue(result.equals(BigInteger.valueOf(77)));
+	}
+    @Test
+	public void extendedEuclidean03() {
+		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(17), BigInteger.valueOf(11));
+		Assert.assertTrue(result.equals(BigInteger.valueOf(2)));
+	}
+   @Test
+	public void extendedEuclidean04() {
+		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(1), BigInteger.valueOf(256));
+		Assert.assertTrue(result.equals(BigInteger.valueOf(1)));
+	}
+   @Test
+	public void extendedEuclidean05() {
+		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(-3), BigInteger.valueOf(256));
+		Assert.assertTrue(result.equals(BigInteger.valueOf(85)));
+	}
+    @Test
+	public void extendedEuclidean06() {
+		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(7), BigInteger.valueOf(1));
+		Assert.assertTrue(result.equals(BigInteger.valueOf(0)));
 	}
 
 }

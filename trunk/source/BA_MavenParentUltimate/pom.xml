@@ -63,6 +63,7 @@
 		<smtlibDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
 		<smtlib2Dir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2</smtlib2Dir>
 		<dimacsDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs</dimacsDir>
+		<proofsDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker</proofsDir>
 		<externalsmtsolverDir>${workspaceDir}/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external</externalsmtsolverDir>
 		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
 		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut </ltl2autParserDir>
@@ -291,6 +292,10 @@
 			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Lexer.java~,
 			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/LexerSymbols.java,
 			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Parser.java,
+			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java,
+			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java~,
+			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofSymbols.java,
+			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofParser.java,
 			**/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Lexer.java,
 			**/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Lexer.java~,
 			**/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/LexerSymbols.java,
@@ -378,7 +383,7 @@
 						<goals>
 							<goal>revision</goal>
 						</goals>
-						<phase>generate-sources</phase>
+						<phase>initialize</phase>
 					</execution>
 				</executions>
 
@@ -387,7 +392,7 @@
 					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
 					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
 					<format>properties</format>
-					<useNativeGit>true</useNativeGit>
+					<useNativeGit>false</useNativeGit>
 
 					<skipPoms>false</skipPoms>
 					<runOnlyOnce>true</runOnlyOnce>

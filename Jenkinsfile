@@ -27,7 +27,13 @@ def prepare_post(def scmResult) {
 #### Links
 * <${env.BUILD_URL}display/redirect|Open Jenkins log>
 * <${env.RUN_CHANGES_DISPLAY_URL}|Open changes in Jenkins>
+"""
+  if(scmResult){
+    mmMessage += """
 * <${scmResult.GIT_URL}|Open project in GitHub>
+"""
+  }
+  mmMessage += """
 #### Changes
 ${changeMessage}
 """
@@ -35,7 +41,7 @@ ${changeMessage}
 
 
 pipeline {
-  agent { label 'linux' && 'java' }
+  agent { label 'linux && java' }
   options {
     skipDefaultCheckout()
     timeout(time: 12, unit: 'HOURS')

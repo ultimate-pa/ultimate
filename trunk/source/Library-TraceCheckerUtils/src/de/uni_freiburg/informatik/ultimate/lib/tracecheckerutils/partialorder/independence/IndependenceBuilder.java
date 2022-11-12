@@ -33,21 +33,23 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation.IIndependenceCache;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConditionTransformingIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DefaultIndependenceCache;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DisjunctiveConditionalIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnionIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IAbstraction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.abstraction.IndependenceRelationWithAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ConditionTransformingIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DisjunctiveConditionalIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ProtectedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IndependenceRelationWithAbstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -356,6 +358,15 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 				return mCreator.apply(mRelation);
 			}
 			return mCreator.apply(new IndependenceRelationWithAbstraction<>(mRelation, abstraction, level));
+		}
+
+		/**
+		 * Ensures only actions with quantifier-free transition formulas are queried for independence. IF an action
+		 * contains quantifiers, {@code UNKNOWN} is returned instead.
+		 */
+		public B protectAgainstQuantifiers() {
+			return mCreator.apply(new ProtectedIndependenceRelation<>(mRelation,
+					a -> QuantifierUtils.isQuantifierFree(a.getTransformula().getFormula())));
 		}
 
 		/**

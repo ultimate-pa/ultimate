@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -124,51 +123,19 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		final EliminationResult er = tryExhaustivelyToEliminate(inputEt);
+		final EliminationResult er = tryToEliminateOne(inputEt);
 		return er;
 	}
 
 	/**
-	 * Try to iteratively eliminate as many eliminatees as possible using the
-	 * given "derHelper". Return null if did not make progress for any
-	 * eliminatee.
-	 */
-	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt) {
-		EliminationTask currentEt = inputEt;
-		final LinkedHashSet<TermVariable> aquiredEliminatees = new LinkedHashSet<>();
-		while (true) {
-			final EliminationResult er = tryToEliminateOne(currentEt);
-			if (er == null) {
-				// no success, no further iterations
-				break;
-			}
-			aquiredEliminatees.addAll(er.getNewEliminatees());
-			currentEt = er.getEliminationTask();
-			if (!aquiredEliminatees.isEmpty()) {
-				break;
-			}
-			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
-					er.getEliminationTask().getTerm())) {
-				// we can push the quantifier, no further iterations
-				break;
-			}
-		}
-		if (currentEt == inputEt) {
-			// only one non-successful iteration
-			return null;
-		} else {
-			return new EliminationResult(currentEt, aquiredEliminatees);
-		}
-	}
-
-	/**
-	 * Try to eliminate some eliminatee using the given "derHelper". Return
-	 * immediately after the first successful step (note that a step can be
-	 * successful if a case distinction was made and the variable was only
-	 * eliminated in for some cases). Return null if did not make progress for
-	 * any eliminatee.
+	 * Try to eliminate some eliminatee. Return immediately after the first
+	 * successful step (note that a step can be successful if a case distinction was
+	 * made and the variable was only eliminated in for some cases). Return null if
+	 * did not make progress for any eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
+		// TODO 20220921 Matthias: Add some heuristics that allows us to iterates over
+		// "inexpensive" variables first.
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(inputEt.getEliminatees());
 			bannedForDivCapture.addAll(inputEt.getContext().getBoundByAncestors());
@@ -383,6 +350,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				}
 				if (!elpr.getLhsMonomial().isLinear()) {
 					return null;
+				}
+				if (SmtSortUtils.isBitvecSort(elpr.getLhsMonomial().getSort())) {
+					if (elpr.getLhsCoefficient() != Rational.ONE && !SmtUtils
+							.isBvMinusOneButNotOne(elpr.getLhsCoefficient(), elpr.getLhsMonomial().getSort())) {
+						return null;
+					}
 				}
 			}
 			switch (elpr.getRelationSymbol()) {
@@ -793,12 +766,13 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 			final List<ExplicitLhsPolynomialRelation> preprocessedLowerBounds = bounds.getFirst();
 			final List<ExplicitLhsPolynomialRelation> preprocessedUpperBounds = bounds.getSecond();
-			if (((long) preprocessedLowerBounds.size()) * ((long) preprocessedUpperBounds.size()) >= Integer.MAX_VALUE) {
-				throw new UnsupportedOperationException(String.format("Size of result too large: %s xjuncts",
-						((long) preprocessedLowerBounds.size()) * ((long) preprocessedUpperBounds.size())));
+			final long numberOfResultDualJuncts = ((long) preprocessedLowerBounds.size())
+					* ((long) preprocessedUpperBounds.size());
+			if (numberOfResultDualJuncts >= Integer.MAX_VALUE) {
+				throw new UnsupportedOperationException(
+						String.format("Size of result too large: %s xjuncts", numberOfResultDualJuncts));
 			}
-			final Term[] allCombinations = new Term[preprocessedLowerBounds.size() * preprocessedUpperBounds.size()];
-
+			final Term[] allCombinations = new Term[Math.toIntExact(numberOfResultDualJuncts)];
 			int i = 0;
 			for (final ExplicitLhsPolynomialRelation lower : preprocessedLowerBounds) {
 				for (final ExplicitLhsPolynomialRelation upper : preprocessedUpperBounds) {

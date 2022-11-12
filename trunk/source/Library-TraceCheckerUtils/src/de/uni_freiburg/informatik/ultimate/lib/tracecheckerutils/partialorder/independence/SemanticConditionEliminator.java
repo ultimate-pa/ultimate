@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IndependenceStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -88,9 +88,9 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 	}
 
 	@Override
-	public boolean contains(final IPredicate state, final L a, final L b) {
+	public Dependence isIndependent(final IPredicate state, final L a, final L b) {
 		final IPredicate condition = state == null ? null : normalize(state, a, b);
-		final boolean result = mUnderlying.contains(condition, a, b);
+		final Dependence result = mUnderlying.isIndependent(condition, a, b);
 		mStatistics.reportQuery(result, condition != null);
 		return result;
 	}

@@ -68,9 +68,6 @@ public class DefaultLogger implements LogProxy {
 	}
 
 	private final void log(int lvl, String msg, Object[] params) {
-		if (params.length == 0) {
-			log(lvl, msg);
-		}
 		synchronized (LOCK) {
 			mWriter.print(LEVELS[lvl - 1]);
 			mWriter.print(" - ");

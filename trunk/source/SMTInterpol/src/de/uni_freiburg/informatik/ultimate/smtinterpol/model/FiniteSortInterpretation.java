@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -46,6 +47,11 @@ public class FiniteSortInterpretation implements SortInterpretation {
 
 	private Term genModelTerm(final int idx, final Theory t, final Sort s) {
 		return t.term(t.getFunctionWithResult("@" + idx, null, s));
+	}
+
+	@Override
+	public void register(Term term) {
+		assert ((ApplicationTerm) term).getFunction().isModelValue();
 	}
 
 	@Override

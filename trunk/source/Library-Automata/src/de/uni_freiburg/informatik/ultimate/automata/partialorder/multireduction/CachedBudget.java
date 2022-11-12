@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A budget function that caches the budgets assigned by a given underlying budget function.
@@ -35,26 +38,36 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
+ *            The type of letters
  * @param <R>
+ *            The type of states in the reduction automaton for which a budget is computed
  */
 public class CachedBudget<L, R> implements IBudgetFunction<L, R> {
 
 	private final IBudgetFunction<L, R> mUnderlying;
-	private final NestedMap2<R, L, Integer> mCache = new NestedMap2<>();
+	private final Map<Pair<R, L>, Integer> mCache = new HashMap<>();
 
+	/**
+	 * Create a new cache around the given budget.
+	 *
+	 * @param underlying
+	 *            The budget function whose return values shall be cached
+	 */
 	public CachedBudget(final IBudgetFunction<L, R> underlying) {
 		mUnderlying = underlying;
 	}
 
 	@Override
 	public int computeBudget(final R state, final L letter) {
-		final Integer cached = mCache.get(state, letter);
+		final var key = new Pair<>(state, letter);
+
+		final Integer cached = mCache.get(key);
 		if (cached != null) {
 			return cached;
 		}
 
 		final int result = mUnderlying.computeBudget(state, letter);
-		mCache.put(state, letter, result);
+		mCache.put(key, result);
 		return result;
 	}
 }

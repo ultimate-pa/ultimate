@@ -15,8 +15,12 @@ import xml.etree.ElementTree as elementtree
 from stat import ST_MODE
 from functools import lru_cache
 
+# quoting style is important here
+# fmt: off
 version = '839c364b'
 toolname = 'Automizer'
+# fmt: on
+
 write_ultimate_output_to_file = True
 output_file_name = "Ultimate.log"
 error_path_file_name = "UltimateCounterExample.errorpath"
@@ -249,7 +253,7 @@ def get_java():
             match = re.search(pattern, line)
             if match:
                 java_version = match.groups()[0]
-                java_version = java_version.split('.')[0]
+                java_version = java_version.split(".")[0]
                 java_version = int(java_version)
                 if java_version == 11:
                     return candidate
@@ -548,7 +552,6 @@ def check_dir(d):
 
 def check_witness_type(witness, type):
     tree = elementtree.parse(witness)
-    root = tree.getroot()
     namespace = "{http://graphml.graphdrawing.org/xmlns}"
     query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)
     elem = tree.find(query)

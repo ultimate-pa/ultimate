@@ -132,8 +132,8 @@ public class LAInterpolator {
 	/**
 	 * Compute the literals and corresponding Farkas coefficients for this LA lemma
 	 */
-	private HashMap<Term, Rational> getFarkasCoeffs(final InterpolatorClauseTermInfo clauseInfo) {
-		final HashMap<Term, Rational> coeffMap = new HashMap<Term, Rational>();
+	private HashMap<Term, Rational> getFarkasCoeffs(final InterpolatorClauseInfo clauseInfo) {
+		final HashMap<Term, Rational> coeffMap = new HashMap<>();
 		final Term[] lits = clauseInfo.getLiterals();
 		final Object[] coeffs = (Object[]) clauseInfo.getLemmaAnnotation();
 		for (int i = 0; i < coeffs.length; i++) {
@@ -151,9 +151,7 @@ public class LAInterpolator {
 	 *            the LA lemma that is interpolated.
 	 * @return an array containing the partial tree interpolants.
 	 */
-	public Term[] computeInterpolants(final Term lemma) {
-		final InterpolatorClauseTermInfo lemmaInfo = mInterpolator.getClauseTermInfo(lemma);
-
+	public Term[] computeInterpolants(final InterpolatorClauseInfo lemmaInfo) {
 		final InterpolatorAffineTerm[] ipl = new InterpolatorAffineTerm[mInterpolator.mNumInterpolants + 1];
 		for (int part = 0; part < ipl.length; part++) {
 			ipl[part] = new InterpolatorAffineTerm();
@@ -240,8 +238,7 @@ public class LAInterpolator {
 	 *            the LA lemma that is interpolated.
 	 * @return an array containing the partial tree interpolants.
 	 */
-	public Term[] computeTrichotomyInterpolants(final Term lemma) {
-		final InterpolatorClauseTermInfo lemmaInfo = mInterpolator.getClauseTermInfo(lemma);
+	public Term[] computeTrichotomyInterpolants(final InterpolatorClauseInfo lemmaInfo) {
 		// Count number of A-local and B-local literals and remember one of them.
 		// Collect the occurence info for the equality and the mix var for inequality and negated inequality.
 		LitInfo equalityOccurenceInfo = null;
@@ -261,10 +258,10 @@ public class LAInterpolator {
 			for (int part = 0; part < mInterpolator.mNumInterpolants; part++) {
 				if (occurrenceInfo.isALocal(part)) {
 					numALocal[part]++;
-					aLocalLit[part] = mInterpolator.unquote(lit);
+					aLocalLit[part] = lit;
 				} else if (occurrenceInfo.isBLocal(part)) {
 					numBLocal[part]++;
-					bLocalLit[part] = mInterpolator.unquote(lit);
+					bLocalLit[part] = lit;
 				}
 			}
 			if (atomTermInfo.isBoundConstraint()) {

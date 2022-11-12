@@ -241,6 +241,10 @@ hs_err_pid*
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Lexer.java~
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/LexerSymbols.java
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Parser.java
+/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java
+/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofParser.java
+/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofSymbols.java
+
 
 /trunk/source/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Lexer.java
 /trunk/source/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Lexer.java~
@@ -300,3 +304,4 @@ releaseScripts/default/UReqCheck-win32/
 /releaseScripts/default/update-smtinterpol-firestation.sh
 /trunk/runtime-Debug-E4.product
 /trunk/runtime-WebBackend.product
+

@@ -23,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -120,18 +119,12 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term resolution(final Term asserted, final Term tautology) {
-		final Theory theory = tautology.getTheory();
-		final ApplicationTerm tautApp = (ApplicationTerm) getProvedTerm(tautology);
-		assert tautApp.getFunction().getName() == SMTLIBConstants.OR;
-		final Term[] clause = tautApp.getParameters();
-		assert clause.length >= 2;
-		if (clause.length == 2) {
-			return clause[1];
-		} else {
-			final Term[] stripped = new Term[clause.length - 1];
-			System.arraycopy(clause, 1, stripped, 0, stripped.length);
-			return theory.term("or", stripped);
-		}
+	public Term resolveBinaryTautology(Term asserted, Term conclusion, Annotation tautRule) {
+		return conclusion;
+	}
+
+	@Override
+	public Term rewriteToClause(Term lhs, Term rewrite) {
+		return null;
 	}
 }

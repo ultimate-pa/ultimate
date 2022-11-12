@@ -45,7 +45,7 @@ ${changeMessage}
 // * Access test results for dependent nightly release and mattermost messages https://stackoverflow.com/questions/39920437/how-to-access-junit-test-counts-in-jenkins-pipeline-project
 
 pipeline {
-  agent { label 'linux' && 'java' }
+  agent { label 'linux && java' }
   triggers {
     cron('@midnight')
   }

@@ -608,7 +608,7 @@ public class CACSL2BoogieBacktranslator
 		for (; j < programExecution.getLength(); ++j) {
 			// search for other nodes that have the same location in order to merge them all into one new statement
 			final AtomicTraceElement<BoogieASTNode> lookahead = programExecution.getTraceElement(j);
-			if (!lookahead.getTraceElement().getLocation().equals(loc)) {
+			if (!loc.equals(lookahead.getTraceElement().getLocation())) {
 				j--;
 				break;
 			}
@@ -851,6 +851,11 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private CLocation getConditionLoc(final boolean isNegated, final IASTExpression condExpr) {
+		if (condExpr == null) {
+			// We should not call mLocationFactory.createCLocation with null
+			// TODO: Is null good to return here?
+			return null;
+		}
 		return (CLocation) mLocationFactory.createCLocation(condExpr);
 	}
 
@@ -1329,20 +1334,18 @@ public class CACSL2BoogieBacktranslator
 			result = new TranslatedVariable(expr, boogieId, null, purpose);
 		} else if (boogieId.equals(SFO.VALID)) {
 			result = new TranslatedVariable(expr, "\\valid", null, VariableType.VALID);
-		} else {
+		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
-			if (boogieId.endsWith(SFO.POINTER_BASE)) {
-				final TranslatedVariable base = translateBoogieIdentifier(expr,
-						boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
-				result = new TranslatedVariable(expr, base.getName(), base.getCType(), VariableType.POINTER_BASE);
-			} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
-				final TranslatedVariable offset = translateBoogieIdentifier(expr,
-						boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
-				result = new TranslatedVariable(expr, offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
-			} else {
-				result = new TranslatedVariable(expr, boogieId, null, VariableType.UNKNOWN);
-				reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
-			}
+			final TranslatedVariable base = translateBoogieIdentifier(expr,
+					boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
+			result = new TranslatedVariable(expr, base.getName(), base.getCType(), VariableType.POINTER_BASE);
+		} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
+			final TranslatedVariable offset = translateBoogieIdentifier(expr,
+					boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
+			result = new TranslatedVariable(expr, offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
+		} else {
+			result = new TranslatedVariable(expr, boogieId, null, VariableType.UNKNOWN);
+			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 		}
 		return result;
 	}

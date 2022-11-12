@@ -150,14 +150,16 @@ public interface IProofTracker {
 	public Term orSimpClause(Term rewrite);
 
 	/**
-	 * Create tautology input (formerly known as aux axiom). The term axiom is
-	 * introduced as Tautology. This doesn't check if the axiom is correct.
+	 * Create tautology clause. The term axiom is introduced as Tautology. This
+	 * doesn't check if the axiom is correct.
 	 *
-	 * @param axiom   The axiom.
-	 * @param auxRule The rule for the axiom, one of {@link ProofConstants}.AUX_*.
+	 * @param axiom
+	 *            The axiom.
+	 * @param tautRule
+	 *            The rule for the axiom, one of {@link ProofConstants}.TAUT_*.
 	 * @return Proof node of the auxiliary tautology.
 	 */
-	public Term tautology(Term axiom, Annotation auxRule);
+	public Term tautology(Term axiom, Annotation tautRule);
 
 	/**
 	 * Introduce a universal quantifier.
@@ -180,32 +182,52 @@ public interface IProofTracker {
 	public Term asserted(Term formula);
 
 	/**
-	 * Create a proof of g from the proof of f and the rewrite proof of {@code (= f g)} (or {@code (=> f g)}) for g.
+	 * Create a proof of g from the proof of f and the rewrite proof of
+	 * {@code (= f g)} (or {@code (=> f g)}) for g.
 	 *
 	 * @param asserted
 	 *            the asserted formula f annotated with its proof.
 	 * @param rewrite
-	 *            the simplified formula g annotated with a proof of {@code (= f g)} (or {@code (=> f g)}).
+	 *            the simplified formula g annotated with a proof of {@code (= f g)}
+	 *            (or {@code (=> f g)}).
 	 * @return the resulting simpFormula annotated with the complete proof
 	 */
 	public Term modusPonens(Term asserted, Term rewrite);
 
 	/**
-	 * Creates the clause proof of t. This is usually the annotation of t.
-	 *
-	 * @param t the proved term annotated with its proof.
-	 * @return the proof.
-	 */
-	public Term getClauseProof(Term t);
-
-	/**
 	 * Create a simple resolution proof from a unit clause and a tautology clause
 	 * that uses the negated unit.
 	 *
-	 * @param unit      the asserted formula {@code u} annotated with its proof.
-	 * @param tautology a tautology of the form {@code (or (not u) u1 .. un)}. If
-	 *                  unit is negated, the tautology does not contain the not.
+	 * @param asserted
+	 *            the asserted formula {@code u} annotated with its proof.
+	 * @param conclusion
+	 *            the conclusion that we want to derive from the asserted formula.
+	 * @param tautRule
+	 *            the rule to apply, one of {@link ProofConstants}.TAUT_*
+	 *            annotations.
 	 * @return the resulting (or u1 .. un) annotated with its proof
 	 */
-	public Term resolution(Term asserted, Term rewrite);
+	public Term resolveBinaryTautology(Term asserted, Term conclusion, Annotation tautRule);
+
+	/**
+	 * Create a proof of {~lhs, rhs} from a rewrite proof {@code (= lhs rhs)} for
+	 * rhs.
+	 *
+	 * @param lhs
+	 *            the rewritten literal.
+	 * @param rewrite
+	 *            the simplified formula rhs annotated with a proof of
+	 *            {@code (= lhs rhs)}.
+	 * @return the clause proving {~lhs, rhs}
+	 */
+	public Term rewriteToClause(Term lhs, Term rewrite);
+
+	/**
+	 * Creates the clause proof of t. This is usually the annotation of t.
+	 *
+	 * @param t
+	 *            the proved term annotated with its proof.
+	 * @return the proof.
+	 */
+	public Term getClauseProof(Term t);
 }

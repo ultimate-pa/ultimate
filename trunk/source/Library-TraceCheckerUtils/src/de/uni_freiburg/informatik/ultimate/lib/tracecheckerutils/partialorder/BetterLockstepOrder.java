@@ -33,8 +33,8 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
 /**

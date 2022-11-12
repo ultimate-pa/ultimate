@@ -29,7 +29,8 @@ package de.uni_freiburg.informatik.ultimate.util;
 import java.math.BigInteger;
 
 /**
- * Provides auxiliary methods for Java datatypes.
+ * This class provides static methods that implement algorithms for Java's
+ * arithmetic data types.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -40,10 +41,21 @@ public final class ArithmeticUtils {
 		// do not instantiate this utility class
 	}
 
+	/**
+	 * There exist several definitions the division operation and the modulo
+	 * operation. The Euclidean modulo is the modulo operation whose result is
+	 * always positive E.g., -8 modulo 7 is 6, because we have that -2*7+6=-8.
+	 *
+	 */
 	public static BigInteger euclideanMod(final BigInteger dividend, final BigInteger divisor) {
 		return dividend.mod(divisor.abs());
 	}
 
+	/**
+	 * There exist several definitions the division operation and the modulo
+	 * operation. The Euclidean division is the divison operation whose remainder is
+	 * always positive E.g., -8 div 7 is -2, because we have that -2*7+6=-8.
+	 */
 	public static BigInteger euclideanDiv(final BigInteger dividend, final BigInteger divisor) {
 		final BigInteger nonEuclideanQuotient = dividend.divide(divisor);
 		final BigInteger nonEuclideanRemainder = dividend.remainder(divisor);
@@ -57,8 +69,65 @@ public final class ArithmeticUtils {
 		} else {
 			result = nonEuclideanQuotient;
 		}
-		assert result.multiply(divisor).add(euclideanMod(dividend, divisor))
-				.equals(dividend) : "incorrect euclidean division";
+		assert result.multiply(divisor).add(euclideanMod(dividend, divisor)).equals(dividend)
+				: "incorrect euclidean division";
 		return result;
+	}
+
+	/**
+	 * The input `a` is the number for which the inverse should be found the divisor
+	 * is the integer which defines the field 0 <= a and a < divisor and
+	 * gcd(divisor, a) = 1
+	 *
+	 * @param a
+	 * @param divisor
+	 * @return
+	 */
+	public static BigInteger extendedEuclidean(BigInteger a, BigInteger divisor) {
+		// the inverse of any number mod 1 is always 0
+		if (divisor.equals(BigInteger.valueOf(1))){
+			return BigInteger.valueOf(0);
+		}
+		if (a.equals(BigInteger.valueOf(0))) {
+			throw new IllegalArgumentException("0 does not have a multiplicative inverse");
+		}
+		if (a.compareTo(divisor) >= 0) {
+			BigInteger newa = a.mod(divisor);
+			extendedEuclidean(newa, divisor);
+		}
+		// inverse of a in the field Z/divisorZ
+		BigInteger inverse = BigInteger.valueOf(0);
+		BigInteger remainder = divisor;
+		BigInteger newInverse = BigInteger.valueOf(1);
+		BigInteger newRemainder = a;
+		BigInteger oldRemainder;
+		BigInteger oldInverse;
+		BigInteger quotient;
+		while (!newRemainder.equals(BigInteger.valueOf(0))) {
+			// while-loop ends if remainder = 1
+			quotient = remainder.divide(newRemainder);
+			// update the inverse
+			oldInverse = inverse;
+			inverse = newInverse;
+			newInverse = oldInverse.subtract(quotient.multiply(newInverse));
+			// update the remainder
+			oldRemainder = remainder;
+			remainder = newRemainder;
+			newRemainder = oldRemainder.subtract(quotient.multiply(newRemainder));
+		}
+		// gcd(a, divisor) > 1
+		if (remainder.compareTo(BigInteger.valueOf(1)) > 0) {
+			throw new IllegalArgumentException("a has no multiplicative inverse mod divisor");
+		}
+		// correct inverse if 'a' is a negative number
+		if (inverse.compareTo(BigInteger.valueOf(0)) < 0 & a.compareTo(BigInteger.valueOf(0)) < 0) {
+			inverse = inverse.negate();
+		}
+		if (inverse.compareTo(BigInteger.valueOf(0)) < 0) {
+			inverse = inverse.add(divisor);
+		}
+		// Check if result is inverse of (a mod divisor)
+		assert ((inverse.multiply(a)).mod(divisor)).equals(BigInteger.valueOf(1));
+		return inverse;
 	}
 }

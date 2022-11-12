@@ -81,6 +81,7 @@ public final class TranslationSettings {
 	private final boolean mEnableFesetround;
 	private final FloatingPointRoundingMode mInitialRoundingMode;
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
+	private final int mStringOverapproximationThreshold;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
@@ -130,6 +131,8 @@ public final class TranslationSettings {
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_INITIAL, FloatingPointRoundingMode.class);
 		mAdaptMemoryModelResolutionOnPointerCasts =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS);
+		mStringOverapproximationThreshold =
+				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
 	}
 
 	private TranslationSettings(final PointerCheckMode divisionByZeroOfIntegerTypes,
@@ -146,8 +149,8 @@ public final class TranslationSettings {
 			final boolean checkAllocationPurity, final boolean checkMemoryLeakInMain,
 			final boolean checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
 			final boolean useStoreChains, final boolean enableFesetround,
-			final FloatingPointRoundingMode initialRoundingMode,
-			final boolean adaptMemoryModelResolutionOnPointerCasts) {
+			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
+			final int stringOverapproximationThreshold) {
 		super();
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
@@ -178,6 +181,7 @@ public final class TranslationSettings {
 		mEnableFesetround = enableFesetround;
 		mInitialRoundingMode = initialRoundingMode;
 		mAdaptMemoryModelResolutionOnPointerCasts = adaptMemoryModelResolutionOnPointerCasts;
+		mStringOverapproximationThreshold = stringOverapproximationThreshold;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -315,6 +319,10 @@ public final class TranslationSettings {
 		return mAdaptMemoryModelResolutionOnPointerCasts;
 	}
 
+	public int getStringOverapproximationThreshold() {
+		return mStringOverapproximationThreshold;
+	}
+
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
@@ -324,7 +332,7 @@ public final class TranslationSettings {
 				mSmtBoolArraysWorkaround, mEntryMethod, mTranslationMode, mCheckSvcompErrorFunction,
 				mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
-				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts);
+				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold);
 	}
 
 	/**

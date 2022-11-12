@@ -18,9 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
@@ -71,30 +72,24 @@ public class InterpolatorAtomInfo {
 	 * Collect information about this literal which is needed during interpolation
 	 */
 	public void computeAtomInfo(final Term term) {
-		final Term atom = term;
-		String annot = null;
 		// Store the underlying atom
-		assert !(atom instanceof ApplicationTerm && ((ApplicationTerm) atom).getFunction().getName().equals("not"));
-		// Annotations can be inside negations
-		if (atom instanceof AnnotatedTerm) {
-			final AnnotatedTerm quotedTerm = (AnnotatedTerm) atom;
-			assert quotedTerm.getAnnotations().length == 1;
-			annot = quotedTerm.getAnnotations()[0].getKey();
-			final Term unquoted = quotedTerm.getSubterm();
-			switch (annot) {
-			case ":quotedCC":
+		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()) {
+			final ApplicationTerm atom = (ApplicationTerm) term;
+			assert !atom.getFunction().getName().equals(SMTLIBConstants.NOT);
+			final String funcName = atom.getFunction().getName();
+			final boolean isEquals = funcName == SMTLIBConstants.EQUALS;
+			if (isEquals && !isZero(atom.getParameters()[1])) {
 				mIsCCEquality = true;
-				mCCEquality = (ApplicationTerm) unquoted;
-				assert mCCEquality.getFunction().getName() == "=";
-				break;
-			case ":quotedLA":
-				computeLAInformation((ApplicationTerm) unquoted);
-				break;
-			default:
-				assert annot == ":quoted";
-				// We do nothing for auxiliary literal.
+				mCCEquality = atom;
+			} else if (isEquals || funcName == SMTLIBConstants.LEQ || funcName == SMTLIBConstants.LT) {
+				computeLAInformation(atom);
 			}
 		}
+		// We do nothing for other literals.
+	}
+
+	private static boolean isZero(Term term) {
+		return term instanceof ConstantTerm && ((ConstantTerm) term).getValue() == Rational.ZERO;
 	}
 
 	/**
@@ -114,7 +109,7 @@ public class InterpolatorAtomInfo {
 			mIsLAEquality = true;
 			break;
 		default:
-			throw new AssertionError("Wrong :quotedLA term.");
+			throw new AssertionError("Malformed LA term.");
 		}
 		final Term[] params = laAtom.getParameters();
 		assert params[1] == Rational.ZERO.toTerm(params[1].getSort());

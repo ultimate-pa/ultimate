@@ -40,6 +40,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -447,7 +450,8 @@ public class LiptonReduction<L, P> {
 	private boolean isLeftMover(final Transition<L, P> t1) {
 		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
+		return coEnabledTransitions.stream()
+				.allMatch(t2 -> mMoverCheck.isIndependent(null, t2, t1.getSymbol()) == Dependence.INDEPENDENT);
 	}
 
 	/**
@@ -460,7 +464,8 @@ public class LiptonReduction<L, P> {
 	private boolean isRightMover(final Transition<L, P> t1) {
 		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
+		return coEnabledTransitions.stream()
+				.allMatch(t2 -> mMoverCheck.isIndependent(null, t1.getSymbol(), t2) == Dependence.INDEPENDENT);
 	}
 
 	public BoundedPetriNet<L, P> getResult() {

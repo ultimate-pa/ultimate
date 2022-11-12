@@ -99,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -317,6 +318,7 @@ public class MemoryHandler {
 				changedSomething |= mmf.reportPointerUncheckedWriteRequired();
 				changedSomething |= mmf.reportPointerUncheckedReadRequired();
 			}
+			changedSomething |= mmf.require(ULTIMATE_DATA_RACE_MEMORY);
 			return changedSomething;
 		}
 
@@ -485,7 +487,7 @@ public class MemoryHandler {
 	 * @return a set of declarations.
 	 */
 	public List<Declaration> declareMemoryModelInfrastructure(final CHandler main, final ILocation tuLoc,
-			final IASTNode hook) {
+			final IASTNode hook, final DataRaceChecker dataRaceChecker) {
 		mRequiredMemoryModelFeatures.finish(mSettings);
 
 		if (!mRequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired()) {
@@ -566,17 +568,17 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_MEMCPY)) {
-			final ConstructMemcpyOrMemmove cmcom =
-					new ConstructMemcpyOrMemmove(this, mProcedureManager, (TypeHandler) mTypeHandler,
-							mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes);
+			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
+					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
+					mTypeSizes, dataRaceChecker);
 			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMCPY, hook));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_MEMMOVE)) {
-			final ConstructMemcpyOrMemmove cmcom =
-					new ConstructMemcpyOrMemmove(this, mProcedureManager, (TypeHandler) mTypeHandler,
-							mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes);
+			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
+					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
+					mTypeSizes, dataRaceChecker);
 			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMMOVE, hook));
 		}
 

@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -201,6 +202,9 @@ public class TypeSizeAndOffsetComputer {
 					sizeTValue = constructSizeTValue_Array(loc, (CArray) underlyingType, hook);
 				} else if (underlyingType instanceof CStructOrUnion) {
 					sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStructOrUnion) underlyingType, hook);
+				} else if (underlyingType instanceof CFunction) {
+					// https://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html
+					sizeTValue = new SizeTValue_Integer(BigInteger.ONE);
 				} else {
 					throw new UnsupportedOperationException("Unsupported type" + underlyingType);
 				}

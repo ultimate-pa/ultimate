@@ -33,13 +33,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.Iterations;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -178,13 +184,30 @@ public class JordanAcceleratedUpdate {
 		return ev1hasBlockGreater2;
 	}
 
+	static int computeSizeOfLargestEv0Block(final JordanTransformationResult jordanUpdate) {
+		final NestedMap2<Integer, Integer, Integer> blockSizes = jordanUpdate.getJordanBlockSizes();
+		if (!blockSizes.containsKey(0)) {
+			return 0;
+		} else {
+			int max = 0;
+			for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(0).keySet()) {
+				if (blockSize > max) {
+					max = blockSize;
+				}
+			}
+			assert max > 0;
+			return max;
+		}
+	}
+
 	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
 			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
 			final JordanTransformationResult jordanUpdate, final TermVariable it, final TermVariable itHalf,
-			final boolean itEven, final boolean restrictedVersionPossible) {
+			final Iterations itKind) {
+		final IPolynomialTerm itc = constructIterationCounter(mgdScript.getScript(), itKind, it, itHalf);
 		// Compute matrix that represents closed form.
 		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
-				jordanUpdate, it, itHalf, itEven, restrictedVersionPossible);
+				jordanUpdate, itc, itKind);
 		final HashMap<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, linearUpdate,
 				varMatrixIndexMap);
 		return closedFormMap;
@@ -269,6 +292,40 @@ public class JordanAcceleratedUpdate {
 			blockSizeSum += triple.getSecond() * triple.getThird();
 		}
 		return (numberOfAssignedVariables + numberOfReadonlyVariables + 1 == blockSizeSum);
+	}
+
+	/**
+	 * Construct an {@link IPolynomialTerm} that represents the current iteration
+	 * (which is also the exponent of the Jordan matrix that we construct). The
+	 * result can be
+	 * <li>`it` (can represent all iterations)
+	 * <li>`2*itHalf` (can represent even iterations)
+	 * <li>`2*itHalf+1` (can represent odd iterations)
+	 *
+	 * Note: We have to distinguish even and odd transitions
+	 * <li> if some eigenvalue is negative (currently we only support -1) or
+	 * <li> if some Jordan block is greater than 2.
+	 */
+	private static IPolynomialTerm constructIterationCounter(final Script script, final Iterations itKind,
+			final TermVariable it, final TermVariable itHalf) {
+		final Sort sort = SmtSortUtils.getIntSort(script);
+		final IPolynomialTerm result;
+		switch (itKind) {
+		case ALL:
+			result = AffineTerm.constructVariable(it);
+			break;
+		case EVEN:
+			result = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
+					AffineTerm.constructVariable(itHalf));
+			break;
+		case ODD:
+			result = PolynomialTerm.sum(PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
+					AffineTerm.constructVariable(itHalf)), AffineTerm.constructConstant(sort, Rational.ONE));
+			break;
+		default:
+			throw new AssertionError("unknown value: " + itKind);
+		}
+		return result;
 	}
 
 	public static class LinearUpdate {

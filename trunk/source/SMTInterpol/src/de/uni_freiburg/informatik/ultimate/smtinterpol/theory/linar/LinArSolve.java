@@ -501,10 +501,13 @@ public class LinArSolve implements ITheory {
 	}
 
 	@Override
-	public Clause backtrackComplete() {
+	public void backtrackStart() {
 		mProplist.clear();
 		mSuggestions.clear();
+	}
 
+	@Override
+	public Clause backtrackComplete() {
 		Clause conflict = checkPendingConflict();
 		if (conflict != null) {
 			return conflict;
@@ -2135,10 +2138,11 @@ public class LinArSolve implements ITheory {
 				final Term term = var.getTerm();
 				final FunctionSymbol fsym = getsValueFromLA(term);
 				if (fsym != null) {
-					final Rational val = realValue(var);
+					final Term value = realValue(var).toTerm(term.getSort());
 					final NumericSortInterpretation si =
 							(NumericSortInterpretation) model.provideSortInterpretation(term.getSort());
-					model.map(fsym, si.extend(val, term.getSort()));
+					si.register(value);
+					model.map(fsym, value);
 				}
 			}
 		}

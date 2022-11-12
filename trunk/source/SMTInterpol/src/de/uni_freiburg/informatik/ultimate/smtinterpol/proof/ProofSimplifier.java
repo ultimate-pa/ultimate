@@ -19,9 +19,9 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
@@ -55,7 +57,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstan
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
- * This class simplifies SMTInterpol proof into a simpler proof format.
+ * This class explains an SMTInterpol proof with oracles using the low-level
+ * rules.
  *
  * @author Jochen Hoenicke
  */
@@ -76,7 +79,8 @@ public class ProofSimplifier extends TermTransformer {
 
 	private HashMap<FunctionSymbol, LambdaTerm> mAuxDefs;
 
-	private final static String ANNOT_PROVED = ":proved";
+	private final static String ANNOT_PROVES_CLAUSE = ":proves";
+	private final static String ANNOT_PROVED_EQ = ":provedEq";
 
 	/**
 	 * Create a proof checker.
@@ -93,24 +97,33 @@ public class ProofSimplifier extends TermTransformer {
 		mChecker = new MinimalProofChecker(mSkript, new DefaultLogger());
 	}
 
+	private Term annotateProvedClause(final Term proof, Annotation annot, final ProofLiteral[] clause) {
+		final Object[] clauseAnnot = new Object[clause.length * 2];
+		for (int i = 0; i < clause.length; i++) {
+			clauseAnnot[2 * i] = clause[i].getPolarity() ? "+" : "-";
+			clauseAnnot[2 * i + 1] = clause[i].getAtom();
+		}
+		return mSkript.annotate(proof, new Annotation(ANNOT_PROVES_CLAUSE, clauseAnnot), annot);
+	}
+
 	private Term annotateProved(final Term provedTerm, final Term proof) {
-		return proof.getTheory().annotatedTerm(new Annotation[] { new Annotation(ANNOT_PROVED, provedTerm) }, proof);
+		return mSkript.annotate(proof, new Annotation(ANNOT_PROVED_EQ, provedTerm));
 	}
 
 	private Term provedTerm(final AnnotatedTerm annotatedTerm) {
-		assert annotatedTerm.getAnnotations()[0].getKey() == ANNOT_PROVED;
+		assert annotatedTerm.getAnnotations()[0].getKey() == ANNOT_PROVED_EQ;
 		return (Term) annotatedTerm.getAnnotations()[0].getValue();
 	}
 
 	private Term stripAnnotation(final Term term) {
-		if (term instanceof AnnotatedTerm && ((AnnotatedTerm) term).getAnnotations()[0].getKey() == ANNOT_PROVED) {
+		if (term instanceof AnnotatedTerm && ((AnnotatedTerm) term).getAnnotations()[0].getKey() == ANNOT_PROVED_EQ) {
 			return ((AnnotatedTerm) term).getSubterm();
 		}
 		return term;
 	}
 
 	private Term subproof(final AnnotatedTerm annotatedTerm) {
-		assert annotatedTerm.getAnnotations()[0].getKey() == ANNOT_PROVED;
+		assert annotatedTerm.getAnnotations()[0].getKey() == ANNOT_PROVED_EQ;
 		return annotatedTerm.getSubterm();
 	}
 
@@ -125,40 +138,17 @@ public class ProofSimplifier extends TermTransformer {
 		return true;
 	}
 
-	private Term convertResolution(final Term[] newParams) {
-		Term accum = stripAnnotation(newParams[0]);
-		for (int i = 1; i < newParams.length; i++) {
-			final AnnotatedTerm pivotPlusProof = (AnnotatedTerm) newParams[i];
-			/* Check if it is a pivot-annotation */
-			assert (pivotPlusProof.getAnnotations().length == 1
-					&& pivotPlusProof.getAnnotations()[0].getKey() == ":pivot")
-				: "Unexpected Annotation in resolution parameter: " + pivotPlusProof;
-			Term pivot = (Term) pivotPlusProof.getAnnotations()[0].getValue();
-			final boolean negated = isApplication(SMTLIBConstants.NOT, pivot);
-			if (negated) {
-				pivot = ((ApplicationTerm) pivot).getParameters()[0];
-			}
-			final Term subproof = stripAnnotation(pivotPlusProof.getSubterm());
-
-			if (negated) {
-				// term occurs negated in subproof, positive in accum
-				accum = mProofRules.resolutionRule(pivot, accum, subproof);
-			} else {
-				accum = mProofRules.resolutionRule(pivot, subproof, accum);
-			}
-		}
-		return accum;
-	}
-
-	private Term convertClause(final Term[] newParams) {
-		assert newParams.length == 1;
-		assert newParams[0] instanceof AnnotatedTerm;
-		// the argument is the proved clause.
-		// the annots are currently discarded
-		final AnnotatedTerm annotTerm = (AnnotatedTerm) newParams[0];
-		return annotTerm.getSubterm();
-	}
-
+	/**
+	 * Extend a proof to eliminate not terms from the given candidateTerm
+	 *
+	 * @param proof
+	 *            the current proof
+	 * @param candidateTerm
+	 *            the literal occurring in the proved clause
+	 * @param positive
+	 *            true iff the literal is expected to occur positive in the clause
+	 * @return the extended proof where the literal is no longer double negated.
+	 */
 	private Term removeNot(Term proof, Term candidateTerm, boolean positive) {
 		while (isApplication("not", candidateTerm)) {
 			proof = mProofRules.resolutionRule(candidateTerm, positive ? proof : mProofRules.notIntro(candidateTerm),
@@ -169,33 +159,33 @@ public class ProofSimplifier extends TermTransformer {
 		return proof;
 	}
 
-	private Term removeQuoted(Term proof, final Term quotedTerm, final Term term, final boolean polarity) {
-		final Term quotedEq = proof.getTheory().term("=", quotedTerm, term);
-		if (polarity) {
-			proof = mProofRules.resolutionRule(term, proof, mProofRules.iffElim1(quotedEq));
-
-		} else {
-			proof = mProofRules.resolutionRule(term, mProofRules.iffElim2(quotedEq), proof);
-		}
-		return mProofRules.resolutionRule(quotedEq, mProofRules.delAnnot(quotedTerm), proof);
-	}
-
-	private Term convertTermITE(final Term[] clause) {
-		assert isApplication("=", clause[clause.length - 1]);
-		Term iteTerm = ((ApplicationTerm) clause[clause.length - 1]).getParameters()[0];
-		final Term goal = ((ApplicationTerm) clause[clause.length - 1]).getParameters()[1];
+	private Term convertTermITE(final ProofLiteral[] clause) {
+		final int lastPos = clause.length - 1;
+		assert clause[lastPos].getPolarity() && isApplication("=", clause[lastPos].getAtom());
+		final ApplicationTerm iteEquality = (ApplicationTerm) clause[lastPos].getAtom();
+		Term iteTerm = iteEquality.getParameters()[0];
+		final Term goal = iteEquality.getParameters()[1];
 		final ArrayList<Term> intermediates = new ArrayList<>();
 		final ArrayList<Term> proofs = new ArrayList<>();
+		final HashMap<Term,ProofLiteral> conditionLits = new HashMap<>();
 		for (int i = 0; i < clause.length - 1; i++) {
+			conditionLits.put(clause[i].getAtom(), clause[i]);
+		}
+		while (iteTerm != goal) {
 			assert isApplication("ite", iteTerm);
 			intermediates.add(iteTerm);
 			final Term[] iteParams = ((ApplicationTerm) iteTerm).getParameters();
-			if (clause[i] == iteParams[0]) {
+			Term condition = iteParams[0];
+			boolean conditionPositive = true;
+			while (isApplication("not", condition)) {
+				condition = ((ApplicationTerm) condition).getParameters()[0];
+				conditionPositive = !conditionPositive;
+			}
+			final ProofLiteral clauseLit = conditionLits.get(condition);
+			if (conditionPositive == clauseLit.getPolarity()) {
 				proofs.add(removeNot(mProofRules.ite2(iteTerm), iteParams[0], true));
 				iteTerm = iteParams[2];
 			} else {
-				assert isApplication("not", clause[i]);
-				assert ((ApplicationTerm) clause[i]).getParameters()[0] == iteParams[0];
 				proofs.add(removeNot(mProofRules.ite1(iteTerm), iteParams[0], false));
 				iteTerm = iteParams[1];
 			}
@@ -218,23 +208,314 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert the tautology that introduces a forall.
+	 * Check if an iteTerm is the ite in the TermITEBound term. A :termITEBound
+	 * axiom has the form {@pre (<= (+ iteTerm (- maxValue)) 0)} or {@pre (<= (+
+	 * minValue (- iteTerm)) 0)}. The problem is that iteTerm may not be the first
+	 * term in the sum and that max/minValue may itself consist of several terms
+	 * that are summed, including other ite terms. Here we check that for the given
+	 * possibleIteTerm and it's factor in the sum, the sum is either of the firsts
+	 * or second form.
+	 *
+	 * @param sum             The sum, i.e. the left-hand-side of the <= term.
+	 * @param possibleIteTerm the candidate ite term. We assume that it is indeed an
+	 *                        ite term.
+	 * @param factor          the factor of the ite term in the sum. This should be
+	 *                        1 or -1.
+	 * @return true if the sum is of the correct form.
+	 */
+	private boolean checkIteinIteBound(final SMTAffineTerm sum, final ApplicationTerm possibleIteTerm,
+			final Rational factor) {
+		assert isApplication(SMTLIBConstants.ITE, possibleIteTerm);
+		Term[] iteArgs = possibleIteTerm.getParameters();
+		boolean zeroSeen = false;
+		final HashSet<Term> visited = new HashSet<>();
+		final ArrayDeque<Term> toCheck = new ArrayDeque<>();
+		toCheck.add(iteArgs[2]);
+		toCheck.add(iteArgs[1]);
+		// Now check for each ti if replacing ti with (ite c t1 t2) in sum results a
+		// non-positive constant.
+		while (!toCheck.isEmpty()) {
+			final Term candidate = toCheck.removeLast();
+			if (visited.add(candidate)) {
+				if (isApplication("ite", candidate)) {
+					// nested ite. push the other branches to toCheck queue
+					iteArgs = ((ApplicationTerm) candidate).getParameters();
+					toCheck.addLast(iteArgs[1]);
+					toCheck.addLast(iteArgs[2]);
+				} else {
+					// replace (ite c t e) with candidate in sum, by adding
+					// (- candidate (ite c t e)) * factor
+					final SMTAffineTerm sumWithCandidate = new SMTAffineTerm(candidate);
+					sumWithCandidate.add(Rational.MONE, possibleIteTerm);
+					sumWithCandidate.mul(factor);
+					sumWithCandidate.add(sum);
+
+					// Afterwards the literal should be <= 0, to make the clause true.
+					if (!sumWithCandidate.isConstant() || sumWithCandidate.getConstant().signum() > 0) {
+						return false;
+					}
+					if (sumWithCandidate.getConstant().signum() == 0) {
+						zeroSeen = true;
+					}
+				}
+			}
+		}
+		// check that the bound is tight, i.e. one of the sums should be 0.
+		return zeroSeen;
+	}
+
+	/**
+	 * Find the ite in the TermITEBound term. A :termITEBound axiom has the form
+	 * {@pre (<= (+ iteTerm (- maxValue)) 0)} or {@pre (<= (+ minValue (- iteTerm))
+	 * 0)}. The problem is that iteTerm may not be the first term in the sum and
+	 * that max/minValue may itself consist of several terms that are summed,
+	 * including other ite terms. We find the right ite term just by trying all
+	 * candidates and check if they match.
+	 *
+	 * @param sum The sum, i.e. the left-hand-side of the <= term.
+	 * @return The iteTerm.
+	 * @throws AssertionError if there is no candidate ite term.
+	 */
+	private ApplicationTerm findAndCheckIteinIteBound(final SMTAffineTerm sum) {
+		for (final Map.Entry<Term, Rational> entry : sum.getSummands().entrySet()) {
+			if (isApplication("ite", entry.getKey()) && entry.getValue().abs() == Rational.ONE) {
+				final ApplicationTerm iteTerm = (ApplicationTerm) entry.getKey();
+				if (checkIteinIteBound(sum, iteTerm, entry.getValue())) {
+					return iteTerm;
+				}
+			}
+		}
+		throw new AssertionError();
+	}
+
+	/**
+	 * Collect the leafs from the given iteTerm and build the proof for the clause
+	 * {@pre (or (= iteTerm leaf1) ... (= iteTerm leafn))}
+	 *
+	 * @param iteTerm  the ite term.
+	 * @param allLeafs a set were all leafs are added to.
+	 * @return the proof for the clause.
+	 */
+	private Term proveIteEqualsLeafs(final ApplicationTerm iteTerm, final Set<Term> allLeafs) {
+		assert isApplication(SMTLIBConstants.ITE, iteTerm);
+		final Theory theory = iteTerm.getTheory();
+		Term[] iteArgs = iteTerm.getParameters();
+		final ArrayDeque<Term> todo = new ArrayDeque<>();
+		final ArrayDeque<ApplicationTerm> subIteTerms = new ArrayDeque<>();
+		final HashSet<Term> visited = new HashSet<>();
+		Term proof = res(iteArgs[0], mProofRules.ite2(iteTerm), mProofRules.ite1(iteTerm));
+		todo.add(iteArgs[2]);
+		todo.add(iteArgs[1]);
+		// find leafs and subIteTerms and bring subIteTerms in topological order.
+		while (!todo.isEmpty()) {
+			final Term candidate = todo.removeLast();
+			if (!visited.contains(candidate)) {
+				if (isApplication("ite", candidate)) {
+					final ApplicationTerm subIteTerm = (ApplicationTerm) candidate;
+					iteArgs = subIteTerm.getParameters();
+					if (!visited.contains(iteArgs[1]) || !visited.contains(iteArgs[2])) {
+						// if children have not been visited yet, visit them first, then visit ite again.
+						todo.addLast(candidate);
+						todo.addLast(iteArgs[1]);
+						todo.addLast(iteArgs[2]);
+					} else {
+						// children already visited.  Add candidate to subIteTerms in reverse order and visit it.
+						// this way children are guaranteed to appear after parents.
+						subIteTerms.addFirst(subIteTerm);
+						visited.add(candidate);
+					}
+				} else {
+					// this is a leaf term
+					allLeafs.add(candidate);
+					visited.add(candidate);
+				}
+			}
+		}
+		// now proof {@pre (or ... (= iteTerm t) ...)} for all leafs.
+		for (final ApplicationTerm subIteTerm : subIteTerms) {
+			iteArgs = subIteTerm.getParameters();
+			Term subProof = res(iteArgs[0], mProofRules.ite2(subIteTerm), mProofRules.ite1(subIteTerm));
+			for (int i = 1; i < 3; i++) {
+				final Term eq2 = theory.term(SMTLIBConstants.EQUALS, subIteTerm, iteArgs[i]);
+				subProof = res(eq2, subProof, mProofRules.trans(iteTerm, subIteTerm, iteArgs[i]));
+			}
+			final Term eq1 = theory.term(SMTLIBConstants.EQUALS, iteTerm, subIteTerm);
+			proof = res(eq1, proof, subProof);
+		}
+		return proof;
+	}
+
+	private Term convertTermITEBound(final ProofLiteral[] clause) {
+		// Check for the form: (<= (+ (ite c1 t1 t2) x) 0) where (+ ti x) must be
+		// constant and <= 0.
+		// The ite can also be nested, i.e. (<= (+ (ite c1 (ite c2 t1 t2) (ite c3 t3
+		// t4)) x) 0)
+		// The ite can also be negated.
+		// One of the (+ ti x) terms must be equal to 0.
+		// The conditions ci can have arbitrary form.
+		assert clause.length == 1 && clause[0].getPolarity() && isApplication("<=", clause[0].getAtom());
+		final Theory theory = clause[0].getAtom().getTheory();
+		final Term[] leqArgs = ((ApplicationTerm) clause[0].getAtom()).getParameters();
+		assert leqArgs.length == 2 && isZero(leqArgs[1]);
+		final SMTAffineTerm sum = new SMTAffineTerm(leqArgs[0]);
+
+		final ApplicationTerm iteTerm = findAndCheckIteinIteBound(sum);
+		final LinkedHashSet<Term> allLeafs = new LinkedHashSet<>();
+		final LinkedHashSet<Term> neededRefls = new LinkedHashSet<>();
+		Term proof = proveIteEqualsLeafs(iteTerm, allLeafs);
+
+		final Sort sort = iteTerm.getSort();
+		final FunctionSymbol lt = theory.getFunctionWithResult(SMTLIBConstants.LT, null, null, sort, sort);
+		int itePos = -1;
+		Term[] sumArgs = null;
+		boolean isNegated = false;
+		if (isApplication(SMTLIBConstants.PLUS, leqArgs[0])) {
+			sumArgs = ((ApplicationTerm) leqArgs[0]).getParameters();
+			for (int i = 0; i < sumArgs.length; i++) {
+				if (sumArgs[i] == iteTerm) {
+					itePos = i;
+					break;
+				} else if (isApplication(SMTLIBConstants.MUL, sumArgs[i])) {
+					final Term[] mulArgs = ((ApplicationTerm) sumArgs[i]).getParameters();
+					if (mulArgs.length == 2 && mulArgs[1] == iteTerm) {
+						itePos = i;
+						isNegated = true;
+						break;
+					}
+				}
+			}
+			assert itePos >= 0;
+		} else {
+			if (leqArgs[0] != iteTerm) {
+				isNegated = true;
+			}
+		}
+
+		for (final Term leaf : allLeafs) {
+			// replace (ite c t e) with leaf in sum by congruence
+			Term eq = theory.term(SMTLIBConstants.EQUALS, iteTerm, leaf);
+			Polynomial newSum = new Polynomial(leaf);
+			Term newLeaf = leaf;
+			if (isNegated) {
+				final ApplicationTerm mulIte = (ApplicationTerm) (itePos >= 0 ? sumArgs[itePos] : leqArgs[0]);
+				final Term[] mulArgs = mulIte.getParameters();
+				final Term[] newMulArgs = mulArgs.clone();
+				newMulArgs[1] = leaf;
+				proof = res(eq, proof, mProofRules.cong(mulIte.getFunction(), mulArgs, newMulArgs));
+				final Term rhs = theory.term(mulIte.getFunction(), newMulArgs);
+				neededRefls.add(mulArgs[0]);
+				newSum.mul(new Polynomial(newMulArgs[0]));
+				newLeaf = newSum.toTerm(leaf.getSort());
+				if (rhs != newLeaf) {
+					proof = res(theory.term(SMTLIBConstants.EQUALS, mulIte, rhs), proof,
+							res(theory.term(SMTLIBConstants.EQUALS, rhs, newLeaf),
+								mProofRules.polyMul(rhs, newLeaf), mProofRules.trans(mulIte, rhs, newLeaf)));
+				}
+				eq = theory.term(SMTLIBConstants.EQUALS, mulIte, newLeaf);
+			}
+			if (itePos >= 0) {
+				final FunctionSymbol plus = ((ApplicationTerm) leqArgs[0]).getFunction();
+				final Term[] newSumArgs = sumArgs.clone();
+				newSumArgs[itePos] = newLeaf;
+				final Term rhs = theory.term(plus, newSumArgs);
+				proof = res(eq, proof, mProofRules.cong(plus, sumArgs, newSumArgs));
+				newSum = new Polynomial();
+				for (int i = 0; i < newSumArgs.length; i++) {
+					newSum.add(Rational.ONE, newSumArgs[i]);
+					if (i != itePos) {
+						neededRefls.add(newSumArgs[i]);
+					}
+				}
+				newLeaf = newSum.toTerm(leaf.getSort());
+				if (rhs != newLeaf) {
+					proof = res(theory.term(SMTLIBConstants.EQUALS, leqArgs[0], rhs), proof,
+							res(theory.term(SMTLIBConstants.EQUALS, rhs, newLeaf),
+									mProofRules.polyAdd(rhs, newLeaf), mProofRules.trans(leqArgs[0], rhs, newLeaf)));
+				}
+				eq = theory.term(SMTLIBConstants.EQUALS, leqArgs[0], newLeaf);
+			}
+			// Now show ~(< 0 leqArgs[0]) from ~(< 0 newLeaf)
+			final Term[] oldArgs = new Term[] { leqArgs[1], leqArgs[0] };
+			final Term[] newArgs = new Term[] { leqArgs[1], newLeaf };
+			proof = res(eq, proof, mProofRules.cong(lt, oldArgs, newArgs));
+			neededRefls.add(leqArgs[1]);
+			final Term oldLt = theory.term(lt, oldArgs);
+			final Term newLt = theory.term(lt, newArgs);
+			final Term ltEqual = theory.term(SMTLIBConstants.EQUALS, oldLt, newLt);
+			proof = res(ltEqual, proof, mProofRules.iffElim2(ltEqual));
+			proof = res(newLt, proof, mProofRules.farkas(new Term[] { newLt }, new BigInteger[] { BigInteger.ONE }));
+		}
+
+		// Now we have a proof for ~(< 0 leqArgs[0]); finish using total and reflexivity.
+		proof = res(theory.term(lt, leqArgs[1], leqArgs[0]), mProofRules.total(leqArgs[0], leqArgs[1]), proof);
+		for (final Term t : neededRefls) {
+			proof = res(theory.term(SMTLIBConstants.EQUALS, t, t), mProofRules.refl(t), proof);
+		}
+		return proof;
+	}
+
+	/**
+	 * Convert the tautology that introduces a forall or eliminates an exists. These
+	 * are the rules that introduce Skolem variables.
 	 *
 	 * @param clause     the clause to check
-	 * @param skolemFuns the Skolemization used in the tautology.
+	 * @param skolemFuns the Skolemization used in the tautology. These are
+	 *                   functions whose expansion is the correct choose term for
+	 *                   the quantifier.
 	 * @return the proof of the tautology.
 	 */
-	private Term convertTautForallIntro(final Term[] clause, final Term[] skolemFuns) {
+	private Term convertTautQuantSkolemize(final ProofLiteral[] clause, final Term[] skolemFuns,
+			final boolean isForall) {
+		// isForall case:
 		// clause[0]: (forall ((x...)) F)
 		// clause[1]: (not (let ((x skolem...)) F))
+		// !isForall case:
+		// clause[0]: not (exists ((x...)) F
+		// clause[1]: (let ((x skolem...)) F)
 		assert clause.length == 2;
-		final QuantifiedFormula qf = (QuantifiedFormula) clause[0];
-		assert qf.getQuantifier() == QuantifiedFormula.FORALL;
-		final TermVariable[] universalVars = qf.getVariables();
-		final Term[] subst = mProofRules.getSkolemVars(universalVars, qf.getSubformula(), true);
+		final QuantifiedFormula qf = (QuantifiedFormula) clause[0].getAtom();
+		assert isForall == clause[0].getPolarity();
+		assert qf.getQuantifier() == (isForall ? QuantifiedFormula.FORALL : QuantifiedFormula.EXISTS);
+		final Theory theory = qf.getTheory();
+		final TermVariable[] vars = qf.getVariables();
+		final Sort[] varSorts = new Sort[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			varSorts[i] = vars[i].getSort();
+		}
+		theory.push();
+		final FunctionSymbol qFunc = theory.declareInternalFunction("@quantbody", varSorts, qf.getFreeVars(),
+				qf.getSubformula(), FunctionSymbol.UNINTERPRETEDINTERNAL);
+		final Term[] chooseTerms = mProofRules.getSkolemVars(vars, qf.getSubformula(), isForall);
 		final FormulaUnLet unletter = new FormulaUnLet();
-		final Term result = unletter.unlet(mSkript.let(universalVars, subst, qf.getSubformula()));
-		return removeNot(mProofRules.forallIntro(qf), result, true);
+		final Term subChoose = unletter.unlet(mSkript.let(vars, chooseTerms, qf.getSubformula()));
+		final Term quantChoose = theory.term(qFunc, chooseTerms);
+		final Term quantSkolem = theory.term(qFunc, skolemFuns);
+		final Term subSkolem = unletter.unlet(mSkript.let(vars, skolemFuns, qf.getSubformula()));
+		Term transProof = res(
+				theory.term(SMTLIBConstants.EQUALS, quantSkolem, subSkolem),
+				mProofRules.expand(quantSkolem),
+				res(theory.term(SMTLIBConstants.EQUALS, subSkolem, quantSkolem),
+						mProofRules.symm(subSkolem, quantSkolem),
+						res(theory.term(SMTLIBConstants.EQUALS, quantSkolem, quantChoose),
+								mProofRules.cong(qFunc, skolemFuns, chooseTerms),
+								res(theory.term(SMTLIBConstants.EQUALS, quantChoose, subChoose),
+										mProofRules.expand(quantChoose),
+										mProofRules.trans(subSkolem, quantSkolem, quantChoose, subChoose)))));
+		for (int i = 0; i < chooseTerms.length; i++) {
+			transProof = res(theory.term(SMTLIBConstants.EQUALS, skolemFuns[i], chooseTerms[i]),
+					mProofRules.expand(skolemFuns[i]), transProof);
+		}
+		final Term skolemEquivalence = theory.term(SMTLIBConstants.EQUALS, subSkolem, subChoose);
+		Term proof;
+		if (isForall) {
+			proof = res(subChoose, mProofRules.iffElim2(skolemEquivalence), mProofRules.forallIntro(qf));
+		} else {
+			proof = res(subChoose, mProofRules.existsElim(qf), mProofRules.iffElim1(skolemEquivalence));
+		}
+		proof = res(skolemEquivalence, transProof, proof);
+		proof = mProofRules.defineFun(qFunc, theory.lambda(vars, qf.getSubformula()), proof);
+		theory.pop();
+		return removeNot(proof, subSkolem, !isForall);
 	}
 
 	/**
@@ -245,12 +526,12 @@ public class ProofSimplifier extends TermTransformer {
 	 *               fresh variables.
 	 * @return the proof of the tautology.
 	 */
-	private Term convertTautForallElim(final Term[] clause, final Term[] subst) {
+	private Term convertTautForallElim(final ProofLiteral[] clause, final Term[] subst) {
 		// clause[0] is (not (forall ((x1...)) F )).
 		// subst is (y1, ..., yn).
 		// clause[1] is F [y1/x1]...[yn/xn].
-		assert clause.length == 2 && isApplication("not", clause[0]);
-		final Term forall = ((ApplicationTerm) clause[0]).getParameters()[0];
+		assert clause.length == 2 && !clause[0].getPolarity();
+		final Term forall = clause[0].getAtom();
 		final QuantifiedFormula qf = (QuantifiedFormula) forall;
 		assert qf.getQuantifier() == QuantifiedFormula.FORALL;
 		final TermVariable[] universalVars = qf.getVariables();
@@ -274,12 +555,12 @@ public class ProofSimplifier extends TermTransformer {
 	 *               fresh variables.
 	 * @return the proof of the tautology.
 	 */
-	private Term convertTautExistsIntro(final Term[] clause, final Term[] subst) {
+	private Term convertTautExistsIntro(final ProofLiteral[] clause, final Term[] subst) {
 		// clause[0] is (exists ((x1...)) F ).
 		// subst is (y1, ..., yn).
 		// clause[1] is (not F [y1/x1]...[yn/xn]).
-		assert clause.length == 2;
-		final QuantifiedFormula qf = (QuantifiedFormula) clause[0];
+		assert clause.length == 2 && clause[0].getPolarity();
+		final QuantifiedFormula qf = (QuantifiedFormula) clause[0].getAtom();
 		assert qf.getQuantifier() == QuantifiedFormula.EXISTS;
 		final TermVariable[] universalVars = qf.getVariables();
 		assert universalVars.length == subst.length;
@@ -290,23 +571,6 @@ public class ProofSimplifier extends TermTransformer {
 		final Term result = unletter.unlet(mSkript.let(universalVars, subst, qf.getSubformula()));
 		proof = removeNot(proof, result, false);
 		return proof;
-	}
-
-	/**
-	 * Convert the tautology that eliminates an exists.
-	 *
-	 * @param clause     the clause to check
-	 * @param skolemFuns the Skolemization used in the tautology.
-	 * @return the proof of the tautology.
-	 */
-	private Term convertTautExistsElim(final Term[] clause, final Term[] skolemFuns) {
-		// clause[0]: not (exists ((x...)) F
-		// clause[1]: (let ((x skolem...)) F)
-		assert clause.length == 2 && isApplication("not", clause[0]);
-		final Term existsAtom = ((ApplicationTerm) clause[0]).getParameters()[0];
-		final QuantifiedFormula qf = (QuantifiedFormula) existsAtom;
-		assert qf.getQuantifier() == QuantifiedFormula.EXISTS;
-		return removeNot(mProofRules.existsElim(qf), clause[1], true);
 	}
 
 	private Term convertTautIte1Helper(final Term iteAtom, final Term iteTrueCase, final boolean polarity) {
@@ -323,144 +587,192 @@ public class ProofSimplifier extends TermTransformer {
 		return removeNot(proof, iteFalseCase, !polarity);
 	}
 
-	private Term convertTautIte(final String tautKind, final Term[] clause) {
-		assert clause.length == 3;
-		final boolean negated = isApplication("not", clause[0]);
-		final Term iteAtom = negated ? negate(clause[0]) : clause[0];
-		assert isApplication("ite", iteAtom);
-		final Term[] iteParams = ((ApplicationTerm) iteAtom).getParameters();
-		switch (tautKind) {
-		case ":ite+1":
-			// iteAtom, ~cond, ~then
-			return removeNot(convertTautIte1Helper(iteAtom, iteParams[1], true), iteParams[0], false);
-		case ":ite+2":
-			// iteAtom, cond, ~else
-			return removeNot(convertTautIte2Helper(iteAtom, iteParams[2], true), iteParams[0], true);
-		case ":ite+red":
-			// iteAtom, ~then, ~else
-			return mProofRules.resolutionRule(iteParams[0],
-					convertTautIte2Helper(iteAtom, iteParams[2], true), convertTautIte1Helper(iteAtom, iteParams[1], true));
-		case ":ite-1":
-			// ~iteAtom, ~cond, then
-			return removeNot(convertTautIte1Helper(iteAtom, iteParams[1], false), iteParams[0], false);
-		case ":ite-2":
-			// ~iteAtom, cond, else
-			return removeNot(convertTautIte2Helper(iteAtom, iteParams[2], false), iteParams[0], true);
-		case ":ite-red": {
-			// ~iteAtom, then, else
-			return mProofRules.resolutionRule(iteParams[0],
-					convertTautIte2Helper(iteAtom, iteParams[2], false), convertTautIte1Helper(iteAtom, iteParams[1], false));
-		}
-		}
-		throw new AssertionError();
-	}
-
-	private Term convertTautExcludedMiddle(final String name, final Term[] clause) {
+	private Term convertTautExcludedMiddle(final String name, final ProofLiteral[] clause) {
 		assert clause.length == 2;
 		final boolean isEqTrue = name == ":excludedMiddle1";
 
-		// Check for the form: (+ (! (= p true) :quoted) - p) :excludedMiddle1
-		// or (+ (! (= p false) :quoted) + p) :excludedMiddle2
-		final Term quotedAtom = clause[0];
-		final boolean isQuotedQuant = ((AnnotatedTerm) quotedAtom).getAnnotations()[0].getKey().equals(":quotedQuant");
-		final Term equality = isQuotedQuant ? unquoteExpand(quotedAtom) : unquote(quotedAtom);
-		assert isApplication("=", equality);
+		// Check for the form: (+ (= p true) - p) :excludedMiddle1
+		// or (+ (= p false) + p) :excludedMiddle2
+		final Term equality = clause[0].getAtom();
+		assert clause[0].getPolarity() && isApplication("=", equality);
 		final Term[] eqArgs = ((ApplicationTerm) equality).getParameters();
-		final Term lit = clause[1];
-		assert isApplication("not", lit) == isEqTrue;
-		final Term atom = isEqTrue ? negate(lit) : lit;
-		assert eqArgs.length == 2 && eqArgs[0] == atom && isApplication(isEqTrue ? "true" : "false", eqArgs[1]);
+		final boolean isAuxLiteral = isAuxApplication(eqArgs[0]);
+		final Term atomTerm = isAuxLiteral ? expandAux((ApplicationTerm) eqArgs[0]) : eqArgs[0];
+		assert eqArgs.length == 2 && isApplication(isEqTrue ? "true" : "false", eqArgs[1]);
 
 		// now proof equality, lit
 		Term proof = isEqTrue
 				? mProofRules.resolutionRule(eqArgs[1], mProofRules.trueIntro(), mProofRules.iffIntro2(equality))
 				: mProofRules.resolutionRule(eqArgs[1], mProofRules.iffIntro1(equality), mProofRules.falseElim());
 
-		final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, quotedAtom, equality);
-		final Term expandProof = isQuotedQuant ? proveAuxExpand(quotedAtom, equality)
-				: mProofRules.delAnnot(quotedAtom);
-		proof = mProofRules.resolutionRule(equality, proof, mProofRules.iffElim1(expandEq));
-		proof = mProofRules.resolutionRule(expandEq, expandProof, proof);
-		proof = removeNot(proof, atom, !isEqTrue);
+		if (isAuxLiteral) {
+			final Term expandAuxEq = mSkript.term(SMTLIBConstants.EQUALS, eqArgs[0], atomTerm);
+			final Term expandAuxProof = mProofRules.expand(eqArgs[0]);
+			if (isEqTrue) {
+				proof = res(eqArgs[0], res(expandAuxEq, expandAuxProof, mProofRules.iffElim1(expandAuxEq)), proof);
+			} else {
+				proof = res(eqArgs[0], proof, res(expandAuxEq, expandAuxProof, mProofRules.iffElim2(expandAuxEq)));
+			}
+		}
+		proof = removeNot(proof, atomTerm, !isEqTrue);
 		return proof;
 	}
 
-	private Term convertTautElimIntro(final String ruleName, final Term[] clauseLits) {
-		final String func = ruleName.substring(1, ruleName.length() - 1);
-		final boolean isElim = ruleName.endsWith("-");
-
-		Term mainAtom = clauseLits[0];
-		if (isElim) {
-			assert isApplication(SMTLIBConstants.NOT, clauseLits[0]);
-			mainAtom = ((ApplicationTerm) clauseLits[0]).getParameters()[0];
+	private boolean isSkolem(Term term) {
+		if (term instanceof ApplicationTerm) {
+			final FunctionSymbol func = ((ApplicationTerm) term).getFunction();
+			return func.isIntern() && func.getName().startsWith("@skolem");
 		}
-		final Term quotedAtom = mainAtom;
-		final boolean isQuotedQuant = mainAtom instanceof AnnotatedTerm;
-		if (isQuotedQuant) {
-			mainAtom = unquoteExpand(mainAtom);
-		}
-		assert isApplication(func, mainAtom);
-		final Term[] mainParams = ((ApplicationTerm) mainAtom).getParameters();
+		return false;
+	}
 
-		int pos = -1;
-		if (func.equals(SMTLIBConstants.AND) ? isElim : !isElim) {
-			// An and-, or+, =>+ rule have only one additional lit
-			assert clauseLits.length == 2;
-			for (int i = 0; i < mainParams.length; i++) {
-				final boolean negated = func.equals(SMTLIBConstants.OR)
-						|| (func.equals(SMTLIBConstants.IMPLIES) && i == mainParams.length - 1);
-				if (clauseLits[1] == (negated ? mSkript.term(SMTLIBConstants.NOT, mainParams[i]) : mainParams[i])) {
-					pos = i;
-					break;
-				}
+	private boolean isAuxApplication(Term term) {
+		if (term instanceof ApplicationTerm) {
+			final FunctionSymbol func = ((ApplicationTerm) term).getFunction();
+			return func.isIntern() && func.getName().startsWith("@AUX");
+		}
+		return false;
+	}
+
+	private int findArgPosition(final ProofLiteral searchTerm, final Term[] mainParams, boolean forImplication) {
+		for (int i = 0; i < mainParams.length; i++) {
+			Term mainParam = mainParams[i];
+			boolean positive = true;
+			while (isApplication(SMTLIBConstants.NOT, mainParam)) {
+				mainParam = ((ApplicationTerm) mainParam).getParameters()[0];
+				positive = !positive;
 			}
-			assert pos != -1;
+			if (forImplication && i == mainParams.length - 1) {
+				positive = !positive;
+			}
+			if (mainParam == searchTerm.getAtom() && positive == searchTerm.getPolarity()) {
+				return i;
+			}
 		}
+		throw new AssertionError();
+	}
+
+	private Term convertTautElimIntro(final String ruleName, final ProofLiteral[] clause) {
+		final boolean isElim = ruleName.contains("-");
+
+		ApplicationTerm mainAtom;
+		final ApplicationTerm firstAtom = (ApplicationTerm) clause[0].getAtom();
+		final boolean isAuxDefEq = clause[0].getPolarity() && isApplication(SMTLIBConstants.EQUALS, firstAtom);
+		if (isAuxDefEq) {
+			assert isApplication(isElim ? SMTLIBConstants.FALSE : SMTLIBConstants.TRUE, firstAtom.getParameters()[1]);
+			mainAtom = (ApplicationTerm) expandAuxDef(firstAtom);
+		} else {
+			assert isElim != clause[0].getPolarity();
+			mainAtom = firstAtom;
+		}
+		assert ruleName.startsWith(":" + mainAtom.getFunction().getName());
+		final Term[] mainParams = mainAtom.getParameters();
+
 		Term proof;
 		switch (ruleName) {
-		case ":or+":
+		case ":or+": {
+			assert clause.length == 2;
+			final int pos = findArgPosition(clause[1].negate(), mainParams, false);
 			proof = mProofRules.orIntro(pos, mainAtom);
+			proof = removeNot(proof, mainParams[pos], false);
 			break;
-		case ":or-":
+		}
+		case ":or-": {
 			proof = mProofRules.orElim(mainAtom);
+			for (int i = 0; i < mainParams.length; i++) {
+				proof = removeNot(proof, mainParams[i], true);
+			}
 			break;
+		}
 		case ":and+":
 			proof = mProofRules.andIntro(mainAtom);
+			for (int i = 0; i < mainParams.length; i++) {
+				proof = removeNot(proof, mainParams[i], false);
+			}
 			break;
-		case ":and-":
+		case ":and-": {
+			assert clause.length == 2;
+			final int pos = findArgPosition(clause[1], mainParams, false);
 			proof = mProofRules.andElim(pos, mainAtom);
+			proof = removeNot(proof, mainParams[pos], true);
 			break;
-		case ":=>+":
+		}
+		case ":=>+": {
+			assert clause.length == 2;
+			final int lastPos = mainParams.length - 1;
+			final int pos = findArgPosition(clause[1], mainParams, true);
 			proof = mProofRules.impIntro(pos, mainAtom);
+			proof = removeNot(proof, mainParams[pos], pos != lastPos);
 			break;
-		case ":=>-":
+		}
+		case ":=>-": {
 			proof = mProofRules.impElim(mainAtom);
+			for (int i = 0; i < mainParams.length; i++) {
+				proof = removeNot(proof, mainParams[i], i == mainParams.length - 1);
+			}
+			break;
+		}
+		case ":xor+1": {
+			proof = mProofRules.xorIntro(mainParams, new Term[] { mainParams[0] }, new Term[] { mainParams[1] });
+			proof = removeNot(proof, mainParams[0], true);
+			proof = removeNot(proof, mainParams[1], false);
+			break;
+		}
+		case ":xor+2": {
+			proof = mProofRules.xorIntro(mainParams, new Term[] { mainParams[1] }, new Term[] { mainParams[0] });
+			proof = removeNot(proof, mainParams[0], false);
+			proof = removeNot(proof, mainParams[1], true);
+			break;
+		}
+		case ":xor-1": {
+			proof = mProofRules.xorIntro(new Term[] { mainParams[0] }, new Term[] { mainParams[1] }, mainParams);
+			proof = removeNot(proof, mainParams[0], true);
+			proof = removeNot(proof, mainParams[1], true);
+			break;
+		}
+		case ":xor-2": {
+			proof = mProofRules.xorElim(mainParams, new Term[] { mainParams[0] }, new Term[] { mainParams[1] });
+			proof = removeNot(proof, mainParams[0], false);
+			proof = removeNot(proof, mainParams[1], false);
+			break;
+		}
+		case ":ite+1":
+			// iteAtom, ~cond, ~then
+			proof = removeNot(convertTautIte1Helper(mainAtom, mainParams[1], true), mainParams[0], false);
+			break;
+		case ":ite+2":
+			// iteAtom, cond, ~else
+			proof = removeNot(convertTautIte2Helper(mainAtom, mainParams[2], true), mainParams[0], true);
+			break;
+		case ":ite+red":
+			// iteAtom, ~then, ~else
+			proof = mProofRules.resolutionRule(mainParams[0], convertTautIte2Helper(mainAtom, mainParams[2], true),
+					convertTautIte1Helper(mainAtom, mainParams[1], true));
+			break;
+		case ":ite-1":
+			// ~iteAtom, ~cond, then
+			proof = removeNot(convertTautIte1Helper(mainAtom, mainParams[1], false), mainParams[0], false);
+			break;
+		case ":ite-2":
+			// ~iteAtom, cond, else
+			proof = removeNot(convertTautIte2Helper(mainAtom, mainParams[2], false), mainParams[0], true);
+			break;
+		case ":ite-red":
+			// ~iteAtom, then, else
+			proof = mProofRules.resolutionRule(mainParams[0], convertTautIte2Helper(mainAtom, mainParams[2], false),
+					convertTautIte1Helper(mainAtom, mainParams[1], false));
 			break;
 		default:
 			throw new AssertionError();
 		}
-		// remove double negations
-		if (func.equals(SMTLIBConstants.AND) ? isElim : !isElim) {
-			// An and-, or+, =>+ rule have only one additional lit
-			assert clauseLits.length == 2;
-			final boolean negated = func.equals(SMTLIBConstants.OR)
-					|| (func.equals(SMTLIBConstants.IMPLIES) && pos == mainParams.length - 1);
-			proof = removeNot(proof, mainParams[pos], !negated);
-		} else {
-			for (int i = 0; i < mainParams.length; i++) {
-				final boolean negated = func.equals(SMTLIBConstants.AND)
-						|| (func.equals(SMTLIBConstants.IMPLIES) && i < mainParams.length - 1);
-				proof = removeNot(proof, mainParams[i], !negated);
-			}
-		}
-		if (isQuotedQuant) {
-			final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, quotedAtom, mainAtom);
+		if (isAuxDefEq) {
+			final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, firstAtom, mainAtom);
 			if (isElim) {
-				proof = mProofRules.resolutionRule(mainAtom, mProofRules.iffElim2(expandEq), proof);
+				proof = mProofRules.resolutionRule(mainAtom, proveAuxElim(firstAtom, mainAtom), proof);
 			} else {
 				proof = mProofRules.resolutionRule(mainAtom, proof, mProofRules.iffElim1(expandEq));
+				proof = mProofRules.resolutionRule(expandEq, proveAuxExpand(firstAtom, mainAtom), proof);
 			}
-			proof = mProofRules.resolutionRule(expandEq, proveAuxExpand(quotedAtom, mainAtom), proof);
 		}
 		return proof;
 	}
@@ -471,11 +783,11 @@ public class ProofSimplifier extends TermTransformer {
 	 *
 	 * @param clause the clause to check.
 	 */
-	private Term convertTautStore(final Term[] clause) {
+	private Term convertTautStore(final ProofLiteral[] clause) {
 		// Store tautology have the form
 		// (@tautology (! (= (select (store a i v) i) v) :store))
-		assert clause.length ==1;
-		final Term eqlit = clause[0];
+		assert clause.length == 1 && clause[0].getPolarity();
+		final Term eqlit = clause[0].getAtom();
 		assert isApplication("=", eqlit);
 		final Term[] sides = ((ApplicationTerm) eqlit).getParameters();
 		assert isApplication("select", sides[0]);
@@ -488,19 +800,20 @@ public class ProofSimplifier extends TermTransformer {
 		return mProofRules.selectStore1(storeArgs[0], storeArgs[1], storeArgs[2]);
 	}
 
-	private Term convertTautDiff(final Term[] clause) {
+	private Term convertTautDiff(final ProofLiteral[] clause) {
 		// lit0: (= a b)
 		// lit1: ~(= (select a (diff a b)) (select b (diff a b)))
-		assert clause.length == 2;
-		final Term arrEq = clause[0];
+		assert clause.length == 2 && clause[0].getPolarity();
+		final Term arrEq = clause[0].getAtom();
 		assert isApplication("=", arrEq);
 		final Term[] arrays = ((ApplicationTerm) arrEq).getParameters();
 		// we could check the second equality, but the proof check in tautology will catch any problems
 		return mProofRules.extDiff(arrays[0], arrays[1]);
 	}
 
-	private Term convertTautLowHigh(final String ruleName, final Term literal) {
-		final Theory theory = literal.getTheory();
+	private Term convertTautLowHigh(final String ruleName, final ProofLiteral[] clause) {
+		final Term atom = clause[0].getAtom();
+		final Theory theory = atom.getTheory();
 		final boolean isToInt = ruleName.startsWith(":toInt");
 		final boolean isHigh = ruleName.endsWith("High");
 		// isLow: (<= (+ (- arg0) (* d candidate) ) 0)
@@ -509,7 +822,7 @@ public class ProofSimplifier extends TermTransformer {
 		// aka. (< (- arg0 (* d candidate)) |d|)
 		// where candidate is (div arg0 d) or (to_int arg0) and d is 1 for toInt.
 
-		final Term atom = isHigh ? negate(literal): literal;
+		assert clause[0].getPolarity() != isHigh;
 		assert isApplication("<=", atom);
 		final Term[] leArgs = ((ApplicationTerm) atom).getParameters();
 		final SMTAffineTerm lhs = new SMTAffineTerm(leArgs[0]);
@@ -604,27 +917,127 @@ public class ProofSimplifier extends TermTransformer {
 		throw new AssertionError();
 	}
 
-	private Term convertTautology(final Term taut) {
-		final AnnotatedTerm annotTerm = (AnnotatedTerm) taut;
-		final Term clause = annotTerm.getSubterm();
-		final Term[] clauseLits;
-		if (isApplication("or", clause)) {
-			clauseLits = ((ApplicationTerm) clause).getParameters();
+	private Term convertTautDtMatch(final String rule, final ProofLiteral[] clause) {
+		// there are two different matchCase tautologies:
+		// boolean case: +/~(match ...), ~(is_cons c), ~/+(case ...)
+		// term case: ~(is_cons c), (= (match ...) (case ...))
+		// similarly, there are two different matchDefault tautologies:
+		// boolean case: +/~(match ...), (is_cons c1), ..., (is_cons cn) ~/+(case ...)
+		// term case: (is_cons c1), ..., (is_cons cn), (= (match ...) (case ...))
+		boolean negated;
+		// check for matchCase or matchDefault.
+		final boolean isMatchCase = rule.equals(":matchCase");
+		// use the first literal to distinguish between boolean and term case.
+		final boolean boolCase = clause[0].getAtom() instanceof MatchTerm;
+		MatchTerm matchTerm;
+		ApplicationTerm isTerm = null;
+		if (boolCase) {
+			// boolean case
+			assert clause.length >= 2;
+			negated = !clause[0].getPolarity();
+			matchTerm = (MatchTerm) clause[0].getAtom();
+			if (isMatchCase) {
+				assert !clause[1].getPolarity();
+				final Term tester = clause[1].getAtom();
+				assert isApplication(SMTLIBConstants.IS, tester);
+				isTerm = (ApplicationTerm) tester;
+			}
 		} else {
-			clauseLits = new Term[] { clause };
+			// term case
+			assert clause.length >= 1;
+			negated = false;
+			if (isMatchCase) {
+				assert !clause[0].getPolarity();
+				final Term tester = clause[0].getAtom();
+				assert isApplication(SMTLIBConstants.IS, tester);
+				isTerm = (ApplicationTerm) tester;
+			}
+			assert clause[clause.length - 1].getPolarity();
+			assert isApplication(SMTLIBConstants.EQUALS, clause[clause.length - 1].getAtom());
+			final ApplicationTerm eqTerm = (ApplicationTerm) clause[clause.length - 1].getAtom();
+			assert eqTerm.getParameters().length == 2;
+			matchTerm = (MatchTerm) eqTerm.getParameters()[0];
 		}
-		assert annotTerm.getAnnotations().length == 1;
-		final Annotation annot = annotTerm.getAnnotations()[0];
+
+		final Constructor[] constrs = matchTerm.getConstructors();
+		int caseNr;
+		for (caseNr = 0; caseNr < constrs.length; caseNr++) {
+			if (isMatchCase ? constrs[caseNr].getName().equals(isTerm.getFunction().getIndices()[0])
+					: constrs[caseNr] == null) {
+					break;
+			}
+		}
+		final Theory theory = matchTerm.getTheory();
+		final Term dataTerm = matchTerm.getDataTerm();
+		Term iteTerm = MinimalProofChecker.buildIteForMatch(matchTerm);
+
+		final ArrayList<Term> eqSequence = new ArrayList<>();
+		eqSequence.add(matchTerm);
+		for (int i = 0; i < caseNr; i++) {
+			assert isApplication(SMTLIBConstants.ITE, iteTerm);
+			eqSequence.add(iteTerm);
+			iteTerm = ((ApplicationTerm) iteTerm).getParameters()[2];
+		}
+		if (isMatchCase && caseNr < constrs.length - 1) {
+			assert isApplication(SMTLIBConstants.ITE, iteTerm);
+			eqSequence.add(iteTerm);
+			iteTerm = ((ApplicationTerm) iteTerm).getParameters()[1];
+		}
+		eqSequence.add(iteTerm);
+		Term proof = mProofRules.trans(eqSequence.toArray(new Term[eqSequence.size()]));
+		proof = res(theory.term(SMTLIBConstants.EQUALS, matchTerm, eqSequence.get(1)), mProofRules.dtMatch(matchTerm),
+				proof);
+		final Constructor cons = constrs[caseNr];
+		Term consTerm = null;
+		if (isMatchCase) {
+			final Term[] selectTerms = new Term[cons.getSelectors().length];
+			for (int i = 0; i < selectTerms.length; i++) {
+				selectTerms[i] = theory.term(cons.getSelectors()[i], dataTerm);
+			}
+			consTerm = theory.term(cons.getName(), null, (cons.needsReturnOverload() ? dataTerm.getSort() : null),
+					selectTerms);
+		}
+		for (int i = 0; i < caseNr; i++) {
+			proof = res(theory.term(SMTLIBConstants.EQUALS, eqSequence.get(i + 1), eqSequence.get(i + 2)),
+					mProofRules.ite2(eqSequence.get(i + 1)), proof);
+			if (isMatchCase) {
+				final String[] index = new String[] { constrs[i].getName() };
+				final Term isConsData = theory.term(SMTLIBConstants.IS, index, null, dataTerm);
+				final Term isConsCons = theory.term(SMTLIBConstants.IS, index, null, consTerm);
+				final Term isConsEq = theory.term(SMTLIBConstants.EQUALS, isConsCons, isConsData);
+				proof = res(isConsData, proof, mProofRules.iffElim1(isConsEq));
+				proof = res(isConsEq, mProofRules.cong(isConsCons, isConsData), proof);
+				proof = res(isConsCons, proof, mProofRules.dtTestE(constrs[i].getName(), consTerm));
+			}
+		}
+		if (isMatchCase && caseNr > 0) {
+			final Term isConsCons = theory.term(SMTLIBConstants.IS, new String[] { cons.getName() }, null, dataTerm);
+			proof = res(theory.term(SMTLIBConstants.EQUALS, consTerm, dataTerm), mProofRules.dtCons(isConsCons), proof);
+		}
+		if (isMatchCase && caseNr < constrs.length - 1) {
+			proof = res(theory.term(SMTLIBConstants.EQUALS, eqSequence.get(caseNr + 1), eqSequence.get(caseNr + 2)),
+					mProofRules.ite1(eqSequence.get(caseNr + 1)), proof);
+		}
+		if (boolCase) {
+			final Term matchEq = theory.term(SMTLIBConstants.EQUALS, matchTerm, iteTerm);
+			proof = res(matchEq, proof, (negated ? mProofRules.iffElim2(matchEq) : mProofRules.iffElim1(matchEq)));
+			proof = removeNot(proof, iteTerm, negated);
+		}
+		return proof;
+	}
+
+	private Term convertTautology(final ProofLiteral[] clause, Annotation annot) {
 		final String ruleName = annot.getKey();
 		Term proof = null;
 		switch (ruleName) {
 		case ":true+":
-			assert isApplication("true", clause);
+			assert clause.length == 1 && clause[0].getPolarity()
+					&& isApplication(SMTLIBConstants.TRUE, clause[0].getAtom());
 			proof = mProofRules.trueIntro();
 			break;
 		case ":false-":
-			assert isApplication("not", clause)
-					&& isApplication("false", ((ApplicationTerm) clause).getParameters()[0]);
+			assert clause.length == 1 && !clause[0].getPolarity()
+					&& isApplication(SMTLIBConstants.FALSE, clause[0].getAtom());
 			proof = mProofRules.falseElim();
 			break;
 		case ":or+":
@@ -632,178 +1045,102 @@ public class ProofSimplifier extends TermTransformer {
 		case ":and+":
 		case ":and-":
 		case ":=>+":
-		case ":=>-": {
-			proof = convertTautElimIntro(ruleName, clauseLits);
-			break;
-		}
-		case ":=+1": {
-			assert clauseLits.length == 3;
-			final Term eqTerm = clauseLits[0];
-			assert isApplication("=", eqTerm);
-			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
-			assert eqParams.length == 2;
-			proof = mProofRules.iffIntro1(eqTerm);
-			assert eqParams[0] == clauseLits[1];
-			proof = removeNot(proof, eqParams[0], true);
-			assert eqParams[1] == clauseLits[2];
-			proof = removeNot(proof, eqParams[1], true);
-			break;
-		}
-		case ":=+2": {
-			assert clauseLits.length == 3;
-			final Term eqTerm = clauseLits[0];
-			assert isApplication("=", eqTerm);
-			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
-			assert eqParams.length == 2;
-			proof = mProofRules.iffIntro2(eqTerm);
-			assert isApplication("not", clauseLits[1]);
-			assert eqParams[0] == ((ApplicationTerm) clauseLits[1]).getParameters()[0];
-			proof = removeNot(proof, eqParams[0], false);
-			assert isApplication("not", clauseLits[2]);
-			assert eqParams[1] == ((ApplicationTerm) clauseLits[2]).getParameters()[0];
-			proof = removeNot(proof, eqParams[0], false);
-			break;
-		}
-		case ":=-1": {
-			assert clauseLits.length == 3;
-			assert isApplication("not", clauseLits[0]);
-			final Term eqTerm = ((ApplicationTerm) clauseLits[0]).getParameters()[0];
-			assert isApplication("=", eqTerm);
-			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
-			assert eqParams.length == 2;
-			proof = mProofRules.iffElim1(eqTerm);
-			assert eqParams[0] == clauseLits[1];
-			proof = removeNot(proof, eqParams[0], true);
-			assert isApplication("not", clauseLits[2]);
-			assert eqParams[1] == ((ApplicationTerm) clauseLits[2]).getParameters()[0];
-			proof = removeNot(proof, eqParams[1], false);
-			break;
-		}
-		case ":=-2": {
-			assert clauseLits.length == 3;
-			assert isApplication("not", clauseLits[0]);
-			final Term eqTerm = ((ApplicationTerm) clauseLits[0]).getParameters()[0];
-			assert isApplication("=", eqTerm);
-			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
-			assert eqParams.length == 2;
-			proof = mProofRules.iffElim2(eqTerm);
-			assert isApplication("not", clauseLits[1]);
-			assert eqParams[0] == ((ApplicationTerm) clauseLits[1]).getParameters()[0];
-			proof = removeNot(proof, eqParams[0], false);
-			assert eqParams[1] == clauseLits[2];
-			proof = removeNot(proof, eqParams[1], true);
-			break;
-		}
-		case ":xor+1": {
-			assert isApplication("or", clause);
-			final Term quotedTerm = clauseLits[0];
-			final boolean isQuotedQuant = quotedTerm instanceof AnnotatedTerm;
-			final Term xorTerm = isQuotedQuant ? unquoteExpand(quotedTerm) : quotedTerm;
-			assert isApplication("xor", xorTerm);
-			final Term[] xorParams = ((ApplicationTerm) xorTerm).getParameters();
-			proof = mProofRules.xorIntro(xorParams, new Term[] { xorParams[0] }, new Term[] { xorParams[1] });
-			proof = removeNot(proof, xorParams[0], true);
-			proof = removeNot(proof, xorParams[1], false);
-			if (isQuotedQuant) {
-				final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, quotedTerm, xorTerm);
-				proof = mProofRules.resolutionRule(xorTerm, proof, mProofRules.iffElim1(expandEq));
-				proof = mProofRules.resolutionRule(expandEq, proveAuxExpand(quotedTerm, xorTerm), proof);
-			}
-			break;
-		}
-		case ":xor+2": {
-			assert isApplication("or", clause);
-			final Term quotedTerm = clauseLits[0];
-			final boolean isQuotedQuant = quotedTerm instanceof AnnotatedTerm;
-			final Term xorTerm = isQuotedQuant ? unquoteExpand(quotedTerm) : quotedTerm;
-			assert isApplication("xor", xorTerm);
-			final Term[] xorParams = ((ApplicationTerm) xorTerm).getParameters();
-			proof = mProofRules.xorIntro(xorParams, new Term[] { xorParams[1] }, new Term[] { xorParams[0] });
-			proof = removeNot(proof, xorParams[0], false);
-			proof = removeNot(proof, xorParams[1], true);
-			if (isQuotedQuant) {
-				final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, quotedTerm, xorTerm);
-				proof = mProofRules.resolutionRule(xorTerm, proof, mProofRules.iffElim1(expandEq));
-				proof = mProofRules.resolutionRule(expandEq, proveAuxExpand(quotedTerm, xorTerm), proof);
-			}
-			break;
-		}
-		case ":xor-1": {
-			assert isApplication("or", clause);
-			assert isApplication("not", clauseLits[0]);
-			final Term quotedTerm = ((ApplicationTerm) clauseLits[0]).getParameters()[0];
-			final boolean isQuotedQuant = quotedTerm instanceof AnnotatedTerm;
-			final Term xorTerm = isQuotedQuant ? unquoteExpand(quotedTerm) : quotedTerm;
-			assert isApplication("xor", xorTerm);
-			final Term[] xorParams = ((ApplicationTerm) xorTerm).getParameters();
-			proof = mProofRules.xorIntro(new Term[] { xorParams[0] }, new Term[] { xorParams[1] }, xorParams);
-			proof = removeNot(proof, xorParams[0], true);
-			proof = removeNot(proof, xorParams[1], true);
-			if (isQuotedQuant) {
-				final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, quotedTerm, xorTerm);
-				proof = mProofRules.resolutionRule(xorTerm, mProofRules.iffElim2(expandEq), proof);
-				proof = mProofRules.resolutionRule(expandEq, proveAuxExpand(quotedTerm, xorTerm), proof);
-			}
-			break;
-		}
-		case ":xor-2": {
-			assert isApplication("or", clause);
-			assert isApplication("not", clauseLits[0]);
-			final Term quotedTerm = ((ApplicationTerm) clauseLits[0]).getParameters()[0];
-			final boolean isQuotedQuant = quotedTerm instanceof AnnotatedTerm;
-			final Term xorTerm = isQuotedQuant ? unquoteExpand(quotedTerm) : quotedTerm;
-			assert isApplication("xor", xorTerm);
-			final Term[] xorParams = ((ApplicationTerm) xorTerm).getParameters();
-			proof = mProofRules.xorElim(xorParams, new Term[] { xorParams[0] }, new Term[] { xorParams[1] });
-			proof = removeNot(proof, xorParams[0], false);
-			proof = removeNot(proof, xorParams[1], false);
-			if (isQuotedQuant) {
-				final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, quotedTerm, xorTerm);
-				proof = mProofRules.resolutionRule(xorTerm, mProofRules.iffElim2(expandEq), proof);
-				proof = mProofRules.resolutionRule(expandEq, proveAuxExpand(quotedTerm, xorTerm), proof);
-			}
-			break;
-		}
+		case ":=>-":
+		case ":xor+1":
+		case ":xor+2":
+		case ":xor-1":
+		case ":xor-2":
 		case ":ite+1":
 		case ":ite+2":
 		case ":ite+red":
 		case ":ite-1":
 		case ":ite-2":
 		case ":ite-red": {
-			proof = convertTautIte(ruleName, clauseLits);
+			proof = convertTautElimIntro(ruleName, clause);
 			break;
 		}
-		case ":exists-": {
-			proof = convertTautExistsElim(clauseLits, (Term[]) annot.getValue());
+		case ":=+1": {
+			assert clause.length == 3;
+			final Term eqTerm = clause[0].getAtom();
+			assert clause[0].getPolarity() && isApplication("=", eqTerm);
+			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
+			assert eqParams.length == 2;
+			proof = mProofRules.iffIntro1(eqTerm);
+			assert clause[1].getPolarity() && eqParams[0] == clause[1].getAtom();
+			proof = removeNot(proof, eqParams[0], true);
+			assert clause[2].getPolarity() && eqParams[1] == clause[2].getAtom();
+			proof = removeNot(proof, eqParams[1], true);
+			break;
+		}
+		case ":=+2": {
+			assert clause.length == 3;
+			final Term eqTerm = clause[0].getAtom();
+			assert clause[0].getPolarity() && isApplication("=", eqTerm);
+			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
+			assert eqParams.length == 2;
+			proof = mProofRules.iffIntro2(eqTerm);
+			assert !clause[1].getPolarity() && eqParams[0] == clause[1].getAtom();
+			proof = removeNot(proof, eqParams[0], false);
+			assert !clause[2].getPolarity() && eqParams[1] == clause[2].getAtom();
+			proof = removeNot(proof, eqParams[0], false);
+			break;
+		}
+		case ":=-1": {
+			assert clause.length == 3;
+			final Term eqTerm = clause[0].getAtom();
+			assert !clause[0].getPolarity() && isApplication("=", eqTerm);
+			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
+			assert eqParams.length == 2;
+			proof = mProofRules.iffElim1(eqTerm);
+			assert clause[1].getPolarity() && eqParams[0] == clause[1].getAtom();
+			proof = removeNot(proof, eqParams[0], true);
+			assert !clause[2].getPolarity() && eqParams[1] == clause[2].getAtom();
+			proof = removeNot(proof, eqParams[1], false);
+			break;
+		}
+		case ":=-2": {
+			assert clause.length == 3;
+			final Term eqTerm = clause[0].getAtom();
+			assert !clause[0].getPolarity() && isApplication("=", eqTerm);
+			final Term[] eqParams = ((ApplicationTerm) eqTerm).getParameters();
+			assert eqParams.length == 2;
+			proof = mProofRules.iffElim2(eqTerm);
+			assert !clause[1].getPolarity() && eqParams[0] == clause[1].getAtom();
+			proof = removeNot(proof, eqParams[0], false);
+			assert clause[2].getPolarity() && eqParams[1] == clause[2].getAtom();
+			proof = removeNot(proof, eqParams[1], true);
+			break;
+		}
+		case ":exists-":
+		case ":forall+": {
+			proof = convertTautQuantSkolemize(clause, (Term[]) annot.getValue(), ruleName.equals(":forall+"));
 			break;
 		}
 		case ":exists+": {
-			proof = convertTautExistsIntro(clauseLits, (Term[]) annot.getValue());
+			proof = convertTautExistsIntro(clause, (Term[]) annot.getValue());
 			break;
 		}
 		case ":forall-": {
-			proof = convertTautForallElim(clauseLits, (Term[]) annot.getValue());
-			break;
-		}
-		case ":forall+": {
-			proof = convertTautForallIntro(clauseLits, (Term[]) annot.getValue());
+			proof = convertTautForallElim(clause, (Term[]) annot.getValue());
 			break;
 		}
 		case ":termITE": {
-			assert isApplication("or", clause);
-			proof = convertTermITE(clauseLits);
+			proof = convertTermITE(clause);
+			break;
+		}
+		case ":termITEBound": {
+			proof = convertTermITEBound(clause);
 			break;
 		}
 		case ":trueNotFalse": {
-			final Theory t = taut.getTheory();
+			final Theory t = clause[0].getAtom().getTheory();
 			proof = mProofRules.resolutionRule(t.mTrue, mProofRules.trueIntro(), mProofRules.resolutionRule(t.mFalse,
 					mProofRules.iffElim2(t.term("=", t.mTrue, t.mFalse)), mProofRules.falseElim()));
 			break;
 		}
 		case ":excludedMiddle1":
 		case ":excludedMiddle2":
-			assert isApplication("or", clause);
-			proof = convertTautExcludedMiddle(ruleName, clauseLits);
+			proof = convertTautExcludedMiddle(ruleName, clause);
 			break;
 		case ":divHigh":
 		case ":divLow":
@@ -812,43 +1149,20 @@ public class ProofSimplifier extends TermTransformer {
 			proof = convertTautLowHigh(ruleName, clause);
 			break;
 		case ":store":
-			proof = convertTautStore(clauseLits);
+			proof = convertTautStore(clause);
 			break;
 		case ":diff":
-			proof = convertTautDiff(clauseLits);
+			proof = convertTautDiff(clause);
 			break;
-		default: {
-			proof = mProofRules.oracle(termToProofLiterals(clause), annotTerm.getAnnotations());
+		case ":matchCase":
+		case ":matchDefault":
+			proof = convertTautDtMatch(ruleName, clause);
 			break;
+		default:
+			throw new IllegalArgumentException("Unknown Tautology");
 		}
-		}
-		assert checkProof(proof, termToProofLiterals(clause));
+		assert checkProof(proof, clause);
 		return proof;
-	}
-
-	private Term convertMP(final Term[] newParams) {
-		assert newParams.length == 2;
-		assert newParams[1] instanceof AnnotatedTerm;
-		// the first argument is a normal proof of a formula.
-		// the second argument is a rewrite proof and annotated with the proved term.
-		final AnnotatedTerm annotImp = (AnnotatedTerm) newParams[1];
-		final Term implicationTerm = (ApplicationTerm) annotImp.getAnnotations()[0].getValue();
-		final boolean isEquality = isApplication(SMTLIBConstants.EQUALS, implicationTerm);
-		assert isEquality || isApplication(SMTLIBConstants.IMPLIES, implicationTerm);
-		Term lhsTerm = ((ApplicationTerm) implicationTerm).getParameters()[0];
-		final Term rhsTerm = ((ApplicationTerm) implicationTerm).getParameters()[1];
-
-		final Term impElim = isEquality ? mProofRules.iffElim2(implicationTerm)
-				: mProofRules.impElim(implicationTerm);
-		final Term impClause = mProofRules.resolutionRule(implicationTerm, annotImp.getSubterm(),
-				removeNot(impElim, lhsTerm, false));
-		boolean positive = true;
-		while (isApplication("not", lhsTerm)) {
-			lhsTerm = ((ApplicationTerm) lhsTerm).getParameters()[0];
-			positive = !positive;
-		}
-		return removeNot(mProofRules.resolutionRule(lhsTerm, positive ? newParams[0] : impClause,
-				positive ? impClause : newParams[0]), rhsTerm, true);
 	}
 
 	private Term convertTrans(final Term[] newParams) {
@@ -874,39 +1188,30 @@ public class ProofSimplifier extends TermTransformer {
 		return annotateProved(provedTerm, clause);
 	}
 
-	private Term convertCong(final Term[] newParams) {
+	private Term convertCong(final FunctionSymbol congSymb, final Term[] newParams) {
+		final Sort resultSort = congSymb.isReturnOverload() ? congSymb.getReturnSort() : null;
+		final FunctionSymbol func = CongRewriteFunctionFactory.getFunctionFromIndex(congSymb.getIndices(),
+				congSymb.getParameterSorts(), resultSort);
+
 		final ApplicationTerm leftEquality = (ApplicationTerm) provedTerm((AnnotatedTerm) newParams[0]);
 		final Theory t = newParams[0].getTheory();
 		assert isApplication(SMTLIBConstants.EQUALS, leftEquality);
-		final ApplicationTerm oldFunc = (ApplicationTerm) leftEquality.getParameters()[1];
-		final Term[] oldFuncParams = oldFunc.getParameters();
-		final Term[] newFuncParams = oldFuncParams.clone();
-		final Term[] newLit = new Term[oldFuncParams.length];
-		final Term[] newLitProof = new Term[oldFuncParams.length];
-		int pos = 1;
-		for (int i = 0; i < oldFuncParams.length; i++) {
-			// check if we rewrite this argument
-			if (pos < newParams.length) {
-				final ApplicationTerm provedEquality = (ApplicationTerm) provedTerm((AnnotatedTerm) newParams[pos]);
-				assert isApplication(SMTLIBConstants.EQUALS, provedEquality);
-				if (provedEquality.getParameters()[0] == oldFuncParams[i]) {
-					// we rewrite the argument
-					newFuncParams[i] = provedEquality.getParameters()[1];
-					newLit[i] = provedEquality;
-					newLitProof[i] = subproof((AnnotatedTerm) newParams[pos]);
-					pos++;
-					continue;
-				}
-			}
-			// use reflexivity by default
-			newLit[i] = t.term(SMTLIBConstants.EQUALS, oldFuncParams[i], oldFuncParams[i]);
-			newLitProof[i] = mProofRules.refl(oldFuncParams[i]);
+		final Term[] oldFuncParams = new Term[newParams.length];
+		final Term[] newFuncParams = new Term[newParams.length];
+		final Term[] newLit = new Term[newParams.length];
+		final Term[] newLitProof = new Term[newParams.length];
+		for (int i = 0; i < newFuncParams.length; i++) {
+			final ApplicationTerm provedEquality = (ApplicationTerm) provedTerm((AnnotatedTerm) newParams[i]);
+			newLit[i] = provedEquality;
+			newLitProof[i] = subproof((AnnotatedTerm) newParams[i]);
+			oldFuncParams[i] = provedEquality.getParameters()[0];
+			newFuncParams[i] = provedEquality.getParameters()[1];
 		}
-		assert pos == newParams.length;
 
-		final Term newFunc = t.term(oldFunc.getFunction(), newFuncParams);
+		final Term oldFunc = t.term(func, oldFuncParams);
+		final Term newFunc = t.term(func, newFuncParams);
 		final Term congEquality = t.term(SMTLIBConstants.EQUALS, oldFunc, newFunc);
-		Term proof = mProofRules.cong(oldFunc.getFunction(), oldFuncParams, newFuncParams);
+		Term proof = mProofRules.cong(func, oldFuncParams, newFuncParams);
 		final HashSet<Term> eliminated = new HashSet<>();
 		for (int i = 0; i < newFuncParams.length; i++) {
 			if (!eliminated.contains(newLit[i])) {
@@ -914,13 +1219,123 @@ public class ProofSimplifier extends TermTransformer {
 				eliminated.add(newLit[i]);
 			}
 		}
-		// build transitivity with left equality, unless it is a reflexivity
-		if (leftEquality.getParameters()[0] != leftEquality.getParameters()[1]) {
-			Term transProof = mProofRules.trans(leftEquality.getParameters()[0], oldFunc, newFunc);
-			transProof = mProofRules.resolutionRule(leftEquality, subproof((AnnotatedTerm) newParams[0]), transProof);
-			proof = mProofRules.resolutionRule(congEquality, proof, transProof);
+		return annotateProved(congEquality, proof);
+	}
+
+	private Term convertMatch(final Term[] newParams) {
+		final AnnotatedTerm dataRewrite = (AnnotatedTerm) newParams[0];
+		final Theory theory = dataRewrite.getTheory();
+		final ApplicationTerm dataEquality = (ApplicationTerm) provedTerm(dataRewrite);
+		assert dataEquality.getFunction().getName().equals(SMTLIBConstants.EQUALS);
+		final Term oldData = dataEquality.getParameters()[0];
+		final Term newData = dataEquality.getParameters()[1];
+
+		final DataType dataType = (DataType) oldData.getSort().getSortSymbol();
+		final Term[] oldMatchCases = new Term[newParams.length - 1];
+		final Term[] newMatchCases = new Term[newParams.length - 1];
+		final TermVariable[][] caseVars = new TermVariable[newParams.length - 1][];
+		final Constructor[] constructors = new Constructor[newParams.length - 1];
+		final Term[] rewriteProofs = new Term[newParams.length - 1];
+		for  (int i = 1; i < newParams.length; i++) {
+			final AnnotatedTerm caseRewrite = (AnnotatedTerm) newParams[i];
+			final AnnotatedTerm rewrite = (AnnotatedTerm) caseRewrite.getSubterm();
+			final ApplicationTerm caseEquality = (ApplicationTerm) provedTerm(rewrite);
+			assert caseRewrite.getAnnotations()[0].getKey() == ProofConstants.ANNOTKEY_VARS;
+			caseVars[i-1] = (TermVariable[]) caseRewrite.getAnnotations()[0].getValue();
+			assert caseRewrite.getAnnotations()[1].getKey() == ProofConstants.ANNOTKEY_CONSTRUCTOR;
+			final String constructorName = (String) caseRewrite.getAnnotations()[1].getValue();
+			oldMatchCases[i - 1] = caseEquality.getParameters()[0];
+			newMatchCases[i - 1] = caseEquality.getParameters()[1];
+			constructors[i - 1] = constructorName == null ? null : dataType.findConstructor(constructorName);
+			rewriteProofs[i - 1] = subproof(rewrite);
 		}
-		return annotateProved(t.term(SMTLIBConstants.EQUALS, leftEquality.getParameters()[0], newFunc), proof);
+		final MatchTerm oldOldMatch = (MatchTerm) theory.match(oldData, caseVars, oldMatchCases, constructors);
+		final MatchTerm oldMatch = (MatchTerm) theory.match(newData, caseVars, oldMatchCases, constructors);
+		final MatchTerm newMatch = (MatchTerm) theory.match(newData, caseVars, newMatchCases, constructors);
+		Term oldMatchEqualityProof = null;
+		if (oldData != newData) {
+			theory.push();
+			final TermVariable dataVar = theory.createFreshTermVariable("match", oldData.getSort());
+			final TermVariable[] bodyVars = new TermVariable[] { dataVar };
+			final Term bodyDef = theory.match(dataVar, caseVars, oldMatchCases, constructors);
+			final FunctionSymbol bodyFunc = theory.declareInternalFunction("@matchbody",
+					new Sort[] { oldData.getSort() }, bodyVars, bodyDef, FunctionSymbol.UNINTERPRETEDINTERNAL);
+			final Term oldBody = theory.term(bodyFunc, oldData);
+			final Term newBody = theory.term(bodyFunc, newData);
+			final Term oldOldMatchBodyEq = res(theory.term(SMTLIBConstants.EQUALS, oldBody, oldOldMatch),
+					mProofRules.expand(oldBody), mProofRules.symm(oldOldMatch, oldBody));
+			final Term oldNewBodyEq = res(theory.term(SMTLIBConstants.EQUALS, oldData, newData),
+					subproof(dataRewrite), mProofRules.cong(oldBody, newBody));
+			oldMatchEqualityProof = res(theory.term(SMTLIBConstants.EQUALS, oldOldMatch, oldBody), oldOldMatchBodyEq,
+					res(theory.term(SMTLIBConstants.EQUALS, oldBody, newBody), oldNewBodyEq,
+							res(theory.term(SMTLIBConstants.EQUALS, newBody, oldMatch),
+									mProofRules.expand(newBody),
+									mProofRules.trans(oldOldMatch, oldBody, newBody, oldMatch))));
+			oldMatchEqualityProof = mProofRules.defineFun(bodyFunc, theory.lambda(bodyVars, bodyDef),
+					oldMatchEqualityProof);
+			theory.pop();
+		}
+
+		final Term oldIte = MinimalProofChecker.buildIteForMatch(oldMatch);
+		final Term newIte = MinimalProofChecker.buildIteForMatch(newMatch);
+		Term iteEqualsProof = null;
+		boolean needReflData = false;
+		Term oldSub = oldIte;
+		Term newSub = newIte;
+		for (int i = 0; i < constructors.length; i++) {
+			Term oldCase, newCase;
+			if (constructors[i] == null || i == newParams.length - 1) {
+				oldCase = oldSub;
+				newCase = newSub;
+			} else {
+				assert ((ApplicationTerm) oldSub).getFunction().getName().equals("ite");
+				assert ((ApplicationTerm) newSub).getFunction().getName().equals("ite");
+				oldCase = ((ApplicationTerm) oldSub).getParameters()[1];
+				newCase = ((ApplicationTerm) newSub).getParameters()[1];
+				iteEqualsProof = res(theory.term(SMTLIBConstants.EQUALS, oldSub, newSub),
+						mProofRules.cong(oldSub, newSub), iteEqualsProof);
+
+				final Term oldCond = ((ApplicationTerm) oldSub).getParameters()[0];
+				final Term newCond = ((ApplicationTerm) newSub).getParameters()[0];
+				iteEqualsProof = res(theory.term(SMTLIBConstants.EQUALS, oldCond, newCond),
+						mProofRules.cong(oldCond, newCond), iteEqualsProof);
+				needReflData = true;
+			}
+			Term[] selectors;
+			if (constructors[i] == null) {
+				selectors = new Term[] { newData };
+			} else {
+				selectors = new Term[constructors[i].getSelectors().length];
+				for (int j = 0; j < selectors.length; j++) {
+					selectors[j] = theory.term(constructors[i].getSelectors()[j], newData);
+				}
+			}
+			iteEqualsProof = res(theory.term(SMTLIBConstants.EQUALS, oldCase, newCase),
+					theory.let(caseVars[i], selectors, rewriteProofs[i]), iteEqualsProof);
+			if (constructors[i] == null) {
+				break;
+			} else if (i < newParams.length - 1) {
+				oldSub = ((ApplicationTerm) oldSub).getParameters()[2];
+				newSub = ((ApplicationTerm) newSub).getParameters()[2];
+			}
+		}
+		iteEqualsProof = new FormulaUnLet().unlet(iteEqualsProof);
+		if (needReflData) {
+			iteEqualsProof = res(theory.term(SMTLIBConstants.EQUALS, newData, newData),
+					mProofRules.refl(newData), iteEqualsProof);
+		}
+		final Term iteEquality = theory.term(SMTLIBConstants.EQUALS, oldIte, newIte);
+		Term proof = res(iteEquality, iteEqualsProof, mProofRules.trans(oldMatch, oldIte, newIte, newMatch));
+		proof = res(theory.term(SMTLIBConstants.EQUALS, oldMatch, oldIte), mProofRules.dtMatch(oldMatch), proof);
+		proof = res(theory.term(SMTLIBConstants.EQUALS, newMatch, newIte), mProofRules.dtMatch(newMatch),
+				res(theory.term(SMTLIBConstants.EQUALS, newIte, newMatch), mProofRules.symm(newIte, newMatch), proof));
+		if (oldData != newData) {
+			proof = res(theory.term(SMTLIBConstants.EQUALS, oldOldMatch, oldMatch), oldMatchEqualityProof,
+					res(theory.term(SMTLIBConstants.EQUALS, oldMatch, newMatch), proof,
+							mProofRules.trans(oldOldMatch, oldMatch, newMatch)));
+		}
+
+		return annotateProved(theory.term(SMTLIBConstants.EQUALS, oldOldMatch, newMatch), proof);
 	}
 
 	private Term convertRewriteIntern(final Term lhs, final Term rhs) {
@@ -930,71 +1345,45 @@ public class ProofSimplifier extends TermTransformer {
 			return mProofRules.refl(lhs);
 		}
 
-		// term x can be rewritten to (not (! (= x false) :quoted))
+		// term x can be rewritten to (not (= x false))) for EPR reasoning
 		if (isApplication("not", rhs)) {
-			final Term quotedAtom = negate(rhs);
-			if (quotedAtom instanceof AnnotatedTerm) {
-				final Term unquotedAtom = unquote(quotedAtom);
-				if (isApplication("=", unquotedAtom)) {
-					final ApplicationTerm rhsApp = (ApplicationTerm) unquotedAtom;
-					if (isApplication("false", rhsApp.getParameters()[1])
-							&& lhs == rhsApp.getParameters()[0]) {
-						final Term rhsLit = theory.term("not", rhsApp);
-						final Term lhsEqRhsLit = theory.term("=", lhs, rhsLit);
-						Term proofLhsEqRhsLit;
-						Term proofUnquote = mProofRules.resolutionRule(theory.term("=", quotedAtom, unquotedAtom),
-								mProofRules.delAnnot(quotedAtom), mProofRules.symm(unquotedAtom, quotedAtom));
-						final Term falseTerm = rhsApp.getParameters()[1];
-						proofLhsEqRhsLit = proveIff(lhsEqRhsLit,
-								mProofRules.resolutionRule(rhsApp, mProofRules.notIntro(rhsLit), mProofRules.iffElim2(rhsApp)),
-								mProofRules.resolutionRule(rhsApp, mProofRules.iffIntro1(rhsApp), mProofRules.notElim(rhsLit)));
-						proofLhsEqRhsLit = mProofRules.resolutionRule(falseTerm, proofLhsEqRhsLit, mProofRules.falseElim());
-						proofUnquote = mProofRules.resolutionRule(theory.term("=", unquotedAtom, quotedAtom), proofUnquote,
-								mProofRules.cong(rhsLit, rhs));
-						return mProofRules.resolutionRule(theory.term("=", lhs, rhsLit), proofLhsEqRhsLit,
-								mProofRules.resolutionRule(theory.term("=", rhsLit, rhs), proofUnquote,
-										mProofRules.trans(lhs, rhsLit, rhs)));
-					}
+			final Term atom = ((ApplicationTerm) rhs).getParameters()[0];
+			if (isApplication("=", atom)) {
+				final ApplicationTerm rhsApp = (ApplicationTerm) atom;
+				if (isApplication("false", rhsApp.getParameters()[1]) && lhs == rhsApp.getParameters()[0]) {
+					final Term rhsLit = theory.term("not", rhsApp);
+					final Term lhsEqRhsLit = theory.term("=", lhs, rhsLit);
+					Term proofLhsEqRhsLit;
+					final Term falseTerm = rhsApp.getParameters()[1];
+					proofLhsEqRhsLit = proveIff(lhsEqRhsLit,
+							mProofRules.resolutionRule(rhsApp, mProofRules.notIntro(rhsLit),
+									mProofRules.iffElim2(rhsApp)),
+							mProofRules.resolutionRule(rhsApp, mProofRules.iffIntro1(rhsApp),
+									mProofRules.notElim(rhsLit)));
+					proofLhsEqRhsLit = mProofRules.resolutionRule(falseTerm, proofLhsEqRhsLit, mProofRules.falseElim());
+					return proofLhsEqRhsLit;
 				}
 			}
 		}
 
-		if (rhs instanceof AnnotatedTerm) {
-			final Term unquoteRhs = unquote(rhs);
+		/* second case: boolean functions are created as equality with true */
+		if (isApplication("=", rhs)) {
+			final Term[] rhsArgs = ((ApplicationTerm) rhs).getParameters();
+			if (rhsArgs.length == 2 && isApplication("true", rhsArgs[1])) {
+				/* check if we need to expand an @aux application */
+				if (lhs == rhsArgs[0] || isAuxApplication(rhsArgs[0])) {
 
-			/* check for quoted auxiliary literals */
-			if (lhs == unquoteRhs) {
-				return mProofRules.resolutionRule(theory.term("=", rhs, lhs), mProofRules.delAnnot(rhs),
-						mProofRules.symm(lhs, rhs));
-			}
-
-			/* second case: boolean functions are created as equality with true */
-			if (isApplication("=", unquoteRhs)) {
-				final Term[] rhsArgs = ((ApplicationTerm) unquoteRhs).getParameters();
-				if (rhsArgs.length == 2 && isApplication("true", rhsArgs[1])) {
-					/* check if we need to expand an @aux application */
-					final boolean needsExpand = lhs != rhsArgs[0] && (rhsArgs[0] instanceof ApplicationTerm
-							&& mAuxDefs.containsKey(((ApplicationTerm) rhsArgs[0]).getFunction()));
-					if (needsExpand || lhs == rhsArgs[0]) {
-						final Term transitivity = needsExpand ? mProofRules.trans(lhs, rhsArgs[0], unquoteRhs, rhs)
-								: mProofRules.trans(lhs, unquoteRhs, rhs);
-
-						final Term equality2 = theory.term("=", unquoteRhs, rhs);
-						final Term proof2 = mProofRules.resolutionRule(theory.term("=", rhs, unquoteRhs),
-								mProofRules.delAnnot(rhs), mProofRules.symm(unquoteRhs, rhs));
-
-						final Term equality1 = theory.term("=", rhsArgs[0], unquoteRhs);
-						final Term proof1 = res(rhsArgs[1], mProofRules.trueIntro(), proveIff(equality1,
-								mProofRules.iffIntro2(unquoteRhs), mProofRules.iffElim1(unquoteRhs)));
-						Term proof = mProofRules.resolutionRule(equality1, proof1,
-								mProofRules.resolutionRule(equality2, proof2, transitivity));
-						if (needsExpand) {
-							proof = res(theory.term("=", lhs, rhsArgs[0]), res(theory.term("=", rhsArgs[0], lhs),
-													mProofRules.expand(rhsArgs[0]), mProofRules.symm(lhs, rhsArgs[0])),
-											proof);
-						}
-						return proof;
+					final Term equality1 = theory.term("=", rhsArgs[0], rhs);
+					Term proof = res(rhsArgs[1], mProofRules.trueIntro(),
+							proveIff(equality1, mProofRules.iffIntro2(rhs), mProofRules.iffElim1(rhs)));
+					if (lhs != rhsArgs[0]) {
+						final Term transitivity = mProofRules.trans(lhs, rhsArgs[0], rhs);
+						proof = mProofRules.resolutionRule(equality1, proof, transitivity);
+						proof = res(theory.term("=", lhs, rhsArgs[0]), res(theory.term("=", rhsArgs[0], lhs),
+												mProofRules.expand(rhsArgs[0]), mProofRules.symm(lhs, rhsArgs[0])),
+										proof);
 					}
+					return proof;
 				}
 			}
 		}
@@ -1005,7 +1394,7 @@ public class ProofSimplifier extends TermTransformer {
 			return proveRewriteWithLeq(lhs, rhs, true);
 		}
 
-		// eq is rewritten to quotedCC
+		// eq is normalized in CC (sides may be swapped)
 		if (isApplication("=", lhs)) {
 			/* compute affine term for lhs */
 			final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
@@ -1022,33 +1411,20 @@ public class ProofSimplifier extends TermTransformer {
 				return proveIffTrue(theory.term("=", lhs, rhs), mProofRules.refl(lhsParams[0]));
 			}
 
-			final Term unquoteRhs = unquote(rhs);
-			final Term equality2 = theory.term("=", unquoteRhs, rhs);
-			final Term proof2 = mProofRules.resolutionRule(theory.term("=", rhs, unquoteRhs),
-					mProofRules.delAnnot(rhs), mProofRules.symm(unquoteRhs, rhs));
-
-			assert isApplication("=", unquoteRhs);
-			final Term[] rhsParams = ((ApplicationTerm) unquoteRhs).getParameters();
+			assert isApplication("=", rhs);
+			final Term[] rhsParams = ((ApplicationTerm) rhs).getParameters();
 			assert rhsParams.length == 2;
 
-			if (lhs == unquoteRhs) {
-				// lhs and rhs are the same (modulo quote)
-				return proof2;
-			}
-
-			final Term equality1 = theory.term("=", lhs, unquoteRhs);
-			Term proof1;
+			final Term equality = theory.term("=", lhs, rhs);
 			if (lhsParams[1] == rhsParams[0] && lhsParams[0] == rhsParams[1]) {
 				// lhs and rhs are only swapped
-				proof1 = proveIff(equality1, mProofRules.symm(rhsParams[0], rhsParams[1]),
+				return proveIff(equality, mProofRules.symm(rhsParams[0], rhsParams[1]),
 						mProofRules.symm(lhsParams[0], lhsParams[1]));
 			} else {
 				// Now it must be an LA equality that got normalized in a different way.
 				assert lhsParams[0].getSort().isNumericSort();
-				proof1 = proveRewriteWithLinEq(lhs, unquoteRhs);
+				return proveRewriteWithLinEq(lhs, rhs);
 			}
-			return mProofRules.resolutionRule(equality1, proof1,
-					mProofRules.resolutionRule(equality2, proof2, mProofRules.trans(lhs, unquoteRhs, rhs)));
 		}
 		throw new AssertionError();
 	}
@@ -1134,13 +1510,13 @@ public class ProofSimplifier extends TermTransformer {
 		assert isApplication("=", lhs);
 		int trueFalseIdx = -1;
 		final Term[] params = ((ApplicationTerm) lhs).getParameters();
-		final LinkedHashSet<Integer> args = new LinkedHashSet<>();
+		final LinkedHashMap<Term, Integer> args = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i++) {
 			final Term t = params[i];
 			if (isApplication(trueCase ? "true" : "false", t)) {
 				trueFalseIdx = i;
-			} else {
-				args.add(i);
+			} else if (!args.containsKey(t)) {
+				args.put(t, i);
 			}
 		}
 		assert trueFalseIdx >= 0;
@@ -1148,9 +1524,10 @@ public class ProofSimplifier extends TermTransformer {
 
 		final Term rewrite = theo.term(SMTLIBConstants.EQUALS, lhs, rhs);
 		Term proofRhs = null;
-		final Term rhsAtom = ((ApplicationTerm) rhs).getParameters()[0];
+		Term rhsAtom = null;
 		if (args.size() > 1 || !trueCase) {
 			assert isApplication(SMTLIBConstants.NOT, rhs);
+			rhsAtom = ((ApplicationTerm) rhs).getParameters()[0];
 			proofRhs = mProofRules.notIntro(rhs);
 			if (args.size() > 1) {
 				assert isApplication(SMTLIBConstants.OR, rhsAtom);
@@ -1167,7 +1544,7 @@ public class ProofSimplifier extends TermTransformer {
 		// proofLhs: ~true/false, ~? l1,...,~? ln, lhs.
 		// introduce all distinct arguments
 		int orPos = 0;
-		for (final int pos : args) {
+		for (final int pos : args.values()) {
 			final Term arg = params[pos];
 			final Term notArg = theo.term(SMTLIBConstants.NOT, arg);
 			final Term orArg = trueCase ? notArg : arg;
@@ -1235,15 +1612,15 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	private Term convertRewriteXorNot(final Term rewrite, final Term lhs, final Term rhs) {
-		// lhs: (xor (not? arg0) (not? arg1)), rhs: (not? (xor arg0 arg1))
+		// lhs: (xor (not* arg0) (not* arg1)), rhs: (not? (xor arg0 arg1))
 		final Theory theory = rewrite.getTheory();
 		boolean rhsNegated = false;
 		Term rhsAtom = rhs;
-		if (isApplication("not", rhs)) {
+		if (isApplication(SMTLIBConstants.NOT, rhs)) {
 			rhsNegated = !rhsNegated;
 			rhsAtom = ((ApplicationTerm) rhs).getParameters()[0];
 		}
-		assert isApplication("xor", lhs) && isApplication("xor", rhsAtom);
+		assert isApplication(SMTLIBConstants.XOR, lhs) && isApplication(SMTLIBConstants.XOR, rhsAtom);
 		final Term[] lhsArgs = ((ApplicationTerm) lhs).getParameters();
 		final Term[] rhsArgs = ((ApplicationTerm) rhsAtom).getParameters();
 		final ArrayList<Term> pairs = new ArrayList<>();
@@ -1252,51 +1629,89 @@ public class ProofSimplifier extends TermTransformer {
 		Term[] xorAllArgs = null;
 		Term xorAll = null;
 		Term proofXorAll = null;
-		boolean polarity = false;
+		boolean xorAllNegated = false;
 		// Build xorAll = xor(~p1, p1,...) for all literals negatedin lhs.
 		// Build proof for polarity * xorAll.
 		for (int i = 0; i < lhsArgs.length; i++) {
-			// If lhsArg contains not, remove it, and switch polarity.
+			// While lhsArg contains not, remove it, and switch polarity.
 			// Then check it equals the corresponding rhsArg
 			final Term lhsArg = lhsArgs[i];
 			final Term rhsArg = rhsArgs[i];
-			if (isApplication("not", lhsArg)) {
-				// prove +(xor lhsArgs[i] rhsArgs[i])
-				final Term[] xorNotArgs = new Term[] { lhsArg, rhsArg };
-				final Term xorNot = theory.term("xor", xorNotArgs);
-				final Term proofXorNot = mProofRules.resolutionRule(rhsArg,
-						mProofRules.resolutionRule(lhsArg, mProofRules.notIntro(lhsArg),
-								mProofRules.xorIntro(xorNotArgs, new Term[] { rhsArg }, new Term[] { lhsArg })),
-						mProofRules.resolutionRule(lhsArg,
-								mProofRules.xorIntro(xorNotArgs, new Term[] { lhsArg }, new Term[] { rhsArg }),
-								mProofRules.notElim(lhsArg)));
+			if (isApplication(SMTLIBConstants.NOT, lhsArg)) {
+				Term arg = lhsArg;
+				int numNegations = 0;
+				while (isApplication(SMTLIBConstants.NOT, arg)) {
+					arg = ((ApplicationTerm) arg).getParameters()[0];
+					numNegations++;
+				}
+				assert arg == rhsArg;
+				// prove -rhsArg, +/-lhsArg and +rhsArg, -/+lhsArg
+				Term proofLhsNeg = null;
+				Term proofLhsPos = null;
+				arg = rhsArg;
+				for (int ctr = 0; ctr < numNegations; ctr++) {
+					final Term notArg = mSkript.term(SMTLIBConstants.NOT, arg);
+					final Term nextProofLhsPos = res(arg, mProofRules.notIntro(notArg), proofLhsNeg);
+					proofLhsNeg = res(arg, proofLhsPos, mProofRules.notElim(notArg));
+					proofLhsPos = nextProofLhsPos;
+					arg = notArg;
+				}
+				// prove +/-(xor lhsArgs[i] rhsArgs[i])
+				final Term[] xorArgs = new Term[] { lhsArg, rhsArg };
+				final Term xorTerm = theory.term(SMTLIBConstants.XOR, xorArgs);
+
+				// and then prove (xor lhsArgs[0] rhsArgs[0]...lhsArgs[i] rhsArgs[i])
 				pairs.add(lhsArg);
 				pairs.add(rhsArg);
 				final Term[] xorAllNextArgs = pairs.toArray(new Term[pairs.size()]);
-				final Term xorAllNext = theory.term("xor", xorAllNextArgs);
-				// Now compute the proof for !polarity * xorAllNext
-				if (proofXorAll == null) {
-					proofXorAll = proofXorNot;
+				final Term xorAllNext = theory.term(SMTLIBConstants.XOR, xorAllNextArgs);
+				boolean xorAllNextNegated;
+				Term proofStep;
+				if (numNegations % 2 == 0) {
+					// prove - xor(lhsArg, rhsArg)
+					final Term proofXor = mProofRules.resolutionRule(rhsArg,
+							mProofRules.resolutionRule(lhsArg,
+									mProofRules.xorIntro(new Term[] { lhsArg }, new Term[] { rhsArg }, xorArgs),
+									proofLhsNeg),
+							mProofRules.resolutionRule(lhsArg, proofLhsPos,
+									mProofRules.xorElim(new Term[] { lhsArg }, new Term[] { rhsArg }, xorArgs)));
+					if (xorAll == null) {
+						proofStep = proofXor;
+					} else {
+						proofStep = xorAllNegated ? mProofRules.xorIntro(xorArgs, xorAllNextArgs, xorAllArgs)
+								: mProofRules.xorIntro(xorArgs, xorAllArgs, xorAllNextArgs);
+						proofStep = mProofRules.resolutionRule(xorTerm, proofStep, proofXor);
+					}
+					xorAllNextNegated = xorAllNegated;
 				} else {
-					Term proofStep = polarity
-							? mProofRules.xorElim(xorAllNextArgs, xorAllArgs, xorNotArgs)
-							: mProofRules.xorIntro(xorAllNextArgs, xorAllArgs, xorNotArgs);
-					proofStep = mProofRules.resolutionRule(xorNot, proofXorNot, proofStep);
-					proofXorAll = mProofRules.resolutionRule(xorAll,
-							polarity ? proofXorAll : proofStep,
-							polarity ? proofStep : proofXorAll);
+					final Term proofXor = mProofRules.resolutionRule(rhsArg,
+							mProofRules.resolutionRule(lhsArg, proofLhsPos,
+									mProofRules.xorIntro(xorArgs, new Term[] { rhsArg }, new Term[] { lhsArg })),
+						mProofRules.resolutionRule(lhsArg,
+									mProofRules.xorIntro(xorArgs, new Term[] { lhsArg }, new Term[] { rhsArg }),
+									proofLhsNeg));
+					// Now compute the proof for !polarity * xorAllNext
+					if (xorAll == null) {
+						proofStep = proofXor;
+					} else {
+						proofStep = xorAllNegated ? mProofRules.xorElim(xorAllNextArgs, xorAllArgs, xorArgs)
+								: mProofRules.xorIntro(xorAllNextArgs, xorAllArgs, xorArgs);
+						proofStep = mProofRules.resolutionRule(xorTerm, proofXor, proofStep);
+					}
+					xorAllNextNegated = !xorAllNegated;
 				}
+				proofXorAll = res(xorAll, xorAllNegated ? proofXorAll : proofStep,
+						xorAllNegated ? proofStep : proofXorAll);
 				xorAllArgs = xorAllNextArgs;
 				xorAll = xorAllNext;
-				polarity = !polarity;
-				assert rhsArg == ((ApplicationTerm) lhsArg).getParameters()[0];
+				xorAllNegated = xorAllNextNegated;
 			} else {
-				assert rhsArg == lhsArg;
+				assert lhsArg == rhsArg;
 			}
 		}
 		assert pairs.size() > 0;
 		// The lemma is well-formed if all nots cancel out.
-		assert rhsNegated == polarity;
+		assert rhsNegated == xorAllNegated;
 
 		Term proof1, proof2;
 		proof1 = mProofRules.xorIntro(lhsArgs, rhsNegated ? rhsArgs : xorAllArgs, rhsNegated ? xorAllArgs : rhsArgs);
@@ -1311,7 +1726,7 @@ public class ProofSimplifier extends TermTransformer {
 				mProofRules.resolutionRule(rhs, mProofRules.iffIntro1(rewrite),
 						proof1),
 				mProofRules.resolutionRule(rhs, proof2, mProofRules.iffIntro2(rewrite)));
-		return mProofRules.resolutionRule(xorAll, polarity ? proofXorAll : proof, polarity ? proof : proofXorAll);
+		return mProofRules.resolutionRule(xorAll, xorAllNegated ? proofXorAll : proof, xorAllNegated ? proof : proofXorAll);
 	}
 
 	private Term convertRewriteXorConst(final String rewriteRule, final Term rewrite, final Term lhs, final Term rhs) {
@@ -1346,11 +1761,11 @@ public class ProofSimplifier extends TermTransformer {
 		return proveIffFalse(rewrite, mProofRules.xorElim(lhsArgs, lhsArgs, lhsArgs));
 	}
 
-	private Term convertRewriteEqSimp(final String rewriteRule, final Term rewrite, final Term lhs, final Term rhs) {
+	private Term convertRewriteEqSimp(final String rewriteRule, final Term lhs, final Term rhs) {
 		// lhs: (= ...), rhs: (= ...) or true, if all entries in rhs are the same.
 		// duplicated entries in lhs should be removed in rhs.
 		assert isApplication("=", lhs);
-		final Theory theory = rewrite.getTheory();
+		final Theory theory = lhs.getTheory();
 		final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
 		final LinkedHashMap<Term, Integer> lhsTerms = new LinkedHashMap<>();
 		for (int i = 0; i < lhsParams.length; i++) {
@@ -1362,7 +1777,7 @@ public class ProofSimplifier extends TermTransformer {
 			if (lhsParams.length > 2) {
 				proof = res(theory.term("=", lhsParams[0], lhsParams[0]), proof, mProofRules.equalsIntro(lhs));
 			}
-			return proveIffTrue(rewrite, proof);
+			return proveIffTrue(theory.term("=", lhs, rhs), proof);
 		} else {
 			assert rewriteRule.equals(":eqSimp");
 			assert isApplication("=", rhs);
@@ -1394,13 +1809,13 @@ public class ProofSimplifier extends TermTransformer {
 						proofRhsToLhs);
 				}
 			}
-			return proveIff(rewrite, proofLhsToRhs, proofRhsToLhs);
+			return proveIff(theory.term("=", lhs, rhs), proofLhsToRhs, proofRhsToLhs);
 		}
 	}
 
 	private Term convertRewriteEqBinary(final Term rewrite, final Term lhs, final Term rhs) {
 		// eqBinary is like expand (chainable) combined with andToOr
-		final Theory theory = rewrite.getTheory();
+		final Theory theory = lhs.getTheory();
 		assert isApplication("=", lhs);
 		final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
 		assert lhsParams.length >= 3;
@@ -1432,7 +1847,7 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	private Term convertRewriteDistinct(final String rewriteRule, final Term rewrite, final Term lhs, final Term rhs) {
-		final Theory theory = rewrite.getTheory();
+		final Theory theory = lhs.getTheory();
 		assert isApplication("distinct", lhs);
 		final Term[] args = ((ApplicationTerm) lhs).getParameters();
 		switch (rewriteRule) {
@@ -1537,7 +1952,8 @@ public class ProofSimplifier extends TermTransformer {
 		Term proofLhs = null;
 		if (isApplication("false", rhs)) {
 			proofLhs = mProofRules.falseElim();
-		} else if (isApplication("or", rhs)) {
+		} else if (args.size() > 1) {
+			assert isApplication("or", rhs);
 			final Term[] rhsParams = ((ApplicationTerm) rhs).getParameters();
 			for (int i = 0; i < rhsParams.length; i++) {
 				proofRhs = mProofRules.resolutionRule(rhsParams[i], proofRhs, mProofRules.orIntro(i, rhs));
@@ -1816,6 +2232,19 @@ public class ProofSimplifier extends TermTransformer {
 		}
 	}
 
+	/**
+	 * Explain an auxIntro rewrite rules of the form {@code (= def (@AUX x y))},
+	 * where def is the definition of the {@code @AUX} application.
+	 *
+	 * @param lhs the definition.
+	 * @param rhs the AUX application.
+	 * @return the low-level proof for that statement.
+	 */
+	private Term convertRewriteAuxIntro(final Term rewrite, final Term lhs, final Term rhs) {
+		final Term symmEq = mSkript.term(SMTLIBConstants.EQUALS, rhs, lhs);
+		return res(symmEq, mProofRules.expand(rhs), mProofRules.symm(lhs, rhs));
+	}
+
 	private Term convertRewriteStore(final Term rewrite, final Term lhs, final Term rhs) {
 		// lhs: (= (store a i v) a) (or symmetric)
 		// rhs: (= (select a i) v)
@@ -1831,7 +2260,7 @@ public class ProofSimplifier extends TermTransformer {
 		final Term value = storeArgs[2];
 		assert isApplication("store", store) && array == lhsArgs[1 - storeIdx];
 
-		final Term diff = theory.term("@diff", lhsArgs);
+		final Term diff = theory.term("@diff", store, array);
 		final Term selectArrayDiff = theory.term(SMTLIBConstants.SELECT, array, diff);
 		final Term selectStoreDiff = theory.term(SMTLIBConstants.SELECT, store, diff);
 		final Term selectArrayI = theory.term(SMTLIBConstants.SELECT, array, index);
@@ -1866,7 +2295,7 @@ public class ProofSimplifier extends TermTransformer {
 		if (storeIdx == 0) {
 			proofRhs = res(theory.term("=", array, store), mProofRules.symm(array, store), proofRhs);
 		} else {
-			proofLhs = res(theory.term("=", store, array), mProofRules.symm(store, array), proofRhs);
+			proofLhs = res(theory.term("=", store, array), proofLhs, mProofRules.symm(array, store));
 		}
 		Term proof = proveIff(rewrite, proofRhs, proofLhs);
 		proof = res(theory.term("=", selectStoreI, value), mProofRules.selectStore1(array, index, value), proof);
@@ -2281,75 +2710,71 @@ public class ProofSimplifier extends TermTransformer {
 				mProofRules.trans(lhs, equalTerm, rhs)));
 	}
 
-	private Term convertRewrite(final Term[] newParams) {
-		final AnnotatedTerm annotTerm = (AnnotatedTerm) newParams[0];
-		final String rewriteRule = annotTerm.getAnnotations()[0].getKey();
-		final Term rewriteStmt = annotTerm.getSubterm();
-		assert rewriteRule == ":removeForall"
-				? isApplication(SMTLIBConstants.IMPLIES, rewriteStmt)
-			: isApplication(SMTLIBConstants.EQUALS, rewriteStmt);
-		final Term[] stmtParams = ((ApplicationTerm) rewriteStmt).getParameters();
+	private Term convertRewrite(final Term lhs, Term rhs, Annotation annot) {
+		final Term rewriteStmt = lhs.getTheory().term("=", lhs, rhs);
+		final String rewriteRule = annot.getKey();
+		assert isApplication(SMTLIBConstants.EQUALS, rewriteStmt);
 		Term subProof;
 
 		switch (rewriteRule) {
 		case ":expand":
 		case ":expandDef":
-			subProof = mProofRules.expand(stmtParams[0]);
+			subProof = mProofRules.expand(lhs);
 			break;
 		case ":intern":
-			subProof = convertRewriteIntern(stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteIntern(lhs, rhs);
 			break;
 		case ":notSimp":
-			subProof = convertRewriteNot(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteNot(rewriteStmt, lhs, rhs);
 			break;
 		case ":trueNotFalse":
-			subProof = convertRewriteTrueNotFalse(stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteTrueNotFalse(lhs, rhs);
 			break;
 		case ":eqTrue":
 		case ":eqFalse":
-			subProof = convertRewriteEqTrueFalse(rewriteRule, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteEqTrueFalse(rewriteRule, lhs, rhs);
 			break;
 		case ":eqSimp":
 		case ":eqSame":
-			subProof = convertRewriteEqSimp(rewriteRule, rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteEqSimp(rewriteRule, lhs, rhs);
 			break;
 		case ":eqBinary":
-			subProof = convertRewriteEqBinary(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteEqBinary(rewriteStmt, lhs, rhs);
 			break;
 		case ":eqToXor":
 		case ":distinctToXor":
-			subProof = convertRewriteToXor(rewriteRule, rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteToXor(rewriteRule, rewriteStmt, lhs, rhs);
 			break;
 		case ":xorTrue":
 		case ":xorFalse":
-			subProof = convertRewriteXorConst(rewriteRule, rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteXorConst(rewriteRule, rewriteStmt, lhs, rhs);
 			break;
 		case ":xorNot":
-			subProof = convertRewriteXorNot(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteXorNot(rewriteStmt, lhs, rhs);
 			break;
 		case ":xorSame":
-			subProof = convertRewriteXorSame(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteXorSame(rewriteStmt, lhs, rhs);
 			break;
 		case ":orSimp":
-			subProof = convertRewriteOrSimp(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteOrSimp(rewriteStmt, lhs, rhs);
 			break;
 		case ":orTaut":
-			subProof = convertRewriteOrTaut(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteOrTaut(rewriteStmt, lhs, rhs);
 			break;
 		case ":distinctBool":
 		case ":distinctSame":
 		case ":distinctBinary":
-			subProof = convertRewriteDistinct(rewriteRule, rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteDistinct(rewriteRule, rewriteStmt, lhs, rhs);
 			break;
 		case ":leqTrue":
 		case ":leqFalse":
-			subProof = convertRewriteLeq(rewriteRule, rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteLeq(rewriteRule, rewriteStmt, lhs, rhs);
 			break;
 		case ":leqToLeq0":
 		case ":ltToLeq0":
 		case ":geqToLeq0":
 		case ":gtToLeq0":
-			subProof = convertRewriteToLeq0(rewriteRule, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteToLeq0(rewriteRule, lhs, rhs);
 			break;
 		case ":iteTrue":
 		case ":iteFalse":
@@ -2360,46 +2785,48 @@ public class ProofSimplifier extends TermTransformer {
 		case ":iteBool4":
 		case ":iteBool5":
 		case ":iteBool6":
-			subProof = convertRewriteIte(rewriteRule, rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteIte(rewriteRule, rewriteStmt, lhs, rhs);
 			break;
 		case ":constDiff":
-			subProof = convertRewriteConstDiff(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteConstDiff(rewriteStmt, lhs, rhs);
 			break;
 		case ":strip":
-			subProof = mProofRules.delAnnot(stmtParams[0]);
+			subProof = mProofRules.delAnnot(lhs);
 			break;
 		case ":canonicalSum":
-			subProof = convertRewriteCanonicalSum(stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteCanonicalSum(lhs, rhs);
 			break;
 		case ":toInt":
-			subProof = convertRewriteToInt(stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteToInt(lhs, rhs);
 			break;
 		case ":div1":
 		case ":div-1":
 		case ":divConst":
-			subProof = convertRewriteDiv(rewriteRule, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteDiv(rewriteRule, lhs, rhs);
 			break;
 		case ":modulo1":
 		case ":modulo-1":
 		case ":moduloConst":
 		case ":modulo":
-			subProof = convertRewriteModulo(rewriteRule, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteModulo(rewriteRule, lhs, rhs);
 			break;
 		case ":divisible":
-			subProof = convertRewriteDivisible(rewriteRule, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteDivisible(rewriteRule, lhs, rhs);
 			break;
 		case ":storeOverStore":
-			subProof = convertRewriteStoreOverStore(stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteStoreOverStore(lhs, rhs);
 			break;
 		case ":selectOverStore":
-			subProof = convertRewriteSelectOverStore(stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteSelectOverStore(lhs, rhs);
 			break;
 		case ":storeRewrite":
-			subProof = convertRewriteStore(rewriteStmt, stmtParams[0], stmtParams[1]);
+			subProof = convertRewriteStore(rewriteStmt, lhs, rhs);
+			break;
+		case ":auxIntro":
+			subProof = convertRewriteAuxIntro(rewriteStmt, lhs, rhs);
 			break;
 		default:
-			// throw new AssertionError("Unknown Rewrite Rule: " + annotTerm);
-			subProof = mProofRules.oracle(termToProofLiterals(rewriteStmt), annotTerm.getAnnotations());
+			subProof = mProofRules.oracle(termToProofLiterals(rewriteStmt), new Annotation[] { annot });
 		}
 		assert checkProof(subProof, termToProofLiterals(rewriteStmt));
 		return annotateProved(rewriteStmt, subProof);
@@ -2412,13 +2839,11 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param coefficients the argument of the :LA annotation, which is the list of
 	 *                     Farkas coefficients.
 	 */
-	private Term convertLALemma(final Term[] clause, final Term[] coefficients) {
+	private Term convertLALemma(final ProofLiteral[] clause, final Term[] coefficients) {
 		assert clause.length == coefficients.length;
 		final Theory theory = mSkript.getTheory();
 		final BigInteger[] coeffs = new BigInteger[coefficients.length];
 		final Term[] atoms = new Term[clause.length];
-		final Term[] quotedAtoms = new Term[clause.length];
-		final BitSet polarities = new BitSet();
 		final Term[] realAtoms = new Term[clause.length];
 		final Term[] realAtomProofs = new Term[clause.length];
 
@@ -2427,10 +2852,8 @@ public class ProofSimplifier extends TermTransformer {
 			assert coeff.isIntegral() && coeff != Rational.ZERO;
 			coeffs[i] = coeff.numerator().abs();
 
-			final Term lit = clause[i];
-			final boolean isNegated = isApplication("not", lit);
-			final Term quotedAtom = isNegated ? negate(lit) : lit;
-			final Term atom = unquote(quotedAtom);
+			final boolean isNegated = !clause[i].getPolarity();
+			final Term atom = clause[i].getAtom();
 			final Term[] atomParams = ((ApplicationTerm) atom).getParameters();
 			Term realAtom;
 			Term realAtomProof;
@@ -2468,13 +2891,10 @@ public class ProofSimplifier extends TermTransformer {
 			realAtoms[i] = realAtom;
 			realAtomProofs[i] = realAtomProof;
 			atoms[i] = atom;
-			quotedAtoms[i] = quotedAtom;
-			polarities.set(i, !isNegated);
 		}
 		Term proof = mProofRules.farkas(realAtoms, coeffs);
 		for (int i = 0; i < atoms.length; i++) {
 			proof = res(realAtoms[i], realAtomProofs[i], proof);
-			proof = removeQuoted(proof, quotedAtoms[i], atoms[i], polarities.get(i));
 		}
 		return proof;
 	}
@@ -2485,31 +2905,27 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param clause
 	 *            the clause to check.
 	 */
-	private Term convertTrichotomy(final Term[] clause) {
+	private Term convertTrichotomy(final ProofLiteral[] clause) {
 		assert clause.length == 3;
-		final Theory theory = clause[0].getTheory();
-		Term quotedEq = null, eq = null;
-		Term quotedLt = null, lt = null;
-		Term quotedGt = null, gt = null;
-		for (final Term lit : clause) {
-			final boolean isNegated = isApplication("not", lit);
-			final Term quotedAtom = isNegated ? ((ApplicationTerm) lit).getParameters()[0] : lit;
-			final Term atom = unquote(quotedAtom);
+		final Theory theory = clause[0].getAtom().getTheory();
+		Term eq = null;
+		Term lt = null;
+		Term gt = null;
+		for (final ProofLiteral lit : clause) {
+			final boolean isPositive = lit.getPolarity();
+			final Term atom = lit.getAtom();
 			assert isZero(((ApplicationTerm) atom).getParameters()[1]);
 
 			if (isApplication("=", atom)) {
-				assert !isNegated && eq == null;
-				quotedEq = quotedAtom;
+				assert isPositive && eq == null;
 				eq = atom;
 			} else if (isApplication("<=", atom) || isApplication("<", atom)) {
-				if (isNegated) {
-					assert gt == null;
-					quotedGt = quotedAtom;
-					gt = atom;
-				} else {
+				if (isPositive) {
 					assert lt == null;
-					quotedLt = quotedAtom;
 					lt = atom;
+				} else {
+					assert gt == null;
+					gt = atom;
 				}
 			} else {
 				throw new AssertionError();
@@ -2535,9 +2951,6 @@ public class ProofSimplifier extends TermTransformer {
 							mProofRules.farkas(new Term[] { realLeq, realLt },
 									new BigInteger[] { BigInteger.ONE, BigInteger.ONE })));
 		}
-		proof = removeQuoted(proof, quotedGt, gt, false);
-		proof = removeQuoted(proof, quotedLt, lt, true);
-		proof = removeQuoted(proof, quotedEq, eq, true);
 		return proof;
 	}
 
@@ -2547,25 +2960,15 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param clause the clause to check
 	 * @return the proof.
 	 */
-	private Term convertEQLemma(final Term[] clause) {
+	private Term convertEQLemma(final ProofLiteral[] clause) {
 		assert clause.length == 2;
-		Term quotedNegAtom;
-		Term quotedPosAtom;
+		final int posNr = clause[0].getPolarity() ? 0 : 1;
+		final int negNr = 1 - posNr;
+		assert clause[1].getPolarity() == (posNr == 1);
+		assert isApplication("=", clause[0].getAtom()) && isApplication("=", clause[1].getAtom());
 
-		if (isApplication("not", clause[0])) {
-			quotedNegAtom = negate(clause[0]);
-			quotedPosAtom = clause[1];
-		} else {
-			assert isApplication("not", clause[1]);
-			quotedNegAtom = negate(clause[1]);
-			quotedPosAtom = clause[0];
-		}
-		final Term negAtom = unquote(quotedNegAtom);
-		final Term posAtom = unquote(quotedPosAtom);
-
-		assert isApplication("=", negAtom) && isApplication("=", posAtom);
-		final Term[] negAtomArgs = ((ApplicationTerm) negAtom).getParameters();
-		final Term[] posAtomArgs = ((ApplicationTerm) posAtom).getParameters();
+		final Term[] negAtomArgs = ((ApplicationTerm) clause[negNr].getAtom()).getParameters();
+		final Term[] posAtomArgs = ((ApplicationTerm) clause[posNr].getAtom()).getParameters();
 		final SMTAffineTerm negDiff = new SMTAffineTerm(negAtomArgs[0]);
 		negDiff.add(Rational.MONE, negAtomArgs[1]);
 		final SMTAffineTerm posDiff = new SMTAffineTerm(posAtomArgs[0]);
@@ -2577,9 +2980,7 @@ public class ProofSimplifier extends TermTransformer {
 			multiplier = multiplier.negate();
 		}
 		assert negDiff.equals(posDiff);
-		Term proof = proveEqWithMultiplier(negAtomArgs, posAtomArgs, multiplier);
-		proof = removeQuoted(proof, quotedNegAtom, negAtom, false);
-		proof = removeQuoted(proof, quotedPosAtom, posAtom, true);
+		final Term proof = proveEqWithMultiplier(negAtomArgs, posAtomArgs, multiplier);
 		return proof;
 	}
 
@@ -2590,20 +2991,19 @@ public class ProofSimplifier extends TermTransformer {
 	 *  @param equalities  HashMap to store equalities (negated in the clause).
 	 *  @param disequalities HashMap to store disequalities (positive in the clause).
 	 */
-	private void collectEqualities(final Term[] clause, final HashMap<SymmetricPair<Term>, Term> equalities,
+	private void collectEqualities(final ProofLiteral[] clause, final HashMap<SymmetricPair<Term>, Term> equalities,
 			final HashMap<SymmetricPair<Term>, Term> disequalities) {
-		for (final Term literal : clause) {
-			final boolean negated = isApplication("not", literal);
-			final Term quotedAtom = negated ? ((ApplicationTerm) literal).getParameters()[0] : literal;
-			final Term atom = unquote(quotedAtom);
+		for (final ProofLiteral literal : clause) {
+			final Term atom = literal.getAtom();
 			assert isApplication("=", atom);
 			final Term[] sides = ((ApplicationTerm) atom).getParameters();
 			assert sides.length == 2;
-			if (negated) {
-				// negated atom in clause -> equality in conflict
-				equalities.put(new SymmetricPair<>(sides[0], sides[1]), quotedAtom);
+			if (literal.getPolarity()) {
+				// positive in clause -> disequality in conflict
+				disequalities.put(new SymmetricPair<>(sides[0], sides[1]), atom);
 			} else {
-				disequalities.put(new SymmetricPair<>(sides[0], sides[1]), quotedAtom);
+				// negated atom in clause -> equality in conflict
+				equalities.put(new SymmetricPair<>(sides[0], sides[1]), atom);
 			}
 		}
 	}
@@ -2614,14 +3014,11 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param clause       the clause to check
 	 * @param ccAnnotation the argument of the :CC annotation.
 	 */
-	private Term convertCCLemma(final Term[] clause, final Object[] ccAnnotation) {
-		assert ccAnnotation.length >= 3 && ccAnnotation[0] instanceof Term && ccAnnotation[1] == ":subpath"
-				&& ccAnnotation[2] instanceof Term[];
-		final int startSubpathAnnot = 1;
+	private Term convertCCLemma(final ProofLiteral[] clause, String lemmaType, final Term[] mainPath) {
+		assert mainPath.length >= 2 : "Main path too short in CC lemma";
 
 		// The goal equality
-		final Term goalEquality = unquote((Term) ccAnnotation[0]);
-		final Theory theory = goalEquality.getTheory();
+		final Theory theory = mainPath[0].getTheory();
 
 		/* collect literals and search for the disequality */
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
@@ -2629,18 +3026,11 @@ public class ProofSimplifier extends TermTransformer {
 		collectEqualities(clause, allEqualities, allDisequalities);
 		assert allDisequalities.size() <= 1;
 
-		final Term[] mainPath = (Term[]) ccAnnotation[startSubpathAnnot + 1];
-		assert mainPath.length >= 2 : "Main path too short in CC lemma";
-		assert isApplication("=", goalEquality) : "Goal equality is not an equality in CC lemma";
-		final Term[] sides = ((ApplicationTerm) goalEquality).getParameters();
-		assert sides.length == 2 : "Expected binary equality in CC lemma";
-		assert new SymmetricPair<>(mainPath[0], mainPath[mainPath.length - 1])
-				.equals(new SymmetricPair<>(sides[0], sides[1])) : "Did not explain main equality " + goalEquality;
 
 		Term proof;
 		final HashSet<Term> neededEqualities = new HashSet<>();
-		final Term mainPathEquality = theory.term("=", mainPath[0], mainPath[mainPath.length - 1]);
 		if (mainPath.length == 2) {
+			assert lemmaType == ":cong" : "Transitivity lemma must have at least three steps";
 			// This must be a congruence lemma
 			assert mainPath[0] instanceof ApplicationTerm && mainPath[1] instanceof ApplicationTerm;
 			final ApplicationTerm lhs = (ApplicationTerm) mainPath[0];
@@ -2657,12 +3047,14 @@ public class ProofSimplifier extends TermTransformer {
 				neededEqualities.add(theory.term(SMTLIBConstants.EQUALS, lhsParams[i], rhsParams[i]));
 			}
 		} else {
+			assert lemmaType == ":trans" : "Congruence lemma must have a main path of length 2";
 			// This is a transitivity lemma
 			proof = mProofRules.trans(mainPath);
 			for (int i = 0; i < mainPath.length - 1; i++) {
 				neededEqualities.add(theory.term(SMTLIBConstants.EQUALS, mainPath[i], mainPath[i + 1]));
 			}
 		}
+		final Term mainPathEquality = theory.term("=", mainPath[0], mainPath[mainPath.length - 1]);
 		final Set<Term> neededDisequalities = Collections.singleton(mainPathEquality);
 		proof = resolveNeededEqualities(proof, allEqualities, allDisequalities, neededEqualities, neededDisequalities);
 		return proof;
@@ -2956,9 +3348,9 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param ccAnnotation
 	 *            the argument of the lemma annotation.
 	 */
-	private Term convertArraySelectConstWeakEqLemma(final Term[] clause, final Object[] ccAnnotation) {
+	private Term convertArraySelectConstWeakEqLemma(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length >= 3;
-		final Theory theory = clause[0].getTheory();
+		final Theory theory = clause[0].getAtom().getTheory();
 		/*
 		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
 		 * pair. strongPaths contains the sets of all proven strong paths.
@@ -2971,7 +3363,7 @@ public class ProofSimplifier extends TermTransformer {
 		final HashSet<Term> neededEqualities = new HashSet<>();
 		final HashSet<Term> neededDisequalities = new HashSet<>();
 
-		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+		final Term goalEquality = (Term) ccAnnotation[0];
 		assert isApplication("=", goalEquality);
 		final Term[] goalTerms = ((ApplicationTerm) goalEquality).getParameters();
 		assert goalTerms.length == 2;
@@ -3011,9 +3403,9 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param ccAnnotation
 	 *            the argument of the lemma annotation.
 	 */
-	private Term convertArraySelectWeakEqLemma(final Term[] clause, final Object[] ccAnnotation) {
+	private Term convertArraySelectWeakEqLemma(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length >= 3;
-		final Theory theory = clause[0].getTheory();
+		final Theory theory = clause[0].getAtom().getTheory();
 		/*
 		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
 		 * pair. strongPaths contains the sets of all proven strong paths.
@@ -3026,7 +3418,7 @@ public class ProofSimplifier extends TermTransformer {
 		final HashSet<Term> neededEqualities = new HashSet<>();
 		final HashSet<Term> neededDisequalities = new HashSet<>();
 
-		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+		final Term goalEquality = (Term) ccAnnotation[0];
 		assert isApplication("=", goalEquality);
 		final Term[] goalTerms = ((ApplicationTerm) goalEquality).getParameters();
 		assert goalTerms.length == 2;
@@ -3076,9 +3468,9 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param clause       the clause to check
 	 * @param ccAnnotation the argument of the lemma annotation.
 	 */
-	private Term convertArrayWeakEqExtLemma(final Term[] clause, final Object[] ccAnnotation) {
+	private Term convertArrayWeakEqExtLemma(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length >= 3;
-		final Theory theory = clause[0].getTheory();
+		final Theory theory = clause[0].getAtom().getTheory();
 		/*
 		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
 		 * pair. strongPaths contains the sets of all proven strong paths.
@@ -3091,7 +3483,7 @@ public class ProofSimplifier extends TermTransformer {
 		final HashSet<Term> neededEqualities = new HashSet<>();
 		final HashSet<Term> neededDisequalities = new HashSet<>();
 
-		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+		final Term goalEquality = (Term) ccAnnotation[0];
 		assert isApplication("=", goalEquality);
 		final Term[] goalTerms = ((ApplicationTerm) goalEquality).getParameters();
 		assert goalTerms.length == 2;
@@ -3199,9 +3591,9 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param ccAnnotation the argument of the :dt-project annotation. It has the
 	 *                     form {@code (= seli(w) vi) :cons cons(v1,...,vn)}.
 	 */
-	private Term convertDTProject(final Term[] clause, final Object[] ccAnnotation) {
+	private Term convertDTProject(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length == 3;
-		final Theory theory = clause[0].getTheory();
+		final Theory theory = clause[0].getAtom().getTheory();
 
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
@@ -3210,13 +3602,13 @@ public class ProofSimplifier extends TermTransformer {
 		final HashSet<Term> neededEqualities = new HashSet<>();
 		final HashSet<Term> neededDisequalities = new HashSet<>();
 
-		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+		final ApplicationTerm goalEquality = (ApplicationTerm) ccAnnotation[0];
 		assert isApplication("=", goalEquality);
 		assert ccAnnotation[1].equals(":cons");
 		final ApplicationTerm consTerm = (ApplicationTerm) ccAnnotation[2];
 		final FunctionSymbol consFunc = consTerm.getFunction();
 		assert consFunc.isConstructor();
-		final Term[] goalTerms = ((ApplicationTerm) goalEquality).getParameters();
+		final Term[] goalTerms = goalEquality.getParameters();
 		assert goalTerms.length == 2;
 
 		assert goalTerms[0] instanceof ApplicationTerm;
@@ -3255,9 +3647,9 @@ public class ProofSimplifier extends TermTransformer {
 	 *                     form
 	 *                     {@code (= is_cons(w) true/false) :cons cons(v1,...,vn)}.
 	 */
-	private Term convertDTTester(final Term[] clause, final Object[] ccAnnotation) {
+	private Term convertDTTester(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length == 3;
-		final Theory theory = clause[0].getTheory();
+		final Theory theory = clause[0].getAtom().getTheory();
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
 		collectEqualities(clause, allEqualities, allDisequalities);
@@ -3265,7 +3657,7 @@ public class ProofSimplifier extends TermTransformer {
 		final HashSet<Term> neededEqualities = new HashSet<>();
 		final HashSet<Term> neededDisequalities = new HashSet<>();
 
-		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+		final Term goalEquality = (Term) ccAnnotation[0];
 		assert isApplication("=", goalEquality);
 		assert ccAnnotation[1].equals(":cons");
 		final ApplicationTerm consTerm = (ApplicationTerm) ccAnnotation[2];
@@ -3317,9 +3709,9 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param ccAnnotation the argument of the :dt-tester annotation. It has the
 	 *                     form {@code (= w (cons (sel1 w) ... (seln w)))}.
 	 */
-	private Term convertDTConstructor(final Term[] clause, final Object[] ccAnnotation) {
+	private Term convertDTConstructor(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length == 1;
-		final Theory theory = clause[0].getTheory();
+		final Theory theory = clause[0].getAtom().getTheory();
 
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
@@ -3328,9 +3720,9 @@ public class ProofSimplifier extends TermTransformer {
 		final HashSet<Term> neededEqualities = new HashSet<>();
 		final HashSet<Term> neededDisequalities = new HashSet<>();
 
-		final Term goalEquality = unquote((Term) ccAnnotation[0]);
+		final ApplicationTerm goalEquality = (ApplicationTerm) ccAnnotation[0];
 		assert isApplication("=", goalEquality);
-		final Term[] goalTerms = ((ApplicationTerm) goalEquality).getParameters();
+		final Term[] goalTerms = goalEquality.getParameters();
 		assert goalTerms.length == 2;
 
 		final ApplicationTerm consTerm = (ApplicationTerm) goalTerms[1];
@@ -3358,8 +3750,8 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param ccAnnotation the argument of the :dt-tester annotation. It is a list
 	 *                     of the tester terms {@code ((_ is consi) ui)}.
 	 */
-	private Term convertDTCases(final Term[] clause, final Object[] ccAnnotation) {
-		final Theory theory = clause[0].getTheory();
+	private Term convertDTCases(final ProofLiteral[] clause, final Object[] ccAnnotation) {
+		final Theory theory = clause[0].getAtom().getTheory();
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
 		collectEqualities(clause, allEqualities, allDisequalities);
@@ -3404,8 +3796,8 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param ccAnnotation the argument of the :dt-tester annotation. It is a list
 	 *                     of the two tester terms {@code ((_ is consi) ui)}.
 	 */
-	private Term convertDTUnique(final Term[] clause, final Object[] ccAnnotation) {
-		final Theory theory = clause[0].getTheory();
+	private Term convertDTUnique(final ProofLiteral[] clause, final Object[] ccAnnotation) {
+		final Theory theory = clause[0].getAtom().getTheory();
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
 		collectEqualities(clause, allEqualities, allDisequalities);
@@ -3460,8 +3852,8 @@ public class ProofSimplifier extends TermTransformer {
 	 *                     form
 	 *                     {@code ((= ai bi) :cons (cons a1 ... an) (cons b1 ... bn))}.
 	 */
-	private Term convertDTInjective(final Term[] clause, final Object[] ccAnnotation) {
-		final Theory theory = clause[0].getTheory();
+	private Term convertDTInjective(final ProofLiteral[] clause, final Object[] ccAnnotation) {
+		final Theory theory = clause[0].getAtom().getTheory();
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
 		collectEqualities(clause, allEqualities, allDisequalities);
@@ -3470,7 +3862,7 @@ public class ProofSimplifier extends TermTransformer {
 		final HashSet<Term> neededDisequalities = new HashSet<>();
 
 		assert ccAnnotation.length == 4;
-		final ApplicationTerm goalEquality = (ApplicationTerm) unquote((Term) ccAnnotation[0]);
+		final ApplicationTerm goalEquality = (ApplicationTerm) ccAnnotation[0];
 		assert ccAnnotation[1].equals(":cons");
 		final ApplicationTerm consTerm1 = (ApplicationTerm) ccAnnotation[2];
 		final ApplicationTerm consTerm2 = (ApplicationTerm) ccAnnotation[3];
@@ -3519,8 +3911,8 @@ public class ProofSimplifier extends TermTransformer {
 	 * @param ccAnnotation the argument of the :dt-disjoint annotation. It has the
 	 *                     form {@code :cons (cons a1 ... an) (cons' b1 ... bn'))}.
 	 */
-	private Term convertDTDisjoint(final Term[] clause, final Object[] ccAnnotation) {
-		final Theory theory = clause[0].getTheory();
+	private Term convertDTDisjoint(final ProofLiteral[] clause, final Object[] ccAnnotation) {
+		final Theory theory = clause[0].getAtom().getTheory();
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
 		collectEqualities(clause, allEqualities, allDisequalities);
@@ -3552,16 +3944,157 @@ public class ProofSimplifier extends TermTransformer {
 		return resolveNeededEqualities(proof, allEqualities, allDisequalities, neededEqualities, neededDisequalities);
 	}
 
+	private int checkAndFindConsArg(final Term consTerm, final Term argTerm) {
+		if (!(consTerm instanceof ApplicationTerm)) {
+			return -1;
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) consTerm;
+		if (!appTerm.getFunction().isConstructor()) {
+			return -1;
+		}
+		final Term[] consArgs = appTerm.getParameters();
+		for (int i = 0; i < consArgs.length; i++) {
+			if (consArgs[i] == argTerm) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * Convert a data type dt-cycle lemma to a minimal proof. The lemma is annotated
+	 * with a cycle {@code a1,b1,a2,b2,..,an} that shows that {@code a1} is equal to
+	 * a constructor call on itself. The lemma must contain {@code ai=bi} negated
+	 * and {@code a(i+1)} is a child of {@code bi} in the sense that either
+	 * {@code bi} is a term {@code cons(..,a(i+1),...)}, or that {@code a(i+1)} is a
+	 * term {@code sel(bi)} and for the corresponding constructor
+	 * {@code is_cons(bi) = true} occurs negated in the lemma.
+	 *
+	 * @param clause       the clause to check
+	 * @param ccAnnotation the argument of the :dt-cycle annotation. It has the form
+	 *                     {@code :cycle a1 b1 a2 b2 ... an} where a1 == an.
+	 */
+	private Term convertDTCycle(final ProofLiteral[] clause, final Object[] ccAnnotation) {
+		final Theory theory = clause[0].getAtom().getTheory();
+		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
+		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
+		collectEqualities(clause, allEqualities, allDisequalities);
+
+		final HashSet<Term> neededEqualities = new HashSet<>();
+		final HashSet<Term> neededDisequalities = new HashSet<>();
+
+		assert ccAnnotation.length == 2;
+		assert ccAnnotation[0].equals(":cycle");
+		final Term[] cycle = (Term[]) ccAnnotation[1];
+		assert cycle.length >= 3;
+		assert cycle.length % 2 == 1;
+		assert cycle[0] == cycle[cycle.length - 1];
+
+		// Build the running cons term backwards over the cycle.
+		// Also build the proof that the running cons term is equal to the corresponding
+		// term in the cycle.
+
+		Term runningTerm = cycle[0];
+		Term proof = mProofRules.refl(runningTerm);
+		final int[] argSequence = new int[(cycle.length - 1) / 2];
+		for (int i = cycle.length - 3; i >= 0; i -= 2) {
+			final Term selectTerm = cycle[i+2];
+			final Term consTerm = cycle[i+1];
+			int pos = checkAndFindConsArg(consTerm, selectTerm);
+			if (pos >= 0) {
+				if (runningTerm == selectTerm) {
+					runningTerm = consTerm;
+					proof = mProofRules.refl(runningTerm);
+				} else {
+					final Term[] consArgs = ((ApplicationTerm) consTerm).getParameters().clone();
+					consArgs[pos] = runningTerm;
+					for (int argnr = 0; argnr < consArgs.length; argnr++) {
+						if (argnr != pos) {
+							neededEqualities.add(theory.term(SMTLIBConstants.EQUALS, consArgs[argnr], consArgs[argnr]));
+						}
+					}
+					final Term newRunningTerm = theory.term(((ApplicationTerm) consTerm).getFunction(), consArgs);
+					proof = res(theory.term(SMTLIBConstants.EQUALS, runningTerm, selectTerm), proof,
+							mProofRules.cong(newRunningTerm, consTerm));
+					runningTerm = newRunningTerm;
+				}
+				argSequence[i / 2] = pos;
+			} else {
+				final ApplicationTerm appTerm = (ApplicationTerm) selectTerm;
+				assert appTerm.getFunction().isSelector();
+				assert consTerm == appTerm.getParameters()[0];
+				final DataType dataType = (DataType) consTerm.getSort().getSortSymbol();
+				final Constructor[] constrs = dataType.getConstructors();
+				findSelector: {
+					for (final Constructor c : constrs) {
+						final String[] selectors = c.getSelectors();
+						for (pos = 0; pos < selectors.length; pos++) {
+							if (selectors[pos].equals(appTerm.getFunction().getName())) {
+								final Term[] consArgs = new Term[selectors.length];
+								final Term[] runningArgs = new Term[selectors.length];
+								for (int argnr = 0; argnr < consArgs.length; argnr++) {
+									consArgs[argnr] = theory.term(selectors[argnr], consTerm);
+									if (argnr != pos) {
+										runningArgs[argnr] = consArgs[argnr];
+										neededEqualities.add(
+												theory.term(SMTLIBConstants.EQUALS, consArgs[argnr], consArgs[argnr]));
+									} else {
+										runningArgs[argnr] = runningTerm;
+									}
+								}
+								final Term newConsTerm = theory.term(c.getName(), null,
+										(c.needsReturnOverload() ? consTerm.getSort() : null), consArgs);
+								final Term newRunningTerm = theory.term(c.getName(), null,
+										(c.needsReturnOverload() ? consTerm.getSort() : null), runningArgs);
+								final Term isConsTerm = theory.term(SMTLIBConstants.IS, new String[] { c.getName() },
+										null, consTerm);
+								proof = res(theory.term(SMTLIBConstants.EQUALS, runningTerm, selectTerm), proof,
+										mProofRules.cong(newRunningTerm, newConsTerm));
+								proof = res(theory.term(SMTLIBConstants.EQUALS, newRunningTerm, newConsTerm), proof,
+										mProofRules.trans(newRunningTerm, newConsTerm, consTerm));
+								final Term isConsEq = theory.term(SMTLIBConstants.EQUALS, isConsTerm, theory.mTrue);
+								proof = res(theory.term(SMTLIBConstants.EQUALS, newConsTerm, consTerm),
+										mProofRules.dtCons(isConsTerm), proof);
+								proof = res(isConsTerm,
+										res(theory.mTrue, mProofRules.trueIntro(), mProofRules.iffElim1(isConsEq)),
+										proof);
+								neededEqualities.add(isConsEq);
+								runningTerm = newRunningTerm;
+								argSequence[i / 2] = pos;
+								break findSelector;
+							}
+						}
+					}
+					// selector not found in datatype
+					throw new AssertionError();
+				}
+			}
+			final Term eqterm = cycle[i];
+			if (eqterm != consTerm) {
+				proof = res(theory.term(SMTLIBConstants.EQUALS, runningTerm, consTerm), proof,
+						mProofRules.trans(runningTerm, consTerm, eqterm));
+				neededEqualities.add(theory.term(SMTLIBConstants.EQUALS, consTerm, eqterm));
+			}
+		}
+
+		// Now runningTerm = cons(...cycle[0]...) and proof shows runningTerm =
+		// cycle[0].
+
+		proof = res(theory.term(SMTLIBConstants.EQUALS, runningTerm, cycle[0]), proof,
+				mProofRules.dtAcyclic(runningTerm, argSequence));
+		return resolveNeededEqualities(proof, allEqualities, allDisequalities, neededEqualities, neededDisequalities);
+	}
+
 	/**
 	 * Convert an instantiation lemma to a minimal proof.
 	 *
 	 * @param clause         the clause to convert
 	 * @param instAnnotation the argument of the :inst annotation.
 	 */
-	private Term convertInstLemma(final Term[] clause, final Object[] quantAnnotation) {
+	private void convertInstLemma(final ProofLiteral[] clause, final Object[] quantAnnotation) {
 		// the first literal in the lemma is a negated universally quantified literal.
-		assert isApplication("not", clause[0]);
-		final Term firstAtom = ((ApplicationTerm) clause[0]).getParameters()[0];
+		assert !clause[0].getPolarity();
+		final Term firstAtom = clause[0].getAtom();
 		assert firstAtom instanceof QuantifiedFormula
 				&& ((QuantifiedFormula) firstAtom).getQuantifier() == QuantifiedFormula.FORALL;
 
@@ -3571,7 +4104,7 @@ public class ProofSimplifier extends TermTransformer {
 						|| quantAnnotation[2] == ":e-matching" || quantAnnotation[2] == ":enumeration")
 				&& quantAnnotation[3] == ":subproof";
 		final Term[] subst = (Term[]) quantAnnotation[1];
-		final AnnotatedTerm annotSubproof = (AnnotatedTerm) quantAnnotation[4];
+		final AnnotatedTerm annotSubproof = (AnnotatedTerm) getConverted();
 		final Term provedEq = provedTerm(annotSubproof);
 		final Term subproof = stripAnnotation(annotSubproof);
 		assert isApplication("=", provedEq);
@@ -3594,75 +4127,7 @@ public class ProofSimplifier extends TermTransformer {
 		for (int i = 0; i < result.length; i++) {
 			proof = removeNot(proof, result[i], true);
 		}
-		return proof;
-	}
-
-	private Term convertLemma(final Term[] newParams) {
-		/*
-		 * The argument of the @lemma application is a single clause annotated with the lemma type, which has as object
-		 * all the necessary annotation. For example (@lemma (! (or (not (= a b)) (not (= b c)) (= a c)) :CC ((= a c)
-		 * :path (a b c))))
-		 */
-		assert newParams.length == 1;
-		final AnnotatedTerm annTerm = (AnnotatedTerm) newParams[0];
-		final String lemmaType = annTerm.getAnnotations()[0].getKey();
-		final Object lemmaAnnotation = annTerm.getAnnotations()[0].getValue();
-		final Term lemma = annTerm.getSubterm();
-		final Term[] clause = termToClause(lemma);
-		Term subProof;
-
-		switch (lemmaType) {
-		case ":CC":
-			subProof = convertCCLemma(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":read-over-weakeq":
-			subProof = convertArraySelectWeakEqLemma(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":weakeq-ext":
-			subProof = convertArrayWeakEqExtLemma(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":read-const-weakeq":
-			subProof = convertArraySelectConstWeakEqLemma(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":dt-project":
-			subProof = convertDTProject(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":dt-tester":
-			subProof = convertDTTester(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":dt-constructor":
-			subProof = convertDTConstructor(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":dt-cases":
-			subProof = convertDTCases(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":dt-unique":
-			subProof = convertDTUnique(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":dt-injective":
-			subProof = convertDTInjective(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":dt-disjoint":
-			subProof = convertDTDisjoint(clause, (Object[]) lemmaAnnotation);
-			break;
-		case ":EQ":
-			subProof = convertEQLemma(clause);
-			break;
-		case ":LA":
-			subProof = convertLALemma(clause, (Term[]) lemmaAnnotation);
-			break;
-		case ":trichotomy":
-			subProof = convertTrichotomy(clause);
-			break;
-		case ":inst":
-			subProof = convertInstLemma(clause, (Object[]) lemmaAnnotation);
-			break;
-		default: {
-			subProof = mProofRules.oracle(termToProofLiterals(lemma), annTerm.getAnnotations());
-		}
-		}
-		assert checkProof(subProof, termToProofLiterals(lemma));
-		return subProof;
+		setResult(proof);
 	}
 
 	private Term convertQuant(final Term[] newParams) {
@@ -3677,27 +4142,33 @@ public class ProofSimplifier extends TermTransformer {
 
 		final Term subProof = annotatedTerm.getSubterm();
 		/* Check that subproof is an equality */
+		Term proof = subproof((AnnotatedTerm) subProof);
 		final ApplicationTerm subEquality = (ApplicationTerm) provedTerm((AnnotatedTerm) subProof);
 		assert isApplication("=", subEquality);
+		final FormulaUnLet unletter = new FormulaUnLet();
 
-		Term proof = subproof((AnnotatedTerm) subProof);
+		/* first show that subProof holds for all values of the variables */
+		final Term[] skolem = mProofRules.getSkolemVars(vars, subEquality, true);
+		final Term letEquality = unletter.unlet(theory.let(vars, skolem, subEquality));
+		final Term letProof = unletter.unlet(theory.let(vars, skolem, proof));
+		final QuantifiedFormula forallSubEquality = (QuantifiedFormula) theory.forall(vars, subEquality);
+		final Term forallProof = res(letEquality, letProof, mProofRules.forallIntro(forallSubEquality));
 
 		/* compute the proven equality (= (exists (...) lhs) (exists (...) rhs)) */
-		final FormulaUnLet unletter = new FormulaUnLet();
 		final Term lhs = subEquality.getParameters()[0];
 		final Term rhs = subEquality.getParameters()[1];
 
 		final Term[] skolem1 = mProofRules.getSkolemVars(vars, isForall ? lhs : rhs, isForall);
-		final Term let1Eq = unletter.unlet(theory.let(vars, skolem1, subEquality));
 		final Term let1Rhs = unletter.unlet(theory.let(vars, skolem1, rhs));
 		final Term let1Lhs = unletter.unlet(theory.let(vars, skolem1, lhs));
-		final Term let1Proof = unletter.unlet(theory.let(vars, skolem1, proof));
+		final Term let1Eq = theory.term(SMTLIBConstants.EQUALS, let1Lhs, let1Rhs);
+		final Term let1Proof = mProofRules.forallElim(skolem1, forallSubEquality);
 
 		final Term[] skolem2 = mProofRules.getSkolemVars(vars, isForall ? rhs : lhs, isForall);
-		final Term let2Eq = unletter.unlet(theory.let(vars, skolem2, subEquality));
 		final Term let2Lhs = unletter.unlet(theory.let(vars, skolem2, lhs));
 		final Term let2Rhs = unletter.unlet(theory.let(vars, skolem2, rhs));
-		final Term let2Proof = unletter.unlet(theory.let(vars, skolem2, proof));
+		final Term let2Eq = theory.term(SMTLIBConstants.EQUALS, let2Lhs, let2Rhs);
+		final Term let2Proof = mProofRules.forallElim(skolem2, forallSubEquality);
 		final QuantifiedFormula quLhs = (QuantifiedFormula) (isForall ? theory.forall(vars, lhs)
 				: theory.exists(vars, lhs));
 		final QuantifiedFormula quRhs = (QuantifiedFormula) (isForall ? theory.forall(vars, rhs)
@@ -3715,133 +4186,247 @@ public class ProofSimplifier extends TermTransformer {
 						mProofRules.resolutionRule(let2Eq, let2Proof, mProofRules.iffElim2(let2Eq)),
 						isForall ? mProofRules.forallIntro(quRhs) : mProofRules.existsIntro(skolem2, quRhs)));
 		proof = proveIff(newEquality, proof2, proof1);
+		proof = res(forallSubEquality, forallProof, proof);
+		assert checkProof(proof, termToProofLiterals(newEquality));
 		return annotateProved(newEquality, proof);
 	}
 
-	private Term convertAllIntro(final Term[] newParams) {
-		final LambdaTerm lambda = (LambdaTerm) newParams[0];
-		final AnnotatedTerm annotatedTerm = (AnnotatedTerm) lambda.getSubterm();
+	public Term convertLemma(ProofLiteral[] clause, Annotation annot) {
+		final String name = annot.getKey();
+		final Object annotValue = annot.getValue();
+		Term result;
+		switch (name) {
+		case ":trans":
+		case ":cong":
+			result = convertCCLemma(clause, name, (Term[]) annotValue);
+			break;
+		case ":read-over-weakeq":
+			result = convertArraySelectWeakEqLemma(clause, (Object[]) annotValue);
+			break;
+		case ":weakeq-ext":
+			result = convertArrayWeakEqExtLemma(clause, (Object[]) annotValue);
+			break;
+		case ":read-const-weakeq":
+			result = convertArraySelectConstWeakEqLemma(clause, (Object[]) annotValue);
+			break;
+		case ":dt-project":
+			result = convertDTProject(clause, (Object[]) annotValue);
+			break;
+		case ":dt-tester":
+			result = convertDTTester(clause, (Object[]) annotValue);
+			break;
+		case ":dt-constructor":
+			result = convertDTConstructor(clause, (Object[]) annotValue);
+			break;
+		case ":dt-cases":
+			result = convertDTCases(clause, (Object[]) annotValue);
+			break;
+		case ":dt-unique":
+			result = convertDTUnique(clause, (Object[]) annotValue);
+			break;
+		case ":dt-injective":
+			result = convertDTInjective(clause, (Object[]) annotValue);
+			break;
+		case ":dt-disjoint":
+			result = convertDTDisjoint(clause, (Object[]) annotValue);
+			break;
+		case ":dt-cycle":
+			result = convertDTCycle(clause, (Object[]) annotValue);
+			break;
+		case ":EQ":
+			result = convertEQLemma(clause);
+			break;
+		case ":LA":
+			result = convertLALemma(clause, (Term[]) annotValue);
+			break;
+		case ":trichotomy":
+			result = convertTrichotomy(clause);
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown Lemma");
+		}
+		assert checkProof(result, clause);
+		result = annotateProvedClause(result, annot, clause);
+		return result;
+	}
 
-		final Annotation bodyAnnot = annotatedTerm.getAnnotations()[0];
-		if (annotatedTerm.getAnnotations().length != 1 || bodyAnnot.getKey() != ":body"
-				|| !(bodyAnnot.getValue() instanceof Term)) {
-			throw new AssertionError("@allIntro with malformed annotation");
+	private void convertMP(final ProofLiteral[] clause) {
+		final AnnotatedTerm rewrite = (AnnotatedTerm) getConverted();
+		final ApplicationTerm provedEq = (ApplicationTerm) provedTerm(rewrite);
+		assert isApplication(SMTLIBConstants.EQUALS, provedEq);
+		final Term[] eqParams = provedEq.getParameters();
+		Term proof = res(provedEq, subproof(rewrite), mProofRules.iffElim2(provedEq));
+		proof = removeNot(proof, eqParams[0], false);
+		proof = removeNot(proof, eqParams[1], true);
+		assert checkProof(proof, clause);
+		setResult(proof);
+	}
+
+	public void convertOracle(final AnnotatedTerm oracle) {
+		final Annotation[] annots = oracle.getAnnotations();
+		assert annots.length >= 2;
+
+		// annots[0] is :oracle ( proof literals )
+		final Object[] lits = (Object[]) annots[0].getValue();
+		assert lits.length % 2 == 0;
+		final ProofLiteral[] clause = new ProofLiteral[lits.length / 2];
+		for (int i = 0; i < clause.length; i++) {
+			assert lits[2 * i].equals("+") || lits[2 * i].equals("-");
+			clause[i] = new ProofLiteral((Term) lits[2 * i + 1], lits[2 * i].equals("+"));
 		}
-		final Term provedClause = (Term) bodyAnnot.getValue();
-		Term proof = annotatedTerm.getSubterm();
-		if (isApplication("not", provedClause)) {
-			final Term atom = ((ApplicationTerm) provedClause).getParameters()[0];
-			proof = res(atom, mProofRules.notIntro(provedClause), proof);
+
+		// annots[1] is the first oracle annotation and determines the type.
+		switch (annots[1].getKey()) {
+		case ":trans":
+		case ":cong":
+		case ":read-over-weakeq":
+		case ":weakeq-ext":
+		case ":read-const-weakeq":
+		case ":dt-project":
+		case ":dt-tester":
+		case ":dt-constructor":
+		case ":dt-cases":
+		case ":dt-unique":
+		case ":dt-injective":
+		case ":dt-disjoint":
+		case ":dt-cycle":
+		case ":EQ":
+		case ":LA":
+		case ":trichotomy":
+			setResult(convertLemma(clause, annots[1]));
+			break;
+		case ":true+":
+		case ":false-":
+		case ":or+":
+		case ":or-":
+		case ":and+":
+		case ":and-":
+		case ":=>+":
+		case ":=>-":
+		case ":xor+1":
+		case ":xor+2":
+		case ":xor-1":
+		case ":xor-2":
+		case ":ite+1":
+		case ":ite+2":
+		case ":ite+red":
+		case ":ite-1":
+		case ":ite-2":
+		case ":ite-red":
+		case ":=+1":
+		case ":=+2":
+		case ":=-1":
+		case ":=-2":
+		case ":exists-":
+		case ":forall+":
+		case ":exists+":
+		case ":forall-":
+		case ":termITE":
+		case ":termITEBound":
+		case ":trueNotFalse":
+		case ":excludedMiddle1":
+		case ":excludedMiddle2":
+		case ":divHigh":
+		case ":divLow":
+		case ":toIntHigh":
+		case ":toIntLow":
+		case ":store":
+		case ":diff":
+		case ":matchCase":
+		case ":matchDefault":
+			setResult(convertTautology(clause, annots[1]));
+			break;
+
+		case ProofConstants.ANNOTKEY_REWRITE:
+			enqueueWalker((NonRecursive engine) -> ((ProofSimplifier) engine).convertMP(clause));
+			convert((Term) annots[1].getValue());
+			break;
+		case ":inst": {
+			final Object[] instAnnot = (Object[]) annots[1].getValue();
+			assert instAnnot[3] == ":subproof";
+			enqueueWalker((NonRecursive engine) -> ((ProofSimplifier) engine).convertInstLemma(clause, instAnnot));
+			convert((Term) instAnnot[4]);
+			break;
 		}
-		final TermVariable[] vars = lambda.getVariables();
-		final Term[] skolemTerms = mProofRules.getSkolemVars(vars, provedClause, true);
-		proof = mSkript.let(vars, skolemTerms, proof);
-		final Term lettedClause = mSkript.let(vars, skolemTerms, provedClause);
-		final FormulaUnLet unletter = new FormulaUnLet();
-		proof = unletter.unlet(proof);
-		/* compute the resulting quantified term (forall (...) origTerm) */
-		final Term forallClause = mSkript.quantifier(Script.FORALL, vars, provedClause);
-		proof = mProofRules.resolutionRule(unletter.unlet(lettedClause), proof,
-				mProofRules.forallIntro((QuantifiedFormula) forallClause));
-		return proof;
+		default:
+			setResult(oracle);
+			return;
+		}
 	}
 
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm old, final Term[] newParams) {
-		assert old.getSort().getName() == ProofConstants.SORT_PROOF;
-		switch (old.getFunction().getName()) {
-		case ProofConstants.FN_RES: {
-			/* convert super-resolution into simple resolution */
-			setResult(convertResolution(newParams));
-			return;
-		}
-		case ProofConstants.FN_CLAUSE: {
-			setResult(convertClause(newParams));
-			return;
-		}
-		case ProofConstants.FN_MP: {
-			setResult(convertMP(newParams));
-			return;
-		}
-		case ProofConstants.FN_ASSERTED:
-		case ProofConstants.FN_ASSUMPTION: {
-			setResult(removeNot(mProofRules.asserted(newParams[0]), newParams[0], true));
-			return;
-		}
-		case ProofConstants.FN_TAUTOLOGY: {
-			setResult(convertTautology(newParams[0]));
-			return;
-		}
-		case ProofConstants.FN_REFL: {
-			final Term t = newParams[0];
-			setResult(annotateProved(t.getTheory().term(SMTLIBConstants.EQUALS, t, t), mProofRules.refl(t)));
-			return;
-		}
-		case ProofConstants.FN_TRANS: {
-			setResult(convertTrans(newParams));
-			return;
-		}
-		case ProofConstants.FN_CONG: {
-			setResult(convertCong(newParams));
-			return;
-		}
-		case ProofConstants.FN_QUANT: {
-			setResult(convertQuant(newParams));
-			return;
-		}
-		case ProofConstants.FN_REWRITE: {
-			setResult(convertRewrite(newParams));
-			return;
-		}
-		case ProofConstants.FN_LEMMA: {
-			setResult(convertLemma(newParams));
-			return;
-		}
-		case ProofConstants.FN_ALLINTRO: {
-			setResult(convertAllIntro(newParams));
-			return;
-		}
-		default:
-			throw new AssertionError("Cannot translate proof rule: " + old.getFunction());
+		if (old.getSort().getName() == ProofConstants.SORT_EQPROOF) {
+			switch (old.getFunction().getName()) {
+			case ProofConstants.FN_TRANS: {
+				setResult(convertTrans(newParams));
+				return;
+			}
+			case ProofConstants.FN_CONG: {
+				setResult(convertCong(old.getFunction(), newParams));
+				return;
+			}
+			case ProofConstants.FN_MATCH: {
+				setResult(convertMatch(newParams));
+				return;
+			}
+			case ProofConstants.FN_QUANT: {
+				setResult(convertQuant(newParams));
+				return;
+			}
+			default:
+				throw new AssertionError("Cannot translate proof rule: " + old.getFunction());
+			}
+		} else {
+			assert ProofRules.isProof(old);
+			super.convertApplicationTerm(old, newParams);
 		}
 	}
 
 	@Override
 	public void convert(final Term term) {
-		if (term.getSort().getName() != ProofConstants.SORT_PROOF) {
-			// don't convert subterms that are not proofs
-			if (!(term instanceof AnnotatedTerm) || ((AnnotatedTerm) term).getAnnotations()[0].getKey() != ":inst") {
-				// but check that it is not an :inst annotation, that must be converted
-				setResult(term);
+		// don't convert sub-formulas (in optional :proves annotations and resolutions).
+		if (term.getSort() == term.getTheory().getBooleanSort()) {
+			setResult(term);
+		} else if (term.getSort().getName() == ProofConstants.SORT_EQPROOF && term instanceof ApplicationTerm) {
+			// handle reflexivity and rewrite proofs
+			final ApplicationTerm rewriteProof = (ApplicationTerm) term;
+			switch (rewriteProof.getFunction().getName()) {
+			case ProofConstants.FN_REFL: {
+				final Term t = rewriteProof.getParameters()[0];
+				setResult(annotateProved(t.getTheory().term(SMTLIBConstants.EQUALS, t, t), mProofRules.refl(t)));
 				return;
 			}
+			case ProofConstants.FN_REWRITE: {
+				final AnnotatedTerm lhsAnnot = (AnnotatedTerm) rewriteProof.getParameters()[0];
+				final Annotation annot = lhsAnnot.getAnnotations()[0];
+				final Term lhs = lhsAnnot.getSubterm();
+				final Term rhs = rewriteProof.getParameters()[1];
+				setResult(convertRewrite(lhs, rhs, annot));
+				return;
+			}
+			default:
+				super.convert(term);
+			}
+		} else if (ProofRules.isOracle(term)) {
+			convertOracle((AnnotatedTerm) term);
+		} else {
+			super.convert(term);
 		}
-		super.convert(term);
 	}
 
 
 	/* === Auxiliary functions === */
-	private Term unquote(final Term quotedTerm) {
-		if (quotedTerm instanceof AnnotatedTerm) {
-			final AnnotatedTerm annTerm = (AnnotatedTerm) quotedTerm;
-			final Annotation[] annots = annTerm.getAnnotations();
-			if (annots.length == 1) {
-				final String annot = annots[0].getKey();
-				if (annot == ":quoted" || annot == ":quotedCC" || annot == ":quotedLA"
-						|| annot == ":quotedQuant") {
-					final Term result = annTerm.getSubterm();
-					return result;
-				}
-			}
-		}
-		throw new AssertionError("Expected quoted literal, but got " + quotedTerm);
+
+	private Term expandAux(final ApplicationTerm auxTerm) {
+		final FunctionSymbol auxFunc = auxTerm.getFunction();
+		return new FormulaUnLet()
+				.unlet(mSkript.let(auxFunc.getDefinitionVars(), auxTerm.getParameters(), auxFunc.getDefinition()));
 	}
 
-	private Term unquoteExpand(final Term quotedTerm) {
-		final ApplicationTerm auxTerm = (ApplicationTerm) ((ApplicationTerm) unquote(quotedTerm)).getParameters()[0];
-		final LambdaTerm lambda = mAuxDefs.get(auxTerm.getFunction());
-		return new FormulaUnLet()
-				.unlet(mSkript.let(lambda.getVariables(), auxTerm.getParameters(), lambda.getSubterm()));
+	private Term expandAuxDef(final ApplicationTerm auxEqTerm) {
+		final ApplicationTerm auxTerm = (ApplicationTerm) auxEqTerm.getParameters()[0];
+		return expandAux(auxTerm);
 	}
 
 	/**
@@ -4038,14 +4623,19 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Prove the needed equalities and disequalities from their unquoted counterpart.  It also handles symmetric
-	 * cases and trivial equalities/disequalities.
+	 * Prove the needed equalities and disequalities in the right form. It handles
+	 * symmetric cases and trivial equalities/disequalities.
 	 *
-	 * @param proof  the proof that is modified to remove the equalities/disequalities
-	 * @param allEqualities a hash map from symmetric pair to quoted equality as it appears (negated) in the clause.
-	 * @param allDisequalities a hash map from symmetric pair to quoted equality as it appears (positive) in the clause.
-	 * @param neededEqualities a set of needed equalities (occurring negative in the proved clause)
-	 * @param neededDisequalities a set of needed disequalities (occurring positive in the proved clause).
+	 * @param proof               the proof that is modified to remove the
+	 *                            equalities/disequalities
+	 * @param allEqualities       a hash map from symmetric pair to the equality as
+	 *                            it appears (negated) in the clause.
+	 * @param allDisequalities    a hash map from symmetric pair to the equality as
+	 *                            it appears (positive) in the clause.
+	 * @param neededEqualities    a set of needed equalities (occurring negative in
+	 *                            the proved clause)
+	 * @param neededDisequalities a set of needed disequalities (occurring positive
+	 *                            in the proved clause).
 	 * @return the modified proof.
 	 */
 	private Term resolveNeededEqualities(Term proof, final Map<SymmetricPair<Term>, Term> allEqualities,
@@ -4054,10 +4644,9 @@ public class ProofSimplifier extends TermTransformer {
 		for (final Term eq : neededEqualities) {
 			assert isApplication("=", eq);
 			final Term[] eqParam = ((ApplicationTerm) eq).getParameters();
-			final Term quotedEq = allEqualities.get(new SymmetricPair<>(eqParam[0], eqParam[1]));
-			if (quotedEq != null) {
-				final Term unquoteEq = unquote(quotedEq);
-				if (unquoteEq != eq) {
+			final Term clauseEq = allEqualities.get(new SymmetricPair<>(eqParam[0], eqParam[1]));
+			if (clauseEq != null) {
+				if (clauseEq != eq) {
 					// need symmetry
 					proof = res(eq, mProofRules.symm(eqParam[0], eqParam[1]), proof);
 				}
@@ -4070,10 +4659,9 @@ public class ProofSimplifier extends TermTransformer {
 		for (final Term eq : neededDisequalities) {
 			assert isApplication("=", eq);
 			final Term[] eqParam = ((ApplicationTerm) eq).getParameters();
-			final Term quotedEq = allDisequalities.get(new SymmetricPair<>(eqParam[0], eqParam[1]));
-			if (quotedEq != null) {
-				final Term unquoteEq = unquote(quotedEq);
-				if (unquoteEq != eq) {
+			final Term clauseEq = allDisequalities.get(new SymmetricPair<>(eqParam[0], eqParam[1]));
+			if (clauseEq != null) {
+				if (clauseEq != eq) {
 					// need symmetry
 					proof = res(eq, proof, mProofRules.symm(eqParam[1], eqParam[0]));
 				}
@@ -4082,12 +4670,6 @@ public class ProofSimplifier extends TermTransformer {
 				assert proofEq != null;
 				proof = res(eq, proof, proofEq);
 			}
-		}
-		for (final Term quotedEq : allEqualities.values()) {
-			proof = removeQuoted(proof, quotedEq, unquote(quotedEq), false);
-		}
-		for (final Term quotedEq : allDisequalities.values()) {
-			proof = removeQuoted(proof, quotedEq, unquote(quotedEq), true);
 		}
 		return proof;
 	}
@@ -4112,14 +4694,13 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a clause term into an Array of proof literals, one entry for each
+	 * Convert an array of terms into an array of proof literals, one entry for each
 	 * disjunct. This also removes double negations.
 	 *
 	 * @param clauseTerm The term representing a clause.
 	 * @return The disjuncts of the clause.
 	 */
-	private ProofLiteral[] termToProofLiterals(final Term clauseTerm) {
-		final Term[] clauseLits = termToClause(clauseTerm);
+	private ProofLiteral[] termArrayToProofLiterals(final Term[] clauseLits) {
 		final ProofLiteral[] proofLits = new ProofLiteral[clauseLits.length];
 		for (int i = 0; i < proofLits.length; i++) {
 			Term lit = clauseLits[i];
@@ -4131,6 +4712,17 @@ public class ProofSimplifier extends TermTransformer {
 			proofLits[i] = new ProofLiteral(lit, polarity);
 		}
 		return proofLits;
+	}
+
+	/**
+	 * Convert a clause term into an array of proof literals, one entry for each
+	 * disjunct. This also removes double negations.
+	 *
+	 * @param clauseTerm The term representing a clause.
+	 * @return The disjuncts of the clause.
+	 */
+	private ProofLiteral[] termToProofLiterals(final Term clauseTerm) {
+		return termArrayToProofLiterals(termToClause(clauseTerm));
 	}
 
 	/**
@@ -4191,24 +4783,41 @@ public class ProofSimplifier extends TermTransformer {
 				: proofNeg == null ? proofPos : mProofRules.resolutionRule(pivot, proofPos, proofNeg);
 	}
 
-	private Term proveAuxExpand(final Term quotedAtom, final Term expanded) {
-		// prove the equality (= quotedAtom mainAtom)
-		// where quotedAtom is (! (= auxTerm true) :quotedQuant)
-		// and mainAtom is the expanded form of auxTerm.
-		final ApplicationTerm auxTerm = (ApplicationTerm) ((ApplicationTerm) unquote(quotedAtom)).getParameters()[0];
-		final Term unquotedAtom = ((AnnotatedTerm) quotedAtom).getSubterm();
-		final Term trueTerm = mSkript.term(SMTLIBConstants.TRUE);
-		final Term firstEq = mSkript.term(SMTLIBConstants.EQUALS, quotedAtom, unquotedAtom);
-		final Term secondEq = mSkript.term(SMTLIBConstants.EQUALS, unquotedAtom, auxTerm);
-		final Term thirdEq = mSkript.term(SMTLIBConstants.EQUALS, auxTerm, expanded);
+	/**
+	 * Proves the clause { (= auxTerm false), expanded }.
+	 *
+	 * @param auxEqAtom the (= auxTerm true) term
+	 * @param expanded  the expanded definition of auxTerm
+	 * @return the proof
+	 */
+	private Term proveAuxElim(final ApplicationTerm auxEqAtom, final Term expanded) {
+		final ApplicationTerm auxTerm = (ApplicationTerm) auxEqAtom.getParameters()[0];
+		final Term falseTerm = mSkript.term(SMTLIBConstants.FALSE);
+		final Term expandEq = mSkript.term(SMTLIBConstants.EQUALS, auxTerm, expanded);
 
-		return mProofRules.resolutionRule(firstEq, mProofRules.delAnnot(quotedAtom),
-				mProofRules.resolutionRule(secondEq,
+		return res(auxTerm, res(falseTerm, mProofRules.iffIntro1(auxEqAtom), mProofRules.falseElim()),
+				res(expandEq, mProofRules.expand(auxTerm), mProofRules.iffElim2(expandEq)));
+	}
+
+	/**
+	 * Proves the equality (= (= auxTerm true) expanded).
+	 *
+	 * @param auxEqAtom the (= auxTerm true) term
+	 * @param expanded  the expanded definition of auxTerm
+	 * @return the proof
+	 */
+	private Term proveAuxExpand(final ApplicationTerm auxEqAtom, final Term expanded) {
+		final ApplicationTerm auxTerm = (ApplicationTerm) auxEqAtom.getParameters()[0];
+		final Term trueTerm = mSkript.term(SMTLIBConstants.TRUE);
+		final Term firstEq = mSkript.term(SMTLIBConstants.EQUALS, auxEqAtom, auxTerm);
+		final Term secondEq = mSkript.term(SMTLIBConstants.EQUALS, auxTerm, expanded);
+
+		return mProofRules.resolutionRule(firstEq,
 						mProofRules.resolutionRule(trueTerm, mProofRules.trueIntro(),
-								proveIff(secondEq, mProofRules.iffElim1(unquotedAtom),
-										mProofRules.iffIntro2(unquotedAtom))),
-						mProofRules.resolutionRule(thirdEq, mProofRules.expand(auxTerm),
-								mProofRules.trans(quotedAtom, unquotedAtom, auxTerm, expanded))));
+								proveIff(firstEq, mProofRules.iffElim1(auxEqAtom),
+										mProofRules.iffIntro2(auxEqAtom))),
+						mProofRules.resolutionRule(secondEq, mProofRules.expand(auxTerm),
+						mProofRules.trans(auxEqAtom, auxTerm, expanded)));
 	}
 
 	/**
@@ -4265,14 +4874,12 @@ public class ProofSimplifier extends TermTransformer {
 				proveEqWithMultiplier(rhsParams, lhsParams, multiplier));
 	}
 
-	private Term proveRewriteWithLeq(final Term lhs, final Term rhs, final boolean normalizeGCD) {
+	private Term proveRewriteWithLeq(final Term lhs, final Term rhs, final boolean allowFactor) {
 		final Theory theory = lhs.getTheory();
 
 		final boolean isGreater = isApplication(">", lhs) || isApplication(">=", lhs);
 		final boolean rhsIsNegated = isApplication("not", rhs);
-		final Term quotedRhsAtom = rhsIsNegated ? negate(rhs) : rhs;
-		final boolean rhsIsQuoted = quotedRhsAtom instanceof AnnotatedTerm;
-		final Term rhsAtom = rhsIsQuoted ? unquote(quotedRhsAtom) : quotedRhsAtom;
+		final Term rhsAtom = rhsIsNegated ? negate(rhs) : rhs;
 		Term[] lhsParam = ((ApplicationTerm) lhs).getParameters();
 		final Term[] rhsAtomParam = ((ApplicationTerm) rhsAtom).getParameters();
 		final boolean isStrictLhs = isApplication("<", lhs) || isApplication(">", lhs);
@@ -4284,16 +4891,20 @@ public class ProofSimplifier extends TermTransformer {
 		final Term posLhs = theory.term(isStrictLhs ? "<" : "<=", lhsParam[0], lhsParam[1]);
 		final Term negLhs = theory.term(isStrictLhs ? "<=" : "<", lhsParam[1], lhsParam[0]);
 
-		Rational gcd = Rational.ONE;
+		Rational factor = Rational.ONE;
 		boolean needsIntReasoning = false;
-		if (normalizeGCD) {
+		if (allowFactor) {
 			final SMTAffineTerm lhsAffine = new SMTAffineTerm(lhsParam[0]);
 			lhsAffine.add(Rational.MONE, lhsParam[1]);
-			gcd = lhsAffine.getGcd();
+			final SMTAffineTerm rhsAffine = new SMTAffineTerm(rhsAtomParam[0]);
+			rhsAffine.add(Rational.MONE, rhsAtomParam[1]);
+			assert !lhsAffine.isConstant() && !rhsAffine.isConstant();
+			final Term someTerm = lhsAffine.getSummands().keySet().iterator().next();
+			factor = lhsAffine.getSummands().get(someTerm).div(rhsAffine.getSummands().get(someTerm)).abs();
 
 			// Round constant up for integers: (<= (x + 1.25) 0) --> (<= (x + 2) 0)
 			if (lhsParam[0].getSort().getName().equals(SMTLIBConstants.INT)) {
-				needsIntReasoning = !lhsAffine.getConstant().div(gcd).isIntegral() || rhsIsNegated;
+				needsIntReasoning = !lhsAffine.getConstant().div(factor).isIntegral() || rhsIsNegated;
 			}
 		}
 
@@ -4311,21 +4922,15 @@ public class ProofSimplifier extends TermTransformer {
 					rhsAtomParam[isStrictRhsAtom ? 0 : 1]);
 		}
 		Term proofToRhsAtom = mProofRules.farkas(new Term[] { rhsIsNegated ? negLhs : posLhs, negRhsAtom },
-				new BigInteger[] { gcd.denominator(), gcd.numerator() } );
+				new BigInteger[] { factor.denominator(), factor.numerator() });
 		proofToRhsAtom = mProofRules.resolutionRule(negRhsAtom, rhsTotality, proofToRhsAtom);
-		Term proofFromRhsAtom = mProofRules.farkas(new Term[] { rhsIsNegated ? posLhs : negLhs, rhsAtom },
-				new BigInteger[] { gcd.denominator(), gcd.numerator() } );
-		Term unquoteEq = null;
-		if (rhsIsQuoted) {
-			unquoteEq = theory.term(SMTLIBConstants.EQUALS, quotedRhsAtom, rhsAtom);
-			proofFromRhsAtom = mProofRules.resolutionRule(rhsAtom, mProofRules.iffElim2(unquoteEq), proofFromRhsAtom);
-			proofToRhsAtom = mProofRules.resolutionRule(rhsAtom, proofToRhsAtom, mProofRules.iffElim1(unquoteEq));
-		}
+		final Term proofFromRhsAtom = mProofRules.farkas(new Term[] { rhsIsNegated ? posLhs : negLhs, rhsAtom },
+				new BigInteger[] { factor.denominator(), factor.numerator() });
 		Term proofLhsToRhs = rhsIsNegated
-				? mProofRules.resolutionRule(quotedRhsAtom, mProofRules.notIntro(rhs), proofFromRhsAtom)
+				? mProofRules.resolutionRule(rhsAtom, mProofRules.notIntro(rhs), proofFromRhsAtom)
 				: proofToRhsAtom;
 		Term proofRhsToLhs = rhsIsNegated
-				? mProofRules.resolutionRule(quotedRhsAtom, proofToRhsAtom, mProofRules.notElim(rhs))
+				? mProofRules.resolutionRule(rhsAtom, proofToRhsAtom, mProofRules.notElim(rhs))
 				: proofFromRhsAtom;
 		proofRhsToLhs = mProofRules.resolutionRule(negLhs,
 				mProofRules.total(lhsParam[isStrictLhs ? 1 : 0], lhsParam[isStrictLhs ? 0 : 1]), proofRhsToLhs);
@@ -4337,9 +4942,6 @@ public class ProofSimplifier extends TermTransformer {
 
 		}
 		Term proof = proveIff(theory.term("=", lhs, rhs), proofLhsToRhs, proofRhsToLhs);
-		if (rhsIsQuoted) {
-			proof = mProofRules.resolutionRule(unquoteEq, mProofRules.delAnnot(quotedRhsAtom), proof);
-		}
 		if (isGreater) {
 			proof = mProofRules.resolutionRule(greaterEq,
 					isStrictLhs ? mProofRules.gtDef(lhs) : mProofRules.geqDef(lhs), proof);
@@ -4349,211 +4951,53 @@ public class ProofSimplifier extends TermTransformer {
 
 	public Term transformProof(Term proof) {
 		final CollectSkolemAux collector = new CollectSkolemAux();
-		collector.transform(proof);
+		proof = collector.transform(proof);
 		mAuxDefs = collector.getAuxDef();
-		proof = new RewriteSkolem(collector.getSkolems()).transform(proof);
 		proof = super.transform(proof);
-		for (final Map.Entry<FunctionSymbol, LambdaTerm> definition : mAuxDefs.entrySet()) {
-			proof = mProofRules.defineFun(definition.getKey(), definition.getValue(), proof);
+		final TermVariable[] freeVars = proof.getFreeVars();
+		if (freeVars.length > 0) {
+			final Theory theory = proof.getTheory();
+			final Term[] values = new Term[freeVars.length];
+			for (int i = 0; i < freeVars.length; i++) {
+				values[i] = mProofRules.choose(freeVars[i], theory.mTrue);
+			}
+			proof = new FormulaUnLet().unlet(theory.let(freeVars, values, proof));
+		}
+		// add function symbols in reverse order
+		final ArrayDeque<FunctionSymbol> reversedOrder = new ArrayDeque<>();
+		for (final FunctionSymbol function : mAuxDefs.keySet()) {
+			reversedOrder.addFirst(function);
+		}
+		for (final FunctionSymbol function : reversedOrder) {
+			proof = mProofRules.defineFun(function, mAuxDefs.get(function), proof);
 		}
 		return proof;
 	}
 
 	class CollectSkolemAux extends TermTransformer {
-		private final HashMap<Term, Term> mSkolemFunctions = new HashMap<>();
-		private final HashMap<FunctionSymbol, LambdaTerm> mQuantDefinedTerms = new HashMap<>();
-
-		public HashMap<Term, Term> getSkolems() {
-			return mSkolemFunctions;
-		}
+		private final HashMap<FunctionSymbol, LambdaTerm> mQuantDefinedTerms = new LinkedHashMap<>();
 
 		public HashMap<FunctionSymbol, LambdaTerm> getAuxDef() {
 			return mQuantDefinedTerms;
 		}
 
 		@Override
-		public void convert(final Term term) {
-			if (term.getSort().getName() != ProofConstants.SORT_PROOF) {
-				setResult(term);
-				return;
-			}
-			if (term instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (appTerm.getFunction().getName().equals(ProofConstants.FN_REWRITE)) {
-					final AnnotatedTerm annotTerm = (AnnotatedTerm) appTerm.getParameters()[0];
-					switch (annotTerm.getAnnotations()[0].getKey()) {
-					case ":intern":
-						collectAuxFromIntern(annotTerm);
-						break;
-					}
-					setResult(term);
-					return;
-				} else if (appTerm.getFunction().getName().equals(ProofConstants.FN_TAUTOLOGY)) {
-					final AnnotatedTerm annotTerm = (AnnotatedTerm) appTerm.getParameters()[0];
-					switch (annotTerm.getAnnotations()[0].getKey()) {
-					case ":exists-":
-						collectExistsElim(annotTerm);
-						break;
-					case ":forall+":
-						collectForallIntro(annotTerm);
-						break;
-					case ":or+":
-					case ":or-":
-					case ":and+":
-					case ":and-":
-					case ":=>+":
-					case ":=>-":
-					case ":excludedMiddle1":
-					case ":excludedMiddle2": {
-						assert isApplication(SMTLIBConstants.OR, annotTerm.getSubterm());
-						Term firstLit = ((ApplicationTerm) annotTerm.getSubterm()).getParameters()[0];
-						if (isApplication(SMTLIBConstants.NOT, firstLit)) {
-							firstLit = ((ApplicationTerm) firstLit).getParameters()[0];
-						}
-						if (firstLit instanceof AnnotatedTerm) {
-							final AnnotatedTerm quotedTerm = (AnnotatedTerm) firstLit;
-							if (quotedTerm.getAnnotations()[0].getKey().equals(":quotedQuant")
-									&& quotedTerm.getAnnotations()[0].getValue() != null) {
-								collectAuxTerm(quotedTerm);
-							}
-						}
-						break;
-					}
-					}
-					setResult(term);
-					return;
-				}
-			}
-			super.convert(term);
-		}
-
-		private void collectAuxFromIntern(final AnnotatedTerm annTerm) {
-			final Term rewrite = annTerm.getSubterm();
-			assert isApplication(SMTLIBConstants.EQUALS, rewrite);
-			final Term rhs = ((ApplicationTerm) rewrite).getParameters()[1];
-			if (rhs instanceof AnnotatedTerm) {
-				collectAuxTerm((AnnotatedTerm) rhs);
-			}
-		}
-
-		private void collectAuxTerm(final AnnotatedTerm annTerm) {
-			final Annotation[] annots = annTerm.getAnnotations();
-			if (annots.length == 1) {
-				final String annot = annots[0].getKey();
-				// Check for Quant AUX literals
-				if (annot == ":quotedQuant" && annots[0].getValue() instanceof Term) {
-					final Term subterm = annTerm.getSubterm();
-					if (isApplication("=", subterm)) {
-						final ApplicationTerm auxApp = (ApplicationTerm) subterm;
-						if (isApplication("true", auxApp.getParameters()[1])) {
-							final Term lhs = auxApp.getParameters()[0];
-							if (lhs instanceof ApplicationTerm
-									&& ((ApplicationTerm) lhs).getFunction().getName().startsWith("@AUX")) {
-								// the definition of the quantAuxLit can be found in the annotation
-								validateAuxDef(lhs, (Term) annots[0].getValue());
-								return;
-							}
-						}
-					}
-					throw new AssertionError("Malformed quantified AUX literal");
-				}
-			}
-		}
-
-		private void collectForallIntro(final AnnotatedTerm annotTerm) {
-			final Term[] clause = ((ApplicationTerm) annotTerm.getSubterm()).getParameters();
-			final Term[] skolemFuns = (Term[]) annotTerm.getAnnotations()[0].getValue();
-			// clause[0]: (forall ((x...)) F)
-			// clause[1]: (not (let ((x skolem...)) F))
-			assert clause.length == 2 && isApplication("not", clause[1]);
-			final QuantifiedFormula qf = (QuantifiedFormula) clause[0];
-			assert qf.getQuantifier() == QuantifiedFormula.FORALL;
-
-			final TermVariable[] quantVars = qf.getVariables();
-			assert quantVars.length == skolemFuns.length;
-			final Term[] skolemTerms = mProofRules.getSkolemVars(quantVars, qf.getSubformula(), true);
-
-			for (int i = 0; i < quantVars.length; i++) {
-				validateSkolemDef(skolemFuns[i], skolemTerms[i]);
-			}
-		}
-
-		private void collectExistsElim(final AnnotatedTerm annotTerm) {
-			final Term[] clause = ((ApplicationTerm) annotTerm.getSubterm()).getParameters();
-			final Term[] skolemFuns = (Term[]) annotTerm.getAnnotations()[0].getValue();
-			// clause[0]: not (exists ((x...)) F
-			// clause[1]: (let ((x skolem...)) F)
-			assert clause.length == 2 && isApplication("not", clause[0]);
-			final Term existsAtom = ((ApplicationTerm) clause[0]).getParameters()[0];
-			final QuantifiedFormula qf = (QuantifiedFormula) existsAtom;
-			assert qf.getQuantifier() == QuantifiedFormula.EXISTS;
-
-			final TermVariable[] quantVars = qf.getVariables();
-			assert quantVars.length == skolemFuns.length;
-			final Term[] skolemTerms = mProofRules.getSkolemVars(quantVars, qf.getSubformula(), false);
-
-			for (int i = 0; i < quantVars.length; i++) {
-				validateSkolemDef(skolemFuns[i], skolemTerms[i]);
-			}
-		}
-
-		/**
-		 * Check that an existentially quantified variable has a unique Skolem function.
-		 *
-		 * @param skolemApp    the application term {@code (skolem_xyz vars)}. The
-		 *                     function symbol should be unique and the parameters
-		 *                     should equal the free variables of the existentially
-		 *                     quantified formula.
-		 * @param var          the variable for which the skolemApp was introduced.
-		 * @param quantformula the existentially quantified formula.
-		 * @return true iff this usage of skolemApp matches the previous uses (is only
-		 *         used for this quantformula with this variable) and that the arguments
-		 *         are the free variables of quantformula.
-		 */
-		private void validateSkolemDef(final Term skolemApp, final Term skolemTerm) {
-			final Term previous = mSkolemFunctions.put(skolemApp, new FormulaUnLet().unlet(skolemTerm));
-			assert previous == null || previous == skolemTerm;
-		}
-
-		/**
-		 * Check that an {@literal @}AUX term has the same definition as previously seen.
-		 */
-		private void validateAuxDef(final Term auxTerm, final Term defTerm) {
-			assert auxTerm instanceof ApplicationTerm
-					&& ((ApplicationTerm) auxTerm).getFunction().getName().startsWith("@AUX");
-			final ApplicationTerm auxApp = (ApplicationTerm) auxTerm;
-			final Term[] params = auxApp.getParameters();
-			final TermVariable[] vars = new TermVariable[params.length];
-			for (int i = 0; i < params.length; i++) {
-				vars[i] = (TermVariable) params[i];
-			}
-			final LambdaTerm lambdaTerm = (LambdaTerm) defTerm.getTheory().lambda(vars, defTerm);
-			final Term old = mQuantDefinedTerms.put(auxApp.getFunction(), lambdaTerm);
-			assert old == null || old == lambdaTerm;
-		}
-
-	}
-
-	static Annotation[] ANNOT_QUANT = new Annotation[] { new Annotation(":quotedQuant", null) };
-
-	static class RewriteSkolem extends TermTransformer {
-		private final HashMap<Term, Term> mSkolems;
-
-		public RewriteSkolem(final HashMap<Term, Term> skolems) {
-			mSkolems = skolems;
-		}
-
-		@Override
 		public void convert(Term term) {
-			final Term skolemDef = mSkolems.get(term);
-			if (skolemDef != null) {
-				term = skolemDef;
-			}
-			if (term instanceof AnnotatedTerm
-					&& ((AnnotatedTerm) term).getAnnotations()[0].getKey().equals(":quotedQuant")
-					&& ((AnnotatedTerm) term).getAnnotations()[0].getValue() instanceof Term) {
-				term = ((AnnotatedTerm) term).getSubterm();
-				term = term.getTheory().annotatedTerm(ANNOT_QUANT, term);
+			if (isAuxApplication(term) || isSkolem(term)) {
+				final FunctionSymbol func = ((ApplicationTerm) term).getFunction();
+				if (!mQuantDefinedTerms.containsKey(func)) {
+					// recursively convert function definition, pop it from the result stack
+					// afterwards, and only then add the function definition to make sure it's
+					// dependent functions are defined first.
+					enqueueWalker((final NonRecursive engine) -> {
+						((CollectSkolemAux) engine).getConverted();
+						if (!mQuantDefinedTerms.containsKey(func)) {
+							mQuantDefinedTerms.put(func, (LambdaTerm) func.getTheory().lambda(func.getDefinitionVars(),
+									func.getDefinition()));
+						}
+					});
+					super.convert(func.getDefinition());
+				}
 			}
 			super.convert(term);
 		}

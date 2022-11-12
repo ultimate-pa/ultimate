@@ -119,6 +119,16 @@ public final class HoareTripleCheckerUtils {
 				predicateUnifier);
 	}
 
+	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
+			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
+			final HoareTripleCheckerCache initialCache) {
+		// TODO: Cache support in ChainingHtc
+		return new CachingHoareTripleCheckerMap(services,
+				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier),
+				predicateUnifier, initialCache);
+	}
+
 	/**
 	 * Hoare triple check mode.
 	 */
