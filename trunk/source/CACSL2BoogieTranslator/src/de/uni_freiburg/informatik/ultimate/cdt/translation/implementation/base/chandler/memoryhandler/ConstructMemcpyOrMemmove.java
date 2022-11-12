@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.HeapDataArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -55,11 +57,12 @@ public final class ConstructMemcpyOrMemmove {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TypeSizes mTypeSizes;
+	private final DataRaceChecker mDataRaceChecker;
 
 	public ConstructMemcpyOrMemmove(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
 			final TypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final TypeSizes typeSizes) {
+			final TypeSizes typeSizes, final DataRaceChecker dataRaceChecker) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
@@ -67,7 +70,9 @@ public final class ConstructMemcpyOrMemmove {
 		mExpressionTranslation = expressionTranslation;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mTypeSizes = typeSizes;
+		mDataRaceChecker = dataRaceChecker;
 	}
+
 	/**
 	 * Construct specification and implementation for our Boogie representation of the memcpy and memmove functions
 	 * defined in 7.24.2.1 of C11.
@@ -116,10 +121,8 @@ public final class ConstructMemcpyOrMemmove {
 			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 			bodyDecl.add(loopCtrAux.getVarDec());
 
-
-			final ExpressionResult loopBody =
-					constructMemcpyOrMemmoveDataLoopAssignment(heapDataArrays, loopCtrAux, SFO.MEMCPY_DEST,
-							SFO.MEMCPY_SRC, memCopyOrMemMove.getName(), hook);
+			final ExpressionResult loopBody = constructMemcpyOrMemmoveDataLoopAssignment(loopCtrAux, SFO.MEMCPY_DEST,
+					SFO.MEMCPY_SRC, memCopyOrMemMove.getName(), hook);
 			bodyDecl.addAll(loopBody.getDeclarations());
 
 			final IdentifierExpression sizeIdExprBody =
@@ -224,17 +227,13 @@ public final class ConstructMemcpyOrMemmove {
 	 * background: C11 7.24.2.1.2
 	 * The memcpy function copies n characters from the object pointed to by s2 into the object pointed to by s1.
 	 *
-	 * @param heapDataArrays
-	 * @param loopCtr
+	 * @param loopCtrAux
 	 * @param destPtrName
 	 * @param srcPtrName
-	 * @param valueType determines which type the pointers have (thus in which steps we have to increment the access
-	 *    source and destination)
 	 * @return
 	 */
-			private ExpressionResult constructMemcpyOrMemmoveDataLoopAssignment(
-			final Collection<HeapDataArray> heapDataArrays, final AuxVarInfo loopCtrAux, final String destPtrName,
-			final String srcPtrName, final String surroundingProcedure, final IASTNode hook) {
+	private ExpressionResult constructMemcpyOrMemmoveDataLoopAssignment(final AuxVarInfo loopCtrAux,
+			final String destPtrName, final String srcPtrName, final String surroundingProcedure, final IASTNode hook) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -278,6 +277,10 @@ public final class ConstructMemcpyOrMemmove {
 							hook);
 					loopBody.addStatements(writeCall);
 				}
+			}
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnRead(loopBody, ignoreLoc, new HeapLValue(currentSrc, charCType, null));
+				mDataRaceChecker.checkOnWrite(loopBody, ignoreLoc, new HeapLValue(currentDest, charCType, null));
 			}
 		}
 

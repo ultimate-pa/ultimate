@@ -637,7 +637,7 @@ public class CHandler {
 		// constants for initializations
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
-		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, globalHook));
+		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, globalHook, mDataRaceChecker));
 		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
@@ -733,9 +733,13 @@ public class CHandler {
 			// In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are
 			// positive, and rhs is a bitwise binary expression.
 
-			if (mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
-				return mExpressionTranslation.abstractAssginWithBitwiseOp(this, mProcedureManager, mDeclarations,
-						mNameHandler, mAuxVarInfoBuilder, mExprResultTransformer, main, mLocationFactory, node);
+			// TODO Frank 2022-10-31: Checking for HeapLValue is just a workaround to avoid issues in
+			// abstractAssginWithBitwiseOp (when working with addresses)! Is there a better way to check this?
+			// And how should we integrate this deprecated method?
+			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
+					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
+				return mExpressionTranslation.abstractAssginWithBitwiseOp(mExprResultTransformer, main,
+						mLocationFactory, node);
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
@@ -1006,7 +1010,7 @@ public class CHandler {
 		final BigInteger operandTypeByteSize =
 				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
 
-		if (operandTypeByteSize.intValueExact() == 0) {
+		if (operandTypeByteSize.signum() == 0) {
 			// operand's type has size 0 -- not sure what makes sense to do here, doing
 			// nothing
 			// case where I encountered it was a struct with a 0-sized array in it; if
@@ -1956,7 +1960,7 @@ public class CHandler {
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
 		final boolean writeValues =
-				stringLiteral.getByteValues().size() < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
+				stringLiteral.getByteValues().size() < mSettings.getStringOverapproximationThreshold();
 		if (writeValues) {
 			final ExpressionResult exprRes =
 					mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
@@ -2400,10 +2404,13 @@ public class CHandler {
 
 			return dr;
 		}
+		case IASTTypeIdExpression.op_alignof:
+			throw new UnsupportedSyntaxException(loc, "__alignof__ is not supported");
 		default:
 			break;
 		}
-		final String msg = "Unsupported boogie AST node type: " + node.getClass();
+		final String msg =
+				"Unsupported AST node type: " + node.getClass() + " with operator " + node.getOperator() + ": " + loc;
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
@@ -2803,23 +2810,6 @@ public class CHandler {
 			final DeclaratorResult declResult, final IASTDeclarator hook, final CDeclaration cDec,
 			final CStorageClass storageClass) {
 
-		// if the same variable is declared multiple times (within the same scope), we
-		// only keep one declaration if one of them has an initializer, we keep that
-		// one.
-		// if we are inside a struct declaration however, this does not apply, we
-		// proceed as normal, as the result is needed to build the struct type
-
-		final boolean isInsideStructDeclaration = mSymbolTable.isInsideStructDeclaration(hook);
-
-		if (!isInsideStructDeclaration) {
-			final SymbolTableValue stv = mSymbolTable.findCSymbolInInnermostScope(hook, cDec.getName());
-			if (stv != null && (!stv.getCDecl().hasInitializer() || cDec.hasInitializer())
-					&& mProcedureManager.isGlobalScope()) {
-				// Keep the last STV with an initializer
-				mStaticObjectsHandler.removeDeclaration(mSymbolTable.findCSymbol(hook, cDec.getName()).getBoogieDecl());
-			}
-		}
-
 		final boolean onHeap = cDec.isOnHeap();
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
 				onHeap, cDec.getType());
@@ -2884,6 +2874,8 @@ public class CHandler {
 			 */
 			final boolean hasRealInitializer =
 					cDec.hasInitializer() && (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
+
+			final boolean isInsideStructDeclaration = mSymbolTable.isInsideStructDeclaration(hook);
 
 			if (!hasRealInitializer && !mProcedureManager.isGlobalScope() && !isInsideStructDeclaration) {
 				// in case of a local variable declaration without an

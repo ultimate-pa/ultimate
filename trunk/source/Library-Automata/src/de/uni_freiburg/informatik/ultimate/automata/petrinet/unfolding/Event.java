@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -54,6 +55,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public final class Event<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
+
+	// See https://github.com/ultimate-pa/ultimate/pull/595 for discussion
+	private static final boolean USE_HASH_JENKINS = false;
+	private static final int HASH_PRIME = 89;
 
 	/**
 	 * Use the optimization that is outlined in observation B17 in the following issue.
@@ -96,7 +101,12 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mTransition = transition;
 		mSuccessors = transition.getSuccessors().stream().map(p -> bp.constructCondition(this, p))
 				.collect(Collectors.toSet());
-		mHashCode = hashCode;
+
+		if (USE_HASH_JENKINS) {
+			mHashCode = HashUtils.hashJenkins(HASH_PRIME, hashCode);
+		} else {
+			mHashCode = hashCode;
+		}
 
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mDepth = 0;
@@ -150,7 +160,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mPredecessors = new HashSet<>();
 		mSuccessors = mMark.stream().map(p -> bp.constructCondition(this, p)).collect(Collectors.toSet());
 		conditionMarkSet.addAll(mSuccessors);
-		mHashCode = 0;
+		mHashCode = HashUtils.hashJenkins(HASH_PRIME, 0);
 		mPlaceCorelationMap = new HashMap<>();
 		if (bp.getNewFiniteComprehensivePrefixMode()) {
 			computePlaceCorelationMap(bp);
@@ -353,7 +363,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public String toString() {
-		if (mSerialNumber == 0 ) {
+		if (mSerialNumber == 0) {
 			return "Dummy event whose successors are the initial conditions of the branching process";
 		} else {
 			return mSerialNumber + ":" + +mLocalConfiguration.size() + "A:" + getTransition().toString();
@@ -367,14 +377,9 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final Event<?, ?> other = (Event<?, ?>) obj;
-		return mPredecessors.equals(other.mPredecessors) && mSuccessors.equals(other.mSuccessors)
-				&& mTransition.equals(other.mTransition);
+		// We intentionally use reference equality here:
+		// - An efficient equality check is crucial for unfolding performance; comparing sets of conditions is too slow.
+		// - The unfolding should never create two instances representing "equal" events.
+		return this == obj;
 	}
 }

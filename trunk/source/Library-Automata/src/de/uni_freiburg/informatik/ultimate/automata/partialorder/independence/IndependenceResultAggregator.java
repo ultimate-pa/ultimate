@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
+
 /**
  * Collects data on independence query, separating between conditional and unconditional queries as well as based on the
  * result of the query.
@@ -39,45 +41,52 @@ import java.util.function.Function;
  *            The type of data being collected
  */
 public class IndependenceResultAggregator<T> {
-	private T mPositiveConditional;
-	private T mPositiveUnconditional;
-	private T mNegativeConditional;
-	private T mNegativeUnconditional;
+	private T mIndependentConditional;
+	private T mIndependentUnconditional;
+	private T mDependentConditional;
+	private T mDependentUnconditional;
 	private T mUnknownConditional;
 	private T mUnknownUnconditional;
 	private final BinaryOperator<T> mAggregator;
 
 	private IndependenceResultAggregator(final T initial, final BinaryOperator<T> aggregator) {
-		mPositiveConditional = initial;
-		mPositiveUnconditional = initial;
-		mNegativeConditional = initial;
-		mNegativeUnconditional = initial;
+		mIndependentConditional = initial;
+		mIndependentUnconditional = initial;
+		mDependentConditional = initial;
+		mDependentUnconditional = initial;
 		mUnknownConditional = initial;
 		mUnknownUnconditional = initial;
 		mAggregator = aggregator;
 	}
 
-	protected void aggregate(final T data, final boolean result, final boolean conditional) {
-		if (result) {
-			aggregatePositive(data, conditional);
+	protected void aggregate(final T data, final Dependence result, final boolean conditional) {
+		switch (result) {
+		case DEPENDENT:
+			aggregateDependent(data, conditional);
+			return;
+		case INDEPENDENT:
+			aggregateIndependent(data, conditional);
+			return;
+		case UNKNOWN:
+			aggregateUnknown(data, conditional);
+			return;
+		}
+		throw new IllegalArgumentException("Unknown value: " + result);
+	}
+
+	protected void aggregateIndependent(final T data, final boolean conditional) {
+		if (conditional) {
+			mIndependentConditional = mAggregator.apply(mIndependentConditional, data);
 		} else {
-			aggregateNegative(data, conditional);
+			mIndependentUnconditional = mAggregator.apply(mIndependentUnconditional, data);
 		}
 	}
 
-	protected void aggregatePositive(final T data, final boolean conditional) {
+	protected void aggregateDependent(final T data, final boolean conditional) {
 		if (conditional) {
-			mPositiveConditional = mAggregator.apply(mPositiveConditional, data);
+			mDependentConditional = mAggregator.apply(mDependentConditional, data);
 		} else {
-			mPositiveUnconditional = mAggregator.apply(mPositiveUnconditional, data);
-		}
-	}
-
-	protected void aggregateNegative(final T data, final boolean conditional) {
-		if (conditional) {
-			mNegativeConditional = mAggregator.apply(mNegativeConditional, data);
-		} else {
-			mNegativeUnconditional = mAggregator.apply(mNegativeUnconditional, data);
+			mDependentUnconditional = mAggregator.apply(mDependentUnconditional, data);
 		}
 	}
 
@@ -90,10 +99,10 @@ public class IndependenceResultAggregator<T> {
 	}
 
 	protected void aggregate(final IndependenceResultAggregator<T> other) {
-		mPositiveConditional = mAggregator.apply(mPositiveConditional, other.mPositiveConditional);
-		mPositiveUnconditional = mAggregator.apply(mPositiveUnconditional, other.mPositiveUnconditional);
-		mNegativeConditional = mAggregator.apply(mNegativeConditional, other.mNegativeConditional);
-		mNegativeUnconditional = mAggregator.apply(mNegativeUnconditional, other.mNegativeUnconditional);
+		mIndependentConditional = mAggregator.apply(mIndependentConditional, other.mIndependentConditional);
+		mIndependentUnconditional = mAggregator.apply(mIndependentUnconditional, other.mIndependentUnconditional);
+		mDependentConditional = mAggregator.apply(mDependentConditional, other.mDependentConditional);
+		mDependentUnconditional = mAggregator.apply(mDependentUnconditional, other.mDependentUnconditional);
 		mUnknownConditional = mAggregator.apply(mUnknownConditional, other.mUnknownConditional);
 		mUnknownUnconditional = mAggregator.apply(mUnknownUnconditional, other.mUnknownUnconditional);
 	}
@@ -103,37 +112,37 @@ public class IndependenceResultAggregator<T> {
 	}
 
 	public T getConditional() {
-		return mAggregator.apply(getPositiveConditional(),
-				mAggregator.apply(getNegativeConditional(), getUnknownConditional()));
+		return mAggregator.apply(getIndependentConditional(),
+				mAggregator.apply(getDependentConditional(), getUnknownConditional()));
 	}
 
 	public T getUnconditional() {
-		return mAggregator.apply(getPositiveUnconditional(),
-				mAggregator.apply(getNegativeUnconditional(), getUnknownUnconditional()));
+		return mAggregator.apply(getIndependentUnconditional(),
+				mAggregator.apply(getDependentUnconditional(), getUnknownUnconditional()));
 	}
 
-	public T getPositive() {
-		return mAggregator.apply(getPositiveConditional(), getPositiveUnconditional());
+	public T getIndependent() {
+		return mAggregator.apply(getIndependentConditional(), getIndependentUnconditional());
 	}
 
-	public T getPositiveConditional() {
-		return mPositiveConditional;
+	public T getIndependentConditional() {
+		return mIndependentConditional;
 	}
 
-	public T getPositiveUnconditional() {
-		return mPositiveUnconditional;
+	public T getIndependentUnconditional() {
+		return mIndependentUnconditional;
 	}
 
-	public T getNegative() {
-		return mAggregator.apply(getNegativeConditional(), getNegativeUnconditional());
+	public T getDependent() {
+		return mAggregator.apply(getDependentConditional(), getDependentUnconditional());
 	}
 
-	public T getNegativeConditional() {
-		return mNegativeConditional;
+	public T getDependentConditional() {
+		return mDependentConditional;
 	}
 
-	public T getNegativeUnconditional() {
-		return mNegativeUnconditional;
+	public T getDependentUnconditional() {
+		return mDependentUnconditional;
 	}
 
 	public T getUnknown() {
@@ -159,18 +168,18 @@ public class IndependenceResultAggregator<T> {
 		final StringBuilder str = new StringBuilder();
 		str.append("[ total: ");
 		str.append(dataPrinter.apply(getTotal()));
-		str.append(", positive: ");
-		str.append(dataPrinter.apply(getPositive()));
-		str.append(", positive conditional: ");
-		str.append(dataPrinter.apply(getPositiveConditional()));
-		str.append(", positive unconditional: ");
-		str.append(dataPrinter.apply(getPositiveUnconditional()));
-		str.append(", negative: ");
-		str.append(dataPrinter.apply(getNegative()));
-		str.append(", negative conditional: ");
-		str.append(dataPrinter.apply(getNegativeConditional()));
-		str.append(", negative unconditional: ");
-		str.append(dataPrinter.apply(getNegativeUnconditional()));
+		str.append(", independent: ");
+		str.append(dataPrinter.apply(getIndependent()));
+		str.append(", independent conditional: ");
+		str.append(dataPrinter.apply(getIndependentConditional()));
+		str.append(", independent unconditional: ");
+		str.append(dataPrinter.apply(getIndependentUnconditional()));
+		str.append(", dependent: ");
+		str.append(dataPrinter.apply(getDependent()));
+		str.append(", dependent conditional: ");
+		str.append(dataPrinter.apply(getDependentConditional()));
+		str.append(", dependent unconditional: ");
+		str.append(dataPrinter.apply(getDependentUnconditional()));
 		str.append(", unknown: ");
 		str.append(dataPrinter.apply(getUnknown()));
 		str.append(", unknown conditional: ");
@@ -193,12 +202,8 @@ public class IndependenceResultAggregator<T> {
 			super(0, (x, y) -> x + y);
 		}
 
-		public void increment(final boolean result, final boolean conditional) {
+		public void increment(final Dependence result, final boolean conditional) {
 			aggregate(1, result, conditional);
-		}
-
-		public void incrementUnknown(final boolean conditional) {
-			aggregateUnknown(1, conditional);
 		}
 
 		public static Counter sum(final Counter lhs, final Counter rhs) {
@@ -221,17 +226,10 @@ public class IndependenceResultAggregator<T> {
 			mStartTime = System.nanoTime();
 		}
 
-		public void stop(final boolean result, final boolean conditional) {
+		public void stop(final Dependence result, final boolean conditional) {
 			assert mStartTime != 0L : "Timer was not running";
 			final long elapsed = System.nanoTime() - mStartTime;
 			aggregate(elapsed, result, conditional);
-			mStartTime = 0L;
-		}
-
-		public void stopUnknown(final boolean conditional) {
-			assert mStartTime != 0L : "Timer was not running";
-			final long elapsed = System.nanoTime() - mStartTime;
-			aggregateUnknown(elapsed, conditional);
 			mStartTime = 0L;
 		}
 

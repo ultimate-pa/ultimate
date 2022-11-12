@@ -7,17 +7,17 @@
   <!-- === No Partial Order Reduction === -->
   <!-- ================================== -->
 
-  <rundefinition name="Automizer-FA">
+  <!--rundefinition name="Automizer-FA">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-  </rundefinition>
+  </rundefinition-->
 
   <!--rundefinition name="Automizer FA.CANONICAL">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-CANONICAL.epf</option>
   </rundefinition-->
 
-  <rundefinition name="Automizer-PN">
+  <!--rundefinition name="Automizer-PN">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
-  </rundefinition>
+  </rundefinition-->
 
   <!--rundefinition name="GemCutter.None">
     <option name="-s">../../../trunk/examples/settings/gemcutter/None.epf</option>
@@ -82,9 +82,9 @@
   <!-- === Sleep Set Reduction (with unrolling, minimal) integrated in TAR === -->
   <!-- ======================================================================= -->
 
-  <!--rundefinition name="GemCutter.NewStatesSleep">
+  <rundefinition name="GemCutter.NewStatesSleep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleep.Symm">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-Symm.epf</option>
@@ -97,6 +97,11 @@
   <!--rundefinition name="GemCutter.NewStatesSleep.OrderLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
     <option name="&#45;-traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleep.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
   </rundefinition-->
 
   <!--rundefinition name="GemCutter.NewStatesSleep.OrderRandom42">
@@ -157,6 +162,18 @@
 
   <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.Badger">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.PerError">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
   </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderLockstep">
@@ -199,9 +216,9 @@
   <!-- === Minimal Sleep Set Reduction in TAR with Variable-Based Abstraction === -->
   <!-- ========================================================================== -->
 
-  <!--rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic">
+  <rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic.OrderLoopLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
@@ -222,10 +239,14 @@
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
   </rundefinition>
 
-  <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.WithAssertions">
+  <!--rundefinition name="GemCutter.SleepMapPersistentFixedOrder.ConcreteSmt_VarAbsGlobalSyntactic">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMapPersistentFixedOrder-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.WithAssertions">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="-ea" />
-  </rundefinition>
+  </rundefinition-->
 
   <!--rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
@@ -236,29 +257,137 @@
   <!-- === Combined Reduction with Probabilistic Switching === -->
   <!-- ======================================================= -->
 
-  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep.flip90-PURE-seed0">
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip10-PURE-seed0">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.coinflip.probability.value">10</option>
+    <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
+    <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition-->
+
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip90-PURE-seed0">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="&#45;-traceabstraction.coinflip.probability.value">90</option>
     <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
     <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">PURE</option>
-    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
   </rundefinition-->
 
-  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep.flip10-FALLBACK-seed0">
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip10-FALLBACK-seed0">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="&#45;-traceabstraction.coinflip.probability.value">10</option>
     <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
     <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
-    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
   </rundefinition-->
 
-  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep.flip90-FALLBACK-seed0">
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip90-FALLBACK-seed0">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
     <option name="&#45;-traceabstraction.coinflip.probability.value">90</option>
     <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
     <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
-    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
   </rundefinition-->
+  
+  <rundefinition name="GemCutter.SleepMap.Incremental5_Seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Incremental10_Seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+  
+  <rundefinition name="GemCutter.SleepMap.Incremental5_Seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Incremental10_Seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.SleepMap.Flip05_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip10_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip15_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip85_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip90_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip95_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.SleepMap.Flip05_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip10_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip15_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip85_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip90_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip95_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
 
 
   <!-- === Experiments with Varying SMT Solvers and Timeouts for Independence === -->
@@ -314,15 +443,19 @@
   </rundefinition-->
 
   <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
-    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
-    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
   </rundefinition>
 
-  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.WithAssertions">
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.Badger">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.WithAssertions">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
     <option name="-ea" />
-  </rundefinition>
+  </rundefinition-->
 
   <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.LooperAbs">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
@@ -372,6 +505,7 @@
 
   <tasks name="POPL2023">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
 
     <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>

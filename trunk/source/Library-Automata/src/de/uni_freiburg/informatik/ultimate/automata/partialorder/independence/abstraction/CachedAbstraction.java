@@ -67,14 +67,26 @@ public class CachedAbstraction<H, L> implements IAbstraction<H, L> {
 
 	@Override
 	public L abstractLetter(final L input, final H level) {
+		// First, try direct cache lookup.
+		// (Do not restrict immediately, for performance purposes.)
+		if (mCache.containsKey(input, level)) {
+			return mCache.get(input, level);
+		}
+
+		// Restrict to a lower level, for which the result is still the same as for the given level.
 		final H restricted = restrict(input, level);
 		assert getHierarchy().compare(restricted, level)
 				.isLessOrEqual() : "restrict must return smaller or equal abstraction level";
 
+		// Try cache lookup at restricted level.
 		if (mCache.containsKey(input, restricted)) {
-			return mCache.get(input, restricted);
+			final L result = mCache.get(input, restricted);
+			// Duplicate value at current level (for faster future lookups).
+			mCache.put(input, level, result);
+			return result;
 		}
 
+		// Result has not been cached. Compute it, and store it at the restricted level.
 		final L abstracted = mUnderlying.abstractLetter(input, restricted);
 		mCache.put(input, restricted, abstracted);
 		return abstracted;

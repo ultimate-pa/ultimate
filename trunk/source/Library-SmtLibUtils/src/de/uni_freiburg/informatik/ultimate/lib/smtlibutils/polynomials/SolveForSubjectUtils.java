@@ -446,8 +446,10 @@ public class SolveForSubjectUtils {
 			if (Arrays.stream(beforeDiv.toTerm(script).getFreeVars()).anyMatch(bannedForDivCapture::contains)) {
 				afterDiv = null;
 			} else {
+				// Can't be simplified since the divisor is not a constant, construct
+				// `div` term directly without {@link SmtUtils#div}.
 				afterDiv = PolynomialTermOperations.convert(script,
-						SmtUtils.div(script, beforeDiv.toTerm(script), divisor));
+						SmtUtils.divIntFlatten(script, beforeDiv.toTerm(script), divisor));
 			}
 		} else {
 			if (!divisorAsRational.isIntegral()) {
@@ -457,7 +459,7 @@ public class SolveForSubjectUtils {
 				throw new AssertionError("inconsistent information on sign");
 			}
 			final BigInteger divisorAsInt = divisorAsRational.numerator();
-			afterDiv = ((AbstractGeneralizedAffineTerm<?>) beforeDiv).div(script, divisorAsInt, bannedForDivCapture);
+			afterDiv = ((AbstractGeneralizedAffineTerm<?>) beforeDiv).divInt(script, divisorAsInt, bannedForDivCapture);
 		}
 		if (afterDiv == null) {
 			return null;
@@ -563,6 +565,9 @@ public class SolveForSubjectUtils {
 			for (final Term abstractVariable : m.getVariable2Exponent().keySet()) {
 				if (SmtUtils.isIntDiv(abstractVariable) || SmtUtils.isIntMod(abstractVariable)) {
 					final ApplicationTerm appTerm = (ApplicationTerm) abstractVariable;
+					if (appTerm.getParameters().length > 2) {
+						throw new UnsupportedOperationException("Div with more than two parameters");
+					}
 					final boolean dividentContainsSubject = SmtUtils.isSubterm(appTerm.getParameters()[0], subject);
 					final boolean tailIsConstant = tailIsConstant(Arrays.asList(appTerm.getParameters()));
 					if (dividentContainsSubject) {

@@ -75,10 +75,10 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
+	public Dependence isIndependent(final S state, final L a, final L b) {
 		final L abstractA = mAbstraction.abstractLetter(a, mLevel);
 		final L abstractB = mAbstraction.abstractLetter(b, mLevel);
-		final boolean result = mUnderlying.contains(state, abstractA, abstractB);
+		final Dependence result = mUnderlying.isIndependent(state, abstractA, abstractB);
 		mStatistics.reportQuery(result, state != null);
 		return result;
 	}

@@ -112,12 +112,17 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
 
 			for (final File inputFile : inputFiles) {
-				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile,
-						runConfiguration.getSettingsFile(), runConfiguration.getToolchainFile(), mTimeout);
+				final UltimateRunDefinition urd =
+						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
+								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
 				rtr.add(buildTestCase(urd, getTestResultDecider(urd)));
 			}
 		}
 		return rtr;
+	}
+
+	protected long getTimeout(final Config rundef, final File file) {
+		return mTimeout;
 	}
 
 	/**

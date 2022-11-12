@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -52,54 +52,79 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> {
 
 	private final CacheStatistics mStatistics = new CacheStatistics();
-	private final Map<S, HashRelation<L, L>> mPositiveCache = new HashMap<>();
-	private final Map<S, HashRelation<L, L>> mNegativeCache = new HashMap<>();
+	private final Map<S, HashRelation<L, L>> mIndependentCache = new HashMap<>();
+	private final Map<S, HashRelation<L, L>> mDependentCache = new HashMap<>();
+	private final Map<S, HashRelation<L, L>> mUnknownCache = new HashMap<>();
 
 	@Override
-	public LBool contains(final S condition, final L a, final L b) {
+	public Dependence contains(final S condition, final L a, final L b) {
 		if (condition != null) {
 			// For conditional queries, check unconditional independence first.
-			final HashRelation<L, L> globalPositive = mPositiveCache.get(null);
+			final HashRelation<L, L> globalPositive = mIndependentCache.get(null);
 			if (globalPositive != null && globalPositive.containsPair(a, b)) {
-				return LBool.SAT;
+				return Dependence.INDEPENDENT;
 			}
 		}
 
-		final HashRelation<L, L> positive = mPositiveCache.get(condition);
+		final HashRelation<L, L> positive = mIndependentCache.get(condition);
 		if (positive != null && positive.containsPair(a, b)) {
-			return LBool.SAT;
+			return Dependence.INDEPENDENT;
 		}
 
-		final HashRelation<L, L> negative = mNegativeCache.get(condition);
+		final HashRelation<L, L> negative = mDependentCache.get(condition);
 		if (negative != null && negative.containsPair(a, b)) {
-			return LBool.UNSAT;
+			return Dependence.DEPENDENT;
 		}
 
-		return LBool.UNKNOWN;
+		final HashRelation<L, L> unknown = mUnknownCache.get(condition);
+		if (unknown != null && unknown.containsPair(a, b)) {
+			return Dependence.UNKNOWN;
+		}
+
+		return null;
 	}
 
 	@Override
 	public void remove(final L a) {
-		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
-			relation.removeDomainElement(a);
-			relation.removeRangeElement(a);
-		}
-		for (final HashRelation<L, L> relation : mNegativeCache.values()) {
-			relation.removeDomainElement(a);
-			relation.removeRangeElement(a);
+		removeFromCache(mIndependentCache, a);
+		removeFromCache(mDependentCache, a);
+		removeFromCache(mUnknownCache, a);
+	}
+
+	private void removeFromCache(final Map<?, HashRelation<L, L>> cache, final L elem) {
+		final var it = cache.values().iterator();
+		while (it.hasNext()) {
+			final var relation = it.next();
+			relation.removeDomainElement(elem);
+			relation.removeRangeElement(elem);
+			if (relation.isEmpty()) {
+				it.remove();
+			}
 		}
 	}
 
 	@Override
-	public void cacheResult(final S condition, final L a, final L b, final boolean independent) {
-		final Map<S, HashRelation<L, L>> cache = independent ? mPositiveCache : mNegativeCache;
+	public void cacheResult(final S condition, final L a, final L b, final Dependence result) {
+		final Map<S, HashRelation<L, L>> cache = getCache(result);
 		final HashRelation<L, L> row = cache.computeIfAbsent(condition, x -> new HashRelation<>());
 		row.addPair(a, b);
 	}
 
+	private Map<S, HashRelation<L, L>> getCache(final Dependence result) {
+		switch (result) {
+		case DEPENDENT:
+			return mDependentCache;
+		case INDEPENDENT:
+			return mIndependentCache;
+		case UNKNOWN:
+			return mUnknownCache;
+		}
+		throw new IllegalArgumentException();
+	}
+
 	@Override
 	public void mergeIndependencies(final L a, final L b, final L ab) {
-		for (final HashRelation<L, L> relation : mPositiveCache.values()) {
+		for (final HashRelation<L, L> relation : mIndependentCache.values()) {
 			// (a, c) + (b, c) -> (ab, c)
 			for (final L c : relation.getImage(a)) {
 				if (relation.containsPair(b, c)) {
@@ -151,6 +176,9 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		public static final String NEGATIVE_CACHE_SIZE = "Negative cache size";
 		public static final String NEGATIVE_CONDITIONAL_CACHE_SIZE = "Negative conditional cache size";
 		public static final String NEGATIVE_UNCONDITIONAL_CACHE_SIZE = "Negative unconditional cache size";
+		public static final String UNKNOWN_CACHE_SIZE = "Unknown cache size";
+		public static final String UNKNOWN_CONDITIONAL_CACHE_SIZE = "Unknown conditional cache size";
+		public static final String UNKNOWN_UNCONDITIONAL_CACHE_SIZE = "Unknown unconditional cache size";
 
 		private CacheStatistics() {
 			declare(TOTAL_CACHE_SIZE, this::getTotalSize, KeyType.COUNTER);
@@ -160,6 +188,9 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 			declare(NEGATIVE_CACHE_SIZE, this::getNegativeCacheSize, KeyType.COUNTER);
 			declare(NEGATIVE_CONDITIONAL_CACHE_SIZE, this::getNegativeConditionalCacheSize, KeyType.COUNTER);
 			declare(NEGATIVE_UNCONDITIONAL_CACHE_SIZE, this::getNegativeUnconditionalCacheSize, KeyType.COUNTER);
+			declare(UNKNOWN_CACHE_SIZE, this::getUnknownCacheSize, KeyType.COUNTER);
+			declare(UNKNOWN_CONDITIONAL_CACHE_SIZE, this::getUnknownConditionalCacheSize, KeyType.COUNTER);
+			declare(UNKNOWN_UNCONDITIONAL_CACHE_SIZE, this::getUnknownUnconditionalCacheSize, KeyType.COUNTER);
 		}
 
 		public int getTotalSize() {
@@ -167,7 +198,7 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		}
 
 		public int getPositiveCacheSize() {
-			return getCacheSize(mPositiveCache);
+			return getCacheSize(mIndependentCache);
 		}
 
 		public int getPositiveConditionalCacheSize() {
@@ -175,11 +206,11 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		}
 
 		public int getPositiveUnconditionalCacheSize() {
-			return getUnconditionalCacheSize(mPositiveCache);
+			return getUnconditionalCacheSize(mIndependentCache);
 		}
 
 		public int getNegativeCacheSize() {
-			return getCacheSize(mNegativeCache);
+			return getCacheSize(mDependentCache);
 		}
 
 		public int getNegativeConditionalCacheSize() {
@@ -187,7 +218,19 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		}
 
 		public int getNegativeUnconditionalCacheSize() {
-			return getUnconditionalCacheSize(mNegativeCache);
+			return getUnconditionalCacheSize(mDependentCache);
+		}
+
+		public int getUnknownCacheSize() {
+			return getCacheSize(mUnknownCache);
+		}
+
+		public int getUnknownConditionalCacheSize() {
+			return getUnknownCacheSize() - getUnknownUnconditionalCacheSize();
+		}
+
+		public int getUnknownUnconditionalCacheSize() {
+			return getUnconditionalCacheSize(mUnknownCache);
 		}
 
 		private int getCacheSize(final Map<S, HashRelation<L, L>> cache) {

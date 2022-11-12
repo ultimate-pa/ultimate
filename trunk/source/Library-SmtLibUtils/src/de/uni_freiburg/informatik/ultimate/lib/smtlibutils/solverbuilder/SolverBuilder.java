@@ -815,9 +815,12 @@ public final class SolverBuilder {
 		CVC4("cvc4 --incremental --print-success --lang smt",
 				"cvc4 --incremental --print-success --lang smt" + " --tlimit-per=%d", Logics.ALL),
 
-		MATHSAT("mathsat -unsat_core_generation=3", null, Logics.ALL),
+		MATHSAT("mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -unsat_core_generation=3",
+				null, Logics.ALL),
 
-		MATHSAT_INTERPOLATION("mathsat -theory.bv.eager=false -theory.fp.enabled=false", null, Logics.ALL),
+		MATHSAT_INTERPOLATION(
+				"mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -theory.bv.eager=false -theory.fp.enabled=false",
+				null, Logics.ALL),
 
 		SMTINTERPOL(null, null, Logics.ALL),
 

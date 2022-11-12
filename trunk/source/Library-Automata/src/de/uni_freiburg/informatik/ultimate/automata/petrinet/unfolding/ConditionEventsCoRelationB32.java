@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -292,11 +292,9 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 
 	@Override
 	public int computeMaximalDegree() {
-		final Function<Condition<LETTER, PLACE>, Integer> computeDegree =
-				(c -> streamCoRelatedEvents(c).map(e -> e.getSuccessorConditions().size()).reduce(0, Integer::sum));
-		final Integer max = mCoRelatedCutoffEvents.getDomain().stream().map(computeDegree).max(Integer::compare)
-				.orElse(Integer.valueOf(0));
-		return max;
+		final ToIntFunction<Condition<LETTER, PLACE>> computeDegree =
+				c -> streamCoRelatedEvents(c).mapToInt(e -> e.getSuccessorConditions().size()).sum();
+		return mCoRelatedCutoffEvents.getDomain().stream().mapToInt(computeDegree).max().orElse(0);
 	}
 
 	@Override

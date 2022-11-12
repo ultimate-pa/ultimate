@@ -49,60 +49,60 @@ public class TranslationManager {
 	private final TranslationConstrainer mTc;
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
+	private final boolean mNutzTransformation;
 
 	/*
-	 * Wrapper class for bit-vector to integer translation and back-translation
-	 * Manages: variables and constraints
+	 * Wrapper class for bit-vector to integer translation and back-translation Manages: variables and constraints
 	 */
-	public TranslationManager(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations cfbo) {
+	public TranslationManager(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations cfbo,
+			final boolean useNutzTransformation) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 
-		mVariableMap = new LinkedHashMap<Term, Term>();
+		mVariableMap = new LinkedHashMap<>();
 		mReversedVarMap = new LinkedHashMap<>();
 
-		mConstraintSet = new HashSet<Term>();
+		mConstraintSet = new HashSet<>();
 		mTc = new TranslationConstrainer(mMgdScript, cfbo);
 		mIntand = mTc.getIntAndFunctionSymbol();
+
+		mNutzTransformation = useNutzTransformation;
 	}
 
-	public void setReplacementVarMaps(final LinkedHashMap replacementVarMap) {
+	public void setReplacementVarMaps(final LinkedHashMap<Term, Term> replacementVarMap) {
 		mVariableMap = replacementVarMap;
 	}
 
 	/*
-	 * Method to translate bit-vector to integer.
-	 * This method fills mVariableMap, mReversedVarMap and mConstraintSet in the process.
-	 * returns a triple, first element is the translation result,
-	 * second element is a map containing all variables used to overapproximate bit-wise function in constraint mode
-	 * NONE,
-	 * third is a flag that is true if constraint mode is NONE
+	 * Method to translate bit-vector to integer. This method fills mVariableMap, mReversedVarMap and mConstraintSet in
+	 * the process. returns a triple, first element is the translation result, second element is a map containing all
+	 * variables used to overapproximate bit-wise function in constraint mode NONE, third is a flag that is true if
+	 * constraint mode is NONE
 	 */
 	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoInt(final Term bitvecFromula) {
 		final BvToIntTranslation bvToInt =
-				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars());
-		bvToInt.setNutzTransformation(false);
+				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
 		final Set<TermVariable> overapproxVariables = bvToInt.getOverapproxVariables();
 		final boolean isOverapproximation = bvToInt.wasOverapproximation();
-		if (!bvToInt.getNutzFlag()) {
+		if (!mNutzTransformation) {
 			mConstraintSet.addAll(mTc.getConstraints());
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
 		}
+		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
 		final Term integerFormula =
 				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
-		return new Triple<Term, Set<TermVariable>, Boolean>(integerFormula, overapproxVariables, isOverapproximation);
+		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
 
-
 	/*
-	 * Method to translate from integer back to bit-vector
-	 * requires mReversedVarMap to be filled
-	 * returns the translation result
+	 * Method to translate from integer back to bit-vector requires mReversedVarMap to be filled returns the translation
+	 * result
 	 */
+	// TODO: Is there anything we need to change here with the Nutz-Transformation?
 	public Term translateIntBacktoBv(final Term integerFormula) {
 		// The preprocessing steps need also to be applied on the constraint, to ensure the map matches them.
 		final UnfTransformer unfT = new UnfTransformer(mScript);
@@ -117,8 +117,6 @@ public class TranslationManager {
 		return intToBv.transform(simplifiedInput);
 	}
 
-
-
 	public LinkedHashMap<Term, Term> getVarMap() {
 		return mVariableMap;
 	}
@@ -126,6 +124,5 @@ public class TranslationManager {
 	public LinkedHashMap<Term, Term> getReversedVarMap() {
 		return mReversedVarMap;
 	}
-
 
 }

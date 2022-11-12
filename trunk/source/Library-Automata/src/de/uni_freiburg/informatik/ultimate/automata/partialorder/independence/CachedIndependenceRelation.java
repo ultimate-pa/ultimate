@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceResultAggregator.Counter;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -96,30 +95,24 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
+	public Dependence isIndependent(final S state, final L a, final L b) {
 		final S condition = isConditional() ? state : null;
 
-		final LBool cached = mCache.contains(condition, a, b);
-		if (cached == LBool.SAT) {
-			mStatistics.reportPositiveCachedQuery(condition != null);
-			return true;
-		} else if (cached == LBool.UNSAT) {
-			mStatistics.reportNegativeCachedQuery(condition != null);
-			return false;
+		final Dependence cached = mCache.contains(condition, a, b);
+		if (cached != null) {
+			mStatistics.reportCachedQuery(cached, condition != null);
+			return cached;
 		}
 
 		if (isSymmetric()) {
-			final LBool symCached = mCache.contains(condition, b, a);
-			if (symCached == LBool.SAT) {
-				mStatistics.reportPositiveCachedQuery(condition != null);
-				return true;
-			} else if (symCached == LBool.UNSAT) {
-				mStatistics.reportNegativeCachedQuery(condition != null);
-				return false;
+			final Dependence symCached = mCache.contains(condition, b, a);
+			if (symCached != null) {
+				mStatistics.reportCachedQuery(symCached, condition != null);
+				return symCached;
 			}
 		}
 
-		final boolean result = mUnderlying.contains(condition, a, b);
+		final Dependence result = mUnderlying.isIndependent(condition, a, b);
 		mCache.cacheResult(condition, a, b, result);
 		mStatistics.reportUncachedQuery(result, condition != null);
 		return result;
@@ -142,19 +135,14 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 			forward(CACHE_STATISTICS, mCache::getStatistics);
 		}
 
-		private void reportPositiveCachedQuery(final boolean conditional) {
-			reportPositiveQuery(conditional);
-			mCacheQueries.increment(true, conditional);
-		}
-
-		private void reportNegativeCachedQuery(final boolean conditional) {
-			reportNegativeQuery(conditional);
-			mCacheQueries.increment(false, conditional);
-		}
-
-		private void reportUncachedQuery(final boolean result, final boolean conditional) {
+		private void reportCachedQuery(final Dependence result, final boolean conditional) {
 			reportQuery(result, conditional);
-			mCacheQueries.incrementUnknown(conditional);
+			mCacheQueries.increment(result, conditional);
+		}
+
+		private void reportUncachedQuery(final Dependence result, final boolean conditional) {
+			reportQuery(result, conditional);
+			mCacheQueries.increment(Dependence.UNKNOWN, conditional);
 		}
 	}
 
@@ -178,10 +166,9 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 *            The first letter
 		 * @param b
 		 *            The second letter
-		 * @return SAT if the letters are known to be independent (possibly under the given condition), UNSAT if they
-		 *         are known to be dependent, and UNKNOWN otherwise.
+		 * @return The cached result of an independence check, or {@code null} if no result has been cached.
 		 */
-		LBool contains(S condition, L a, L b);
+		Dependence contains(S condition, L a, L b);
 
 		/**
 		 * Remove all independence and dependence information involving a given letter.
@@ -200,10 +187,10 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 		 *            The first letter
 		 * @param b
 		 *            The second letter
-		 * @param independent
-		 *            Whether or not the given letters are independent
+		 * @param result
+		 *            The result of an independence check
 		 */
-		void cacheResult(S condition, L a, L b, boolean independent);
+		void cacheResult(S condition, L a, L b, Dependence result);
 
 		/**
 		 * Merges cached independencies for two letters into a combined letter. If both are independent from some third

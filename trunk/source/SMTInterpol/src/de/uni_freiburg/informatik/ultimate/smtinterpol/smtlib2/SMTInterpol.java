@@ -770,15 +770,15 @@ public class SMTInterpol extends NoopScript {
 
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree) {
+		if (getProofMode() == ProofMode.NONE || mAssertions == null) {
+			throw new SMTLIBException("Option :produce-interpolants not set to true");
+		}
 		return getInterpolants(partition, startOfSubtree, getProof(ProofMode.CLAUSES));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree) {
-		if (getProofMode() == ProofMode.NONE || mAssertions == null) {
-			throw new SMTLIBException("Option :produce-interpolants not set to true");
-		}
 		final long timeout = mSolverOptions.getTimeout();
 		if (timeout > 0) {
 			mCancel.setTimeout(timeout);

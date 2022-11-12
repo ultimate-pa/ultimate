@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Transferrer
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -64,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 /**
  * Creates {@link IRefinableIndependenceProvider} instances from given settings. This involves setting up
@@ -111,11 +111,13 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			final IndependenceSettings settings, final PredicateFactory predicateFactory) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		if (settings.getAbstractionType() == AbstractionType.LOOPER) {
-			return new IndependenceProviderForLoopers<>(mServices, csToolkit, settings.getIndependenceType());
+			return new IndependenceProviderForLoopers<>(mServices, csToolkit,
+					new Lazy<>(() -> constructIndependenceScript(settings)), settings.getIndependenceType());
 		}
 
 		// Construct the script used for independence checks.
 		// TODO Only construct this if an independence relation actually needs a script!
+		// TODO Independence relations might have different settings for the script!
 		if (mIndependenceScript == null) {
 			mIndependenceScript = constructIndependenceScript(settings);
 		}
@@ -169,6 +171,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// the condition predicates to the independenceScript.
 				.ifThen(tfsAlreadyTransferred && conditional,
 						b -> b.withTransformedPredicates(transferrer::transferPredicate))
+				// Protect the SMT solver against checks with quantifiers that are unlikely to succeed anyway.
+				.protectAgainstQuantifiers()
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
 				// Cache independence query results.
@@ -222,8 +226,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		// We eliminate auxiliary variables.
 		// This is useful both for semantic independence (ease the load on the SMT solver),
 		// but even more so for syntactic independence (often allows shrinking the set of "read" variables).
-		final TransFormulaAuxVarEliminator tfEliminator = (ms, fm, av) -> TransFormulaUtils
-				.tryAuxVarElimination(mServices, ms, SimplificationTechnique.POLY_PAC, fm, av);
+		final TransFormulaAuxVarEliminator tfEliminator =
+				(ms, fm, av) -> TransFormulaUtils.tryAuxVarEliminationLight(mServices, ms, fm, av);
 
 		switch (settings.getAbstractionType()) {
 		case VARIABLES_GLOBAL:
