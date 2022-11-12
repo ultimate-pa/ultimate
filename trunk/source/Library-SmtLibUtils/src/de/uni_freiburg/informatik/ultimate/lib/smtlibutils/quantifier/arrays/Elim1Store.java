@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -171,41 +170,15 @@ public class Elim1Store {
 	}
 
 	public EliminationTaskPlain elim1(final EliminationTaskPlain input) throws ElimStorePlainException {
-		final Term inputTerm = input.getTerm();
+		assert UltimateNormalFormUtils.respectsUltimateNormalForm(input.getTerm()) : "invalid input";
 		if (input.getEliminatees().size() != 1) {
 			throw new IllegalArgumentException("Can only eliminate one variable");
 		}
 		final int quantifier = input.getQuantifier();
 		final TermVariable eliminatee = input.getEliminatees().iterator().next();
-		final Term context = input.getContext();
+		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, input.getContext());
 
-		assert UltimateNormalFormUtils.respectsUltimateNormalForm(inputTerm) : "invalid input";
-//		assert (!Arrays.asList(context.getFreeVars()).contains(eliminatee)) : "eliminatee must not occur in context";
-		final Term[] xjunctsOuter = QuantifierUtils.getXjunctsOuter(quantifier, inputTerm);
-//		if (xjunctsOuter.length > 1) {
-//			throw new AssertionError("several disjuncts! " + inputTerm);
-//		}
-
-		ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), inputTerm, eliminatee);
-//		if (!aoa.getArrayDisequalities().isEmpty()) {
-//			throw new AssertionError("disequality");
-//		}
-//		if (!aoa.getArrayEqualities().isEmpty()) {
-//			throw new AssertionError("equality");
-//		}
-		final TreeSet<Integer> dims = aoa.computeSelectAndStoreDimensions();
-//		if (dims.size() > 1) {
-//			throw new AssertionError("Dims before preprocessing " + dims);
-//		}
-
-
-		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, context);
-
-
-		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
-		final Term preprocessedInput = input.getTerm();
-
-		aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), preprocessedInput, eliminatee)
+		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), input.getTerm(), eliminatee)
 				.downgradeDimensionsIfNecessary(mMgdScript.getScript());
 		assert aoa.computeSelectAndStoreDimensions().size() <= 1 : "incompatible";
 
@@ -263,11 +236,12 @@ public class Elim1Store {
 
 		final Map<ArrayIndex, ArrayIndex> indexMapping = imp.getIndexReplacementMapping();
 
+		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 		newAuxVars.addAll(imp.getConstructedAuxVars());
 		final Term indexAuxVarDefinitionsTerm = imp.constructAuxVarDefinitions(mScript, quantifier);
 
 		final Map<MultiDimensionalNestedStore, Term> storeTermEquivalenceMapping = computeStoreTermEquivalenceMapping(
-				mScript, auxVarConstructor, quantifier, eliminatee, preprocessedInput, stores);
+				mScript, auxVarConstructor, quantifier, eliminatee,  input.getTerm(), stores);
 		final Term hiddenWeakArrayEqualities = computeHiddenWeakArrayEqualities(mScript, quantifier, storeTermEquivalenceMapping);
 		assert !Arrays.asList(hiddenWeakArrayEqualities.getFreeVars()).contains(eliminatee) : "var is still there: "
 				+ eliminatee;
@@ -316,7 +290,7 @@ public class Elim1Store {
 				quantifier, aiem);
 		assert indexEqualityInformationTerm == QuantifierUtils.getAbsorbingElement(mScript, quantifier) : "strange equivalences";
 		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				indexAuxVarDefinitionsTerm, preprocessedInput);
+				indexAuxVarDefinitionsTerm,  input.getTerm());
 
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
 
@@ -324,7 +298,7 @@ public class Elim1Store {
 //		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,
 //				indexMapping, substitutionMapping, indexEqualityInformation);
 		if (Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee)) {
-			if (QuantifierUtils.isQuantifierFree(inputTerm)) {
+			if (QuantifierUtils.isQuantifierFree( input.getTerm())) {
 				throw new AssertionError("Unexpected substitution problem.");
 			}
 			throw new ElimStorePlain.ElimStorePlainException(ElimStorePlainException.CAPTURED_INDEX);
@@ -337,7 +311,7 @@ public class Elim1Store {
 			final Term doubleCaseTermMod;
 			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
 				final Term criticalConstraint = SmtUtils.and(mScript,
-						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, result), context);
+						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, result), input.getContext());
 				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, doubleCaseTerm,
 						criticalConstraint, mServices,
 						SimplificationTechnique.SIMPLIFY_DDA);
@@ -357,11 +331,6 @@ public class Elim1Store {
 		{
 			final StringBuilder sb = new StringBuilder();
 			sb.append("Elim1");
-			if (inputTerm == preprocessedInput) {
-				sb.append(" did not use preprocessing");
-			} else {
-				sb.append(" applied some preprocessing");
-			}
 			final int dim = new MultiDimensionalSort(eliminatee.getSort()).getDimension();
 			sb.append(" eliminated variable of array dimension " + dim);
 			sb.append(", " + stores.size() + " stores");
@@ -373,7 +342,7 @@ public class Elim1Store {
 					equalityInformation.getDisequalities().size(), indexPairs));
 			sb.append(String.format(", introduced %d new quantified variables", newAuxVars.size()));
 			sb.append(String.format(", introduced %d case distinctions", doubleCaseJuncts.size()));
-			sb.append(String.format(", treesize of input %d treesize of output %d", new DAGSize().treesize(inputTerm),
+			sb.append(String.format(", treesize of input %d treesize of output %d", new DAGSize().treesize( input.getTerm()),
 					new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
@@ -386,7 +355,7 @@ public class Elim1Store {
 						esrQuick.getReductionOfTreeSize(), esrQuick.getReductionRatioInPercent()));
 				if (esrQuick.getReductionRatioInPercent() < 70) {
 					throw new AssertionError(
-							"Reduction: " + esrQuick.getReductionRatioInPercent() + " Input: " + preprocessedInput);
+							"Reduction: " + esrQuick.getReductionRatioInPercent() + " Input: " +  input.getTerm());
 				}
 			}
 			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, result, null,
@@ -408,7 +377,7 @@ public class Elim1Store {
 				|| EliminationTaskSimple
 						.areDistinct(mMgdScript.getScript(), resultEt,
 								new EliminationTaskSimple(quantifier, Collections.singleton(eliminatee),
-										inputTerm)) != LBool.SAT : "Bug array QE Input: " + inputTerm + " Result:"
+										 input.getTerm())) != LBool.SAT : "Bug array QE Input: " +  input.getTerm() + " Result:"
 												+ resultEt;
 		assert !mMgdScript.isLocked() : "Solver still locked";
 		return resultEt;
