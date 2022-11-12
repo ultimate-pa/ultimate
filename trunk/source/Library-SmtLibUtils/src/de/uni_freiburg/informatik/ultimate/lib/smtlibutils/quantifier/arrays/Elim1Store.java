@@ -267,11 +267,9 @@ public class Elim1Store {
 		final Term indexAuxVarDefinitionsTerm = imp.constructAuxVarDefinitions(mScript, quantifier);
 
 		final Map<MultiDimensionalNestedStore, Term> newArrayMapping = new HashMap<>();
-		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				preprocessedInput, polarizedContext);
 		for (final MultiDimensionalNestedStore store : stores) {
 			final Term newArray;
-			final EqProvider eqProvider = new EqProvider(preprocessedInputWithContext, eliminatee, quantifier);
+			final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
 			final Term eqArray = eqProvider.getEqTerm(store.toTerm(mScript));
 			if (eqArray != null) {
 				newArray = eqArray;
