@@ -584,6 +584,9 @@ def debug_environment():
     call_relaxed_and_print(["cat", "/proc/cpuinfo"])
     call_relaxed_and_print(["cat", "/proc/meminfo"])
 
+    print("--- libs ---")
+    call_relaxed_and_print(["ldconfig", "-p"])
+
     print("--- Java ---")
     java_bin = get_java()
     print("Using java binary {}".format(java_bin))
@@ -608,6 +611,11 @@ def debug_environment():
     print("--- Versions ---")
     print(version)
     call_relaxed_and_print(create_callargs(create_ultimate_base_call(), ["--version"]))
+    call_relaxed_and_print(["z3", "-version"])
+    call_relaxed_and_print(["mathsat", "-version"])
+    call_relaxed_and_print(["cvc4", "--version"])
+    call_relaxed_and_print(["cvc4nyu", "--version"])
+    call_relaxed_and_print(["sha256sum", "z3", "mathsat", "cvc4", "cvc4nyu"])
 
     print("--- umask ---")
     call_relaxed_and_print(["touch", "testfile"])
