@@ -40,6 +40,10 @@ public class ProgramConst implements IProgramConst {
 	private static final long serialVersionUID = 2529175722580437047L;
 
 	private final String mIdentifier;
+	/**
+	 * @deprecated SMT constants that below to the theory are no {@link IProgramConst}s
+	 */
+	@Deprecated
 	private final boolean mBelongsToSmtTheory;
 
 	/**
