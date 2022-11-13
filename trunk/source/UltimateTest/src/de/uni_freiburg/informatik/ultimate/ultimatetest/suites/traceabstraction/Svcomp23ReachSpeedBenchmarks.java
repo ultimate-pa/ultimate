@@ -108,6 +108,13 @@ public class Svcomp23ReachSpeedBenchmarks extends AbstractTraceAbstractionTestSu
 	private static final String[] SETTINGS_32BIT = {
 		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
 		"default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
+//		"automizer/interpolation/Reach-32bit-Z3-IcSpLv.epf",
+//		"automizer/interpolation/Reach-32bit-CVC4-IcSpLv.epf",
+//		"automizer/interpolation/Reach-32bit-CVC5-IcSpLv.epf",
+//		"automizer/interpolation/Reach-32bit-MathSAT-IcSpLv.epf",
+//		"automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf",
+//		"automizer/interpolation/Reach-32bit-SMTInterpol-IcSpLv.epf",
+//		"automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf",
 	};
 
 	private static final String[] TOOLCHAINS = {
