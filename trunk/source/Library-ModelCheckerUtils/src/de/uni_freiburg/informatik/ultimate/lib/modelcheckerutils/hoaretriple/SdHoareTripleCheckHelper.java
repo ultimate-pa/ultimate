@@ -192,6 +192,10 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 		return DataStructureUtils.haveEmptyIntersection(state.getFuns(), (Set) tf.getNonTheoryConsts());
 	}
 
+	protected static boolean disjointFunctions(final IPredicate pred1, final IPredicate pred2) {
+		return DataStructureUtils.haveEmptyIntersection(pred1.getFuns(), pred2.getFuns());
+	}
+
 	/**
 	 * Checks if the predicate contains both a non-modifiable global variable x and old(x).
 	 *

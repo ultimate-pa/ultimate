@@ -90,6 +90,11 @@ public class SdHoareTripleCheckerTest extends AbstractHoareTripleCheckerTest {
 	}
 
 	@Override
+	protected Validity constsWeakenedCallVerdict() {
+		return Validity.UNKNOWN;
+	}
+
+	@Override
 	protected Validity nonPseudoTautologicalPostCallVerdict() {
 		return Validity.UNKNOWN;
 	}
