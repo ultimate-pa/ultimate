@@ -15,20 +15,21 @@
 set -e
 
 GIT_FETCH_URL="https://github.com/Z3Prover/z3.git"
+# see https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
 COMMON_FLAGS="-O2 -march=x86-64 -mtune=generic -pipe"
 
 CMAKE_FLAGS=(-DCMAKE_BUILD_TYPE=Release \
 -DZ3_BUILD_EXECUTABLE:BOOL=ON \
--DZ3_BUILD_LIBZ3_MSVC_STATIC=ON \
+#-DZ3_BUILD_LIBZ3_MSVC_STATIC=ON \
 -DZ3_BUILD_TEST_EXECUTABLES=OFF \
 -DZ3_ENABLE_EXAMPLE_TARGETS=OFF \
 -DZ3_LINK_TIME_OPTIMIZATION=ON \
 -DZ3_SINGLE_THREADED:BOOL=OFF \
 -DZ3_USE_LIB_GMP=OFF \
--DBUILD_SHARED_LIBS=OFF \
--DZ3_BUILD_LIBZ3_SHARED=OFF \
+#-DBUILD_SHARED_LIBS=OFF \
+#-DZ3_BUILD_LIBZ3_SHARED=OFF \
 # -DCMAKE_EXE_LINKER_FLAGS:STRING=\'-static -Wl,--whole-archive -lrt -lpthread -Wl,--no-whole-archive\' \
--DCMAKE_EXE_LINKER_FLAGS='-static -Wl,--whole-archive -Wl,--no-whole-archive' \
+# -DCMAKE_EXE_LINKER_FLAGS='-static -Wl,--whole-archive -Wl,--no-whole-archive' \
 )
 MK_MAKE_FLAGS="--staticbin --optimize"
 
