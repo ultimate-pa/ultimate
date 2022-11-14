@@ -115,7 +115,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -295,17 +294,22 @@ public class StandardFunctionHandler {
 		// unsound and because we consider wchars as chars.
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
-		// TODO 20211106 Matthias: Set to "die" by Dominik because scanf caused
-		// unoundness in datarace benchmarks
-		fill(map, "scanf", die);
-
-		// TODO 20211105 Matthias: Unsound because depending on its first argument,
-		// the *scanf functions manipulate memory addressed by the other arguments.
-		// see https://en.cppreference.com/w/c/io/fscanf and https://en.cppreference.com/w/c/io/fwscanf
-		fill(map, "sscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
-				new CPrimitive(CPrimitive.CPrimitives.INT)));
-		fill(map, "swscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
-				new CPrimitive(CPrimitive.CPrimitives.INT)));
+		// TODO Frank 2022-11-14: This is an overapproximation (since it ignores the format), but we don't label it
+		// as such, therefore this is unsound in general.
+		// https://en.cppreference.com/w/c/io/fscanf
+		// https://en.cppreference.com/w/c/io/fwscanf
+		fill(map, "scanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
+		fill(map, "scanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
+		fill(map, "wscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
+		fill(map, "wscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
+		fill(map, "fscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "fscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "fwscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "fwscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "sscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "sscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "swscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -798,6 +802,31 @@ public class StandardFunctionHandler {
 		if (!declNotSupp.isEmpty()) {
 			throw new IllegalStateException("A supported float function is not declared: " + declNotSupp);
 		}
+	}
+
+	/**
+	 * Handles all derivates of *scanf by writing non-deterministic values to all arguments starting from
+	 * {@code firstArgumentToConsider}.
+	 */
+	private Result handleScanf(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final int firstArgumentToConsider) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		for (int i = firstArgumentToConsider; i < arguments.length; i++) {
+			final ExpressionResult arg =
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			final CType type = ((CPointer) arg.getCType()).getPointsToType();
+			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+			builder.addDeclaration(auxvar.getVarDec());
+			builder.addAuxVar(auxvar);
+			// Write a non-deterministic value to the given address, but make sure the value is in range
+			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
+			final List<Statement> writes = mMemoryHandler.getWriteCall(loc,
+					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null),
+					auxvar.getExp(), new CPrimitive(CPrimitive.CPrimitives.INT), false, node);
+			builder.addStatements(writes);
+		}
+		return builder.build();
 	}
 
 	private Result handleStrCmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -2076,10 +2105,9 @@ public class StandardFunctionHandler {
 
 	private static Result handleLtlStep(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
-		final NamedAttribute ltlAttribute = new NamedAttribute(loc, "ltl_step", new Expression[]{ });
-		final AssumeStatement assumeStmt = new AssumeStatement(loc, 
-				new NamedAttribute[] { ltlAttribute }, 
-				ExpressionFactory.createBooleanLiteral(loc, true))  ;
+		final NamedAttribute ltlAttribute = new NamedAttribute(loc, "ltl_step", new Expression[] {});
+		final AssumeStatement assumeStmt = new AssumeStatement(loc, new NamedAttribute[] { ltlAttribute },
+				ExpressionFactory.createBooleanLiteral(loc, true));
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
 	}
 
