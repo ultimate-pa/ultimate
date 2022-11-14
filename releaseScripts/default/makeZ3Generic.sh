@@ -17,7 +17,20 @@ set -e
 GIT_FETCH_URL="https://github.com/Z3Prover/z3.git"
 COMMON_FLAGS="-O2 -march=x86-64 -mtune=generic -pipe"
 
-ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release -DZ3_BUILD_EXECUTABLE:BOOL=ON -DZ3_BUILD_LIBZ3_MSVC_STATIC=ON -DZ3_BUILD_TEST_EXECUTABLES=OFF -DZ3_ENABLE_EXAMPLE_TARGETS=OFF -DZ3_LINK_TIME_OPTIMIZATION=ON -DZ3_SINGLE_THREADED:BOOL=OFF -DZ3_USE_LIB_GMP=ON"
+CMAKE_FLAGS=(-DCMAKE_BUILD_TYPE=Release \
+-DZ3_BUILD_EXECUTABLE:BOOL=ON \
+-DZ3_BUILD_LIBZ3_MSVC_STATIC=ON \
+-DZ3_BUILD_TEST_EXECUTABLES=OFF \
+-DZ3_ENABLE_EXAMPLE_TARGETS=OFF \
+-DZ3_LINK_TIME_OPTIMIZATION=ON \
+-DZ3_SINGLE_THREADED:BOOL=OFF \
+-DZ3_USE_LIB_GMP=OFF \
+-DBUILD_SHARED_LIBS=OFF \
+-DZ3_BUILD_LIBZ3_SHARED=OFF \
+# -DCMAKE_EXE_LINKER_FLAGS:STRING=\'-static -Wl,--whole-archive -lrt -lpthread -Wl,--no-whole-archive\' \
+-DCMAKE_EXE_LINKER_FLAGS='-static -Wl,--whole-archive -Wl,--no-whole-archive' \
+)
+MK_MAKE_FLAGS="--staticbin --optimize"
 
 WORKING_DIR="z3temp"
 DEFAULT_WORKING=true
@@ -78,8 +91,8 @@ function print_setup()
 	else
 		echo
 	fi
-	echo -e "  Additional parameters:\t${ADDITIONAL_FLAGS}"
-	echo -e "  CFLAGS and CXXFLAGS:\t${COMMON_FLAGS}"
+	echo -e "  Additional parameters:\t${CMAKE_FLAGS[*]}"
+	echo -e "  CFLAGS and CXXFLAGS:\t\t${COMMON_FLAGS}"
 	echo -e "  Number of parallel jobs:\t${NUMCPUS}"
 	echo
 }
@@ -151,23 +164,51 @@ function compile_z3()
 		rm -rf "${BUILD_DIR}"
 	fi
 
+	echo "Generating makefiles with cmake"
 	mkdir "${BUILD_DIR}"
 	cd "${BUILD_DIR}"
-
-	echo "Generating makefiles"
 	CFLAGS="${COMMON_FLAGS}" \
 	CXXFLAGS="${COMMON_FLAGS}" \
 	CC=gcc \
 	CXX=g++ \
-	cmake -G "Unix Makefiles" ../ ${ADDITIONAL_FLAGS}
+	cmake -G "Unix Makefiles" ../ ${CMAKE_FLAGS[*]}
+
+	# build static binary without respecting cflags
+	# echo "Generating makefiles with mk_make"
+	# CFLAGS="${COMMON_FLAGS}" \
+	# CXXFLAGS="${COMMON_FLAGS}" \
+	# CC=gcc \
+	# CXX=g++ \
+	# python scripts/mk_make.py --build="${BUILD_DIR}" ${MK_MAKE_FLAGS}
+	# cd "${BUILD_DIR}"
 
 	echo "Compiling z3 ..."
-	make "${MAKEOPTS}"
+	CFLAGS="${COMMON_FLAGS}" \
+	CXXFLAGS="${COMMON_FLAGS}" \
+	CC=gcc \
+	CXX=g++ \
+	make ${MAKEOPTS}
 	strip -s z3
+
+	# check for dynamic vs static linking
+	if command -v readelf &> /dev/null ; then
+		readelf -d z3
+	elif command -v objdump &> /dev/null ; then
+		objdump -p z3
+	else
+		echo "No readelf or objdump available"
+	fi
+
+	# check which cpuflags are required 
+	if command -v ~/.cargo/bin/elfx86exts &> /dev/null ; then
+		~/.cargo/bin/elfx86exts z3
+	else 
+		echo "No elfx86exts available"
+		echo "Install it by visiting https://github.com/pkgw/elfx86exts"
+	fi
+
 	cd "${ROOT}"
-
 	echo "Build successful."
-
 	version_z3
 }
 
