@@ -6,6 +6,7 @@ import argparse
 import fnmatch
 import glob
 import os
+import platform
 import re
 import shutil
 import signal
@@ -446,7 +447,7 @@ def call_desperate(call_args):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=False,
-            preexec_fn=_init_child_process,
+            preexec_fn=None if is_windows() else _init_child_process,
         )
     except:
         print("Error trying to open subprocess " + str(call_args))
@@ -580,6 +581,7 @@ def debug_environment():
         print(str(env) + "=" + str(os.environ.get(env)))
 
     print("--- Machine ---")
+    print(platform.uname())
     call_relaxed_and_print(["uname", "-a"])
     call_relaxed_and_print(["cat", "/proc/cpuinfo"])
     call_relaxed_and_print(["cat", "/proc/meminfo"])
@@ -611,11 +613,16 @@ def debug_environment():
     print("--- Versions ---")
     print(version)
     call_relaxed_and_print(create_callargs(create_ultimate_base_call(), ["--version"]))
-    call_relaxed_and_print(["z3", "-version"])
-    call_relaxed_and_print(["mathsat", "-version"])
-    call_relaxed_and_print(["cvc4", "--version"])
-    call_relaxed_and_print(["cvc4nyu", "--version"])
-    call_relaxed_and_print(["sha256sum", "z3", "mathsat", "cvc4", "cvc4nyu"])
+    solver_versions = [
+        ("z3", "-version"),
+        ("mathsat", "-version"),
+        ("cvc4", "--version"),
+        ("cvc4nyu", "--version"),
+    ]
+    for solver, vflag in solver_versions:
+        abs_solver = os.path.join(ultimatedir, solver)
+        call_relaxed_and_print([abssolver, vflag])
+        call_relaxed_and_print(["sha256sum", abs_solver])
 
     print("--- umask ---")
     call_relaxed_and_print(["touch", "testfile"])
@@ -628,7 +635,9 @@ def call_relaxed_and_print(call_args):
         print("No call_args given")
     try:
         child_process = subprocess.Popen(
-            call_args, stdout=subprocess.PIPE, preexec_fn=_init_child_process
+            call_args,
+            stdout=subprocess.PIPE,
+            preexec_fn=None if is_windows() else _init_child_process,
         )
         stdout, stderr = child_process.communicate()
     except Exception as ex:
@@ -985,6 +994,10 @@ def main():
     )
 
 
+def is_windows():
+    return sys.platform == "win32"
+
+
 def signal_handler(sig, frame):
     print("Killed by {}".format(sig))
     sys.exit(ExitCode.FAIL_SIGNAL)
@@ -994,5 +1007,6 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     # just ignore pipe exceptions
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    if not is_windows():
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     main()
