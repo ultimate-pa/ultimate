@@ -15,19 +15,21 @@
 set -e
 
 GIT_FETCH_URL="https://github.com/Z3Prover/z3.git"
-ADDITIONAL_FLAGS="--staticbin --optimize"
+COMMON_FLAGS="-O2 -march=x86-64 -mtune=generic -pipe"
+
+ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release -DZ3_BUILD_EXECUTABLE:BOOL=ON -DZ3_BUILD_LIBZ3_MSVC_STATIC=ON -DZ3_BUILD_TEST_EXECUTABLES=OFF -DZ3_ENABLE_EXAMPLE_TARGETS=OFF -DZ3_LINK_TIME_OPTIMIZATION=ON -DZ3_SINGLE_THREADED:BOOL=OFF -DZ3_USE_LIB_GMP=ON"
 
 WORKING_DIR="z3temp"
 DEFAULT_WORKING=true
 BUILD_DIR="buildtemp"
 DEST_DIR="z3"
 DEFAULT_DEST=true
-NUMCPUS=`grep -c '^processor' /proc/cpuinfo`
-NUMCPUS=$((${NUMCPUS} + 1))
+NUMCPUS=$(grep -c '^processor' /proc/cpuinfo)
+NUMCPUS=$((NUMCPUS + 1))
 NOUPDATE=false
 DONTREMOVE=false
 
-ROOT="`pwd`"
+ROOT="$(pwd)"
 trap 'cd "${ROOT}"' EXIT
 
 function print_help()
@@ -77,6 +79,7 @@ function print_setup()
 		echo
 	fi
 	echo -e "  Additional parameters:\t${ADDITIONAL_FLAGS}"
+	echo -e "  CFLAGS and CXXFLAGS:\t${COMMON_FLAGS}"
 	echo -e "  Number of parallel jobs:\t${NUMCPUS}"
 	echo
 }
@@ -144,44 +147,22 @@ function compile_z3()
 {
 	echo "Building z3 ..."
 	cd "${WORKING_DIR}"
-
 	if [ -d "${BUILD_DIR}" ]; then
-		EXISTING=$(dirname $(readlink -e "${BUILD_DIR}"))
-		echo -n "Warning: Build directory ${EXISTING} already exists. Remove? [Y/n] "
-		read answer
-		if [ ! -z ${answer} ]; then
-			case ${answer} in
-				y|Y|yes|Yes|YES)
-					;;
-				*)
-					if [ -f "${BUILD_DIR}/z3" ]; then
-						echo -n "Use previously built z3 version? [y/N] "
-						read answerp
-						if [ ! -z ${answerp} ]; then
-							case ${answerp} in
-								y|Y|yes|Yes|YES)
-									cd "${ROOT}"
-									return
-									;;
-								*)
-									;;
-							esac
-						fi
-					fi
-					echo "Aborting..."
-					cd "${ROOT}"
-					exit 1
-					;;
-			esac
-		fi
 		rm -rf "${BUILD_DIR}"
 	fi
 
-	CXXFLAGS="-march=x86-64 -mtune=generic" python scripts/mk_make.py --build="${BUILD_DIR}" ${ADDITIONAL_FLAGS}
-
+	mkdir "${BUILD_DIR}"
 	cd "${BUILD_DIR}"
+
+	echo "Generating makefiles"
+	CFLAGS="${COMMON_FLAGS}" \
+	CXXFLAGS="${COMMON_FLAGS}" \
+	CC=gcc \
+	CXX=g++ \
+	cmake -G "Unix Makefiles" ../ ${ADDITIONAL_FLAGS}
+
 	echo "Compiling z3 ..."
-	make ${MAKEOPTS}
+	make "${MAKEOPTS}"
 	strip -s z3
 	cd "${ROOT}"
 
