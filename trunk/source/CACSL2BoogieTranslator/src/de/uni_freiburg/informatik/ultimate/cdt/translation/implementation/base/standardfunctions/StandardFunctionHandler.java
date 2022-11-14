@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
@@ -166,6 +167,8 @@ public class StandardFunctionHandler {
 
 	private final ThreadIdManager mThreadIdManager;
 
+	private final DataRaceChecker mDataRaceChecker;
+
 	private final ILogger mLogger;
 
 	private final Set<String> mOverwrittenFunctionNames;
@@ -177,7 +180,7 @@ public class StandardFunctionHandler {
 			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
 			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
 			final LocationFactory locationFactory, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator) {
+			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
@@ -198,6 +201,7 @@ public class StandardFunctionHandler {
 		mOverwrittenFunctionNames = getOverwrittenFunctionNames(settings);
 		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
 				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
+		mDataRaceChecker = dataRaceChecker;
 	}
 
 	/**
@@ -824,12 +828,15 @@ public class StandardFunctionHandler {
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 			builder.addDeclaration(auxvar.getVarDec());
 			builder.addAuxVar(auxvar);
+
 			// Write a non-deterministic value to the given address, but make sure the value is in range
+			final var lValue =
+					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null);
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
-			final List<Statement> writes = mMemoryHandler.getWriteCall(loc,
-					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null),
-					auxvar.getExp(), new CPrimitive(CPrimitive.CPrimitives.INT), false, node);
+			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(),
+					new CPrimitive(CPrimitive.CPrimitives.INT), false, node);
 			builder.addStatements(writes);
+			mDataRaceChecker.checkOnWrite(builder, loc, lValue);
 		}
 		return builder.build();
 	}
