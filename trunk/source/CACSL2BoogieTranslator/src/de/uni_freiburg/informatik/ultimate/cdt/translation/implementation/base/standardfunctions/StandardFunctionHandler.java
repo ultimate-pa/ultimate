@@ -294,20 +294,19 @@ public class StandardFunctionHandler {
 		// unsound and because we consider wchars as chars.
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
-		// TODO Frank 2022-11-14: This is an overapproximation (since it ignores the format), but we don't label it
-		// as such, therefore this is unsound in general.
 		// https://en.cppreference.com/w/c/io/fscanf
-		// https://en.cppreference.com/w/c/io/fwscanf
 		fill(map, "scanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
 		fill(map, "scanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
-		fill(map, "wscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
-		fill(map, "wscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
 		fill(map, "fscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
 		fill(map, "fscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "fwscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "fwscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
 		fill(map, "sscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
 		fill(map, "sscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+
+		// https://en.cppreference.com/w/c/io/fwscanf
+		fill(map, "wscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
+		fill(map, "wscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
+		fill(map, "fwscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "fwscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
 		fill(map, "swscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
 		fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
 
@@ -810,6 +809,8 @@ public class StandardFunctionHandler {
 	 */
 	private Result handleScanf(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final int firstArgumentToConsider) {
+		// TODO Frank 2022-11-14: This is an overapproximation (since it ignores the format), but we don't label it
+		// as such, therefore this is unsound in general.
 		final IASTInitializerClause[] arguments = node.getArguments();
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		for (int i = firstArgumentToConsider; i < arguments.length; i++) {
