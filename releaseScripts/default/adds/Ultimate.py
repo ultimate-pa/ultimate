@@ -621,7 +621,7 @@ def debug_environment():
     ]
     for solver, vflag in solver_versions:
         abs_solver = os.path.join(ultimatedir, solver)
-        call_relaxed_and_print([abssolver, vflag])
+        call_relaxed_and_print([abs_solver, vflag])
         call_relaxed_and_print(["sha256sum", abs_solver])
 
     print("--- umask ---")
