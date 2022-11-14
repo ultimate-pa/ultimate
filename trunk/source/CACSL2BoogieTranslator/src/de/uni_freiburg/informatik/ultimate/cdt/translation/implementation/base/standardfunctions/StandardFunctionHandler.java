@@ -2132,7 +2132,8 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Handle a function call by dispatching all arguments and then calling a function with no arguments that has the
-	 * name of the function and is marked with the {@link Overapprox} annotation.
+	 * name of the function and is marked with the {@link Overapprox} annotation. Additionally it is assumed that the
+	 * result is in range of the given type.
 	 *
 	 * @param main
 	 *            the current dispatcher
@@ -2152,15 +2153,16 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String methodName, final int numberOfArgs, final CType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
-		final List<ExpressionResult> results = new ArrayList<>();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		for (final IASTInitializerClause argument : arguments) {
-			results.add((ExpressionResult) main.dispatch(argument));
+			builder.addAllExceptLrValue((ExpressionResult) main.dispatch(argument));
 		}
 
 		final ExpressionResult overapproxCall = constructOverapproximationForFunctionCall(loc, methodName, resultType);
-		results.add(overapproxCall);
-		return new ExpressionResultBuilder().addAllExceptLrValue(results).setLrValue(overapproxCall.getLrValue())
-				.build();
+		builder.addAllExceptLrValue(overapproxCall);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, overapproxCall.getLrValue().getValue(), resultType,
+				builder);
+		return builder.setLrValue(overapproxCall.getLrValue()).build();
 	}
 
 	/**
