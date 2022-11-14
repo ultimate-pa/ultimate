@@ -435,4 +435,19 @@ public class DataStructureUtils {
 		final Object[] elements = stream.toArray();
 		return (Set<T>) Set.of(elements);
 	}
+
+	/**
+	 * Return an unmodifiable view of the input set. Use
+	 * {@link Collections#emptySet} or {@link Collections#singleton} if possible to
+	 * get a memory-efficient representation.
+	 */
+	public static <T> Set<T> getUnmodifiable(final Set<T> set) {
+		if (set.isEmpty()) {
+			return Collections.emptySet();
+		} else if (set.size() == 1) {
+			return Collections.singleton(set.iterator().next());
+		} else {
+			return Collections.unmodifiableSet(set);
+		}
+	}
 }

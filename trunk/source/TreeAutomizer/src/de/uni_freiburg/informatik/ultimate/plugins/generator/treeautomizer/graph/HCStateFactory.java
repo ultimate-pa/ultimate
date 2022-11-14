@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
@@ -47,11 +48,14 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
@@ -155,7 +159,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 		if (mPredicateFactory.isDontCare(conjoinedPred)) {
 			return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedPred.getFormula(),
-					Collections.emptyList());
+					Collections.emptyList(), Collections.emptyList());
 			// return conjoinedPred;
 		}
 
@@ -166,8 +170,11 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		// ps.add(state1);
 		// ps.add(state2);
 
+		final Set<ApplicationTerm> appTerms = TermVarsProc.findNonTheoryApplicationTerms(conjoinedFormula);
+		final List<FunctionSymbol> funs = appTerms.stream().map(ApplicationTerm::getFunction)
+				.collect(Collectors.toList());
 		return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedFormula,
-				Arrays.asList(state1.getFormula().getFreeVars()));
+				Arrays.asList(state1.getFormula().getFreeVars()), funs);
 	}
 
 	@Override
@@ -206,10 +213,14 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		if (mergedLocations.isEmpty()) {
 			return mPredicateFactory.newPredicate(mergedFormula);
 		} else if (mPredicateFactory.isDontCare(mergedFormula)) {
-			return mPredicateFactory.newPredicate(mergedLocations, mergedFormula, Collections.emptyList());
+			return mPredicateFactory.newPredicate(mergedLocations, mergedFormula, Collections.emptyList(),
+					Collections.emptyList());
 		} else {
+			final Set<ApplicationTerm> appTerms = TermVarsProc.findNonTheoryApplicationTerms(mergedFormula);
+			final List<FunctionSymbol> funs = appTerms.stream().map(ApplicationTerm::getFunction)
+					.collect(Collectors.toList());
 			return mPredicateFactory.newPredicate(mergedLocations, mergedFormula,
-					Arrays.asList(mergedFormula.getFreeVars()));
+					Arrays.asList(mergedFormula.getFreeVars()), funs);
 		}
 	}
 

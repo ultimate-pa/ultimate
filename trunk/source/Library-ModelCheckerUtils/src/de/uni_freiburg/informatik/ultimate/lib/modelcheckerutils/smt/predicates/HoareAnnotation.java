@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -65,13 +64,14 @@ public class HoareAnnotation extends SPredicate {
 
 	public HoareAnnotation(final IcfgLocation programPoint, final int serialNumber,
 			final PredicateFactory predicateFactory, final ManagedScript mgdScript) {
-		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, mgdScript.getScript().term("true"),
-				new HashSet<IProgramVar>(), null);
+		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() },
+				mgdScript.getScript().term("true"), new HashSet<>(), new HashSet<>(), null);
 		mMgdScript = mgdScript;
 	}
 
 	public void addInvariant(final IPredicate pred) {
 		mVars.addAll(pred.getVars());
+		mFunctions.addAll(pred.getFuns());
 		mInvariants.add(pred.getFormula());
 	}
 

@@ -95,7 +95,7 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 	}
 
 	@Override
-	public IProgramFunction getProgramFunction(final FunctionSymbol funSym) {
+	public IProgramFunction getProgramFun(final FunctionSymbol funSym) {
 		return mFunSym2ProgramFunction.get(funSym);
 	}
 
@@ -116,6 +116,10 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 			return Collections.emptySet();
 		}
 		return Collections.unmodifiableSet(mLocals.getImage(proc));
+	}
+
+	public void addFun(final IProgramFunction fun) {
+		mFunSym2ProgramFunction.put(fun.getFunctionSymbol(), fun);
 	}
 
 	public void add(final IProgramVarOrConst varOrConst) {

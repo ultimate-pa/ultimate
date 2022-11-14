@@ -319,8 +319,8 @@ public class Boogie2SmtSymbolTable
 	}
 
 	@Override
-	public ProgramFunction getProgramFunction(final FunctionSymbol smtFunSym) {
-		return (ProgramFunction) mIcfgSymbolTable.getProgramFunction(smtFunSym);
+	public ProgramFunction getProgramFun(final FunctionSymbol smtFunSym) {
+		return (ProgramFunction) mIcfgSymbolTable.getProgramFun(smtFunSym);
 	}
 
 	public Map<String, Expression[]> getAttributes(final String boogieFunctionId) {
@@ -407,6 +407,9 @@ public class Boogie2SmtSymbolTable
 			final DeclarableFunctionSymbol smtFunctionDefinition = DeclarableFunctionSymbol
 					.createFromString(mScript.getScript(), smtID, smtDefinedBody, paramIds, paramSorts, resultSort);
 			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
+			final FunctionSymbol funSymb = mScript.getScript().getFunctionSymbol(smtID);
+			final ProgramFunction progFunc = new ProgramFunction(funSymb);
+			mIcfgSymbolTable.addFun(progFunc);
 		} else {
 			smtID = attributeDefinedIdentifier;
 			if (smtDefinedBody != null) {

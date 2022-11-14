@@ -272,7 +272,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public ProgramFunction getProgramFunction(final FunctionSymbol funSym) {
+	public ProgramFunction getProgramFun(final FunctionSymbol funSym) {
 		throw new UnsupportedOperationException();
 	}
 

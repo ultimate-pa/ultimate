@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -40,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * A predicate object for HornClauses.
- * 
+ *
  * Convention: The "signature" of any Predicate that we use in TreeAutomizer is fixed by a sequence of Sorts. (I.e. the
  * length and the contents of that sequence.) Thus the signature is given by a sequence of TermVariables. This sequence
  * is identical to the free variabels in the predicate's formula except for the ordering. Alternatively, the signature
  * can be given through an unordered set of TermVariables because we fix an (the natural?) ordering on the
  * TermVariables. (note sure about this..) Furthermore each of the free variables in the predicate formula corresponds
  * to an HCOutVar, which can also give us the "index" in the order of each of the free variables.
- * 
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -61,31 +62,34 @@ public class HCPredicate extends BasicPredicate {
 	private final List<TermVariable> mVariables;
 
 	protected HCPredicate(final HcPredicateSymbol programPoint, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
-		this(programPoint, serialNumber, term, vars, closedFormula, variables, 0);
+			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
+			final List<TermVariable> variables) {
+		this(programPoint, serialNumber, term, vars, funs, closedFormula, variables, 0);
 	}
+
 	protected HCPredicate(final HcPredicateSymbol programPoint, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables, int dontCare) {
-		super(serialNumber, new String[0], term, vars, closedFormula);
+			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
+			final List<TermVariable> variables, final int dontCare) {
+		super(serialNumber, new String[0], term, vars, funs, closedFormula);
 		mHcPredicateSymbols = Collections.singleton(programPoint);
 		mVariables = variables;
 	}
 
 	protected HCPredicate(final HcPredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
-			final Term closedFormula, final List<TermVariable> variables) {
-		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables), term, vars,
+			final Set<IProgramFunction> funs, final Term closedFormula, final List<TermVariable> variables) {
+		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables), term, vars, funs,
 				closedFormula, variables);
 	}
 
-
 	protected HCPredicate(final Set<HcPredicateSymbol> programPoints, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
-		super(serialNumber, new String[0], term, vars, closedFormula);
+			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
+			final List<TermVariable> variables) {
+		super(serialNumber, new String[0], term, vars, funs, closedFormula);
 		mHcPredicateSymbols = programPoints;
 		mVariables = variables;
 	}
 
-	
+
 	//here
 	/*
 	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term,
@@ -110,5 +114,5 @@ public class HCPredicate extends BasicPredicate {
 	public List<TermVariable> getSignature() {
 		return mVariables;
 	}
-	
+
 }

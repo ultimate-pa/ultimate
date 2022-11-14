@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -73,6 +74,11 @@ public class UnknownState implements ISLPredicate {
 
 	@Override
 	public Set<IProgramVar> getVars() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Set<IProgramFunction> getFuns() {
 		throw new UnsupportedOperationException();
 	}
 

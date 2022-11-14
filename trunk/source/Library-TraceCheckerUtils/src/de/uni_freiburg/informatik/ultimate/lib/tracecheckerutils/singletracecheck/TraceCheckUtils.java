@@ -357,7 +357,7 @@ public final class TraceCheckUtils {
 			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}
 		final String[] procs = new String[0];
-		final TermVarsProc result = new TermVarsProc(term, vars, procs,
+		final TermVarsProc result = new TermVarsProc(term, vars, Collections.emptySet(), procs,
 				PredicateUtils.computeClosedFormula(term, vars, mgdScript));
 		return result;
 	}

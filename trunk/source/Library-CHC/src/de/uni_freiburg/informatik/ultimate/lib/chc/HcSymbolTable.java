@@ -348,7 +348,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	// }
 
 	@Override
-	public IProgramFunction getProgramFunction(final FunctionSymbol funSym) {
+	public IProgramFunction getProgramFun(final FunctionSymbol funSym) {
 		throw new AssertionError();
 	}
 

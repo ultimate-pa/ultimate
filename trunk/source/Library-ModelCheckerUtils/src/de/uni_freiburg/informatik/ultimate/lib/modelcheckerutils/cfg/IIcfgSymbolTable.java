@@ -61,7 +61,7 @@ public interface IIcfgSymbolTable {
 	 *            {@link IProgramConst}
 	 * @return {@link IProgramConst} such that parameter at is {@link IProgramConst#getDefaultConstant()}
 	 */
-	public IProgramFunction getProgramFunction(final FunctionSymbol funSym);
+	public IProgramFunction getProgramFun(final FunctionSymbol funSym);
 
 	/**
 	 * @return Set of all global (non-old) variables that occur in the ICFG.

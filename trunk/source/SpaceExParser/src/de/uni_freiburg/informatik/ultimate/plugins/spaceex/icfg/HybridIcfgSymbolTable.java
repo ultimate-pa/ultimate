@@ -116,7 +116,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	}
 
 	@Override
-	public IProgramConst getProgramFunction(final FunctionSymbol funSym) {
+	public IProgramConst getProgramFun(final FunctionSymbol funSym) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 

@@ -149,11 +149,11 @@ public class EqualitySupportingInvariantAnalysis {
 			invariantCandidateTerm = EqualityAnalysisResult.notEqualTerm(mScript.getScript(), definingDoubleton);
 		}
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mScript, mSymbolTable);
-		final IPredicate invariantCandidate =
-				new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
+		final IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(),
+				tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula());
 		final Set<IProgramVar> emptyVarSet = Collections.emptySet();
 		final IPredicate truePredicate = new BasicPredicate(0, new String[0], mScript.getScript().term("true"),
-				emptyVarSet, mScript.getScript().term("true"));
+				emptyVarSet, Collections.emptySet(), mScript.getScript().term("true"));
 		final LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript.getScript(), truePredicate,
 				invariantCandidate, mOriginalStem, mModifiableGlobalsAtStart, mModifiableGlobalsAtHonda);
 		if (impliedByStem == LBool.UNSAT) {

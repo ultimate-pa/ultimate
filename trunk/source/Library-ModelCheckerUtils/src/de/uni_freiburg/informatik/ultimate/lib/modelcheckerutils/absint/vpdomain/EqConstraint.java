@@ -270,7 +270,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
 
 		final Function<IProgramFunction, IProgramConst> cast = (x -> (IProgramConst) x);
-		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramFunction(c.getFunction())).map(cast)
+		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramFun(c.getFunction())).map(cast)
 				.collect(Collectors.toSet()));
 
 		assert !mPvocs.stream().anyMatch(Objects::isNull);

@@ -182,7 +182,7 @@ public final class Term2Expression implements Serializable {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			final IProgramFunction programFun = mBoogie2SmtSymbolTable.getProgramFunction(term.getFunction());
+			final IProgramFunction programFun = mBoogie2SmtSymbolTable.getProgramFun(term.getFunction());
 			if (programFun instanceof ProgramConst) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
 						((ProgramConst) programFun).getIdentifier(),

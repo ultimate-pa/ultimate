@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public interface ITerm2ExpressionSymbolTable {
 
-	IProgramFunction getProgramFunction(FunctionSymbol funSym);
+	IProgramFunction getProgramFun(FunctionSymbol funSym);
 
 	IProgramVar getProgramVar(TermVariable term);
 

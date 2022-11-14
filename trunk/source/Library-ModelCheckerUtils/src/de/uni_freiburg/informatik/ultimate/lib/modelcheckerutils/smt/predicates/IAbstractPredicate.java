@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -47,26 +46,17 @@ public interface IAbstractPredicate {
 
 	/**
 	 * Returns a superset of the all {@link IProgramVar} that are constraint
-	 * by this predicate (informally: whose corresponding TermVariable "occurs" 
+	 * by this predicate (informally: whose corresponding TermVariable "occurs"
 	 * in this IPredicate)
 	 * It is sound to return the set of variables but a better approximation
 	 * increases the speed of some operations and increases the precision
 	 * of data flow-based analysis
 	 */
 	Set<IProgramVar> getVars();
-	
+
 	/**
-	 * Similar that {@link this#getVars()} but for constants. 
+	 * Similar that {@link this#getVars()} but for functions.
 	 */
-	default Set<IProgramConst> getConstants() {
-		throw new UnsupportedOperationException("not yet implemented");
-	}
-	
-	/**
-	 * Similar that {@link this#getVars()} but for constants. 
-	 */
-	default Set<IProgramFunction> getFunctions() {
-		throw new UnsupportedOperationException("not yet implemented");
-	}
+	Set<IProgramFunction> getFuns();
 
 }
