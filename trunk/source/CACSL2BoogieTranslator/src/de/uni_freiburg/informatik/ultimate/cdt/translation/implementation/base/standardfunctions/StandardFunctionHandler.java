@@ -804,13 +804,17 @@ public class StandardFunctionHandler {
 	}
 
 	/**
-	 * Handles all derivates of *scanf by writing non-deterministic values to all arguments starting from
-	 * {@code firstArgumentToConsider}.
+	 * Handles all derivates of *scanf as an overapproximation by writing non-deterministic values to all arguments
+	 * starting from {@code firstArgumentToConsider}.
 	 */
+	// TODO Frank 2022-11-14: In general this is unsound for various reasons:
+	// - We don't label the result as an overapproximation. For reading from e.g. stdin this is fine, but for
+	// something like sscanf("0", "%d", &data) it is not (data has the value 0 afterwards)
+	// - In general scanf can write multiple bytes. E.g. for the format %2c we would need two writes, for the format %s
+	// even non-determinstically many writes! Determining whether this occurs in the format, is only possible if the
+	// format is a literal (it can be any expression in general).
 	private Result handleScanf(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final int firstArgumentToConsider) {
-		// TODO Frank 2022-11-14: This is an overapproximation (since it ignores the format), but we don't label it
-		// as such, therefore this is unsound in general.
 		final IASTInitializerClause[] arguments = node.getArguments();
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		for (int i = firstArgumentToConsider; i < arguments.length; i++) {
