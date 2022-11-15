@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -111,7 +112,8 @@ public class ArrayHandler {
 	public ExpressionResult handleArraySubscriptExpression(final IDispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final IASTArraySubscriptExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		ExpressionResult subscript = mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
+		ExpressionResult subscript =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
 		assert subscript.getLrValue().getCType().isIntegerType();
 
 		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
@@ -207,11 +209,18 @@ public class ArrayHandler {
 				result.addAllExceptLrValue(leftExpRes, subscript);
 				result.setLrValue(lValue);
 				addArrayBoundsCheckForCurrentIndex(loc, index, bound, result);
+			} else if (leftExpRes.getLrValue() instanceof RValueForArrays) {
+				result.addAllExceptLrValue(leftExpRes, subscript);
+				final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
+						leftExpRes.getLrValue().getValue(), resultCType, false, null);
+				result.setLrValue(lValue);
+				return result.build();
 			} else {
 				throw new AssertionError("result.lrVal has to be either HeapLValue or LocalLValue");
 			}
 		}
 		return result.build();
+
 	}
 
 	/**
