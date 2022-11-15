@@ -265,7 +265,11 @@ public class TypeHandler implements ITypeHandler {
 				final CType cType = ((ExpressionResult) opRes).getLrValue().getCType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
-				final CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
+				final var declResult = (DeclaratorResult) opRes;
+				if (!declResult.hasNoSideEffects()) {
+					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+				}
+				final CType cType = declResult.getDeclaration().getType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			}
 		}

@@ -957,23 +957,25 @@ public class CHandler {
 		final CType newCType = declResult.getDeclaration().getType();
 		mCurrentDeclaredTypes.pop();
 
-		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
+		final ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
+		ExpressionResult exprWithType = new ExpressionResultBuilder().addAllSideEffects(declResult)
+				.addAllExceptLrValue(expr).setLrValue(expr.getLrValue()).build();
 
-		if (!expr.hasLRValue()) {
+		if (!exprWithType.hasLRValue()) {
 			// creates a void expression for null RValues
 			final Expression newExpression = ExpressionFactory.createVoidDummyExpression(loc);
 			final RValue rVal = new RValue(newExpression, new CPrimitive(CPrimitives.VOID));
-			expr = new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rVal).build();
+			exprWithType = new ExpressionResultBuilder().addAllExceptLrValue(exprWithType).setLrValue(rVal).build();
 		}
-		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, newCType, node);
-		checkUnsupportedPointerCast(expr, loc, newCType);
+		exprWithType = mExprResultTransformer.makeRepresentationReadyForConversion(exprWithType, loc, newCType, node);
+		checkUnsupportedPointerCast(exprWithType, loc, newCType);
 
 		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun) {
-			checkIfNecessaryMemoryModelAdaption(node, loc, newCType, expr);
+			checkIfNecessaryMemoryModelAdaption(node, loc, newCType, exprWithType);
 		}
 
-		expr = mExprResultTransformer.rexBoolToInt(expr, loc);
-		return mExprResultTransformer.performImplicitConversion(expr, newCType, loc);
+		exprWithType = mExprResultTransformer.rexBoolToInt(exprWithType, loc);
+		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
 	}
 
 	private void checkIfNecessaryMemoryModelAdaption(final IASTCastExpression node, final ILocation loc,
@@ -1237,6 +1239,10 @@ public class CHandler {
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
 			for (int i = 0; i < paramDecls.length; i++) {
 				final DeclaratorResult decl = (DeclaratorResult) main.dispatch(paramDecls[i]);
+				if (!decl.hasNoSideEffects()) {
+					// TODO but this should be possible
+					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+				}
 				if (decl.getDeclaration().getName() == "" && decl.getDeclaration().getType() instanceof CPrimitive
 						&& ((CPrimitive) decl.getDeclaration().getType()).getType().equals(CPrimitives.VOID)) {
 					assert paramDecls.length == 1;
@@ -1304,6 +1310,10 @@ public class CHandler {
 		if (node.getNestedDeclarator() != null) {
 			mCurrentDeclaredTypes.push(TypesResult.create(resType, cType));
 			DeclaratorResult result = (DeclaratorResult) main.dispatch(node.getNestedDeclarator());
+			if (!result.hasNoSideEffects()) {
+				// TODO but this should be possible
+				throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+			}
 			mCurrentDeclaredTypes.pop();
 			if (node.getInitializer() != null) {
 				final CDeclaration cdec = result.getDeclaration();
@@ -1469,6 +1479,10 @@ public class CHandler {
 
 		mCurrentDeclaredTypes.push(resType);
 		final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(node.getDeclarator());
+		if (!declResult.hasNoSideEffects()) {
+			throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+		}
+
 		mCurrentDeclaredTypes.pop();
 		assert declResult.getDeclaration().getType() instanceof CFunction;
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
@@ -1688,6 +1702,9 @@ public class CHandler {
 		final TypesResult declSpecifierResult = (TypesResult) main.dispatch(typeId.getDeclSpecifier());
 		mCurrentDeclaredTypes.push(declSpecifierResult);
 		final DeclaratorResult declaratorResult = (DeclaratorResult) main.dispatch(typeId.getAbstractDeclarator());
+		if (!declaratorResult.hasNoSideEffects()) {
+			throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+		}
 		mCurrentDeclaredTypes.pop();
 
 		final CDeclaration cDeclaration = declaratorResult.getDeclaration();
@@ -2123,7 +2140,11 @@ public class CHandler {
 		final List<Result> intermediateResults = new ArrayList<>();
 		for (final IASTDeclarator declarator : node.getDeclarators()) {
 			final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(declarator);
+			if (!declResult.hasNoSideEffects()) {
+				throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+			}
 			final CDeclaration cDec = declResult.getDeclaration();
+
 			cDec.setStorageClass(storageClass);
 
 			// are we in prerun mode?
@@ -2386,6 +2407,9 @@ public class CHandler {
 			mCurrentDeclaredTypes.push(rt);
 			// main.dispatch(node.getTypeId().getAbstractDeclarator());
 			final DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+			if (!dr.hasNoSideEffects()) {
+				throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+			}
 			mCurrentDeclaredTypes.pop();
 			// TypesResult checked = checkForPointer(main,
 			// node.getTypeId().getAbstractDeclarator().getPointerOperators(),
