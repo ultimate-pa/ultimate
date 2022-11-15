@@ -743,9 +743,11 @@ public class StandardFunctionHandler {
 		 * 7.22.6.2 The div, ldiv, and lldiv functions
 		 * @formatter:on
 		 */
-		fill(map, "abs", die);
-		fill(map, "labs", die);
-		fill(map, "llabs", die);
+		fill(map, "abs", (main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.INT)));
+		fill(map, "labs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "llabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "div", die);
 		fill(map, "ldiv", die);
 		fill(map, "lldiv", die);
@@ -805,6 +807,39 @@ public class StandardFunctionHandler {
 		if (!declNotSupp.isEmpty()) {
 			throw new IllegalStateException("A supported float function is not declared: " + declNotSupp);
 		}
+	}
+
+	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final CPrimitive resultType) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult argResult = (ExpressionResult) main.dispatch(arguments[0]);
+		builder.addAllExceptLrValue(argResult);
+		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.ABS);
+		builder.addDeclaration(auxvar.getVarDec());
+		builder.addAuxVar(auxvar);
+		builder.addStatement(
+				StatementFactory.constructAssignmentStatement(loc, auxvar.getLhs(), argResult.getLrValue().getValue()));
+		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
+		if (mSettings.checkSignedIntegerBounds() && resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)) {
+			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
+					mTypeSizes.getMinValueOfPrimitiveType(resultType));
+			final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+					IASTBinaryExpression.op_greaterThan, auxvar.getExp(), resultType, minInt, resultType);
+			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
+			new Check(Spec.INTEGER_OVERFLOW).annotate(biggerMinIntStmt);
+			builder.addStatement(biggerMinIntStmt);
+		}
+		// Construct if x > 0 then x else -x as LrValue for abs(x)
+		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterThan, auxvar.getExp(), resultType,
+				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
+		final Expression negated = mExpressionTranslation.constructUnaryIntegerExpression(loc,
+				IASTUnaryExpression.op_minus, auxvar.getExp(), resultType);
+		final Expression iteExpression =
+				ExpressionFactory.constructIfThenElseExpression(loc, positive, auxvar.getExp(), negated);
+		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
 	}
 
 	/**
