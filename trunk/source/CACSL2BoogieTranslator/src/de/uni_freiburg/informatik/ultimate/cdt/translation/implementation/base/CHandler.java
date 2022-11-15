@@ -2407,17 +2407,14 @@ public class CHandler {
 			mCurrentDeclaredTypes.push(rt);
 			// main.dispatch(node.getTypeId().getAbstractDeclarator());
 			final DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
-			if (!dr.hasNoSideEffects()) {
-				throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
-			}
 			mCurrentDeclaredTypes.pop();
 			// TypesResult checked = checkForPointer(main,
 			// node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 			// rt, false);
 
-			return new ExpressionResult(
-					new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(), node),
-							mTypeSizeComputer.getSizeT()));
+			final var rVal = new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(), node),
+					mTypeSizeComputer.getSizeT());
+			return new ExpressionResultBuilder().addAllSideEffects(dr).setLrValue(rVal).build();
 		}
 		case IASTTypeIdExpression.op_typeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
