@@ -836,7 +836,10 @@ public class StandardFunctionHandler {
 			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(),
 					new CPrimitive(CPrimitive.CPrimitives.INT), false, node);
 			builder.addStatements(writes);
-			mDataRaceChecker.checkOnWrite(builder, loc, lValue);
+
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnWrite(builder, loc, lValue);
+			}
 		}
 		return builder.build();
 	}
