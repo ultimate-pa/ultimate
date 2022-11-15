@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public abstract class ExpressionTranslation {
 
@@ -563,5 +564,15 @@ public abstract class ExpressionTranslation {
 
 	public abstract Expression applyNutzTransformationWraparound(ILocation loc, TypeSizes typeSizes,
 			CPrimitive cPrimitive, Expression operand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(ILocation loc,
+			int operation, CPrimitive resultType, Expression lhsOperand, Expression rhsOperand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(ILocation loc,
+			int operation, CPrimitive resultType, Expression operand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(
+			ILocation loc, int operation, CPrimitive resultType, Expression lhsOperand, Expression rhsOperand,
+			IASTNode hook);
 
 }

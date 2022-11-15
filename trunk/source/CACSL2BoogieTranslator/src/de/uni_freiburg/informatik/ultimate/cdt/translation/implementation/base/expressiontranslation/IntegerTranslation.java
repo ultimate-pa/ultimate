@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -959,4 +960,70 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
 		return mBitabsTranslation.abstractAssign(exprResultTransformer, main, locationFactory, node);
 	}
+
+	@Override
+	public Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(final ILocation loc,
+			final int operation, final CPrimitive resultType, final Expression lhsOperand,
+			final Expression rhsOperand) {
+		assert resultType.isIntegerType()
+				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
+		assert operation == IASTBinaryExpression.op_multiply || operation == IASTBinaryExpression.op_multiplyAssign
+				|| operation == IASTBinaryExpression.op_plus || operation == IASTBinaryExpression.op_plusAssign
+				|| operation == IASTBinaryExpression.op_minus || operation == IASTBinaryExpression.op_minus;
+
+		final Expression operationResult = constructArithmeticExpression(loc, operation, lhsOperand, resultType,
+				rhsOperand, resultType);
+		return constructOverflowCheck(loc, resultType, operationResult);
+	}
+
+	@Override
+	public Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(final ILocation loc, final int operation,
+			final CPrimitive resultType, final Expression operand) {
+		assert resultType.isIntegerType()
+		&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
+		assert operation == IASTUnaryExpression.op_minus;
+
+		final Expression operationResult = constructUnaryExpression(loc, operation, operand, resultType);
+		return constructOverflowCheck(loc, resultType, operationResult);
+	}
+	@Override
+	public Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(final ILocation loc,
+			final int operation, final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand, final IASTNode hook) {
+		assert operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign;
+
+		final Expression operationResult = constructBinaryBitwiseIntegerExpression(loc, operation,
+				lhsOperand, resultType, rhsOperand, resultType, hook);
+		return constructOverflowCheck(loc, resultType, operationResult);
+	}
+
+	private Pair<Expression, Expression> constructOverflowCheck(final ILocation loc, final CPrimitive resultType,
+			final Expression operationResult) {
+		final Expression largerMinInt = constructBiggerMinIntExpression(loc, resultType, operationResult);
+		final Expression smallerMaxInt = constructSmallerMaxIntExpression(loc, resultType, operationResult);
+		return new Pair<>(largerMinInt, smallerMaxInt);
+	}
+
+	/**
+	 * Construct `expression <= maxInt`, where maxInt is the largest value of type primType.
+	 */
+	private Expression constructSmallerMaxIntExpression(final ILocation loc, final CPrimitive primType,
+			final Expression expression) {
+		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLEQ, expression,
+				ExpressionFactory.createIntegerLiteral(loc,
+						mTypeSizes.getMaxValueOfPrimitiveType(primType).toString()));
+	}
+
+	/**
+	 * Construct `expression >= minInt`, where minInt is the smallest value of type primType.
+	 */
+	private Expression constructBiggerMinIntExpression(final ILocation loc, final CPrimitive primType,
+			final Expression expression) {
+		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+				expression, ExpressionFactory.createIntegerLiteral(loc,
+						mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
+	}
+
+
+
+
 }

@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -1052,36 +1051,33 @@ public class CExpressionTranslator {
 			// nothing to do
 			return erb;
 		}
-		final Check check = new Check(Spec.INTEGER_OVERFLOW);
-		final Expression operationResult;
+		final Pair<Expression, Expression> inBoundsCheck;
 		if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
 			// 2017-11-18 Matthias: For this shift there are more possibilities of undefined
 			// behavior
 			// I don't know where we should check them and if we should call them
 			// "signed integer overflows" (probably not)
-			operationResult = mExpressionTranslation.constructBinaryBitwiseIntegerExpression(loc, operation,
-					operands[0], resultType, operands[1], resultType, hook);
+			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression(loc,
+					operation, resultType, operands[0], operands[1], hook);
 		} else if (operands.length == 1) {
-			operationResult = mExpressionTranslation.constructUnaryExpression(loc, operation, operands[0], resultType);
+			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForUnaryExpression(loc, operation, resultType,
+					operands[0]);
+
 		} else if (operands.length == 2) {
-			operationResult = mExpressionTranslation.constructArithmeticExpression(loc, operation, operands[0],
-					resultType, operands[1], resultType);
+			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForArithmeticExpression(loc, operation,
+					resultType, operands[0], operands[1]);
 		} else {
 			throw new AssertionError("no such operation");
 		}
 
-		final Expression smallerMaxInt = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLEQ,
-				operationResult, ExpressionFactory.createIntegerLiteral(loc,
-						mTypeSizes.getMaxValueOfPrimitiveType(resultType).toString()));
+		final Check check = new Check(Spec.INTEGER_OVERFLOW);
+		final Expression biggerMinInt = inBoundsCheck.getFirst();
+		final Expression smallerMaxInt = inBoundsCheck.getSecond();
 		if (!ExpressionFactory.isTrueLiteral(smallerMaxInt)) {
 			final AssertStatement smallerMaxIntStmt = new AssertStatement(loc, smallerMaxInt);
 			check.annotate(smallerMaxIntStmt);
 			erb.addStatement(smallerMaxIntStmt);
 		}
-
-		final Expression biggerMinInt = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-				operationResult, ExpressionFactory.createIntegerLiteral(loc,
-						mTypeSizes.getMinValueOfPrimitiveType(resultType).toString()));
 		if (!ExpressionFactory.isTrueLiteral(biggerMinInt)) {
 			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
 			check.annotate(biggerMinIntStmt);

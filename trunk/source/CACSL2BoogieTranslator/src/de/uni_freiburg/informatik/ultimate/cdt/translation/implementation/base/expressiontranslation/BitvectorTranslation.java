@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class BitvectorTranslation extends ExpressionTranslation {
 
@@ -1416,4 +1417,27 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// Nutz transformation not needed in the bitvector translation
 		return operand;
 	}
+
+
+	@Override
+	public Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(final ILocation loc,
+			final int operation, final CPrimitive resultType, final Expression lhsOperand,
+			final Expression rhsOperand) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(final ILocation loc,
+			final int operation, final CPrimitive resultType, final Expression operand) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(final ILocation loc,
+			final int operation, final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+			final IASTNode hook) {
+		throw new UnsupportedOperationException();
+	}
+
+
 }
