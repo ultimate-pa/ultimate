@@ -2428,7 +2428,11 @@ public class CHandler {
 			return dr;
 		}
 		case IASTTypeIdExpression.op_alignof:
-			throw new UnsupportedSyntaxException(loc, "__alignof__ is not supported");
+			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
+			mCurrentDeclaredTypes.push(rt);
+			final DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+			mCurrentDeclaredTypes.pop();
+			return mMemoryHandler.handleAlignOf(loc, dr.getDeclaration().getType(), mTypeSizeComputer.getSizeT());
 		default:
 			break;
 		}
