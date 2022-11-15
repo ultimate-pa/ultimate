@@ -48,6 +48,11 @@ public class DeclaratorResult extends ResultWithSideEffects {
 		this(cd, Collections.emptyList(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList());
 	}
 
+	public DeclaratorResult(final CDeclaration cd, final ResultWithSideEffects sideEffects) {
+		this(cd, sideEffects.getStatements(), sideEffects.getDeclarations(), sideEffects.getAuxVars(),
+				sideEffects.getOverapprs());
+	}
+
 	public DeclaratorResult(final CDeclaration cd, final List<Statement> stmt, final List<Declaration> decl,
 			final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList) {
 		super(null, stmt, decl, auxVars, overapproxList);
