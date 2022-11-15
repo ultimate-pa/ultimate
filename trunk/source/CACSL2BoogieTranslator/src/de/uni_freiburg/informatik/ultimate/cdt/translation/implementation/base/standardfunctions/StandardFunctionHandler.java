@@ -234,7 +234,7 @@ public class StandardFunctionHandler {
 						"Function %s is already implemented but we override the implementation for the call at %s",
 						transformedName, node.getFileLocation()));
 			}
-			final ILocation loc = getLoc(main, node);
+			final ILocation loc = mLocationFactory.createCLocation(node);
 			return functionModel.handleFunction(main, node, loc, name);
 		}
 		return null;
@@ -1769,7 +1769,7 @@ public class StandardFunctionHandler {
 
 	private Result handleRand(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		checkArguments(loc, 0, name, node);
+		checkArguments(loc, 0, name, node.getArguments());
 
 		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -2215,15 +2215,6 @@ public class StandardFunctionHandler {
 		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
 	}
 
-	/**
-	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will **NOT** be
-	 * marked as an overapproximation, which is always unsound.
-	 */
-	private ExpressionResult constructUnsoundOverapproximationForFunctionCall(final ILocation loc,
-			final CType resultType) {
-		return buildFunctionCall(loc, resultType).build();
-	}
-
 	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
@@ -2241,23 +2232,11 @@ public class StandardFunctionHandler {
 		}
 	}
 
-	private static void checkArguments(final ILocation loc, final int expectedArgs, final String name,
-			final IASTFunctionCallExpression call) {
-		checkArguments(loc, 0, name, call.getArguments());
-	}
-
 	private static <K, V> void fill(final Map<K, V> map, final K key, final V value) {
 		final V old = map.put(key, value);
 		if (old != null) {
 			throw new AssertionError("Accidentally overwrote definition for " + key);
 		}
-	}
-
-	private ILocation getLoc(final IDispatcher main, final IASTFunctionCallExpression node) {
-		if (mSettings.isSvcompMode()) {
-			return mLocationFactory.createCLocation(node, new Check(Check.Spec.PRE_CONDITION));
-		}
-		return mLocationFactory.createCLocation(node);
 	}
 
 	/**

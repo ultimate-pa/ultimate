@@ -222,7 +222,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -1466,8 +1465,7 @@ public class CHandler {
 				return standardFunction;
 			}
 		}
-		final Check check = new Check(Check.Spec.PRE_CONDITION);
-		final ILocation loc = mLocationFactory.createCLocation(node, check);
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments());
 	}
 
