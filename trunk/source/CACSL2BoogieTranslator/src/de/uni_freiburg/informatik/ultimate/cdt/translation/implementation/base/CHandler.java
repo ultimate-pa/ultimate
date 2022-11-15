@@ -2432,7 +2432,9 @@ public class CHandler {
 			mCurrentDeclaredTypes.push(rt);
 			final DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
 			mCurrentDeclaredTypes.pop();
-			return mMemoryHandler.handleAlignOf(loc, dr.getDeclaration().getType(), mTypeSizeComputer.getSizeT());
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder(
+					mMemoryHandler.handleAlignOf(loc, dr.getDeclaration().getType(), mTypeSizeComputer.getSizeT()));
+			return builder.addAllSideEffects(dr).build();
 		default:
 			break;
 		}
