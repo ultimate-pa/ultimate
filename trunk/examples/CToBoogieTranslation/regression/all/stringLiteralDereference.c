@@ -6,6 +6,6 @@
 */
 
 int main() {
-  char c = "abc"[0];
-  //@ assert c == 97;
+  char c = "abc"[1];
+  //@ assert c == 98;
 }

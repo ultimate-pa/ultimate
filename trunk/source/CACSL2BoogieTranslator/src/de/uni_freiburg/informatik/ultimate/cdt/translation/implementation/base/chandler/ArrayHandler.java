@@ -213,9 +213,12 @@ public class ArrayHandler {
 			return result.build();
 		}
 		if (leftlrValue instanceof RValueForArrays) {
-			result.addAllExceptLrValue(leftExpRes, subscript);
-			final HeapLValue lValue =
-					LRValueFactory.constructHeapLValue(mTypeHandler, leftlrValue.getValue(), resultCType, false, null);
+			final ExpressionResult newAddress =
+					mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
+							leftlrValue.getValue(), (RValue) subscript.getLrValue(), resultCType, node);
+			result.addAllExceptLrValue(leftExpRes, subscript, newAddress);
+			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
+					newAddress.getLrValue().getValue(), resultCType, false, null);
 			result.setLrValue(lValue);
 			return result.build();
 		}
