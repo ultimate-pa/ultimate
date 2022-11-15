@@ -969,7 +969,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
 		assert operation == IASTBinaryExpression.op_multiply || operation == IASTBinaryExpression.op_multiplyAssign
 				|| operation == IASTBinaryExpression.op_plus || operation == IASTBinaryExpression.op_plusAssign
-				|| operation == IASTBinaryExpression.op_minus || operation == IASTBinaryExpression.op_minus;
+				|| operation == IASTBinaryExpression.op_minus || operation == IASTBinaryExpression.op_minusAssign
+				|| operation == IASTBinaryExpression.op_divide || operation == IASTBinaryExpression.op_divideAssign;
 
 		final Expression operationResult = constructArithmeticExpression(loc, operation, lhsOperand, resultType,
 				rhsOperand, resultType);
