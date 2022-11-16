@@ -1175,8 +1175,8 @@ public class CHandler {
 					// e.g., a[23] or a[n+1]
 					final ExpressionResult dispatched = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					final ExpressionResult switched = mExprResultTransformer.switchToRValue(dispatched, loc, node);
-					final ExpressionResult converted = mExpressionTranslation.convertIntToInt(loc, switched,
-							mExpressionTranslation.getCTypeOfPointerComponents());
+					final ExpressionResult converted =
+							mExpressionTranslation.convertIntToInt(loc, switched, mTypeSizes.getSizeT());
 					expressionResults.add(converted);
 					sizeFactor = (RValue) converted.getLrValue();
 				} else if (am.getConstantExpression() == null
@@ -1212,7 +1212,7 @@ public class CHandler {
 					// CArray.INCOMPLETE_ARRY_MAGIC_NUMBER.
 					// If we work with an unsigned type for pointer components we have to rethink
 					// the use of the magic number.
-					final CPrimitive arrayIndexCtype = mExpressionTranslation.getCTypeOfPointerComponents();
+					final CPrimitive arrayIndexCtype = mTypeSizes.getSizeT();
 					final Expression sizeExpression = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
 							BigInteger.valueOf(intSizeFactor));
 					sizeFactor = new RValue(sizeExpression, arrayIndexCtype, false, false);
