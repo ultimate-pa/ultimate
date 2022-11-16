@@ -563,11 +563,11 @@ public class ExpressionResultTransformer {
 	 *
 	 */
 	public ExpressionResult rexBoolToInt(final ExpressionResult old, final ILocation loc) {
-		if (old.getLrValue() == null) {
+		if (old.getLrValue() == null || !old.getLrValue().isBoogieBool()) {
 			/*
 			 * This ExpressionResult does not have a value (for example it may be the translation of a call to a void
-			 * function). Void values like this are allowed for example in something like <code>0 ? foo() : 0</code>
-			 * where foo is void. Do nothing here.
+			 * function) or its value is not a bool. Void values like this are allowed for example in something like
+			 * <code>0 ? foo() : 0</code> where foo is void. Do nothing here.
 			 */
 			return old;
 		}
@@ -575,11 +575,8 @@ public class ExpressionResultTransformer {
 		if (!(old.getLrValue() instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}
-		if (old.getLrValue().isBoogieBool()) {
-			return new ExpressionResultBuilder(old)
-					.setOrResetLrValue(toInteger(loc, (RValue) old.getLrValue(), mTypeSizes)).build();
-		}
-		return old;
+		return new ExpressionResultBuilder(old).setOrResetLrValue(toInteger(loc, (RValue) old.getLrValue(), mTypeSizes))
+				.build();
 	}
 
 	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToInt(final ExpressionResult expr,
