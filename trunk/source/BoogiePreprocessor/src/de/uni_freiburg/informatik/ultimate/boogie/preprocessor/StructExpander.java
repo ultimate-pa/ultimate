@@ -437,14 +437,15 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 			return result;
 		} else if (e instanceof IfThenElseExpression) {
 			final IfThenElseExpression ite = (IfThenElseExpression) e;
+			final Expression condition = processExpression(ite.getCondition());
 			final Expression[] thens = expandExpression(ite.getThenPart());
 			final Expression[] elses = expandExpression(ite.getElsePart());
 			assert (thens.length == elses.length);
 			final Expression[] result = new Expression[thens.length];
 			for (int i = 0; i < result.length; i++) {
 				assert (thens[i].getType().equals(elses[i].getType()));
-				result[i] = new IfThenElseExpression(ite.getLocation(), thens[i].getType(), ite.getCondition(),
-						thens[i], elses[i]);
+				result[i] =
+						new IfThenElseExpression(ite.getLocation(), thens[i].getType(), condition, thens[i], elses[i]);
 			}
 			return result;
 		} else if (e instanceof UnaryExpression) {
