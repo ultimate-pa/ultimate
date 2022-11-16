@@ -548,6 +548,16 @@ public class ExpressionResultTransformer {
 				.build();
 	}
 
+	private static RValue toInteger(final ILocation loc, final RValue rVal, final TypeSizes typeSizes) {
+		assert rVal.isBoogieBool();
+		final Expression one =
+				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
+		final Expression zero =
+				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
+				rVal.getCType(), false);
+	}
+
 	/**
 	 * boolean <code>p</code> becomes <code>!p ? 1 : 0</code>
 	 *
@@ -567,7 +577,7 @@ public class ExpressionResultTransformer {
 		}
 		if (old.getLrValue().isBoogieBool()) {
 			return new ExpressionResultBuilder(old)
-					.setOrResetLrValue(RValue.boolToInt(loc, (RValue) old.getLrValue(), mTypeSizes)).build();
+					.setOrResetLrValue(toInteger(loc, (RValue) old.getLrValue(), mTypeSizes)).build();
 		}
 		return old;
 	}
