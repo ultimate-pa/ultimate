@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
@@ -113,7 +114,7 @@ public class ArrayHandler {
 	public ExpressionResult handleArraySubscriptExpression(final IDispatcher main,
 			final IASTArraySubscriptExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		ExpressionResult subscript =
+		final ExpressionResult subscript =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
 		assert subscript.getLrValue().getCType().isIntegerType();
 
@@ -190,9 +191,9 @@ public class ArrayHandler {
 			// The following is not in the standard, since there everything
 			// is defined via pointers. However, we have to make the subscript
 			// compatible to the type of the dimension of the array
-			subscript = mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
-
-			final RValue index = (RValue) subscript.getLrValue();
+			final ExpressionResult convertedSubscript =
+					mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
+			final RValue index = (RValue) convertedSubscript.getLrValue();
 			final ArrayLHS newInnerArrayLHS;
 			if (oldInnerArrayLHS instanceof ArrayLHS) {
 				final Expression[] oldIndices = ((ArrayLHS) oldInnerArrayLHS).getIndices();
@@ -208,7 +209,7 @@ public class ArrayHandler {
 						new Expression[] { index.getValue() });
 			}
 			final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false, null);
-			result.addAllExceptLrValue(leftExpRes, subscript);
+			result.addAllExceptLrValue(leftExpRes, convertedSubscript);
 			result.setLrValue(lValue);
 			addArrayBoundsCheckForCurrentIndex(loc, index, bound, result);
 			return result.build();
@@ -223,7 +224,8 @@ public class ArrayHandler {
 			result.setLrValue(lValue);
 			return result.build();
 		}
-		throw new AssertionError("Unhandled type " + leftlrValue.getClass().getSimpleName());
+		throw new UnsupportedSyntaxException(loc,
+				leftlrValue.getClass().getSimpleName() + " cannot be handled as array subscript.");
 	}
 
 	/**
@@ -257,16 +259,14 @@ public class ArrayHandler {
 		// 2015-10-24 Matthias:
 		// Probably solved. Now the input is already converted to the type
 		// of the dimension.
-		{
-			final CPrimitive indexType = (CPrimitive) currentIndex.getCType().getUnderlyingType();
-			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
-			final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_lessEqual, zero, indexType, currentIndex.getValue(), indexType);
-			final Expression notTooBig = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, currentDimension.getValue(),
-					(CPrimitive) currentDimension.getCType().getUnderlyingType());
-			inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
-		}
+		final CPrimitive indexType = (CPrimitive) currentIndex.getCType().getUnderlyingType();
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
+		final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, zero, indexType, currentIndex.getValue(), indexType);
+		final Expression notTooBig = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, currentDimension.getValue(),
+				(CPrimitive) currentDimension.getCType().getUnderlyingType());
+		inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		switch (mSettings.checkArrayAccessOffHeap()) {
 		case ASSERTandASSUME:
 			final Statement assertStm = new AssertStatement(loc, inRange);
