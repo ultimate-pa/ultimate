@@ -514,15 +514,14 @@ public class ExpressionResultTransformer {
 	 * Other types are not supported. If the expression was obtained by a conversion from bool to int, we try to get rid
 	 * of the former conversion instead of applying a new one.
 	 */
-	private static RValue toBoolean(final ILocation loc, final RValue rVal,
-			final ExpressionTranslation expressionTranslation) {
+	private RValue toBoolean(final ILocation loc, final RValue rVal) {
 		assert !rVal.isBoogieBool();
 		final CType underlyingType = CEnum.replaceEnumWithInt(rVal.getCType().getUnderlyingType());
-		final Expression zero = expressionTranslation.constructZero(loc, underlyingType);
+		final Expression zero = mExprTrans.constructZero(loc, underlyingType);
 
 		final Expression resultEx;
 		if (underlyingType instanceof CPrimitive) {
-			resultEx = expressionTranslation.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
+			resultEx = mExprTrans.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
 					rVal.getValue(), rVal.getCType(), zero, underlyingType);
 		} else if (underlyingType instanceof CPointer) {
 			resultEx = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
@@ -544,16 +543,15 @@ public class ExpressionResultTransformer {
 		if (old.getLrValue().isBoogieBool()) {
 			return old;
 		}
-		return new ExpressionResultBuilder(old).setOrResetLrValue(toBoolean(loc, (RValue) old.getLrValue(), mExprTrans))
-				.build();
+		return new ExpressionResultBuilder(old).setOrResetLrValue(toBoolean(loc, (RValue) old.getLrValue())).build();
 	}
 
-	private static RValue toInteger(final ILocation loc, final RValue rVal, final TypeSizes typeSizes) {
+	private RValue toInteger(final ILocation loc, final RValue rVal) {
 		assert rVal.isBoogieBool();
 		final Expression one =
-				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
 		final Expression zero =
-				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
 				rVal.getCType(), false);
 	}
@@ -575,8 +573,7 @@ public class ExpressionResultTransformer {
 		if (!(old.getLrValue() instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}
-		return new ExpressionResultBuilder(old).setOrResetLrValue(toInteger(loc, (RValue) old.getLrValue(), mTypeSizes))
-				.build();
+		return new ExpressionResultBuilder(old).setOrResetLrValue(toInteger(loc, (RValue) old.getLrValue())).build();
 	}
 
 	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToInt(final ExpressionResult expr,
