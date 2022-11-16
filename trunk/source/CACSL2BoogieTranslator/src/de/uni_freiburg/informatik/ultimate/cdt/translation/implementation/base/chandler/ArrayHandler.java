@@ -135,11 +135,11 @@ public class ArrayHandler {
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
 			leftExpRes = mExprResultTransformer.switchToRValue(leftExpRes, loc, node);
-			assert cTypeLeft.equals(leftlrValue.getCType());
+			assert cTypeLeft.equals(leftExpRes.getLrValue().getCType());
 			final RValue integer = (RValue) subscript.getLrValue();
 			final CType valueType = ((CPointer) cTypeLeft).getPointsToType();
 			final ExpressionResult newAddress = mMemoryHandler.doPointerArithmeticWithConversion(
-					IASTBinaryExpression.op_plus, loc, leftlrValue.getValue(), integer, valueType, node);
+					IASTBinaryExpression.op_plus, loc, leftExpRes.getLrValue().getValue(), integer, valueType, node);
 			result.addAllExceptLrValue(leftExpRes, subscript, newAddress);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), valueType, false, null);
