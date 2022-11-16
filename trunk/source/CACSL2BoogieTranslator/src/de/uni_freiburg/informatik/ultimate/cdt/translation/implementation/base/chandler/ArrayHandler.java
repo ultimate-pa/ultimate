@@ -117,7 +117,7 @@ public class ArrayHandler {
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
 		assert subscript.getLrValue().getCType().isIntegerType();
 
-		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
+		final ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
 		final LRValue leftlrValue = leftExpRes.getLrValue();
 
 		/*
@@ -134,13 +134,14 @@ public class ArrayHandler {
 		final ExpressionResultBuilder result = new ExpressionResultBuilder();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			leftExpRes = mExprResultTransformer.switchToRValue(leftExpRes, loc, node);
-			assert cTypeLeft.equals(leftExpRes.getLrValue().getCType());
+			final ExpressionResult transformedResult = mExprResultTransformer.switchToRValue(leftExpRes, loc, node);
+			final LRValue transformedValue = transformedResult.getLrValue();
+			assert cTypeLeft.equals(transformedValue.getCType());
 			final RValue integer = (RValue) subscript.getLrValue();
 			final CType valueType = ((CPointer) cTypeLeft).getPointsToType();
 			final ExpressionResult newAddress = mMemoryHandler.doPointerArithmeticWithConversion(
-					IASTBinaryExpression.op_plus, loc, leftExpRes.getLrValue().getValue(), integer, valueType, node);
-			result.addAllExceptLrValue(leftExpRes, subscript, newAddress);
+					IASTBinaryExpression.op_plus, loc, transformedValue.getValue(), integer, valueType, node);
+			result.addAllExceptLrValue(transformedResult, subscript, newAddress);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), valueType, false, null);
 			result.setLrValue(lValue);
