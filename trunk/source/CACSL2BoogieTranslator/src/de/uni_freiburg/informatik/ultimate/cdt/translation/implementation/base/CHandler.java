@@ -710,7 +710,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {
-		return mArrayHandler.handleArraySubscriptExpression(main, mMemoryHandler, mStructHandler, node);
+		return mArrayHandler.handleArraySubscriptExpression(main, node);
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {

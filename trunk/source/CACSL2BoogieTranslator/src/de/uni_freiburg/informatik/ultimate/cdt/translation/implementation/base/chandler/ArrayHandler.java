@@ -110,8 +110,8 @@ public class ArrayHandler {
 	 * <li>a[i_1]...[i_n-1] is a pointer (so it might not have that array subscript form), then we need to do pointer
 	 * arithmetic, similar to the on-heap case
 	 */
-	public ExpressionResult handleArraySubscriptExpression(final IDispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final IASTArraySubscriptExpression node) {
+	public ExpressionResult handleArraySubscriptExpression(final IDispatcher main,
+			final IASTArraySubscriptExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		ExpressionResult subscript =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
@@ -289,9 +289,4 @@ public class ArrayHandler {
 	private static boolean isInnermostSubscriptExpression(final IASTArraySubscriptExpression node) {
 		return !(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
 	}
-
-	private static boolean isOutermostSubscriptExpression(final IASTArraySubscriptExpression node) {
-		return !(node.getParent() instanceof IASTArraySubscriptExpression);
-	}
-
 }
