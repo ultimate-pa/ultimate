@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -214,7 +213,7 @@ public class ArrayHandler {
 			addArrayBoundsCheckForCurrentIndex(loc, index, bound, result);
 			return result.build();
 		}
-		if (leftlrValue instanceof RValueForArrays) {
+		if (leftlrValue instanceof RValue) {
 			final ExpressionResult newAddress =
 					mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
 							leftlrValue.getValue(), (RValue) subscript.getLrValue(), resultCType, node);

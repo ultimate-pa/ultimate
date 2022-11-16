@@ -463,7 +463,7 @@ public class ExpressionResultTransformer {
 		}
 		final int bound = boundBigInteger.intValue();
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
-		final LRValue resultValue = new RValueForArrays(newArrayAuxvar.getExp(), arrayType);
+		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addDeclaration(newArrayAuxvar.getVarDec());
 		builder.addAuxVar(newArrayAuxvar);

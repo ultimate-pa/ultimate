@@ -127,7 +127,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -901,16 +900,9 @@ public class MemoryHandler {
 	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final CType cType,
 			final IASTNode hook) {
 		final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
-		final RValue addressRValue;
-		{
-			final Expression addressExpression =
-					mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO);
-			if (cType instanceof CArray) {
-				addressRValue = new RValueForArrays(addressExpression, cType);
-			} else {
-				addressRValue = new RValue(addressExpression, cType);
-			}
-		}
+		final Expression addressExpression =
+				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO);
+		final RValue addressRValue = new RValue(addressExpression, cType);
 		final RValue ptrBaseRValue = new RValue(
 				mTypeSizes.constructLiteralForIntegerType(actualLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),

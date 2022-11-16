@@ -213,7 +213,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultWithSideEffects;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
@@ -1964,7 +1963,7 @@ public class CHandler {
 
 		} else {
 			auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
-			addressRValue = new RValueForArrays(auxvar.getExp(), arrayType);
+			addressRValue = new RValue(auxvar.getExp(), arrayType);
 			// the declaration of the variable that corresponds to a string literal has to
 			// be made global
 			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
@@ -2587,7 +2586,7 @@ public class CHandler {
 			// circumvents Boogie type checking during preprocessing
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
 			moveArrayAndStructIdsOnHeap(loc, rightLrVal.getUnderlyingType(), oldValue, Collections.emptySet(), hook);
-		} else if (rightLrVal instanceof RValueForArrays) {
+		} else if (rightLrVal instanceof RValue) {
 			newValue = rightLrVal.getValue();
 		} else {
 			newValue = ((HeapLValue) rightLrVal).getAddress();
@@ -3150,7 +3149,7 @@ public class CHandler {
 				builder.addDeclaration(auxVar.getVarDec());
 				builder.addAuxVar(auxVar);
 
-				final RValue tmpVarRVal = new RValueForArrays(auxVar.getExp(), er.getLrValue().getCType());
+				final RValue tmpVarRVal = new RValue(auxVar.getExp(), er.getLrValue().getCType());
 
 				final Overapprox overapp = new Overapprox(
 						"field of union updated " + "--> havoccing other fields (CHandler.makeAssignment(..))", loc);
