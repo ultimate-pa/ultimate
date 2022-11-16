@@ -868,8 +868,7 @@ public class MemoryHandler {
 
 		final MemoryModelDeclarations alloc = memArea.getMemoryModelDeclaration();
 		requireMemoryModelFeature(alloc);
-		final Expression wrappedSize =
-				mExpressionTranslation.applyNutzTransformationWraparound(loc, mTypeSizes, mTypeSizes.getSizeT(), size);
+		final Expression wrappedSize = mExpressionTranslation.applyWraparound(loc, mTypeSizes.getSizeT(), size);
 		final CallStatement result = StatementFactory.constructCallStatement(loc, false,
 				new VariableLHS[] { returnedValue }, alloc.getName(), new Expression[] { wrappedSize });
 

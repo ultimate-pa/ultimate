@@ -120,8 +120,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		Expression rightExpr = exp2;
 		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(type1)) {
 			assert mTypeSizes.isUnsigned(type2);
-			leftExpr = applyWraparound(loc, mTypeSizes, type1, leftExpr);
-			rightExpr = applyWraparound(loc, mTypeSizes, type2, rightExpr);
+			leftExpr = applyWraparound(loc, type1, leftExpr);
+			rightExpr = applyWraparound(loc, type2, rightExpr);
 		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
@@ -151,16 +151,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression applyNutzTransformationWraparound(final ILocation loc, final TypeSizes typeSizes,
-			final CPrimitive cPrimitive, final Expression operand) {
-		return applyWraparound(loc, typeSizes, cPrimitive, operand);
-	}
-
-	public static Expression applyWraparound(final ILocation loc, final TypeSizes typeSizes,
-			final CPrimitive cPrimitive, final Expression operand) {
+	public Expression applyWraparound(final ILocation loc, final CPrimitive cPrimitive, final Expression operand) {
 		if (cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
-			if (typeSizes.isUnsigned(cPrimitive)) {
-				final BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
+			if (mTypeSizes.isUnsigned(cPrimitive)) {
+				final BigInteger maxValuePlusOne =
+						mTypeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
 				return applyEucledeanModulo(loc, operand, maxValuePlusOne);
 			}
 			throw new AssertionError("wraparound only for unsigned types");
@@ -242,8 +237,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 					|| nodeOperator == IASTBinaryExpression.op_moduloAssign) {
 				// apply wraparound to ensure that Nutz transformation is sound
 				// (see examples/programs/regression/c/NutzTransformation02.c)
-				leftExpr = applyWraparound(loc, mTypeSizes, leftType, leftExpr);
-				rightExpr = applyWraparound(loc, mTypeSizes, rightType, rightExpr);
+				leftExpr = applyWraparound(loc, leftType, leftExpr);
+				rightExpr = applyWraparound(loc, rightType, rightExpr);
 			}
 		}
 		final boolean bothAreIntegerLiterals =
@@ -445,7 +440,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 					&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
 				// required for sound Nutz transformation
 				// (see examples/programs/regression/c/NutzTransformation03.c)
-				oldWrappedIfNeeded = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
+				oldWrappedIfNeeded = applyWraparound(loc, oldType, operand.getLrValue().getValue());
 			} else {
 				oldWrappedIfNeeded = operand.getLrValue().getValue();
 			}
@@ -475,7 +470,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (mTypeSizes.isUnsigned(oldType)) {
 				// required for sound Nutz transformation
 				// (see examples/programs/regression/c/NutzTransformation01.c)
-				oldWrappedIfUnsigned = applyWraparound(loc, mTypeSizes, oldType, operand.getLrValue().getValue());
+				oldWrappedIfUnsigned = applyWraparound(loc, oldType, operand.getLrValue().getValue());
 			} else {
 				oldWrappedIfUnsigned = operand.getLrValue().getValue();
 			}
@@ -493,8 +488,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				// If the number is strictly larger than MAX_VALUE we
 				// subtract the cardinality of the data range.
 				final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-				final Expression wrapped =
-						applyWraparound(loc, mTypeSizes, correspondingUnsignedType, oldWrappedIfUnsigned);
+				final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
 				final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
 						mTypeSizes.getMaxValueOfPrimitiveType(resultType));
 				final Expression condition =
@@ -769,8 +763,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive primitive2 = (CPrimitive) type2;
 			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
 				assert mTypeSizes.isUnsigned(primitive2);
-				leftExpr = applyWraparound(loc, mTypeSizes, primitive1, leftExpr);
-				rightExpr = applyWraparound(loc, mTypeSizes, primitive2, rightExpr);
+				leftExpr = applyWraparound(loc, primitive1, leftExpr);
+				rightExpr = applyWraparound(loc, primitive2, rightExpr);
 			}
 		}
 		return constructEquality(loc, nodeOperator, leftExpr, rightExpr);
@@ -972,28 +966,30 @@ public class IntegerTranslation extends ExpressionTranslation {
 				|| operation == IASTBinaryExpression.op_minus || operation == IASTBinaryExpression.op_minusAssign
 				|| operation == IASTBinaryExpression.op_divide || operation == IASTBinaryExpression.op_divideAssign;
 
-		final Expression operationResult = constructArithmeticExpression(loc, operation, lhsOperand, resultType,
-				rhsOperand, resultType);
+		final Expression operationResult =
+				constructArithmeticExpression(loc, operation, lhsOperand, resultType, rhsOperand, resultType);
 		return constructOverflowCheck(loc, resultType, operationResult);
 	}
 
 	@Override
-	public Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(final ILocation loc, final int operation,
-			final CPrimitive resultType, final Expression operand) {
+	public Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(final ILocation loc,
+			final int operation, final CPrimitive resultType, final Expression operand) {
 		assert resultType.isIntegerType()
-		&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
+				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
 		assert operation == IASTUnaryExpression.op_minus;
 
 		final Expression operationResult = constructUnaryExpression(loc, operation, operand, resultType);
 		return constructOverflowCheck(loc, resultType, operationResult);
 	}
+
 	@Override
 	public Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(final ILocation loc,
-			final int operation, final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand, final IASTNode hook) {
+			final int operation, final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+			final IASTNode hook) {
 		assert operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign;
 
-		final Expression operationResult = constructBinaryBitwiseIntegerExpression(loc, operation,
-				lhsOperand, resultType, rhsOperand, resultType, hook);
+		final Expression operationResult = constructBinaryBitwiseIntegerExpression(loc, operation, lhsOperand,
+				resultType, rhsOperand, resultType, hook);
 		return constructOverflowCheck(loc, resultType, operationResult);
 	}
 
@@ -1019,12 +1015,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 	 */
 	private Expression constructBiggerMinIntExpression(final ILocation loc, final CPrimitive primType,
 			final Expression expression) {
-		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-				expression, ExpressionFactory.createIntegerLiteral(loc,
+		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, expression,
+				ExpressionFactory.createIntegerLiteral(loc,
 						mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
 	}
-
-
-
 
 }
