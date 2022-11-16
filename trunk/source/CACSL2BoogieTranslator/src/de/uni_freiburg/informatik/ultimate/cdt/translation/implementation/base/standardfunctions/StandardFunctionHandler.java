@@ -852,6 +852,8 @@ public class StandardFunctionHandler {
 	// - In general scanf can write multiple bytes. E.g. for the format %2c we would need two writes, for the format %s
 	// even non-determinstically many writes! Determining whether this occurs in the format, is only possible if the
 	// format is a literal (it can be any expression in general).
+	// - We always return a value indicating success, though the call could fail (for stdin) or may even necessarily
+	// fail (in case of e.g. sscanf("z", "%d", &data)).
 	private Result handleScanf(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final int firstArgumentToConsider) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -876,6 +878,13 @@ public class StandardFunctionHandler {
 				mDataRaceChecker.checkOnWrite(builder, loc, lValue);
 			}
 		}
+
+		// The number of arguments to which sth should be written.
+		// Returning this value indicates success.
+		final int writtenArgs = arguments.length - firstArgumentToConsider;
+		final var retVal = mExpressionTranslation.translateIntegerLiteral(loc, Integer.toString(writtenArgs));
+		builder.setLrValue(retVal);
+
 		return builder.build();
 	}
 
