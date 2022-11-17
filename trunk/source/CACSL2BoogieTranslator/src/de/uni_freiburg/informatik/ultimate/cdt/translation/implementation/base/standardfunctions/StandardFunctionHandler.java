@@ -45,6 +45,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
@@ -2052,12 +2053,20 @@ public class StandardFunctionHandler {
 
 		// dispatch all arguments
 		for (final IASTInitializerClause arg : node.getArguments()) {
+			if (isStringLiteral(arg)) {
+				continue;
+			}
 			final ExpressionResult argRes =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arg);
 			resultBuilder.addAllExceptLrValue(argRes);
 		}
 
 		return resultBuilder.build();
+	}
+
+	private boolean isStringLiteral(final IASTInitializerClause expr) {
+		return expr instanceof IASTLiteralExpression
+				&& ((IASTLiteralExpression) expr).getKind() == IASTLiteralExpression.lk_string_literal;
 	}
 
 	private Result handleMemcpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
