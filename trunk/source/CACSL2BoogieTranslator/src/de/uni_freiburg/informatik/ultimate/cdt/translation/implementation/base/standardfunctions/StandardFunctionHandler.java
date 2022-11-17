@@ -2047,7 +2047,7 @@ public class StandardFunctionHandler {
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 
-		final LRValue returnValue = new RValue(auxvarinfo.getExp(), null);
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT));
 		resultBuilder.setLrValue(returnValue);
 
 		// dispatch all arguments
