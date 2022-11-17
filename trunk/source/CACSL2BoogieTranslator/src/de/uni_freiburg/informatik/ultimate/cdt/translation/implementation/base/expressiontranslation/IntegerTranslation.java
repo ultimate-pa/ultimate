@@ -951,8 +951,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public Result abstractAssginWithBitwiseOp(final ExpressionResultTransformer exprResultTransformer,
-			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
-		return mBitabsTranslation.abstractAssign(exprResultTransformer, main, locationFactory, node);
+			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return mBitabsTranslation.abstractAssign(exprResultTransformer, main, locationFactory, node, auxVarInfoBuilder);
 	}
 
 	@Override

@@ -419,7 +419,8 @@ public abstract class ExpressionTranslation {
 	 */
 	@Deprecated
 	public Result abstractAssginWithBitwiseOp(final ExpressionResultTransformer exprResultTransformer,
-			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
+			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		throw new UnsupportedOperationException();
 	}
 

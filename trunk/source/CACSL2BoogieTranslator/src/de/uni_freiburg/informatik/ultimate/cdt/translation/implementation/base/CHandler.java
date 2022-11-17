@@ -738,7 +738,7 @@ public class CHandler {
 			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
 					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
 				return mExpressionTranslation.abstractAssginWithBitwiseOp(mExprResultTransformer, main,
-						mLocationFactory, node);
+						mLocationFactory, node, mAuxVarInfoBuilder);
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
