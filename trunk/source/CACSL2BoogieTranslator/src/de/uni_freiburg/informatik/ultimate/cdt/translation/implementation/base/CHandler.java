@@ -423,8 +423,9 @@ public class CHandler {
 				mLocationFactory);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
-						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), true)
+						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mExpressionTranslation, mTypeHandler,
+								mTypeSizeComputer, mTypeSizes, mProcedureManager,
+								mExpressionTranslation.getFunctionDeclarations(), true)
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
@@ -517,8 +518,9 @@ public class CHandler {
 				mLocationFactory);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
-						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), false)
+						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mExpressionTranslation, mTypeHandler,
+								mTypeSizeComputer, mTypeSizes, mProcedureManager,
+								mExpressionTranslation.getFunctionDeclarations(), false)
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,

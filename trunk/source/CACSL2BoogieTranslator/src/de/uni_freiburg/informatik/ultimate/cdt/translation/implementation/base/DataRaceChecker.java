@@ -31,9 +31,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -60,15 +63,23 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModel_SingleBitprecise;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModel_Unbounded;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -80,6 +91,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
+/**
+ * Utility class to insert checks for data races.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ */
 public final class DataRaceChecker {
 	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = true;
 
@@ -89,6 +106,7 @@ public final class DataRaceChecker {
 
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
+	private final ExpressionTranslation mExpressionTranslation;
 	private final ITypeHandler mTypeHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 	private final TypeSizes mTypeSizes;
@@ -99,10 +117,12 @@ public final class DataRaceChecker {
 	private final Map<String, BoogieType> mRaceIndicators = new HashMap<>();
 
 	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
-			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes,
-			final ProcedureManager procMan, final FunctionDeclarations funDecl, final boolean isPreRun) {
+			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
+			final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes, final ProcedureManager procMan,
+			final FunctionDeclarations funDecl, final boolean isPreRun) {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mMemoryHandler = memoryHandler;
+		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
 		mTypeSizeComputer = typeSizeComputer;
 		mTypeSizes = typeSizes;
@@ -301,15 +321,7 @@ public final class DataRaceChecker {
 		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			final LeftHandSide raceLhs = mMemoryHandler.getMemoryRaceArrayLhs(loc);
-
-			final LeftHandSide[] lhs = new LeftHandSide[getTypeSize(loc, hlv.getUnderlyingType())];
-			for (int i = 0; i < lhs.length; ++i) {
-				// TODO For better performance, use memory model resolution to have fewer LHS here
-				final Expression ptrPlusI =
-						mMemoryHandler.addIntegerConstantToPointer(loc, hlv.getAddress(), BigInteger.valueOf(i));
-				lhs[i] = ExpressionFactory.constructNestedArrayLHS(loc, raceLhs, new Expression[] { ptrPlusI });
-			}
-			return lhs;
+			return getHeapRaceLhs(loc, raceLhs, hlv, hlv.getCType()).toArray(LeftHandSide[]::new);
 		}
 		if (lrVal instanceof LocalLValue) {
 			return new LeftHandSide[] { getRaceIndicatorLhs(loc, (LocalLValue) lrVal) };
@@ -317,14 +329,104 @@ public final class DataRaceChecker {
 		throw new UnsupportedOperationException();
 	}
 
-	private Stream<Expression> getRaceExpressions(final ILocation loc, final LRValue lrVal) {
-		return Arrays.stream(getRaceLhs(loc, lrVal)).map(CTranslationUtil::convertLhsToExpression);
+	private List<LeftHandSide> getHeapRaceLhs(final ILocation loc, final LeftHandSide heapRaceArray,
+			final HeapLValue hlv, final CType valueType) {
+		final var realValueType = valueType.getUnderlyingType();
+
+		final List<LeftHandSide> lhs;
+		if (realValueType instanceof CStructOrUnion) {
+			lhs = getHeapRaceLhsForStruct(loc, heapRaceArray, hlv, (CStructOrUnion) realValueType);
+		} else if (realValueType instanceof CPrimitive) {
+			lhs = getHeapRaceLhsForPrimitive(loc, heapRaceArray, hlv, (CPrimitive) realValueType);
+		} else {
+			lhs = null;
+		}
+
+		if (lhs != null) {
+			return lhs;
+		}
+
+		// fallback: byte-by-byte race LHS
+		return getHeapRaceLhsByIncrement(loc, heapRaceArray, hlv, realValueType, 1);
+	}
+
+	private List<LeftHandSide> getHeapRaceLhsForStruct(final ILocation loc, final LeftHandSide heapRaceArray,
+			final HeapLValue hlv, final CStructOrUnion valueType) {
+		if (valueType.isStructOrUnion() != StructOrUnion.STRUCT || hlv.getBitfieldInformation() != null) {
+			// unsupported cases: return null to fallback to byte-by-byte checking
+			return null;
+		}
+
+		final Expression startAddress = hlv.getAddress();
+		final Expression startAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+		final Expression startAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
+
+		final var lhs = new ArrayList<LeftHandSide>();
+		for (final var fieldId : valueType.getFieldIds()) {
+			final Offset fieldOffset = mTypeSizeComputer.constructOffsetForField(loc, valueType, fieldId, null);
+			if (fieldOffset.isBitfieldOffset()) {
+				// unclear what to do in this case
+				return null;
+			}
+
+			final CType fieldType = valueType.getFieldType(fieldId);
+			final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+					IASTBinaryExpression.op_plus, startAddressOffset,
+					mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset.getAddressOffsetAsExpression(loc),
+					mExpressionTranslation.getCTypeOfPointerComponents());
+			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler,
+					MemoryHandler.constructPointerFromBaseAndOffset(startAddressBase, newOffset, loc), fieldType, null);
+			lhs.addAll(getHeapRaceLhs(loc, heapRaceArray, fieldHlv, fieldType));
+		}
+
+		return lhs;
+	}
+
+	private List<LeftHandSide> getHeapRaceLhsForPrimitive(final ILocation loc, final LeftHandSide heapRaceArray,
+			final HeapLValue hlv, final CPrimitive valueType) {
+		final int resolution = getResolution();
+		if (resolution == -1) {
+			final var lhs = ExpressionFactory.constructNestedArrayLHS(loc, heapRaceArray,
+					new Expression[] { hlv.getAddress() });
+			return List.of(lhs);
+		}
+
+		return getHeapRaceLhsByIncrement(loc, heapRaceArray, hlv, valueType, resolution);
+	}
+
+	private List<LeftHandSide> getHeapRaceLhsByIncrement(final ILocation loc, final LeftHandSide heapRaceArray,
+			final HeapLValue hlv, final CType valueType, final int increment) {
+		final var typesize = getTypeSize(loc, valueType);
+		assert typesize < increment || typesize % increment == 0 : "type size " + typesize
+				+ " not divisible by offset increment " + increment;
+
+		final var result = new ArrayList<LeftHandSide>();
+		for (int offset = 0; offset < typesize; offset += increment) {
+			final Expression ptr =
+					mMemoryHandler.addIntegerConstantToPointer(loc, hlv.getAddress(), BigInteger.valueOf(offset));
+			result.add(ExpressionFactory.constructNestedArrayLHS(loc, heapRaceArray, new Expression[] { ptr }));
+		}
+		return result;
+	}
+
+	private int getResolution() {
+		final var model = mMemoryHandler.getMemoryModel();
+		if (model instanceof MemoryModel_SingleBitprecise) {
+			return ((MemoryModel_SingleBitprecise) model).getResolution();
+		} else if (model instanceof MemoryModel_Unbounded) {
+			return -1;
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	private int getTypeSize(final ILocation loc, final CType type) {
 		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type, null);
 		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), null)
 				.intValueExact();
+	}
+
+	private Stream<Expression> getRaceExpressions(final ILocation loc, final LRValue lrVal) {
+		return Arrays.stream(getRaceLhs(loc, lrVal)).map(CTranslationUtil::convertLhsToExpression);
 	}
 
 	private LeftHandSide getRaceIndicatorLhs(final ILocation loc, final LocalLValue lval) {
