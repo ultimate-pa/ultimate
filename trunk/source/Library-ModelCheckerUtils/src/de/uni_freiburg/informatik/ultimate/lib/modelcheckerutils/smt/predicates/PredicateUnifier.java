@@ -187,8 +187,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				mLogger.fatal("Want " + predicate);
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
-		} else if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
-			if (pc.getEquivalantGtQuantifiedPredicate() != predicate) {
+		} else if (pc.isEquivalentToExistingPredicatesWithGtQuantifiers()) {
+			if (pc.getEquivalantGtQuantifiedPredicates().size() != 1
+					|| !pc.getEquivalantGtQuantifiedPredicates().contains(predicate)) {
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
 		} else {
@@ -365,8 +366,10 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 		}
 		result = constructNewPredicate(simplifiedTerm, originalPredicate);
-		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
-			mDeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
+		if (pc.isEquivalentToExistingPredicatesWithGtQuantifiers()) {
+			for (IPredicate equivalentGtQuantifierPredicate : pc.getEquivalantGtQuantifiedPredicates()) {
+				mDeprecatedPredicates.put(equivalentGtQuantifierPredicate, result);
+			}
 			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
 		}
 		addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
@@ -739,7 +742,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		private final HashMap<IPredicate, Validity> mImpliedPredicates;
 		private final HashMap<IPredicate, Validity> mExpliedPredicates;
 		private final IPredicate mEquivalentLeqQuantifiedPredicate;
-		private IPredicate mEquivalentGtQuantifiedPredicate;
+		private final Set<IPredicate> mEquivalentGtQuantifiedPredicates;
 		private boolean mIsIntricatePredicate;
 
 		/**
@@ -763,6 +766,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			mTerm = term;
 			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mMgdScript);
 			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
+			mEquivalentGtQuantifiedPredicates = new HashSet<>();
 
 			mScript.echo(new QuotedObject("begin unification"));
 			mEquivalentLeqQuantifiedPredicate = compare();
@@ -797,11 +801,11 @@ public class PredicateUnifier implements IPredicateUnifier {
 			return mEquivalentLeqQuantifiedPredicate;
 		}
 
-		public IPredicate getEquivalantGtQuantifiedPredicate() {
-			if (mEquivalentGtQuantifiedPredicate == null) {
+		public Set<IPredicate> getEquivalantGtQuantifiedPredicates() {
+			if (mEquivalentGtQuantifiedPredicates.isEmpty()) {
 				throw new IllegalAccessError("accessible only if equivalent to existing predicate");
 			}
-			return mEquivalentGtQuantifiedPredicate;
+			return mEquivalentGtQuantifiedPredicates;
 		}
 
 		public boolean isIntricatePredicate() {
@@ -815,8 +819,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 			return mEquivalentLeqQuantifiedPredicate != null;
 		}
 
-		public boolean isEquivalentToExistingPredicateWithGtQuantifiers() {
-			return mEquivalentGtQuantifiedPredicate != null;
+		public boolean isEquivalentToExistingPredicatesWithGtQuantifiers() {
+			return !mEquivalentGtQuantifiedPredicates.isEmpty();
 		}
 
 		private IPredicate compare() {
@@ -969,10 +973,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 							&& !thisIsLessQuantifiedThanOther(mClosedTerm, otherClosedTerm)) {
 						return other;
 					}
-					if (mEquivalentGtQuantifiedPredicate != null) {
-						throw new AssertionError("at most one deprecated predicate");
-					}
-					mEquivalentGtQuantifiedPredicate = other;
+					mEquivalentGtQuantifiedPredicates.add(other);
 				}
 			}
 			// no predicate was equivalent
