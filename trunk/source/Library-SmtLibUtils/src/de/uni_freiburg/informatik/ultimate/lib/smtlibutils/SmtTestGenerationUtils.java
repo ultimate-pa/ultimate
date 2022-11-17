@@ -91,6 +91,8 @@ public final class SmtTestGenerationUtils {
 				} else {
 					constructionString = "arraySort" + counter;
 				}
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
+				constructionString = "QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
 			} else {
 				constructionString = "otherSort" + counter;
 			}
