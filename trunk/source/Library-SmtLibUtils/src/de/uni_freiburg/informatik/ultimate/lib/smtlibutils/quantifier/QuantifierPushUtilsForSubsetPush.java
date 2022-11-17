@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -125,9 +127,11 @@ public class QuantifierPushUtilsForSubsetPush {
 		int iterations = 0;
 		int iterationsWithProgress = 0;
 		while (!currentSuitableEliminatees.isEmpty()) {
-			if (iterations > 20) {
-				// TODO change to logging output
-				throw new AssertionError("Maybe an infinite loop");
+			if (iterations > 20 + et.getEliminatees().size()) {
+				final ILogger logger = services.getLoggingService().getLogger(QuantifierPushUtilsForSubsetPush.class);
+				logger.info(String.format(
+						"Initially %s eliminatees, after %s iterations we have %s eliminatees. Is this in finite loop?",
+						et.getEliminatees().size(), iterations, currentEliminatees.size()));
 			}
 			final TermVariable eliminatee = XnfScout.selectBestEliminatee(mgdScript.getScript(),
 					et.getQuantifier(), currentSuitableEliminatees, currentDualFiniteJuncts);
