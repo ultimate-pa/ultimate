@@ -6,6 +6,8 @@ Bundle-Version: 0.2.2
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  org.eclipse.cdt.core,
+ org.eclipse.cdt.managedbuilder.core,
+ org.eclipse.cdt.build.gcc.core,
  de.uni_freiburg.informatik.ultimate.acsl.parser,
  org.eclipse.core.resources,
  de.uni_freiburg.informatik.ultimate.lib.util,
