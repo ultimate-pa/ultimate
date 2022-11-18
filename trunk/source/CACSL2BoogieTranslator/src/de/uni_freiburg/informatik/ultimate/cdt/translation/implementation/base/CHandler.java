@@ -2690,6 +2690,11 @@ public class CHandler {
 			// the value of an assignment statement expression is the right hand side of the
 			// assignment
 			builder.setLrValue(rightHandSideValueWithConversionsApplied);
+			for (final Overapprox oa : rhsConverted.getOverapprs()) {
+				for (final Statement stm : builder.getStatements()) {
+					oa.annotate(stm);
+				}
+			}
 
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
