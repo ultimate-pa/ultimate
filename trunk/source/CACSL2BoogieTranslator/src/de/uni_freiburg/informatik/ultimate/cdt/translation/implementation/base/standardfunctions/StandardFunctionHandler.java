@@ -67,11 +67,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
@@ -298,6 +301,8 @@ public class StandardFunctionHandler {
 		// TODO 20211105 Matthias: Unsound because our implementation of printf is
 		// unsound and because we consider wchars as chars.
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
 
 		// https://en.cppreference.com/w/c/io/fscanf
 		fill(map, "scanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
@@ -841,6 +846,95 @@ public class StandardFunctionHandler {
 		final Expression iteExpression =
 				ExpressionFactory.constructIfThenElseExpression(loc, positive, auxvar.getExp(), negated);
 		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
+	}
+
+	// Overapproximates snprintf as follows:
+	// ctr:=0; while (*) { assume ctr < len; havoc aux; *(ptr+ctr) := aux; ctr := ctr + 1; }
+	private Result handleSnPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		assert arguments.length >= 2 : "insufficient arguments to snprintf";
+		final var builder = new ExpressionResultBuilder();
+
+		// first argument is ptr
+		final var ptr = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(ptr);
+
+		// second argument is len
+		final var len = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(len);
+
+		// dispatch remaining arguments (except for string literals)
+		for (int i = 2; i < arguments.length; ++i) {
+			if (isStringLiteral(arguments[i])) {
+				continue;
+			}
+			final ExpressionResult argRes =
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(argRes);
+		}
+
+		// declare loop counter ctr
+		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), SFO.AUXVAR.LOOPCTR);
+		builder.addDeclaration(ctr.getVarDec());
+		builder.addAuxVar(ctr);
+
+		// declare nondet aux var
+		final AuxVarInfo auxvar =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvar.getVarDec());
+		builder.addAuxVar(auxvar);
+
+		// ctr := 0
+		final var zero = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final var initCtr = StatementFactory.constructAssignmentStatement(loc, ctr.getLhs(), zero);
+		builder.addStatement(initCtr);
+
+		final var body = new ArrayList<Statement>();
+
+		// assume ctr < len;
+		final var assumeInRange = new AssumeStatement(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, ctr.getExp(), len.getLrValue().getValue()));
+		body.add(assumeInRange);
+
+		// havoc aux;
+		final var havocNondet = new HavocStatement(loc, new VariableLHS[] { auxvar.getLhs() });
+		body.add(havocNondet);
+
+		// *(ptr + ctr) := aux
+		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
+		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
+				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
+		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
+		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
+				new CPrimitive(CPrimitives.CHAR), false, node);
+		body.addAll(writeToMem);
+
+		// ctr := ctr + 1
+		final var incrementCtr = StatementFactory.constructAssignmentStatement(loc, ctr.getLhs(),
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, ctr.getExp(),
+						mTypeSizes.constructLiteralForIntegerType(loc,
+								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE)));
+		body.add(incrementCtr);
+
+		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
+				body.toArray(Statement[]::new));
+		builder.addStatement(loop);
+
+		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
+		builder.addOverapprox(overAppFlag);
+
+		final var ret =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
+		builder.addAuxVar(ret);
+		builder.addDeclaration(ret.getVarDec());
+		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
+
+		return builder.build();
 	}
 
 	/**
