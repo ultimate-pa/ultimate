@@ -855,6 +855,9 @@ public class StandardFunctionHandler {
 		assert arguments.length >= 2 : "insufficient arguments to snprintf";
 		final var builder = new ExpressionResultBuilder();
 
+		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
+		builder.addOverapprox(overAppFlag);
+
 		// first argument is ptr
 		final var ptr = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(ptr);
@@ -912,6 +915,9 @@ public class StandardFunctionHandler {
 		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
 		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
 				new CPrimitive(CPrimitives.CHAR), false, node);
+		for (final var write : writeToMem) {
+			overAppFlag.annotate(write);
+		}
 		body.addAll(writeToMem);
 
 		// ctr := ctr + 1
@@ -925,12 +931,10 @@ public class StandardFunctionHandler {
 				body.toArray(Statement[]::new));
 		builder.addStatement(loop);
 
-		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
-		builder.addOverapprox(overAppFlag);
-
 		final var ret =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
 		builder.addAuxVar(ret);
+		builder.addOverapprox(overAppFlag);
 		builder.addDeclaration(ret.getVarDec());
 		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
 
