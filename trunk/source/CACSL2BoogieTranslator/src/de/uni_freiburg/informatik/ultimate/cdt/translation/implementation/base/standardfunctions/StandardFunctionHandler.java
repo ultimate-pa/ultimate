@@ -919,6 +919,9 @@ public class StandardFunctionHandler {
 			overAppFlag.annotate(write);
 		}
 		body.addAll(writeToMem);
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, ptrPlusCtrHlv);
+		}
 
 		// ctr := ctr + 1
 		final var incrementCtr = StatementFactory.constructAssignmentStatement(loc, ctr.getLhs(),
