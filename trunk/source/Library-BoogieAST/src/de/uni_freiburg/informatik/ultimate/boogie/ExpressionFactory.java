@@ -639,6 +639,24 @@ public class ExpressionFactory {
 		return new BitvecLiteral(loc, BoogieType.createBitvectorType(length), value, length);
 	}
 
+	public static Expression createBitvecLiteral(final ILocation loc, BigInteger value, final int bitlength) {
+		final Expression resultLiteral;
+		if (value.signum() == -1) {
+			final BigInteger maxValue = BigInteger.valueOf(2).pow(bitlength);
+			value = value.add(maxValue);
+		}
+		final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
+		resultLiteral = ExpressionFactory.createBitvecLiteral(loc, valueInRange.toString(), bitlength);
+		return resultLiteral;
+	}
+
+	/**
+	 * @return the result of value % 2^bitlength
+	 */
+	private static BigInteger constructBitvectorInRange(final BigInteger value, final int bitlength) {
+		return value.mod(new BigInteger("2").pow(bitlength));
+	}
+
 	public static RealLiteral createRealLiteral(final ILocation loc, final String value) {
 		return new RealLiteral(loc, BoogieType.TYPE_REAL, value);
 	}
