@@ -724,7 +724,7 @@ public class StandardFunctionHandler {
 		fill(map, "atexit", die);
 		fill(map, "at_quick_exit", die);
 		fill(map, "_Exit", die);
-		fill(map, "getenv", die);
+		fill(map, "getenv", (main, node, loc, name) -> handleGetenv(main, node, loc));
 		fill(map, "quick_exit", die);
 		fill(map, "system", die);
 
@@ -813,6 +813,64 @@ public class StandardFunctionHandler {
 		if (!declNotSupp.isEmpty()) {
 			throw new IllegalStateException("A supported float function is not declared: " + declNotSupp);
 		}
+	}
+
+	private Result handleGetenv(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		final var builder = new ExpressionResultBuilder();
+
+		// dispatch the argument (unless it's a string literal, then we don't need it)
+		assert node.getArguments().length == 1 : "unexpected number of arguments to getenv";
+		final var arg = node.getArguments()[0];
+		if (!isStringLiteral(arg)) {
+			final var argRes = (ExpressionResult) main.dispatch(arg);
+			builder.addAllExceptLrValue(argRes);
+		}
+
+		final var nondetString = getNondetStringOrNull(loc, node);
+		builder.addAllExceptLrValue(nondetString).setLrValue(nondetString.getLrValue());
+
+		return builder.build();
+	}
+
+	private ExpressionResult getNondetStringOrNull(final ILocation loc, final IASTNode hook) {
+		final var charType = new CPrimitive(CPrimitives.CHAR);
+		final var resultType = new CPointer(charType);
+		final var builder = new ExpressionResultBuilder();
+
+		final AuxVarInfo retvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(retvar.getVarDec());
+		builder.addAuxVar(retvar);
+		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
+
+		// one possible return value: NULL
+		final var setPtrToNull = StatementFactory.constructAssignmentStatement(loc, retvar.getLhs(),
+				mExpressionTranslation.constructNullPointer(loc));
+
+		// alternative option: return a nondeterministic string of nondeterministic length
+		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, mTypeSizes.getSizeT(), SFO.AUXVAR.NONDET);
+		builder.addDeclaration(len.getVarDec());
+		builder.addAuxVar(len);
+
+		// allocate memory for a string and end it with a null-char as terminator
+		final var body = new ArrayList<Statement>();
+		body.add(new HavocStatement(loc, new VariableLHS[] { len.getLhs() }));
+		body.add(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, len.getExp(),
+				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizes.getSizeT(), BigInteger.ZERO))));
+		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
+		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
+		final var lenMinusOne = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, len.getExp(),
+				mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ONE));
+		final var lastChar = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(retvar.getExp(), loc), lenMinusOne, loc);
+		body.addAll(mMemoryHandler.getWriteCall(loc,
+				LRValueFactory.constructHeapLValue(mTypeHandler, lastChar, charType, null), nullChar, charType, false,
+				hook));
+
+		final var stmt = StatementFactory.constructIfStatement(loc, new WildcardExpression(loc),
+				new Statement[] { setPtrToNull }, body.toArray(Statement[]::new));
+		builder.addStatement(stmt);
+
+		return builder.build();
 	}
 
 	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
