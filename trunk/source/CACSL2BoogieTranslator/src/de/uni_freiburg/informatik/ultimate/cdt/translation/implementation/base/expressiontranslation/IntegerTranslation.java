@@ -32,8 +32,6 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
-import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
@@ -52,9 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -68,9 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -910,50 +904,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		throw new UnsupportedOperationException("fesetround not supported in non-bitprecise translation");
-	}
-
-	@Override
-	public boolean shouldAbstractAssignWithBitwiseOp(final IASTBinaryExpression node) {
-		return isBitwiseOperation(node.getOperand2()) && node.getOperand1() instanceof IASTIdExpression;
-	}
-
-	/**
-	 * Returns true iff {@code expr} is a bitwise expression (&, |, ^, ~).
-	 *
-	 * @param expr
-	 *            An expression
-	 * @return true iff {@code expr} is a bitwise expression
-	 */
-	private static boolean isBitwiseOperation(final IASTExpression expr) {
-		if (!(expr instanceof IASTBinaryExpression)) {
-			if (expr instanceof IASTUnaryExpression) {
-				final IASTUnaryExpression uexpr = (IASTUnaryExpression) expr;
-				if (uexpr.getOperator() == IASTUnaryExpression.op_tilde) {
-					return true;
-				}
-			}
-			return false;
-		}
-		final IASTBinaryExpression bexpr = (IASTBinaryExpression) expr;
-		switch (bexpr.getOperator()) {
-		case IASTBinaryExpression.op_binaryAnd:
-		case IASTBinaryExpression.op_binaryAndAssign:
-		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryOrAssign:
-		case IASTBinaryExpression.op_binaryXor:
-		case IASTBinaryExpression.op_binaryXorAssign:
-			return true;
-		default: {
-			return false;
-		}
-		}
-	}
-
-	@Override
-	public Result abstractAssginWithBitwiseOp(final ExpressionResultTransformer exprResultTransformer,
-			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return mBitabsTranslation.abstractAssign(exprResultTransformer, main, locationFactory, node, auxVarInfoBuilder);
 	}
 
 	@Override

@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -62,9 +61,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -408,21 +405,6 @@ public abstract class ExpressionTranslation {
 	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
 
 	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
-
-	public boolean shouldAbstractAssignWithBitwiseOp(final IASTBinaryExpression node) {
-		return false;
-	}
-
-	/**
-	 * @return
-	 * @deprecated do not use this method; it is a workaround
-	 */
-	@Deprecated
-	public Result abstractAssginWithBitwiseOp(final ExpressionResultTransformer exprResultTransformer,
-			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		throw new UnsupportedOperationException();
-	}
 
 	public ExpressionResult createNan(final ILocation loc, final CPrimitive cPrimitive) {
 		if (!cPrimitive.isFloatingType()) {
