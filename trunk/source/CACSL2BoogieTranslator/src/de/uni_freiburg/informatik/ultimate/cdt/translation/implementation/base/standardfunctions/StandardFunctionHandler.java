@@ -1030,8 +1030,7 @@ public class StandardFunctionHandler {
 			final var lValue =
 					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null);
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
-			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(),
-					new CPrimitive(CPrimitive.CPrimitives.INT), false, node);
+			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(), type, false, node);
 			builder.addStatements(writes);
 
 			if (mDataRaceChecker != null) {
