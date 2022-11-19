@@ -32,8 +32,9 @@ import java.util.LinkedHashMap;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -44,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -59,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
- * Provides the information if we want to use fixed sizes for types. If yes an object of this class also provides the
- * bytesize for each type.
+ * Provides the information if we want to use fixed sizes for types. If yes an
+ * object of this class also provides the bytesize for each type.
  *
  *
  * @author Matthias Heizmann
@@ -79,7 +80,8 @@ public class TypeSizes {
 	private final int mSizeOfLongDoubleType;
 	private final int mSizeOfPointerType;
 
-	// for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
+	// for pointer arithmetic on a void pointer -- c standard disallows that, but
+	// gcc does not..
 	private final int mSizeOfVoidType;
 
 	/**
@@ -337,8 +339,9 @@ public class TypeSizes {
 	}
 
 	/**
-	 * Try to get the value of RValue rval. Returns null if extraction is impossible. Extraction might succeed if rval
-	 * represents a constant value. Extraction fails, e.g., if rval represents a variable.
+	 * Try to get the value of RValue rval. Returns null if extraction is
+	 * impossible. Extraction might succeed if rval represents a constant value.
+	 * Extraction fails, e.g., if rval represents a variable.
 	 *
 	 * @param expr
 	 * @return
@@ -348,103 +351,297 @@ public class TypeSizes {
 	}
 
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
-		if (mSettings.isBitvectorTranslation()) {
-			return extractIntegerValueBitvector(expr, cType, hook);
+		final BigInteger tmp = extractIntegerValue(expr, hook);
+		if (!(cType instanceof CPrimitive)) {
+			throw new AssertionError("Expected only CPrimitive but got " + cType);
 		}
-		return extractIntegerValueInteger(expr, cType, hook);
+		final CPrimitive cPrimitive = (CPrimitive) cType;
+		if (mSettings.isBitvectorTranslation()) {
+			if (isUnsigned(cPrimitive)) {
+				// my return as is
+				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(tmp) > 0) {
+					throw new AssertionError("Value too small for type " + cType);
+				}
+				if (getMaxValueOfPrimitiveType(cPrimitive).compareTo(tmp) < 0) {
+					throw new AssertionError("Value too large for type " + cType);
+				}
+				return tmp;
+			} else {
+				// is signed
+				final Integer bytesize = getSize(cPrimitive.getType());
+				final int bitsize = bytesize * 8;
+				final BitvectorConstant bc = new BitvectorConstant(tmp, BigInteger.valueOf(bitsize));
+				return bc.toSignedInt();
+			}
+		} else {
+			// integer translation
+			if (isUnsigned(cPrimitive)) {
+				// TODO 20221119 Matthias: Because of the Nutz transformation we do
+				// do a modulo operation. It don't think this should be necessary,
+				// but it won't hurt and I don't have the time to check.
+				final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+				final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+				return tmp.mod(maxValuePlusOne);
+			} else {
+				return tmp;
+			}
+		}
 	}
 
-	private BigInteger extractIntegerValueInteger(final Expression expr, final CType cType, final IASTNode hook) {
-		if (cType.isIntegerType()) {
-			if (expr instanceof IntegerLiteral) {
-				final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
-				if (isUnsigned((CPrimitive) cType)) {
-					final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
-					final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-					return value.mod(maxValuePlusOne);
-				}
-				return value;
-			}
-			if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
-				final String bId = ((IdentifierExpression) expr).getIdentifier();
-				final String cId = mSymboltable.getCIdForBoogieId(bId);
-				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
-				if (stv == null) {
-					return null;
-				}
-				if (stv.hasConstantValue()) {
-					return extractIntegerValue(stv.getConstantValue(), cType, hook);
-				}
-			}
-			if (expr instanceof BinaryExpression) {
-				final BinaryExpression binExpr = (BinaryExpression) expr;
-				final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
-				final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
+	private BigInteger extractIntegerValue(final Expression expr, final IASTNode hook) {
+		if (expr instanceof IntegerLiteral) {
+			return extractIntegerValueFromIntegerLiteral(expr);
+		} else if (expr instanceof BitvecLiteral) {
+			return extractIntegerValueFromBitvectorLiteral((BitvecLiteral) expr);
+		} else if (expr instanceof IdentifierExpression) {
+			return extractIntegerValueFromIdentifierExpression((IdentifierExpression) expr, hook);
+		} else if (expr instanceof BinaryExpression) {
+			return extractIntegerValueFromBinaryExpression((BinaryExpression) expr, hook);
+		} else if (expr instanceof IfThenElseExpression) {
+			return extractIntegerValueFromIfThenElseExpression(expr, hook);
+		} else if (expr instanceof FunctionApplication) {
+			return extractIntegerValueFromBitvectorFunctionApplication(expr, hook);
+		} else if (expr instanceof BitVectorAccessExpression) {
+			return extractIntegerValueFromBitVectorAccessExpression((BitVectorAccessExpression) expr, hook);
+		} else {
+			throw new AssertionError("Unknown Expression " + expr.getClass().getSimpleName());
+		}
+	}
 
-				if (leftValue == null || rightValue == null) {
-					return null;
-				}
+	private BigInteger extractIntegerValueFromBitVectorAccessExpression(final BitVectorAccessExpression expr,
+			final IASTNode hook) {
+		final Expression operand = expr.getBitvec();
+		final BigInteger value = extractIntegerValue(operand, hook);
+		if (value == null) {
+			return null;
+		} else {
+			return ExpressionFactory.constructBitvectorAccessExpressionResult(value, expr.getEnd(), expr.getStart());
+		}
+	}
 
-				switch (binExpr.getOperator()) {
-				case ARITHDIV:
-					return leftValue.divide(rightValue);
-				case ARITHMINUS:
-					return leftValue.subtract(rightValue);
-				case ARITHMOD:
-					return leftValue.mod(rightValue);
-				case ARITHMUL:
-					return leftValue.multiply(rightValue);
-				case ARITHPLUS:
-					return leftValue.add(rightValue);
-				default:
-					return null;
-				}
+	private BigInteger extractIntegerValueFromBitvectorFunctionApplication(final Expression expr, final IASTNode hook) {
+		final FunctionApplication funApp = (FunctionApplication) expr;
+		final Expression[] args = funApp.getArguments();
+		// TODO Matthias 20221119 Avoid code duplication in the following two sections
+		if (funApp.getIdentifier().startsWith(SFO.AUXILIARY_FUNCTION_PREFIX + BvOp.sign_extend)) {
+			// remove the `~sign_extendFrom` it remains a string of the form aTob, where a
+			// and b are natural numbers in a decimal representation
+			final String range = funApp.getIdentifier().substring(16);
+			final String[] res = range.split("To");
+			if (res.length != 2) {
+				throw new AssertionError();
 			}
-			if (expr instanceof IfThenElseExpression) {
-				final IfThenElseExpression ifThenElseExpr = (IfThenElseExpression) expr;
-				final Boolean condValue = extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook);
-				if (condValue != null) {
-					if (extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook)) {
-						return extractIntegerValue(ifThenElseExpr.getThenPart(), cType, hook);
-					}
-					return extractIntegerValue(ifThenElseExpr.getElsePart(), cType, hook);
-				}
+			final int from = Integer.parseInt(res[0]);
+			final int to = Integer.parseInt(res[1]);
+			final BigInteger operand = extractIntegerValue(args[0], hook);
+			final BitvectorConstant bv = new BitvectorConstant(operand, BigInteger.valueOf(from));
+			return BitvectorConstant.sign_extend(bv, BigInteger.valueOf(to - from)).getValue();
+		} else if (funApp.getIdentifier().startsWith(SFO.AUXILIARY_FUNCTION_PREFIX + BvOp.zero_extend)) {
+			// remove the `~sign_extendFrom` it remains a string of the form aTob, where a
+			// and b are natural numbers in a decimal representation
+			final String range = funApp.getIdentifier().substring(16);
+			final String[] res = range.split("To");
+			if (res.length != 2) {
+				throw new AssertionError();
+			}
+			final int from = Integer.parseInt(res[0]);
+			final int to = Integer.parseInt(res[1]);
+			final BigInteger operand = extractIntegerValue(args[0], hook);
+			final BitvectorConstant bv = new BitvectorConstant(operand, BigInteger.valueOf(from));
+			return BitvectorConstant.zero_extend(bv, BigInteger.valueOf(to - from)).getValue();
+		}
+
+		final BvOp sbo = getBitvectorSmtFunctionNameFromCFunctionName(funApp.getIdentifier());
+		if (sbo == null) {
+			// not a bitvector function
+			return null;
+		}
+		if (sbo.isBoolean()) {
+			throw new AssertionError("Unexpected boolean bitvector op");
+		}
+		switch (sbo) {
+		case sign_extend:
+		case zero_extend:
+		case extract:
+			throw new UnsupportedOperationException(sbo.name() + " not yet supported but can be implemented");
+		default:
+			final int index = getBitvectorIndexFromCFunctionName(funApp.getIdentifier());
+			if (index == -1) {
 				return null;
 			}
+			final BitvectorConstant[] operands = new BitvectorConstant[sbo.getArity()];
+			for (int i = 0; i < args.length; ++i) {
+				final BigInteger arg = extractIntegerValue(args[i], hook);
+				if (arg == null) {
+					return null;
+				}
+				operands[i] = new BitvectorConstant(arg, BigInteger.valueOf(index));
+			}
+			final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, operands);
+			if (result.isBoolean()) {
+				throw new AssertionError("Need bitvector result");
+			}
+			return result.getBvResult().getValue();
+		}
+	}
+
+	private Boolean extractBooleanValueFromBitvectorFunctionApplication(final Expression expr, final IASTNode hook) {
+		final FunctionApplication funApp = (FunctionApplication) expr;
+		final Expression[] args = funApp.getArguments();
+
+		final BvOp sbo = getBitvectorSmtFunctionNameFromCFunctionName(funApp.getIdentifier());
+		if (sbo == null) {
+			// not a bitvector function
 			return null;
+		}
+		if (!sbo.isBoolean()) {
+			throw new AssertionError("Expected boolean bitvector op");
+		}
+		final int index = getBitvectorIndexFromCFunctionName(funApp.getIdentifier());
+		if (index == -1) {
+			return null;
+		}
+		final BitvectorConstant[] operands = new BitvectorConstant[sbo.getArity()];
+		for (int i = 0; i < args.length; ++i) {
+			final BigInteger arg = extractIntegerValue(args[i], hook);
+			if (arg == null) {
+				return null;
+			}
+			operands[i] = new BitvectorConstant(arg, BigInteger.valueOf(index));
+		}
+		final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, operands);
+		if (!result.isBoolean()) {
+			throw new AssertionError("Need Boolean result");
+		}
+		return result.getBooleanResult();
+
+	}
+
+	private BigInteger extractIntegerValueFromIntegerLiteral(final Expression expr) {
+		final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
+		// TODO Matthias 20221119: Questionable to do apply modulo only for unsigned.
+//		if (isUnsigned((CPrimitive) cType)) {
+//			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+//			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+//			return value.mod(maxValuePlusOne);
+//		}
+		return value;
+	}
+
+	private BigInteger extractIntegerValueFromIfThenElseExpression(final Expression expr, final IASTNode hook) {
+		final IfThenElseExpression ifThenElseExpr = (IfThenElseExpression) expr;
+		final Boolean condValue = extractBooleanValue(ifThenElseExpr.getCondition(), hook);
+		if (condValue != null) {
+			if (condValue) {
+				return extractIntegerValue(ifThenElseExpr.getThenPart(), hook);
+			} else {
+				return extractIntegerValue(ifThenElseExpr.getElsePart(), hook);
+			}
 		}
 		return null;
 	}
 
+	private BigInteger extractIntegerValueFromBinaryExpression(final BinaryExpression expr, final IASTNode hook) {
+		final BigInteger leftValue = extractIntegerValue(expr.getLeft(), hook);
+		final BigInteger rightValue = extractIntegerValue(expr.getRight(), hook);
+		if (leftValue == null || rightValue == null) {
+			return null;
+		}
+		switch (expr.getOperator()) {
+		case ARITHDIV:
+			// TODO Matthias 20221119: Division in C may differ from division in Java
+			return leftValue.divide(rightValue);
+		case ARITHMINUS:
+			return leftValue.subtract(rightValue);
+		case ARITHMOD:
+			// TODO Matthias 20221119: Modulo in C differs from division in Java
+			return leftValue.mod(rightValue);
+		case ARITHMUL:
+			return leftValue.multiply(rightValue);
+		case ARITHPLUS:
+			return leftValue.add(rightValue);
+		case BITVECCONCAT:
+			throw new UnsupportedOperationException("BITVECCONCAT not yet supported but can be implemented");
+		case COMPEQ:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPNEQ:
+		case COMPPO:
+		case LOGICAND:
+		case LOGICIFF:
+		case LOGICIMPLIES:
+		case LOGICOR:
+			throw new AssertionError("Does not have integer return type: " + expr.getOperator());
+		default:
+			throw new AssertionError("Unknown operator:" + expr.getOperator());
+		}
+	}
+
+	private BigInteger extractIntegerValueFromBitvectorLiteral(final BitvecLiteral expr) {
+		final BigInteger value = new BigInteger(expr.getValue());
+//		if (isUnsigned((CPrimitive) cType)) {
+//			if (value.signum() < 0) {
+//				throw new UnsupportedOperationException("negative value");
+//			}
+//			return value;
+//		}
+		return value;
+	}
+
+	private BigInteger extractIntegerValueFromIdentifierExpression(final IdentifierExpression expr,
+			final IASTNode hook) {
+		// An IdentifierExpression may be an alias for an integer value, this is stored
+		// in the symbol table.
+		final String bId = expr.getIdentifier();
+		final String cId = mSymboltable.getCIdForBoogieId(bId);
+		final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
+		if (stv != null && stv.hasConstantValue()) {
+			return extractIntegerValue(stv.getConstantValue(), hook);
+		} else {
+			return null;
+		}
+	}
+
 	/**
-	 * Takes an expression and returns its boolean value, if possible. Returns null otherwise.
+	 * Takes an expression and returns its boolean value, if possible. Returns null
+	 * otherwise.
 	 */
-	private Boolean extractBooleanValue(final Expression expr, final CType cType, final IASTNode hook) {
+	private Boolean extractBooleanValue(final Expression expr, final IASTNode hook) {
 		if (expr instanceof BooleanLiteral) {
-			return Boolean.valueOf((((BooleanLiteral) expr).getValue()));
+			return extractBooleanValueFromBooleanLiteral(expr);
+		} else if (expr instanceof BinaryExpression) {
+			return extractBooleanValueFromBinaryExpression((BinaryExpression) expr, hook);
+		} else if (expr instanceof FunctionApplication) {
+			return extractBooleanValueFromBitvectorFunctionApplication(expr, hook);
+		} else {
+			throw new AssertionError("Unknown Expression " + expr.getClass().getSimpleName());
 		}
 
-		if (expr instanceof BinaryExpression) {
-			final BinaryExpression binExpr = (BinaryExpression) expr;
-			if (binExpr.getOperator() == Operator.LOGICAND || binExpr.getOperator() == Operator.LOGICOR) {
-				final Boolean leftValue = extractBooleanValue(binExpr.getLeft(), cType, hook);
-				final Boolean rightValue = extractBooleanValue(binExpr.getRight(), cType, hook);
-				if (leftValue == null || rightValue == null) {
-					return null;
-				}
-				if (binExpr.getOperator() == Operator.LOGICAND) {
-					return leftValue && rightValue;
-				}
-				return leftValue || rightValue;
-			}
+	}
 
-			final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
-			final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
+	private Boolean extractBooleanValueFromBinaryExpression(final BinaryExpression expr, final IASTNode hook) {
+		switch (expr.getOperator()) {
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case ARITHMUL:
+		case ARITHPLUS:
+		case BITVECCONCAT:
+			throw new AssertionError("Not a operation with Boolean return type");
+		case COMPEQ:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPNEQ: {
+			final BigInteger leftValue = extractIntegerValue(expr.getLeft(), hook);
+			final BigInteger rightValue = extractIntegerValue(expr.getRight(), hook);
 			if (leftValue == null || rightValue == null) {
 				return null;
 			}
-			switch (binExpr.getOperator()) {
+			switch (expr.getOperator()) {
 			case COMPEQ:
 				return leftValue.compareTo(rightValue) == 0;
 			case COMPNEQ:
@@ -458,72 +655,42 @@ public class TypeSizes {
 			case COMPGEQ:
 				return leftValue.compareTo(rightValue) >= 0;
 			default:
+				throw new AssertionError();
+			}
+		}
+		case COMPPO:
+			throw new AssertionError("We do not use COMPPO in our C translation");
+		case LOGICAND:
+		case LOGICIFF:
+		case LOGICIMPLIES:
+		case LOGICOR: {
+			final Boolean leftValue = extractBooleanValue(expr.getLeft(), hook);
+			final Boolean rightValue = extractBooleanValue(expr.getRight(), hook);
+			if (leftValue == null || rightValue == null) {
 				return null;
 			}
+			switch (expr.getOperator()) {
+			case LOGICAND:
+				return leftValue && rightValue;
+			case LOGICIFF:
+				return leftValue.equals(rightValue);
+			case LOGICIMPLIES:
+				return !leftValue || rightValue;
+			case LOGICOR:
+				return leftValue || rightValue;
+			default:
+				throw new AssertionError();
+			}
+
 		}
-		return null;
+		default:
+			throw new AssertionError("Unknown operator:" + expr.getOperator());
+		}
+
 	}
 
-	private BigInteger extractIntegerValueBitvector(final Expression expr, CType cType, final IASTNode hook) {
-		if (cType.isIntegerType()) {
-			cType = CEnum.replaceEnumWithInt(cType);
-			if (expr instanceof BitvecLiteral) {
-				final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
-				if (isUnsigned((CPrimitive) cType)) {
-					if (value.signum() < 0) {
-						throw new UnsupportedOperationException("negative value");
-					}
-					return value;
-				}
-				return value;
-			} else if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
-				final String bId = ((IdentifierExpression) expr).getIdentifier();
-				final String cId = mSymboltable.getCIdForBoogieId(bId);
-				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
-				if (stv != null && stv.hasConstantValue()) {
-					return extractIntegerValue(stv.getConstantValue(), cType, hook);
-				}
-			} else if (expr instanceof FunctionApplication) {
-				final FunctionApplication funApp = (FunctionApplication) expr;
-				final Expression[] args = funApp.getArguments();
-
-				final BvOp sbo =
-						getBitvectorSmtFunctionNameFromCFunctionName(funApp.getIdentifier());
-				if (sbo == null) {
-					return null;
-				}
-				if (sbo.isBoolean()) {
-					throw new UnsupportedOperationException("Unexpected boolean bitvector op");
-				}
-
-				switch (sbo) {
-				case zero_extend:
-				case extract:
-					// TODO: Add support for these
-					return null;
-				default:
-
-					final int index = getBitvectorIndexFromCFunctionName(funApp.getIdentifier());
-					if (index == -1) {
-						return null;
-					}
-					final BitvectorConstant[] operands = new BitvectorConstant[sbo.getArity()];
-					for (int i = 0; i < args.length; ++i) {
-						final BigInteger arg = extractIntegerValue(args[i], cType, hook);
-						if (arg == null) {
-							return null;
-						}
-						operands[i] = new BitvectorConstant(arg, BigInteger.valueOf(index));
-					}
-					final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, operands);
-					assert !result.isBoolean();
-					return result.getBvResult().toSignedInt();
-				}
-			}
-			return null;
-		}
-		return null;
+	private Boolean extractBooleanValueFromBooleanLiteral(final Expression expr) {
+		return Boolean.valueOf((((BooleanLiteral) expr).getValue()));
 	}
 
 	private static BvOp getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
@@ -544,7 +711,8 @@ public class TypeSizes {
 	}
 
 	/**
-	 * The size of a real floating point type is defined by a significant and an exponent.
+	 * The size of a real floating point type is defined by a significant and an
+	 * exponent.
 	 */
 	public static final class FloatingPointSize {
 		private final int mSignificant;
