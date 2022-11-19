@@ -736,7 +736,8 @@ public class CHandler {
 			// abstractAssginWithBitwiseOp (when working with addresses)! Is there a better way to check this?
 			// And how should we integrate this deprecated method?
 			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
-					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
+					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)
+					&& leftOperand.getLrValue().getCType() instanceof CPrimitive) {
 				return mExpressionTranslation.abstractAssginWithBitwiseOp(mExprResultTransformer, main,
 						mLocationFactory, node, mAuxVarInfoBuilder);
 			}
