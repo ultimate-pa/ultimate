@@ -451,6 +451,9 @@ public class TypeSizes {
 			final int from = Integer.parseInt(res[0]);
 			final int to = Integer.parseInt(res[1]);
 			final BigInteger operand = extractIntegerValue(args[0], hook);
+			if (operand == null) {
+				return null;
+			}
 			final BitvectorConstant bv = new BitvectorConstant(operand, BigInteger.valueOf(from));
 			return BitvectorConstant.sign_extend(bv, BigInteger.valueOf(to - from)).getValue();
 		} else if (funApp.getIdentifier().startsWith(SFO.AUXILIARY_FUNCTION_PREFIX + BvOp.zero_extend)) {
@@ -464,6 +467,9 @@ public class TypeSizes {
 			final int from = Integer.parseInt(res[0]);
 			final int to = Integer.parseInt(res[1]);
 			final BigInteger operand = extractIntegerValue(args[0], hook);
+			if (operand == null) {
+				return null;
+			}
 			final BitvectorConstant bv = new BitvectorConstant(operand, BigInteger.valueOf(from));
 			return BitvectorConstant.zero_extend(bv, BigInteger.valueOf(to - from)).getValue();
 		}
