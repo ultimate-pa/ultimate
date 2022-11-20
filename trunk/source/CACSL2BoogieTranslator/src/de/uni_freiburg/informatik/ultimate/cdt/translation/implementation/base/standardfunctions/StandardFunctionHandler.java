@@ -561,7 +561,7 @@ public class StandardFunctionHandler {
 		fill(map, "fdimf", this::handleBinaryFloatFunction);
 		fill(map, "fdiml", this::handleBinaryFloatFunction);
 
-		/** SV-COMP and modelling functions **/
+		/** SV-COMP and modeling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		fill(map, "__VERIFIER_error", this::handleErrorFunction);
 		fill(map, "reach_error", this::handleErrorFunction);
@@ -586,6 +586,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__VERIFIER_nondet_long",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__VERIFIER_nondet_longlong",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "__VERIFIER_nondet_loff_t",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "__VERIFIER_nondet_short",
@@ -600,6 +602,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__VERIFIER_nondet_ulong",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_ulonglong",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONGLONG)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 
