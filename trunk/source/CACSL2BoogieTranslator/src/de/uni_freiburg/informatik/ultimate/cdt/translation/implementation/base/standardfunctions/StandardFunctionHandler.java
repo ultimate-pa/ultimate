@@ -588,6 +588,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "__VERIFIER_nondet_longlong",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "__VERIFIER_nondet_int128",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT128)));
 		fill(map, "__VERIFIER_nondet_loff_t",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "__VERIFIER_nondet_short",
@@ -604,6 +606,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
 		fill(map, "__VERIFIER_nondet_ulonglong",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONGLONG)));
+		fill(map, "__VERIFIER_nondet_uint128",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 

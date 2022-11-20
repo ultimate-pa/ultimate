@@ -527,8 +527,11 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Get the types that a given integer type can have. Returns the types in the correct order according to 6.4.4.1.5
-	 * of the C11 standard.
+	 * Get the types that a given integer type can have. Returns the types in the
+	 * correct order according to 6.4.4.1.5 of the C11 standard. <br />
+	 * Note that we must not have __int128 from GNU C here since literals of that
+	 * size are not allowed.
+	 * https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 	 */
 	private static CPrimitives[] getPossibleTypes(final IntegerConstant ic) {
 		if (ic.hasUnsignedSuffix()) {

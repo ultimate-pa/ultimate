@@ -79,6 +79,7 @@ public class TypeSizes {
 	private final int mSizeOfDoubleType;
 	private final int mSizeOfLongDoubleType;
 	private final int mSizeOfPointerType;
+	private final int mSizeOfInt128Type;
 
 	// for pointer arithmetic on a void pointer -- c standard disallows that, but
 	// gcc does not..
@@ -114,6 +115,10 @@ public class TypeSizes {
 		mSizeOfLongDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		mSizeOfPointerType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
 		mSignednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
+		// Hardcoded to 16 bytes. According to the GNU C is could probably also be
+		// larger
+		// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
+		mSizeOfInt128Type = 16;
 
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
@@ -128,6 +133,8 @@ public class TypeSizes {
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, mSizeOfInt128Type);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, mSizeOfInt128Type);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
@@ -135,6 +142,7 @@ public class TypeSizes {
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
+
 	}
 
 	public TypeSizes(final TypeSizes prerunTypeSizes, final FlatSymbolTable symbolTable) {
@@ -156,6 +164,7 @@ public class TypeSizes {
 		mSizeOfLongDoubleType = prerunTypeSizes.mSizeOfLongDoubleType;
 		mSizeOfPointerType = prerunTypeSizes.mSizeOfPointerType;
 		mSignednessOfChar = prerunTypeSizes.mSignednessOfChar;
+		mSizeOfInt128Type = prerunTypeSizes.mSizeOfInt128Type;
 	}
 
 	public boolean useFixedTypeSizes() {
@@ -186,6 +195,7 @@ public class TypeSizes {
 		case ULONG:
 		case ULONGLONG:
 		case USHORT:
+		case UINT128:
 			return true;
 		case CHAR:
 			return mSignednessOfChar == Signedness.UNSIGNED;
@@ -194,6 +204,7 @@ public class TypeSizes {
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
+		case INT128:
 			return false;
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -315,6 +326,8 @@ public class TypeSizes {
 			return new CPrimitive(CPrimitives.UCHAR);
 		case SHORT:
 			return new CPrimitive(CPrimitives.USHORT);
+		case INT128:
+			return new CPrimitive(CPrimitives.UINT128);
 		default:
 			throw new IllegalArgumentException("unsupported type " + this);
 		}
