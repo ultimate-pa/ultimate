@@ -352,6 +352,10 @@ public class TypeSizes {
 
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
 		final BigInteger tmp = extractIntegerValue(expr, hook);
+		if (tmp == null) {
+			return null;
+		}
+
 		if (!(cType instanceof CPrimitive)) {
 			throw new AssertionError("Expected only CPrimitive but got " + cType);
 		}
