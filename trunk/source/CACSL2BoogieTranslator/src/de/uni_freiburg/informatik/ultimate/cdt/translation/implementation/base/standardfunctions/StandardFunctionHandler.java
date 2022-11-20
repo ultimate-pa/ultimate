@@ -834,6 +834,7 @@ public class StandardFunctionHandler {
 
 	private ExpressionResult getNondetStringOrNull(final ILocation loc, final IASTNode hook) {
 		final var charType = new CPrimitive(CPrimitives.CHAR);
+		final var sizeT = mTypeSizes.getSizeT();
 		final var resultType = new CPointer(charType);
 		final var builder = new ExpressionResultBuilder();
 
@@ -847,19 +848,22 @@ public class StandardFunctionHandler {
 				mExpressionTranslation.constructNullPointer(loc));
 
 		// alternative option: return a nondeterministic string of nondeterministic length
-		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, mTypeSizes.getSizeT(), SFO.AUXVAR.NONDET);
+		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, sizeT, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(len.getVarDec());
 		builder.addAuxVar(len);
 
 		// allocate memory for a string and end it with a null-char as terminator
 		final var body = new ArrayList<Statement>();
 		body.add(new HavocStatement(loc, new VariableLHS[] { len.getLhs() }));
-		body.add(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, len.getExp(),
-				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizes.getSizeT(), BigInteger.ZERO))));
+		body.add(new AssumeStatement(loc,
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterThan,
+						len.getExp(), sizeT, mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ZERO),
+						sizeT)));
 		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
 		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
-		final var lenMinusOne = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, len.getExp(),
-				mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ONE));
+		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_minus, len.getExp(), sizeT,
+				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
 		final var lastChar = MemoryHandler.constructPointerFromBaseAndOffset(
 				MemoryHandler.getPointerBaseAddress(retvar.getExp(), loc), lenMinusOne, loc);
 		body.addAll(mMemoryHandler.getWriteCall(loc,
