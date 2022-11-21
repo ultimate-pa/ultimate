@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
- * Provides the information if we want to use fixed sizes for types. If yes an
- * object of this class also provides the bytesize for each type.
+ * Provides the information if we want to use fixed sizes for types. If yes an object of this class also provides the
+ * bytesize for each type.
  *
  *
  * @author Matthias Heizmann
@@ -273,48 +273,32 @@ public class TypeSizes {
 	 * @return FloatingPointSize of a float, double, or long double.
 	 */
 	public FloatingPointSize getFloatingPointSize(final CPrimitives cPrimitive) {
-		final FloatingPointSize result;
+		final int sizeof = getSize(cPrimitive);
 		switch (cPrimitive) {
-		case FLOAT: {
-			final int sizeof = getSize(cPrimitive);
-			if (sizeof == 4) {
-				result = new FloatingPointSize(sizeof, 24, 8);
-			} else {
+		case FLOAT:
+			if (sizeof != 4) {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-		}
-			break;
-		case DOUBLE: {
-			final int sizeof = getSize(cPrimitive);
-			if (sizeof == 8) {
-				result = new FloatingPointSize(sizeof, 53, 11);
-			} else {
+			return new FloatingPointSize(sizeof, 24, 8);
+		case DOUBLE:
+			if (sizeof != 8) {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-		}
-			break;
-		case LONGDOUBLE: {
-			final int sizeof = getSize(cPrimitive);
+			return new FloatingPointSize(sizeof, 53, 11);
+		case LONGDOUBLE:
 			// 12 because of 80bit long doubles on linux x86
-			if (sizeof == 12 || sizeof == 16) {
-				result = new FloatingPointSize(sizeof, 113, 15);
-			} else {
+			if (sizeof != 12 && sizeof != 16) {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-		}
-			break;
+			return new FloatingPointSize(sizeof, 113, 15);
 		case FLOAT128:
-			final int sizeof = getSize(cPrimitive);
-			if (sizeof == 16) {
-				result = new FloatingPointSize(sizeof, 113, 15);
-			} else {
+			if (sizeof != 16) {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-			break;
+			return new FloatingPointSize(sizeof, 113, 15);
 		default:
 			throw new IllegalArgumentException("not real floating type " + cPrimitive);
 		}
-		return result;
 	}
 
 	public CPrimitive getCorrespondingUnsignedType(final CPrimitive type) {
@@ -366,9 +350,8 @@ public class TypeSizes {
 	}
 
 	/**
-	 * Try to get the value of RValue rval. Returns null if extraction is
-	 * impossible. Extraction might succeed if rval represents a constant value.
-	 * Extraction fails, e.g., if rval represents a variable.
+	 * Try to get the value of RValue rval. Returns null if extraction is impossible. Extraction might succeed if rval
+	 * represents a constant value. Extraction fails, e.g., if rval represents a variable.
 	 *
 	 * @param expr
 	 * @return
@@ -397,26 +380,23 @@ public class TypeSizes {
 					throw new AssertionError("Value too large for type " + cType);
 				}
 				return tmp;
-			} else {
-				// is signed
-				final Integer bytesize = getSize(cPrimitive.getType());
-				final int bitsize = bytesize * 8;
-				final BitvectorConstant bc = new BitvectorConstant(tmp, BigInteger.valueOf(bitsize));
-				return bc.toSignedInt();
 			}
-		} else {
-			// integer translation
-			if (isUnsigned(cPrimitive)) {
-				// TODO 20221119 Matthias: Because of the Nutz transformation we do
-				// do a modulo operation. It don't think this should be necessary,
-				// but it won't hurt and I don't have the time to check.
-				final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
-				final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-				return tmp.mod(maxValuePlusOne);
-			} else {
-				return tmp;
-			}
+			// is signed
+			final Integer bytesize = getSize(cPrimitive.getType());
+			final int bitsize = bytesize * 8;
+			final BitvectorConstant bc = new BitvectorConstant(tmp, BigInteger.valueOf(bitsize));
+			return bc.toSignedInt();
 		}
+		// integer translation
+		if (isUnsigned(cPrimitive)) {
+			// TODO 20221119 Matthias: Because of the Nutz transformation we do
+			// do a modulo operation. It don't think this should be necessary,
+			// but it won't hurt and I don't have the time to check.
+			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+			return tmp.mod(maxValuePlusOne);
+		}
+		return tmp;
 	}
 
 	private BigInteger extractIntegerValue(final Expression expr, final IASTNode hook) {
@@ -557,11 +537,11 @@ public class TypeSizes {
 	private BigInteger extractIntegerValueFromIntegerLiteral(final Expression expr) {
 		final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
 		// TODO Matthias 20221119: Questionable to do apply modulo only for unsigned.
-//		if (isUnsigned((CPrimitive) cType)) {
-//			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
-//			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-//			return value.mod(maxValuePlusOne);
-//		}
+		// if (isUnsigned((CPrimitive) cType)) {
+		// final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+		// final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+		// return value.mod(maxValuePlusOne);
+		// }
 		return value;
 	}
 
@@ -618,12 +598,12 @@ public class TypeSizes {
 
 	private BigInteger extractIntegerValueFromBitvectorLiteral(final BitvecLiteral expr) {
 		final BigInteger value = new BigInteger(expr.getValue());
-//		if (isUnsigned((CPrimitive) cType)) {
-//			if (value.signum() < 0) {
-//				throw new UnsupportedOperationException("negative value");
-//			}
-//			return value;
-//		}
+		// if (isUnsigned((CPrimitive) cType)) {
+		// if (value.signum() < 0) {
+		// throw new UnsupportedOperationException("negative value");
+		// }
+		// return value;
+		// }
 		return value;
 	}
 
@@ -642,8 +622,7 @@ public class TypeSizes {
 	}
 
 	/**
-	 * Takes an expression and returns its boolean value, if possible. Returns null
-	 * otherwise.
+	 * Takes an expression and returns its boolean value, if possible. Returns null otherwise.
 	 */
 	private Boolean extractBooleanValue(final Expression expr, final IASTNode hook) {
 		if (expr instanceof BooleanLiteral) {
@@ -748,8 +727,7 @@ public class TypeSizes {
 	}
 
 	/**
-	 * The size of a real floating point type is defined by a significant and an
-	 * exponent.
+	 * The size of a real floating point type is defined by a significant and an exponent.
 	 */
 	public static final class FloatingPointSize {
 		private final int mSignificant;
