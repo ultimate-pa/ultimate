@@ -1511,7 +1511,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			requiredBitsize = inputBitsize + 1;
 			bvop = BvOp.bvsdiv;
 		} else if (operation == IASTBinaryExpression.op_multiply || operation == IASTBinaryExpression.op_multiply) {
-			requiredBitsize = inputBitsize * 2 + 1;
+			// In the worst case, we have -2^(n-1)*-2^(n-1) = 2^(n-2), which can we represented within 2^(n-1)
+			requiredBitsize = inputBitsize * 2 - 1;
 			bvop = BvOp.bvmul;
 		} else {
 			throw new AssertionError("Not applicable to operation " + operation);
