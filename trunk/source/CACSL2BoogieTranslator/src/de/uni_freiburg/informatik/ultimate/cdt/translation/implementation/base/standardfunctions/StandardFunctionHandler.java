@@ -934,7 +934,8 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(ptr);
 
 		// second argument is len
-		final var len = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		final var len = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc, arguments[1],
+				mExpressionTranslation.getCTypeOfPointerComponents());
 		builder.addAllExceptLrValue(len);
 
 		// dispatch remaining arguments (except for string literals)
@@ -971,7 +972,7 @@ public class StandardFunctionHandler {
 		final var assumeInRange = new AssumeStatement(loc,
 				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
 						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(), len.getLrValue().getValue(),
-						mTypeSizes.getSizeT()));
+						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(assumeInRange);
 
 		// havoc aux;
@@ -1012,7 +1013,6 @@ public class StandardFunctionHandler {
 		final var ret =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
 		builder.addAuxVar(ret);
-		builder.addOverapprox(overAppFlag);
 		builder.addDeclaration(ret.getVarDec());
 		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
 
