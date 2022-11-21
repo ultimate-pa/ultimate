@@ -34,7 +34,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -1086,14 +1085,8 @@ public class CExpressionTranslator {
 				rhsSmallerBitWidth = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 						IASTBinaryExpression.op_lessThan, operands[1], resultType, bitwidthOfLhsAsExpr, resultType);
 			}
-			final Expression conjunction = ExpressionFactory.and(loc,
-					Arrays.asList(new Expression[] { lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth }));
-			if (!ExpressionFactory.isTrueLiteral(conjunction)) {
-				final Check check = new Check(Spec.INTEGER_OVERFLOW);
-				final AssertStatement additionalLeftshiftChecks = new AssertStatement(loc, conjunction);
-				check.annotate(additionalLeftshiftChecks);
-				erb.addStatement(additionalLeftshiftChecks);
-			}
+			addOverflowAssertion(loc,
+					ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth)), erb);
 			// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to
 			// extend/reduce the RHS
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression(loc,
@@ -1108,20 +1101,19 @@ public class CExpressionTranslator {
 		} else {
 			throw new AssertionError("no such operation");
 		}
+		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
+		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
+	}
 
-		final Check check = new Check(Spec.INTEGER_OVERFLOW);
-		final Expression biggerMinInt = inBoundsCheck.getFirst();
-		final Expression smallerMaxInt = inBoundsCheck.getSecond();
-		if (!ExpressionFactory.isTrueLiteral(smallerMaxInt)) {
-			final AssertStatement smallerMaxIntStmt = new AssertStatement(loc, smallerMaxInt);
-			check.annotate(smallerMaxIntStmt);
-			erb.addStatement(smallerMaxIntStmt);
+	private static void addOverflowAssertion(final ILocation loc, final Expression condition,
+			final ExpressionResultBuilder erb) {
+		if (ExpressionFactory.isTrueLiteral(condition)) {
+			// Avoid the creation of "assert true" statement
+			return;
 		}
-		if (!ExpressionFactory.isTrueLiteral(biggerMinInt)) {
-			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
-			check.annotate(biggerMinIntStmt);
-			erb.addStatement(biggerMinIntStmt);
-		}
+		final AssertStatement assertSt = new AssertStatement(loc, condition);
+		new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
+		erb.addStatement(assertSt);
 	}
 
 	/**
