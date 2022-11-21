@@ -1088,10 +1088,12 @@ public class CExpressionTranslator {
 			}
 			final Expression conjunction = ExpressionFactory.and(loc,
 					Arrays.asList(new Expression[] { lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth }));
-			final Check check = new Check(Spec.INTEGER_OVERFLOW);
-			final AssertStatement additionalLeftshiftChecks = new AssertStatement(loc, conjunction);
-			check.annotate(additionalLeftshiftChecks);
-			erb.addStatement(additionalLeftshiftChecks);
+			if (!ExpressionFactory.isTrueLiteral(conjunction)) {
+				final Check check = new Check(Spec.INTEGER_OVERFLOW);
+				final AssertStatement additionalLeftshiftChecks = new AssertStatement(loc, conjunction);
+				check.annotate(additionalLeftshiftChecks);
+				erb.addStatement(additionalLeftshiftChecks);
+			}
 			// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to
 			// extend/reduce the RHS
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression(loc,
