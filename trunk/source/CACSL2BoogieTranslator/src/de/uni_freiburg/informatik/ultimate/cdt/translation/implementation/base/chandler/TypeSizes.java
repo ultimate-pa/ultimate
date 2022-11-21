@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
@@ -42,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -414,8 +417,15 @@ public class TypeSizes {
 			return extractIntegerValueFromBitvectorFunctionApplication(expr, hook);
 		} else if (expr instanceof BitVectorAccessExpression) {
 			return extractIntegerValueFromBitVectorAccessExpression((BitVectorAccessExpression) expr, hook);
+		} else if (expr instanceof UnaryExpression) {
+			return extractIntegerValueFromUnaryExpression((UnaryExpression) expr, hook);
+		} else if (expr instanceof ArrayAccessExpression || expr instanceof StructAccessExpression) {
+			// TODO Dominik 20221121: We could support StructAccessExpression if the struct is a StructConstructor
+			return null;
 		} else {
-			throw new AssertionError("Unknown Expression " + expr.getClass().getSimpleName());
+			// throw an error for expressions that never have the correct type (e.g. ArrayStoreExpression)
+			// as well as for yet unknown expressions.
+			throw new AssertionError("Don't know how to extract integer from " + expr.getClass().getSimpleName());
 		}
 	}
 
@@ -425,9 +435,8 @@ public class TypeSizes {
 		final BigInteger value = extractIntegerValue(operand, hook);
 		if (value == null) {
 			return null;
-		} else {
-			return ExpressionFactory.constructBitvectorAccessExpressionResult(value, expr.getEnd(), expr.getStart());
 		}
+		return ExpressionFactory.constructBitvectorAccessExpressionResult(value, expr.getEnd(), expr.getStart());
 	}
 
 	private BigInteger extractIntegerValueFromBitvectorFunctionApplication(final Expression expr, final IASTNode hook) {
@@ -596,6 +605,23 @@ public class TypeSizes {
 		}
 	}
 
+	private BigInteger extractIntegerValueFromUnaryExpression(final UnaryExpression expr, final IASTNode hook) {
+		switch (expr.getOperator()) {
+		case ARITHNEGATIVE:
+			final BigInteger operandValue = extractIntegerValue(expr.getExpr(), hook);
+			if (operandValue == null) {
+				return null;
+			}
+			return operandValue.negate();
+		case LOGICNEG:
+			throw new AssertionError("Does not have integer return type: " + expr.getOperator());
+		case OLD:
+			return null;
+		default:
+			throw new AssertionError("Unknown operator:" + expr.getOperator());
+		}
+	}
+
 	private BigInteger extractIntegerValueFromBitvectorLiteral(final BitvecLiteral expr) {
 		final BigInteger value = new BigInteger(expr.getValue());
 		// if (isUnsigned((CPrimitive) cType)) {
@@ -616,9 +642,8 @@ public class TypeSizes {
 		final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
 		if (stv != null && stv.hasConstantValue()) {
 			return extractIntegerValue(stv.getConstantValue(), hook);
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	/**
@@ -629,12 +654,51 @@ public class TypeSizes {
 			return extractBooleanValueFromBooleanLiteral(expr);
 		} else if (expr instanceof BinaryExpression) {
 			return extractBooleanValueFromBinaryExpression((BinaryExpression) expr, hook);
+		} else if (expr instanceof UnaryExpression) {
+			return extractBooleanValueFromUnaryExpression((UnaryExpression) expr, hook);
 		} else if (expr instanceof FunctionApplication) {
 			return extractBooleanValueFromBitvectorFunctionApplication(expr, hook);
+		} else if (expr instanceof IdentifierExpression) {
+			return extractBooleanValueFromIdentifierExpression((IdentifierExpression) expr, hook);
+		} else if (expr instanceof ArrayAccessExpression || expr instanceof StructAccessExpression) {
+			// TODO Dominik 20221121: We could support StructAccessExpression if the struct is a StructConstructor
+			return null;
 		} else {
-			throw new AssertionError("Unknown Expression " + expr.getClass().getSimpleName());
+			// throw an error for expressions that never have the correct type (e.g. ArrayStoreExpression)
+			// as well as for yet unknown expressions.
+			// TODO Dominik 20221121: We could support IfThenElseExpression, perhaps QuantifierExpression
+			throw new AssertionError("Don't know how to extract boolean from " + expr.getClass().getSimpleName());
 		}
+	}
 
+	private Boolean extractBooleanValueFromIdentifierExpression(final IdentifierExpression expr, final IASTNode hook) {
+		// An IdentifierExpression may be an alias for a boolean value, this is stored in the symbol table.
+		final String bId = expr.getIdentifier();
+		final String cId = mSymboltable.getCIdForBoogieId(bId);
+		final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
+		if (stv != null && stv.hasConstantValue()) {
+			return extractBooleanValue(stv.getConstantValue(), hook);
+		}
+		return null;
+	}
+
+	private Boolean extractBooleanValueFromUnaryExpression(final UnaryExpression expr, final IASTNode hook) {
+		switch (expr.getOperator()) {
+		case LOGICNEG:
+			final Boolean operandValue = extractBooleanValue(expr.getExpr(), hook);
+			if (operandValue == Boolean.TRUE) {
+				return Boolean.FALSE;
+			}
+			if (operandValue == Boolean.FALSE) {
+				return Boolean.TRUE;
+			}
+			break;
+		case OLD:
+			return null;
+		case ARITHNEGATIVE:
+			throw new AssertionError("Not a operation with Boolean return type");
+		}
+		return null;
 	}
 
 	private Boolean extractBooleanValueFromBinaryExpression(final BinaryExpression expr, final IASTNode hook) {
