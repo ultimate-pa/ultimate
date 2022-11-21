@@ -217,6 +217,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
+	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type, final BigInteger value) {
+		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, mTypeSizes, type, value);
+	}
+
+	@Override
 	public Expression constructLiteralForFloatingType(final ILocation loc, final CPrimitive type,
 			final BigDecimal value) {
 		if (mSettings.overapproximateFloatingPointOperations()) {
